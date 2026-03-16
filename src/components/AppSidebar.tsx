@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { 
   LayoutDashboard, 
   Rocket, 
@@ -9,9 +10,11 @@ import {
   ChevronLeft,
   LogOut,
   ScanSearch,
-  Compass
+  Compass,
+  ShieldCheck
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
