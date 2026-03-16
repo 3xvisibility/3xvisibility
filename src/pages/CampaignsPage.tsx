@@ -35,6 +35,7 @@ export default function CampaignsPage() {
   const [campaignName, setCampaignName] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedWebsite, setSelectedWebsite] = useState("");
+  const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
