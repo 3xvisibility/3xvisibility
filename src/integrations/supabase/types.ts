@@ -146,6 +146,7 @@ export type Database = {
       internal_link_settings: {
         Row: {
           anchor_format: string
+          auto_build: boolean
           campaign_id: string
           created_at: string
           enabled: boolean
@@ -158,6 +159,7 @@ export type Database = {
         }
         Insert: {
           anchor_format?: string
+          auto_build?: boolean
           campaign_id: string
           created_at?: string
           enabled?: boolean
@@ -170,6 +172,7 @@ export type Database = {
         }
         Update: {
           anchor_format?: string
+          auto_build?: boolean
           campaign_id?: string
           created_at?: string
           enabled?: boolean

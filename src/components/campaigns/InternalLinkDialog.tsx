@@ -33,6 +33,7 @@ export function InternalLinkDialog({
   const [sectionTitle, setSectionTitle] = useState("Related Pages");
   const [anchorFormat, setAnchorFormat] = useState("{title}");
   const [groupingVar, setGroupingVar] = useState<string>("");
+  const [autoBuild, setAutoBuild] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,6 +103,7 @@ export function InternalLinkDialog({
       setSectionTitle(existingSettings.section_title);
       setAnchorFormat(existingSettings.anchor_format);
       setGroupingVar(existingSettings.grouping_variable || "");
+      setAutoBuild((existingSettings as any).auto_build ?? false);
     }
   }, [existingSettings]);
 
@@ -118,6 +120,7 @@ export function InternalLinkDialog({
         section_title: sectionTitle,
         anchor_format: anchorFormat,
         grouping_variable: groupingVar || null,
+        auto_build: autoBuild,
         updated_at: new Date().toISOString(),
       };
 
@@ -209,6 +212,16 @@ export function InternalLinkDialog({
                 </div>
                 <Switch checked={enabled} onCheckedChange={setEnabled} />
               </div>
+
+              {enabled && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Auto-build after generation</Label>
+                    <p className="text-xs text-muted-foreground">Automatically build internal links when pages finish generating</p>
+                  </div>
+                  <Switch checked={autoBuild} onCheckedChange={setAutoBuild} />
+                </div>
+              )}
 
               {enabled && (
                 <>
