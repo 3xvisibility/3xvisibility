@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, FileText, Copy, Trash2 } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -17,8 +17,10 @@ type Template = Tables<"templates">;
 
 export default function TemplatesPage() {
   const [open, setOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -53,11 +55,32 @@ export default function TemplatesPage() {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template created", description: `"${name}" has been saved.` });
       setOpen(false);
+      setAiOpen(false);
       setName("");
       setContent("");
+      setAiPrompt("");
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const aiGenerateMutation = useMutation({
+    mutationFn: async (prompt: string) => {
+      const { data, error } = await supabase.functions.invoke("generate-template", {
+        body: { prompt },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { content: string; variables: string[]; suggestedName: string };
+    },
+    onSuccess: (data) => {
+      setContent(data.content);
+      setName(data.suggestedName);
+      toast({ title: "Template generated", description: "Review and save the AI-generated template." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "AI generation failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -75,57 +98,156 @@ export default function TemplatesPage() {
     },
   });
 
+  const resetAndClose = () => {
+    setAiOpen(false);
+    setName("");
+    setContent("");
+    setAiPrompt("");
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-display">Templates</h1>
           <p className="text-muted-foreground mt-1">Define reusable page layouts with dynamic variables.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
-              <Plus className="mr-2 h-4 w-4" /> New Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Create Template</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label htmlFor="tpl-name">Template Name</Label>
-                <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="tpl-content">Template Content</Label>
-                <p className="text-xs text-muted-foreground mb-1">Use &#123;variable&#125; syntax for dynamic fields.</p>
-                <Textarea
-                  id="tpl-content"
-                  placeholder={"<h1>{course} in {city}</h1>\n<p>Learn {course} in {city}...</p>"}
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={8}
-                  className="font-mono text-xs"
-                />
-              </div>
-              {detectedVars.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-muted-foreground">Detected variables:</span>
-                  {[...new Set(detectedVars)].map((v) => (
-                    <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
-                  ))}
+        <div className="flex gap-2">
+          {/* AI Template Builder */}
+          <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
+                <Sparkles className="mr-2 h-4 w-4" /> AI Builder
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  AI Template Builder
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label htmlFor="ai-prompt">Describe the template you need</Label>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    e.g. "Create a landing page template for a plumbing service company"
+                  </p>
+                  <Textarea
+                    id="ai-prompt"
+                    placeholder="Create a landing page template for a plumbing service company with service details, pricing, and location-specific content..."
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    rows={3}
+                  />
                 </div>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create Template"}
+                <Button
+                  onClick={() => aiGenerateMutation.mutate(aiPrompt)}
+                  disabled={!aiPrompt.trim() || aiGenerateMutation.isPending}
+                  className="w-full"
+                >
+                  {aiGenerateMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" /> Generate Template
+                    </>
+                  )}
                 </Button>
+
+                {/* Show generated result for review */}
+                {content && (
+                  <div className="space-y-4 pt-2 border-t border-border">
+                    <div>
+                      <Label htmlFor="ai-name">Template Name</Label>
+                      <Input
+                        id="ai-name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Generated Template</Label>
+                      <Textarea
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        rows={12}
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    {detectedVars.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-muted-foreground">Detected variables:</span>
+                        {[...new Set(detectedVars)].map((v) => (
+                          <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => { setContent(""); setName(""); }}>
+                        Discard
+                      </Button>
+                      <Button
+                        onClick={() => createMutation.mutate()}
+                        disabled={!name || !content || createMutation.isPending}
+                      >
+                        {createMutation.isPending ? "Saving..." : "Save Template"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+
+          {/* Manual Template */}
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
+                <Plus className="mr-2 h-4 w-4" /> New Template
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Create Template</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label htmlFor="tpl-name">Template Name</Label>
+                  <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="tpl-content">Template Content</Label>
+                  <p className="text-xs text-muted-foreground mb-1">Use &#123;variable&#125; syntax for dynamic fields.</p>
+                  <Textarea
+                    id="tpl-content"
+                    placeholder={"<h1>{course} in {city}</h1>\n<p>Learn {course} in {city}...</p>"}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    rows={8}
+                    className="font-mono text-xs"
+                  />
+                </div>
+                {detectedVars.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-muted-foreground">Detected variables:</span>
+                    {[...new Set(detectedVars)].map((v) => (
+                      <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
+                    {createMutation.isPending ? "Creating..." : "Create Template"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
