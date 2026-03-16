@@ -26,25 +26,25 @@ const footerLinks = {
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-border/50 py-14 md:py-16">
+    <footer className="border-t border-border/40 py-16 md:py-20">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg bg-gradient-primary flex items-center justify-center">
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="h-7 w-7 rounded-lg bg-gradient-primary flex items-center justify-center shadow-lg shadow-primary/15">
                 <Zap className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
               <span className="text-base font-bold tracking-tight">PageGen</span>
             </Link>
-            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-[200px]">
               Deploy data-driven content at scale.
             </p>
           </div>
 
           {Object.entries(footerLinks).map(([group, links]) => (
             <div key={group}>
-              <h4 className="font-semibold text-sm mb-3">{group}</h4>
-              <ul className="space-y-2.5">
+              <h4 className="font-semibold text-xs uppercase tracking-[0.15em] text-foreground/70 mb-4">{group}</h4>
+              <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
                     <a
@@ -60,11 +60,11 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
+        <div className="mt-14 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground/60">
             © {new Date().getFullYear()} PageGen. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-5 text-xs text-muted-foreground/60">
             <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
             <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
             <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
