@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -30,6 +30,13 @@ export default function GeneratedPagesPage() {
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
+
+  // Selection & bulk SEO
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkSeoOpen, setBulkSeoOpen] = useState(false);
+  const [bulkSeoForm, setBulkSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
+  const [bulkSeoApply, setBulkSeoApply] = useState({ title: true, description: true, keywords: true });
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -83,10 +90,7 @@ export default function GeneratedPagesPage() {
 
   const seoSaveMutation = useMutation({
     mutationFn: async ({ id, seo_title, seo_description, seo_keywords }: { id: string; seo_title: string; seo_description: string; seo_keywords: string }) => {
-      const keywordsArr = seo_keywords
-        .split(",")
-        .map((k) => k.trim())
-        .filter(Boolean);
+      const keywordsArr = seo_keywords.split(",").map((k) => k.trim()).filter(Boolean);
       const { error } = await supabase
         .from("generated_pages")
         .update({
@@ -107,6 +111,40 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const bulkSeoSaveMutation = useMutation({
+    mutationFn: async ({ ids, seo_title, seo_description, seo_keywords, apply }: {
+      ids: string[];
+      seo_title: string;
+      seo_description: string;
+      seo_keywords: string;
+      apply: { title: boolean; description: boolean; keywords: boolean };
+    }) => {
+      const keywordsArr = seo_keywords.split(",").map((k) => k.trim()).filter(Boolean);
+      const updatePayload: Record<string, any> = {};
+      if (apply.title) updatePayload.seo_title = seo_title || null;
+      if (apply.description) updatePayload.seo_description = seo_description || null;
+      if (apply.keywords) updatePayload.seo_keywords = keywordsArr.length > 0 ? keywordsArr : null;
+
+      if (Object.keys(updatePayload).length === 0) throw new Error("Select at least one field to update");
+
+      const { error } = await supabase
+        .from("generated_pages")
+        .update(updatePayload)
+        .in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setBulkSeoOpen(false);
+      setSelectedIds(new Set());
+      toast({ title: "Bulk SEO updated", description: `Updated ${count} pages.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const openSeoEditor = (page: GeneratedPage) => {
     setSeoEditPage(page);
     setSeoForm({
@@ -116,14 +154,39 @@ export default function GeneratedPagesPage() {
     });
   };
 
+  const openBulkSeoEditor = () => {
+    setBulkSeoForm({ seo_title: "", seo_description: "", seo_keywords: "" });
+    setBulkSeoApply({ title: true, description: true, keywords: true });
+    setBulkSeoOpen(true);
+  };
+
   const pendingPages = pages.filter((p) => p.status === "pending");
 
-  const filtered = pages.filter(
+  const filtered = useMemo(() => pages.filter(
     (p) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.slug.toLowerCase().includes(search.toLowerCase()) ||
       (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase())
-  );
+  ), [pages, search]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((p) => p.id)));
+    }
+  };
+
+  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
+  const someSelected = selectedIds.size > 0;
 
   return (
     <div className="space-y-6">
@@ -155,6 +218,26 @@ export default function GeneratedPagesPage() {
           </div>
         </div>
       </div>
+
+      {/* Selection action bar */}
+      {someSelected && (
+        <Card className="shadow-surface border-primary/20 bg-primary/5">
+          <CardContent className="p-3 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{selectedIds.size} page{selectedIds.size !== 1 ? "s" : ""} selected</span>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
+                <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+                <X className="h-3.5 w-3.5 mr-1.5" /> Clear
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -196,6 +279,13 @@ export default function GeneratedPagesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
+                  <th className="p-4 w-10">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all"
+                    />
+                  </th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Title</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Campaign</th>
@@ -207,8 +297,21 @@ export default function GeneratedPagesPage() {
               <tbody>
                 {filtered.map((page) => {
                   const hasSeo = !!(page as any).seo_title || !!(page as any).seo_description;
+                  const isSelected = selectedIds.has(page.id);
                   return (
-                    <tr key={page.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors duration-150">
+                    <tr
+                      key={page.id}
+                      className={`border-b last:border-0 transition-colors duration-150 ${
+                        isSelected ? "bg-primary/5" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <td className="p-4 w-10">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelect(page.id)}
+                          aria-label={`Select ${page.title}`}
+                        />
+                      </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
@@ -288,7 +391,6 @@ export default function GeneratedPagesPage() {
             </p>
           </DialogHeader>
 
-          {/* SEO Preview */}
           {previewPage && ((previewPage as any).seo_title || (previewPage as any).seo_description) && (
             <div className="mt-2 border rounded-lg p-4 bg-muted/30 space-y-2">
               <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
@@ -326,7 +428,7 @@ export default function GeneratedPagesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* SEO Edit Dialog */}
+      {/* Single SEO Edit Dialog */}
       <Dialog open={!!seoEditPage} onOpenChange={(open) => !open && setSeoEditPage(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -341,7 +443,6 @@ export default function GeneratedPagesPage() {
                 Page: <span className="font-medium text-foreground">{seoEditPage.title}</span>
               </p>
 
-              {/* Google SERP Preview */}
               <div className="border rounded-lg p-4 bg-muted/30 space-y-1">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Search preview</p>
                 <p className="text-primary text-sm font-medium leading-tight truncate">
@@ -394,12 +495,7 @@ export default function GeneratedPagesPage() {
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setSeoEditPage(null)}>Cancel</Button>
                 <Button
-                  onClick={() =>
-                    seoSaveMutation.mutate({
-                      id: seoEditPage.id,
-                      ...seoForm,
-                    })
-                  }
+                  onClick={() => seoSaveMutation.mutate({ id: seoEditPage.id, ...seoForm })}
                   disabled={seoSaveMutation.isPending}
                 >
                   {seoSaveMutation.isPending ? (
@@ -411,6 +507,112 @@ export default function GeneratedPagesPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk SEO Edit Dialog */}
+      <Dialog open={bulkSeoOpen} onOpenChange={setBulkSeoOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckSquare className="h-5 w-5 text-primary" />
+              Bulk Edit SEO ({selectedIds.size} pages)
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-xs text-muted-foreground">
+              Set SEO metadata for all selected pages at once. Use template variables like <code className="font-mono bg-muted px-1 py-0.5 rounded text-primary">{"{title}"}</code> in fields — they won't be auto-replaced here but serve as a pattern reference.
+            </p>
+
+            <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Fields to update</p>
+              <div className="flex flex-wrap gap-3">
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={bulkSeoApply.title}
+                    onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, title: !!v })}
+                  />
+                  SEO Title
+                </label>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={bulkSeoApply.description}
+                    onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, description: !!v })}
+                  />
+                  Meta Description
+                </label>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={bulkSeoApply.keywords}
+                    onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, keywords: !!v })}
+                  />
+                  Keywords
+                </label>
+              </div>
+            </div>
+
+            {bulkSeoApply.title && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  SEO Title
+                  <span className="text-muted-foreground ml-1">({bulkSeoForm.seo_title.length}/60)</span>
+                </Label>
+                <Input
+                  value={bulkSeoForm.seo_title}
+                  onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_title: e.target.value })}
+                  placeholder="e.g., Best {service} in {location}"
+                  maxLength={60}
+                />
+              </div>
+            )}
+
+            {bulkSeoApply.description && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  Meta Description
+                  <span className="text-muted-foreground ml-1">({bulkSeoForm.seo_description.length}/160)</span>
+                </Label>
+                <Textarea
+                  value={bulkSeoForm.seo_description}
+                  onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_description: e.target.value })}
+                  placeholder="e.g., Discover professional {service} services in {location}."
+                  maxLength={160}
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {bulkSeoApply.keywords && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Keywords <span className="text-muted-foreground">(comma-separated)</span></Label>
+                <Input
+                  value={bulkSeoForm.seo_keywords}
+                  onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_keywords: e.target.value })}
+                  placeholder="e.g., plumbing, new york, emergency service"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setBulkSeoOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() =>
+                  bulkSeoSaveMutation.mutate({
+                    ids: [...selectedIds],
+                    ...bulkSeoForm,
+                    apply: bulkSeoApply,
+                  })
+                }
+                disabled={bulkSeoSaveMutation.isPending || (!bulkSeoApply.title && !bulkSeoApply.description && !bulkSeoApply.keywords)}
+              >
+                {bulkSeoSaveMutation.isPending ? (
+                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Updating...</>
+                ) : (
+                  <><Save className="mr-1.5 h-3.5 w-3.5" /> Update {selectedIds.size} Pages</>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
