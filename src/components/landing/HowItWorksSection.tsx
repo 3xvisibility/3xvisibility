@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge";
-
 const steps = [
   {
     step: "01",
@@ -14,7 +12,7 @@ const steps = [
   {
     step: "03",
     title: "Upload CSV & map fields",
-    description: "Upload your data CSV. Drag CSV column headers onto template variable slots to create the mapping.",
+    description: "Upload your data CSV. Map column headers to template variable slots to create the mapping.",
   },
   {
     step: "04",
@@ -25,34 +23,37 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-16 md:py-24">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-            How it works
+    <section id="how-it-works" className="py-20 md:py-28 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[hsl(var(--primary-glow)/.04)] blur-3xl pointer-events-none" />
+
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">How it works</span>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Four steps to{" "}
+            <span className="text-gradient-primary">published pages</span>
           </h2>
-          <p className="mt-3 text-muted-foreground">
-            Four steps from raw data to published pages.
+          <p className="mt-4 text-muted-foreground text-base">
+            From raw data to live content in minutes.
           </p>
         </div>
 
-        <div className="max-w-2xl mx-auto space-y-0">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {steps.map((s, i) => (
-            <div key={s.step} className="flex gap-4 md:gap-6">
-              {/* Timeline line */}
-              <div className="flex flex-col items-center">
-                <Badge className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0">
+            <div
+              key={s.step}
+              className="relative group rounded-xl border border-border/50 bg-background p-6 hover:border-primary/30 hover:shadow-card-hover transition-all duration-300"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20">
                   {s.step}
-                </Badge>
-                {i < steps.length - 1 && (
-                  <div className="w-px flex-1 bg-border my-2" />
-                )}
-              </div>
-
-              <div className="pb-8 md:pb-10">
+                </span>
                 <h3 className="font-semibold text-base">{s.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{s.description}</p>
               </div>
+              <p className="text-sm text-muted-foreground leading-relaxed pl-[52px]">{s.description}</p>
+              {i < steps.length - 1 && (
+                <div className="hidden md:block absolute -bottom-3 left-1/2 -translate-x-1/2 w-px h-6 bg-gradient-to-b from-border to-transparent" />
+              )}
             </div>
           ))}
         </div>
