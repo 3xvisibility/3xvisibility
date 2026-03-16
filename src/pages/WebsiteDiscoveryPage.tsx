@@ -681,6 +681,14 @@ export default function WebsiteDiscoveryPage() {
                           )}
                         </div>
                       </ScrollArea>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full mt-1"
+                        onClick={() => setPickGroupDialog(group)}
+                      >
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Create Template
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}
