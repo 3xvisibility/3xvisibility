@@ -8,7 +8,8 @@ import {
   Settings,
   ChevronLeft,
   LogOut,
-  ScanSearch
+  ScanSearch,
+  Compass
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
