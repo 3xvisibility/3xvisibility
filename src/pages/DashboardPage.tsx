@@ -55,7 +55,22 @@ export default function DashboardPage() {
     },
   });
 
+  // AI usage
+  const { data: aiUsage, isLoading: loadingAi } = useQuery({
+    queryKey: ["dashboard-ai-usage"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("ai_generations_used, ai_generations_limit, plan")
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const isLoading = loadingCampaigns || loadingPages || loadingWebsites;
+  const aiUsed = aiUsage?.ai_generations_used || 0;
+  const aiLimit = aiUsage?.ai_generations_limit || 50;
+  const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   const stats = [
     { label: "Total Campaigns", value: campaignCount, icon: Rocket },
