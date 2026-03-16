@@ -101,6 +101,24 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup className="mt-auto">
+          {isAdmin && (
+            <SidebarGroupContent className="mb-2">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/admin"
+                      className="hover:bg-accent/50 transition-all duration-150"
+                      activeClassName="bg-primary/10 text-primary font-medium"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4 shrink-0" />
+                      {!collapsed && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {bottomNav.map((item) => (
