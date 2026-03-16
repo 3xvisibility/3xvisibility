@@ -1,7 +1,8 @@
 import { 
   LayoutDashboard, 
   Rocket, 
-  FileText, 
+  FileText,
+  Layers,
   Globe, 
   CreditCard, 
   Settings,
