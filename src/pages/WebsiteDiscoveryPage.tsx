@@ -20,6 +20,7 @@ import {
   X,
   Save,
   ArrowRight,
+  ArrowLeftRight,
   Loader2,
   Tag,
   Eye,
