@@ -353,10 +353,7 @@ export default function TemplatesPage() {
                     >
                       <Eye className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                      navigator.clipboard.writeText(tpl.content);
-                      toast({ title: "Copied to clipboard" });
-                    }}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate">
                       <Copy className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(tpl.id)}>
