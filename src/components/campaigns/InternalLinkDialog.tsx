@@ -103,6 +103,7 @@ export function InternalLinkDialog({
       setSectionTitle(existingSettings.section_title);
       setAnchorFormat(existingSettings.anchor_format);
       setGroupingVar(existingSettings.grouping_variable || "");
+      setAutoBuild((existingSettings as any).auto_build ?? false);
     }
   }, [existingSettings]);
 
