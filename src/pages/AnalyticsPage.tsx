@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -12,6 +13,8 @@ import {
   Sparkles,
   TrendingUp,
   Tag,
+  Download,
+  FileDown,
 } from "lucide-react";
 import {
   BarChart,
@@ -29,8 +32,11 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateSeoScore } from "@/lib/seo-score";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AnalyticsPage() {
+  const { toast } = useToast();
+
   // Fetch all generated pages
   const { data: pages = [], isLoading: loadingPages } = useQuery({
     queryKey: ["analytics-pages"],
@@ -142,16 +148,137 @@ export default function AnalyticsPage() {
   const aiLimit = aiUsage?.ai_generations_limit || 50;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
+  const downloadFile = useCallback((content: string, filename: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  const exportCSV = useCallback(() => {
+    const rows: string[][] = [
+      ["Title", "Status", "SEO Score", "SEO Title", "SEO Description", "Keywords", "Created"],
+    ];
+    for (const page of pages) {
+      const p = page as any;
+      const score = p.seo_title || p.seo_description
+        ? calculateSeoScore(p.seo_title, p.seo_description, p.seo_keywords, page.title).score.toString()
+        : "N/A";
+      rows.push([
+        `"${(page.title || "").replace(/"/g, '""')}"`,
+        page.status,
+        score,
+        `"${(p.seo_title || "").replace(/"/g, '""')}"`,
+        `"${(p.seo_description || "").replace(/"/g, '""')}"`,
+        `"${(p.seo_keywords || []).join(", ")}"`,
+        new Date(page.created_at).toISOString(),
+      ]);
+    }
+    downloadFile(rows.map((r) => r.join(",")).join("\n"), "analytics-report.csv", "text/csv");
+    toast({ title: "CSV exported", description: `${pages.length} pages exported.` });
+  }, [pages, downloadFile, toast]);
+
+  const exportPDF = useCallback(() => {
+    const date = new Date().toLocaleDateString();
+    const seoDist = seoDistribution.map((d) => `${d.name}: ${d.value}`).join(" | ");
+    const campPerf = campaignPerformance.map((c) => `${c.name}: ${c.pages}/${c.total} pages`).join("\n      ");
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Analytics Report</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 40px; color: #1a1a2e; max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 24px; border-bottom: 2px solid #3b82f6; padding-bottom: 8px; }
+  h2 { font-size: 16px; margin-top: 28px; color: #334155; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+  .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-value { font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: #64748b; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+  th { background: #f1f5f9; font-weight: 600; }
+  .footer { margin-top: 32px; font-size: 11px; color: #94a3b8; text-align: center; }
+  .section { margin-bottom: 24px; }
+  @media print { body { padding: 20px; } }
+</style>
+</head><body>
+  <h1>Campaign Analytics Report</h1>
+  <p style="color:#64748b;font-size:13px;">Generated on ${date}</p>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-value">${stats.total}</div><div class="stat-label">Total Pages</div></div>
+    <div class="stat"><div class="stat-value" style="color:#16a34a">${stats.published}</div><div class="stat-label">Published</div></div>
+    <div class="stat"><div class="stat-value" style="color:#3b82f6">${stats.pending}</div><div class="stat-label">Pending</div></div>
+    <div class="stat"><div class="stat-value" style="color:#dc2626">${stats.failed}</div><div class="stat-label">Failed</div></div>
+  </div>
+
+  <div class="section">
+    <h2>SEO Score Distribution</h2>
+    <p style="font-size:13px;">Average Score: <strong>${avgSeoScore}/100</strong></p>
+    <p style="font-size:13px;color:#64748b;">${seoDist}</p>
+  </div>
+
+  <div class="section">
+    <h2>AI Generation Usage</h2>
+    <p style="font-size:13px;">${aiUsed} / ${aiLimit} generations used (${aiPercent}%) &mdash; Plan: ${aiUsage?.plan || "free"}</p>
+  </div>
+
+  <div class="section">
+    <h2>Campaign Performance</h2>
+    <table>
+      <thead><tr><th>Campaign</th><th>Processed</th><th>Total Rows</th></tr></thead>
+      <tbody>${campaignPerformance.map((c) => `<tr><td>${c.name}</td><td>${c.pages}</td><td>${c.total}</td></tr>`).join("")}</tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Page Details (Top 50)</h2>
+    <table>
+      <thead><tr><th>Title</th><th>Status</th><th>SEO Score</th><th>Created</th></tr></thead>
+      <tbody>${pages.slice(0, 50).map((p) => {
+        const pa = p as any;
+        const score = pa.seo_title || pa.seo_description
+          ? calculateSeoScore(pa.seo_title, pa.seo_description, pa.seo_keywords, p.title).score
+          : "—";
+        return `<tr><td>${p.title}</td><td>${p.status}</td><td>${score}</td><td>${new Date(p.created_at).toLocaleDateString()}</td></tr>`;
+      }).join("")}</tbody>
+    </table>
+  </div>
+
+  <div class="footer">Analytics Report &mdash; Generated automatically</div>
+</body></html>`;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 300);
+    }
+    toast({ title: "PDF report opened", description: "Use your browser's print dialog to save as PDF." });
+  }, [pages, stats, seoDistribution, campaignPerformance, avgSeoScore, aiUsed, aiLimit, aiPercent, aiUsage, toast]);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-display flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-primary" />
-          Campaign Analytics
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Track page generation, publishing performance, and SEO quality.
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-display flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-primary" />
+            Campaign Analytics
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Track page generation, publishing performance, and SEO quality.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportCSV} disabled={pages.length === 0}>
+            <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportPDF} disabled={pages.length === 0}>
+            <FileDown className="mr-1.5 h-3.5 w-3.5" /> PDF Report
+          </Button>
+        </div>
       </div>
 
       {/* Top stats */}
