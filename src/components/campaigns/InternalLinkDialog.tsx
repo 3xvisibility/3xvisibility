@@ -67,6 +67,34 @@ export function InternalLinkDialog({
     enabled: open,
   });
 
+  // Graph data: pages and links
+  const { data: graphPages = [] } = useQuery({
+    queryKey: ["graph-pages", campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("generated_pages")
+        .select("id, title")
+        .eq("campaign_id", campaignId)
+        .neq("status", "failed");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  const { data: graphLinks = [] } = useQuery({
+    queryKey: ["graph-links", campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("internal_links")
+        .select("source_page_id, target_page_id")
+        .eq("campaign_id", campaignId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open,
+  });
+
   useEffect(() => {
     if (existingSettings) {
       setEnabled(existingSettings.enabled);
