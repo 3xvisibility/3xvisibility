@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Eye, Trash2, ExternalLink, FileText } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -55,6 +55,29 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const publishMutation = useMutation({
+    mutationFn: async (pageIds: string[]) => {
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { page_ids: pageIds },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({
+        title: "Publishing complete",
+        description: `${data.published} published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const pendingPages = pages.filter((p) => p.status === "pending");
+
   const filtered = pages.filter(
     (p) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,14 +92,27 @@ export default function GeneratedPagesPage() {
           <h1 className="text-display">Generated Pages</h1>
           <p className="text-muted-foreground mt-1">Browse and manage all pages created by your campaigns.</p>
         </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search pages..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex gap-2 w-full sm:w-auto">
+          {pendingPages.length > 0 && (
+            <Button
+              size="sm"
+              className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:brightness-110 transition-all duration-200"
+              disabled={publishMutation.isPending}
+              onClick={() => publishMutation.mutate(pendingPages.map((p) => p.id))}
+            >
+              <Send className="h-3.5 w-3.5 mr-1.5" />
+              {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
+            </Button>
+          )}
+          <div className="relative flex-1 sm:w-64 sm:flex-none">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search pages..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
       </div>
 
@@ -149,6 +185,18 @@ export default function GeneratedPagesPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex gap-1">
+                        {page.status === "pending" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-primary"
+                            onClick={() => publishMutation.mutate([page.id])}
+                            disabled={publishMutation.isPending}
+                            title="Publish"
+                          >
+                            <Send className="h-3 w-3" />
+                          </Button>
+                        )}
                         <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                           <Eye className="h-3 w-3" />
                         </Button>

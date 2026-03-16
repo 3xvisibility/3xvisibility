@@ -2,3 +2,6 @@ project_id = "qmuxdkxdrxevlnckssuw"
 
 [functions.generate-pages]
 verify_jwt = false
+
+[functions.publish-pages]
+verify_jwt = false
