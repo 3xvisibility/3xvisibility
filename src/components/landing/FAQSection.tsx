@@ -5,6 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ScrollReveal } from "./ScrollReveal";
+import { HelpCircle } from "lucide-react";
 
 const faqs = [
   { q: "What types of websites can I connect?", a: "Currently we support WordPress (via REST API with Application Passwords) and Shopify (via Admin API). More integrations are coming soon." },
@@ -17,17 +18,22 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section id="faq" className="py-24 md:py-32 relative">
+    <section id="faq" className="py-28 md:py-36 relative">
       <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <ScrollReveal className="text-center max-w-2xl mx-auto mb-16">
-          <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4">
+        <ScrollReveal className="text-center max-w-3xl mx-auto mb-20">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-5 bg-primary/[0.06] rounded-full px-4 py-1.5">
+            <HelpCircle className="h-3 w-3" />
             FAQ
           </span>
-          <h2 className="text-3xl md:text-[2.5rem] font-bold tracking-tight leading-tight">
-            Frequently asked questions
+          <h2 className="text-3xl md:text-[2.75rem] lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
+            Frequently asked{" "}
+            <span className="text-gradient-primary">questions</span>
           </h2>
+          <p className="mt-6 text-muted-foreground text-lg leading-relaxed">
+            Everything you need to know about PageGen.
+          </p>
         </ScrollReveal>
 
         <ScrollReveal delay={0.15} className="max-w-2xl mx-auto">
@@ -36,12 +42,12 @@ export function FAQSection() {
               <AccordionItem
                 key={i}
                 value={`item-${i}`}
-                className="border border-border/40 rounded-2xl px-6 bg-background hover:border-primary/20 transition-colors duration-200 data-[state=open]:border-primary/25 data-[state=open]:shadow-card-hover"
+                className="border border-border/40 rounded-2xl px-7 bg-background hover:border-primary/20 transition-all duration-300 data-[state=open]:border-primary/25 data-[state=open]:shadow-card-hover"
               >
-                <AccordionTrigger className="text-sm font-medium text-left hover:no-underline py-5">
+                <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline py-5">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-5">
+                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-6">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
