@@ -400,6 +400,67 @@ export default function WebsiteDiscoveryPage() {
     [selectionPopover, toast]
   );
 
+  // Auto-create template from URL group
+  const handlePickRepresentativePage = useCallback(
+    (page: DiscoveredPage, group: UrlGroup) => {
+      setPickGroupDialog(null);
+
+      // Extract the varying segment value from this page's URL
+      try {
+        const parsed = new URL(page.url);
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        const slug = segments[segments.length - 1] || "";
+
+        // Auto-map: find the slug text in the page content and pre-assign it as {slug}
+        const initialMappings: VisualMapping[] = [];
+
+        if (slug) {
+          // Also try to find slug-like text in the title or headings
+          const slugText = slug.replace(/-/g, " ");
+          
+          // Map the slug in the title if present
+          if (page.title.toLowerCase().includes(slugText.toLowerCase())) {
+            // Find the actual cased version in the title
+            const idx = page.title.toLowerCase().indexOf(slugText.toLowerCase());
+            const actualText = page.title.substring(idx, idx + slugText.length);
+            initialMappings.push({
+              id: `auto-slug-title-${Date.now()}`,
+              original: actualText,
+              variable: "slug",
+              value: actualText,
+            });
+          }
+
+          // Map the raw slug (hyphenated) in URLs/content
+          if (page.bodyHtml.includes(slug)) {
+            initialMappings.push({
+              id: `auto-slug-url-${Date.now()}`,
+              original: slug,
+              variable: "slug",
+              value: slug,
+            });
+          }
+        }
+
+        setConvertingPage(page);
+        setVisualMappings(initialMappings);
+        setTemplateName(`${group.pattern.replace(/\{slug\}/g, "").replace(/\//g, " ").trim()} Template`);
+
+        toast({
+          title: "Template started",
+          description: initialMappings.length > 0
+            ? `Auto-mapped ${initialMappings.length} occurrence(s) of the varying URL segment as {slug}. Select more text to add variables.`
+            : "Select text in the preview to assign template variables.",
+        });
+      } catch {
+        setConvertingPage(page);
+        setVisualMappings([]);
+        setTemplateName(page.title);
+      }
+    },
+    [toast]
+  );
+
   const isCrawling = crawlUrlMutation.isPending || crawlConnectedMutation.isPending;
 
   // Filter pages
