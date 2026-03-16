@@ -1,6 +1,5 @@
-import { Upload, GitBranch, Globe, Zap, LayoutTemplate, BarChart3, Brain, Shield, Rocket } from "lucide-react";
+import { Upload, GitBranch, Globe, Zap, LayoutTemplate, BarChart3 } from "lucide-react";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
-import { motion } from "framer-motion";
 
 const features = [
   {
@@ -49,40 +48,36 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-28 md:py-36 relative">
+    <section id="features" className="py-20 md:py-24 relative">
       <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
-      {/* Decorative orbs */}
       <div className="absolute top-1/4 -left-[200px] w-[400px] h-[400px] rounded-full bg-primary/[0.03] blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-[200px] w-[400px] h-[400px] rounded-full bg-[hsl(var(--primary-glow)/.03)] blur-[100px] pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <ScrollReveal className="text-center max-w-3xl mx-auto mb-20">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-5 bg-primary/[0.06] rounded-full px-4 py-1.5">
+        <ScrollReveal className="text-center max-w-2xl mx-auto mb-14">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4 bg-primary/[0.06] rounded-full px-3.5 py-1">
             <Zap className="h-3 w-3" />
             Features
           </span>
-          <h2 className="text-3xl md:text-[2.75rem] lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.1]">
             Everything you need to{" "}
             <span className="text-gradient-primary">generate pages at scale</span>
           </h2>
-          <p className="mt-6 text-muted-foreground text-lg leading-relaxed max-w-xl mx-auto">
-            From CSV upload to live published pages — a complete pipeline in one powerful platform.
+          <p className="mt-4 text-muted-foreground text-base leading-relaxed max-w-lg mx-auto">
+            From CSV upload to live published pages — a complete pipeline in one platform.
           </p>
         </ScrollReveal>
 
-        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map((f) => (
             <StaggerItem key={f.title}>
-              <div className="group relative rounded-2xl border border-border/40 bg-background p-8 hover:border-primary/30 hover:shadow-card-hover transition-all duration-500 h-full overflow-hidden">
-                {/* Gradient hover effect */}
+              <div className="group relative rounded-2xl border border-border/40 bg-background/60 backdrop-blur-sm p-6 hover:border-primary/30 hover:shadow-card-hover transition-all duration-500 h-full overflow-hidden">
                 <div className={`absolute inset-0 bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                
                 <div className="relative z-10">
-                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/10 to-[hsl(var(--primary-glow)/.05)] border border-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-lg transition-all duration-500">
-                    <f.icon className={`h-5.5 w-5.5 ${f.iconColor}`} />
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/10 to-[hsl(var(--primary-glow)/.05)] border border-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-all duration-500">
+                    <f.icon className={`h-5 w-5 ${f.iconColor}`} />
                   </div>
-                  <h3 className="font-bold text-base mb-3">{f.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{f.description}</p>
+                  <h3 className="font-bold text-sm mb-2">{f.title}</h3>
+                  <p className="text-[13px] text-muted-foreground leading-relaxed">{f.description}</p>
                 </div>
               </div>
             </StaggerItem>
