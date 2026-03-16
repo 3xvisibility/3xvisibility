@@ -564,7 +564,8 @@ export default function GeneratedPagesPage() {
                 </Button>
               </div>
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
