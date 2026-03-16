@@ -70,6 +70,23 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("generated_pages").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
+      setSelectedIds(new Set());
+      toast({ title: "Pages deleted", description: `Deleted ${count} pages.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const publishMutation = useMutation({
     mutationFn: async (pageIds: string[]) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
@@ -233,6 +250,20 @@ export default function GeneratedPagesPage() {
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => {
+                  if (window.confirm(`Delete ${selectedIds.size} selected page${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`)) {
+                    bulkDeleteMutation.mutate([...selectedIds]);
+                  }
+                }}
+                disabled={bulkDeleteMutation.isPending}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
                 <X className="h-3.5 w-3.5 mr-1.5" /> Clear
