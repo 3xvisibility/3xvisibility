@@ -60,7 +60,15 @@ export function LandingNav() {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+            onClick={toggleDarkMode}
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
             <Link to="/auth">Log in</Link>
           </Button>
