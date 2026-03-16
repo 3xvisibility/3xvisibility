@@ -1,1 +1,4 @@
 project_id = "qmuxdkxdrxevlnckssuw"
+
+[functions.generate-pages]
+verify_jwt = false
