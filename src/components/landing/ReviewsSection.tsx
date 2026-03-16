@@ -1,4 +1,4 @@
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 
 const reviews = [
@@ -14,20 +14,21 @@ const reviews = [
 
 function ReviewCard({ review }: { review: typeof reviews[0] }) {
   return (
-    <div className="flex-shrink-0 w-[320px] md:w-[360px] rounded-xl border border-border/50 bg-background p-6 hover:border-primary/20 hover:shadow-card-hover transition-all duration-300">
-      <div className="flex items-center gap-1 mb-3">
+    <div className="flex-shrink-0 w-[320px] md:w-[360px] rounded-2xl border border-border/40 bg-background p-6 hover:border-primary/20 hover:shadow-card-hover transition-all duration-300 relative">
+      <Quote className="absolute top-5 right-5 h-8 w-8 text-primary/[0.06]" />
+      <div className="flex items-center gap-1 mb-4">
         {[...Array(review.rating)].map((_, i) => (
           <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
         ))}
       </div>
-      <p className="text-sm text-foreground leading-relaxed mb-4">"{review.text}"</p>
-      <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
+      <p className="text-sm text-foreground/90 leading-relaxed mb-5">"{review.text}"</p>
+      <div className="flex items-center gap-3 pt-4 border-t border-border/30">
+        <div className="h-9 w-9 rounded-full bg-primary/[0.08] flex items-center justify-center text-xs font-bold text-primary">
           {review.avatar}
         </div>
         <div>
-          <p className="text-sm font-semibold">{review.name}</p>
-          <p className="text-xs text-muted-foreground">{review.role}</p>
+          <p className="text-sm font-semibold leading-tight">{review.name}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{review.role}</p>
         </div>
       </div>
     </div>
@@ -38,28 +39,29 @@ export function ReviewsSection() {
   const allReviews = [...reviews, ...reviews];
 
   return (
-    <section id="reviews" className="py-20 md:py-28 relative overflow-hidden">
+    <section id="reviews" className="py-24 md:py-32 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
 
-      <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-12">
+      <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-14">
         <div className="text-center max-w-2xl mx-auto">
-          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">Reviews</span>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+          <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4">
+            Reviews
+          </span>
+          <h2 className="text-3xl md:text-[2.5rem] font-bold tracking-tight leading-tight">
             Loved by{" "}
             <span className="text-gradient-primary">2,000+ teams</span>
           </h2>
-          <p className="mt-4 text-muted-foreground text-base">
+          <p className="mt-5 text-muted-foreground text-base leading-relaxed">
             See what SEO professionals and agencies say about PageGen.
           </p>
         </div>
       </ScrollReveal>
 
-      {/* Scrolling row */}
       <ScrollReveal delay={0.2}>
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          <div className="flex gap-4 animate-scroll-left" style={{ width: "max-content" }}>
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+          <div className="flex gap-5 animate-scroll-left" style={{ width: "max-content" }}>
             {allReviews.map((review, i) => (
               <ReviewCard key={`row1-${i}`} review={review} />
             ))}
