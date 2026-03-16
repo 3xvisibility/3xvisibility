@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     q: "How does CSV processing work?",
-    a: "Upload any CSV file — the system auto-detects column headers. You then map each column to a template variable using our drag-and-drop interface. Each row becomes one generated page.",
+    a: "Upload any CSV file — the system auto-detects column headers. You then map each column to a template variable. Each row becomes one generated page.",
   },
   {
     q: "Can I preview pages before publishing?",
@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: "Can I use this for SEO landing pages?",
-    a: "Absolutely. PGP is built for SEO teams generating city pages, service pages, product pages, and location-based content at scale.",
+    a: "Absolutely. PageGen is built for SEO teams generating city pages, service pages, product pages, and location-based content at scale.",
   },
   {
     q: "Is there an API?",
@@ -34,22 +34,29 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section id="faq" className="py-16 md:py-24">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+    <section id="faq" className="py-20 md:py-28 relative">
+      <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
+
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">FAQ</span>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
             Frequently asked questions
           </h2>
         </div>
 
         <div className="max-w-2xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-2">
+          <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`item-${i}`} className="border rounded-lg px-4 shadow-surface">
-                <AccordionTrigger className="text-sm font-medium text-left hover:no-underline">
+              <AccordionItem
+                key={i}
+                value={`item-${i}`}
+                className="border border-border/50 rounded-xl px-5 bg-background hover:border-primary/20 transition-colors duration-200"
+              >
+                <AccordionTrigger className="text-sm font-medium text-left hover:no-underline py-4">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>

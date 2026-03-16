@@ -1,35 +1,51 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import heroImage from "@/assets/hero-dashboard.png";
 
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden py-16 md:py-24 lg:py-32">
-      <div className="container mx-auto px-4 lg:px-8">
+      {/* Gradient background orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -top-20 -left-40 w-[400px] h-[400px] rounded-full bg-[hsl(var(--primary-glow)/.07)] blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] rounded-full bg-primary/[0.02] blur-3xl" />
+      </div>
+
+      <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground mb-6">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-            Now with WordPress &amp; Shopify integration
+          {/* Social proof pill */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-8">
+            <div className="flex -space-x-1">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-3 w-3 fill-primary text-primary" />
+              ))}
+            </div>
+            Trusted by 2,000+ SEO teams worldwide
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1]">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05]">
             Deploy data-driven
             <br />
-            <span className="text-primary">content at scale</span>
+            <span className="text-gradient-primary">content at scale</span>
           </h1>
 
-          <p className="mt-4 md:mt-6 text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
+          <p className="mt-5 md:mt-6 text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
             Upload a CSV, map it to a template, and generate hundreds of SEO-optimized pages — published directly to WordPress or Shopify in minutes.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button size="lg" className="w-full sm:w-auto transition-all duration-150 hover:brightness-110 active:scale-[0.97]" asChild>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:brightness-110 transition-all duration-200 active:scale-[0.97] text-base px-8 h-12"
+              asChild
+            >
               <Link to="/auth">
                 Start generating pages <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto" asChild>
+            <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 text-base border-border/60" asChild>
               <a href="#how-it-works">See how it works</a>
             </Button>
           </div>
@@ -39,14 +55,31 @@ export function HeroSection() {
           </p>
         </div>
 
-        <div className="mt-12 md:mt-16 max-w-4xl mx-auto">
-          <div className="rounded-xl shadow-surface-hover overflow-hidden border">
+        {/* Hero image with glow */}
+        <div className="mt-14 md:mt-20 max-w-5xl mx-auto relative">
+          <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-[hsl(var(--primary-glow)/.15)] to-primary/20 rounded-2xl blur-2xl opacity-60" />
+          <div className="relative rounded-xl shadow-glow overflow-hidden border border-primary/10 bg-background">
+            <div className="h-8 bg-muted/80 flex items-center gap-1.5 px-4 border-b">
+              <div className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-yellow-400/60" />
+              <div className="h-2.5 w-2.5 rounded-full bg-success/60" />
+            </div>
             <img
               src={heroImage}
               alt="Page Generator Platform dashboard showing CSV to page workflow"
               className="w-full h-auto"
               loading="eager"
             />
+          </div>
+        </div>
+
+        {/* Logos strip */}
+        <div className="mt-14 md:mt-20 text-center">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground/60 font-medium mb-6">Trusted by teams at</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 opacity-40">
+            {["Shopify", "WordPress", "HubSpot", "Webflow", "Ahrefs"].map((name) => (
+              <span key={name} className="text-lg font-bold tracking-tight text-foreground">{name}</span>
+            ))}
           </div>
         </div>
       </div>
