@@ -12,15 +12,44 @@ interface WebsiteCredentials {
   admin_api_token?: string;
 }
 
+interface SeoData {
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_keywords?: string[] | null;
+}
+
 async function publishToWordPress(
   siteUrl: string,
   credentials: WebsiteCredentials,
   title: string,
   content: string,
-  slug: string
+  slug: string,
+  seo: SeoData
 ): Promise<{ external_id: string; external_url: string }> {
   const apiUrl = `${siteUrl.replace(/\/$/, "")}/wp-json/wp/v2/pages`;
   const auth = btoa(`${credentials.username}:${credentials.app_password}`);
+
+  // Build the page body with SEO meta injected via Yoast/RankMath compatible excerpt + meta
+  const pageBody: Record<string, any> = {
+    title,
+    content,
+    slug,
+    status: "publish",
+  };
+
+  // WordPress REST API supports excerpt which many SEO plugins use
+  if (seo.seo_description) {
+    pageBody.excerpt = seo.seo_description;
+  }
+
+  // Add Yoast SEO metadata if the plugin is active (fields are silently ignored if not)
+  if (seo.seo_title || seo.seo_description) {
+    pageBody.meta = {
+      ...(seo.seo_title ? { _yoast_wpseo_title: seo.seo_title } : {}),
+      ...(seo.seo_description ? { _yoast_wpseo_metadesc: seo.seo_description } : {}),
+      ...(seo.seo_keywords?.length ? { _yoast_wpseo_focuskw: seo.seo_keywords[0] } : {}),
+    };
+  }
 
   const response = await fetch(apiUrl, {
     method: "POST",
@@ -28,12 +57,7 @@ async function publishToWordPress(
       "Content-Type": "application/json",
       Authorization: `Basic ${auth}`,
     },
-    body: JSON.stringify({
-      title,
-      content,
-      slug,
-      status: "publish",
-    }),
+    body: JSON.stringify(pageBody),
   });
 
   if (!response.ok) {
@@ -52,11 +76,25 @@ async function publishToShopify(
   siteUrl: string,
   credentials: WebsiteCredentials,
   title: string,
-  content: string
+  content: string,
+  seo: SeoData
 ): Promise<{ external_id: string; external_url: string }> {
-  // Extract the Shopify domain (e.g. mystore.myshopify.com)
   const shopDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const apiUrl = `https://${shopDomain}/admin/api/2024-01/pages.json`;
+
+  // Shopify supports metafields_global_title_tag and metafields_global_description_tag
+  const pagePayload: Record<string, any> = {
+    title,
+    body_html: content,
+    published: true,
+  };
+
+  if (seo.seo_title) {
+    pagePayload.metafields_global_title_tag = seo.seo_title;
+  }
+  if (seo.seo_description) {
+    pagePayload.metafields_global_description_tag = seo.seo_description;
+  }
 
   const response = await fetch(apiUrl, {
     method: "POST",
@@ -64,13 +102,7 @@ async function publishToShopify(
       "Content-Type": "application/json",
       "X-Shopify-Access-Token": credentials.admin_api_token!,
     },
-    body: JSON.stringify({
-      page: {
-        title,
-        body_html: content,
-        published: true,
-      },
-    }),
+    body: JSON.stringify({ page: pagePayload }),
   });
 
   if (!response.ok) {
@@ -103,7 +135,6 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify user
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -123,7 +154,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch pages with their website info
     const { data: pages, error: pagesError } = await supabase
       .from("generated_pages")
       .select("*, websites(url, type, credentials)")
@@ -141,7 +171,6 @@ Deno.serve(async (req) => {
 
     for (const page of pages) {
       if (!page.websites) {
-        // Try to get website from campaign
         const { data: campaign } = await supabase
           .from("campaigns")
           .select("website_id")
@@ -157,7 +186,6 @@ Deno.serve(async (req) => {
 
           if (website) {
             page.websites = website;
-            // Update the page's website_id
             await supabase
               .from("generated_pages")
               .update({ website_id: campaign.website_id })
@@ -176,6 +204,11 @@ Deno.serve(async (req) => {
       }
 
       const website = page.websites as { url: string; type: string; credentials: WebsiteCredentials };
+      const seo: SeoData = {
+        seo_title: page.seo_title,
+        seo_description: page.seo_description,
+        seo_keywords: page.seo_keywords,
+      };
 
       try {
         let result: { external_id: string; external_url: string };
@@ -186,14 +219,16 @@ Deno.serve(async (req) => {
             website.credentials,
             page.title,
             page.content,
-            page.slug
+            page.slug,
+            seo
           );
         } else if (website.type === "shopify") {
           result = await publishToShopify(
             website.url,
             website.credentials,
             page.title,
-            page.content
+            page.content,
+            seo
           );
         } else {
           throw new Error(`Unsupported website type: ${website.type}`);
