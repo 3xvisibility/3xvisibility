@@ -110,6 +110,19 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function formatRelativeTime(d: string) {
+  const now = Date.now();
+  const diff = now - new Date(d).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(d);
+}
+
 function statusBadge(status: string) {
   const map: Record<string, string> = {
     completed: "bg-success/10 text-success border-success/20",
