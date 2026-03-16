@@ -120,6 +120,7 @@ export function InternalLinkDialog({
         section_title: sectionTitle,
         anchor_format: anchorFormat,
         grouping_variable: groupingVar || null,
+        auto_build: autoBuild,
         updated_at: new Date().toISOString(),
       };
 
