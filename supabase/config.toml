@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.generate-template]
 verify_jwt = false
+
+[functions.build-internal-links]
+verify_jwt = false
