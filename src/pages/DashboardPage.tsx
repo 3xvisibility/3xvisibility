@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { Rocket, FileText, Globe, TrendingUp } from "lucide-react";
+import { Rocket, FileText, Globe, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 
 const statusColors: Record<string, string> = {
@@ -54,7 +55,22 @@ export default function DashboardPage() {
     },
   });
 
+  // AI usage
+  const { data: aiUsage, isLoading: loadingAi } = useQuery({
+    queryKey: ["dashboard-ai-usage"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("subscriptions")
+        .select("ai_generations_used, ai_generations_limit, plan")
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const isLoading = loadingCampaigns || loadingPages || loadingWebsites;
+  const aiUsed = aiUsage?.ai_generations_used || 0;
+  const aiLimit = aiUsage?.ai_generations_limit || 50;
+  const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   const stats = [
     { label: "Total Campaigns", value: campaignCount, icon: Rocket },
@@ -83,6 +99,30 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
+
+        {/* AI Usage Card */}
+        <Card className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150 sm:col-span-2 lg:col-span-3">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground text-sm">AI Generations</span>
+              </div>
+              <Badge variant="outline" className="capitalize text-xs">{aiUsage?.plan || "free"}</Badge>
+            </div>
+            {loadingAi ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-2xl font-semibold tabular-nums tracking-tight">{aiUsed}</span>
+                  <span className="text-xs text-muted-foreground">/ {aiLimit} this month</span>
+                </div>
+                <Progress value={aiPercent} className="h-1.5" />
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div>
