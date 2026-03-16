@@ -251,6 +251,20 @@ export default function GeneratedPagesPage() {
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => {
+                  if (window.confirm(`Delete ${selectedIds.size} selected page${selectedIds.size !== 1 ? "s" : ""}? This cannot be undone.`)) {
+                    bulkDeleteMutation.mutate([...selectedIds]);
+                  }
+                }}
+                disabled={bulkDeleteMutation.isPending}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
+              </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
                 <X className="h-3.5 w-3.5 mr-1.5" /> Clear
               </Button>
