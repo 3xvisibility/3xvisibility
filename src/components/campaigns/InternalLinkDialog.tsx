@@ -33,6 +33,7 @@ export function InternalLinkDialog({
   const [sectionTitle, setSectionTitle] = useState("Related Pages");
   const [anchorFormat, setAnchorFormat] = useState("{title}");
   const [groupingVar, setGroupingVar] = useState<string>("");
+  const [autoBuild, setAutoBuild] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
