@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ import {
   Tag,
   Eye,
   FileText,
+  MousePointer,
+  List,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +57,69 @@ interface WpPage {
   link: string;
 }
 
+// Popover for assigning variable to selected text
+function SelectionPopover({
+  position,
+  selectedText,
+  onAssign,
+  onClose,
+}: {
+  position: { x: number; y: number };
+  selectedText: string;
+  onAssign: (varName: string) => void;
+  onClose: () => void;
+}) {
+  const [varName, setVarName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
+
+  return (
+    <div
+      className="fixed z-50 bg-popover border border-border rounded-lg shadow-lg p-3 space-y-2 w-64"
+      style={{ left: position.x, top: position.y }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted-foreground">Assign variable</p>
+        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onClose}>
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+      <p className="text-xs bg-muted rounded px-2 py-1 truncate font-mono">"{selectedText}"</p>
+      <div className="flex gap-1.5">
+        <Input
+          ref={inputRef}
+          placeholder="e.g., city"
+          value={varName}
+          onChange={(e) => setVarName(e.target.value)}
+          className="h-7 text-xs font-mono flex-1"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && varName.trim()) {
+              onAssign(varName.trim().toLowerCase().replace(/\s+/g, "_"));
+            }
+            if (e.key === "Escape") onClose();
+          }}
+        />
+        <Button
+          size="sm"
+          className="h-7 text-xs px-2"
+          onClick={() => {
+            if (varName.trim()) {
+              onAssign(varName.trim().toLowerCase().replace(/\s+/g, "_"));
+            }
+          }}
+          disabled={!varName.trim()}
+        >
+          <Tag className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function TemplateScannerPage() {
   const [url, setUrl] = useState("");
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
@@ -69,7 +134,13 @@ export default function TemplateScannerPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [wpPages, setWpPages] = useState<WpPage[]>([]);
+  const [viewMode, setViewMode] = useState<"visual" | "blocks">("visual");
+  const [selectionPopover, setSelectionPopover] = useState<{
+    position: { x: number; y: number };
+    text: string;
+  } | null>(null);
 
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -150,7 +221,6 @@ export default function TemplateScannerPage() {
       const acceptedMappings = mappings.filter((m) => m.accepted);
       let templateContent = bodyHtml;
 
-      // Apply variable replacements to the HTML
       for (const mapping of acceptedMappings) {
         const escapedValue = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const regex = new RegExp(escapedValue, "gi");
@@ -171,7 +241,6 @@ export default function TemplateScannerPage() {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template saved", description: `"${templateName}" is ready to use in campaigns.` });
       setSaveDialogOpen(false);
-      // Reset
       setUrl("");
       setBlocks([]);
       setBodyHtml("");
@@ -203,7 +272,6 @@ export default function TemplateScannerPage() {
   const addManualMapping = useCallback(
     (block: ContentBlock) => {
       if (!manualVarName.trim()) return;
-      // Get selected text or use full block text
       const value = block.text;
       setMappings((prev) => [
         ...prev,
@@ -228,13 +296,110 @@ export default function TemplateScannerPage() {
   const acceptedMappings = mappings.filter((m) => m.accepted);
   const uniqueVars = [...new Set(acceptedMappings.map((m) => m.variable))];
 
-  // Generate preview content
+  // Build visual editor HTML with highlights and selection handling
+  const getVisualEditorHtml = useCallback(() => {
+    let content = bodyHtml;
+
+    // Highlight already-mapped values
+    for (const mapping of acceptedMappings) {
+      const escapedValue = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedValue, "gi");
+      content = content.replace(
+        regex,
+        `<span data-var="${mapping.variable}" style="background:hsl(221 83% 53% / 0.15);color:hsl(221 83% 53%);padding:1px 4px;border-radius:4px;font-weight:600;cursor:pointer;" title="Variable: {${mapping.variable}}">{${mapping.variable}}</span>`
+      );
+    }
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: system-ui, sans-serif; padding: 16px; margin: 0; font-size: 14px; line-height: 1.6; color: #1a1a2e; }
+  ::selection { background: hsl(221 83% 53% / 0.3); }
+  * { max-width: 100%; box-sizing: border-box; }
+  img { height: auto; }
+  [data-var]:hover { outline: 2px solid hsl(221 83% 53%); outline-offset: 2px; border-radius: 4px; }
+</style>
+</head>
+<body>${content}</body>
+<script>
+  document.addEventListener('mouseup', function(e) {
+    const sel = window.getSelection();
+    const text = sel ? sel.toString().trim() : '';
+    if (text && text.length > 0 && text.length < 200) {
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      window.parent.postMessage({
+        type: 'text-selected',
+        text: text,
+        x: rect.left + rect.width / 2,
+        y: rect.bottom + 8,
+      }, '*');
+    }
+  });
+  document.addEventListener('mousedown', function() {
+    window.parent.postMessage({ type: 'selection-cleared' }, '*');
+  });
+</script>
+</html>`;
+  }, [bodyHtml, acceptedMappings]);
+
+  // Listen for messages from the iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "text-selected") {
+        const iframe = iframeRef.current;
+        if (!iframe) return;
+        const iframeRect = iframe.getBoundingClientRect();
+        setSelectionPopover({
+          text: e.data.text,
+          position: {
+            x: Math.min(iframeRect.left + e.data.x, window.innerWidth - 280),
+            y: Math.min(iframeRect.top + e.data.y, window.innerHeight - 120),
+          },
+        });
+      }
+      if (e.data?.type === "selection-cleared") {
+        // Don't clear if popover is open (user might be typing)
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  // Add mapping from visual selection
+  const handleVisualAssign = useCallback(
+    (varName: string) => {
+      if (!selectionPopover) return;
+      const id = `visual-${Date.now()}`;
+      setMappings((prev) => [
+        ...prev,
+        {
+          blockId: id,
+          original: selectionPopover.text,
+          variable: varName,
+          value: selectionPopover.text,
+          accepted: true,
+        },
+      ]);
+      setSelectionPopover(null);
+      toast({
+        title: "Variable assigned",
+        description: `"${selectionPopover.text}" → {${varName}}`,
+      });
+    },
+    [selectionPopover, toast]
+  );
+
   const getPreviewContent = () => {
     let content = bodyHtml;
     for (const mapping of acceptedMappings) {
       const escapedValue = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(escapedValue, "gi");
-      content = content.replace(regex, `<mark class="bg-primary/20 text-primary px-1 rounded font-semibold">{${mapping.variable}}</mark>`);
+      content = content.replace(
+        regex,
+        `<mark class="bg-primary/20 text-primary px-1 rounded font-semibold">{${mapping.variable}}</mark>`
+      );
     }
     return content;
   };
@@ -266,9 +431,7 @@ export default function TemplateScannerPage() {
             </TabsList>
 
             <TabsContent value="url" className="space-y-2">
-              <Label htmlFor="scan-url" className="text-sm font-medium">
-                Webpage URL
-              </Label>
+              <Label htmlFor="scan-url" className="text-sm font-medium">Webpage URL</Label>
               <p className="text-xs text-muted-foreground">
                 Enter any public URL to scan and convert into a template.
               </p>
@@ -289,13 +452,9 @@ export default function TemplateScannerPage() {
                   className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
                 >
                   {scanMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...
-                    </>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...</>
                   ) : (
-                    <>
-                      <ScanSearch className="mr-2 h-4 w-4" /> Scan Page
-                    </>
+                    <><ScanSearch className="mr-2 h-4 w-4" /> Scan Page</>
                   )}
                 </Button>
               </div>
@@ -323,21 +482,17 @@ export default function TemplateScannerPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {wpWebsites.map((w) => (
-                          <SelectItem key={w.id} value={w.id}>
-                            {w.name}
-                          </SelectItem>
+                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-
                   {wpPagesMutation.isPending && (
                     <div className="space-y-2">
                       <Skeleton className="h-8 w-full" />
                       <Skeleton className="h-8 w-full" />
                     </div>
                   )}
-
                   {wpPages.length > 0 && (
                     <div className="space-y-1.5 max-h-60 overflow-y-auto border border-border rounded-lg p-2">
                       {wpPages.map((page) => (
@@ -359,7 +514,6 @@ export default function TemplateScannerPage() {
                       ))}
                     </div>
                   )}
-
                   {wpPagesMutation.isSuccess && wpPages.length === 0 && (
                     <p className="text-sm text-muted-foreground">No published pages found on this site.</p>
                   )}
@@ -385,7 +539,7 @@ export default function TemplateScannerPage() {
       {/* Results */}
       {blocks.length > 0 && !scanMutation.isPending && (
         <>
-          {/* Variable Suggestions Summary */}
+          {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="shadow-surface">
               <CardContent className="p-4 flex items-center gap-3">
@@ -422,7 +576,7 @@ export default function TemplateScannerPage() {
             </Card>
           </div>
 
-          {/* Accepted Variables Chips */}
+          {/* Variables chips */}
           {uniqueVars.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-sm text-muted-foreground">Variables:</span>
@@ -434,167 +588,222 @@ export default function TemplateScannerPage() {
             </div>
           )}
 
-          {/* Content Blocks with Variable Mapping */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Content Blocks</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
-                  <Eye className="mr-1.5 h-3.5 w-3.5" /> Preview Template
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => setSaveDialogOpen(true)}
-                  disabled={acceptedMappings.length === 0}
-                  className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
-                >
-                  <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Template
-                </Button>
-              </div>
+          {/* View mode tabs + actions */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <Button
+                variant={viewMode === "visual" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setViewMode("visual")}
+              >
+                <MousePointer className="mr-1.5 h-3.5 w-3.5" /> Visual Editor
+              </Button>
+              <Button
+                variant={viewMode === "blocks" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setViewMode("blocks")}
+              >
+                <List className="mr-1.5 h-3.5 w-3.5" /> Block List
+              </Button>
             </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+                <Eye className="mr-1.5 h-3.5 w-3.5" /> Preview
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setSaveDialogOpen(true)}
+                disabled={acceptedMappings.length === 0}
+                className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+              >
+                <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Template
+              </Button>
+            </div>
+          </div>
 
-            {blocks.slice(0, 50).map((block) => {
-              const blockMappings = mappings.filter((m) => m.blockId === block.id);
-              const isSelected = selectedBlockId === block.id;
+          {/* Visual Editor Mode */}
+          {viewMode === "visual" && (
+            <div className="space-y-4">
+              <Card className="shadow-surface overflow-hidden">
+                <div className="bg-muted/50 border-b border-border px-4 py-2 flex items-center gap-2">
+                  <MousePointer className="h-3.5 w-3.5 text-primary" />
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">Select text</span> in the preview below to assign it as a variable.
+                    Already-mapped values are highlighted in blue.
+                  </p>
+                </div>
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={getVisualEditorHtml()}
+                  className="w-full border-0"
+                  style={{ height: "500px" }}
+                  sandbox="allow-scripts allow-same-origin"
+                  title="Visual template editor"
+                />
+              </Card>
 
-              return (
-                <Card
-                  key={block.id}
-                  className={`shadow-surface transition-all duration-150 cursor-pointer ${
-                    isSelected ? "ring-2 ring-primary" : "hover:shadow-surface-hover"
-                  }`}
-                  onClick={() => setSelectedBlockId(isSelected ? null : block.id)}
-                >
+              {/* Mapped variables list */}
+              {acceptedMappings.length > 0 && (
+                <Card className="shadow-surface">
                   <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="text-xs font-mono shrink-0">
-                            {`<${block.tag}>`}
-                          </Badge>
-                          {blockMappings.length > 0 && (
-                            <Badge variant="secondary" className="text-xs bg-success/10 text-success">
-                              {blockMappings.filter((m) => m.accepted).length} variable
-                              {blockMappings.filter((m) => m.accepted).length !== 1 ? "s" : ""}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm leading-relaxed break-words">{block.text}</p>
-                      </div>
-                    </div>
-
-                    {/* Variable suggestions for this block */}
-                    {blockMappings.length > 0 && (
-                      <div className="mt-3 space-y-2 border-t border-border pt-3">
-                        {blockMappings.map((mapping) => (
-                          <div
-                            key={`${mapping.blockId}-${mapping.variable}`}
-                            className="flex items-center gap-2 text-xs"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className={`h-6 w-6 shrink-0 ${
-                                mapping.accepted
-                                  ? "text-success hover:text-success"
-                                  : "text-muted-foreground"
-                              }`}
-                              onClick={() => toggleMapping(mapping.blockId, mapping.variable)}
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </Button>
-
-                            <span className="text-muted-foreground truncate max-w-[120px]">
-                              "{mapping.value}"
-                            </span>
-                            <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-
-                            {editingVar === `${mapping.blockId}-${mapping.variable}` ? (
-                              <div className="flex items-center gap-1">
-                                <Input
-                                  value={editValue}
-                                  onChange={(e) => setEditValue(e.target.value)}
-                                  className="h-6 text-xs w-28 font-mono"
-                                  autoFocus
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                      renameVariable(mapping.blockId, mapping.variable, editValue);
-                                    }
-                                    if (e.key === "Escape") setEditingVar(null);
-                                  }}
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() =>
-                                    renameVariable(mapping.blockId, mapping.variable, editValue)
-                                  }
-                                >
-                                  <Check className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className={`font-mono cursor-pointer ${
-                                  mapping.accepted ? "border-primary text-primary" : "opacity-50"
-                                }`}
-                                onClick={() => {
-                                  setEditingVar(`${mapping.blockId}-${mapping.variable}`);
-                                  setEditValue(mapping.variable);
-                                }}
-                              >
-                                {`{${mapping.variable}}`}
-                                <Pencil className="ml-1 h-2.5 w-2.5" />
-                              </Badge>
-                            )}
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-destructive shrink-0 ml-auto"
-                              onClick={() => removeMapping(mapping.blockId, mapping.variable)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Manual variable assignment */}
-                    {isSelected && (
-                      <div
-                        className="mt-3 border-t border-border pt-3 flex gap-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Input
-                          placeholder="Variable name (e.g., city)"
-                          value={manualVarName}
-                          onChange={(e) => setManualVarName(e.target.value)}
-                          className="h-8 text-xs font-mono flex-1"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") addManualMapping(block);
-                          }}
-                        />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 text-xs"
-                          onClick={() => addManualMapping(block)}
-                          disabled={!manualVarName.trim()}
+                    <h3 className="text-sm font-semibold mb-3">Mapped Variables</h3>
+                    <div className="space-y-2">
+                      {acceptedMappings.map((mapping, i) => (
+                        <div
+                          key={`${mapping.variable}-${i}`}
+                          className="flex items-center gap-2 text-xs"
                         >
-                          <Tag className="mr-1 h-3 w-3" /> Assign
-                        </Button>
-                      </div>
-                    )}
+                          <Badge variant="outline" className="font-mono border-primary text-primary shrink-0">
+                            {`{${mapping.variable}}`}
+                          </Badge>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                          <span className="text-muted-foreground truncate">
+                            "{mapping.value}"
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive shrink-0 ml-auto"
+                            onClick={() => removeMapping(mapping.blockId, mapping.variable)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          )}
+
+          {/* Block List Mode */}
+          {viewMode === "blocks" && (
+            <div className="space-y-3">
+              {blocks.slice(0, 50).map((block) => {
+                const blockMappings = mappings.filter((m) => m.blockId === block.id);
+                const isSelected = selectedBlockId === block.id;
+
+                return (
+                  <Card
+                    key={block.id}
+                    className={`shadow-surface transition-all duration-150 cursor-pointer ${
+                      isSelected ? "ring-2 ring-primary" : "hover:shadow-surface-hover"
+                    }`}
+                    onClick={() => setSelectedBlockId(isSelected ? null : block.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-xs font-mono shrink-0">
+                              {`<${block.tag}>`}
+                            </Badge>
+                            {blockMappings.length > 0 && (
+                              <Badge variant="secondary" className="text-xs bg-success/10 text-success">
+                                {blockMappings.filter((m) => m.accepted).length} variable
+                                {blockMappings.filter((m) => m.accepted).length !== 1 ? "s" : ""}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm leading-relaxed break-words">{block.text}</p>
+                        </div>
+                      </div>
+
+                      {blockMappings.length > 0 && (
+                        <div className="mt-3 space-y-2 border-t border-border pt-3">
+                          {blockMappings.map((mapping) => (
+                            <div
+                              key={`${mapping.blockId}-${mapping.variable}`}
+                              className="flex items-center gap-2 text-xs"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-6 w-6 shrink-0 ${
+                                  mapping.accepted ? "text-success hover:text-success" : "text-muted-foreground"
+                                }`}
+                                onClick={() => toggleMapping(mapping.blockId, mapping.variable)}
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </Button>
+                              <span className="text-muted-foreground truncate max-w-[120px]">
+                                "{mapping.value}"
+                              </span>
+                              <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                              {editingVar === `${mapping.blockId}-${mapping.variable}` ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    className="h-6 text-xs w-28 font-mono"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") renameVariable(mapping.blockId, mapping.variable, editValue);
+                                      if (e.key === "Escape") setEditingVar(null);
+                                    }}
+                                  />
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => renameVariable(mapping.blockId, mapping.variable, editValue)}>
+                                    <Check className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className={`font-mono cursor-pointer ${mapping.accepted ? "border-primary text-primary" : "opacity-50"}`}
+                                  onClick={() => {
+                                    setEditingVar(`${mapping.blockId}-${mapping.variable}`);
+                                    setEditValue(mapping.variable);
+                                  }}
+                                >
+                                  {`{${mapping.variable}}`}
+                                  <Pencil className="ml-1 h-2.5 w-2.5" />
+                                </Badge>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-destructive shrink-0 ml-auto"
+                                onClick={() => removeMapping(mapping.blockId, mapping.variable)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {isSelected && (
+                        <div className="mt-3 border-t border-border pt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Input
+                            placeholder="Variable name (e.g., city)"
+                            value={manualVarName}
+                            onChange={(e) => setManualVarName(e.target.value)}
+                            className="h-8 text-xs font-mono flex-1"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") addManualMapping(block);
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs"
+                            onClick={() => addManualMapping(block)}
+                            disabled={!manualVarName.trim()}
+                          >
+                            <Tag className="mr-1 h-3 w-3" /> Assign
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
 
           {/* Template Preview Dialog */}
           <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
@@ -638,9 +847,7 @@ export default function TemplateScannerPage() {
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
-                    Cancel
-                  </Button>
+                  <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
                   <Button
                     onClick={() => saveMutation.mutate()}
                     disabled={!templateName || saveMutation.isPending}
@@ -665,6 +872,16 @@ export default function TemplateScannerPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Selection Popover */}
+      {selectionPopover && (
+        <SelectionPopover
+          position={selectionPopover.position}
+          selectedText={selectionPopover.text}
+          onAssign={handleVisualAssign}
+          onClose={() => setSelectionPopover(null)}
+        />
       )}
     </div>
   );
