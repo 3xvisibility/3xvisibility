@@ -105,6 +105,26 @@ export default function CampaignsPage() {
     },
   });
 
+  const executeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("generate-pages", {
+        body: { campaign_id: id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
+      toast({ title: "Pages generated", description: `${data.generated} pages created successfully.` });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -242,9 +262,12 @@ export default function CampaignsPage() {
                     <td className="p-4">
                       <div className="flex gap-1">
                         {c.status === "draft" && (
-                          <Button size="sm" variant="ghost" className="text-primary">
-                            <Play className="h-3 w-3 mr-1" /> Execute
+                          <Button size="sm" variant="ghost" className="text-primary" disabled={executeMutation.isPending} onClick={() => executeMutation.mutate(c.id)}>
+                            <Play className="h-3 w-3 mr-1" /> {executeMutation.isPending ? "Generating..." : "Execute"}
                           </Button>
+                        )}
+                        {c.status === "processing" && (
+                          <span className="text-xs text-muted-foreground animate-pulse">Processing...</span>
                         )}
                         {c.status === "completed" && (
                           <Button size="sm" variant="ghost" className="text-muted-foreground">
