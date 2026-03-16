@@ -171,6 +171,8 @@ export default function WebsiteDiscoveryPage() {
 
   // URL group template creation
   const [pickGroupDialog, setPickGroupDialog] = useState<UrlGroup | null>(null);
+  // Comparison view
+  const [compareGroup, setCompareGroup] = useState<UrlGroup | null>(null);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
