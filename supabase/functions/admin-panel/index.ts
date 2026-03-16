@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify caller is admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -28,10 +27,7 @@ Deno.serve(async (req) => {
     const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const {
-      data: { user },
-      error: authError,
-    } = await anonClient.auth.getUser();
+    const { data: { user }, error: authError } = await anonClient.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -39,7 +35,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check admin role
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
     const { data: roleData } = await serviceClient
       .from("user_roles")
@@ -55,10 +50,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
     if (action === "get-stats") {
-      // Fetch all users from auth
       const { data: authUsers, error: usersError } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
       if (usersError) throw usersError;
 
@@ -68,7 +63,6 @@ Deno.serve(async (req) => {
       const { data: subscriptions } = await serviceClient.from("subscriptions").select("*");
       const { data: websites } = await serviceClient.from("websites").select("id, user_id, type, status");
 
-      // Merge auth users with profiles
       const users = (authUsers?.users || []).map((u: any) => {
         const profile = profiles?.find((p: any) => p.user_id === u.id);
         const sub = subscriptions?.find((s: any) => s.user_id === u.id);
@@ -88,13 +82,13 @@ Deno.serve(async (req) => {
           plan: sub?.plan || "free",
           pages_used: sub?.pages_used || 0,
           pages_limit: sub?.pages_limit || 0,
+          subscription_id: sub?.id || null,
           campaigns_count: userCampaigns.length,
           pages_count: userPages.length,
           websites_count: userWebsites.length,
         };
       });
 
-      // Overview stats
       const totalPages = generatedPages?.length || 0;
       const publishedPages = generatedPages?.filter((p: any) => p.status === "published").length || 0;
       const failedPages = generatedPages?.filter((p: any) => p.status === "failed").length || 0;
@@ -122,8 +116,36 @@ Deno.serve(async (req) => {
     }
 
     if (action === "update-subscription") {
-      const { subscription_id, updates } = await req.json().catch(() => ({}));
-      // Already parsed above, re-parse body won't work. Let's handle differently.
+      const { subscription_id, user_id, plan, pages_limit, pages_used } = body;
+
+      if (subscription_id) {
+        // Update existing subscription
+        const updates: Record<string, any> = {};
+        if (plan !== undefined) updates.plan = plan;
+        if (pages_limit !== undefined) updates.pages_limit = pages_limit;
+        if (pages_used !== undefined) updates.pages_used = pages_used;
+        updates.updated_at = new Date().toISOString();
+
+        const { error } = await serviceClient
+          .from("subscriptions")
+          .update(updates)
+          .eq("id", subscription_id);
+
+        if (error) throw error;
+      } else if (user_id) {
+        // Create new subscription for user
+        const { error } = await serviceClient.from("subscriptions").insert({
+          user_id,
+          plan: plan || "starter",
+          pages_limit: pages_limit ?? 100,
+          pages_used: pages_used ?? 0,
+        });
+        if (error) throw error;
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {
