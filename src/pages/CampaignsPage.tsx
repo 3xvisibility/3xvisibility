@@ -207,6 +207,50 @@ export default function CampaignsPage() {
                 <Label htmlFor="name">Campaign Name</Label>
                 <Input id="name" placeholder="e.g., Python Training Cities" value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
               </div>
+              {/* Variable Mapping Preview */}
+              {variableMapping && (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold">Variable Mapping</h4>
+                    {variableMapping.matched.every((m) => m.column) ? (
+                      <Badge variant="secondary" className="bg-success/10 text-success text-xs">
+                        <Check className="h-3 w-3 mr-1" /> All matched
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-destructive/10 text-destructive text-xs">
+                        <AlertTriangle className="h-3 w-3 mr-1" /> Unmatched variables
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    {variableMapping.matched.map(({ variable, column }) => (
+                      <div key={variable} className="flex items-center gap-2 text-xs">
+                        <Badge variant="outline" className="font-mono shrink-0">{`{${variable}}`}</Badge>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                        {column ? (
+                          <Badge variant="secondary" className="bg-success/10 text-success font-mono">
+                            <Check className="h-3 w-3 mr-1" /> {column}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-destructive/10 text-destructive font-mono">
+                            <X className="h-3 w-3 mr-1" /> No match
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {variableMapping.unmatchedColumns.length > 0 && (
+                    <div className="pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-1.5">Extra CSV columns (unused):</p>
+                      <div className="flex flex-wrap gap-1">
+                        {variableMapping.unmatchedColumns.map((c) => (
+                          <Badge key={c} variant="outline" className="text-xs font-mono text-muted-foreground">{c}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <Label>Template</Label>
                 <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
