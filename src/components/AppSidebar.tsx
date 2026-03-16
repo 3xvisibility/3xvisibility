@@ -8,7 +8,8 @@ import {
   Settings,
   ChevronLeft,
   LogOut,
-  ScanSearch
+  ScanSearch,
+  Compass
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -32,6 +33,7 @@ const mainNav = [
   { title: "Generated Pages", url: "/pages", icon: Layers },
   { title: "Templates", url: "/templates", icon: FileText },
   { title: "AI Scanner", url: "/scanner", icon: ScanSearch },
+  { title: "Discovery", url: "/discovery", icon: Compass },
   { title: "Websites", url: "/websites", icon: Globe },
 ];
 

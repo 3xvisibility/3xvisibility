@@ -19,6 +19,7 @@ import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
 import GeneratedPagesPage from "./pages/GeneratedPagesPage";
 import TemplateScannerPage from "./pages/TemplateScannerPage";
+import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -111,6 +112,14 @@ const App = () => {
               element={
                 <ProtectedRoute session={session}>
                   <DashboardLayout onLogout={handleLogout}><TemplateScannerPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/discovery"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><WebsiteDiscoveryPage /></DashboardLayout>
                 </ProtectedRoute>
               }
             />
