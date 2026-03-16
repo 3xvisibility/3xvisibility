@@ -7,7 +7,8 @@ import {
   CreditCard, 
   Settings,
   ChevronLeft,
-  LogOut
+  LogOut,
+  ScanSearch
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
