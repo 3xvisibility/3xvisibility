@@ -1,12 +1,14 @@
 import { useState, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ScanSearch,
   Globe,
@@ -19,6 +21,7 @@ import {
   Loader2,
   Tag,
   Eye,
+  FileText,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +48,13 @@ interface VariableMapping {
   accepted: boolean;
 }
 
+interface WpPage {
+  id: number;
+  title: string;
+  slug: string;
+  link: string;
+}
+
 export default function TemplateScannerPage() {
   const [url, setUrl] = useState("");
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
@@ -57,6 +67,8 @@ export default function TemplateScannerPage() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [manualVarName, setManualVarName] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedWebsite, setSelectedWebsite] = useState("");
+  const [wpPages, setWpPages] = useState<WpPage[]>([]);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
