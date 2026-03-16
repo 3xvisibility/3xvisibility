@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { TemplatePreview } from "@/components/templates/TemplatePreview";
 
 type Template = Tables<"templates">;
 
@@ -21,6 +23,7 @@ export default function TemplatesPage() {
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -120,7 +123,7 @@ export default function TemplatesPage() {
                 <Sparkles className="mr-2 h-4 w-4" /> AI Builder
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
@@ -157,7 +160,7 @@ export default function TemplatesPage() {
                   )}
                 </Button>
 
-                {/* Show generated result for review */}
+                {/* Show generated result with code/preview tabs */}
                 {content && (
                   <div className="space-y-4 pt-2 border-t border-border">
                     <div>
@@ -168,15 +171,29 @@ export default function TemplatesPage() {
                         onChange={(e) => setName(e.target.value)}
                       />
                     </div>
-                    <div>
-                      <Label>Generated Template</Label>
-                      <Textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        rows={12}
-                        className="font-mono text-xs"
-                      />
-                    </div>
+
+                    <Tabs defaultValue="code" className="w-full">
+                      <TabsList className="w-full grid grid-cols-2">
+                        <TabsTrigger value="code" className="flex items-center gap-1.5">
+                          <Code className="h-3.5 w-3.5" /> Code
+                        </TabsTrigger>
+                        <TabsTrigger value="preview" className="flex items-center gap-1.5">
+                          <Eye className="h-3.5 w-3.5" /> Preview
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="code" className="mt-3">
+                        <Textarea
+                          value={content}
+                          onChange={(e) => setContent(e.target.value)}
+                          rows={14}
+                          className="font-mono text-xs"
+                        />
+                      </TabsContent>
+                      <TabsContent value="preview" className="mt-3">
+                        <TemplatePreview html={content} />
+                      </TabsContent>
+                    </Tabs>
+
                     {detectedVars.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         <span className="text-xs text-muted-foreground">Detected variables:</span>
@@ -209,7 +226,7 @@ export default function TemplatesPage() {
                 <Plus className="mr-2 h-4 w-4" /> New Template
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create Template</DialogTitle>
               </DialogHeader>
@@ -218,18 +235,36 @@ export default function TemplatesPage() {
                   <Label htmlFor="tpl-name">Template Name</Label>
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
-                <div>
-                  <Label htmlFor="tpl-content">Template Content</Label>
-                  <p className="text-xs text-muted-foreground mb-1">Use &#123;variable&#125; syntax for dynamic fields.</p>
-                  <Textarea
-                    id="tpl-content"
-                    placeholder={"<h1>{course} in {city}</h1>\n<p>Learn {course} in {city}...</p>"}
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    rows={8}
-                    className="font-mono text-xs"
-                  />
-                </div>
+                <Tabs defaultValue="code" className="w-full">
+                  <TabsList className="w-full grid grid-cols-2">
+                    <TabsTrigger value="code" className="flex items-center gap-1.5">
+                      <Code className="h-3.5 w-3.5" /> Code
+                    </TabsTrigger>
+                    <TabsTrigger value="preview" className="flex items-center gap-1.5">
+                      <Eye className="h-3.5 w-3.5" /> Preview
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="code" className="mt-3">
+                    <p className="text-xs text-muted-foreground mb-1">Use &#123;variable&#125; syntax for dynamic fields.</p>
+                    <Textarea
+                      id="tpl-content"
+                      placeholder={"<h1>{course} in {city}</h1>\n<p>Learn {course} in {city}...</p>"}
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      rows={10}
+                      className="font-mono text-xs"
+                    />
+                  </TabsContent>
+                  <TabsContent value="preview" className="mt-3">
+                    {content ? (
+                      <TemplatePreview html={content} />
+                    ) : (
+                      <div className="flex items-center justify-center h-32 border border-dashed border-border rounded-md text-muted-foreground text-sm">
+                        Start typing in the Code tab to see a preview
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
                 {detectedVars.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     <span className="text-xs text-muted-foreground">Detected variables:</span>
@@ -269,6 +304,15 @@ export default function TemplatesPage() {
                     <h3 className="font-semibold">{tpl.name}</h3>
                   </div>
                   <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setPreviewTemplateId(previewTemplateId === tpl.id ? null : tpl.id)}
+                      title="Toggle preview"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                       navigator.clipboard.writeText(tpl.content);
                       toast({ title: "Copied to clipboard" });
@@ -285,9 +329,15 @@ export default function TemplatesPage() {
                     <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
                   ))}
                 </div>
-                <pre className="mt-3 p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed">
-                  {tpl.content}
-                </pre>
+                {previewTemplateId === tpl.id ? (
+                  <div className="mt-3">
+                    <TemplatePreview html={tpl.content} />
+                  </div>
+                ) : (
+                  <pre className="mt-3 p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-40 overflow-y-auto">
+                    {tpl.content}
+                  </pre>
+                )}
               </CardContent>
             </Card>
           ))}
