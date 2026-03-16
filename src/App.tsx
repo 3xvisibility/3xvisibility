@@ -18,6 +18,7 @@ import WebsitesPage from "./pages/WebsitesPage";
 import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
 import GeneratedPagesPage from "./pages/GeneratedPagesPage";
+import TemplateScannerPage from "./pages/TemplateScannerPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
