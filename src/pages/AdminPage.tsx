@@ -343,7 +343,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="activity">
         <TabsList>
           <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
