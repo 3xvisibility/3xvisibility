@@ -143,6 +143,102 @@ export type Database = {
           },
         ]
       }
+      internal_link_settings: {
+        Row: {
+          anchor_format: string
+          campaign_id: string
+          created_at: string
+          enabled: boolean
+          grouping_variable: string | null
+          id: string
+          max_links_per_page: number
+          section_title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anchor_format?: string
+          campaign_id: string
+          created_at?: string
+          enabled?: boolean
+          grouping_variable?: string | null
+          id?: string
+          max_links_per_page?: number
+          section_title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anchor_format?: string
+          campaign_id?: string
+          created_at?: string
+          enabled?: boolean
+          grouping_variable?: string | null
+          id?: string
+          max_links_per_page?: number
+          section_title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_link_settings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_links: {
+        Row: {
+          anchor_text: string
+          campaign_id: string
+          created_at: string
+          id: string
+          source_page_id: string
+          target_page_id: string
+        }
+        Insert: {
+          anchor_text: string
+          campaign_id: string
+          created_at?: string
+          id?: string
+          source_page_id: string
+          target_page_id: string
+        }
+        Update: {
+          anchor_text?: string
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          source_page_id?: string
+          target_page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_links_source_page_id_fkey"
+            columns: ["source_page_id"]
+            isOneToOne: false
+            referencedRelation: "generated_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_links_target_page_id_fkey"
+            columns: ["target_page_id"]
+            isOneToOne: false
+            referencedRelation: "generated_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ai_content_length: string
