@@ -684,14 +684,25 @@ export default function WebsiteDiscoveryPage() {
                           )}
                         </div>
                       </ScrollArea>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full mt-1"
-                        onClick={() => setPickGroupDialog(group)}
-                      >
-                        <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Create Template
-                      </Button>
+                      <div className="flex gap-2 mt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setCompareGroup(group)}
+                          disabled={group.pages.length < 2}
+                        >
+                          <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" /> Compare
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => setPickGroupDialog(group)}
+                        >
+                          <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Template
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
