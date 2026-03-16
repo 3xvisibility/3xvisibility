@@ -465,11 +465,41 @@ export default function GeneratedPagesPage() {
               Edit SEO Metadata
             </DialogTitle>
           </DialogHeader>
-          {seoEditPage && (
+          {seoEditPage && (() => {
+            const liveKeywords = seoForm.seo_keywords.split(",").map(k => k.trim()).filter(Boolean);
+            const liveScore = calculateSeoScore(seoForm.seo_title, seoForm.seo_description, liveKeywords, seoEditPage.title);
+            return (
             <div className="space-y-4 mt-2">
-              <p className="text-xs text-muted-foreground">
-                Page: <span className="font-medium text-foreground">{seoEditPage.title}</span>
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Page: <span className="font-medium text-foreground">{seoEditPage.title}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        liveScore.score >= 85 ? "bg-emerald-500" :
+                        liveScore.score >= 60 ? "bg-primary" :
+                        liveScore.score >= 35 ? "bg-amber-500" : "bg-destructive"
+                      }`}
+                      style={{ width: `${liveScore.score}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-bold tabular-nums ${liveScore.color}`}>
+                    {liveScore.score}
+                  </span>
+                </div>
+              </div>
+
+              {/* Live checklist */}
+              <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px]">
+                {liveScore.checks.map((c, i) => (
+                  <div key={i} className="flex items-center gap-1">
+                    <span className={c.passed ? "text-emerald-500" : "text-destructive"}>{c.passed ? "✓" : "✗"}</span>
+                    <span className={c.passed ? "text-muted-foreground" : "text-foreground"}>{c.label}</span>
+                  </div>
+                ))}
+              </div>
 
               <div className="border rounded-lg p-4 bg-muted/30 space-y-1">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Search preview</p>
