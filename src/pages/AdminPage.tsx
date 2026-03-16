@@ -62,6 +62,13 @@ interface Subscription {
   current_period_end: string | null;
 }
 
+interface ActivityItem {
+  type: "signup" | "campaign" | "page";
+  message: string;
+  timestamp: string;
+  user_email?: string;
+}
+
 const PLAN_LIMITS: Record<string, number> = {
   free: 0,
   starter: 100,
