@@ -70,6 +70,23 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("generated_pages").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
+      setSelectedIds(new Set());
+      toast({ title: "Pages deleted", description: `Deleted ${count} pages.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const publishMutation = useMutation({
     mutationFn: async (pageIds: string[]) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
