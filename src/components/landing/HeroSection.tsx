@@ -25,7 +25,7 @@ export function HeroSection() {
           >
             <div className="flex -space-x-1">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-3 w-3 fill-primary text-primary" />
+                <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
               ))}
             </div>
             Trusted by 2,000+ SEO teams worldwide
