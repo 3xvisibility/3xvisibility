@@ -4,6 +4,7 @@ import {
   Rocket, 
   FileText,
   Layers,
+  BarChart3,
   Globe, 
   CreditCard, 
   Settings,
