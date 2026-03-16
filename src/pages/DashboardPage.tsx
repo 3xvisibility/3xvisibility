@@ -99,9 +99,31 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
-      </div>
 
-      <div>
+        {/* AI Usage Card */}
+        <Card className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150 sm:col-span-2 lg:col-span-3">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground text-sm">AI Generations</span>
+              </div>
+              <Badge variant="outline" className="capitalize text-xs">{aiUsage?.plan || "free"}</Badge>
+            </div>
+            {loadingAi ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-2xl font-semibold tabular-nums tracking-tight">{aiUsed}</span>
+                  <span className="text-xs text-muted-foreground">/ {aiLimit} this month</span>
+                </div>
+                <Progress value={aiPercent} className="h-1.5" />
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
         <h2 className="text-display-sm mb-4">Recent Campaigns</h2>
         <Card className="shadow-surface">
           <div className="overflow-x-auto">
