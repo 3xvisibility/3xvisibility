@@ -1,13 +1,18 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Rocket, FileText, Globe, TrendingUp, AlertCircle, CheckCircle2, Search } from "lucide-react";
+import { toast } from "sonner";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -19,6 +24,7 @@ interface AdminUser {
   plan: string;
   pages_used: number;
   pages_limit: number;
+  subscription_id: string | null;
   campaigns_count: number;
   pages_count: number;
   websites_count: number;
@@ -54,6 +60,13 @@ interface Subscription {
   current_period_start: string | null;
   current_period_end: string | null;
 }
+
+const PLAN_LIMITS: Record<string, number> = {
+  free: 0,
+  starter: 100,
+  pro: 2000,
+  agency: 10000,
+};
 
 function StatCard({ title, value, icon: Icon, subtitle, variant }: {
   title: string;
@@ -97,16 +110,122 @@ function statusBadge(status: string) {
     failed: "bg-destructive/10 text-destructive border-destructive/20",
     draft: "bg-muted text-muted-foreground border-border",
   };
+  return <Badge variant="outline" className={map[status] || ""}>{status}</Badge>;
+}
+
+// --- Edit Subscription Dialog ---
+function EditSubscriptionDialog({
+  open,
+  onOpenChange,
+  user,
+  subscription,
+  onSave,
+  saving,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  user: AdminUser | null;
+  subscription: Subscription | null;
+  onSave: (data: { plan: string; pages_limit: number; pages_used: number }) => void;
+  saving: boolean;
+}) {
+  const [plan, setPlan] = useState(subscription?.plan || user?.plan || "free");
+  const [pagesLimit, setPagesLimit] = useState(String(subscription?.pages_limit ?? user?.pages_limit ?? 0));
+  const [pagesUsed, setPagesUsed] = useState(String(subscription?.pages_used ?? user?.pages_used ?? 0));
+
+  // Sync state when dialog opens with new data
+  const key = user?.id || subscription?.id || "";
+  useState(() => {
+    setPlan(subscription?.plan || user?.plan || "free");
+    setPagesLimit(String(subscription?.pages_limit ?? user?.pages_limit ?? 0));
+    setPagesUsed(String(subscription?.pages_used ?? user?.pages_used ?? 0));
+  });
+
+  const handlePlanChange = (newPlan: string) => {
+    setPlan(newPlan);
+    if (PLAN_LIMITS[newPlan] !== undefined) {
+      setPagesLimit(String(PLAN_LIMITS[newPlan]));
+    }
+  };
+
   return (
-    <Badge variant="outline" className={map[status] || ""}>
-      {status}
-    </Badge>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Subscription</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-1 mb-4">
+          <p className="text-sm font-medium">{user?.full_name || "Unknown"}</p>
+          <p className="text-xs text-muted-foreground">{user?.email}</p>
+        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Plan</Label>
+            <Select value={plan} onValueChange={handlePlanChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="starter">Starter</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="agency">Agency</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Pages Limit</Label>
+            <Input
+              type="number"
+              min={0}
+              value={pagesLimit}
+              onChange={(e) => setPagesLimit(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Pages Used</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1 text-muted-foreground"
+                onClick={() => setPagesUsed("0")}
+              >
+                <RotateCcw className="h-3 w-3" /> Reset
+              </Button>
+            </div>
+            <Input
+              type="number"
+              min={0}
+              value={pagesUsed}
+              onChange={(e) => setPagesUsed(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onSave({ plan, pages_limit: Number(pagesLimit), pages_used: Number(pagesUsed) })}
+            disabled={saving}
+          >
+            {saving ? "Saving…" : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 export default function AdminPage() {
   const [userSearch, setUserSearch] = useState("");
   const [campaignSearch, setCampaignSearch] = useState("");
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [editSub, setEditSub] = useState<Subscription | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-panel"],
@@ -123,6 +242,52 @@ export default function AdminPage() {
       };
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: async (payload: {
+      subscription_id?: string | null;
+      user_id?: string;
+      plan: string;
+      pages_limit: number;
+      pages_used: number;
+    }) => {
+      const { data, error } = await supabase.functions.invoke("admin-panel", {
+        body: { action: "update-subscription", ...payload },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Subscription updated");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+      setDialogOpen(false);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update subscription");
+    },
+  });
+
+  const openEditFromUser = (user: AdminUser) => {
+    const sub = data?.subscriptions?.find((s) => s.user_id === user.id) || null;
+    setEditUser(user);
+    setEditSub(sub);
+    setDialogOpen(true);
+  };
+
+  const openEditFromSub = (sub: Subscription) => {
+    const user = data?.users?.find((u) => u.id === sub.user_id) || null;
+    setEditUser(user);
+    setEditSub(sub);
+    setDialogOpen(true);
+  };
+
+  const handleSave = (formData: { plan: string; pages_limit: number; pages_used: number }) => {
+    updateMutation.mutate({
+      subscription_id: editSub?.id || editUser?.subscription_id || null,
+      user_id: editUser?.id,
+      ...formData,
+    });
+  };
 
   if (error) {
     return (
@@ -153,17 +318,12 @@ export default function AdminPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Admin Panel</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Platform overview and management
-        </p>
+        <p className="text-muted-foreground text-sm mt-1">Platform overview and management</p>
       </div>
 
-      {/* Overview stats */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-[100px] rounded-xl" />
-          ))}
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-[100px] rounded-xl" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -185,14 +345,8 @@ export default function AdminPage() {
         <TabsContent value="users" className="space-y-4">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Search users..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-9" />
           </div>
-
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
           ) : (
@@ -207,14 +361,13 @@ export default function AdminPage() {
                     <TableHead className="text-right">Sites</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead>Last Active</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        No users found
-                      </TableCell>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users found</TableCell>
                     </TableRow>
                   ) : (
                     filteredUsers.map((u) => (
@@ -225,16 +378,17 @@ export default function AdminPage() {
                             <p className="text-xs text-muted-foreground">{u.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="capitalize">{u.plan}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-sm">
-                          {u.pages_used} / {u.pages_limit || "∞"}
-                        </TableCell>
+                        <TableCell><Badge variant="outline" className="capitalize">{u.plan}</Badge></TableCell>
+                        <TableCell className="text-right tabular-nums text-sm">{u.pages_used} / {u.pages_limit || "∞"}</TableCell>
                         <TableCell className="text-right tabular-nums text-sm">{u.campaigns_count}</TableCell>
                         <TableCell className="text-right tabular-nums text-sm">{u.websites_count}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(u.created_at)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(u.last_sign_in_at)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromUser(u)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -248,14 +402,8 @@ export default function AdminPage() {
         <TabsContent value="campaigns" className="space-y-4">
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search campaigns..."
-              value={campaignSearch}
-              onChange={(e) => setCampaignSearch(e.target.value)}
-              className="pl-9"
-            />
+            <Input placeholder="Search campaigns..." value={campaignSearch} onChange={(e) => setCampaignSearch(e.target.value)} className="pl-9" />
           </div>
-
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
           ) : (
@@ -272,18 +420,14 @@ export default function AdminPage() {
                 <TableBody>
                   {filteredCampaigns.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No campaigns found
-                      </TableCell>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
                     </TableRow>
                   ) : (
                     filteredCampaigns.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell className="font-medium text-sm">{c.name}</TableCell>
                         <TableCell>{statusBadge(c.status)}</TableCell>
-                        <TableCell className="text-right tabular-nums text-sm">
-                          {c.processed_rows ?? 0} / {c.total_rows ?? 0}
-                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-sm">{c.processed_rows ?? 0} / {c.total_rows ?? 0}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(c.created_at)}</TableCell>
                       </TableRow>
                     ))
@@ -308,14 +452,13 @@ export default function AdminPage() {
                     <TableHead className="text-right">Usage</TableHead>
                     <TableHead>Period Start</TableHead>
                     <TableHead>Period End</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(data?.subscriptions || []).length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No subscriptions found
-                      </TableCell>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No subscriptions found</TableCell>
                     </TableRow>
                   ) : (
                     data!.subscriptions.map((s) => {
@@ -329,9 +472,7 @@ export default function AdminPage() {
                               <p className="text-xs text-muted-foreground">{user?.email || s.user_id}</p>
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="capitalize">{s.plan}</Badge>
-                          </TableCell>
+                          <TableCell><Badge variant="outline" className="capitalize">{s.plan}</Badge></TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-2">
                               <span className="text-sm tabular-nums">{s.pages_used} / {s.pages_limit}</span>
@@ -339,13 +480,16 @@ export default function AdminPage() {
                                 usagePercent >= 90 ? "text-destructive border-destructive/20" :
                                 usagePercent >= 70 ? "text-yellow-600 border-yellow-500/20" :
                                 "text-success border-success/20"
-                              }`}>
-                                {usagePercent}%
-                              </Badge>
+                              }`}>{usagePercent}%</Badge>
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">{formatDate(s.current_period_start)}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{formatDate(s.current_period_end)}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromSub(s)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       );
                     })
@@ -356,6 +500,15 @@ export default function AdminPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      <EditSubscriptionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        user={editUser}
+        subscription={editSub}
+        onSave={handleSave}
+        saving={updateMutation.isPending}
+      />
     </div>
   );
 }
