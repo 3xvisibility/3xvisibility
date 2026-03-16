@@ -347,9 +347,14 @@ export default function CampaignsPage() {
                           <span className="text-xs text-muted-foreground animate-pulse">Processing...</span>
                         )}
                         {c.status === "completed" && (
-                          <Button size="sm" variant="ghost" className="text-muted-foreground">
-                            <ArrowRight className="h-3 w-3 mr-1" /> View
-                          </Button>
+                          <>
+                            <Button size="sm" variant="ghost" className="text-primary" onClick={() => setLinkDialogCampaign(c)} title="Internal Linking">
+                              <Link2 className="h-3 w-3 mr-1" /> Links
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-muted-foreground">
+                              <ArrowRight className="h-3 w-3 mr-1" /> View
+                            </Button>
+                          </>
                         )}
                         <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMutation.mutate(c.id)}>
                           <Trash2 className="h-3 w-3" />
