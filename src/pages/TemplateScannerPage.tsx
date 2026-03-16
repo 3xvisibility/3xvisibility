@@ -370,6 +370,18 @@ export default function TemplateScannerPage() {
         </CardContent>
       </Card>
 
+      {/* Loading state */}
+      {scanMutation.isPending && (
+        <div className="space-y-4">
+          <Card><CardContent className="p-5 space-y-3">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-20 w-full" />
+          </CardContent></Card>
+        </div>
+      )}
+
       {/* Results */}
       {blocks.length > 0 && !scanMutation.isPending && (
         <>
