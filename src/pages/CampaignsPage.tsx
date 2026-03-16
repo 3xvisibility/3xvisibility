@@ -52,11 +52,42 @@ export default function CampaignsPage() {
   const { data: templates = [] } = useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name").order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables").order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  // Get the selected template's variables
+  const selectedTemplateVars = useMemo(() => {
+    if (!selectedTemplate) return [];
+    const tpl = templates.find((t) => t.id === selectedTemplate);
+    if (!tpl?.variables) return [];
+    return (tpl.variables as string[]).map((v) => v.replace(/[{}]/g, ""));
+  }, [selectedTemplate, templates]);
+
+  // Auto-match CSV columns to template variables
+  const variableMapping = useMemo(() => {
+    if (selectedTemplateVars.length === 0 || csvHeaders.length === 0) return null;
+    const matched: { variable: string; column: string | null }[] = [];
+    for (const v of selectedTemplateVars) {
+      const vLower = v.toLowerCase();
+      const exactMatch = csvHeaders.find((h) => h.toLowerCase() === vLower);
+      if (exactMatch) {
+        matched.push({ variable: v, column: exactMatch });
+      } else {
+        // fuzzy: check if column contains variable or vice versa
+        const fuzzy = csvHeaders.find(
+          (h) => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase())
+        );
+        matched.push({ variable: v, column: fuzzy || null });
+      }
+    }
+    const unmatchedColumns = csvHeaders.filter(
+      (h) => !matched.some((m) => m.column === h)
+    );
+    return { matched, unmatchedColumns };
+  }, [selectedTemplateVars, csvHeaders]);
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites"],
