@@ -154,6 +154,7 @@ export function InternalLinkDialog({
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["internal-links-count", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ["graph-links", campaignId] });
       toast({
         title: "Internal links built",
         description: `${data.links_created} links created across ${data.pages_updated} pages.`,
