@@ -4,7 +4,7 @@ import { ArrowRight, Star, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import heroImage from "@/assets/hero-dashboard.png";
 
-const ease = [0.22, 1, 0.36, 1];
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export function HeroSection() {
   return (
