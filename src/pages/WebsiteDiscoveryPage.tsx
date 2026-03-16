@@ -168,6 +168,9 @@ export default function WebsiteDiscoveryPage() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [selectionPopover, setSelectionPopover] = useState<{ position: { x: number; y: number }; text: string } | null>(null);
 
+  // URL group template creation
+  const [pickGroupDialog, setPickGroupDialog] = useState<UrlGroup | null>(null);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
