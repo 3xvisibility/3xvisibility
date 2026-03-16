@@ -1,3 +1,5 @@
+import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
+
 const steps = [
   {
     step: "01",
@@ -27,7 +29,7 @@ export function HowItWorksSection() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[hsl(var(--primary-glow)/.04)] blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="text-center max-w-2xl mx-auto mb-14">
+        <ScrollReveal className="text-center max-w-2xl mx-auto mb-14">
           <span className="inline-block text-xs font-semibold uppercase tracking-widest text-primary mb-3">How it works</span>
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
             Four steps to{" "}
@@ -36,27 +38,23 @@ export function HowItWorksSection() {
           <p className="mt-4 text-muted-foreground text-base">
             From raw data to live content in minutes.
           </p>
-        </div>
+        </ScrollReveal>
 
-        <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+        <StaggerContainer className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           {steps.map((s, i) => (
-            <div
-              key={s.step}
-              className="relative group rounded-xl border border-border/50 bg-background p-6 hover:border-primary/30 hover:shadow-card-hover transition-all duration-300"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <span className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20">
-                  {s.step}
-                </span>
-                <h3 className="font-semibold text-base">{s.title}</h3>
+            <StaggerItem key={s.step}>
+              <div className="relative group rounded-xl border border-border/50 bg-background p-6 hover:border-primary/30 hover:shadow-card-hover transition-all duration-300 h-full">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20">
+                    {s.step}
+                  </span>
+                  <h3 className="font-semibold text-base">{s.title}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed pl-[52px]">{s.description}</p>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed pl-[52px]">{s.description}</p>
-              {i < steps.length - 1 && (
-                <div className="hidden md:block absolute -bottom-3 left-1/2 -translate-x-1/2 w-px h-6 bg-gradient-to-b from-border to-transparent" />
-              )}
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   );
