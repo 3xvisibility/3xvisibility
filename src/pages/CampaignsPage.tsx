@@ -105,6 +105,26 @@ export default function CampaignsPage() {
     },
   });
 
+  const executeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase.functions.invoke("generate-pages", {
+        body: { campaign_id: id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
+      toast({ title: "Pages generated", description: `${data.generated} pages created successfully.` });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
