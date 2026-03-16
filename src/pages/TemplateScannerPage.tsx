@@ -1,12 +1,14 @@
 import { useState, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ScanSearch,
   Globe,
@@ -19,6 +21,7 @@ import {
   Loader2,
   Tag,
   Eye,
+  FileText,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +48,13 @@ interface VariableMapping {
   accepted: boolean;
 }
 
+interface WpPage {
+  id: number;
+  title: string;
+  slug: string;
+  link: string;
+}
+
 export default function TemplateScannerPage() {
   const [url, setUrl] = useState("");
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
@@ -57,9 +67,45 @@ export default function TemplateScannerPage() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [manualVarName, setManualVarName] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedWebsite, setSelectedWebsite] = useState("");
+  const [wpPages, setWpPages] = useState<WpPage[]>([]);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch connected WordPress websites
+  const { data: wpWebsites = [] } = useQuery({
+    queryKey: ["wp-websites"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("websites")
+        .select("id, name, url")
+        .eq("type", "wordpress")
+        .eq("status", "connected")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch WP pages for selected website
+  const wpPagesMutation = useMutation({
+    mutationFn: async (websiteId: string) => {
+      const { data, error } = await supabase.functions.invoke("scan-template", {
+        body: { action: "list-wp-pages", website_id: websiteId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data.pages as WpPage[];
+    },
+    onSuccess: (pages) => {
+      setWpPages(pages);
+      toast({ title: "Pages loaded", description: `Found ${pages.length} WordPress pages.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
+    },
+  });
 
   // Scan URL mutation
   const scanMutation = useMutation({
@@ -206,42 +252,121 @@ export default function TemplateScannerPage() {
         </p>
       </div>
 
-      {/* URL Input */}
+      {/* Input Section */}
       <Card className="shadow-surface">
         <CardContent className="p-5">
-          <Label htmlFor="scan-url" className="text-sm font-medium">
-            Webpage URL
-          </Label>
-          <p className="text-xs text-muted-foreground mb-2">
-            Enter a public URL or WordPress page to scan and convert into a template.
-          </p>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="scan-url"
-                placeholder="https://example.com/page"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Button
-              onClick={() => scanMutation.mutate(url)}
-              disabled={!url.trim() || scanMutation.isPending}
-              className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
-            >
-              {scanMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...
-                </>
+          <Tabs defaultValue="url">
+            <TabsList className="mb-4">
+              <TabsTrigger value="url">
+                <Globe className="mr-1.5 h-3.5 w-3.5" /> Public URL
+              </TabsTrigger>
+              <TabsTrigger value="wordpress">
+                <FileText className="mr-1.5 h-3.5 w-3.5" /> WordPress Page
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="url" className="space-y-2">
+              <Label htmlFor="scan-url" className="text-sm font-medium">
+                Webpage URL
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Enter any public URL to scan and convert into a template.
+              </p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="scan-url"
+                    placeholder="https://example.com/page"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Button
+                  onClick={() => scanMutation.mutate(url)}
+                  disabled={!url.trim() || scanMutation.isPending}
+                  className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+                >
+                  {scanMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <ScanSearch className="mr-2 h-4 w-4" /> Scan Page
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="wordpress" className="space-y-3">
+              <Label className="text-sm font-medium">Connected WordPress Site</Label>
+              {wpWebsites.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No WordPress websites connected. Add one in the Websites section first.
+                </p>
               ) : (
                 <>
-                  <ScanSearch className="mr-2 h-4 w-4" /> Scan Page
+                  <div className="flex gap-2">
+                    <Select
+                      value={selectedWebsite}
+                      onValueChange={(val) => {
+                        setSelectedWebsite(val);
+                        setWpPages([]);
+                        wpPagesMutation.mutate(val);
+                      }}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select a WordPress site" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {wpWebsites.map((w) => (
+                          <SelectItem key={w.id} value={w.id}>
+                            {w.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {wpPagesMutation.isPending && (
+                    <div className="space-y-2">
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  )}
+
+                  {wpPages.length > 0 && (
+                    <div className="space-y-1.5 max-h-60 overflow-y-auto border border-border rounded-lg p-2">
+                      {wpPages.map((page) => (
+                        <button
+                          key={page.id}
+                          className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent/50 transition-colors text-left"
+                          onClick={() => {
+                            setUrl(page.link);
+                            scanMutation.mutate(page.link);
+                          }}
+                          disabled={scanMutation.isPending}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{page.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">/{page.slug}</p>
+                          </div>
+                          <ScanSearch className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {wpPagesMutation.isSuccess && wpPages.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No published pages found on this site.</p>
+                  )}
                 </>
               )}
-            </Button>
-          </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
