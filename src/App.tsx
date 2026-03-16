@@ -98,6 +98,14 @@ const App = () => {
               }
             />
             <Route
+              path="/pages"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><GeneratedPagesPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/billing"
               element={
                 <ProtectedRoute session={session}>
