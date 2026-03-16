@@ -262,9 +262,12 @@ export default function CampaignsPage() {
                     <td className="p-4">
                       <div className="flex gap-1">
                         {c.status === "draft" && (
-                          <Button size="sm" variant="ghost" className="text-primary">
-                            <Play className="h-3 w-3 mr-1" /> Execute
+                          <Button size="sm" variant="ghost" className="text-primary" disabled={executeMutation.isPending} onClick={() => executeMutation.mutate(c.id)}>
+                            <Play className="h-3 w-3 mr-1" /> {executeMutation.isPending ? "Generating..." : "Execute"}
                           </Button>
+                        )}
+                        {c.status === "processing" && (
+                          <span className="text-xs text-muted-foreground animate-pulse">Processing...</span>
                         )}
                         {c.status === "completed" && (
                           <Button size="sm" variant="ghost" className="text-muted-foreground">
