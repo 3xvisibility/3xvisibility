@@ -368,6 +368,19 @@ export default function CampaignsPage() {
           </div>
         </Card>
       )}
+
+      {/* Internal Linking Dialog */}
+      {linkDialogCampaign && (
+        <InternalLinkDialog
+          campaignId={linkDialogCampaign.id}
+          campaignName={linkDialogCampaign.name}
+          templateVariables={
+            (templates.find((t) => t.id === linkDialogCampaign.template_id)?.variables as string[]) || []
+          }
+          open={!!linkDialogCampaign}
+          onOpenChange={(v) => { if (!v) setLinkDialogCampaign(null); }}
+        />
+      )}
     </div>
   );
 }
