@@ -124,6 +124,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <div>
         <h2 className="text-display-sm mb-4">Recent Campaigns</h2>
         <Card className="shadow-surface">
           <div className="overflow-x-auto">
