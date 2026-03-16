@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { 
   LayoutDashboard, 
   Rocket, 
@@ -9,9 +10,11 @@ import {
   ChevronLeft,
   LogOut,
   ScanSearch,
-  Compass
+  Compass,
+  ShieldCheck
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -49,6 +52,17 @@ interface AppSidebarProps {
 export function AppSidebar({ onLogout }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkAdmin() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      setIsAdmin(!!data);
+    }
+    checkAdmin();
+  }, []);
 
   return (
     <Sidebar collapsible="icon">
@@ -87,6 +101,24 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup className="mt-auto">
+          {isAdmin && (
+            <SidebarGroupContent className="mb-2">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/admin"
+                      className="hover:bg-accent/50 transition-all duration-150"
+                      activeClassName="bg-primary/10 text-primary font-medium"
+                    >
+                      <ShieldCheck className="mr-2 h-4 w-4 shrink-0" />
+                      {!collapsed && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {bottomNav.map((item) => (
