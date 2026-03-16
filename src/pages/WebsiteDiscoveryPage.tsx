@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
 import {
   Compass,
   Globe,
@@ -25,6 +28,9 @@ import {
   Search,
   Pencil,
   ExternalLink,
+  FolderTree,
+  Layers,
+  Settings2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +50,20 @@ interface DetectedPattern {
   variables: string[];
   matchingPages: string[];
   confidence: string;
+}
+
+interface UrlGroup {
+  pattern: string;
+  patternLabel: string;
+  pages: string[];
+  suggestedVariables: string[];
+}
+
+interface CrawlStats {
+  total_discovered: number;
+  total_crawled: number;
+  max_pages: number;
+  max_depth: number;
 }
 
 interface VisualMapping {
@@ -125,8 +145,21 @@ export default function WebsiteDiscoveryPage() {
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [pages, setPages] = useState<DiscoveredPage[]>([]);
   const [patterns, setPatterns] = useState<DetectedPattern[]>([]);
+  const [urlGroups, setUrlGroups] = useState<UrlGroup[]>([]);
+  const [crawlStats, setCrawlStats] = useState<CrawlStats | null>(null);
   const [filterType, setFilterType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "groups">("list");
+
+  // Scan settings
+  const [maxPages, setMaxPages] = useState(50);
+  const [maxDepth, setMaxDepth] = useState(3);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Progress
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanPhase, setScanPhase] = useState("");
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Template conversion state
   const [convertingPage, setConvertingPage] = useState<DiscoveredPage | null>(null);
@@ -138,6 +171,39 @@ export default function WebsiteDiscoveryPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Simulated progress animation
+  const startProgress = useCallback(() => {
+    setScanProgress(0);
+    setScanPhase("Connecting to website...");
+    let progress = 0;
+    const phases = [
+      { at: 5, text: "Fetching homepage..." },
+      { at: 15, text: "Discovering internal links..." },
+      { at: 25, text: "Crawling pages..." },
+      { at: 50, text: "Scanning content..." },
+      { at: 70, text: "Classifying page types..." },
+      { at: 85, text: "Detecting URL patterns..." },
+      { at: 95, text: "Finalizing results..." },
+    ];
+
+    scanIntervalRef.current = setInterval(() => {
+      progress += Math.random() * 3 + 0.5;
+      if (progress > 95) progress = 95;
+      setScanProgress(progress);
+      const phase = [...phases].reverse().find(p => progress >= p.at);
+      if (phase) setScanPhase(phase.text);
+    }, 300);
+  }, []);
+
+  const stopProgress = useCallback(() => {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+    setScanProgress(100);
+    setTimeout(() => setScanProgress(0), 1000);
+  }, []);
 
   // Fetch connected websites
   const { data: websites = [] } = useQuery({
@@ -156,19 +222,25 @@ export default function WebsiteDiscoveryPage() {
   // Crawl public URL
   const crawlUrlMutation = useMutation({
     mutationFn: async (crawlUrl: string) => {
+      startProgress();
       const { data, error } = await supabase.functions.invoke("discover-templates", {
-        body: { url: crawlUrl },
+        body: { url: crawlUrl, max_pages: maxPages, max_depth: maxDepth },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data.pages as DiscoveredPage[];
+      return data as { pages: DiscoveredPage[]; urlGroups: UrlGroup[]; stats: CrawlStats };
     },
     onSuccess: (data) => {
-      setPages(data);
+      stopProgress();
+      setPages(data.pages);
+      setUrlGroups(data.urlGroups || []);
+      setCrawlStats(data.stats || null);
       setPatterns([]);
-      toast({ title: "Scan complete", description: `Discovered ${data.length} pages.` });
+      if (data.urlGroups?.length > 0) setViewMode("groups");
+      toast({ title: "Scan complete", description: `Discovered ${data.pages.length} pages across ${data.urlGroups?.length || 0} URL patterns.` });
     },
     onError: (err: Error) => {
+      stopProgress();
       toast({ title: "Scan failed", description: err.message, variant: "destructive" });
     },
   });
@@ -176,19 +248,25 @@ export default function WebsiteDiscoveryPage() {
   // Crawl connected website
   const crawlConnectedMutation = useMutation({
     mutationFn: async (websiteId: string) => {
+      startProgress();
       const { data, error } = await supabase.functions.invoke("discover-templates", {
         body: { action: "crawl-connected", website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data.pages as DiscoveredPage[];
+      return data as { pages: DiscoveredPage[]; urlGroups: UrlGroup[] };
     },
     onSuccess: (data) => {
-      setPages(data);
+      stopProgress();
+      setPages(data.pages);
+      setUrlGroups(data.urlGroups || []);
+      setCrawlStats(null);
       setPatterns([]);
-      toast({ title: "Scan complete", description: `Discovered ${data.length} pages.` });
+      if (data.urlGroups?.length > 0) setViewMode("groups");
+      toast({ title: "Scan complete", description: `Discovered ${data.pages.length} pages across ${data.urlGroups?.length || 0} URL patterns.` });
     },
     onError: (err: Error) => {
+      stopProgress();
       toast({ title: "Scan failed", description: err.message, variant: "destructive" });
     },
   });
@@ -202,6 +280,7 @@ export default function WebsiteDiscoveryPage() {
           pages: discoveredPages.map((p) => ({
             title: p.title,
             type: p.type,
+            url: p.url,
             headings: p.headings,
             textSnippet: p.textSnippet,
           })),
@@ -339,7 +418,7 @@ export default function WebsiteDiscoveryPage() {
           Website Template Discovery
         </h1>
         <p className="text-muted-foreground mt-1">
-          Scan a website to discover pages and automatically detect template patterns.
+          Scan a website to discover pages, detect URL patterns, and auto-suggest template structures.
         </p>
       </div>
 
@@ -352,18 +431,65 @@ export default function WebsiteDiscoveryPage() {
               <TabsTrigger value="connected"><FileText className="mr-1.5 h-3.5 w-3.5" /> Connected Site</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="url" className="space-y-2">
+            <TabsContent value="url" className="space-y-3">
               <Label className="text-sm font-medium">Website URL</Label>
-              <p className="text-xs text-muted-foreground">Enter a website URL to crawl and discover pages.</p>
+              <p className="text-xs text-muted-foreground">Enter a website URL to crawl and discover pages (up to {maxPages} pages, depth {maxDepth}).</p>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="https://example.com" value={url} onChange={(e) => setUrl(e.target.value)} className="pl-9" />
                 </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => setShowSettings(!showSettings)}
+                  title="Scan settings"
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
                 <Button onClick={() => crawlUrlMutation.mutate(url)} disabled={!url.trim() || isCrawling} className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
                   {isCrawling ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...</> : <><Compass className="mr-2 h-4 w-4" /> Scan</>}
                 </Button>
               </div>
+
+              {/* Scan settings */}
+              {showSettings && (
+                <Card className="bg-muted/50">
+                  <CardContent className="p-4 space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Max pages to scan</Label>
+                        <span className="text-xs font-mono text-muted-foreground">{maxPages}</span>
+                      </div>
+                      <Slider
+                        value={[maxPages]}
+                        onValueChange={([v]) => setMaxPages(v)}
+                        min={10}
+                        max={100}
+                        step={10}
+                        className="w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Higher values take longer but discover more pages.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Crawl depth</Label>
+                        <span className="text-xs font-mono text-muted-foreground">{maxDepth}</span>
+                      </div>
+                      <Slider
+                        value={[maxDepth]}
+                        onValueChange={([v]) => setMaxDepth(v)}
+                        min={1}
+                        max={5}
+                        step={1}
+                        className="w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Depth 1 = homepage links only. Higher = follows links from discovered pages.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="connected" className="space-y-3">
@@ -396,24 +522,42 @@ export default function WebsiteDiscoveryPage() {
         </CardContent>
       </Card>
 
-      {/* Loading */}
+      {/* Progress indicator */}
       {isCrawling && (
-        <div className="space-y-4">
-          <Card><CardContent className="p-5 space-y-3">
-            <Skeleton className="h-5 w-48" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-3/4" /><Skeleton className="h-20 w-full" />
-          </CardContent></Card>
-        </div>
+        <Card className="shadow-surface overflow-hidden">
+          <CardContent className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm font-medium">Scanning website...</span>
+              </div>
+              <span className="text-xs text-muted-foreground tabular-nums">{Math.round(scanProgress)}%</span>
+            </div>
+            <Progress value={scanProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground">{scanPhase}</p>
+            <div className="flex gap-4 text-xs text-muted-foreground">
+              <span>Max pages: {maxPages}</span>
+              <span>Max depth: {maxDepth}</span>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Results */}
       {pages.length > 0 && !isCrawling && !convertingPage && (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <Card className="shadow-surface">
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold tabular-nums">{pages.length}</p>
-                <p className="text-xs text-muted-foreground">Pages Found</p>
+                <p className="text-xs text-muted-foreground">Pages Crawled</p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-surface">
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold tabular-nums">{urlGroups.length}</p>
+                <p className="text-xs text-muted-foreground">URL Patterns</p>
               </CardContent>
             </Card>
             {pageTypes.slice(0, 3).map((type) => (
@@ -426,6 +570,60 @@ export default function WebsiteDiscoveryPage() {
             ))}
           </div>
 
+          {crawlStats && (
+            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+              <span>Discovered {crawlStats.total_discovered} URLs</span>
+              <span>·</span>
+              <span>Crawled {crawlStats.total_crawled} pages</span>
+              <span>·</span>
+              <span>Depth {crawlStats.max_depth}</span>
+            </div>
+          )}
+
+          {/* URL Pattern Groups */}
+          {urlGroups.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <FolderTree className="h-5 w-5 text-primary" /> URL Pattern Groups
+                </h2>
+                <p className="text-xs text-muted-foreground">Pages grouped by URL structure</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {urlGroups.map((group, i) => (
+                  <Card key={i} className="shadow-surface hover:shadow-surface-hover transition-shadow">
+                    <CardContent className="p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-4 w-4 text-primary shrink-0" />
+                        <code className="text-xs font-mono text-primary bg-primary/5 px-2 py-1 rounded truncate">{group.pattern}</code>
+                      </div>
+                      <p className="text-sm font-medium">{group.pages.length} matching pages</p>
+                      <div className="flex flex-wrap gap-1">
+                        {group.suggestedVariables.map((v) => (
+                          <Badge key={v} variant="outline" className="font-mono text-[10px] border-primary text-primary">{`{${v}}`}</Badge>
+                        ))}
+                      </div>
+                      <ScrollArea className="max-h-24">
+                        <div className="space-y-0.5 text-xs text-muted-foreground">
+                          {group.pages.slice(0, 5).map((url, j) => {
+                            try {
+                              return <p key={j} className="truncate">• {new URL(url).pathname}</p>;
+                            } catch {
+                              return <p key={j} className="truncate">• {url}</p>;
+                            }
+                          })}
+                          {group.pages.length > 5 && (
+                            <p className="text-primary font-medium">+ {group.pages.length - 5} more</p>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Detect patterns button */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Button
@@ -436,7 +634,7 @@ export default function WebsiteDiscoveryPage() {
               {analyzePatternsMutation.isPending ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing patterns...</>
               ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Detect Template Patterns</>
+                <><Sparkles className="mr-2 h-4 w-4" /> AI: Detect Template Patterns</>
               )}
             </Button>
           </div>
@@ -445,7 +643,7 @@ export default function WebsiteDiscoveryPage() {
           {patterns.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" /> Detected Patterns
+                <Sparkles className="h-5 w-5 text-primary" /> AI-Detected Patterns
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {patterns.map((pattern, i) => (
@@ -660,7 +858,7 @@ export default function WebsiteDiscoveryPage() {
           <CardContent className="p-10 text-center text-muted-foreground">
             <Compass className="mx-auto h-10 w-10 mb-3 opacity-50" />
             <p className="font-medium">Enter a URL or select a connected website to scan</p>
-            <p className="text-sm mt-1">The system will crawl the site, discover pages, and detect template patterns automatically.</p>
+            <p className="text-sm mt-1">The system will crawl up to 100 pages, group them by URL structure, and detect template patterns automatically.</p>
           </CardContent>
         </Card>
       )}
