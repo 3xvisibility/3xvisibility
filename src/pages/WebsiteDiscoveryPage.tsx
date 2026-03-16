@@ -944,6 +944,46 @@ export default function WebsiteDiscoveryPage() {
           onClose={() => setSelectionPopover(null)}
         />
       )}
+
+      {/* Pick Representative Page Dialog */}
+      {pickGroupDialog && (
+        <Dialog open={!!pickGroupDialog} onOpenChange={(open) => !open && setPickGroupDialog(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Choose a Representative Page</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-2">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary shrink-0" />
+                <code className="text-xs font-mono text-primary bg-primary/5 px-2 py-1 rounded">{pickGroupDialog.pattern}</code>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Select one page to use as the template base. The varying URL segment will be auto-mapped as <code className="font-mono text-primary">{"{slug}"}</code>.
+              </p>
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-1">
+                  {pickGroupDialog.pages.map((pageUrl, i) => {
+                    const matchedPage = pages.find((p) => p.url === pageUrl);
+                    if (!matchedPage) return null;
+                    let pathname = pageUrl;
+                    try { pathname = new URL(pageUrl).pathname; } catch {}
+                    return (
+                      <button
+                        key={i}
+                        className="w-full text-left rounded-lg border border-border px-3 py-2.5 hover:bg-accent hover:border-primary/30 transition-colors"
+                        onClick={() => handlePickRepresentativePage(matchedPage, pickGroupDialog)}
+                      >
+                        <p className="text-sm font-medium truncate">{matchedPage.title}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{pathname}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
