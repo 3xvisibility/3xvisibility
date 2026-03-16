@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Upload, Play, ArrowRight, Trash2 } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
@@ -52,11 +52,42 @@ export default function CampaignsPage() {
   const { data: templates = [] } = useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name").order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables").order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  // Get the selected template's variables
+  const selectedTemplateVars = useMemo(() => {
+    if (!selectedTemplate) return [];
+    const tpl = templates.find((t) => t.id === selectedTemplate);
+    if (!tpl?.variables) return [];
+    return (tpl.variables as string[]).map((v) => v.replace(/[{}]/g, ""));
+  }, [selectedTemplate, templates]);
+
+  // Auto-match CSV columns to template variables
+  const variableMapping = useMemo(() => {
+    if (selectedTemplateVars.length === 0 || csvHeaders.length === 0) return null;
+    const matched: { variable: string; column: string | null }[] = [];
+    for (const v of selectedTemplateVars) {
+      const vLower = v.toLowerCase();
+      const exactMatch = csvHeaders.find((h) => h.toLowerCase() === vLower);
+      if (exactMatch) {
+        matched.push({ variable: v, column: exactMatch });
+      } else {
+        // fuzzy: check if column contains variable or vice versa
+        const fuzzy = csvHeaders.find(
+          (h) => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase())
+        );
+        matched.push({ variable: v, column: fuzzy || null });
+      }
+    }
+    const unmatchedColumns = csvHeaders.filter(
+      (h) => !matched.some((m) => m.column === h)
+    );
+    return { matched, unmatchedColumns };
+  }, [selectedTemplateVars, csvHeaders]);
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites"],
@@ -176,6 +207,50 @@ export default function CampaignsPage() {
                 <Label htmlFor="name">Campaign Name</Label>
                 <Input id="name" placeholder="e.g., Python Training Cities" value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
               </div>
+              {/* Variable Mapping Preview */}
+              {variableMapping && (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold">Variable Mapping</h4>
+                    {variableMapping.matched.every((m) => m.column) ? (
+                      <Badge variant="secondary" className="bg-success/10 text-success text-xs">
+                        <Check className="h-3 w-3 mr-1" /> All matched
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-destructive/10 text-destructive text-xs">
+                        <AlertTriangle className="h-3 w-3 mr-1" /> Unmatched variables
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    {variableMapping.matched.map(({ variable, column }) => (
+                      <div key={variable} className="flex items-center gap-2 text-xs">
+                        <Badge variant="outline" className="font-mono shrink-0">{`{${variable}}`}</Badge>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                        {column ? (
+                          <Badge variant="secondary" className="bg-success/10 text-success font-mono">
+                            <Check className="h-3 w-3 mr-1" /> {column}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-destructive/10 text-destructive font-mono">
+                            <X className="h-3 w-3 mr-1" /> No match
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {variableMapping.unmatchedColumns.length > 0 && (
+                    <div className="pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-1.5">Extra CSV columns (unused):</p>
+                      <div className="flex flex-wrap gap-1">
+                        {variableMapping.unmatchedColumns.map((c) => (
+                          <Badge key={c} variant="outline" className="text-xs font-mono text-muted-foreground">{c}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <Label>Template</Label>
                 <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
