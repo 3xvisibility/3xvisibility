@@ -21,6 +21,7 @@ import GeneratedPagesPage from "./pages/GeneratedPagesPage";
 import TemplateScannerPage from "./pages/TemplateScannerPage";
 import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
