@@ -15,6 +15,16 @@ const navLinks = [
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains("dark")
+  );
+
+  const toggleDarkMode = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
