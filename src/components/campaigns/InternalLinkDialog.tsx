@@ -214,6 +214,16 @@ export function InternalLinkDialog({
               </div>
 
               {enabled && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Auto-build after generation</Label>
+                    <p className="text-xs text-muted-foreground">Automatically build internal links when pages finish generating</p>
+                  </div>
+                  <Switch checked={autoBuild} onCheckedChange={setAutoBuild} />
+                </div>
+              )}
+
+              {enabled && (
                 <>
                   {/* Max links */}
                   <div>
