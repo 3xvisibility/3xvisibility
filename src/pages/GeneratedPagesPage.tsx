@@ -329,13 +329,38 @@ export default function GeneratedPagesPage() {
                         <Badge variant="secondary" className={statusColors[page.status]}>{page.status}</Badge>
                       </td>
                       <td className="p-4 hidden lg:table-cell">
-                        {hasSeo ? (
-                          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
-                            <Tag className="h-2.5 w-2.5 mr-1" /> SEO
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1.5 cursor-default">
+                                <div className="w-8 h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      seoResult.score >= 85 ? "bg-emerald-500" :
+                                      seoResult.score >= 60 ? "bg-primary" :
+                                      seoResult.score >= 35 ? "bg-amber-500" : "bg-destructive"
+                                    }`}
+                                    style={{ width: `${seoResult.score}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[10px] font-semibold tabular-nums ${seoResult.color}`}>
+                                  {seoResult.score}
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="max-w-[220px] p-3">
+                              <p className="text-xs font-semibold mb-1.5">SEO Score: {seoResult.score}/100 ({seoResult.label})</p>
+                              <div className="space-y-1">
+                                {seoResult.checks.map((c, i) => (
+                                  <div key={i} className="flex items-start gap-1.5 text-[10px]">
+                                    <span className={c.passed ? "text-emerald-500" : "text-destructive"}>{c.passed ? "✓" : "✗"}</span>
+                                    <span className={c.passed ? "text-muted-foreground" : "text-foreground"}>{c.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
