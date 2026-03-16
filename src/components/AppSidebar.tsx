@@ -4,6 +4,7 @@ import {
   Rocket, 
   FileText,
   Layers,
+  BarChart3,
   Globe, 
   CreditCard, 
   Settings,
@@ -37,6 +38,7 @@ const mainNav = [
   { title: "Templates", url: "/templates", icon: FileText },
   { title: "AI Scanner", url: "/scanner", icon: ScanSearch },
   { title: "Discovery", url: "/discovery", icon: Compass },
+  { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Websites", url: "/websites", icon: Globe },
 ];
 
