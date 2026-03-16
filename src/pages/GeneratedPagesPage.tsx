@@ -299,7 +299,7 @@ export default function GeneratedPagesPage() {
               </thead>
               <tbody>
                 {filtered.map((page) => {
-                  const hasSeo = !!(page as any).seo_title || !!(page as any).seo_description;
+                  const seoResult = calculateSeoScore((page as any).seo_title, (page as any).seo_description, (page as any).seo_keywords, page.title);
                   const isSelected = selectedIds.has(page.id);
                   return (
                     <tr
