@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,47 +7,73 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, FileText, Copy } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, FileText, Copy, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
-const mockTemplates = [
-  {
-    id: "1",
-    name: "Course Landing",
-    variables: ["{course}", "{city}"],
-    content: "<h1>{course} in {city}</h1>\n<p>Learn {course} in {city} with expert instructors.</p>",
-    usedIn: 3,
-  },
-  {
-    id: "2",
-    name: "SEO Page",
-    variables: ["{keyword}", "{location}", "{title}"],
-    content: "<h1>{title}</h1>\n<p>Best {keyword} services in {location}.</p>",
-    usedIn: 1,
-  },
-  {
-    id: "3",
-    name: "Product Page",
-    variables: ["{product}", "{category}", "{price}"],
-    content: "<h1>{product}</h1>\n<p>Shop {product} in {category}. Starting at {price}.</p>",
-    usedIn: 0,
-  },
-];
+type Template = Tables<"templates">;
 
 export default function TemplatesPage() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const detectedVars = content.match(/\{[^}]+\}/g) || [];
 
-  const handleCreate = () => {
-    toast({ title: "Template created", description: `"${name}" has been saved.` });
-    setOpen(false);
-    setName("");
-    setContent("");
-  };
+  const { data: templates = [], isLoading } = useQuery({
+    queryKey: ["templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Template[];
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
+      const { error } = await supabase.from("templates").insert({
+        name,
+        content,
+        variables,
+        user_id: user.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Template created", description: `"${name}" has been saved.` });
+      setOpen(false);
+      setName("");
+      setContent("");
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Template deleted" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -92,41 +119,58 @@ export default function TemplatesPage() {
               )}
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreate} disabled={!name || !content}>Create Template</Button>
+                <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
+                  {createMutation.isPending ? "Creating..." : "Create Template"}
+                </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockTemplates.map((tpl) => (
-          <Card key={tpl.id} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-primary" />
-                  <h3 className="font-semibold">{tpl.name}</h3>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}><CardContent className="p-5 space-y-3"><Skeleton className="h-5 w-32" /><Skeleton className="h-4 w-full" /><Skeleton className="h-20 w-full" /></CardContent></Card>
+          ))}
+        </div>
+      ) : templates.length === 0 ? (
+        <Card><CardContent className="p-10 text-center text-muted-foreground">No templates yet. Create your first template to get started.</CardContent></Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((tpl) => (
+            <Card key={tpl.id} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold">{tpl.name}</h3>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                      navigator.clipboard.writeText(tpl.content);
+                      toast({ title: "Copied to clipboard" });
+                    }}>
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(tpl.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {tpl.variables.map((v) => (
-                  <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
-                ))}
-              </div>
-              <pre className="mt-3 p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed">
-                {tpl.content}
-              </pre>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Used in {tpl.usedIn} campaign{tpl.usedIn !== 1 ? "s" : ""}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {(tpl.variables || []).map((v) => (
+                    <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
+                  ))}
+                </div>
+                <pre className="mt-3 p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed">
+                  {tpl.content}
+                </pre>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
