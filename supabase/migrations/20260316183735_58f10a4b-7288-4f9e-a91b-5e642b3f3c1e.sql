@@ -1,0 +1,1 @@
+ALTER TABLE public.internal_link_settings ADD COLUMN auto_build BOOLEAN NOT NULL DEFAULT false;
