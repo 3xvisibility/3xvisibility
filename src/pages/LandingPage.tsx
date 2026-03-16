@@ -1,6 +1,8 @@
 import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { FeatureShowcaseSection } from "@/components/landing/FeatureShowcaseSection";
+import { VideoSection } from "@/components/landing/VideoSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { ReviewsSection } from "@/components/landing/ReviewsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -15,6 +17,8 @@ export default function LandingPage() {
       <main className="flex-1">
         <HeroSection />
         <FeaturesSection />
+        <FeatureShowcaseSection />
+        <VideoSection />
         <HowItWorksSection />
         <ReviewsSection />
         <PricingSection />
