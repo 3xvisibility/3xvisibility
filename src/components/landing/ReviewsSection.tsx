@@ -14,21 +14,21 @@ const reviews = [
 
 function ReviewCard({ review }: { review: typeof reviews[0] }) {
   return (
-    <div className="flex-shrink-0 w-[320px] md:w-[380px] rounded-2xl border border-border/40 bg-background p-7 hover:border-primary/20 hover:shadow-card-hover transition-all duration-500 relative group">
-      <Quote className="absolute top-6 right-6 h-10 w-10 text-primary/[0.05] group-hover:text-primary/[0.1] transition-colors duration-500" />
-      <div className="flex items-center gap-1 mb-5">
+    <div className="flex-shrink-0 w-[300px] md:w-[340px] rounded-xl border border-border/40 bg-background/60 backdrop-blur-sm p-5 hover:border-primary/20 hover:shadow-card-hover transition-all duration-500 relative group">
+      <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/[0.05] group-hover:text-primary/[0.1] transition-colors duration-500" />
+      <div className="flex items-center gap-0.5 mb-3">
         {[...Array(review.rating)].map((_, i) => (
-          <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+          <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
         ))}
       </div>
-      <p className="text-sm text-foreground/85 leading-relaxed mb-6 line-clamp-4">"{review.text}"</p>
-      <div className="flex items-center gap-3 pt-5 border-t border-border/30">
-        <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground shadow-lg shadow-primary/15">
+      <p className="text-[13px] text-foreground/85 leading-relaxed mb-4 line-clamp-4">"{review.text}"</p>
+      <div className="flex items-center gap-2.5 pt-4 border-t border-border/30">
+        <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground shadow-md shadow-primary/15">
           {review.avatar}
         </div>
         <div>
-          <p className="text-sm font-semibold leading-tight">{review.name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{review.role}</p>
+          <p className="text-[13px] font-semibold leading-tight">{review.name}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{review.role}</p>
         </div>
       </div>
     </div>
@@ -39,20 +39,20 @@ export function ReviewsSection() {
   const allReviews = [...reviews, ...reviews];
 
   return (
-    <section id="reviews" className="py-28 md:py-36 relative overflow-hidden">
+    <section id="reviews" className="py-20 md:py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
 
-      <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-16">
-        <div className="text-center max-w-3xl mx-auto">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-5 bg-primary/[0.06] rounded-full px-4 py-1.5">
+      <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-10">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4 bg-primary/[0.06] rounded-full px-3.5 py-1">
             <Star className="h-3 w-3 fill-current" />
             Reviews
           </span>
-          <h2 className="text-3xl md:text-[2.75rem] lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.1]">
             Loved by{" "}
             <span className="text-gradient-primary">2,000+ teams</span>
           </h2>
-          <p className="mt-6 text-muted-foreground text-lg leading-relaxed">
+          <p className="mt-4 text-muted-foreground text-base leading-relaxed">
             See what SEO professionals and agencies say about PageGen.
           </p>
         </div>
@@ -60,9 +60,9 @@ export function ReviewsSection() {
 
       <ScrollReveal delay={0.2}>
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          <div className="flex gap-6 animate-scroll-left" style={{ width: "max-content" }}>
+          <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+          <div className="flex gap-4 animate-scroll-left" style={{ width: "max-content" }}>
             {allReviews.map((review, i) => (
               <ReviewCard key={`row1-${i}`} review={review} />
             ))}

@@ -13,77 +13,75 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-28 md:py-36 relative overflow-hidden">
+    <section id="pricing" className="py-20 md:py-24 relative overflow-hidden">
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-primary/[0.03] blur-[120px] pointer-events-none" />
-      <div className="absolute top-1/4 right-0 w-[300px] h-[300px] rounded-full bg-[hsl(var(--primary-glow)/.03)] blur-[100px] pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <ScrollReveal className="text-center max-w-3xl mx-auto mb-20">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-5 bg-primary/[0.06] rounded-full px-4 py-1.5">
+        <ScrollReveal className="text-center max-w-2xl mx-auto mb-14">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4 bg-primary/[0.06] rounded-full px-3.5 py-1">
             <Zap className="h-3 w-3" />
             Pricing
           </span>
-          <h2 className="text-3xl md:text-[2.75rem] lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.1]">
             Simple,{" "}
             <span className="text-gradient-primary">transparent pricing</span>
           </h2>
-          <p className="mt-6 text-muted-foreground text-lg leading-relaxed">
+          <p className="mt-4 text-muted-foreground text-base leading-relaxed">
             Start free and scale as you grow. No hidden fees.
           </p>
         </ScrollReveal>
 
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto items-start">
           {plans.map((plan) => (
             <StaggerItem key={plan.name}>
               <Card
-                className={`relative bg-background transition-all duration-500 h-full rounded-2xl overflow-hidden ${
+                className={`relative bg-background/60 backdrop-blur-sm transition-all duration-500 h-full rounded-2xl overflow-hidden ${
                   plan.popular
-                    ? "ring-2 ring-primary/80 shadow-[0_0_80px_-20px_hsl(var(--primary)/.3)] md:scale-105"
+                    ? "ring-2 ring-primary/70 shadow-[0_0_60px_-20px_hsl(var(--primary)/.25)] md:scale-[1.03]"
                     : "border-border/40 hover:border-primary/20 hover:shadow-card-hover"
                 }`}
               >
-                {/* Top gradient bar for popular */}
                 {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-primary" />
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-primary" />
                 )}
                 {plan.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-gradient-primary border-0 text-primary-foreground shadow-lg shadow-primary/25 px-4 py-1 font-semibold">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-gradient-primary border-0 text-primary-foreground shadow-lg shadow-primary/25 px-3 py-0.5 text-[11px] font-semibold">
                       Most Popular
                     </Badge>
                   </div>
                 )}
-                <CardHeader className="pb-2 pt-9">
-                  <CardTitle className="text-base font-bold">{plan.name}</CardTitle>
-                  <div className="mt-5">
-                    <span className="text-5xl font-extrabold tabular-nums tracking-tight">{plan.price}</span>
-                    <span className="text-muted-foreground text-sm ml-1.5">/month</span>
+                <CardHeader className="pb-1 pt-7">
+                  <CardTitle className="text-sm font-bold">{plan.name}</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-4xl font-extrabold tabular-nums tracking-tight">{plan.price}</span>
+                    <span className="text-muted-foreground text-sm ml-1">/month</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">{plan.pages}</p>
+                  <p className="text-[13px] text-muted-foreground mt-1.5">{plan.pages}</p>
                 </CardHeader>
-                <CardContent className="pt-6">
-                  <ul className="space-y-3.5 mb-9">
+                <CardContent className="pt-5">
+                  <ul className="space-y-3 mb-7">
                     {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-3 text-sm">
-                        <div className="h-5 w-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">
-                          <Check className="h-3 w-3 text-success" />
+                      <li key={f} className="flex items-center gap-2.5 text-[13px]">
+                        <div className="h-4 w-4 rounded-full bg-success/10 flex items-center justify-center shrink-0">
+                          <Check className="h-2.5 w-2.5 text-success" />
                         </div>
                         <span className="text-foreground/80">{f}</span>
                       </li>
                     ))}
                   </ul>
                   <Button
-                    className={`w-full transition-all duration-300 active:scale-[0.97] rounded-xl h-12 font-semibold ${
+                    className={`w-full transition-all duration-300 active:scale-[0.97] rounded-full h-10 text-sm font-semibold ${
                       plan.popular
-                        ? "bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:brightness-110"
-                        : "hover:bg-accent/80"
+                        ? "bg-primary/80 backdrop-blur-xl border border-primary/40 shadow-[0_4px_20px_hsl(var(--primary)/.3),inset_0_1px_0_rgba(255,255,255,.15)] hover:bg-primary/90 hover:shadow-[0_6px_28px_hsl(var(--primary)/.4)] text-primary-foreground"
+                        : "bg-background/50 backdrop-blur-xl border-border/40 hover:bg-background/80 hover:border-border/60 shadow-[0_2px_8px_rgba(0,0,0,.04),inset_0_1px_0_rgba(255,255,255,.1)]"
                     }`}
                     variant={plan.popular ? "default" : "outline"}
                     asChild
                   >
                     <Link to="/auth">
                       {plan.cta}
-                      {plan.popular && <ArrowRight className="ml-2 h-4 w-4" />}
+                      {plan.popular && <ArrowRight className="ml-1.5 h-3.5 w-3.5" />}
                     </Link>
                   </Button>
                 </CardContent>

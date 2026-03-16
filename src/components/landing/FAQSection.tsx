@@ -18,36 +18,36 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section id="faq" className="py-28 md:py-36 relative">
+    <section id="faq" className="py-20 md:py-24 relative">
       <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <ScrollReveal className="text-center max-w-3xl mx-auto mb-20">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-5 bg-primary/[0.06] rounded-full px-4 py-1.5">
+        <ScrollReveal className="text-center max-w-2xl mx-auto mb-12">
+          <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-4 bg-primary/[0.06] rounded-full px-3.5 py-1">
             <HelpCircle className="h-3 w-3" />
             FAQ
           </span>
-          <h2 className="text-3xl md:text-[2.75rem] lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight leading-[1.1]">
             Frequently asked{" "}
             <span className="text-gradient-primary">questions</span>
           </h2>
-          <p className="mt-6 text-muted-foreground text-lg leading-relaxed">
+          <p className="mt-4 text-muted-foreground text-base leading-relaxed">
             Everything you need to know about PageGen.
           </p>
         </ScrollReveal>
 
-        <ScrollReveal delay={0.15} className="max-w-2xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-3">
+        <ScrollReveal delay={0.15} className="max-w-xl mx-auto">
+          <Accordion type="single" collapsible className="space-y-2.5">
             {faqs.map((faq, i) => (
               <AccordionItem
                 key={i}
                 value={`item-${i}`}
-                className="border border-border/40 rounded-2xl px-7 bg-background hover:border-primary/20 transition-all duration-300 data-[state=open]:border-primary/25 data-[state=open]:shadow-card-hover"
+                className="border border-border/40 rounded-xl px-5 bg-background/60 backdrop-blur-sm hover:border-primary/20 transition-colors duration-200 data-[state=open]:border-primary/25 data-[state=open]:shadow-card-hover"
               >
-                <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline py-5">
+                <AccordionTrigger className="text-[13px] font-semibold text-left hover:no-underline py-4">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-6">
+                <AccordionContent className="text-[13px] text-muted-foreground leading-relaxed pb-4">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
