@@ -73,6 +73,40 @@ export default function TemplateScannerPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fetch connected WordPress websites
+  const { data: wpWebsites = [] } = useQuery({
+    queryKey: ["wp-websites"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("websites")
+        .select("id, name, url")
+        .eq("type", "wordpress")
+        .eq("status", "connected")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch WP pages for selected website
+  const wpPagesMutation = useMutation({
+    mutationFn: async (websiteId: string) => {
+      const { data, error } = await supabase.functions.invoke("scan-template", {
+        body: { action: "list-wp-pages", website_id: websiteId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data.pages as WpPage[];
+    },
+    onSuccess: (pages) => {
+      setWpPages(pages);
+      toast({ title: "Pages loaded", description: `Found ${pages.length} WordPress pages.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
+    },
+  });
+
   // Scan URL mutation
   const scanMutation = useMutation({
     mutationFn: async (scanUrl: string) => {
