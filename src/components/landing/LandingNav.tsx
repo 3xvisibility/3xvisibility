@@ -108,6 +108,15 @@ export function LandingNav() {
                 </a>
               ))}
               <div className="pt-3 flex flex-col gap-2 border-t border-border/50 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleDarkMode}
+                  className="justify-start gap-2"
+                >
+                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {isDark ? "Light mode" : "Dark mode"}
+                </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/auth">Log in</Link>
                 </Button>
