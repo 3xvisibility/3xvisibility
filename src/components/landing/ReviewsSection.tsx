@@ -17,7 +17,7 @@ function ReviewCard({ review }: { review: typeof reviews[0] }) {
     <div className="flex-shrink-0 w-[320px] md:w-[360px] rounded-xl border border-border/50 bg-background p-6 hover:border-primary/20 hover:shadow-card-hover transition-all duration-300">
       <div className="flex items-center gap-1 mb-3">
         {[...Array(review.rating)].map((_, i) => (
-          <Star key={i} className="h-3.5 w-3.5 fill-primary text-primary" />
+          <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
         ))}
       </div>
       <p className="text-sm text-foreground leading-relaxed mb-4">"{review.text}"</p>
