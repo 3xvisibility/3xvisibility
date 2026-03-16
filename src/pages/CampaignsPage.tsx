@@ -145,12 +145,35 @@ export default function CampaignsPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data;
+      return { ...data, campaign_id: id };
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
       toast({ title: "Pages generated", description: `${data.generated} pages created successfully.` });
+
+      // Check if auto-build internal links is enabled
+      try {
+        const { data: settings } = await supabase
+          .from("internal_link_settings")
+          .select("enabled, auto_build")
+          .eq("campaign_id", data.campaign_id)
+          .maybeSingle();
+
+        if (settings?.enabled && (settings as any).auto_build) {
+          toast({ title: "Building internal links...", description: "Auto-linking related pages." });
+          const { data: linkData, error: linkErr } = await supabase.functions.invoke("build-internal-links", {
+            body: { campaign_id: data.campaign_id },
+          });
+          if (linkErr || linkData?.error) {
+            toast({ title: "Auto-linking failed", description: linkData?.error || linkErr?.message, variant: "destructive" });
+          } else {
+            toast({ title: "Internal links built", description: `${linkData.links_created} links created across ${linkData.pages_updated} pages.` });
+          }
+        }
+      } catch {
+        // Silent fail for auto-link check
+      }
     },
     onError: (err: Error) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
