@@ -15,6 +15,13 @@ interface DiscoveredPage {
   bodyHtml: string;
 }
 
+interface UrlGroup {
+  pattern: string;
+  patternLabel: string;
+  pages: string[];
+  suggestedVariables: string[];
+}
+
 function extractBodyContent(html: string): string {
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
@@ -64,10 +71,14 @@ function classifyPage(url: string, headings: { tag: string; text: string }[], te
 
 async function fetchPage(pageUrl: string): Promise<DiscoveredPage | null> {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     const resp = await fetch(pageUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)", Accept: "text/html" },
       redirect: "follow",
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!resp.ok) return null;
     const ct = resp.headers.get("content-type") || "";
     if (!ct.includes("html")) return null;
@@ -109,6 +120,58 @@ function discoverLinks(html: string, baseUrl: string): string[] {
   return [...links];
 }
 
+/**
+ * Group pages by URL structure pattern.
+ * e.g. /services/plumbing-new-york and /services/plumbing-chicago -> pattern "/services/{slug}"
+ */
+function groupPagesByUrlPattern(pages: DiscoveredPage[]): UrlGroup[] {
+  const patternMap = new Map<string, { pages: string[]; segments: string[][] }>();
+
+  for (const page of pages) {
+    try {
+      const parsed = new URL(page.url);
+      const segments = parsed.pathname.split("/").filter(Boolean);
+      if (segments.length === 0) continue;
+
+      // Create pattern by replacing the last segment with a placeholder
+      // For deeper paths, replace last segment
+      if (segments.length >= 2) {
+        const patternSegs = [...segments];
+        patternSegs[patternSegs.length - 1] = "{slug}";
+        const pattern = "/" + patternSegs.join("/");
+
+        if (!patternMap.has(pattern)) {
+          patternMap.set(pattern, { pages: [], segments: [] });
+        }
+        const group = patternMap.get(pattern)!;
+        group.pages.push(page.url);
+        group.segments.push(segments);
+      }
+    } catch { /* skip */ }
+  }
+
+  // Only keep groups with 2+ pages (actual patterns)
+  const groups: UrlGroup[] = [];
+  for (const [pattern, data] of patternMap) {
+    if (data.pages.length >= 2) {
+      // Extract the varying parts as suggested variables
+      const varyingValues = data.segments.map(s => s[s.length - 1]);
+      const parentPath = data.segments[0].slice(0, -1).join("/");
+
+      groups.push({
+        pattern,
+        patternLabel: `${parentPath ? parentPath + "/" : ""}{slug} (${data.pages.length} pages)`,
+        pages: data.pages,
+        suggestedVariables: ["slug"],
+      });
+    }
+  }
+
+  // Sort by number of pages descending
+  groups.sort((a, b) => b.pages.length - a.pages.length);
+  return groups;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -138,7 +201,7 @@ Deno.serve(async (req) => {
 
     // ACTION: Analyze patterns across multiple pages using AI
     if (action === "analyze-patterns") {
-      const { pages } = body as { pages: { title: string; headings: { tag: string; text: string }[]; textSnippet: string; type: string }[]; action: string };
+      const { pages } = body as { pages: { title: string; headings: { tag: string; text: string }[]; textSnippet: string; type: string; url?: string }[]; action: string };
 
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
       if (!LOVABLE_API_KEY) {
@@ -147,9 +210,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      const pagesForAi = pages.slice(0, 20).map((p) => ({
+      const pagesForAi = pages.slice(0, 30).map((p) => ({
         title: p.title,
         type: p.type,
+        url: p.url || "",
         h1: p.headings.find((h) => h.tag === "h1")?.text || "",
         snippet: p.textSnippet.slice(0, 200),
       }));
@@ -167,6 +231,7 @@ Deno.serve(async (req) => {
               role: "system",
               content: `You are analyzing pages from a website to detect patterns suitable for template generation. 
 Look for pages that follow similar structures but with different specific values (city names, service names, product names, etc.).
+Pay special attention to URL patterns like /services/plumbing-new-york and /services/plumbing-chicago.
 Group similar pages and suggest template patterns with variable placeholders.
 Only suggest patterns where at least 2 pages share the same structure with different values.`,
             },
@@ -259,13 +324,16 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
           headers["Authorization"] = `Basic ${btoa(`${creds.username}:${creds.app_password}`)}`;
         }
 
-        // Fetch WP pages and posts
         for (const endpoint of ["pages", "posts"]) {
           try {
-            const wpResp = await fetch(`${siteUrl}/wp-json/wp/v2/${endpoint}?per_page=50&status=publish`, { headers });
-            if (wpResp.ok) {
+            // Fetch up to 100 items (2 pages of 50)
+            for (let page = 1; page <= 2 && pages.length < 100; page++) {
+              const wpResp = await fetch(`${siteUrl}/wp-json/wp/v2/${endpoint}?per_page=50&page=${page}&status=publish`, { headers });
+              if (!wpResp.ok) break;
               const items = await wpResp.json();
+              if (items.length === 0) break;
               for (const item of items) {
+                if (pages.length >= 100) break;
                 const bodyHtml = item.content?.rendered || "";
                 const headings = extractHeadings(bodyHtml);
                 const textSnippet = extractTextSnippet(bodyHtml);
@@ -292,6 +360,7 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
             if (pagesResp.ok) {
               const { pages: shopPages } = await pagesResp.json();
               for (const sp of shopPages) {
+                if (pages.length >= 100) break;
                 const bodyHtml = sp.body_html || "";
                 const headings = extractHeadings(bodyHtml);
                 const textSnippet = extractTextSnippet(bodyHtml);
@@ -307,7 +376,6 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
             }
           } catch { /* skip */ }
 
-          // Products
           try {
             const prodResp = await fetch(`https://${shopDomain}/admin/api/2024-01/products.json?limit=50`, {
               headers: { "X-Shopify-Access-Token": creds.access_token },
@@ -315,6 +383,7 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
             if (prodResp.ok) {
               const { products } = await prodResp.json();
               for (const p of products) {
+                if (pages.length >= 100) break;
                 const bodyHtml = p.body_html || "";
                 const headings = extractHeadings(bodyHtml);
                 const textSnippet = extractTextSnippet(bodyHtml);
@@ -332,12 +401,14 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
         }
       }
 
-      return new Response(JSON.stringify({ success: true, pages }), {
+      const urlGroups = groupPagesByUrlPattern(pages);
+
+      return new Response(JSON.stringify({ success: true, pages, urlGroups }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // DEFAULT: Crawl from public URL
+    // DEFAULT: Crawl from public URL with multi-depth BFS (max 100 pages, max depth 3)
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -349,31 +420,90 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    // Fetch homepage
-    const homeResp = await fetch(formattedUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)", Accept: "text/html" },
-    });
-    if (!homeResp.ok) {
-      return new Response(JSON.stringify({ error: `Failed to fetch: ${homeResp.status}` }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const maxPages = Math.min(body.max_pages || 100, 100);
+    const maxDepth = Math.min(body.max_depth || 3, 5);
 
-    const homeHtml = await homeResp.text();
-    const internalLinks = discoverLinks(homeHtml, formattedUrl);
-
-    // Crawl up to 20 internal pages
-    const pagesToCrawl = internalLinks.slice(0, 20);
+    const base = new URL(formattedUrl);
+    const visited = new Set<string>();
     const results: DiscoveredPage[] = [];
 
-    const crawlPromises = pagesToCrawl.map((link) => fetchPage(link));
-    const crawled = await Promise.all(crawlPromises);
+    // BFS queue: [url, depth]
+    const queue: [string, number][] = [[formattedUrl, 0]];
+    visited.add(formattedUrl);
 
-    for (const page of crawled) {
-      if (page) results.push(page);
+    while (queue.length > 0 && results.length < maxPages) {
+      // Process in batches of 5 for concurrency
+      const batchSize = Math.min(5, queue.length, maxPages - results.length);
+      const batch = queue.splice(0, batchSize);
+
+      const promises = batch.map(async ([pageUrl, depth]) => {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000);
+          const resp = await fetch(pageUrl, {
+            headers: { "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)", Accept: "text/html" },
+            redirect: "follow",
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+
+          if (!resp.ok) return { page: null, links: [], depth };
+          const ct = resp.headers.get("content-type") || "";
+          if (!ct.includes("html")) return { page: null, links: [], depth };
+
+          const rawHtml = await resp.text();
+          const bodyHtml = extractBodyContent(rawHtml);
+          const headings = extractHeadings(bodyHtml);
+          const textSnippet = extractTextSnippet(bodyHtml);
+
+          const titleMatch = rawHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+          const title = titleMatch
+            ? titleMatch[1].replace(/<[^>]*>/g, "").trim()
+            : headings[0]?.text || pageUrl;
+
+          const type = classifyPage(pageUrl, headings, textSnippet);
+          const page: DiscoveredPage = { url: pageUrl, title, type, headings, textSnippet, bodyHtml };
+
+          // Discover links for next depth level
+          const links = depth < maxDepth ? discoverLinks(rawHtml, pageUrl) : [];
+
+          return { page, links, depth };
+        } catch {
+          return { page: null, links: [], depth };
+        }
+      });
+
+      const batchResults = await Promise.all(promises);
+
+      for (const { page, links, depth } of batchResults) {
+        if (page && results.length < maxPages) {
+          results.push(page);
+        }
+        // Add new links to queue
+        if (depth < maxDepth) {
+          for (const link of links) {
+            if (!visited.has(link) && visited.size < maxPages * 3) {
+              visited.add(link);
+              queue.push([link, depth + 1]);
+            }
+          }
+        }
+      }
     }
 
-    return new Response(JSON.stringify({ success: true, pages: results }), {
+    const urlGroups = groupPagesByUrlPattern(results);
+
+    return new Response(JSON.stringify({
+      success: true,
+      pages: results,
+      urlGroups,
+      stats: {
+        total_discovered: visited.size,
+        total_crawled: results.length,
+        max_pages: maxPages,
+        max_depth: maxDepth,
+      },
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
