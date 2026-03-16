@@ -136,6 +136,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_content_length: string
+          ai_language: string
+          ai_tone: string
           company: string | null
           created_at: string
           full_name: string | null
@@ -144,6 +147,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_content_length?: string
+          ai_language?: string
+          ai_tone?: string
           company?: string | null
           created_at?: string
           full_name?: string | null
@@ -152,6 +158,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_content_length?: string
+          ai_language?: string
+          ai_tone?: string
           company?: string | null
           created_at?: string
           full_name?: string | null
@@ -163,6 +172,8 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          ai_generations_limit: number
+          ai_generations_used: number
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -176,6 +187,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_generations_limit?: number
+          ai_generations_used?: number
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -189,6 +202,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_generations_limit?: number
+          ai_generations_used?: number
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
