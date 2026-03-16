@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
@@ -15,6 +15,16 @@ const navLinks = [
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains("dark")
+  );
+
+  const toggleDarkMode = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -50,7 +60,15 @@ export function LandingNav() {
           ))}
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
+            onClick={toggleDarkMode}
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
             <Link to="/auth">Log in</Link>
           </Button>
@@ -90,6 +108,15 @@ export function LandingNav() {
                 </a>
               ))}
               <div className="pt-3 flex flex-col gap-2 border-t border-border/50 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleDarkMode}
+                  className="justify-start gap-2"
+                >
+                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {isDark ? "Light mode" : "Dark mode"}
+                </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/auth">Log in</Link>
                 </Button>
