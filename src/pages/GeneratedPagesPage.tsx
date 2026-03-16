@@ -55,6 +55,29 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const publishMutation = useMutation({
+    mutationFn: async (pageIds: string[]) => {
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { page_ids: pageIds },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({
+        title: "Publishing complete",
+        description: `${data.published} published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const pendingPages = pages.filter((p) => p.status === "pending");
+
   const filtered = pages.filter(
     (p) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
