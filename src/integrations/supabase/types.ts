@@ -83,6 +83,9 @@ export type Database = {
           external_id: string | null
           external_url: string | null
           id: string
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
           slug: string
           status: Database["public"]["Enums"]["page_status"]
           title: string
@@ -97,6 +100,9 @@ export type Database = {
           external_id?: string | null
           external_url?: string | null
           id?: string
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
           slug: string
           status?: Database["public"]["Enums"]["page_status"]
           title: string
@@ -111,6 +117,9 @@ export type Database = {
           external_id?: string | null
           external_url?: string | null
           id?: string
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["page_status"]
           title?: string
