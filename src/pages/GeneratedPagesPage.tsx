@@ -13,6 +13,9 @@ import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, L
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { calculateSeoScore } from "@/lib/seo-score";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
