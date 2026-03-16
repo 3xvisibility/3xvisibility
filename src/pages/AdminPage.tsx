@@ -345,10 +345,50 @@ export default function AdminPage() {
 
       <Tabs defaultValue="users">
         <TabsList>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
         </TabsList>
+
+        {/* Activity feed tab */}
+        <TabsContent value="activity" className="space-y-4">
+          {isLoading ? (
+            <Skeleton className="h-[400px] rounded-xl" />
+          ) : (
+            <Card>
+              <CardContent className="pt-6 px-0">
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-0 divide-y divide-border">
+                    {(data?.activity || []).length === 0 ? (
+                      <p className="text-center text-muted-foreground py-12">No activity yet</p>
+                    ) : (
+                      data!.activity.map((item, i) => {
+                        const Icon = item.type === "signup" ? UserPlus : item.type === "campaign" ? Rocket : FileText;
+                        const iconClass = item.type === "signup" ? "text-primary bg-primary/10" : item.type === "campaign" ? "text-accent-foreground bg-accent" : "text-success bg-success/10";
+                        return (
+                          <div key={i} className="flex items-start gap-3 px-6 py-3">
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${iconClass}`}>
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm">{item.message}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {item.user_email && <span className="text-xs text-muted-foreground truncate">{item.user_email}</span>}
+                                <span className="text-xs text-muted-foreground">·</span>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">{formatRelativeTime(item.timestamp)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         {/* Users tab */}
         <TabsContent value="users" className="space-y-4">
