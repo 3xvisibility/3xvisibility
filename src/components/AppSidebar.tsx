@@ -31,6 +31,7 @@ const mainNav = [
   { title: "Campaigns", url: "/campaigns", icon: Rocket },
   { title: "Generated Pages", url: "/pages", icon: Layers },
   { title: "Templates", url: "/templates", icon: FileText },
+  { title: "AI Scanner", url: "/scanner", icon: ScanSearch },
   { title: "Websites", url: "/websites", icon: Globe },
 ];
 

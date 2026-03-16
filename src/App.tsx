@@ -107,6 +107,13 @@ const App = () => {
               }
             />
             <Route
+              path="/scanner"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><TemplateScannerPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            <Route
               path="/billing"
               element={
                 <ProtectedRoute session={session}>
