@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Link2, CheckCircle2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Link2, CheckCircle2, Settings2, Network } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { LinkGraph } from "./LinkGraph";
 
 interface InternalLinkDialogProps {
   campaignId: string;
@@ -61,6 +63,34 @@ export function InternalLinkDialog({
         .eq("campaign_id", campaignId);
       if (error) throw error;
       return count || 0;
+    },
+    enabled: open,
+  });
+
+  // Graph data: pages and links
+  const { data: graphPages = [] } = useQuery({
+    queryKey: ["graph-pages", campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("generated_pages")
+        .select("id, title")
+        .eq("campaign_id", campaignId)
+        .neq("status", "failed");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open,
+  });
+
+  const { data: graphLinks = [] } = useQuery({
+    queryKey: ["graph-links", campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("internal_links")
+        .select("source_page_id, target_page_id")
+        .eq("campaign_id", campaignId);
+      if (error) throw error;
+      return data || [];
     },
     enabled: open,
   });
@@ -124,6 +154,7 @@ export function InternalLinkDialog({
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["internal-links-count", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ["graph-links", campaignId] });
       toast({
         title: "Internal links built",
         description: `${data.links_created} links created across ${data.pages_updated} pages.`,
@@ -136,7 +167,7 @@ export function InternalLinkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="h-5 w-5 text-primary" />
@@ -149,145 +180,168 @@ export function InternalLinkDialog({
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-5 mt-4">
-            {/* Status */}
-            {(linkCount ?? 0) > 0 && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
-                <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                <span className="text-sm">
-                  <strong>{linkCount}</strong> internal links currently active
-                </span>
-              </div>
-            )}
+          <Tabs defaultValue="settings" className="mt-4">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="settings" className="flex items-center gap-1.5">
+                <Settings2 className="h-3.5 w-3.5" /> Settings
+              </TabsTrigger>
+              <TabsTrigger value="graph" className="flex items-center gap-1.5">
+                <Network className="h-3.5 w-3.5" /> Link Graph
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Enable toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium">Enable Internal Linking</Label>
-                <p className="text-xs text-muted-foreground">Auto-link related pages in this campaign</p>
-              </div>
-              <Switch checked={enabled} onCheckedChange={setEnabled} />
-            </div>
-
-            {enabled && (
-              <>
-                {/* Max links */}
-                <div>
-                  <Label>Maximum links per page</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={maxLinks}
-                    onChange={(e) => setMaxLinks(parseInt(e.target.value) || 5)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Number of related page links to include on each page</p>
+            <TabsContent value="settings" className="space-y-5 mt-4">
+              {/* Status */}
+              {(linkCount ?? 0) > 0 && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                  <span className="text-sm">
+                    <strong>{linkCount}</strong> internal links currently active
+                  </span>
                 </div>
+              )}
 
-                {/* Section title */}
+              {/* Enable toggle */}
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label>Link section title</Label>
-                  <Input
-                    value={sectionTitle}
-                    onChange={(e) => setSectionTitle(e.target.value)}
-                    placeholder="e.g., Other Locations, Related Services"
-                  />
+                  <Label className="text-sm font-medium">Enable Internal Linking</Label>
+                  <p className="text-xs text-muted-foreground">Auto-link related pages in this campaign</p>
                 </div>
+                <Switch checked={enabled} onCheckedChange={setEnabled} />
+              </div>
 
-                {/* Anchor format */}
-                <div>
-                  <Label>Anchor text format</Label>
-                  <Input
-                    value={anchorFormat}
-                    onChange={(e) => setAnchorFormat(e.target.value)}
-                    placeholder="e.g., {service} in {location}"
-                    className="font-mono text-sm"
-                  />
-                  <div className="flex flex-wrap gap-1 mt-1.5">
-                    <button
-                      type="button"
-                      className="text-xs px-2 py-0.5 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                      onClick={() => setAnchorFormat("{title}")}
-                    >
-                      {"{title}"}
-                    </button>
-                    {cleanVars.map((v) => (
+              {enabled && (
+                <>
+                  {/* Max links */}
+                  <div>
+                    <Label>Maximum links per page</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={maxLinks}
+                      onChange={(e) => setMaxLinks(parseInt(e.target.value) || 5)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Number of related page links to include on each page</p>
+                  </div>
+
+                  {/* Section title */}
+                  <div>
+                    <Label>Link section title</Label>
+                    <Input
+                      value={sectionTitle}
+                      onChange={(e) => setSectionTitle(e.target.value)}
+                      placeholder="e.g., Other Locations, Related Services"
+                    />
+                  </div>
+
+                  {/* Anchor format */}
+                  <div>
+                    <Label>Anchor text format</Label>
+                    <Input
+                      value={anchorFormat}
+                      onChange={(e) => setAnchorFormat(e.target.value)}
+                      placeholder="e.g., {service} in {location}"
+                      className="font-mono text-sm"
+                    />
+                    <div className="flex flex-wrap gap-1 mt-1.5">
                       <button
-                        key={v}
                         type="button"
-                        className="text-xs px-2 py-0.5 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors font-mono"
-                        onClick={() => setAnchorFormat((prev) => `${prev}{${v}}`)}
+                        className="text-xs px-2 py-0.5 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                        onClick={() => setAnchorFormat("{title}")}
                       >
-                        {`{${v}}`}
+                        {"{title}"}
                       </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Grouping variable */}
-                <div>
-                  <Label>Smart grouping variable</Label>
-                  <p className="text-xs text-muted-foreground mb-1.5">
-                    Link pages that share this variable (e.g., same "service" across different "location" values)
-                  </p>
-                  <Select value={groupingVar} onValueChange={setGroupingVar}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="None (link all pages)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (link all pages)</SelectItem>
                       {cleanVars.map((v) => (
-                        <SelectItem key={v} value={v}>{v}</SelectItem>
+                        <button
+                          key={v}
+                          type="button"
+                          className="text-xs px-2 py-0.5 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors font-mono"
+                          onClick={() => setAnchorFormat((prev) => `${prev}{${v}}`)}
+                        >
+                          {`{${v}}`}
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Preview */}
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Preview</p>
-                  <div className="text-sm">
-                    <p className="font-semibold">{sectionTitle}</p>
-                    <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-0.5">
-                      <li className="text-primary underline text-xs">{anchorFormat || "{title}"}</li>
-                      <li className="text-primary underline text-xs">{anchorFormat || "{title}"}</li>
-                      <li className="text-primary underline text-xs">{anchorFormat || "{title}"}</li>
-                    </ul>
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
 
-            {/* Actions */}
-            <div className="flex justify-between items-center gap-2 pt-2 border-t border-border">
-              <Button
-                variant="outline"
-                onClick={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending}
-              >
-                {saveMutation.isPending ? "Saving..." : "Save Settings"}
-              </Button>
-              <Button
-                onClick={async () => {
-                  if (!existingSettings) {
-                    await saveMutation.mutateAsync();
-                  }
-                  buildMutation.mutate();
-                }}
-                disabled={!enabled || buildMutation.isPending}
-              >
-                {buildMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Building...
-                  </>
-                ) : (
-                  <>
-                    <Link2 className="mr-2 h-4 w-4" /> Build Links Now
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
+                  {/* Grouping variable */}
+                  <div>
+                    <Label>Smart grouping variable</Label>
+                    <p className="text-xs text-muted-foreground mb-1.5">
+                      Link pages that share this variable (e.g., same "service" across different "location" values)
+                    </p>
+                    <Select value={groupingVar} onValueChange={setGroupingVar}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="None (link all pages)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (link all pages)</SelectItem>
+                        {cleanVars.map((v) => (
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Preview */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Preview</p>
+                    <div className="text-sm">
+                      <p className="font-semibold">{sectionTitle}</p>
+                      <ul className="list-disc list-inside text-muted-foreground mt-1 space-y-0.5">
+                        <li className="text-primary underline text-xs">{anchorFormat || "{title}"}</li>
+                        <li className="text-primary underline text-xs">{anchorFormat || "{title}"}</li>
+                        <li className="text-primary underline text-xs">{anchorFormat || "{title}"}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-between items-center gap-2 pt-2 border-t border-border">
+                <Button
+                  variant="outline"
+                  onClick={() => saveMutation.mutate()}
+                  disabled={saveMutation.isPending}
+                >
+                  {saveMutation.isPending ? "Saving..." : "Save Settings"}
+                </Button>
+                <Button
+                  onClick={async () => {
+                    if (!existingSettings) {
+                      await saveMutation.mutateAsync();
+                    }
+                    buildMutation.mutate();
+                  }}
+                  disabled={!enabled || buildMutation.isPending}
+                >
+                  {buildMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Building...
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="mr-2 h-4 w-4" /> Build Links Now
+                    </>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="graph" className="mt-4">
+              {graphLinks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Network className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                  <p className="text-sm text-muted-foreground">No internal links built yet.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Configure settings and click "Build Links Now" to generate the link graph.</p>
+                </div>
+              ) : (
+                <LinkGraph pages={graphPages} links={graphLinks} />
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </DialogContent>
     </Dialog>
