@@ -116,6 +116,14 @@ const App = () => {
               }
             />
             <Route
+              path="/discovery"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><WebsiteDiscoveryPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/billing"
               element={
                 <ProtectedRoute session={session}>

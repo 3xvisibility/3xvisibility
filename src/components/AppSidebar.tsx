@@ -33,6 +33,7 @@ const mainNav = [
   { title: "Generated Pages", url: "/pages", icon: Layers },
   { title: "Templates", url: "/templates", icon: FileText },
   { title: "AI Scanner", url: "/scanner", icon: ScanSearch },
+  { title: "Discovery", url: "/discovery", icon: Compass },
   { title: "Websites", url: "/websites", icon: Globe },
 ];
 
