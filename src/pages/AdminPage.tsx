@@ -246,6 +246,7 @@ export default function AdminPage() {
         users: AdminUser[];
         campaigns: Campaign[];
         subscriptions: Subscription[];
+        activity: ActivityItem[];
         overview: AdminOverview;
       };
     },
