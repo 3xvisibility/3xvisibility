@@ -13,6 +13,9 @@ import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, L
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { calculateSeoScore } from "@/lib/seo-score";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
@@ -296,7 +299,7 @@ export default function GeneratedPagesPage() {
               </thead>
               <tbody>
                 {filtered.map((page) => {
-                  const hasSeo = !!(page as any).seo_title || !!(page as any).seo_description;
+                  const seoResult = calculateSeoScore((page as any).seo_title, (page as any).seo_description, (page as any).seo_keywords, page.title);
                   const isSelected = selectedIds.has(page.id);
                   return (
                     <tr
@@ -326,13 +329,38 @@ export default function GeneratedPagesPage() {
                         <Badge variant="secondary" className={statusColors[page.status]}>{page.status}</Badge>
                       </td>
                       <td className="p-4 hidden lg:table-cell">
-                        {hasSeo ? (
-                          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
-                            <Tag className="h-2.5 w-2.5 mr-1" /> SEO
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
+                        <TooltipProvider delayDuration={200}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1.5 cursor-default">
+                                <div className="w-8 h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      seoResult.score >= 85 ? "bg-emerald-500" :
+                                      seoResult.score >= 60 ? "bg-primary" :
+                                      seoResult.score >= 35 ? "bg-amber-500" : "bg-destructive"
+                                    }`}
+                                    style={{ width: `${seoResult.score}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[10px] font-semibold tabular-nums ${seoResult.color}`}>
+                                  {seoResult.score}
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="max-w-[220px] p-3">
+                              <p className="text-xs font-semibold mb-1.5">SEO Score: {seoResult.score}/100 ({seoResult.label})</p>
+                              <div className="space-y-1">
+                                {seoResult.checks.map((c, i) => (
+                                  <div key={i} className="flex items-start gap-1.5 text-[10px]">
+                                    <span className={c.passed ? "text-emerald-500" : "text-destructive"}>{c.passed ? "✓" : "✗"}</span>
+                                    <span className={c.passed ? "text-muted-foreground" : "text-foreground"}>{c.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
@@ -437,11 +465,41 @@ export default function GeneratedPagesPage() {
               Edit SEO Metadata
             </DialogTitle>
           </DialogHeader>
-          {seoEditPage && (
+          {seoEditPage && (() => {
+            const liveKeywords = seoForm.seo_keywords.split(",").map(k => k.trim()).filter(Boolean);
+            const liveScore = calculateSeoScore(seoForm.seo_title, seoForm.seo_description, liveKeywords, seoEditPage.title);
+            return (
             <div className="space-y-4 mt-2">
-              <p className="text-xs text-muted-foreground">
-                Page: <span className="font-medium text-foreground">{seoEditPage.title}</span>
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Page: <span className="font-medium text-foreground">{seoEditPage.title}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        liveScore.score >= 85 ? "bg-emerald-500" :
+                        liveScore.score >= 60 ? "bg-primary" :
+                        liveScore.score >= 35 ? "bg-amber-500" : "bg-destructive"
+                      }`}
+                      style={{ width: `${liveScore.score}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-bold tabular-nums ${liveScore.color}`}>
+                    {liveScore.score}
+                  </span>
+                </div>
+              </div>
+
+              {/* Live checklist */}
+              <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px]">
+                {liveScore.checks.map((c, i) => (
+                  <div key={i} className="flex items-center gap-1">
+                    <span className={c.passed ? "text-emerald-500" : "text-destructive"}>{c.passed ? "✓" : "✗"}</span>
+                    <span className={c.passed ? "text-muted-foreground" : "text-foreground"}>{c.label}</span>
+                  </div>
+                ))}
+              </div>
 
               <div className="border rounded-lg p-4 bg-muted/30 space-y-1">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Search preview</p>
@@ -506,7 +564,8 @@ export default function GeneratedPagesPage() {
                 </Button>
               </div>
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
