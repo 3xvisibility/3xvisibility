@@ -59,10 +59,36 @@ Deno.serve(async (req) => {
 
       const { data: profiles } = await serviceClient.from("profiles").select("*");
       const { data: campaigns } = await serviceClient.from("campaigns").select("*");
-      const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at");
+      const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at, title, user_id");
       const { data: subscriptions } = await serviceClient.from("subscriptions").select("*");
       const { data: websites } = await serviceClient.from("websites").select("id, user_id, type, status");
 
+      // Build activity feed from recent events
+      const activity: { type: string; message: string; timestamp: string; user_email?: string }[] = [];
+
+      // Recent signups (last 50)
+      const sortedUsers = [...(authUsers?.users || [])].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
+      for (const u of sortedUsers) {
+        activity.push({ type: "signup", message: `New user signed up`, timestamp: u.created_at, user_email: u.email });
+      }
+
+      // Recent campaigns (last 50)
+      const sortedCampaigns = [...(campaigns || [])].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
+      for (const c of sortedCampaigns) {
+        const cUser = authUsers?.users?.find((u: any) => u.id === c.user_id);
+        activity.push({ type: "campaign", message: `Campaign "${c.name}" created (${c.status})`, timestamp: c.created_at, user_email: cUser?.email });
+      }
+
+      // Recent pages (last 50)
+      const sortedPages = [...(generatedPages || [])].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
+      for (const p of sortedPages) {
+        const pUser = authUsers?.users?.find((u: any) => u.id === p.user_id);
+        activity.push({ type: "page", message: `Page "${p.title}" generated (${p.status})`, timestamp: p.created_at, user_email: pUser?.email });
+      }
+
+      // Sort all activity by timestamp descending, take top 100
+      activity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const recentActivity = activity.slice(0, 100);
       const users = (authUsers?.users || []).map((u: any) => {
         const profile = profiles?.find((p: any) => p.user_id === u.id);
         const sub = subscriptions?.find((s: any) => s.user_id === u.id);
@@ -100,6 +126,7 @@ Deno.serve(async (req) => {
           users,
           campaigns: campaigns || [],
           subscriptions: subscriptions || [],
+          activity: recentActivity,
           overview: {
             total_users: users.length,
             total_campaigns: campaigns?.length || 0,

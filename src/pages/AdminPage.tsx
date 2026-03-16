@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AdminUser {
   id: string;
@@ -61,6 +62,13 @@ interface Subscription {
   current_period_end: string | null;
 }
 
+interface ActivityItem {
+  type: "signup" | "campaign" | "page";
+  message: string;
+  timestamp: string;
+  user_email?: string;
+}
+
 const PLAN_LIMITS: Record<string, number> = {
   free: 0,
   starter: 100,
@@ -100,6 +108,19 @@ function StatCard({ title, value, icon: Icon, subtitle, variant }: {
 function formatDate(d: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatRelativeTime(d: string) {
+  const now = Date.now();
+  const diff = now - new Date(d).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(d);
 }
 
 function statusBadge(status: string) {
@@ -238,6 +259,7 @@ export default function AdminPage() {
         users: AdminUser[];
         campaigns: Campaign[];
         subscriptions: Subscription[];
+        activity: ActivityItem[];
         overview: AdminOverview;
       };
     },
@@ -334,12 +356,52 @@ export default function AdminPage() {
         </div>
       )}
 
-      <Tabs defaultValue="users">
+      <Tabs defaultValue="activity">
         <TabsList>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
           <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
         </TabsList>
+
+        {/* Activity feed tab */}
+        <TabsContent value="activity" className="space-y-4">
+          {isLoading ? (
+            <Skeleton className="h-[400px] rounded-xl" />
+          ) : (
+            <Card>
+              <CardContent className="pt-6 px-0">
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-0 divide-y divide-border">
+                    {(data?.activity || []).length === 0 ? (
+                      <p className="text-center text-muted-foreground py-12">No activity yet</p>
+                    ) : (
+                      data!.activity.map((item, i) => {
+                        const Icon = item.type === "signup" ? UserPlus : item.type === "campaign" ? Rocket : FileText;
+                        const iconClass = item.type === "signup" ? "text-primary bg-primary/10" : item.type === "campaign" ? "text-accent-foreground bg-accent" : "text-success bg-success/10";
+                        return (
+                          <div key={i} className="flex items-start gap-3 px-6 py-3">
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${iconClass}`}>
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm">{item.message}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {item.user_email && <span className="text-xs text-muted-foreground truncate">{item.user_email}</span>}
+                                <span className="text-xs text-muted-foreground">·</span>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">{formatRelativeTime(item.timestamp)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         {/* Users tab */}
         <TabsContent value="users" className="space-y-4">
