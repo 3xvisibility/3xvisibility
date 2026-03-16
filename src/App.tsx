@@ -17,6 +17,7 @@ import TemplatesPage from "./pages/TemplatesPage";
 import WebsitesPage from "./pages/WebsitesPage";
 import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
+import GeneratedPagesPage from "./pages/GeneratedPagesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -93,6 +94,14 @@ const App = () => {
               element={
                 <ProtectedRoute session={session}>
                   <DashboardLayout onLogout={handleLogout}><WebsitesPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pages"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><GeneratedPagesPage /></DashboardLayout>
                 </ProtectedRoute>
               }
             />

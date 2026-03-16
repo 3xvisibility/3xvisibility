@@ -1,7 +1,8 @@
 import { 
   LayoutDashboard, 
   Rocket, 
-  FileText, 
+  FileText,
+  Layers,
   Globe, 
   CreditCard, 
   Settings,
@@ -27,6 +28,7 @@ import { Button } from "@/components/ui/button";
 const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Campaigns", url: "/campaigns", icon: Rocket },
+  { title: "Generated Pages", url: "/pages", icon: Layers },
   { title: "Templates", url: "/templates", icon: FileText },
   { title: "Websites", url: "/websites", icon: Globe },
 ];
