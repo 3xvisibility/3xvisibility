@@ -35,6 +35,8 @@ import { calculateSeoScore } from "@/lib/seo-score";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AnalyticsPage() {
+  const { toast } = useToast();
+
   // Fetch all generated pages
   const { data: pages = [], isLoading: loadingPages } = useQuery({
     queryKey: ["analytics-pages"],
