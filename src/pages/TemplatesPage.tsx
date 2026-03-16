@@ -87,6 +87,27 @@ export default function TemplatesPage() {
     },
   });
 
+  const duplicateMutation = useMutation({
+    mutationFn: async (tpl: Template) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("templates").insert({
+        name: `${tpl.name} (Copy)`,
+        content: tpl.content,
+        variables: tpl.variables,
+        user_id: user.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Template duplicated" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("templates").delete().eq("id", id);
@@ -332,10 +353,7 @@ export default function TemplatesPage() {
                     >
                       <Eye className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                      navigator.clipboard.writeText(tpl.content);
-                      toast({ title: "Copied to clipboard" });
-                    }}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate">
                       <Copy className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(tpl.id)}>
