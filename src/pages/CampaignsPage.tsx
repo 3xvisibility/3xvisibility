@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2 } from "lucide-react";
+import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
@@ -34,6 +35,7 @@ export default function CampaignsPage() {
   const [campaignName, setCampaignName] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedWebsite, setSelectedWebsite] = useState("");
+  const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -345,9 +347,14 @@ export default function CampaignsPage() {
                           <span className="text-xs text-muted-foreground animate-pulse">Processing...</span>
                         )}
                         {c.status === "completed" && (
-                          <Button size="sm" variant="ghost" className="text-muted-foreground">
-                            <ArrowRight className="h-3 w-3 mr-1" /> View
-                          </Button>
+                          <>
+                            <Button size="sm" variant="ghost" className="text-primary" onClick={() => setLinkDialogCampaign(c)} title="Internal Linking">
+                              <Link2 className="h-3 w-3 mr-1" /> Links
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-muted-foreground">
+                              <ArrowRight className="h-3 w-3 mr-1" /> View
+                            </Button>
+                          </>
                         )}
                         <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMutation.mutate(c.id)}>
                           <Trash2 className="h-3 w-3" />
@@ -360,6 +367,19 @@ export default function CampaignsPage() {
             </table>
           </div>
         </Card>
+      )}
+
+      {/* Internal Linking Dialog */}
+      {linkDialogCampaign && (
+        <InternalLinkDialog
+          campaignId={linkDialogCampaign.id}
+          campaignName={linkDialogCampaign.name}
+          templateVariables={
+            (templates.find((t) => t.id === linkDialogCampaign.template_id)?.variables as string[]) || []
+          }
+          open={!!linkDialogCampaign}
+          onOpenChange={(v) => { if (!v) setLinkDialogCampaign(null); }}
+        />
       )}
     </div>
   );
