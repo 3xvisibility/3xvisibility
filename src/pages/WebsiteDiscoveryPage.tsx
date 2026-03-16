@@ -999,6 +999,16 @@ export default function WebsiteDiscoveryPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Page Comparison Dialog */}
+      {compareGroup && (
+        <PageComparisonDialog
+          open={!!compareGroup}
+          onOpenChange={(open) => !open && setCompareGroup(null)}
+          group={compareGroup}
+          allPages={pages}
+        />
+      )}
     </div>
   );
 }
