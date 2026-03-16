@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
           users,
           campaigns: campaigns || [],
           subscriptions: subscriptions || [],
+          activity: recentActivity,
           overview: {
             total_users: users.length,
             total_campaigns: campaigns?.length || 0,
