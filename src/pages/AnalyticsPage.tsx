@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -12,6 +13,8 @@ import {
   Sparkles,
   TrendingUp,
   Tag,
+  Download,
+  FileDown,
 } from "lucide-react";
 import {
   BarChart,
@@ -29,6 +32,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateSeoScore } from "@/lib/seo-score";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AnalyticsPage() {
   // Fetch all generated pages
