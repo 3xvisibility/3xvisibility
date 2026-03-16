@@ -134,8 +134,27 @@ export default function TemplatesPage() {
                 <div>
                   <Label htmlFor="ai-prompt">Describe the template you need</Label>
                   <p className="text-xs text-muted-foreground mb-1">
-                    e.g. "Create a landing page template for a plumbing service company"
+                    Try an example or write your own prompt
                   </p>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {[
+                      "Landing page for a plumbing service company",
+                      "Local SEO page for a dental clinic",
+                      "Product page for an e-commerce store",
+                      "Course landing page for an online academy",
+                      "Restaurant location page with menu highlights",
+                      "Real estate listing page for property agents",
+                    ].map((example) => (
+                      <button
+                        key={example}
+                        type="button"
+                        onClick={() => setAiPrompt(`Create a ${example.toLowerCase()}`)}
+                        className="text-xs px-2.5 py-1 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
                   <Textarea
                     id="ai-prompt"
                     placeholder="Create a landing page template for a plumbing service company with service details, pricing, and location-specific content..."
