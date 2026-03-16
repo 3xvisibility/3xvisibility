@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import PageComparisonDialog from "@/components/discovery/PageComparisonDialog";
 
 interface DiscoveredPage {
   url: string;
