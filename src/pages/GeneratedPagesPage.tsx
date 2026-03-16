@@ -185,6 +185,18 @@ export default function GeneratedPagesPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex gap-1">
+                        {page.status === "pending" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-primary"
+                            onClick={() => publishMutation.mutate([page.id])}
+                            disabled={publishMutation.isPending}
+                            title="Publish"
+                          >
+                            <Send className="h-3 w-3" />
+                          </Button>
+                        )}
                         <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                           <Eye className="h-3 w-3" />
                         </Button>
