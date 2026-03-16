@@ -168,6 +168,9 @@ export default function WebsiteDiscoveryPage() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [selectionPopover, setSelectionPopover] = useState<{ position: { x: number; y: number }; text: string } | null>(null);
 
+  // URL group template creation
+  const [pickGroupDialog, setPickGroupDialog] = useState<UrlGroup | null>(null);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -397,6 +400,67 @@ export default function WebsiteDiscoveryPage() {
     [selectionPopover, toast]
   );
 
+  // Auto-create template from URL group
+  const handlePickRepresentativePage = useCallback(
+    (page: DiscoveredPage, group: UrlGroup) => {
+      setPickGroupDialog(null);
+
+      // Extract the varying segment value from this page's URL
+      try {
+        const parsed = new URL(page.url);
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        const slug = segments[segments.length - 1] || "";
+
+        // Auto-map: find the slug text in the page content and pre-assign it as {slug}
+        const initialMappings: VisualMapping[] = [];
+
+        if (slug) {
+          // Also try to find slug-like text in the title or headings
+          const slugText = slug.replace(/-/g, " ");
+          
+          // Map the slug in the title if present
+          if (page.title.toLowerCase().includes(slugText.toLowerCase())) {
+            // Find the actual cased version in the title
+            const idx = page.title.toLowerCase().indexOf(slugText.toLowerCase());
+            const actualText = page.title.substring(idx, idx + slugText.length);
+            initialMappings.push({
+              id: `auto-slug-title-${Date.now()}`,
+              original: actualText,
+              variable: "slug",
+              value: actualText,
+            });
+          }
+
+          // Map the raw slug (hyphenated) in URLs/content
+          if (page.bodyHtml.includes(slug)) {
+            initialMappings.push({
+              id: `auto-slug-url-${Date.now()}`,
+              original: slug,
+              variable: "slug",
+              value: slug,
+            });
+          }
+        }
+
+        setConvertingPage(page);
+        setVisualMappings(initialMappings);
+        setTemplateName(`${group.pattern.replace(/\{slug\}/g, "").replace(/\//g, " ").trim()} Template`);
+
+        toast({
+          title: "Template started",
+          description: initialMappings.length > 0
+            ? `Auto-mapped ${initialMappings.length} occurrence(s) of the varying URL segment as {slug}. Select more text to add variables.`
+            : "Select text in the preview to assign template variables.",
+        });
+      } catch {
+        setConvertingPage(page);
+        setVisualMappings([]);
+        setTemplateName(page.title);
+      }
+    },
+    [toast]
+  );
+
   const isCrawling = crawlUrlMutation.isPending || crawlConnectedMutation.isPending;
 
   // Filter pages
@@ -617,6 +681,14 @@ export default function WebsiteDiscoveryPage() {
                           )}
                         </div>
                       </ScrollArea>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full mt-1"
+                        onClick={() => setPickGroupDialog(group)}
+                      >
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Create Template
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -871,6 +943,46 @@ export default function WebsiteDiscoveryPage() {
           onAssign={handleVisualAssign}
           onClose={() => setSelectionPopover(null)}
         />
+      )}
+
+      {/* Pick Representative Page Dialog */}
+      {pickGroupDialog && (
+        <Dialog open={!!pickGroupDialog} onOpenChange={(open) => !open && setPickGroupDialog(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Choose a Representative Page</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-2">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary shrink-0" />
+                <code className="text-xs font-mono text-primary bg-primary/5 px-2 py-1 rounded">{pickGroupDialog.pattern}</code>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Select one page to use as the template base. The varying URL segment will be auto-mapped as <code className="font-mono text-primary">{"{slug}"}</code>.
+              </p>
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-1">
+                  {pickGroupDialog.pages.map((pageUrl, i) => {
+                    const matchedPage = pages.find((p) => p.url === pageUrl);
+                    if (!matchedPage) return null;
+                    let pathname = pageUrl;
+                    try { pathname = new URL(pageUrl).pathname; } catch {}
+                    return (
+                      <button
+                        key={i}
+                        className="w-full text-left rounded-lg border border-border px-3 py-2.5 hover:bg-accent hover:border-primary/30 transition-colors"
+                        onClick={() => handlePickRepresentativePage(matchedPage, pickGroupDialog)}
+                      >
+                        <p className="text-sm font-medium truncate">{matchedPage.title}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{pathname}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
