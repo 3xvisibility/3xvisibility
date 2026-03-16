@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.publish-pages]
 verify_jwt = false
+
+[functions.scan-template]
+verify_jwt = false
