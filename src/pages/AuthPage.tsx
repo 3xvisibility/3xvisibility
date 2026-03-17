@@ -80,6 +80,17 @@ export default function AuthPage() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    const result = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: window.location.origin,
+    });
+    setLoading(false);
+    if (result?.error) {
+      toast({ title: "Apple sign-in failed", description: String(result.error), variant: "destructive" });
+    }
+  };
+
   return (
     <div className="min-h-screen relative flex overflow-hidden">
       {/* Background effects */}
