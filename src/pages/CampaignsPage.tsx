@@ -54,6 +54,8 @@ export default function CampaignsPage() {
   const [logDialogCampaign, setLogDialogCampaign] = useState<string | null>(null);
   const [jobDialogCampaign, setJobDialogCampaign] = useState<Campaign | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
