@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
