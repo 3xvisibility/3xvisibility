@@ -89,6 +89,12 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     checkAdmin();
   }, []);
 
+  const onboardingMap: Record<string, string> = {
+    "/campaigns": "campaigns",
+    "/templates": "templates",
+    "/analytics": "analytics",
+  };
+
   const renderNavItems = (items: NavItem[]) =>
     items.map((item) => (
       <SidebarMenuItem key={item.titleKey}>
@@ -98,6 +104,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             end={item.url === "/dashboard"}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
             activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+            {...(onboardingMap[item.url] ? { "data-onboarding": onboardingMap[item.url] } : {})}
           >
             <item.icon className="h-4 w-4 shrink-0" />
             {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
