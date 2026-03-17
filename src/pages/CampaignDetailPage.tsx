@@ -20,8 +20,9 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
-  Check, Clock, XCircle, FileText, Layers, RefreshCw,
+  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download,
 } from "lucide-react";
+import { exportPagesCsv } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
@@ -369,7 +370,13 @@ export default function CampaignDetailPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-0 shadow-surface">
+            <>
+              <div className="flex justify-end mb-2">
+                <Button size="sm" variant="outline" onClick={() => exportPagesCsv(pages, `${campaign?.name || "pages"}-export.csv`)}>
+                  <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+                </Button>
+              </div>
+              <Card className="border-0 shadow-surface">
               <CardContent className="p-0">
                 <ScrollArea className="max-h-[600px]">
                   <table className="w-full text-sm">
@@ -431,6 +438,7 @@ export default function CampaignDetailPage() {
                 </ScrollArea>
               </CardContent>
             </Card>
+            </>
           )}
         </TabsContent>
 
