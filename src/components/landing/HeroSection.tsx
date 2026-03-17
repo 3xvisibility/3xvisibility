@@ -122,9 +122,19 @@ export function HeroSection() {
                     transition={{ delay: step.delay, duration: 0.5, ease }}
                     className="flex flex-col items-center gap-1.5 flex-1"
                   >
-                    <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary/8 border border-primary/15 flex items-center justify-center">
+                    <motion.div
+                      animate={{ 
+                        boxShadow: [
+                          "0 0 0 0 hsl(var(--primary) / 0)",
+                          "0 0 0 8px hsl(var(--primary) / 0.08)",
+                          "0 0 0 0 hsl(var(--primary) / 0)",
+                        ],
+                      }}
+                      transition={{ delay: 2 + i * 0.4, duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary/8 border border-primary/15 flex items-center justify-center"
+                    >
                       <step.icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                    </div>
+                    </motion.div>
                     <span className="text-[10px] font-medium text-muted-foreground">{step.label}</span>
                   </motion.div>
                   {i < 3 && (
