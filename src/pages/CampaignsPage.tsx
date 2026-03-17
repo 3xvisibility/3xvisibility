@@ -77,9 +77,13 @@ export default function CampaignsPage() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "campaigns" }, () => {
         queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "generation_jobs" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+        queryClient.invalidateQueries({ queryKey: ["generation-jobs", wsId] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+  }, [queryClient, wsId]);
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ["campaigns", wsId],
