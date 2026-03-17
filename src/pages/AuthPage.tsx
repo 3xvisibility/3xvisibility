@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -18,8 +18,16 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const toggleDarkMode = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +123,7 @@ export default function AuthPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease }}
-          className="px-6 py-4 md:px-10 md:py-6"
+          className="px-6 py-4 md:px-10 md:py-6 flex items-center justify-between"
         >
           <Link
             to="/"
@@ -126,6 +134,13 @@ export default function AuthPage() {
             <span className="text-border">/</span>
             <span className="text-foreground/70">{mode === "login" ? "Sign In" : "Sign Up"}</span>
           </Link>
+          <button
+            onClick={toggleDarkMode}
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200"
+            aria-label="Toggle dark mode"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
         </motion.nav>
 
         {/* Center form */}
