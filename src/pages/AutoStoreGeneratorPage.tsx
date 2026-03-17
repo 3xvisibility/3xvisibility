@@ -522,29 +522,62 @@ export default function AutoStoreGeneratorPage() {
                                         <Package className="h-5 w-5 text-muted-foreground" />
                                       </div>
                                     )}
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="secondary"
-                                          size="icon"
-                                          className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-sm"
-                                          disabled={regeneratingIdx === `${gen.id}-${idx}`}
-                                          onClick={() => regenerateImageMutation.mutate({
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      id={`upload-${gen.id}-${idx}`}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          uploadImageMutation.mutate({
                                             generationId: gen.id,
                                             productIndex: idx,
-                                            productName: prod.name,
-                                            niche: gen.niche,
-                                          })}
-                                        >
-                                          {regeneratingIdx === `${gen.id}-${idx}` ? (
-                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                          ) : (
-                                            <RefreshCw className="h-2.5 w-2.5" />
-                                          )}
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="bottom" className="text-xs">Regenerate image</TooltipContent>
-                                    </Tooltip>
+                                            file,
+                                          });
+                                        }
+                                        e.target.value = "";
+                                      }}
+                                    />
+                                    <div className="absolute -bottom-1 -right-1 flex gap-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            className="h-5 w-5 rounded-full shadow-sm"
+                                            disabled={regeneratingIdx === `${gen.id}-${idx}`}
+                                            onClick={() => document.getElementById(`upload-${gen.id}-${idx}`)?.click()}
+                                          >
+                                            <Upload className="h-2.5 w-2.5" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" className="text-xs">Upload image</TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            className="h-5 w-5 rounded-full shadow-sm"
+                                            disabled={regeneratingIdx === `${gen.id}-${idx}`}
+                                            onClick={() => regenerateImageMutation.mutate({
+                                              generationId: gen.id,
+                                              productIndex: idx,
+                                              productName: prod.name,
+                                              niche: gen.niche,
+                                            })}
+                                          >
+                                            {regeneratingIdx === `${gen.id}-${idx}` ? (
+                                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                            ) : (
+                                              <RefreshCw className="h-2.5 w-2.5" />
+                                            )}
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" className="text-xs">Regenerate image</TooltipContent>
+                                      </Tooltip>
+                                    </div>
                                   </div>
                                   <div className="min-w-0 flex-1">
                                     <div className="font-medium truncate">{prod.name}</div>
