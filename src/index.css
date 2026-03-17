@@ -6,27 +6,27 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --background: 220 14% 96%;
+    --foreground: 224 71% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 224 71% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 224 71% 4%;
 
-    --primary: 221 83% 53%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 250 83% 63%;
+    --primary-glow: 239 84% 57%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 187 92% 42%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 220 14% 92%;
+    --accent-foreground: 224 71% 4%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -34,48 +34,55 @@
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --info: 187 92% 42%;
+    --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 210 40% 97%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 221 83% 53%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 71% 4%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 224 71% 4%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 239 84% 67%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(250 83% 63%));
-    --gradient-hero: linear-gradient(180deg, hsl(221 83% 53% / 0.05) 0%, transparent 60%);
-    --gradient-cta: linear-gradient(135deg, hsl(221 83% 40%), hsl(250 83% 50%));
-    --gradient-card: linear-gradient(135deg, hsl(221 83% 53% / 0.05), hsl(250 83% 63% / 0.05));
-    --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(221 83% 53% / 0.06), transparent 40%);
+    --gradient-primary: linear-gradient(135deg, hsl(239 84% 67%), hsl(187 92% 42%));
+    --gradient-hero: linear-gradient(180deg, hsl(239 84% 67% / 0.05) 0%, transparent 60%);
+    --gradient-cta: linear-gradient(135deg, hsl(239 84% 55%), hsl(187 92% 35%));
+    --gradient-card: linear-gradient(135deg, hsl(239 84% 67% / 0.03), hsl(187 92% 42% / 0.03));
+    --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(239 84% 67% / 0.06), transparent 40%);
 
     /* Shadows */
-    --shadow-surface: 0 0 0 1px rgba(0,0,0,.04), 0 2px 4px rgba(0,0,0,.02), 0 8px 16px rgba(0,0,0,.02);
-    --shadow-hover: 0 0 0 1px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
-    --shadow-active: 0 0 0 1px hsl(221 83% 53% / 0.3), 0 4px 12px hsl(221 83% 53% / 0.1);
-    --shadow-glow: 0 0 40px hsl(221 83% 53% / 0.15), 0 0 80px hsl(250 83% 63% / 0.08);
-    --shadow-card-hover: 0 8px 30px -10px hsl(221 83% 53% / 0.2), 0 0 0 1px hsl(221 83% 53% / 0.1);
+    --shadow-surface: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.02);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+    --shadow-active: 0 0 0 2px hsl(239 84% 67% / 0.2), 0 4px 12px hsl(239 84% 67% / 0.08);
+    --shadow-glow: 0 0 40px hsl(239 84% 67% / 0.12), 0 0 80px hsl(187 92% 42% / 0.06);
+    --shadow-card-hover: 0 10px 40px -12px hsl(239 84% 67% / 0.15), 0 0 0 1px hsl(239 84% 67% / 0.08);
+    --shadow-lg: 0 10px 25px -3px rgba(0,0,0,.06), 0 4px 6px -4px rgba(0,0,0,.03);
   }
 
   .dark {
-    --background: 222 47% 5%;
+    --background: 224 71% 4%;
     --foreground: 210 40% 98%;
     --card: 222 47% 7%;
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 7%;
     --popover-foreground: 210 40% 98%;
-    --primary: 221 83% 53%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 250 83% 63%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --primary-glow: 239 84% 57%;
+    --secondary: 187 92% 42%;
+    --secondary-foreground: 0 0% 100%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
     --accent: 217 33% 17%;
@@ -84,17 +91,21 @@
     --destructive-foreground: 210 40% 98%;
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 187 92% 42%;
+    --info-foreground: 0 0% 100%;
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 221 83% 53%;
+    --ring: 239 84% 67%;
     --sidebar-background: 222 47% 7%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-ring: 239 84% 67%;
   }
 }
 
@@ -106,10 +117,10 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.6;
   }
   h1, h2, h3, h4, h5, h6 {
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
     font-weight: 600;
   }
 }
@@ -133,15 +144,18 @@
   .shadow-card-hover {
     box-shadow: var(--shadow-card-hover);
   }
+  .shadow-lg-custom {
+    box-shadow: var(--shadow-lg);
+  }
   .text-display {
     font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.03em;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
   .text-display-sm {
     font-size: 1.125rem;
     font-weight: 600;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
   }
   .bg-gradient-primary {
     background: var(--gradient-primary);
@@ -172,5 +186,13 @@
   }
   .animate-scroll-left:hover {
     animation-play-state: paused;
+  }
+
+  /* Smooth card transitions */
+  .card-interactive {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-interactive:hover {
+    @apply shadow-surface-hover -translate-y-0.5;
   }
 }

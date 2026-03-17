@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
-import { 
-  LayoutDashboard, 
-  Rocket, 
+import {
+  LayoutDashboard,
+  Rocket,
   FileText,
   Layers,
   BarChart3,
-  Globe, 
-  CreditCard, 
+  Globe,
+  CreditCard,
   Settings,
-  ChevronLeft,
   LogOut,
   ScanSearch,
   Compass,
   ShieldCheck,
   Search as SearchIcon,
-  Store
+  Store,
+  Zap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,22 +31,25 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Campaigns", url: "/campaigns", icon: Rocket },
   { title: "Generated Pages", url: "/pages", icon: Layers },
   { title: "Templates", url: "/templates", icon: FileText },
+];
+
+const toolsNav = [
   { title: "AI Scanner", url: "/scanner", icon: ScanSearch },
   { title: "Discovery", url: "/discovery", icon: Compass },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Websites", url: "/websites", icon: Globe },
-  { title: "Google Indexing", url: "/indexing", icon: SearchIcon },
+  { title: "Indexing", url: "/indexing", icon: SearchIcon },
   { title: "Store Generator", url: "/store-generator", icon: Store },
 ];
 
-const bottomNav = [
+const settingsNav = [
+  { title: "Websites", url: "/websites", icon: Globe },
   { title: "Billing", url: "/billing", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
@@ -56,7 +59,7 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ onLogout }: AppSidebarProps) {
-  const { state, toggleSidebar } = useSidebar();
+  const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -70,98 +73,117 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     checkAdmin();
   }, []);
 
+  const renderNavItems = (items: typeof mainNav) =>
+    items.map((item) => (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton asChild>
+          <NavLink
+            to={item.url}
+            end={item.url === "/dashboard"}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
+            activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+          >
+            <item.icon className="h-4 w-4 shrink-0" />
+            {!collapsed && <span className="text-sm">{item.title}</span>}
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    ));
+
   return (
-    <Sidebar collapsible="icon">
-      <SidebarContent>
+    <Sidebar collapsible="icon" className="border-r border-border bg-card">
+      <SidebarContent className="px-3 py-4">
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-3 mb-6">
+          <div className="h-8 w-8 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
+            <Zap className="h-4 w-4 text-primary-foreground" />
+          </div>
+          {!collapsed && (
+            <span className="font-bold text-lg tracking-tight">PageGen</span>
+          )}
+        </div>
+
+        {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center justify-between">
-            {!collapsed && <span className="text-display-sm">PGP</span>}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={toggleSidebar}
-            >
-              <ChevronLeft className={`h-4 w-4 transition-transform duration-150 ${collapsed ? 'rotate-180' : ''}`} />
-            </Button>
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="mt-4">
-            <SidebarMenu>
-              {mainNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/dashboard"}
-                      className="hover:bg-accent/50 transition-all duration-150"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="mr-2 h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
+              Main
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">
+              {renderNavItems(mainNav)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {!collapsed && <Separator className="my-3 mx-3" />}
+
+        {/* Tools */}
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
+              Tools
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">
+              {renderNavItems(toolsNav)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {!collapsed && <Separator className="my-3 mx-3" />}
+
+        {/* Settings & Admin */}
         <SidebarGroup className="mt-auto">
-          {isAdmin && (
-            <SidebarGroupContent className="mb-2">
-              <SidebarMenu>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
+              Account
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">
+              {isAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to="/admin"
-                      className="hover:bg-accent/50 transition-all duration-150"
-                      activeClassName="bg-primary/10 text-primary font-medium"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
+                      activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
                     >
-                      <ShieldCheck className="mr-2 h-4 w-4 shrink-0" />
-                      {!collapsed && <span>Admin</span>}
+                      <ShieldCheck className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span className="text-sm">Admin</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {bottomNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className="hover:bg-accent/50 transition-all duration-150"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="mr-2 h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              )}
+              {renderNavItems(settingsNav)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="px-3 pb-4">
         {!collapsed && (
-          <div className="px-3 py-2">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-              <span>Usage</span>
-              <span className="tabular-nums">42 / 100 pages</span>
+          <div className="px-3 py-3 rounded-xl bg-muted/50 space-y-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium">Usage</span>
+              <span className="tabular-nums">42 / 100</span>
             </div>
             <Progress value={42} className="h-1.5" />
+            <p className="text-[11px] text-muted-foreground">pages generated this month</p>
           </div>
         )}
         {onLogout && (
-          <SidebarMenu>
+          <SidebarMenu className="mt-2">
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={onLogout} className="text-destructive hover:bg-destructive/10">
-                <LogOut className="mr-2 h-4 w-4 shrink-0" />
-                {!collapsed && <span>Log out</span>}
+              <SidebarMenuButton
+                onClick={onLogout}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                {!collapsed && <span className="text-sm">Log out</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
