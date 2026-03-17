@@ -17,6 +17,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import StorePreviewDialog from "@/components/StorePreviewDialog";
+import { useSubscription } from "@/hooks/use-subscription";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 
 interface StoreGeneration {
   id: string;
@@ -61,6 +63,7 @@ const languageOptions = [
 ];
 
 export default function AutoStoreGeneratorPage() {
+  const { canUseFeature } = useSubscription();
   const [niche, setNiche] = useState("");
   const [keywords, setKeywords] = useState("");
   const [productCount, setProductCount] = useState(10);
@@ -280,6 +283,18 @@ export default function AutoStoreGeneratorPage() {
     publish_failed: { icon: <AlertCircle className="h-3.5 w-3.5" />, color: "bg-destructive/10 text-destructive" },
     failed: { icon: <XCircle className="h-3.5 w-3.5" />, color: "bg-destructive/10 text-destructive" },
   };
+
+  if (!canUseFeature("storeGenerator")) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-display">Auto Store Generator</h1>
+          <p className="text-muted-foreground mt-1">Generate a complete ecommerce store with AI-powered products, categories, and SEO content.</p>
+        </div>
+        <UpgradePrompt feature="storeGenerator" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

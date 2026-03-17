@@ -33,6 +33,8 @@ import {
   Bar,
 } from "recharts";
 import { useNavigate } from "react-router-dom";
+import { useSubscription } from "@/hooks/use-subscription";
+import { UsageLimitBanner } from "@/components/UpgradePrompt";
 
 const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
@@ -261,8 +263,12 @@ export default function DashboardPage() {
     return `${days}d ago`;
   };
 
+  const { pagesUsed, pagesLimit, aiUsed: subAiUsed, aiLimit: subAiLimit } = useSubscription();
+
   return (
     <div className="space-y-8">
+      <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
+      <UsageLimitBanner type="ai" used={subAiUsed} limit={subAiLimit} />
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-glow to-secondary p-6 sm:p-8 text-primary-foreground">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />

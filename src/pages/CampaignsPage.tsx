@@ -15,6 +15,8 @@ import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
+import { useSubscription } from "@/hooks/use-subscription";
+import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -278,8 +280,11 @@ export default function CampaignsPage() {
     { num: 4, label: "Website" },
   ];
 
+  const { pagesUsed, pagesLimit } = useSubscription();
+
   return (
     <div className="space-y-6">
+      <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

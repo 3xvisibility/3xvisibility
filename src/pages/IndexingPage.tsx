@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/use-subscription";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 
 const statusColors: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
@@ -33,6 +35,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 export default function IndexingPage() {
+  const { canUseFeature } = useSubscription();
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
   const [search, setSearch] = useState("");
   const [configOpen, setConfigOpen] = useState(false);
@@ -209,6 +212,18 @@ export default function IndexingPage() {
       return next;
     });
   };
+
+  if (!canUseFeature("indexing")) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-display">Google Indexing</h1>
+          <p className="text-muted-foreground mt-1">Submit and track URL indexing via Google Indexing API.</p>
+        </div>
+        <UpgradePrompt feature="indexing" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
