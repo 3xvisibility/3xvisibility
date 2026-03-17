@@ -46,6 +46,7 @@ function getActionDetails(log: AuditLog): string {
 
 export default function AuditLogViewer({ workspaceId }: { workspaceId: string }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [actionFilter, setActionFilter] = useState<string>("all");
 
   const {
     data,
@@ -54,16 +55,20 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["audit-logs", workspaceId],
+    queryKey: ["audit-logs", workspaceId, actionFilter],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
-      const { data, error } = await supabase
+      let query = supabase
         .from("audit_logs")
         .select("id, action, entity_type, entity_id, details, created_at, user_id")
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
         .range(from, to);
+      if (actionFilter !== "all") {
+        query = query.eq("action", actionFilter);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data as AuditLog[];
     },
