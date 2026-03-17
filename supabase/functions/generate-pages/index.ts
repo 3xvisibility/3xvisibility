@@ -7,10 +7,129 @@ const corsHeaders = {
 };
 
 function slugify(text: string): string {
+  // Normalize accents, strip diacritics, lowercase, clean
   return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+// Process {{#if variable}}...{{/if}} conditionals
+function processConditionals(content: string, vars: Record<string, string>): string {
+  return content.replace(
+    /\{\{#if\s+(\w+)\}\}([\s\S]*?)(?:\{\{#else\}\}([\s\S]*?))?\{\{\/if\}\}/gi,
+    (_match, varName, ifBlock, elseBlock) => {
+      const value = vars[varName] || vars[varName.toLowerCase()];
+      return (value && value.trim()) ? ifBlock : (elseBlock || "");
+    }
+  );
+}
+
+// Process {{#each items}}...{{/each}} loops (items = comma-separated string)
+function processLoops(content: string, vars: Record<string, string>): string {
+  return content.replace(
+    /\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/gi,
+    (_match, varName, loopBlock) => {
+      const value = vars[varName] || vars[varName.toLowerCase()];
+      if (!value) return "";
+      const items = value.split(",").map(s => s.trim()).filter(Boolean);
+      return items.map((item, index) =>
+        loopBlock
+          .replace(/\{\{this\}\}/gi, item)
+          .replace(/\{\{@index\}\}/gi, String(index))
+          .replace(/\{\{@number\}\}/gi, String(index + 1))
+      ).join("\n");
+    }
+  );
+}
+
+// Build JSON-LD structured data based on campaign type and row data
+function buildJsonLd(
+  campaignType: string,
+  pageTitle: string,
+  seoDescription: string,
+  slug: string,
+  geoSettings: Record<string, any>,
+  row: Record<string, string>
+): string {
+  const escape = (s: string) => s.replace(/"/g, '\\"');
+
+  if (campaignType === "geo") {
+    const schema: any = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: pageTitle,
+      description: seoDescription,
+    };
+    if (geoSettings.city || geoSettings.region || geoSettings.country) {
+      schema.address = {
+        "@type": "PostalAddress",
+        addressLocality: geoSettings.city || "",
+        addressRegion: geoSettings.region || "",
+        addressCountry: geoSettings.country || "",
+        postalCode: geoSettings.postcode || "",
+      };
+    }
+    if (geoSettings.lat && geoSettings.lng) {
+      schema.geo = { "@type": "GeoCoordinates", latitude: geoSettings.lat, longitude: geoSettings.lng };
+    }
+    if (row.phone || row.telephone) schema.telephone = row.phone || row.telephone;
+    if (row.email) schema.email = row.email;
+    return `<script type="application/ld+json">${JSON.stringify(schema)}</script>`;
+  }
+
+  // Check for FAQ-style data
+  if (row.question && row.answer) {
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [{
+        "@type": "Question",
+        name: row.question,
+        acceptedAnswer: { "@type": "Answer", text: row.answer },
+      }],
+    };
+    return `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`;
+  }
+
+  // Default WebPage schema
+  const webSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: pageTitle,
+    description: seoDescription,
+  };
+  return `<script type="application/ld+json">${JSON.stringify(webSchema)}</script>`;
+}
+
+// Build GEO reusable HTML blocks (address, phone, opening hours)
+function buildGeoBlocks(geoSettings: Record<string, any>, row: Record<string, string>): string {
+  const parts: string[] = [];
+
+  // Address block
+  const addressParts = [geoSettings.city, geoSettings.region, geoSettings.postcode, geoSettings.country].filter(Boolean);
+  if (addressParts.length > 0) {
+    parts.push(`<div class="geo-address" itemscope itemtype="https://schema.org/PostalAddress">
+  <strong>📍 Address</strong><br>
+  ${geoSettings.city ? `<span itemprop="addressLocality">${geoSettings.city}</span>` : ""}${geoSettings.region ? `, <span itemprop="addressRegion">${geoSettings.region}</span>` : ""}${geoSettings.postcode ? ` <span itemprop="postalCode">${geoSettings.postcode}</span>` : ""}${geoSettings.country ? `<br><span itemprop="addressCountry">${geoSettings.country}</span>` : ""}
+</div>`);
+  }
+
+  // Phone block
+  const phone = row.phone || row.telephone;
+  if (phone) {
+    parts.push(`<div class="geo-phone"><strong>📞 Phone</strong><br><a href="tel:${phone}" itemprop="telephone">${phone}</a></div>`);
+  }
+
+  // Opening hours block
+  const hours = row.opening_hours || row.hours;
+  if (hours) {
+    parts.push(`<div class="geo-hours"><strong>🕐 Opening Hours</strong><br><span itemprop="openingHours">${hours}</span></div>`);
+  }
+
+  return parts.length > 0 ? `\n<!-- GEO Blocks -->\n<section class="geo-info">\n${parts.join("\n")}\n</section>` : "";
 }
 
 function extractAiBlocks(content: string): { fullMatch: string; prompt: string }[] {
@@ -480,12 +599,24 @@ Deno.serve(async (req) => {
         try {
           let pageContent = templateContent;
 
+          // Build combined vars for conditionals/loops
+          const allVars: Record<string, string> = { ...row };
+          const geoSettings = (campaign.geo_settings || {}) as Record<string, any>;
+          for (const [gk, gv] of Object.entries(geoSettings)) {
+            if (typeof gv === "string") allVars[gk] = gv;
+          }
+
+          // Process conditional logic {{#if}}...{{/if}}
+          pageContent = processConditionals(pageContent, allVars);
+
+          // Process loops {{#each}}...{{/each}}
+          pageContent = processLoops(pageContent, allVars);
+
           // Apply custom mappings first if available, then fall back to direct replacement
           if (customMappings && customMappings.length > 0) {
             for (const mapping of customMappings) {
               const value = row[mapping.source_column] || "";
               let finalValue = value;
-              // Apply transform expression if present
               if (mapping.transform_expression) {
                 try {
                   if (mapping.transform_expression === "uppercase") finalValue = value.toUpperCase();
@@ -500,8 +631,7 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Inject geo_settings as template variables (e.g. {city}, {region}, {country})
-          const geoSettings = (campaign.geo_settings || {}) as Record<string, string>;
+          // Inject geo_settings as template variables
           for (const [geoKey, geoValue] of Object.entries(geoSettings)) {
             if (typeof geoValue === "string") {
               const geoRegex = new RegExp(`\\{${geoKey}\\}`, "gi");
@@ -513,6 +643,15 @@ Deno.serve(async (req) => {
           for (const [key, value] of Object.entries(row)) {
             const regex = new RegExp(`\\{${key}\\}`, "gi");
             pageContent = pageContent.replace(regex, value || "");
+          }
+
+          // Replace {{GEO_BLOCKS}} placeholder with reusable GEO HTML
+          if (pageContent.includes("{{GEO_BLOCKS}}")) {
+            const geoBlocksHtml = buildGeoBlocks(geoSettings, row);
+            pageContent = pageContent.replace(/\{\{GEO_BLOCKS\}\}/gi, geoBlocksHtml);
+          } else if ((campaign.campaign_type || "seo") === "geo") {
+            // Auto-append GEO blocks for GEO campaigns
+            pageContent += buildGeoBlocks(geoSettings, row);
           }
 
           if (hasAiBlocks && LOVABLE_API_KEY) {
@@ -544,7 +683,6 @@ Deno.serve(async (req) => {
           const utmParams: string[] = [];
           for (const [utmKey, utmVal] of Object.entries(utmSettings)) {
             if (typeof utmVal === "string" && utmVal.trim()) {
-              // Replace any {variable} placeholders in UTM values with row data
               let resolvedVal = utmVal;
               for (const [rk, rv] of Object.entries(row)) {
                 resolvedVal = resolvedVal.replace(new RegExp(`\\{${rk}\\}`, "gi"), rv || "");
@@ -567,8 +705,34 @@ Deno.serve(async (req) => {
             } catch { /* keep fallback */ }
           }
 
-          const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description);
-          pageContent = ogTags + "\n" + pageContent;
+          // Build canonical URL
+          let canonicalUrl: string | null = null;
+          if (campaign.website_id) {
+            const { data: website } = await supabase.from("websites").select("url").eq("id", campaign.website_id).maybeSingle();
+            if (website?.url) {
+              const baseUrl = website.url.replace(/\/+$/, "");
+              canonicalUrl = `${baseUrl}/${slug}`;
+            }
+          }
+
+          // Build JSON-LD structured data
+          const jsonLd = buildJsonLd(
+            campaign.campaign_type || "seo",
+            pageTitle,
+            seoData.seo_description,
+            slug,
+            geoSettings,
+            row
+          );
+
+          // Build OG meta tags + canonical
+          const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description, canonicalUrl || undefined);
+          const canonicalTag = canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : "";
+          pageContent = `${ogTags}\n${canonicalTag}\n${jsonLd}\n${pageContent}`;
+
+          // Extract SEA ad IDs from utm_settings or row data
+          const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;
+          const adGroupId = (utmSettings as any).ad_group_id || row.ad_group_id || null;
 
           batchPages.push({
             campaign_id,
@@ -583,6 +747,9 @@ Deno.serve(async (req) => {
             seo_title: seoData.seo_title,
             seo_description: seoData.seo_description,
             seo_keywords: seoData.seo_keywords,
+            canonical_url: canonicalUrl,
+            ad_campaign_id: adCampaignId,
+            ad_group_id: adGroupId,
           });
 
           processedCount++;
@@ -601,6 +768,9 @@ Deno.serve(async (req) => {
             seo_title: null,
             seo_description: null,
             seo_keywords: null,
+            canonical_url: null,
+            ad_campaign_id: null,
+            ad_group_id: null,
           });
           processedCount++;
           failedCount++;

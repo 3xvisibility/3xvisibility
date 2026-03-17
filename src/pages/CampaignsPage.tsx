@@ -321,15 +321,24 @@ export default function CampaignsPage() {
     reader.onload = (event) => {
       const text = event.target?.result as string;
       const lines = text.split("\n").filter((l) => l.trim());
-      const headers = lines[0].split(",").map((h) => h.trim());
+      if (lines.length === 0) return;
+
+      // Auto-detect delimiter: try tab, semicolon, pipe, then comma
+      const firstLine = lines[0];
+      let delimiter = ",";
+      if (firstLine.includes("\t")) delimiter = "\t";
+      else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
+      else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
+
+      const headers = firstLine.split(delimiter).map((h) => h.trim().replace(/^["']|["']$/g, ""));
       setCsvHeaders(headers);
       const rows = lines.slice(1).map((line) => {
-        const values = line.split(",").map((v) => v.trim());
+        const values = line.split(delimiter).map((v) => v.trim().replace(/^["']|["']$/g, ""));
         return headers.reduce((acc, h, i) => ({ ...acc, [h]: values[i] || "" }), {} as Record<string, string>);
       });
       setCsvData(rows);
     };
-    reader.readAsText(file);
+    reader.readAsText(file, "utf-8");
   };
 
   const resetForm = () => {
@@ -366,9 +375,32 @@ export default function CampaignsPage() {
     return "📝";
   };
 
+  // Check required fields: at least title or h1 variable must be mapped
+  const hasTitleMapping = useMemo(() => {
+    if (!variableMapping) return true; // no mapping yet, allow proceeding
+    const requiredVars = ["title", "name", "h1", "page_title"];
+    return variableMapping.matched.some(
+      (m) => m.column && requiredVars.includes(m.variable.toLowerCase())
+    );
+  }, [variableMapping]);
+
+  const hasSlugSource = useMemo(() => {
+    if (!variableMapping) return true;
+    // Slug is auto-generated from title, so if title is mapped, slug is covered
+    const slugVars = ["slug", "url", "handle"];
+    const titleVars = ["title", "name", "h1", "page_title"];
+    return variableMapping.matched.some(
+      (m) => m.column && ([...slugVars, ...titleVars].includes(m.variable.toLowerCase()))
+    );
+  }, [variableMapping]);
+
+  const mappingWarning = !hasTitleMapping && csvData.length > 0 && selectedTemplate
+    ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
+    : null;
+
   const canProceed = () => {
     if (step === 1) return !!campaignName;
-    if (step === 2) return true; // type selection always valid
+    if (step === 2) return true;
     if (step === 3) return csvData.length > 0;
     if (step === 4) return !!selectedTemplate;
     return true;
@@ -593,6 +625,12 @@ export default function CampaignsPage() {
                             </div>
                           ))}
                         </div>
+                        {mappingWarning && (
+                          <div className="flex items-center gap-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            <span>{mappingWarning}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

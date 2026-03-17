@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSubscription } from "@/hooks/use-subscription";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,11 +47,20 @@ export default function TemplatesPage() {
     },
   });
 
+  const { features } = useSubscription();
+  const maxTemplates = features.templates;
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
+
+      // Enforce max templates limit (-1 = unlimited)
+      if (maxTemplates > 0 && templates.length >= maxTemplates) {
+        throw new Error(`Your plan allows a maximum of ${maxTemplates} template(s). Please upgrade to add more.`);
+      }
+
       const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
       const { error } = await supabase.from("templates").insert({
         name,

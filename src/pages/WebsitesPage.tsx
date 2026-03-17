@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSubscription } from "@/hooks/use-subscription";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,11 +63,21 @@ export default function WebsitesPage() {
 
   const getSitemap = (websiteId: string) => sitemaps.find((s: any) => s.website_id === websiteId);
 
+  const { features } = useSubscription();
+  const maxSites = features.websites;
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
+
+      // Enforce max websites limit
+      if (maxSites > 0 && websites.length >= maxSites) {
+        throw new Error(`Your plan allows a maximum of ${maxSites} website(s). Please upgrade to add more.`);
+      }
+
+      if (!siteUrl || !siteType) throw new Error("Missing website info");
       const credentials = siteType === "wordpress"
         ? { username, app_password: appPassword }
         : siteType === "shopify"

@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_logs: {
         Row: {
           batch_number: number | null
@@ -71,6 +115,7 @@ export type Database = {
           campaign_type: Database["public"]["Enums"]["campaign_type"]
           created_at: string
           csv_data: Json | null
+          csv_storage_path: string | null
           current_batch: number | null
           failed_rows: number | null
           generation_completed_at: string | null
@@ -95,6 +140,7 @@ export type Database = {
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           csv_data?: Json | null
+          csv_storage_path?: string | null
           current_batch?: number | null
           failed_rows?: number | null
           generation_completed_at?: string | null
@@ -119,6 +165,7 @@ export type Database = {
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           csv_data?: Json | null
+          csv_storage_path?: string | null
           current_batch?: number | null
           failed_rows?: number | null
           generation_completed_at?: string | null
@@ -224,7 +271,10 @@ export type Database = {
       }
       generated_pages: {
         Row: {
+          ad_campaign_id: string | null
+          ad_group_id: string | null
           campaign_id: string
+          canonical_url: string | null
           content: string
           created_at: string
           error_message: string | null
@@ -242,7 +292,10 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          ad_campaign_id?: string | null
+          ad_group_id?: string | null
           campaign_id: string
+          canonical_url?: string | null
           content: string
           created_at?: string
           error_message?: string | null
@@ -260,7 +313,10 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          ad_campaign_id?: string | null
+          ad_group_id?: string | null
           campaign_id?: string
+          canonical_url?: string | null
           content?: string
           created_at?: string
           error_message?: string | null

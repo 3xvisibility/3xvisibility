@@ -6,6 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Audit log helper
+async function auditLog(client: any, wsId: string, userId: string, action: string, entityType: string, entityId?: string, details?: any) {
+  try {
+    await client.from("audit_logs").insert({
+      workspace_id: wsId,
+      user_id: userId,
+      action,
+      entity_type: entityType,
+      entity_id: entityId || null,
+      details: details || {},
+    });
+  } catch (e) {
+    console.error("Audit log failed:", e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -84,6 +100,8 @@ serve(async (req) => {
         .insert({ workspace_id, user_id: targetUser.id, role });
       if (insertErr) throw insertErr;
 
+      await auditLog(adminClient, workspace_id, user.id, "invite_member", "workspace_member", targetUser.id, { email, role });
+
       return new Response(JSON.stringify({ success: true, user_id: targetUser.id, email: targetUser.email }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -102,6 +120,7 @@ serve(async (req) => {
         .eq("id", member_id)
         .eq("workspace_id", workspace_id);
       if (error) throw error;
+      await auditLog(adminClient, workspace_id, user.id, "update_role", "workspace_member", member_id, { new_role: role });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -126,6 +145,7 @@ serve(async (req) => {
         .eq("id", member_id)
         .eq("workspace_id", workspace_id);
       if (error) throw error;
+      await auditLog(adminClient, workspace_id, user.id, "remove_member", "workspace_member", member_id);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -150,6 +170,7 @@ serve(async (req) => {
         .update({ name: name.trim(), slug, updated_at: new Date().toISOString() })
         .eq("id", workspace_id);
       if (error) throw error;
+      await auditLog(adminClient, workspace_id, user.id, "rename_workspace", "workspace", workspace_id, { new_name: name.trim() });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
