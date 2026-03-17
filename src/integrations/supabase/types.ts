@@ -441,6 +441,74 @@ export type Database = {
           },
         ]
       }
+      store_generations: {
+        Row: {
+          categories: Json | null
+          content_tone: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          keywords: string[] | null
+          language: string | null
+          niche: string
+          price_max: number | null
+          price_min: number | null
+          product_count: number
+          products: Json | null
+          progress: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+          website_id: string | null
+        }
+        Insert: {
+          categories?: Json | null
+          content_tone?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          keywords?: string[] | null
+          language?: string | null
+          niche: string
+          price_max?: number | null
+          price_min?: number | null
+          product_count?: number
+          products?: Json | null
+          progress?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          website_id?: string | null
+        }
+        Update: {
+          categories?: Json | null
+          content_tone?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          keywords?: string[] | null
+          language?: string | null
+          niche?: string
+          price_max?: number | null
+          price_min?: number | null
+          product_count?: number
+          products?: Json | null
+          progress?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_generations_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           ai_generations_limit: number
