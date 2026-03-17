@@ -47,6 +47,7 @@ const statusConfig: Record<string, { class: string; label: string }> = {
 };
 
 export default function CampaignsPage() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [csvFile, setCsvFile] = useState<File | null>(null);
