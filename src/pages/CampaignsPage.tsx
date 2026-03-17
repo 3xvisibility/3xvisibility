@@ -417,6 +417,34 @@ export default function CampaignsPage() {
                 )}
 
                 {step === 2 && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium mb-2 block">Campaign Type</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: "seo" as const, label: "SEO", icon: SearchIconLucide, desc: "Organic search pages" },
+                        { value: "sea" as const, label: "SEA", icon: Target, desc: "Paid landing pages" },
+                        { value: "geo" as const, label: "GEO", icon: MapPin, desc: "Local / geo pages" },
+                      ].map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => setCampaignType(t.value)}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                            campaignType === t.value
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:border-primary/30 hover:bg-muted/50"
+                          }`}
+                        >
+                          <t.icon className={`h-6 w-6 ${campaignType === t.value ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className={`text-sm font-semibold ${campaignType === t.value ? "text-primary" : "text-foreground"}`}>{t.label}</span>
+                          <span className="text-[10px] text-muted-foreground text-center">{t.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {step === 3 && (
                   <div>
                     <Label className="text-sm font-medium mb-2 block">CSV File</Label>
                     <div className="border-2 border-dashed rounded-2xl p-8 text-center hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer">
@@ -442,7 +470,7 @@ export default function CampaignsPage() {
                   </div>
                 )}
 
-                {step === 3 && (
+                {step === 4 && (
                   <div className="space-y-4">
                     <div>
                       <Label className="text-sm font-medium mb-2 block">Template</Label>
@@ -491,7 +519,90 @@ export default function CampaignsPage() {
                   </div>
                 )}
 
-                {step === 4 && (
+                {step === 5 && campaignType === "sea" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Target className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-semibold">UTM Parameters</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground -mt-2">
+                      Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{variable}"}</code> syntax to pull values from CSV columns.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_source</Label>
+                        <Input value={utmSource} onChange={(e) => setUtmSource(e.target.value)} placeholder="google" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_medium</Label>
+                        <Input value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} placeholder="cpc" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_campaign</Label>
+                        <Input value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} placeholder="{campaign_name}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_term</Label>
+                        <Input value={utmTerm} onChange={(e) => setUtmTerm(e.target.value)} placeholder="{keyword}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="col-span-2 space-y-1.5">
+                        <Label className="text-xs">utm_content</Label>
+                        <Input value={utmContent} onChange={(e) => setUtmContent(e.target.value)} placeholder="variant_a" className="rounded-xl h-9 text-sm" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 5 && campaignType === "geo" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-semibold">Geographic Targeting</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground -mt-2">
+                      Set default geo values. Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{column}"}</code> to map from CSV.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Country</Label>
+                        <Input value={geoCountry} onChange={(e) => setGeoCountry(e.target.value)} placeholder="{country} or US" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Region / State</Label>
+                        <Input value={geoRegion} onChange={(e) => setGeoRegion(e.target.value)} placeholder="{region}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">City</Label>
+                        <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder="{city}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Postcode</Label>
+                        <Input value={geoPostcode} onChange={(e) => setGeoPostcode(e.target.value)} placeholder="{postcode}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Latitude</Label>
+                        <Input value={geoLat} onChange={(e) => setGeoLat(e.target.value)} placeholder="{lat} or 48.8566" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Longitude</Label>
+                        <Input value={geoLng} onChange={(e) => setGeoLng(e.target.value)} placeholder="{lng} or 2.3522" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="col-span-2 space-y-1.5">
+                        <Label className="text-xs">Language</Label>
+                        <Select value={geoLanguage} onValueChange={setGeoLanguage}>
+                          <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {["en", "es", "fr", "de", "pt", "it", "nl", "ja", "zh", "ko", "ar"].map((l) => (
+                              <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === totalSteps && (
                   <div>
                     <Label className="text-sm font-medium mb-2 block">Website (optional)</Label>
                     <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
