@@ -215,8 +215,11 @@ export function IntegrationsSection() {
                 className="absolute"
                 style={{ top: positions[i].top, right: positions[i].right }}
               >
-                <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(250,25%,11%)] border border-[hsl(250,20%,18%)] flex items-center justify-center shadow-lg hover:border-[hsl(262,83%,58%,0.3)] hover:shadow-[0_0_20px_hsl(262,83%,58%,0.1)] transition-all duration-300 cursor-pointer group">
-                  <item.icon className="h-5 w-5 text-[hsl(250,15%,50%)] group-hover:text-[hsl(262,83%,68%)] transition-colors" />
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(250,25%,11%)] border border-[hsl(250,20%,18%)] flex items-center justify-center shadow-lg hover:border-[hsl(262,83%,58%,0.3)] hover:shadow-[0_0_20px_hsl(262,83%,58%,0.1)] transition-all duration-300 cursor-pointer group">
+                    <item.icon className="h-5 w-5 text-[hsl(250,15%,50%)] group-hover:text-[hsl(262,83%,68%)] transition-colors" />
+                  </div>
+                  <span className="text-[10px] font-medium text-[hsl(250,15%,50%)]">{item.name}</span>
                 </div>
               </motion.div>
             );
