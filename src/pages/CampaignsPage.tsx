@@ -375,9 +375,32 @@ export default function CampaignsPage() {
     return "📝";
   };
 
+  // Check required fields: at least title or h1 variable must be mapped
+  const hasTitleMapping = useMemo(() => {
+    if (!variableMapping) return true; // no mapping yet, allow proceeding
+    const requiredVars = ["title", "name", "h1", "page_title"];
+    return variableMapping.matched.some(
+      (m) => m.column && requiredVars.includes(m.variable.toLowerCase())
+    );
+  }, [variableMapping]);
+
+  const hasSlugSource = useMemo(() => {
+    if (!variableMapping) return true;
+    // Slug is auto-generated from title, so if title is mapped, slug is covered
+    const slugVars = ["slug", "url", "handle"];
+    const titleVars = ["title", "name", "h1", "page_title"];
+    return variableMapping.matched.some(
+      (m) => m.column && ([...slugVars, ...titleVars].includes(m.variable.toLowerCase()))
+    );
+  }, [variableMapping]);
+
+  const mappingWarning = !hasTitleMapping && csvData.length > 0 && selectedTemplate
+    ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
+    : null;
+
   const canProceed = () => {
     if (step === 1) return !!campaignName;
-    if (step === 2) return true; // type selection always valid
+    if (step === 2) return true;
     if (step === 3) return csvData.length > 0;
     if (step === 4) return !!selectedTemplate;
     return true;
