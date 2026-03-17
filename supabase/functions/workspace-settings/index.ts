@@ -170,6 +170,7 @@ serve(async (req) => {
         .update({ name: name.trim(), slug, updated_at: new Date().toISOString() })
         .eq("id", workspace_id);
       if (error) throw error;
+      await auditLog(adminClient, workspace_id, user.id, "rename_workspace", "workspace", workspace_id, { new_name: name.trim() });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
