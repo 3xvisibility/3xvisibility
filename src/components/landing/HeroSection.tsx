@@ -57,18 +57,23 @@ function MiniBarChart() {
 function TiltCard({ children }: { children: React.ReactNode }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const [glowPos, setGlowPos] = useState({ x: 50, y: 50, opacity: 0 });
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const x = px / rect.width - 0.5;
+    const y = py / rect.height - 0.5;
     setTilt({ rotateX: -y * 6, rotateY: x * 6 });
+    setGlowPos({ x: px, y: py, opacity: 1 });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     setTilt({ rotateX: 0, rotateY: 0 });
+    setGlowPos(prev => ({ ...prev, opacity: 0 }));
   }, []);
 
   return (
@@ -82,6 +87,15 @@ function TiltCard({ children }: { children: React.ReactNode }) {
         transition: "transform 0.15s ease-out",
       }}
     >
+      {/* Cursor glow */}
+      <div
+        className="pointer-events-none absolute inset-0 z-50 rounded-2xl"
+        style={{
+          background: `radial-gradient(500px circle at ${glowPos.x}px ${glowPos.y}px, hsl(262 83% 58% / 0.1), transparent 50%)`,
+          opacity: glowPos.opacity,
+          transition: "opacity 0.3s ease-out",
+        }}
+      />
       {children}
     </div>
   );
