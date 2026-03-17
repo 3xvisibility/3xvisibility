@@ -13,6 +13,7 @@ import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignsPage from "./pages/CampaignsPage";
+import CampaignDetailPage from "./pages/CampaignDetailPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import WebsitesPage from "./pages/WebsitesPage";
 import BillingPage from "./pages/BillingPage";
