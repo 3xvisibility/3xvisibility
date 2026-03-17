@@ -482,12 +482,32 @@ export default function AutoStoreGeneratorPage() {
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0">
+                        {(gen.status === "completed" || gen.status === "publish_failed") && gen.website_id && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-primary"
+                                disabled={publishMutation.isPending}
+                                onClick={() => publishMutation.mutate(gen.id)}
+                              >
+                                {publishMutation.isPending ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="text-xs">Publish to store</TooltipContent>
+                          </Tooltip>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => setExpandedId(isExpanded ? null : gen.id)}
-                        >
+                          onClick={() => setExpandedId(isExpanded ? null : gen.id)}>
+
                           {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                         </Button>
                         <Button
