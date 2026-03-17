@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Crown, Shield, User, Trash2, UserPlus, Building2 } from "lucide-react";
+import AuditLogViewer from "@/components/workspace/AuditLogViewer";
 
 interface Member {
   id: string;
