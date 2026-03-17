@@ -218,12 +218,16 @@ export default function CampaignsPage() {
         template_id: selectedTemplate || null,
         website_id: selectedWebsite || null,
         csv_data: sampleData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
-        total_rows: csvData.length,
+        total_rows: maxRows ? Math.min(parseInt(maxRows), csvData.length) : csvData.length,
         user_id: user.id,
         workspace_id: wsId,
         utm_settings: utmSettings as any,
         geo_settings: geoSettings as any,
-      }).select("id").single();
+        publish_mode: publishMode,
+        max_rows: maxRows ? parseInt(maxRows) : null,
+        scheduled_at: scheduleMode === "later" && scheduledDate ? scheduledDate.toISOString() : null,
+        status: scheduleMode === "later" && scheduledDate ? "queued" as any : "draft" as any,
+      } as any).select("id").single();
       if (error) throw error;
 
       // Upload full CSV to dedicated table
