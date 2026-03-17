@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, Share2 } from "lucide-react";
+import SocialShareButtons from "@/components/SocialShareButtons";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -425,11 +426,18 @@ export default function GeneratedPagesPage() {
                             <Eye className="h-3 w-3" />
                           </Button>
                           {page.external_url && (
-                            <Button size="sm" variant="ghost" asChild title="Open live page">
-                              <a href={page.external_url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            </Button>
+                            <>
+                              <Button size="sm" variant="ghost" asChild title="Open live page">
+                                <a href={page.external_url} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </Button>
+                              <SocialShareButtons
+                                url={page.external_url}
+                                title={(page as any).seo_title || page.title}
+                                description={(page as any).seo_description || undefined}
+                              />
+                            </>
                           )}
                           <Button
                             size="sm"
@@ -459,6 +467,16 @@ export default function GeneratedPagesPage() {
             <p className="text-xs text-muted-foreground mt-1">
               Slug: <code className="bg-muted px-1.5 py-0.5 rounded">{previewPage?.slug}</code>
             </p>
+            {previewPage?.external_url && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-muted-foreground">Share:</span>
+                <SocialShareButtons
+                  url={previewPage.external_url}
+                  title={(previewPage as any).seo_title || previewPage.title}
+                  description={(previewPage as any).seo_description || undefined}
+                />
+              </div>
+            )}
           </DialogHeader>
 
           {previewPage && ((previewPage as any).seo_title || (previewPage as any).seo_description) && (
