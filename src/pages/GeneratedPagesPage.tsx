@@ -249,6 +249,14 @@ export default function GeneratedPagesPage() {
               {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => exportPagesCsv(filtered, "generated-pages.csv")}
+            disabled={filtered.length === 0}
+          >
+            <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+          </Button>
           <div className="relative flex-1 sm:w-64 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
