@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, MessageSquareText } from "lucide-react";
 import SocialShareButtons from "@/components/SocialShareButtons";
 import SocialCaptionDialog from "@/components/SocialCaptionDialog";
+import BulkCaptionDialog from "@/components/BulkCaptionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -44,6 +45,7 @@ export default function GeneratedPagesPage() {
   const [bulkSeoApply, setBulkSeoApply] = useState({ title: true, description: true, keywords: true });
   const [publishType, setPublishType] = useState<"page" | "product">("page");
   const [captionPage, setCaptionPage] = useState<GeneratedPage | null>(null);
+  const [bulkCaptionOpen, setBulkCaptionOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -264,6 +266,9 @@ export default function GeneratedPagesPage() {
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setBulkCaptionOpen(true)}>
+                <MessageSquareText className="h-3.5 w-3.5 mr-1.5" /> Bulk Captions
               </Button>
               <Button
                 size="sm"
@@ -756,6 +761,19 @@ export default function GeneratedPagesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Caption Dialog */}
+      <BulkCaptionDialog
+        open={bulkCaptionOpen}
+        onOpenChange={setBulkCaptionOpen}
+        pages={pages.filter((p) => selectedIds.has(p.id)).map((p) => ({
+          id: p.id,
+          title: p.title,
+          seo_title: (p as any).seo_title,
+          seo_description: (p as any).seo_description,
+          external_url: p.external_url,
+        }))}
+      />
     </div>
   );
 }
