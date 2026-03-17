@@ -114,6 +114,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
           </main>
           <KeyboardShortcutsDialog />
           <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+          <OnboardingTour />
         </div>
       </div>
     </SidebarProvider>
