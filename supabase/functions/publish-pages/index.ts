@@ -21,6 +21,29 @@ interface SeoData {
   seo_keywords?: string[] | null;
 }
 
+function buildOgMetaTags(
+  title: string,
+  description: string,
+  url?: string,
+  imageUrl?: string
+): string {
+  const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  const tags = [
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:title" content="${escape(title)}">`,
+    `<meta property="og:description" content="${escape(description)}">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="twitter:title" content="${escape(title)}">`,
+    `<meta name="twitter:description" content="${escape(description)}">`,
+  ];
+  if (url) tags.push(`<meta property="og:url" content="${escape(url)}">`);
+  if (imageUrl) {
+    tags.push(`<meta property="og:image" content="${escape(imageUrl)}">`);
+    tags.push(`<meta name="twitter:image" content="${escape(imageUrl)}">`);
+  }
+  return tags.join("\n");
+}
+
 async function publishToWordPress(
   siteUrl: string,
   credentials: WebsiteCredentials,
