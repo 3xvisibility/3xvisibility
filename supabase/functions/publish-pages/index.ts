@@ -334,6 +334,15 @@ Deno.serve(async (req) => {
             page.slug,
             seo
           );
+        } else if (website.type === "woocommerce") {
+          result = await publishToWooCommerce(
+            website.url,
+            website.credentials,
+            page.title,
+            page.content,
+            page.slug,
+            seo
+          );
         } else {
           throw new Error(`Unsupported website type: ${website.type}`);
         }

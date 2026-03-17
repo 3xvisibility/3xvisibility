@@ -76,7 +76,6 @@ Deno.serve(async (req) => {
       if (!apiKey) {
         throw new Error("PrestaShop API key is required");
       }
-      // PrestaShop Webservice uses Basic Auth with API key as username and empty password
       const auth = btoa(`${apiKey}:`);
       const response = await fetch(`${baseUrl}/api/cms?output_format=JSON&limit=1`, {
         headers: { Authorization: `Basic ${auth}` },
@@ -89,6 +88,26 @@ Deno.serve(async (req) => {
         throw new Error(`PrestaShop connection failed [${response.status}]: ${err}`);
       }
       return new Response(JSON.stringify({ success: true, message: "PrestaShop connection successful" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (type === "woocommerce") {
+      const { consumer_key, consumer_secret } = credentials;
+      if (!consumer_key || !consumer_secret) {
+        throw new Error("WooCommerce Consumer Key and Consumer Secret are required");
+      }
+      const response = await fetch(
+        `${baseUrl}/wp-json/wc/v3/products?per_page=1&consumer_key=${encodeURIComponent(consumer_key)}&consumer_secret=${encodeURIComponent(consumer_secret)}`
+      );
+      if (!response.ok) {
+        const err = await response.text();
+        if (response.status === 401) {
+          throw new Error("WooCommerce authentication failed. Check your Consumer Key and Consumer Secret.");
+        }
+        throw new Error(`WooCommerce connection failed [${response.status}]: ${err}`);
+      }
+      return new Response(JSON.stringify({ success: true, message: "WooCommerce connection successful" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
