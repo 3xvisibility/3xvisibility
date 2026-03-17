@@ -123,7 +123,7 @@ export default function AuthPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease }}
-          className="px-6 py-4 md:px-10 md:py-6"
+          className="px-6 py-4 md:px-10 md:py-6 flex items-center justify-between"
         >
           <Link
             to="/"
