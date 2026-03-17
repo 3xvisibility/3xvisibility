@@ -56,6 +56,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
             <div className="flex items-center gap-3">
               <SidebarTrigger className="lg:hidden" />
               <button
+                data-onboarding="search"
                 onClick={() => setCmdOpen(true)}
                 className="hidden md:flex items-center gap-2 h-9 w-64 rounded-lg bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-muted transition-colors"
               >
