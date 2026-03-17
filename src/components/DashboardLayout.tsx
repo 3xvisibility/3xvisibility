@@ -32,6 +32,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const [cmdOpen, setCmdOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { theme, setTheme } = useTheme();
   useJobNotifications();
   useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));
 
