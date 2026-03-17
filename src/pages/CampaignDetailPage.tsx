@@ -20,8 +20,9 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
-  Check, Clock, XCircle, FileText, Layers, RefreshCw,
+  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download,
 } from "lucide-react";
+import { exportPagesCsv } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
