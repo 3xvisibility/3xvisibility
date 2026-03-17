@@ -321,15 +321,24 @@ export default function CampaignsPage() {
     reader.onload = (event) => {
       const text = event.target?.result as string;
       const lines = text.split("\n").filter((l) => l.trim());
-      const headers = lines[0].split(",").map((h) => h.trim());
+      if (lines.length === 0) return;
+
+      // Auto-detect delimiter: try tab, semicolon, pipe, then comma
+      const firstLine = lines[0];
+      let delimiter = ",";
+      if (firstLine.includes("\t")) delimiter = "\t";
+      else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
+      else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
+
+      const headers = firstLine.split(delimiter).map((h) => h.trim().replace(/^["']|["']$/g, ""));
       setCsvHeaders(headers);
       const rows = lines.slice(1).map((line) => {
-        const values = line.split(",").map((v) => v.trim());
+        const values = line.split(delimiter).map((v) => v.trim().replace(/^["']|["']$/g, ""));
         return headers.reduce((acc, h, i) => ({ ...acc, [h]: values[i] || "" }), {} as Record<string, string>);
       });
       setCsvData(rows);
     };
-    reader.readAsText(file);
+    reader.readAsText(file, "utf-8");
   };
 
   const resetForm = () => {

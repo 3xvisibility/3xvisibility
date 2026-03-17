@@ -7,10 +7,129 @@ const corsHeaders = {
 };
 
 function slugify(text: string): string {
+  // Normalize accents, strip diacritics, lowercase, clean
   return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+// Process {{#if variable}}...{{/if}} conditionals
+function processConditionals(content: string, vars: Record<string, string>): string {
+  return content.replace(
+    /\{\{#if\s+(\w+)\}\}([\s\S]*?)(?:\{\{#else\}\}([\s\S]*?))?\{\{\/if\}\}/gi,
+    (_match, varName, ifBlock, elseBlock) => {
+      const value = vars[varName] || vars[varName.toLowerCase()];
+      return (value && value.trim()) ? ifBlock : (elseBlock || "");
+    }
+  );
+}
+
+// Process {{#each items}}...{{/each}} loops (items = comma-separated string)
+function processLoops(content: string, vars: Record<string, string>): string {
+  return content.replace(
+    /\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/gi,
+    (_match, varName, loopBlock) => {
+      const value = vars[varName] || vars[varName.toLowerCase()];
+      if (!value) return "";
+      const items = value.split(",").map(s => s.trim()).filter(Boolean);
+      return items.map((item, index) =>
+        loopBlock
+          .replace(/\{\{this\}\}/gi, item)
+          .replace(/\{\{@index\}\}/gi, String(index))
+          .replace(/\{\{@number\}\}/gi, String(index + 1))
+      ).join("\n");
+    }
+  );
+}
+
+// Build JSON-LD structured data based on campaign type and row data
+function buildJsonLd(
+  campaignType: string,
+  pageTitle: string,
+  seoDescription: string,
+  slug: string,
+  geoSettings: Record<string, any>,
+  row: Record<string, string>
+): string {
+  const escape = (s: string) => s.replace(/"/g, '\\"');
+
+  if (campaignType === "geo") {
+    const schema: any = {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      name: pageTitle,
+      description: seoDescription,
+    };
+    if (geoSettings.city || geoSettings.region || geoSettings.country) {
+      schema.address = {
+        "@type": "PostalAddress",
+        addressLocality: geoSettings.city || "",
+        addressRegion: geoSettings.region || "",
+        addressCountry: geoSettings.country || "",
+        postalCode: geoSettings.postcode || "",
+      };
+    }
+    if (geoSettings.lat && geoSettings.lng) {
+      schema.geo = { "@type": "GeoCoordinates", latitude: geoSettings.lat, longitude: geoSettings.lng };
+    }
+    if (row.phone || row.telephone) schema.telephone = row.phone || row.telephone;
+    if (row.email) schema.email = row.email;
+    return `<script type="application/ld+json">${JSON.stringify(schema)}</script>`;
+  }
+
+  // Check for FAQ-style data
+  if (row.question && row.answer) {
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: [{
+        "@type": "Question",
+        name: row.question,
+        acceptedAnswer: { "@type": "Answer", text: row.answer },
+      }],
+    };
+    return `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`;
+  }
+
+  // Default WebPage schema
+  const webSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: pageTitle,
+    description: seoDescription,
+  };
+  return `<script type="application/ld+json">${JSON.stringify(webSchema)}</script>`;
+}
+
+// Build GEO reusable HTML blocks (address, phone, opening hours)
+function buildGeoBlocks(geoSettings: Record<string, any>, row: Record<string, string>): string {
+  const parts: string[] = [];
+
+  // Address block
+  const addressParts = [geoSettings.city, geoSettings.region, geoSettings.postcode, geoSettings.country].filter(Boolean);
+  if (addressParts.length > 0) {
+    parts.push(`<div class="geo-address" itemscope itemtype="https://schema.org/PostalAddress">
+  <strong>📍 Address</strong><br>
+  ${geoSettings.city ? `<span itemprop="addressLocality">${geoSettings.city}</span>` : ""}${geoSettings.region ? `, <span itemprop="addressRegion">${geoSettings.region}</span>` : ""}${geoSettings.postcode ? ` <span itemprop="postalCode">${geoSettings.postcode}</span>` : ""}${geoSettings.country ? `<br><span itemprop="addressCountry">${geoSettings.country}</span>` : ""}
+</div>`);
+  }
+
+  // Phone block
+  const phone = row.phone || row.telephone;
+  if (phone) {
+    parts.push(`<div class="geo-phone"><strong>📞 Phone</strong><br><a href="tel:${phone}" itemprop="telephone">${phone}</a></div>`);
+  }
+
+  // Opening hours block
+  const hours = row.opening_hours || row.hours;
+  if (hours) {
+    parts.push(`<div class="geo-hours"><strong>🕐 Opening Hours</strong><br><span itemprop="openingHours">${hours}</span></div>`);
+  }
+
+  return parts.length > 0 ? `\n<!-- GEO Blocks -->\n<section class="geo-info">\n${parts.join("\n")}\n</section>` : "";
 }
 
 function extractAiBlocks(content: string): { fullMatch: string; prompt: string }[] {
