@@ -216,7 +216,6 @@ export default function CampaignsPage() {
         }
       }
     },
-    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast({ title: "Campaign created", description: `"${campaignName}" has been saved as a draft.` });
