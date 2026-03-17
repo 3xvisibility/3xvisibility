@@ -28,6 +28,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
   const { t } = useLanguage();
+  useJobNotifications();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
