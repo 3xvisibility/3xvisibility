@@ -143,11 +143,13 @@ export default function DashboardPage() {
   });
 
   const { data: recentPages = [] } = useQuery({
-    queryKey: ["dashboard-recent-pages"],
+    queryKey: ["dashboard-recent-pages", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
         .select("id, title, status, created_at, slug")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false })
         .limit(5);
       if (error) throw error;
