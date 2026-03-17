@@ -89,11 +89,13 @@ export default function DashboardPage() {
   });
 
   const { data: pageCount = 0, isLoading: loadingPages } = useQuery({
-    queryKey: ["dashboard-page-count"],
+    queryKey: ["dashboard-page-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("generated_pages")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
