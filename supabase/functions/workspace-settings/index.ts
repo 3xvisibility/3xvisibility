@@ -100,6 +100,8 @@ serve(async (req) => {
         .insert({ workspace_id, user_id: targetUser.id, role });
       if (insertErr) throw insertErr;
 
+      await auditLog(adminClient, workspace_id, user.id, "invite_member", "workspace_member", targetUser.id, { email, role });
+
       return new Response(JSON.stringify({ success: true, user_id: targetUser.id, email: targetUser.email }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
