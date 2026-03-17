@@ -77,6 +77,8 @@ export default function AutoStoreGeneratorPage() {
   const [previewGen, setPreviewGen] = useState<StoreGeneration | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   // Fetch websites for platform selection
   const { data: websites = [] } = useQuery({
