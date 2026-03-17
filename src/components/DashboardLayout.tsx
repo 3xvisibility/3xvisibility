@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useJobNotifications } from "@/hooks/use-job-notifications";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Search } from "lucide-react";
+import { Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const [cmdOpen, setCmdOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { theme, setTheme } = useTheme();
   useJobNotifications();
   useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));
 
@@ -64,6 +66,15 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               </button>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
               <LanguageSwitcher
                 variant="ghost"
                 size="icon"
