@@ -169,7 +169,7 @@ export default function CampaignsPage() {
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
-      const { error } = await supabase.from("campaigns").insert({
+      const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
         template_id: selectedTemplate || null,
@@ -180,8 +180,42 @@ export default function CampaignsPage() {
         workspace_id: wsId,
         utm_settings: utmSettings as any,
         geo_settings: geoSettings as any,
-      });
+      }).select("id").single();
       if (error) throw error;
+
+      // Persist DataSource
+      if (csvFile && campaign) {
+        await supabase.from("data_sources").insert({
+          campaign_id: campaign.id,
+          workspace_id: wsId,
+          user_id: user.id,
+          type: "csv",
+          file_name: csvFile.name,
+          file_size: csvFile.size,
+          row_count: csvData.length,
+          headers: csvHeaders as any,
+        });
+      }
+
+      // Persist Mappings from variable mapping
+      if (variableMapping && campaign) {
+        const mappingRows = variableMapping.matched
+          .filter((m) => m.column)
+          .map((m, i) => ({
+            campaign_id: campaign.id,
+            workspace_id: wsId,
+            user_id: user.id,
+            source_column: m.column!,
+            target_field: m.variable,
+            field_category: "content",
+            sort_order: i,
+            is_required: true,
+          }));
+        if (mappingRows.length > 0) {
+          await supabase.from("mappings").insert(mappingRows);
+        }
+      }
+    },
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
