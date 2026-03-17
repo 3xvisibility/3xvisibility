@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useJobNotifications } from "@/hooks/use-job-notifications";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
   const { t } = useLanguage();
+  useJobNotifications();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
