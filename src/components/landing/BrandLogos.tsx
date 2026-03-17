@@ -24,12 +24,12 @@ export function BrandLogos() {
       transition={{ duration: 0.8, delay: 0.8 }}
       className="mt-16 md:mt-20 text-center"
     >
-      <p className="text-[11px] uppercase tracking-[0.2em] text-[hsl(250,15%,40%)] font-medium mb-8">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-[hsl(220,15%,40%)] font-medium mb-8">
         {t("hero.trustedBy")}
       </p>
       <div className="relative overflow-hidden max-w-5xl mx-auto">
-        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-[hsl(250,30%,6%)] to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-[hsl(250,30%,6%)] to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-[hsl(220,60%,4%)] to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-[hsl(220,60%,4%)] to-transparent z-10 pointer-events-none" />
 
         <motion.div
           className="flex items-center gap-16 md:gap-24 w-max"
