@@ -450,6 +450,10 @@ export default function CampaignsPage() {
     setCsvData([]);
     setSelectedTemplate("");
     setSelectedWebsite("");
+    setPublishMode("draft");
+    setMaxRows("");
+    setScheduleMode("now");
+    setScheduledDate(undefined);
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
