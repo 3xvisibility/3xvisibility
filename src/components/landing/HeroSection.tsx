@@ -122,9 +122,19 @@ export function HeroSection() {
                     transition={{ delay: step.delay, duration: 0.5, ease }}
                     className="flex flex-col items-center gap-1.5 flex-1"
                   >
-                    <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary/8 border border-primary/15 flex items-center justify-center">
+                    <motion.div
+                      animate={{ 
+                        boxShadow: [
+                          "0 0 0 0 hsl(var(--primary) / 0)",
+                          "0 0 0 8px hsl(var(--primary) / 0.08)",
+                          "0 0 0 0 hsl(var(--primary) / 0)",
+                        ],
+                      }}
+                      transition={{ delay: 2 + i * 0.4, duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                      className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-primary/8 border border-primary/15 flex items-center justify-center"
+                    >
                       <step.icon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                    </div>
+                    </motion.div>
                     <span className="text-[10px] font-medium text-muted-foreground">{step.label}</span>
                   </motion.div>
                   {i < 3 && (
@@ -132,8 +142,15 @@ export function HeroSection() {
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ delay: step.delay + 0.2, duration: 0.4, ease }}
-                      className="h-px flex-1 bg-gradient-to-r from-primary/30 to-primary/10 origin-left hidden sm:block"
-                    />
+                      className="h-px flex-1 origin-left hidden sm:block relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-primary/10" />
+                      <motion.div
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ delay: 2.5 + i * 0.4, duration: 1.5, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+                        className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+                      />
+                    </motion.div>
                   )}
                 </div>
               ))}
@@ -172,8 +189,14 @@ export function HeroSection() {
                       initial={{ width: 0 }}
                       animate={{ width: bar.w }}
                       transition={{ delay: bar.delay, duration: 0.8, ease }}
-                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary/30"
-                    />
+                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary/30 relative overflow-hidden"
+                    >
+                      <motion.div
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ delay: 3 + i * 0.5, duration: 1.2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+                        className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+                      />
+                    </motion.div>
                   </div>
                 </div>
               ))}
