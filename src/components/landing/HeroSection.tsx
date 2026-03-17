@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, FileSpreadsheet, Layers, Rocket, CheckCircle2, BarChart3 } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { BrandLogos } from "./BrandLogos";
 import { useEffect, useRef, useState } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
