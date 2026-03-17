@@ -33,6 +33,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export default function AnalyticsPage() {
   const { toast } = useToast();
