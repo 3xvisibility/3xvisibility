@@ -37,6 +37,8 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export default function AnalyticsPage() {
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   // Fetch all generated pages
   const { data: pages = [], isLoading: loadingPages } = useQuery({
