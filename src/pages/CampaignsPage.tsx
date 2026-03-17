@@ -44,6 +44,7 @@ export default function CampaignsPage() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvRawText, setCsvRawText] = useState<string>("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
