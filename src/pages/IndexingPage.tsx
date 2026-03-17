@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const statusColors: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
