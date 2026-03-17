@@ -15,6 +15,7 @@ import {
   Search as SearchIcon,
   Store,
   Zap,
+  Users,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
