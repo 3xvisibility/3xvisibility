@@ -583,6 +583,57 @@ export default function GeneratedPagesPage() {
               </tbody>
             </table>
           </div>
+          {/* Pagination */}
+          {filtered.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+              <p className="text-xs text-muted-foreground">
+                Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={safePage <= 1}
+                  onClick={() => setCurrentPage(safePage - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 7) {
+                    pageNum = i + 1;
+                  } else if (safePage <= 4) {
+                    pageNum = i + 1;
+                  } else if (safePage >= totalPages - 3) {
+                    pageNum = totalPages - 6 + i;
+                  } else {
+                    pageNum = safePage - 3 + i;
+                  }
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pageNum === safePage ? "default" : "outline"}
+                      size="icon"
+                      className="h-8 w-8 text-xs"
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={safePage >= totalPages}
+                  onClick={() => setCurrentPage(safePage + 1)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
