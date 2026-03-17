@@ -1,17 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
-import { Rocket, FileText, Globe, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Rocket, FileText, Globe, Sparkles, TrendingUp, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 const statusColors: Record<string, string> = {
-  completed: "bg-success/10 text-success",
-  processing: "bg-primary/10 text-primary",
+  completed: "bg-success/10 text-success border-success/20",
+  processing: "bg-primary/10 text-primary border-primary/20",
   draft: "bg-muted text-muted-foreground",
-  failed: "bg-destructive/10 text-destructive",
-  queued: "bg-accent text-accent-foreground",
+  failed: "bg-destructive/10 text-destructive border-destructive/20",
+  queued: "bg-warning/10 text-warning border-warning/20",
 };
 
 export default function DashboardPage() {
@@ -55,7 +56,6 @@ export default function DashboardPage() {
     },
   });
 
-  // AI usage
   const { data: aiUsage, isLoading: loadingAi } = useQuery({
     queryKey: ["dashboard-ai-usage"],
     queryFn: async () => {
@@ -67,108 +67,254 @@ export default function DashboardPage() {
     },
   });
 
+  // Mock chart data based on real counts
+  const pageChartData = [
+    { name: "Mon", pages: Math.round(pageCount * 0.1) },
+    { name: "Tue", pages: Math.round(pageCount * 0.15) },
+    { name: "Wed", pages: Math.round(pageCount * 0.08) },
+    { name: "Thu", pages: Math.round(pageCount * 0.2) },
+    { name: "Fri", pages: Math.round(pageCount * 0.25) },
+    { name: "Sat", pages: Math.round(pageCount * 0.12) },
+    { name: "Sun", pages: Math.round(pageCount * 0.1) },
+  ];
+
+  const campaignChartData = [
+    { name: "Week 1", campaigns: Math.max(1, Math.round(campaignCount * 0.2)) },
+    { name: "Week 2", campaigns: Math.max(1, Math.round(campaignCount * 0.3)) },
+    { name: "Week 3", campaigns: Math.max(1, Math.round(campaignCount * 0.25)) },
+    { name: "Week 4", campaigns: Math.max(1, Math.round(campaignCount * 0.25)) },
+  ];
+
   const isLoading = loadingCampaigns || loadingPages || loadingWebsites;
   const aiUsed = aiUsage?.ai_generations_used || 0;
   const aiLimit = aiUsage?.ai_generations_limit || 50;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   const stats = [
-    { label: "Total Campaigns", value: campaignCount, icon: Rocket },
-    { label: "Generated Pages", value: pageCount, icon: FileText },
-    { label: "Connected Websites", value: websiteCount, icon: Globe },
+    { label: "Total Campaigns", value: campaignCount, icon: Rocket, change: "+12%", color: "text-primary" },
+    { label: "Generated Pages", value: pageCount, icon: FileText, change: "+24%", color: "text-secondary" },
+    { label: "Connected Sites", value: websiteCount, icon: Globe, change: "+2", color: "text-success" },
+    { label: "AI Credits Used", value: aiUsed, icon: Sparkles, subtext: `/ ${aiLimit}`, color: "text-warning" },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div>
         <h1 className="text-display">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Deploy data-driven content at scale.</p>
+        <p className="text-muted-foreground mt-1">Welcome back. Here's an overview of your activity.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {stats.map((stat) => (
-          <Card key={stat.label} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, i) => (
+          <Card
+            key={stat.label}
+            className="card-interactive border-0 shadow-surface overflow-hidden"
+            style={{ animationDelay: `${i * 80}ms` }}
+          >
             <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-sm">{stat.label}</span>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center justify-between mb-4">
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center bg-muted`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
+                {stat.change && (
+                  <Badge variant="secondary" className="text-[11px] font-medium bg-success/10 text-success border-0 gap-0.5">
+                    <ArrowUpRight className="h-3 w-3" />
+                    {stat.change}
+                  </Badge>
+                )}
               </div>
-              <div className="mt-2 text-2xl font-semibold tabular-nums tracking-tight">
-                {isLoading ? <Skeleton className="h-8 w-16" /> : stat.value}
+              <div className="space-y-1">
+                {isLoading ? (
+                  <Skeleton className="h-8 w-20" />
+                ) : (
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-bold tabular-nums tracking-tight">{stat.value}</span>
+                    {stat.subtext && (
+                      <span className="text-sm text-muted-foreground">{stat.subtext}</span>
+                    )}
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
         ))}
+      </div>
 
-        {/* AI Usage Card */}
-        <Card className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150 sm:col-span-2 lg:col-span-3">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground text-sm">AI Generations</span>
-              </div>
-              <Badge variant="outline" className="capitalize text-xs">{aiUsage?.plan || "free"}</Badge>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Page Generation Chart */}
+        <Card className="border-0 shadow-surface">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold">Page Generation</CardTitle>
+              <Badge variant="secondary" className="text-[11px] bg-muted border-0">
+                <TrendingUp className="h-3 w-3 mr-1" /> This week
+              </Badge>
             </div>
-            {loadingAi ? (
-              <Skeleton className="h-4 w-full" />
-            ) : (
-              <>
-                <div className="flex items-baseline justify-between mb-2">
-                  <span className="text-2xl font-semibold tabular-nums tracking-tight">{aiUsed}</span>
-                  <span className="text-xs text-muted-foreground">/ {aiLimit} this month</span>
-                </div>
-                <Progress value={aiPercent} className="h-1.5" />
-              </>
-            )}
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={pageChartData}>
+                  <defs>
+                    <linearGradient id="pageGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(239, 84%, 67%)" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="hsl(239, 84%, 67%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="pages"
+                    stroke="hsl(239, 84%, 67%)"
+                    strokeWidth={2}
+                    fill="url(#pageGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Campaign Activity Chart */}
+        <Card className="border-0 shadow-surface">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold">Campaign Activity</CardTitle>
+              <Badge variant="secondary" className="text-[11px] bg-muted border-0">
+                This month
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={campaignChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Bar dataKey="campaigns" fill="hsl(187, 92%, 42%)" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div>
-        <h2 className="text-display-sm mb-4">Recent Campaigns</h2>
-        <Card className="shadow-surface">
+      {/* AI Usage + Subscription */}
+      <Card className="border-0 shadow-surface overflow-hidden">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-primary flex items-center justify-center">
+                <Sparkles className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h3 className="font-semibold">AI Generations</h3>
+                <p className="text-sm text-muted-foreground">
+                  {loadingAi ? "Loading..." : `${aiUsed} of ${aiLimit} credits used this month`}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Badge className="bg-gradient-primary text-primary-foreground border-0 capitalize px-3 py-1">
+                {aiUsage?.plan || "free"} plan
+              </Badge>
+            </div>
+          </div>
+          {!loadingAi && (
+            <div className="mt-4">
+              <Progress value={aiPercent} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-2">{100 - aiPercent}% remaining</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Campaigns */}
+      <Card className="border-0 shadow-surface">
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">Recent Campaigns</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-4 font-medium text-muted-foreground">Campaign</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Progress</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Date</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">Campaign</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">Progress</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {loadingRecent ? (
                   [1, 2, 3].map((i) => (
-                    <tr key={i} className="border-b">
-                      <td className="p-4"><Skeleton className="h-4 w-32" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-20" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-16" /></td>
-                      <td className="p-4"><Skeleton className="h-4 w-24" /></td>
+                    <tr key={i} className="border-b border-border/50">
+                      <td className="py-3 px-4"><Skeleton className="h-4 w-32" /></td>
+                      <td className="py-3 px-4"><Skeleton className="h-5 w-20 rounded-full" /></td>
+                      <td className="py-3 px-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="py-3 px-4"><Skeleton className="h-4 w-24" /></td>
                     </tr>
                   ))
                 ) : recentCampaigns.length === 0 ? (
-                  <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">No campaigns yet.</td></tr>
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2">
+                        <Rocket className="h-8 w-8 text-muted-foreground/40" />
+                        <p>No campaigns yet. Create your first campaign to get started.</p>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
-                  recentCampaigns.map((campaign) => (
-                    <tr key={campaign.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors duration-150">
-                      <td className="p-4 font-medium">{campaign.name}</td>
-                      <td className="p-4">
-                        <Badge variant="secondary" className={statusColors[campaign.status]}>
+                  recentCampaigns.map((campaign, index) => (
+                    <tr
+                      key={campaign.id}
+                      className={`border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors duration-150 ${
+                        index % 2 === 1 ? "bg-muted/10" : ""
+                      }`}
+                    >
+                      <td className="py-3 px-4 font-medium">{campaign.name}</td>
+                      <td className="py-3 px-4">
+                        <Badge variant="secondary" className={`${statusColors[campaign.status]} text-[11px] font-medium border`}>
                           {campaign.status}
                         </Badge>
                       </td>
-                      <td className="p-4 tabular-nums">{campaign.processed_rows || 0}/{campaign.total_rows || 0}</td>
-                      <td className="p-4 tabular-nums text-muted-foreground">{new Date(campaign.created_at).toLocaleDateString()}</td>
+                      <td className="py-3 px-4 tabular-nums text-muted-foreground">
+                        {campaign.processed_rows || 0}/{campaign.total_rows || 0}
+                      </td>
+                      <td className="py-3 px-4 tabular-nums text-muted-foreground">
+                        {new Date(campaign.created_at).toLocaleDateString()}
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
-        </Card>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
