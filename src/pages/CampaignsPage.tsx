@@ -160,14 +160,26 @@ export default function CampaignsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
+      const utmSettings = campaignType === "sea" ? {
+        utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
+        utm_term: utmTerm, utm_content: utmContent,
+      } : null;
+      const geoSettings = campaignType === "geo" ? {
+        country: geoCountry, region: geoRegion, city: geoCity,
+        postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
+        lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
+      } : null;
       const { error } = await supabase.from("campaigns").insert({
         name: campaignName,
+        campaign_type: campaignType,
         template_id: selectedTemplate || null,
         website_id: selectedWebsite || null,
         csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: csvData.length,
         user_id: user.id,
         workspace_id: wsId,
+        utm_settings: utmSettings as any,
+        geo_settings: geoSettings as any,
       });
       if (error) throw error;
     },
