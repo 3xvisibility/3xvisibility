@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, MessageSquareText, Download, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
-import { exportPagesCsv } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import SocialShareButtons from "@/components/SocialShareButtons";
 import SocialCaptionDialog from "@/components/SocialCaptionDialog";
 import BulkCaptionDialog from "@/components/BulkCaptionDialog";
