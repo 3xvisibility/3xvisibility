@@ -215,6 +215,7 @@ const App = () => {
       </WorkspaceProvider>
       </LanguageProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

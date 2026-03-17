@@ -170,6 +170,36 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Appearance */}
+      <Card className="shadow-surface">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Moon className="h-5 w-5 text-primary" />
+            Appearance
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">Choose your preferred theme for the application.</p>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { value: "light", label: "Light", icon: Sun },
+              { value: "dark", label: "Dark", icon: Moon },
+              { value: "system", label: "System", icon: Monitor },
+            ].map(({ value, label, icon: Icon }) => (
+              <Button
+                key={value}
+                variant={theme === value ? "default" : "outline"}
+                className="flex items-center gap-2 h-12"
+                onClick={() => setTheme(value)}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* AI Content Settings */}
       <Card className="shadow-surface">
         <CardHeader>
