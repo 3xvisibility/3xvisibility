@@ -679,6 +679,17 @@ export default function AutoStoreGeneratorPage() {
           </div>
         )}
       </div>
+
+      {/* Store Preview Dialog */}
+      <StorePreviewDialog
+        open={!!previewGen}
+        onOpenChange={(open) => !open && setPreviewGen(null)}
+        niche={previewGen?.niche || ""}
+        categories={previewGen?.categories || []}
+        products={previewGen?.products || []}
+        tone={previewGen?.content_tone}
+        language={previewGen?.language}
+      />
     </div>
   );
 }
