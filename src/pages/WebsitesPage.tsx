@@ -146,6 +146,8 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword }
         : siteType === "shopify"
         ? { admin_api_token: shopifyToken }
+        : siteType === "woocommerce"
+        ? { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret }
         : { api_key: prestashopApiKey };
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url: siteUrl, type: siteType, credentials },
