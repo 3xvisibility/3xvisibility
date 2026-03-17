@@ -203,6 +203,7 @@ export default function WebsitesPage() {
                     <SelectItem value="wordpress">WordPress</SelectItem>
                     <SelectItem value="shopify">Shopify</SelectItem>
                     <SelectItem value="prestashop">PrestaShop</SelectItem>
+                    <SelectItem value="woocommerce">WooCommerce</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
