@@ -93,11 +93,13 @@ export default function AutoStoreGeneratorPage() {
 
   // Fetch store generations
   const { data: generations = [], isLoading } = useQuery({
-    queryKey: ["store-generations"],
+    queryKey: ["store-generations", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_generations")
         .select("*")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as StoreGeneration[];
