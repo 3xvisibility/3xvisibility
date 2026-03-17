@@ -101,6 +101,34 @@ export default function DashboardPage() {
     },
   });
 
+  const { data: failedPageCount = 0 } = useQuery({
+    queryKey: ["dashboard-failed-pages", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("generated_pages")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!)
+        .eq("status", "failed");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: queuedPageCount = 0 } = useQuery({
+    queryKey: ["dashboard-queued-pages", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("generated_pages")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!)
+        .eq("status", "pending");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   const { data: websiteCount = 0, isLoading: loadingWebsites } = useQuery({
     queryKey: ["dashboard-website-count", wsId],
     enabled: !!wsId,
