@@ -1065,7 +1065,7 @@ export default function CampaignsPage() {
                     <tr key={c.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors ${index % 2 === 1 ? "bg-muted/10" : ""}`}>
                       <td className="py-3 px-4">
                         <div>
-                          <span className="font-medium">{c.name}</span>
+                          <span className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</span>
                           <div className="flex gap-2 mt-0.5 text-[11px] text-muted-foreground">
                             {c.templates?.name && <span>{c.templates.name}</span>}
                             {c.websites?.name && <span>• {c.websites.name}</span>}
