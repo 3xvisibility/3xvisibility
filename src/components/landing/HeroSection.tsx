@@ -190,8 +190,14 @@ export function HeroSection() {
                       initial={{ width: 0 }}
                       animate={{ width: bar.w }}
                       transition={{ delay: bar.delay, duration: 0.8, ease }}
-                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary/30"
-                    />
+                      className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary/30 relative overflow-hidden"
+                    >
+                      <motion.div
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{ delay: 3 + i * 0.5, duration: 1.2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+                        className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+                      />
+                    </motion.div>
                   </div>
                 </div>
               ))}
