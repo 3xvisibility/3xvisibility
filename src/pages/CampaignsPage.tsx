@@ -52,6 +52,7 @@ export default function CampaignsPage() {
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
   const [logDialogCampaign, setLogDialogCampaign] = useState<string | null>(null);
+  const [jobDialogCampaign, setJobDialogCampaign] = useState<Campaign | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
