@@ -2,11 +2,11 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2 } from "lucide-react";
+import { History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2, Filter } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface AuditLog {
   id: string;
@@ -46,6 +46,7 @@ function getActionDetails(log: AuditLog): string {
 
 export default function AuditLogViewer({ workspaceId }: { workspaceId: string }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [actionFilter, setActionFilter] = useState<string>("all");
 
   const {
     data,
@@ -54,16 +55,20 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["audit-logs", workspaceId],
+    queryKey: ["audit-logs", workspaceId, actionFilter],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
-      const { data, error } = await supabase
+      let query = supabase
         .from("audit_logs")
         .select("id, action, entity_type, entity_id, details, created_at, user_id")
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
         .range(from, to);
+      if (actionFilter !== "all") {
+        query = query.eq("action", actionFilter);
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return data as AuditLog[];
     },
@@ -95,11 +100,28 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
   return (
     <Card className="shadow-surface">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <History className="h-5 w-5 text-primary" />
-          Audit Log
-        </CardTitle>
-        <CardDescription>Recent admin actions in this workspace.</CardDescription>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              Audit Log
+            </CardTitle>
+            <CardDescription className="mt-1.5">Recent admin actions in this workspace.</CardDescription>
+          </div>
+          <Select value={actionFilter} onValueChange={setActionFilter}>
+            <SelectTrigger className="w-[170px] h-9 text-xs">
+              <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="invite_member">Member Invited</SelectItem>
+              <SelectItem value="update_role">Role Changed</SelectItem>
+              <SelectItem value="remove_member">Member Removed</SelectItem>
+              <SelectItem value="rename_workspace">Workspace Renamed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
