@@ -12,6 +12,7 @@ import { Plus, Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, Ex
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
