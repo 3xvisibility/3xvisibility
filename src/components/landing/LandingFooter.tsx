@@ -19,38 +19,35 @@ const footerLinks = {
     { label: "Contact", href: "#" },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
+    { label: "Privacy", href: "#" },
+    { label: "Terms", href: "#" },
   ],
 };
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-border/40 py-16 md:py-20">
+    <footer className="border-t border-border/20 py-12 md:py-16">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="h-7 w-7 rounded-lg bg-gradient-primary flex items-center justify-center shadow-lg shadow-primary/15">
-                <Zap className="h-3.5 w-3.5 text-primary-foreground" />
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="h-6 w-6 rounded-md bg-primary flex items-center justify-center shadow-[0_0_12px_hsl(var(--primary)/.2)]">
+                <Zap className="h-3 w-3 text-primary-foreground" />
               </div>
-              <span className="text-base font-bold tracking-tight">PageGen</span>
+              <span className="text-sm font-bold tracking-tight">PageGen</span>
             </Link>
-            <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-[200px]">
+            <p className="mt-3 text-xs text-muted-foreground/60 leading-relaxed max-w-[180px]">
               Deploy data-driven content at scale.
             </p>
           </div>
 
           {Object.entries(footerLinks).map(([group, links]) => (
             <div key={group}>
-              <h4 className="font-semibold text-xs uppercase tracking-[0.15em] text-foreground/70 mb-4">{group}</h4>
-              <ul className="space-y-3">
+              <h4 className="font-semibold text-[10px] uppercase tracking-[0.2em] text-foreground/50 mb-3">{group}</h4>
+              <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
-                    >
+                    <a href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
                       {link.label}
                     </a>
                   </li>
@@ -60,11 +57,11 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-14 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground/60">
+        <div className="mt-10 pt-5 border-t border-border/15 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[10px] text-muted-foreground/40">
             © {new Date().getFullYear()} PageGen. All rights reserved.
           </p>
-          <div className="flex items-center gap-5 text-xs text-muted-foreground/60">
+          <div className="flex items-center gap-4 text-[10px] text-muted-foreground/40">
             <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
             <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
             <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
