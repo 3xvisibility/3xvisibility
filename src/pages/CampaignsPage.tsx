@@ -509,8 +509,6 @@ export default function CampaignsPage() {
     return true;
   };
 
-  const totalSteps = campaignType === "seo" ? 5 : 6;
-
   const getWizardSteps = () => {
     const steps = [
       { num: 1, label: "Name" },
@@ -518,14 +516,18 @@ export default function CampaignsPage() {
       { num: 3, label: "CSV Data" },
       { num: 4, label: "Template" },
     ];
+    let nextNum = 5;
     if (campaignType === "sea") {
-      steps.push({ num: 5, label: "UTM" });
+      steps.push({ num: nextNum++, label: "UTM" });
     } else if (campaignType === "geo") {
-      steps.push({ num: 5, label: "GEO" });
+      steps.push({ num: nextNum++, label: "GEO" });
     }
-    steps.push({ num: campaignType === "seo" ? 5 : 6, label: "Website" });
+    steps.push({ num: nextNum++, label: "Website" });
+    steps.push({ num: nextNum++, label: "Settings" });
     return steps;
   };
+
+  const totalSteps = getWizardSteps().length;
 
   const wizardSteps = getWizardSteps();
 
