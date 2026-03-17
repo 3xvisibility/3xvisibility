@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -211,6 +211,67 @@ export default function TemplatesPage() {
     setSchemaConfig({});
   };
 
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const exportTemplate = (tpl: Template) => {
+    const exportData = {
+      name: tpl.name,
+      content: tpl.content,
+      variables: tpl.variables,
+      seo_title_pattern: (tpl as any).seo_title_pattern || "",
+      seo_description_pattern: (tpl as any).seo_description_pattern || "",
+      schema_type: (tpl as any).schema_type || "WebPage",
+      schema_config: (tpl as any).schema_config || {},
+      exported_at: new Date().toISOString(),
+      version: 1,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${tpl.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.template.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Template exported", description: `"${tpl.name}" saved as JSON.` });
+  };
+
+  const importTemplate = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.name || !data.content) {
+        throw new Error("Invalid template file: missing name or content.");
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
+
+      if (maxTemplates > 0 && templates.length >= maxTemplates) {
+        throw new Error(`Your plan allows a maximum of ${maxTemplates} template(s). Please upgrade to add more.`);
+      }
+
+      const { error } = await supabase.from("templates").insert({
+        name: data.name,
+        content: data.content,
+        variables: data.variables || [],
+        user_id: user.id,
+        workspace_id: wsId,
+        seo_title_pattern: data.seo_title_pattern || "",
+        seo_description_pattern: data.seo_description_pattern || "",
+        schema_type: data.schema_type || "WebPage",
+        schema_config: data.schema_config || {},
+      } as any);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Template imported", description: `"${data.name}" has been added.` });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    }
+    // Reset file input
+    if (importFileRef.current) importFileRef.current.value = "";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -219,6 +280,24 @@ export default function TemplatesPage() {
           <p className="text-muted-foreground mt-1">Define reusable page layouts with dynamic variables.</p>
         </div>
         <div className="flex gap-2">
+          {/* Hidden file input for import */}
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importTemplate(file);
+            }}
+          />
+          <Button
+            variant="outline"
+            className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+            onClick={() => importFileRef.current?.click()}
+          >
+            <Upload className="mr-2 h-4 w-4" /> Import
+          </Button>
           {/* AI Template Builder */}
           <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
             <DialogTrigger asChild>
@@ -667,6 +746,9 @@ export default function TemplatesPage() {
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate">
                       <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON">
+                      <Download className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(tpl.id)}>
                       <Trash2 className="h-3 w-3" />
