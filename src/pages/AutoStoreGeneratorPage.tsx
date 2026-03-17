@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import StorePreviewDialog from "@/components/StorePreviewDialog";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface StoreGeneration {
   id: string;
@@ -76,12 +77,15 @@ export default function AutoStoreGeneratorPage() {
   const [previewGen, setPreviewGen] = useState<StoreGeneration | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   // Fetch websites for platform selection
   const { data: websites = [] } = useQuery({
-    queryKey: ["websites"],
+    queryKey: ["websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("websites").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("websites").select("*").eq("workspace_id", wsId!).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -89,11 +93,13 @@ export default function AutoStoreGeneratorPage() {
 
   // Fetch store generations
   const { data: generations = [], isLoading } = useQuery({
-    queryKey: ["store-generations"],
+    queryKey: ["store-generations", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_generations")
         .select("*")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as StoreGeneration[];

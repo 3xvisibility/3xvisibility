@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PLAN_FEATURES, type PlanName, type FeatureKey, type PlanFeatures } from "@/lib/plan-features";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 export interface SubscriptionData {
   plan: PlanName;
@@ -18,16 +19,23 @@ export interface SubscriptionData {
 }
 
 export function useSubscription(): SubscriptionData {
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
+
   const { data, isLoading } = useQuery({
-    queryKey: ["user-subscription"],
+    queryKey: ["user-subscription", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      const { data } = await supabase
+      const query = supabase
         .from("subscriptions")
         .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .eq("user_id", user.id);
+      if (wsId) {
+        query.eq("workspace_id", wsId);
+      }
+      const { data } = await query.maybeSingle();
       return data;
     },
     staleTime: 60_000,

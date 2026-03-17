@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +53,8 @@ export default function CampaignsPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   useEffect(() => {
     const channel = supabase
@@ -64,11 +67,13 @@ export default function CampaignsPage() {
   }, [queryClient]);
 
   const { data: campaigns = [], isLoading } = useQuery({
-    queryKey: ["campaigns"],
+    queryKey: ["campaigns", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
         .select("*, templates(name), websites(name)")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Campaign[];
@@ -76,9 +81,10 @@ export default function CampaignsPage() {
   });
 
   const { data: templates = [] } = useQuery({
-    queryKey: ["templates"],
+    queryKey: ["templates", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name, variables").order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
@@ -111,9 +117,10 @@ export default function CampaignsPage() {
   }, [selectedTemplateVars, csvHeaders]);
 
   const { data: websites = [] } = useQuery({
-    queryKey: ["websites"],
+    queryKey: ["websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("websites").select("id, name").order("name");
+      const { data, error } = await supabase.from("websites").select("id, name").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
@@ -137,6 +144,7 @@ export default function CampaignsPage() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
       const { error } = await supabase.from("campaigns").insert({
         name: campaignName,
         template_id: selectedTemplate || null,
@@ -144,6 +152,7 @@ export default function CampaignsPage() {
         csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: csvData.length,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },

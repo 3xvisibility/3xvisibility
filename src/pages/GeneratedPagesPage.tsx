@@ -20,6 +20,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
@@ -49,13 +50,17 @@ export default function GeneratedPagesPage() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading } = useQuery({
-    queryKey: ["generated-pages"],
+    queryKey: ["generated-pages", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
         .select("*, campaigns(name), websites(name)")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as GeneratedPage[];

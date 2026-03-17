@@ -26,6 +26,7 @@ import IndexingPage from "./pages/IndexingPage";
 import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
+import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
+      <WorkspaceProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -181,6 +183,7 @@ const App = () => {
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </WorkspaceProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

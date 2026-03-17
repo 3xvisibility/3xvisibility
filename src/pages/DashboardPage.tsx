@@ -35,6 +35,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
@@ -48,6 +49,8 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [greeting, setGreeting] = useState("Welcome back");
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -73,55 +76,65 @@ export default function DashboardPage() {
   }, []);
 
   const { data: campaignCount = 0, isLoading: loadingCampaigns } = useQuery({
-    queryKey: ["dashboard-campaign-count"],
+    queryKey: ["dashboard-campaign-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("campaigns")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
   });
 
   const { data: pageCount = 0, isLoading: loadingPages } = useQuery({
-    queryKey: ["dashboard-page-count"],
+    queryKey: ["dashboard-page-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("generated_pages")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
   });
 
   const { data: websiteCount = 0, isLoading: loadingWebsites } = useQuery({
-    queryKey: ["dashboard-website-count"],
+    queryKey: ["dashboard-website-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("websites")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
   });
 
   const { data: templateCount = 0 } = useQuery({
-    queryKey: ["dashboard-template-count"],
+    queryKey: ["dashboard-template-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("templates")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
   });
 
   const { data: recentCampaigns = [], isLoading: loadingRecent } = useQuery({
-    queryKey: ["dashboard-recent-campaigns"],
+    queryKey: ["dashboard-recent-campaigns", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
         .select("id, name, status, processed_rows, total_rows, created_at")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false })
         .limit(6);
       if (error) throw error;
@@ -130,11 +143,13 @@ export default function DashboardPage() {
   });
 
   const { data: recentPages = [] } = useQuery({
-    queryKey: ["dashboard-recent-pages"],
+    queryKey: ["dashboard-recent-pages", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
         .select("id, title, status, created_at, slug")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false })
         .limit(5);
       if (error) throw error;

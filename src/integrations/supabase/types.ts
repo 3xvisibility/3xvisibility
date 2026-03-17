@@ -24,6 +24,7 @@ export type Database = {
           message: string | null
           pages_in_batch: number | null
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           batch_number?: number | null
@@ -34,6 +35,7 @@ export type Database = {
           message?: string | null
           pages_in_batch?: number | null
           user_id: string
+          workspace_id?: string | null
         }
         Update: {
           batch_number?: number | null
@@ -44,6 +46,7 @@ export type Database = {
           message?: string | null
           pages_in_batch?: number | null
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -51,6 +54,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -75,6 +85,7 @@ export type Database = {
           updated_at: string
           user_id: string
           website_id: string | null
+          workspace_id: string | null
         }
         Insert: {
           batch_size?: number | null
@@ -95,6 +106,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           website_id?: string | null
+          workspace_id?: string | null
         }
         Update: {
           batch_size?: number | null
@@ -115,6 +127,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website_id?: string | null
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -129,6 +142,13 @@ export type Database = {
             columns: ["website_id"]
             isOneToOne: false
             referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -150,6 +170,7 @@ export type Database = {
           title: string
           user_id: string
           website_id: string | null
+          workspace_id: string | null
         }
         Insert: {
           campaign_id: string
@@ -167,6 +188,7 @@ export type Database = {
           title: string
           user_id: string
           website_id?: string | null
+          workspace_id?: string | null
         }
         Update: {
           campaign_id?: string
@@ -184,6 +206,7 @@ export type Database = {
           title?: string
           user_id?: string
           website_id?: string | null
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -198,6 +221,13 @@ export type Database = {
             columns: ["website_id"]
             isOneToOne: false
             referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_pages_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -217,6 +247,7 @@ export type Database = {
           url: string
           user_id: string
           website_id: string
+          workspace_id: string | null
         }
         Insert: {
           created_at?: string
@@ -232,6 +263,7 @@ export type Database = {
           url: string
           user_id: string
           website_id: string
+          workspace_id?: string | null
         }
         Update: {
           created_at?: string
@@ -247,6 +279,7 @@ export type Database = {
           url?: string
           user_id?: string
           website_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -261,6 +294,13 @@ export type Database = {
             columns: ["website_id"]
             isOneToOne: false
             referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "indexing_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -278,6 +318,7 @@ export type Database = {
           section_title: string
           updated_at: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           anchor_format?: string
@@ -291,6 +332,7 @@ export type Database = {
           section_title?: string
           updated_at?: string
           user_id: string
+          workspace_id?: string | null
         }
         Update: {
           anchor_format?: string
@@ -304,6 +346,7 @@ export type Database = {
           section_title?: string
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -311,6 +354,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: true
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_link_settings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -323,6 +373,7 @@ export type Database = {
           id: string
           source_page_id: string
           target_page_id: string
+          workspace_id: string | null
         }
         Insert: {
           anchor_text: string
@@ -331,6 +382,7 @@ export type Database = {
           id?: string
           source_page_id: string
           target_page_id: string
+          workspace_id?: string | null
         }
         Update: {
           anchor_text?: string
@@ -339,6 +391,7 @@ export type Database = {
           id?: string
           source_page_id?: string
           target_page_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -362,6 +415,13 @@ export type Database = {
             referencedRelation: "generated_pages"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "internal_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -375,6 +435,7 @@ export type Database = {
           id: string
           updated_at: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           ai_content_length?: string
@@ -386,6 +447,7 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id: string
+          workspace_id?: string | null
         }
         Update: {
           ai_content_length?: string
@@ -397,8 +459,17 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sitemaps: {
         Row: {
@@ -410,6 +481,7 @@ export type Database = {
           updated_at: string
           user_id: string
           website_id: string
+          workspace_id: string | null
         }
         Insert: {
           content?: string
@@ -420,6 +492,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           website_id: string
+          workspace_id?: string | null
         }
         Update: {
           content?: string
@@ -430,6 +503,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website_id?: string
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -437,6 +511,13 @@ export type Database = {
             columns: ["website_id"]
             isOneToOne: true
             referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sitemaps_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -460,6 +541,7 @@ export type Database = {
           updated_at: string
           user_id: string
           website_id: string | null
+          workspace_id: string | null
         }
         Insert: {
           categories?: Json | null
@@ -479,6 +561,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           website_id?: string | null
+          workspace_id?: string | null
         }
         Update: {
           categories?: Json | null
@@ -498,6 +581,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website_id?: string | null
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -505,6 +589,13 @@ export type Database = {
             columns: ["website_id"]
             isOneToOne: false
             referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_generations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
@@ -524,6 +615,7 @@ export type Database = {
           stripe_subscription_id: string | null
           updated_at: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           ai_generations_limit?: number
@@ -539,6 +631,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           updated_at?: string
           user_id: string
+          workspace_id?: string | null
         }
         Update: {
           ai_generations_limit?: number
@@ -554,8 +647,17 @@ export type Database = {
           stripe_subscription_id?: string | null
           updated_at?: string
           user_id?: string
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       templates: {
         Row: {
@@ -566,6 +668,7 @@ export type Database = {
           updated_at: string
           user_id: string
           variables: string[] | null
+          workspace_id: string | null
         }
         Insert: {
           content: string
@@ -575,6 +678,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           variables?: string[] | null
+          workspace_id?: string | null
         }
         Update: {
           content?: string
@@ -584,8 +688,17 @@ export type Database = {
           updated_at?: string
           user_id?: string
           variables?: string[] | null
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -619,6 +732,7 @@ export type Database = {
           updated_at: string
           url: string
           user_id: string
+          workspace_id: string | null
         }
         Insert: {
           created_at?: string
@@ -633,6 +747,7 @@ export type Database = {
           updated_at?: string
           url: string
           user_id: string
+          workspace_id?: string | null
         }
         Update: {
           created_at?: string
@@ -647,6 +762,77 @@ export type Database = {
           updated_at?: string
           url?: string
           user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "websites_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["workspace_role"]
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["workspace_role"]
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          plan: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          plan?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          plan?: string
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -655,11 +841,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_workspace_role: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: Database["public"]["Enums"]["workspace_role"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_workspace_member: {
+        Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
     }
@@ -675,6 +869,7 @@ export type Database = {
       page_status: "pending" | "published" | "failed"
       website_status: "connected" | "error" | "disconnected"
       website_type: "wordpress" | "shopify" | "prestashop" | "woocommerce"
+      workspace_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -808,6 +1003,7 @@ export const Constants = {
       page_status: ["pending", "published", "failed"],
       website_status: ["connected", "error", "disconnected"],
       website_type: ["wordpress", "shopify", "prestashop", "woocommerce"],
+      workspace_role: ["owner", "admin", "member"],
     },
   },
 } as const

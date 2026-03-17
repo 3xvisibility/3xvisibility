@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface NavItem {
   titleKey: string;
@@ -70,6 +72,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const collapsed = state === "collapsed";
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
+  const { pagesUsed, pagesLimit } = useSubscription();
+  const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
 
   useEffect(() => {
     async function checkAdmin() {
@@ -101,13 +105,9 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
       <SidebarContent className="px-3 py-4">
-        <div className="flex items-center gap-2 px-3 mb-6">
-          <div className="h-8 w-8 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
-            <Zap className="h-4 w-4 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <span className="font-bold text-lg tracking-tight">PageGen</span>
-          )}
+        {/* Workspace Switcher */}
+        <div className="mb-4">
+          <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
         <SidebarGroup>
@@ -173,9 +173,9 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           <div className="px-3 py-3 rounded-xl bg-muted/50 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span className="font-medium">{t("sidebar.usage")}</span>
-              <span className="tabular-nums">42 / 100</span>
+              <span className="tabular-nums">{pagesUsed} / {pagesLimit}</span>
             </div>
-            <Progress value={42} className="h-1.5" />
+            <Progress value={usagePercent} className="h-1.5" />
             <p className="text-[11px] text-muted-foreground">{t("sidebar.pagesGenerated")}</p>
           </div>
         )}

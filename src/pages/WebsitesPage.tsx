@@ -12,6 +12,7 @@ import { Plus, Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, Ex
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
@@ -30,13 +31,17 @@ export default function WebsitesPage() {
   const [sitemapPreview, setSitemapPreview] = useState<{ websiteId: string; content: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   const { data: websites = [], isLoading } = useQuery({
-    queryKey: ["websites"],
+    queryKey: ["websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
         .select("*")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Website[];
@@ -61,6 +66,7 @@ export default function WebsitesPage() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
       const credentials = siteType === "wordpress"
         ? { username, app_password: appPassword }
         : siteType === "shopify"
@@ -74,6 +80,7 @@ export default function WebsitesPage() {
         type: siteType as WebsiteType,
         credentials,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type Template = Tables<"templates">;
 
@@ -26,15 +27,19 @@ export default function TemplatesPage() {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   const detectedVars = content.match(/\{[^}]+\}/g) || [];
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ["templates"],
+    queryKey: ["templates", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("templates")
         .select("*")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Template[];
@@ -45,12 +50,14 @@ export default function TemplatesPage() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
       const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
       const { error } = await supabase.from("templates").insert({
         name,
         content,
         variables,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },
@@ -91,11 +98,13 @@ export default function TemplatesPage() {
     mutationFn: async (tpl: Template) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
       const { error } = await supabase.from("templates").insert({
         name: `${tpl.name} (Copy)`,
         content: tpl.content,
         variables: tpl.variables,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },
