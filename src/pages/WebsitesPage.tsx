@@ -136,6 +136,28 @@ export default function WebsitesPage() {
     setSitemapPreview({ websiteId: site.id, content: (sitemap as any).content });
   };
 
+  const testConnectionMutation = useMutation({
+    mutationFn: async () => {
+      const credentials = siteType === "wordpress"
+        ? { username, app_password: appPassword }
+        : siteType === "shopify"
+        ? { admin_api_token: shopifyToken }
+        : { api_key: prestashopApiKey };
+      const { data, error } = await supabase.functions.invoke("test-connection", {
+        body: { url: siteUrl, type: siteType, credentials },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ title: "Connection successful", description: data.message });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Connection failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setOpen(false);
     setSiteUrl("");
@@ -143,6 +165,7 @@ export default function WebsitesPage() {
     setUsername("");
     setAppPassword("");
     setShopifyToken("");
+    setPrestashopApiKey("");
     setSiteType("");
   };
 
