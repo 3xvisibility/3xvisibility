@@ -242,6 +242,21 @@ export default function WebsitesPage() {
                   </p>
                 </div>
               )}
+              {siteType === "woocommerce" && (
+                <>
+                  <div>
+                    <Label htmlFor="woo-key">Consumer Key</Label>
+                    <Input id="woo-key" type="password" placeholder="ck_xxxxx" value={wooConsumerKey} onChange={(e) => setWooConsumerKey(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="woo-secret">Consumer Secret</Label>
+                    <Input id="woo-secret" type="password" placeholder="cs_xxxxx" value={wooConsumerSecret} onChange={(e) => setWooConsumerSecret(e.target.value)} />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Found in WooCommerce → Settings → Advanced → REST API
+                    </p>
+                  </div>
+                </>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                 <Button
