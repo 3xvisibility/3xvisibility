@@ -1,10 +1,40 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, FileSpreadsheet, Layers, Rocket, CheckCircle2, BarChart3 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useEffect, useRef, useState } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
+
+function AnimatedNumber({ value, prefix = "", suffix = "", delay = 0, color }: { value: number; prefix?: string; suffix?: string; delay?: number; color: string }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef(false);
+
+  useEffect(() => {
+    if (ref.current) return;
+    ref.current = true;
+    const timeout = setTimeout(() => {
+      const mv = { v: 0 };
+      const controls = animate(mv, { v: value }, {
+        duration: 1.5,
+        ease: "easeOut",
+        onUpdate: () => setDisplay(Math.round(mv.v * 10) / 10),
+      });
+      return () => controls.stop();
+    }, delay * 1000);
+    return () => clearTimeout(timeout);
+  }, [value, delay]);
+
+  const formatted = display >= 1000 ? display.toLocaleString("en-US", { maximumFractionDigits: 0 }) : 
+    suffix === "%" && display % 1 !== 0 ? display.toFixed(1) : Math.round(display).toString();
+
+  return (
+    <p className={`text-lg md:text-xl font-bold tracking-tight ${color}`}>
+      {prefix}{formatted}{suffix}
+    </p>
+  );
+}
 
 export function HeroSection() {
   const { t } = useLanguage();
@@ -159,9 +189,9 @@ export function HeroSection() {
             {/* Animated stats row */}
             <div className="mt-5 grid grid-cols-3 gap-3">
               {[
-                { label: "Pages", value: "1,248", color: "text-emerald-500" },
-                { label: "Indexed", value: "98.2%", color: "text-primary" },
-                { label: "Traffic", value: "+340%", color: "text-amber-500" },
+                { label: "Pages", numValue: 1248, prefix: "", suffix: "", color: "text-emerald-500" },
+                { label: "Indexed", numValue: 98.2, prefix: "", suffix: "%", color: "text-primary" },
+                { label: "Traffic", numValue: 340, prefix: "+", suffix: "%", color: "text-amber-500" },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -170,7 +200,7 @@ export function HeroSection() {
                   transition={{ delay: 1.3 + i * 0.1, duration: 0.4, ease }}
                   className="rounded-lg bg-muted/40 border border-border/20 p-3 text-center"
                 >
-                  <p className={`text-lg md:text-xl font-bold tracking-tight ${stat.color}`}>{stat.value}</p>
+                  <AnimatedNumber value={stat.numValue} prefix={stat.prefix} suffix={stat.suffix} delay={1.5 + i * 0.15} color={stat.color} />
                   <p className="text-[10px] text-muted-foreground/60 mt-0.5">{stat.label}</p>
                 </motion.div>
               ))}
