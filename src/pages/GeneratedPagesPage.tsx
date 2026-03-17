@@ -178,6 +178,47 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const bulkPublishMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { page_ids: ids, publish_type: publishType },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setSelectedIds(new Set());
+      toast({
+        title: "Bulk publish complete",
+        description: `${data.published} published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const bulkStatusMutation = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      const { error } = await supabase
+        .from("generated_pages")
+        .update({ status: status as any })
+        .in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setSelectedIds(new Set());
+      toast({ title: "Status updated", description: `${count} pages set to ${status}.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const openSeoEditor = (page: GeneratedPage) => {
     setSeoEditPage(page);
     setSeoForm({
