@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.regenerate-product-image]
 verify_jwt = false
+
+[functions.generate-caption]
+verify_jwt = false

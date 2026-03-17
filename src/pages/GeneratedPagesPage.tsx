@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, Share2 } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, MessageSquareText } from "lucide-react";
 import SocialShareButtons from "@/components/SocialShareButtons";
+import SocialCaptionDialog from "@/components/SocialCaptionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -42,6 +43,7 @@ export default function GeneratedPagesPage() {
   const [bulkSeoForm, setBulkSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [bulkSeoApply, setBulkSeoApply] = useState({ title: true, description: true, keywords: true });
   const [publishType, setPublishType] = useState<"page" | "product">("page");
+  const [captionPage, setCaptionPage] = useState<GeneratedPage | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -422,6 +424,9 @@ export default function GeneratedPagesPage() {
                           <Button size="sm" variant="ghost" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
                           </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setCaptionPage(page)} title="AI Caption">
+                            <MessageSquareText className="h-3 w-3" />
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
@@ -513,8 +518,25 @@ export default function GeneratedPagesPage() {
               <strong>Error:</strong> {previewPage.error_message}
             </div>
           )}
+          <div className="mt-3 flex justify-end">
+            <Button size="sm" variant="outline" onClick={() => { setPreviewPage(null); setCaptionPage(previewPage); }}>
+              <MessageSquareText className="h-3.5 w-3.5 mr-1.5" /> Generate Caption
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
+
+      {/* Social Caption Dialog */}
+      <SocialCaptionDialog
+        open={!!captionPage}
+        onOpenChange={(open) => !open && setCaptionPage(null)}
+        page={captionPage ? {
+          title: captionPage.title,
+          seo_title: (captionPage as any).seo_title,
+          seo_description: (captionPage as any).seo_description,
+          external_url: captionPage.external_url,
+        } : null}
+      />
 
       {/* Single SEO Edit Dialog */}
       <Dialog open={!!seoEditPage} onOpenChange={(open) => !open && setSeoEditPage(null)}>
