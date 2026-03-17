@@ -143,7 +143,7 @@ async function publishProductToShopify(
   }
   if (extraData?.images || extraData?.image) {
     const imgs = extraData.images || (extraData.image ? [extraData.image] : []);
-    productPayload.images = imgs.map((src: string) => ({ src }));
+    productPayload.images = imgs.filter((src: string) => src && !src.startsWith("data:")).map((src: string) => ({ src }));
   }
   if (seo.seo_title) {
     productPayload.metafields_global_title_tag = seo.seo_title;
