@@ -117,9 +117,10 @@ export default function CampaignsPage() {
   }, [selectedTemplateVars, csvHeaders]);
 
   const { data: websites = [] } = useQuery({
-    queryKey: ["websites"],
+    queryKey: ["websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("websites").select("id, name").order("name");
+      const { data, error } = await supabase.from("websites").select("id, name").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
