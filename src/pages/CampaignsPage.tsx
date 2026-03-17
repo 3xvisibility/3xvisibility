@@ -1346,6 +1346,7 @@ function CampaignActions({
   isPaused,
   executeMutation,
   deleteMutation,
+  duplicateMutation,
   setLinkDialogCampaign,
   setLogDialogCampaign,
   setJobDialogCampaign,
@@ -1355,6 +1356,7 @@ function CampaignActions({
   isPaused: boolean;
   executeMutation: any;
   deleteMutation: any;
+  duplicateMutation: any;
   setLinkDialogCampaign: (c: any) => void;
   setLogDialogCampaign: (id: string) => void;
   setJobDialogCampaign: (c: any) => void;
