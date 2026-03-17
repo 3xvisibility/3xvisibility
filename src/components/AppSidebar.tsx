@@ -32,26 +32,33 @@ import {
 } from "@/components/ui/sidebar";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { useLanguage } from "@/i18n/LanguageContext";
 
-const mainNav = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Campaigns", url: "/campaigns", icon: Rocket },
-  { title: "Generated Pages", url: "/pages", icon: Layers },
-  { title: "Templates", url: "/templates", icon: FileText },
+interface NavItem {
+  titleKey: string;
+  url: string;
+  icon: typeof LayoutDashboard;
+}
+
+const mainNav: NavItem[] = [
+  { titleKey: "sidebar.dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { titleKey: "sidebar.campaigns", url: "/campaigns", icon: Rocket },
+  { titleKey: "sidebar.generatedPages", url: "/pages", icon: Layers },
+  { titleKey: "sidebar.templates", url: "/templates", icon: FileText },
 ];
 
-const toolsNav = [
-  { title: "AI Scanner", url: "/scanner", icon: ScanSearch },
-  { title: "Discovery", url: "/discovery", icon: Compass },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Indexing", url: "/indexing", icon: SearchIcon },
-  { title: "Store Generator", url: "/store-generator", icon: Store },
+const toolsNav: NavItem[] = [
+  { titleKey: "sidebar.aiScanner", url: "/scanner", icon: ScanSearch },
+  { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass },
+  { titleKey: "sidebar.analytics", url: "/analytics", icon: BarChart3 },
+  { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon },
+  { titleKey: "sidebar.storeGenerator", url: "/store-generator", icon: Store },
 ];
 
-const settingsNav = [
-  { title: "Websites", url: "/websites", icon: Globe },
-  { title: "Billing", url: "/billing", icon: CreditCard },
-  { title: "Settings", url: "/settings", icon: Settings },
+const settingsNav: NavItem[] = [
+  { titleKey: "sidebar.websites", url: "/websites", icon: Globe },
+  { titleKey: "sidebar.billing", url: "/billing", icon: CreditCard },
+  { titleKey: "sidebar.settings", url: "/settings", icon: Settings },
 ];
 
 interface AppSidebarProps {
@@ -62,6 +69,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const [isAdmin, setIsAdmin] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     async function checkAdmin() {
@@ -73,9 +81,9 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     checkAdmin();
   }, []);
 
-  const renderNavItems = (items: typeof mainNav) =>
+  const renderNavItems = (items: NavItem[]) =>
     items.map((item) => (
-      <SidebarMenuItem key={item.title}>
+      <SidebarMenuItem key={item.titleKey}>
         <SidebarMenuButton asChild>
           <NavLink
             to={item.url}
@@ -84,7 +92,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="text-sm">{item.title}</span>}
+            {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
           </NavLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -93,7 +101,6 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
       <SidebarContent className="px-3 py-4">
-        {/* Logo */}
         <div className="flex items-center gap-2 px-3 mb-6">
           <div className="h-8 w-8 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
             <Zap className="h-4 w-4 text-primary-foreground" />
@@ -103,11 +110,10 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           )}
         </div>
 
-        {/* Main Navigation */}
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              Main
+              {t("sidebar.main")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -119,11 +125,10 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
-        {/* Tools */}
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              Tools
+              {t("sidebar.tools")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -135,11 +140,10 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
 
         {!collapsed && <Separator className="my-3 mx-3" />}
 
-        {/* Settings & Admin */}
         <SidebarGroup className="mt-auto">
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              Account
+              {t("sidebar.account")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -153,7 +157,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                       activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
                     >
                       <ShieldCheck className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span className="text-sm">Admin</span>}
+                      {!collapsed && <span className="text-sm">{t("sidebar.admin")}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -168,11 +172,11 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         {!collapsed && (
           <div className="px-3 py-3 rounded-xl bg-muted/50 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-medium">Usage</span>
+              <span className="font-medium">{t("sidebar.usage")}</span>
               <span className="tabular-nums">42 / 100</span>
             </div>
             <Progress value={42} className="h-1.5" />
-            <p className="text-[11px] text-muted-foreground">pages generated this month</p>
+            <p className="text-[11px] text-muted-foreground">{t("sidebar.pagesGenerated")}</p>
           </div>
         )}
         {onLogout && (
@@ -183,7 +187,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all duration-150"
               >
                 <LogOut className="h-4 w-4 shrink-0" />
-                {!collapsed && <span className="text-sm">Log out</span>}
+                {!collapsed && <span className="text-sm">{t("sidebar.logout")}</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

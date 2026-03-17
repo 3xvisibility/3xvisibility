@@ -5,26 +5,29 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ScrollReveal } from "./ScrollReveal";
-
-const faqs = [
-  { q: "What websites can I connect?", a: "WordPress (via REST API with Application Passwords) and Shopify (via Admin API). More integrations coming soon." },
-  { q: "How does CSV processing work?", a: "Upload any CSV — the system auto-detects columns. Map each column to a template variable. Each row becomes one page." },
-  { q: "Can I preview before publishing?", a: "Yes. Use 'Dry Run' to generate a preview page before executing the full campaign." },
-  { q: "What if a page fails to publish?", a: "Failed pages are logged with detailed errors. Retry individual pages or the entire batch with one click." },
-  { q: "Is there an API?", a: "Yes, Pro and Agency plans include API access for programmatic campaign creation and generation." },
-  { q: "Can I cancel anytime?", a: "Absolutely. No contracts, no commitments. Cancel your subscription at any time." },
-];
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export function FAQSection() {
+  const { t } = useLanguage();
+
+  const faqs = [
+    { q: t("faq.q1"), a: t("faq.a1") },
+    { q: t("faq.q2"), a: t("faq.a2") },
+    { q: t("faq.q3"), a: t("faq.a3") },
+    { q: t("faq.q4"), a: t("faq.a4") },
+    { q: t("faq.q5"), a: t("faq.a5") },
+    { q: t("faq.q6"), a: t("faq.a6") },
+  ];
+
   return (
     <section id="faq" className="py-20 md:py-28 relative">
       <div className="container mx-auto px-4 lg:px-8 relative z-10 max-w-3xl">
         <ScrollReveal className="text-center mb-12">
           <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
-            FAQ
+            {t("faq.badge")}
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
-            Frequently asked questions
+            {t("faq.title")}
           </h2>
         </ScrollReveal>
 

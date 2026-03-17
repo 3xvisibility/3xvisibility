@@ -1,24 +1,27 @@
 import { ScrollReveal } from "./ScrollReveal";
 import { Globe, FileText, Rocket, Settings2 } from "lucide-react";
 import { motion } from "framer-motion";
-
-const steps = [
-  { icon: Globe, title: "Connect website", description: "Link your WordPress or Shopify site via API credentials.", color: "from-blue-500 to-cyan-500" },
-  { icon: FileText, title: "Build template", description: "Create page layouts with {variable} placeholders.", color: "from-violet-500 to-purple-500" },
-  { icon: Settings2, title: "Upload & map", description: "Upload CSV data and map columns to template slots.", color: "from-amber-500 to-orange-500" },
-  { icon: Rocket, title: "Generate & publish", description: "Hit execute. Watch pages go live in real-time.", color: "from-emerald-500 to-teal-500" },
-];
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export function HowItWorksSection() {
+  const { t } = useLanguage();
+
+  const steps = [
+    { icon: Globe, titleKey: "howItWorks.step1Title", descKey: "howItWorks.step1Desc", color: "from-blue-500 to-cyan-500" },
+    { icon: FileText, titleKey: "howItWorks.step2Title", descKey: "howItWorks.step2Desc", color: "from-violet-500 to-purple-500" },
+    { icon: Settings2, titleKey: "howItWorks.step3Title", descKey: "howItWorks.step3Desc", color: "from-amber-500 to-orange-500" },
+    { icon: Rocket, titleKey: "howItWorks.step4Title", descKey: "howItWorks.step4Desc", color: "from-emerald-500 to-teal-500" },
+  ];
+
   return (
     <section id="how-it-works" className="py-20 md:py-28 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-14">
           <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
-            How it works
+            {t("howItWorks.badge")}
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
-            Four steps to published pages
+            {t("howItWorks.title")}
           </h2>
         </ScrollReveal>
 
@@ -31,7 +34,7 @@ export function HowItWorksSection() {
         >
           {steps.map((s, i) => (
             <motion.div
-              key={s.title}
+              key={s.titleKey}
               className="relative rounded-2xl border border-border/30 bg-card/50 p-6 text-center hover:border-border/60 hover:shadow-lg hover:shadow-primary/5 transition-all duration-500 group"
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -44,8 +47,8 @@ export function HowItWorksSection() {
               <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${s.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 opacity-80`}>
                 <s.icon className="h-5 w-5 text-white" />
               </div>
-              <h3 className="font-bold text-sm mb-2">{s.title}</h3>
-              <p className="text-[12px] text-muted-foreground leading-relaxed">{s.description}</p>
+              <h3 className="font-bold text-sm mb-2">{t(s.titleKey)}</h3>
+              <p className="text-[12px] text-muted-foreground leading-relaxed">{t(s.descKey)}</p>
             </motion.div>
           ))}
         </motion.div>

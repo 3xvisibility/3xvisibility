@@ -24,103 +24,9 @@ import {
 } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const YEARLY_DISCOUNT = 0.2;
-
-interface PlanConfig {
-  name: string;
-  monthlyPrice: number;
-  description: string;
-  popular: boolean;
-  icon: React.ReactNode;
-  gradient: string;
-  cta: string;
-  features: string[];
-  pagesLimit: string;
-}
-
-const plans: PlanConfig[] = [
-  {
-    name: "Starter",
-    monthlyPrice: 29,
-    description: "Perfect for individuals and small projects",
-    popular: false,
-    icon: <Zap className="h-5 w-5" />,
-    gradient: "from-secondary/20 to-secondary/5",
-    cta: "Get Started",
-    pagesLimit: "100 pages/month",
-    features: [
-      "100 pages/month",
-      "50 AI generations",
-      "5 templates",
-      "1 website",
-      "WordPress integration",
-      "Social sharing",
-      "Email support",
-    ],
-  },
-  {
-    name: "Pro",
-    monthlyPrice: 79,
-    description: "Best for growing businesses and marketers",
-    popular: true,
-    icon: <Sparkles className="h-5 w-5" />,
-    gradient: "from-primary/20 to-primary/5",
-    cta: "Start Pro Trial",
-    pagesLimit: "2,000 pages/month",
-    features: [
-      "2,000 pages/month",
-      "500 AI generations",
-      "Unlimited templates",
-      "5 websites",
-      "All CMS integrations",
-      "AI Store Generator",
-      "Google Indexing",
-      "Internal link building",
-      "API access",
-      "Priority support",
-    ],
-  },
-  {
-    name: "Agency",
-    monthlyPrice: 199,
-    description: "For agencies and enterprise teams",
-    popular: false,
-    icon: <Crown className="h-5 w-5" />,
-    gradient: "from-warning/20 to-warning/5",
-    cta: "Contact Sales",
-    pagesLimit: "10,000 pages/month",
-    features: [
-      "10,000 pages/month",
-      "5,000 AI generations",
-      "Unlimited templates",
-      "Unlimited websites",
-      "All CMS integrations",
-      "AI Store Generator",
-      "Google Indexing",
-      "Internal link building",
-      "API access",
-      "Team collaboration",
-      "Dedicated support",
-    ],
-  },
-];
-
-const comparisonFeatures = [
-  { label: "Pages / month", icon: <Layers className="h-4 w-4 text-primary" />, starter: "100", pro: "2,000", agency: "10,000" },
-  { label: "AI generations", icon: <Sparkles className="h-4 w-4 text-primary" />, starter: "50", pro: "500", agency: "5,000" },
-  { label: "Templates", icon: <FileText className="h-4 w-4 text-primary" />, starter: "5", pro: "Unlimited", agency: "Unlimited" },
-  { label: "Websites", icon: <Globe className="h-4 w-4 text-primary" />, starter: "1", pro: "5", agency: "Unlimited" },
-  { label: "WordPress", icon: <Globe className="h-4 w-4 text-primary" />, starter: true, pro: true, agency: true },
-  { label: "Shopify", icon: <Store className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-  { label: "Social Sharing", icon: <Share2 className="h-4 w-4 text-primary" />, starter: true, pro: true, agency: true },
-  { label: "AI Store Generator", icon: <Store className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-  { label: "Google Indexing", icon: <Search className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-  { label: "Internal Links", icon: <Link2 className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-  { label: "API Access", icon: <Code className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-  { label: "Team Collaboration", icon: <Users className="h-4 w-4 text-primary" />, starter: false, pro: false, agency: true },
-  { label: "Support", icon: <Headphones className="h-4 w-4 text-primary" />, starter: "Email", pro: "Priority", agency: "Dedicated" },
-];
 
 function TableCell({ val }: { val: string | boolean }) {
   if (typeof val === "boolean") {
@@ -139,26 +45,110 @@ function TableCell({ val }: { val: string | boolean }) {
 
 export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false);
+  const { t } = useLanguage();
+
+  const plans = [
+    {
+      name: t("pricing.starter"),
+      monthlyPrice: 29,
+      description: t("pricing.starterDesc"),
+      popular: false,
+      icon: <Zap className="h-5 w-5" />,
+      gradient: "from-secondary/20 to-secondary/5",
+      cta: t("pricing.getStarted"),
+      pagesLimit: `100 ${t("pricing.pagesPerMonth")}`,
+      features: [
+        `100 ${t("pricing.pagesPerMonth")}`,
+        `50 ${t("pricing.aiGenerations")}`,
+        `5 ${t("pricing.templates")}`,
+        `1 ${t("pricing.websites").toLowerCase()}`,
+        t("pricing.wordpress"),
+        t("pricing.socialSharing"),
+        `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`,
+      ],
+    },
+    {
+      name: t("pricing.pro"),
+      monthlyPrice: 79,
+      description: t("pricing.proDesc"),
+      popular: true,
+      icon: <Sparkles className="h-5 w-5" />,
+      gradient: "from-primary/20 to-primary/5",
+      cta: t("pricing.startProTrial"),
+      pagesLimit: `2,000 ${t("pricing.pagesPerMonth")}`,
+      features: [
+        `2,000 ${t("pricing.pagesPerMonth")}`,
+        `500 ${t("pricing.aiGenerations")}`,
+        `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`,
+        `5 ${t("pricing.websites").toLowerCase()}`,
+        t("pricing.wordpress") + " & " + t("pricing.shopify"),
+        t("pricing.storeGenerator"),
+        t("pricing.googleIndexing"),
+        t("pricing.internalLinks"),
+        t("pricing.apiAccess"),
+        `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`,
+      ],
+    },
+    {
+      name: t("pricing.agency"),
+      monthlyPrice: 199,
+      description: t("pricing.agencyDesc"),
+      popular: false,
+      icon: <Crown className="h-5 w-5" />,
+      gradient: "from-warning/20 to-warning/5",
+      cta: t("pricing.contactSales"),
+      pagesLimit: `10,000 ${t("pricing.pagesPerMonth")}`,
+      features: [
+        `10,000 ${t("pricing.pagesPerMonth")}`,
+        `5,000 ${t("pricing.aiGenerations")}`,
+        `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`,
+        `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`,
+        t("pricing.wordpress") + " & " + t("pricing.shopify"),
+        t("pricing.storeGenerator"),
+        t("pricing.googleIndexing"),
+        t("pricing.internalLinks"),
+        t("pricing.apiAccess"),
+        t("pricing.teamCollaboration"),
+        `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`,
+      ],
+    },
+  ];
+
+  const comparisonFeatures = [
+    { label: t("pricing.pagesMonth"), icon: <Layers className="h-4 w-4 text-primary" />, starter: "100", pro: "2,000", agency: "10,000" },
+    { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-primary" />, starter: "50", pro: "500", agency: "5,000" },
+    { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-primary" />, starter: "5", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
+    { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-primary" />, starter: "1", pro: "5", agency: t("pricing.unlimited") },
+    { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-primary" />, starter: true, pro: true, agency: true },
+    { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.socialSharing"), icon: <Share2 className="h-4 w-4 text-primary" />, starter: true, pro: true, agency: true },
+    { label: t("pricing.storeGenerator"), icon: <Store className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-primary" />, starter: false, pro: false, agency: true },
+    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-primary" />, starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
+  ];
 
   return (
     <section id="pricing" className="py-20 md:py-28 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-10">
           <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
-            Pricing
+            {t("pricing.badge")}
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
-            Simple, transparent pricing
+            {t("pricing.title")}
           </h2>
           <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto">
-            Start free. Scale as you grow. No hidden fees. Cancel anytime.
+            {t("pricing.description")}
           </p>
         </ScrollReveal>
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mb-10">
           <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>
-            Monthly
+            {t("pricing.monthly")}
           </span>
           <button
             onClick={() => setIsYearly(!isYearly)}
@@ -173,11 +163,11 @@ export function PricingSection() {
             />
           </button>
           <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
-            Yearly
+            {t("pricing.yearly")}
           </span>
           {isYearly && (
             <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">
-              Save 20%
+              {t("pricing.save")}
             </Badge>
           )}
         </div>
@@ -223,18 +213,18 @@ export function PricingSection() {
                       </div>
                       {plan.popular && (
                         <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">
-                          Most Popular
+                          {t("pricing.mostPopular")}
                         </Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">{plan.description}</p>
                     <div className="mt-4 flex items-baseline gap-1">
                       <span className="text-4xl font-extrabold tabular-nums tracking-tight">€{price}</span>
-                      <span className="text-muted-foreground text-sm">/mo</span>
+                      <span className="text-muted-foreground text-sm">{t("pricing.mo")}</span>
                     </div>
                     {isYearly && (
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Billed €{price * 12}/year{" "}
+                        {t("pricing.billed")} €{price * 12}/{t("pricing.year")}{" "}
                         <span className="line-through text-muted-foreground/50">€{plan.monthlyPrice * 12}</span>
                       </p>
                     )}
@@ -277,21 +267,21 @@ export function PricingSection() {
         <ScrollReveal className="mt-16 max-w-5xl mx-auto">
           <Card className="rounded-2xl overflow-hidden border-border/30">
             <CardHeader className="text-center pb-2">
-              <CardTitle className="text-xl font-bold">Compare Plans</CardTitle>
-              <p className="text-sm text-muted-foreground">See exactly what's included in each plan</p>
+              <CardTitle className="text-xl font-bold">{t("pricing.comparePlans")}</CardTitle>
+              <p className="text-sm text-muted-foreground">{t("pricing.compareDesc")}</p>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left py-3.5 px-5 font-semibold text-foreground">Feature</th>
+                      <th className="text-left py-3.5 px-5 font-semibold text-foreground">{t("pricing.feature")}</th>
                       {plans.map((p) => (
                         <th key={p.name} className="text-center py-3.5 px-5">
                           <div className="flex flex-col items-center gap-1">
                             <span className={`font-semibold ${p.popular ? "text-primary" : "text-foreground"}`}>{p.name}</span>
                             <span className="text-xs text-muted-foreground tabular-nums">
-                              €{isYearly ? Math.round(p.monthlyPrice * (1 - YEARLY_DISCOUNT)) : p.monthlyPrice}/mo
+                              €{isYearly ? Math.round(p.monthlyPrice * (1 - YEARLY_DISCOUNT)) : p.monthlyPrice}{t("pricing.mo")}
                             </span>
                           </div>
                         </th>

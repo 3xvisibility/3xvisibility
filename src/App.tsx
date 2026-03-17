@@ -25,6 +25,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import IndexingPage from "./pages/IndexingPage";
 import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
 import NotFound from "./pages/NotFound";
+import { LanguageProvider } from "./i18n/LanguageContext";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -179,6 +181,7 @@ const App = () => {
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 };

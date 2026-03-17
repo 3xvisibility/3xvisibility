@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const reviews = [
   { name: "Sarah Chen", role: "SEO Director, GrowthHQ", avatar: "SC", text: "We generated 3,000 location pages in under 2 hours. Organic traffic increased 340% in 3 months." },
@@ -35,6 +36,7 @@ function ReviewCard({ review }: { review: typeof reviews[0] }) {
 }
 
 export function ReviewsSection() {
+  const { t } = useLanguage();
   const allReviews = [...reviews, ...reviews];
 
   return (
@@ -42,13 +44,13 @@ export function ReviewsSection() {
       <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-10">
         <div className="text-center max-w-2xl mx-auto">
           <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
-            Reviews
+            {t("reviews.badge")}
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
-            Loved by 2,000+ teams
+            {t("reviews.title")}
           </h2>
           <p className="mt-3 text-sm text-muted-foreground">
-            See what SEO professionals say about PageGen.
+            {t("reviews.description")}
           </p>
         </div>
       </ScrollReveal>

@@ -1,29 +1,32 @@
 import { Link } from "react-router-dom";
-
-const footerLinks = {
-  Product: [
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
-    { label: "Changelog", href: "#" },
-  ],
-  Integrations: [
-    { label: "WordPress", href: "#" },
-    { label: "Shopify", href: "#" },
-    { label: "API Docs", href: "#" },
-  ],
-  Company: [
-    { label: "About", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Contact", href: "#" },
-  ],
-  Legal: [
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-  ],
-};
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export function LandingFooter() {
+  const { t } = useLanguage();
+
+  const footerLinks = {
+    [t("footer.product")]: [
+      { label: t("footer.features"), href: "#features" },
+      { label: t("footer.pricing"), href: "#pricing" },
+      { label: t("footer.faq"), href: "#faq" },
+      { label: t("footer.changelog"), href: "#" },
+    ],
+    [t("footer.integrations")]: [
+      { label: t("footer.wordpress"), href: "#" },
+      { label: t("footer.shopify"), href: "#" },
+      { label: t("footer.apiDocs"), href: "#" },
+    ],
+    [t("footer.company")]: [
+      { label: t("footer.about"), href: "#" },
+      { label: t("footer.blog"), href: "#" },
+      { label: t("footer.contact"), href: "#" },
+    ],
+    [t("footer.legal")]: [
+      { label: t("footer.privacy"), href: "#" },
+      { label: t("footer.terms"), href: "#" },
+    ],
+  };
+
   return (
     <footer className="border-t border-border/20 py-14 md:py-16">
       <div className="container mx-auto px-4 lg:px-8">
@@ -36,7 +39,7 @@ export function LandingFooter() {
               <span className="text-sm font-bold tracking-tight">PageGen</span>
             </Link>
             <p className="mt-3 text-xs text-muted-foreground/60 leading-relaxed max-w-[200px]">
-              Deploy data-driven content at scale. CSV to published pages in minutes.
+              {t("footer.description")}
             </p>
           </div>
 
@@ -58,7 +61,7 @@ export function LandingFooter() {
 
         <div className="mt-12 pt-6 border-t border-border/15 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-muted-foreground/40">
-            © {new Date().getFullYear()} PageGen. All rights reserved.
+            © {new Date().getFullYear()} PageGen. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-5 text-[11px] text-muted-foreground/40">
             <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
