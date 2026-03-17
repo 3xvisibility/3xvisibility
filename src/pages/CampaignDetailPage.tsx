@@ -304,7 +304,7 @@ export default function CampaignDetailPage() {
               <CardContent>
                 <ChartContainer config={chartConfig} className="h-[250px] w-full">
                   <PieChart>
-                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2} label={({ name, value }: { name: string; value: number }) => `${name}: ${value}`}>
+                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50} paddingAngle={2} label={(props: any) => `${props.name}: ${props.value}`}>
                       {pieData.map((entry, i) => (
                         <Cell key={i} fill={entry.fill} />
                       ))}
