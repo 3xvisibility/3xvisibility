@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,11 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import {
+  TemplateVisualEditor,
+  blocksToHtml,
+  htmlToBlocks,
+  type TemplateBlock,
+} from "@/components/templates/TemplateVisualEditor";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type Template = Tables<"templates">;
@@ -24,14 +30,31 @@ export default function TemplatesPage() {
   const [aiOpen, setAiOpen] = useState(false);
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
+  const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
+  const [activeEditorTab, setActiveEditorTab] = useState<string>("visual");
   const [aiPrompt, setAiPrompt] = useState("");
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
   const detectedVars = content.match(/\{[^}]+\}/g) || [];
+
+  // Sync blocks → HTML when in visual mode
+  const handleBlocksChange = useCallback((newBlocks: TemplateBlock[]) => {
+    setBlocks(newBlocks);
+    setContent(blocksToHtml(newBlocks));
+  }, []);
+
+  // Sync HTML → blocks when switching to visual tab
+  const handleTabChange = useCallback((tab: string) => {
+    if (tab === "visual" && activeEditorTab !== "visual") {
+      setBlocks(htmlToBlocks(content));
+    }
+    setActiveEditorTab(tab);
+  }, [activeEditorTab, content]);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates", wsId],
@@ -74,11 +97,28 @@ export default function TemplatesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template created", description: `"${name}" has been saved.` });
-      setOpen(false);
-      setAiOpen(false);
-      setName("");
-      setContent("");
-      setAiPrompt("");
+      resetAndClose();
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingTemplate) throw new Error("No template to update");
+      const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
+      const { error } = await supabase.from("templates").update({
+        name,
+        content,
+        variables,
+      }).eq("id", editingTemplate.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Template updated", description: `"${name}" has been saved.` });
+      resetAndClose();
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -143,9 +183,13 @@ export default function TemplatesPage() {
 
   const resetAndClose = () => {
     setAiOpen(false);
+    setOpen(false);
+    setEditingTemplate(null);
     setName("");
     setContent("");
+    setBlocks([]);
     setAiPrompt("");
+    setActiveEditorTab("visual");
   };
 
   return (
@@ -278,24 +322,29 @@ export default function TemplatesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Manual Template */}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
-                <Plus className="mr-2 h-4 w-4" /> New Template
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+          {/* Manual / Edit Template */}
+          <Dialog open={open || !!editingTemplate} onOpenChange={(v) => { if (!v) resetAndClose(); else setOpen(true); }}>
+            {!editingTemplate && (
+              <DialogTrigger asChild>
+                <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
+                  <Plus className="mr-2 h-4 w-4" /> New Template
+                </Button>
+              </DialogTrigger>
+            )}
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create Template</DialogTitle>
+                <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
                   <Label htmlFor="tpl-name">Template Name</Label>
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
-                <Tabs defaultValue="code" className="w-full">
-                  <TabsList className="w-full grid grid-cols-2">
+                <Tabs value={activeEditorTab} onValueChange={handleTabChange} className="w-full">
+                  <TabsList className="w-full grid grid-cols-3">
+                    <TabsTrigger value="visual" className="flex items-center gap-1.5">
+                      <LayoutPanelTop className="h-3.5 w-3.5" /> Visual
+                    </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5" /> Code
                     </TabsTrigger>
@@ -303,6 +352,12 @@ export default function TemplatesPage() {
                       <Eye className="h-3.5 w-3.5" /> Preview
                     </TabsTrigger>
                   </TabsList>
+                  <TabsContent value="visual" className="mt-3">
+                    <TemplateVisualEditor
+                      blocks={blocks}
+                      onChange={handleBlocksChange}
+                    />
+                  </TabsContent>
                   <TabsContent value="code" className="mt-3">
                     <p className="text-xs text-muted-foreground mb-1">Use &#123;variable&#125; syntax for dynamic fields.</p>
                     <Textarea
@@ -310,7 +365,7 @@ export default function TemplatesPage() {
                       placeholder={"<h1>{course} in {city}</h1>\n<p>Learn {course} in {city}...</p>"}
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      rows={10}
+                      rows={12}
                       className="font-mono text-xs"
                     />
                   </TabsContent>
@@ -319,7 +374,7 @@ export default function TemplatesPage() {
                       <TemplatePreview html={content} />
                     ) : (
                       <div className="flex items-center justify-center h-32 border border-dashed border-border rounded-md text-muted-foreground text-sm">
-                        Start typing in the Code tab to see a preview
+                        Add blocks in the Visual tab or write HTML in the Code tab
                       </div>
                     )}
                   </TabsContent>
@@ -333,10 +388,16 @@ export default function TemplatesPage() {
                   </div>
                 )}
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
-                    {createMutation.isPending ? "Creating..." : "Create Template"}
-                  </Button>
+                  <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
+                  {editingTemplate ? (
+                    <Button onClick={() => updateMutation.mutate()} disabled={!name || !content || updateMutation.isPending}>
+                      {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  ) : (
+                    <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
+                      {createMutation.isPending ? "Creating..." : "Create Template"}
+                    </Button>
+                  )}
                 </div>
               </div>
             </DialogContent>
@@ -363,6 +424,21 @@ export default function TemplatesPage() {
                     <h3 className="font-semibold">{tpl.name}</h3>
                   </div>
                   <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        setEditingTemplate(tpl);
+                        setName(tpl.name);
+                        setContent(tpl.content);
+                        setBlocks(htmlToBlocks(tpl.content));
+                        setActiveEditorTab("visual");
+                      }}
+                      title="Edit"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
