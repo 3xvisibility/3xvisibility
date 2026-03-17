@@ -11,8 +11,9 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Store, Sparkles, Loader2, CheckCircle, XCircle, Package, FolderTree,
-  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp
+  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
