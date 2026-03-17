@@ -401,6 +401,9 @@ export default function CampaignsPage() {
     if (typeFilter !== "all") {
       result = result.filter((c) => c.campaign_type === typeFilter);
     }
+    if (statusFilter !== "all") {
+      result = result.filter((c) => c.status === statusFilter);
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((c) =>
@@ -410,7 +413,7 @@ export default function CampaignsPage() {
       );
     }
     return result;
-  }, [campaigns, typeFilter, searchQuery]);
+  }, [campaigns, typeFilter, statusFilter, searchQuery]);
 
   return (
     <div className="space-y-6">
