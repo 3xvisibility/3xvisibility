@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
