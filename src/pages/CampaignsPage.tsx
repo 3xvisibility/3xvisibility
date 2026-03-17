@@ -1223,6 +1223,17 @@ export default function CampaignsPage() {
                 onDrop={dragProps.onDrop}
                 onDragEnd={dragProps.onDragEnd}
               >
+                <CardContent className="p-0">
+                  <div className="flex items-start justify-between p-5 gap-4">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 shrink-0 mt-0.5">
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="text-xs">Drag to reorder</TooltipContent>
+                      </Tooltip>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <h3 className="font-semibold truncate cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</h3>
