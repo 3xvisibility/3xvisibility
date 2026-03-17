@@ -56,6 +56,7 @@ export default function CampaignsPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
@@ -400,6 +401,9 @@ export default function CampaignsPage() {
     if (typeFilter !== "all") {
       result = result.filter((c) => c.campaign_type === typeFilter);
     }
+    if (statusFilter !== "all") {
+      result = result.filter((c) => c.status === statusFilter);
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((c) =>
@@ -409,7 +413,7 @@ export default function CampaignsPage() {
       );
     }
     return result;
-  }, [campaigns, typeFilter, searchQuery]);
+  }, [campaigns, typeFilter, statusFilter, searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -760,6 +764,19 @@ export default function CampaignsPage() {
                 </button>
               ))}
             </div>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="queued">Queued</SelectItem>
+                <SelectItem value="processing">Processing</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </>
       )}
