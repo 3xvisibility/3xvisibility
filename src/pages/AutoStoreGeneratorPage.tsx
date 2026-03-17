@@ -11,8 +11,9 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Store, Sparkles, Loader2, CheckCircle, XCircle, Package, FolderTree,
-  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp
+  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -169,6 +170,31 @@ export default function AutoStoreGeneratorPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["store-generations"] });
       toast({ title: "Generation deleted" });
+    },
+  });
+
+  const [regeneratingIdx, setRegeneratingIdx] = useState<string | null>(null);
+
+  const regenerateImageMutation = useMutation({
+    mutationFn: async ({ generationId, productIndex, productName, niche }: {
+      generationId: string; productIndex: number; productName: string; niche: string;
+    }) => {
+      setRegeneratingIdx(`${generationId}-${productIndex}`);
+      const { data, error } = await supabase.functions.invoke("regenerate-product-image", {
+        body: { generation_id: generationId, product_index: productIndex, product_name: productName, niche },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({ title: "Image regenerated" });
+      setRegeneratingIdx(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Image regeneration failed", description: err.message, variant: "destructive" });
+      setRegeneratingIdx(null);
     },
   });
 
@@ -440,14 +466,43 @@ export default function AutoStoreGeneratorPage() {
                                   key={idx}
                                   className="rounded-lg border border-border bg-muted/30 p-3 text-xs flex gap-3"
                                 >
-                                  {prod.image && (
-                                    <img
-                                      src={prod.image}
-                                      alt={prod.name}
-                                      className="w-14 h-14 rounded-md object-cover shrink-0 bg-muted"
-                                      loading="lazy"
-                                    />
-                                  )}
+                                  <div className="relative shrink-0 group/img">
+                                    {prod.image ? (
+                                      <img
+                                        src={prod.image}
+                                        alt={prod.name}
+                                        className="w-14 h-14 rounded-md object-cover bg-muted"
+                                        loading="lazy"
+                                      />
+                                    ) : (
+                                      <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center">
+                                        <Package className="h-5 w-5 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="secondary"
+                                          size="icon"
+                                          className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-sm"
+                                          disabled={regeneratingIdx === `${gen.id}-${idx}`}
+                                          onClick={() => regenerateImageMutation.mutate({
+                                            generationId: gen.id,
+                                            productIndex: idx,
+                                            productName: prod.name,
+                                            niche: gen.niche,
+                                          })}
+                                        >
+                                          {regeneratingIdx === `${gen.id}-${idx}` ? (
+                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                          ) : (
+                                            <RefreshCw className="h-2.5 w-2.5" />
+                                          )}
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="bottom" className="text-xs">Regenerate image</TooltipContent>
+                                    </Tooltip>
+                                  </div>
                                   <div className="min-w-0 flex-1">
                                     <div className="font-medium truncate">{prod.name}</div>
                                     <div className="flex items-center justify-between mt-1 text-muted-foreground">
