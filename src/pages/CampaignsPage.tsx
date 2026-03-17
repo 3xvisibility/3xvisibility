@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,6 +47,7 @@ const statusConfig: Record<string, { class: string; label: string }> = {
 };
 
 export default function CampaignsPage() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -1064,7 +1066,7 @@ export default function CampaignsPage() {
                     <tr key={c.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors ${index % 2 === 1 ? "bg-muted/10" : ""}`}>
                       <td className="py-3 px-4">
                         <div>
-                          <span className="font-medium">{c.name}</span>
+                          <span className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</span>
                           <div className="flex gap-2 mt-0.5 text-[11px] text-muted-foreground">
                             {c.templates?.name && <span>{c.templates.name}</span>}
                             {c.websites?.name && <span>• {c.websites.name}</span>}
@@ -1111,7 +1113,7 @@ export default function CampaignsPage() {
                   <div className="flex items-start justify-between p-5 gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
-                        <h3 className="font-semibold truncate">{c.name}</h3>
+                        <h3 className="font-semibold truncate cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</h3>
                         <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border shrink-0`}>
                           {isPaused ? "Paused" : config.label}
                         </Badge>
