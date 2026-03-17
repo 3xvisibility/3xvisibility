@@ -1,11 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { History, UserPlus, Shield, Pencil, Trash2, Clock } from "lucide-react";
+import { History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useEffect, useRef, useCallback } from "react";
 
 interface AuditLog {
   id: string;
@@ -16,6 +17,8 @@ interface AuditLog {
   created_at: string;
   user_id: string;
 }
+
+const PAGE_SIZE = 20;
 
 const actionConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
   invite_member: { icon: <UserPlus className="h-3.5 w-3.5" />, label: "Member Invited", color: "bg-green-500/10 text-green-600" },
@@ -42,20 +45,52 @@ function getActionDetails(log: AuditLog): string {
 }
 
 export default function AuditLogViewer({ workspaceId }: { workspaceId: string }) {
-  const { data: logs, isLoading } = useQuery({
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["audit-logs", workspaceId],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
+      const from = pageParam * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
       const { data, error } = await supabase
         .from("audit_logs")
         .select("id, action, entity_type, entity_id, details, created_at, user_id")
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .range(from, to);
       if (error) throw error;
       return data as AuditLog[];
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === PAGE_SIZE ? allPages.length : undefined,
     enabled: !!workspaceId,
   });
+
+  const logs = data?.pages.flat() ?? [];
+
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(handleObserver, { threshold: 0.1 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   return (
     <Card className="shadow-surface">
@@ -73,10 +108,10 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               <Skeleton key={i} className="h-12 w-full rounded-lg" />
             ))}
           </div>
-        ) : !logs?.length ? (
+        ) : !logs.length ? (
           <p className="text-sm text-muted-foreground text-center py-8">No audit events yet.</p>
         ) : (
-          <ScrollArea className="h-[360px] pr-3">
+          <div className="max-h-[400px] overflow-y-auto pr-3">
             <div className="relative pl-6 border-l-2 border-border space-y-4">
               {logs.map((log) => {
                 const cfg = actionConfig[log.action] || {
@@ -105,7 +140,20 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
                 );
               })}
             </div>
-          </ScrollArea>
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-4" />
+
+            {isFetchingNextPage && (
+              <div className="flex justify-center py-3">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
+
+            {!hasNextPage && logs.length >= PAGE_SIZE && (
+              <p className="text-xs text-muted-foreground text-center py-2">All events loaded.</p>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
