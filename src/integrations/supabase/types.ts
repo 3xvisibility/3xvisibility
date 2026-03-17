@@ -162,6 +162,66 @@ export type Database = {
           },
         ]
       }
+      data_sources: {
+        Row: {
+          campaign_id: string
+          config: Json | null
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          headers: Json | null
+          id: string
+          row_count: number | null
+          type: string
+          updated_at: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          config?: Json | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          headers?: Json | null
+          id?: string
+          row_count?: number | null
+          type?: string
+          updated_at?: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          config?: Json | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          headers?: Json | null
+          id?: string
+          row_count?: number | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_sources_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_sources_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_pages: {
         Row: {
           campaign_id: string
@@ -234,6 +294,81 @@ export type Database = {
           },
           {
             foreignKeyName: "generated_pages_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generation_jobs: {
+        Row: {
+          batch_size: number
+          campaign_id: string
+          completed_at: string | null
+          config: Json | null
+          created_at: string
+          current_batch: number
+          error_count: number
+          error_log: Json | null
+          id: string
+          processed_rows: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["generation_job_status"]
+          success_count: number
+          total_rows: number
+          updated_at: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          batch_size?: number
+          campaign_id: string
+          completed_at?: string | null
+          config?: Json | null
+          created_at?: string
+          current_batch?: number
+          error_count?: number
+          error_log?: Json | null
+          id?: string
+          processed_rows?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["generation_job_status"]
+          success_count?: number
+          total_rows?: number
+          updated_at?: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          batch_size?: number
+          campaign_id?: string
+          completed_at?: string | null
+          config?: Json | null
+          created_at?: string
+          current_batch?: number
+          error_count?: number
+          error_log?: Json | null
+          id?: string
+          processed_rows?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["generation_job_status"]
+          success_count?: number
+          total_rows?: number
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_jobs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generation_jobs_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -426,6 +561,73 @@ export type Database = {
           },
           {
             foreignKeyName: "internal_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mappings: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          data_source_id: string | null
+          field_category: string
+          id: string
+          is_required: boolean
+          sort_order: number
+          source_column: string
+          target_field: string
+          transform_expression: string | null
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          data_source_id?: string | null
+          field_category?: string
+          id?: string
+          is_required?: boolean
+          sort_order?: number
+          source_column: string
+          target_field: string
+          transform_expression?: string | null
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          data_source_id?: string | null
+          field_category?: string
+          id?: string
+          is_required?: boolean
+          sort_order?: number
+          source_column?: string
+          target_field?: string
+          transform_expression?: string | null
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mappings_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mappings_data_source_id_fkey"
+            columns: ["data_source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mappings_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -875,6 +1077,13 @@ export type Database = {
         | "completed"
         | "failed"
       campaign_type: "seo" | "sea" | "geo"
+      generation_job_status:
+        | "pending"
+        | "running"
+        | "paused"
+        | "completed"
+        | "failed"
+        | "cancelled"
       indexing_status: "pending" | "submitted" | "indexed" | "failed"
       page_status: "pending" | "published" | "failed"
       website_status: "connected" | "error" | "disconnected"
@@ -1010,6 +1219,14 @@ export const Constants = {
       app_role: ["admin", "user"],
       campaign_status: ["draft", "queued", "processing", "completed", "failed"],
       campaign_type: ["seo", "sea", "geo"],
+      generation_job_status: [
+        "pending",
+        "running",
+        "paused",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
       indexing_status: ["pending", "submitted", "indexed", "failed"],
       page_status: ["pending", "published", "failed"],
       website_status: ["connected", "error", "disconnected"],
