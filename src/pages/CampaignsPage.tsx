@@ -700,9 +700,14 @@ export default function CampaignsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border`}>
-                          {isPaused ? "Paused" : config.label}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border`}>
+                            {isPaused ? "Paused" : config.label}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                            {(c as any).campaign_type || "seo"}
+                          </Badge>
+                        </div>
                       </td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{progress.generated}/{progress.total}</td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</td>
