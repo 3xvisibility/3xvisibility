@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.generate-caption]
 verify_jwt = false
+
+[functions.publish-store]
+verify_jwt = false
