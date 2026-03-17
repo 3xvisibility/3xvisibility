@@ -50,6 +50,8 @@ export default function GeneratedPagesPage() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading } = useQuery({
     queryKey: ["generated-pages"],
