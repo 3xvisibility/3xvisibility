@@ -507,38 +507,31 @@ Deno.serve(async (req) => {
 
         if (website.type === "wordpress") {
           result = await publishToWordPress(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            page.slug,
-            seo
+            website.url, website.credentials, page.title, page.content, page.slug, seo
           );
         } else if (website.type === "shopify") {
-          result = await publishToShopify(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            seo
-          );
+          if (pubType === "product") {
+            result = await publishProductToShopify(
+              website.url, website.credentials, page.title, page.content, page.slug, seo
+            );
+          } else {
+            result = await publishToShopify(
+              website.url, website.credentials, page.title, page.content, seo
+            );
+          }
         } else if (website.type === "prestashop") {
-          result = await publishToPrestaShop(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            page.slug,
-            seo
-          );
+          if (pubType === "product") {
+            result = await publishProductToPrestaShop(
+              website.url, website.credentials, page.title, page.content, page.slug, seo
+            );
+          } else {
+            result = await publishToPrestaShop(
+              website.url, website.credentials, page.title, page.content, page.slug, seo
+            );
+          }
         } else if (website.type === "woocommerce") {
           result = await publishToWooCommerce(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            page.slug,
-            seo
+            website.url, website.credentials, page.title, page.content, page.slug, seo
           );
         } else {
           throw new Error(`Unsupported website type: ${website.type}`);
