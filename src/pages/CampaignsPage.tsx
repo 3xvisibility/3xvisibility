@@ -308,17 +308,31 @@ export default function CampaignsPage() {
 
   const canProceed = () => {
     if (step === 1) return !!campaignName;
-    if (step === 2) return csvData.length > 0;
-    if (step === 3) return !!selectedTemplate;
+    if (step === 2) return true; // type selection always valid
+    if (step === 3) return csvData.length > 0;
+    if (step === 4) return !!selectedTemplate;
     return true;
   };
 
-  const wizardSteps = [
-    { num: 1, label: "Name" },
-    { num: 2, label: "CSV Data" },
-    { num: 3, label: "Template" },
-    { num: 4, label: "Website" },
-  ];
+  const totalSteps = campaignType === "seo" ? 5 : 6;
+
+  const getWizardSteps = () => {
+    const steps = [
+      { num: 1, label: "Name" },
+      { num: 2, label: "Type" },
+      { num: 3, label: "CSV Data" },
+      { num: 4, label: "Template" },
+    ];
+    if (campaignType === "sea") {
+      steps.push({ num: 5, label: "UTM" });
+    } else if (campaignType === "geo") {
+      steps.push({ num: 5, label: "GEO" });
+    }
+    steps.push({ num: campaignType === "seo" ? 5 : 6, label: "Website" });
+    return steps;
+  };
+
+  const wizardSteps = getWizardSteps();
 
   const { pagesUsed, pagesLimit } = useSubscription();
 
