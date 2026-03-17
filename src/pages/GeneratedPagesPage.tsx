@@ -761,6 +761,19 @@ export default function GeneratedPagesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Caption Dialog */}
+      <BulkCaptionDialog
+        open={bulkCaptionOpen}
+        onOpenChange={setBulkCaptionOpen}
+        pages={pages.filter((p) => selectedIds.has(p.id)).map((p) => ({
+          id: p.id,
+          title: p.title,
+          seo_title: (p as any).seo_title,
+          seo_description: (p as any).seo_description,
+          external_url: p.external_url,
+        }))}
+      />
     </div>
   );
 }
