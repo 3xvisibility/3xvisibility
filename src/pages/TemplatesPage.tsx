@@ -98,7 +98,11 @@ export default function TemplatesPage() {
         variables,
         user_id: user.id,
         workspace_id: wsId,
-      });
+        seo_title_pattern: seoTitlePattern,
+        seo_description_pattern: seoDescriptionPattern,
+        schema_type: schemaType,
+        schema_config: schemaConfig,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
