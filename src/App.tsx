@@ -158,6 +158,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/indexing"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><IndexingPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

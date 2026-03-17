@@ -41,6 +41,7 @@ const mainNav = [
   { title: "Discovery", url: "/discovery", icon: Compass },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Websites", url: "/websites", icon: Globe },
+  { title: "Google Indexing", url: "/indexing", icon: SearchIcon },
 ];
 
 const bottomNav = [
