@@ -1159,6 +1159,7 @@ function CampaignActions({
   setLinkDialogCampaign,
   setLogDialogCampaign,
   setJobDialogCampaign,
+  onReplaceCsv,
 }: {
   campaign: any;
   isPaused: boolean;
@@ -1167,6 +1168,7 @@ function CampaignActions({
   setLinkDialogCampaign: (c: any) => void;
   setLogDialogCampaign: (id: string) => void;
   setJobDialogCampaign: (c: any) => void;
+  onReplaceCsv?: (campaignId: string) => void;
 }) {
   const isProcessing = c.status === "processing";
 
@@ -1188,6 +1190,11 @@ function CampaignActions({
             ) : (
               <><Play className="h-4 w-4 mr-2" /> Execute</>
             )}
+          </DropdownMenuItem>
+        )}
+        {c.status === "draft" && onReplaceCsv && (
+          <DropdownMenuItem onClick={() => onReplaceCsv(c.id)}>
+            <Upload className="h-4 w-4 mr-2" /> Replace CSV
           </DropdownMenuItem>
         )}
         {isProcessing && !(c as any).is_paused && (
