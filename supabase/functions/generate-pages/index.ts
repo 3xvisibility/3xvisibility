@@ -807,15 +807,77 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Build JSON-LD structured data
-          const jsonLd = buildJsonLd(
-            campaign.campaign_type || "seo",
-            pageTitle,
-            seoData.seo_description,
-            slug,
-            geoSettings,
-            row
-          );
+          // Build JSON-LD structured data — use template schema config if defined
+          const tplSchemaType = campaign.templates.schema_type as string || "";
+          const tplSchemaConfig = (campaign.templates.schema_config || {}) as Record<string, string>;
+          let jsonLd: string;
+
+          if (tplSchemaType && tplSchemaType !== "WebPage") {
+            // Resolve variables in schema config values
+            const resolvedSchema: Record<string, any> = {
+              "@context": "https://schema.org",
+              "@type": tplSchemaType,
+            };
+            for (const [sk, sv] of Object.entries(tplSchemaConfig)) {
+              if (!sv) continue;
+              let resolved = sv;
+              for (const [key, value] of Object.entries(allVars)) {
+                resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+              }
+              resolvedSchema[sk] = resolved;
+            }
+            // Add description from SEO data if not set
+            if (!resolvedSchema.description) resolvedSchema.description = seoData.seo_description;
+            if (!resolvedSchema.name) resolvedSchema.name = pageTitle;
+
+            // Nest address fields for LocalBusiness
+            if (tplSchemaType === "LocalBusiness") {
+              const addrFields = ["addressLocality", "addressRegion", "addressCountry", "postalCode"];
+              const address: Record<string, string> = {};
+              for (const af of addrFields) {
+                if (resolvedSchema[af]) {
+                  address[af] = resolvedSchema[af];
+                  delete resolvedSchema[af];
+                }
+              }
+              if (Object.keys(address).length > 0) {
+                resolvedSchema.address = { "@type": "PostalAddress", ...address };
+              }
+            }
+
+            // Build Product offer structure
+            if (tplSchemaType === "Product" && resolvedSchema.price) {
+              resolvedSchema.offers = {
+                "@type": "Offer",
+                price: resolvedSchema.price,
+                priceCurrency: resolvedSchema.currency || "USD",
+              };
+              delete resolvedSchema.price;
+              delete resolvedSchema.currency;
+            }
+
+            // Build FAQ structure
+            if (tplSchemaType === "FAQPage" && resolvedSchema.question) {
+              resolvedSchema.mainEntity = [{
+                "@type": "Question",
+                name: resolvedSchema.question,
+                acceptedAnswer: { "@type": "Answer", text: resolvedSchema.answer || "" },
+              }];
+              delete resolvedSchema.question;
+              delete resolvedSchema.answer;
+            }
+
+            jsonLd = `<script type="application/ld+json">${JSON.stringify(resolvedSchema)}</script>`;
+          } else {
+            jsonLd = buildJsonLd(
+              campaign.campaign_type || "seo",
+              pageTitle,
+              seoData.seo_description,
+              slug,
+              geoSettings,
+              row
+            );
+          }
 
           // Build OG meta tags + canonical
           const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description, canonicalUrl || undefined);
