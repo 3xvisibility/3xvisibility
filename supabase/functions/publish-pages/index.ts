@@ -11,6 +11,8 @@ interface WebsiteCredentials {
   app_password?: string;
   admin_api_token?: string;
   api_key?: string; // PrestaShop
+  consumer_key?: string; // WooCommerce
+  consumer_secret?: string; // WooCommerce
 }
 
 interface SeoData {
@@ -210,6 +212,64 @@ async function publishToPrestaShop(
   };
 }
 
+async function publishToWooCommerce(
+  siteUrl: string,
+  credentials: WebsiteCredentials,
+  title: string,
+  content: string,
+  slug: string,
+  seo: SeoData
+): Promise<{ external_id: string; external_url: string }> {
+  const baseUrl = siteUrl.replace(/\/$/, "");
+  const { consumer_key, consumer_secret } = credentials;
+  if (!consumer_key || !consumer_secret) {
+    throw new Error("WooCommerce credentials not configured");
+  }
+
+  const productSlug = slugify(slug || title);
+
+  const productPayload: Record<string, any> = {
+    name: title,
+    type: "simple",
+    description: content,
+    slug: productSlug,
+    status: "publish",
+  };
+
+  if (seo.seo_title) {
+    productPayload.meta_data = [
+      ...(productPayload.meta_data || []),
+      { key: "_yoast_wpseo_title", value: seo.seo_title },
+    ];
+  }
+  if (seo.seo_description) {
+    productPayload.short_description = seo.seo_description;
+    productPayload.meta_data = [
+      ...(productPayload.meta_data || []),
+      { key: "_yoast_wpseo_metadesc", value: seo.seo_description },
+    ];
+  }
+
+  const apiUrl = `${baseUrl}/wp-json/wc/v3/products?consumer_key=${encodeURIComponent(consumer_key)}&consumer_secret=${encodeURIComponent(consumer_secret)}`;
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(productPayload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`WooCommerce API error [${response.status}]: ${errorBody}`);
+  }
+
+  const data = await response.json();
+  return {
+    external_id: String(data.id),
+    external_url: data.permalink || `${baseUrl}/product/${productSlug}`,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -325,6 +385,15 @@ Deno.serve(async (req) => {
           );
         } else if (website.type === "prestashop") {
           result = await publishToPrestaShop(
+            website.url,
+            website.credentials,
+            page.title,
+            page.content,
+            page.slug,
+            seo
+          );
+        } else if (website.type === "woocommerce") {
+          result = await publishToWooCommerce(
             website.url,
             website.credentials,
             page.title,

@@ -25,6 +25,8 @@ export default function WebsitesPage() {
   const [appPassword, setAppPassword] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
+  const [wooConsumerKey, setWooConsumerKey] = useState("");
+  const [wooConsumerSecret, setWooConsumerSecret] = useState("");
   const [sitemapPreview, setSitemapPreview] = useState<{ websiteId: string; content: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,6 +65,8 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword }
         : siteType === "shopify"
         ? { admin_api_token: shopifyToken }
+        : siteType === "woocommerce"
+        ? { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret }
         : { api_key: prestashopApiKey };
       const { error } = await supabase.from("websites").insert({
         name: siteName || new URL(siteUrl).hostname,
@@ -142,6 +146,8 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword }
         : siteType === "shopify"
         ? { admin_api_token: shopifyToken }
+        : siteType === "woocommerce"
+        ? { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret }
         : { api_key: prestashopApiKey };
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url: siteUrl, type: siteType, credentials },
@@ -166,6 +172,8 @@ export default function WebsitesPage() {
     setAppPassword("");
     setShopifyToken("");
     setPrestashopApiKey("");
+    setWooConsumerKey("");
+    setWooConsumerSecret("");
     setSiteType("");
   };
 
@@ -195,6 +203,7 @@ export default function WebsitesPage() {
                     <SelectItem value="wordpress">WordPress</SelectItem>
                     <SelectItem value="shopify">Shopify</SelectItem>
                     <SelectItem value="prestashop">PrestaShop</SelectItem>
+                    <SelectItem value="woocommerce">WooCommerce</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -232,6 +241,21 @@ export default function WebsitesPage() {
                     Found in PrestaShop Back Office → Advanced Parameters → Webservice
                   </p>
                 </div>
+              )}
+              {siteType === "woocommerce" && (
+                <>
+                  <div>
+                    <Label htmlFor="woo-key">Consumer Key</Label>
+                    <Input id="woo-key" type="password" placeholder="ck_xxxxx" value={wooConsumerKey} onChange={(e) => setWooConsumerKey(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="woo-secret">Consumer Secret</Label>
+                    <Input id="woo-secret" type="password" placeholder="cs_xxxxx" value={wooConsumerSecret} onChange={(e) => setWooConsumerSecret(e.target.value)} />
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Found in WooCommerce → Settings → Advanced → REST API
+                    </p>
+                  </div>
+                </>
               )}
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
