@@ -240,6 +240,11 @@ export default function BillingPage() {
     setSearchParams({}, { replace: true });
   };
 
+  const handleCanceledDismiss = () => {
+    setShowCanceled(false);
+    setSearchParams({}, { replace: true });
+  };
+
   return (
     <div className="space-y-8">
       {showSuccess && (
@@ -247,6 +252,9 @@ export default function BillingPage() {
           planName={PLAN_FEATURES[activePlan]?.label}
           onDismiss={handleSuccessDismiss}
         />
+      )}
+      {showCanceled && (
+        <CheckoutCanceledOverlay onDismiss={handleCanceledDismiss} />
       )}
       {/* Header */}
       <div>
