@@ -49,6 +49,8 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [greeting, setGreeting] = useState("Welcome back");
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   useEffect(() => {
     const hour = new Date().getHours();
