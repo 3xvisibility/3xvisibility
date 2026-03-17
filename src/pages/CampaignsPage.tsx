@@ -276,11 +276,15 @@ export default function CampaignsPage() {
     setOpen(false);
     setStep(1);
     setCampaignName("");
+    setCampaignType("seo");
     setCsvFile(null);
     setCsvHeaders([]);
     setCsvData([]);
     setSelectedTemplate("");
     setSelectedWebsite("");
+    setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
+    setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
+    setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
   };
 
   const getProgressInfo = (c: Campaign) => {
