@@ -17,6 +17,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import StorePreviewDialog from "@/components/StorePreviewDialog";
+import { useSubscription } from "@/hooks/use-subscription";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 
 interface StoreGeneration {
   id: string;
