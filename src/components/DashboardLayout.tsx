@@ -21,6 +21,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 import { CommandPalette } from "@/components/CommandPalette";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
