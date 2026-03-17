@@ -415,6 +415,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Check if campaign is scheduled for later
+    if (campaign.scheduled_at && !action) {
+      const scheduledTime = new Date(campaign.scheduled_at).getTime();
+      if (scheduledTime > Date.now()) {
+        return new Response(JSON.stringify({
+          error: `Campaign is scheduled for ${campaign.scheduled_at}. It cannot be run before the scheduled time.`,
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Try loading CSV from dedicated storage table first, fall back to inline csv_data
     let csvRows: Record<string, string>[] = [];
     const { data: csvFile } = await supabase
@@ -462,7 +475,10 @@ Deno.serve(async (req) => {
 
     const alreadyProcessed = campaign.processed_rows || 0;
     const startIndex = action === "resume" ? alreadyProcessed : 0;
-    const remainingRows = csvRows.slice(startIndex);
+    // Apply max_rows limit if set
+    const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvRows.length) : csvRows.length;
+    const limitedRows = csvRows.slice(0, maxRowsLimit);
+    const remainingRows = limitedRows.slice(startIndex);
 
     if (remainingRows.length === 0) {
       return new Response(JSON.stringify({ success: true, message: "All pages already generated" }), {
@@ -531,7 +547,7 @@ Deno.serve(async (req) => {
           workspace_id: campaign.workspace_id,
           user_id: user.id,
           status: "running",
-          total_rows: csvRows.length,
+          total_rows: limitedRows.length,
           processed_rows: 0,
           success_count: 0,
           error_count: 0,
@@ -772,7 +788,7 @@ Deno.serve(async (req) => {
             title: pageTitle,
             slug: slug + utmQueryString,
             content: pageContent,
-            status: "pending",
+            status: (campaign.publish_mode === "published" ? "published" : "pending") as any,
             error_message: null,
             seo_title: seoData.seo_title,
             seo_description: seoData.seo_description,

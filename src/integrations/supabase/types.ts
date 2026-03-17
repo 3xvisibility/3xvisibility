@@ -178,8 +178,11 @@ export type Database = {
           id: string
           is_paused: boolean | null
           mapping: Json | null
+          max_rows: number | null
           name: string
           processed_rows: number | null
+          publish_mode: string
+          scheduled_at: string | null
           status: Database["public"]["Enums"]["campaign_status"]
           template_id: string | null
           total_rows: number | null
@@ -203,8 +206,11 @@ export type Database = {
           id?: string
           is_paused?: boolean | null
           mapping?: Json | null
+          max_rows?: number | null
           name: string
           processed_rows?: number | null
+          publish_mode?: string
+          scheduled_at?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
           total_rows?: number | null
@@ -228,8 +234,11 @@ export type Database = {
           id?: string
           is_paused?: boolean | null
           mapping?: Json | null
+          max_rows?: number | null
           name?: string
           processed_rows?: number | null
+          publish_mode?: string
+          scheduled_at?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
           total_rows?: number | null
