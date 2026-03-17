@@ -635,6 +635,11 @@ export default function CampaignsPage() {
     return result;
   }, [campaigns, typeFilter, statusFilter, searchQuery]);
 
+  const { ordered: orderedCampaigns, getDragProps: getCampaignDragProps, hasCustomOrder: hasCampaignCustomOrder, resetOrder: resetCampaignOrder } = useDragReorder(
+    filteredCampaigns,
+    `camp-order-${wsId}`
+  );
+
   return (
     <div className="space-y-6">
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
