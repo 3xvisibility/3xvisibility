@@ -269,6 +269,11 @@ For each product generate a compelling name, detailed HTML description with feat
         slug: slugify(p.name),
       }));
 
+      // Generate images for products in this batch
+      for (const product of products) {
+        product.image = await generateProductImage(product.name, gen.niche, LOVABLE_API_KEY);
+      }
+
       allProducts.push(...products);
 
       // Update progress
