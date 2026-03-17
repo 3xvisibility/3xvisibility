@@ -1165,7 +1165,7 @@ export default function CampaignsPage() {
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{progress.generated}/{progress.total}</td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="py-3 px-4 text-right">
-                        <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} onReplaceCsv={(id) => { setReplaceCsvCampaignId(id); document.getElementById("replace-csv-input")?.click(); }} />
+                        <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} duplicateMutation={duplicateMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} onReplaceCsv={(id) => { setReplaceCsvCampaignId(id); document.getElementById("replace-csv-input")?.click(); }} />
                       </td>
                     </tr>
                   );
