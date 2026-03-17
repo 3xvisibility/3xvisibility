@@ -53,6 +53,8 @@ export default function CampaignsPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   useEffect(() => {
     const channel = supabase
