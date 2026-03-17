@@ -222,7 +222,7 @@ export default function CampaignDetailPage() {
         <div className="flex items-center gap-2">
           {campaign.status === "draft" && (
             <Button
-              onClick={() => executeMutation.mutate()}
+              onClick={() => executeMutation.mutate(undefined)}
               disabled={executeMutation.isPending}
               className="rounded-xl bg-gradient-primary hover:brightness-110"
             >
