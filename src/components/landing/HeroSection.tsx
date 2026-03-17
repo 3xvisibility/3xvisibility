@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, FileSpreadsheet, Layers, Rocket, CheckCircle2, BarChart3 } from "lucide-react";
+import { ArrowRight, Sparkles, Home, BarChart3, Globe, FileText, Settings, Info, Search, Bell, Mail, MoreHorizontal, Users, Eye, Heart, TrendingUp, CheckCircle2 } from "lucide-react";
 import { motion, animate } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { BrandLogos } from "./BrandLogos";
@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-function AnimatedNumber({ value, prefix = "", suffix = "", delay = 0, color }: { value: number; prefix?: string; suffix?: string; delay?: number; color: string }) {
+function AnimatedNumber({ value, suffix = "", delay = 0 }: { value: number; suffix?: string; delay?: number }) {
   const [display, setDisplay] = useState(0);
   const ref = useRef(false);
 
@@ -27,30 +27,45 @@ function AnimatedNumber({ value, prefix = "", suffix = "", delay = 0, color }: {
     return () => clearTimeout(timeout);
   }, [value, delay]);
 
-  const formatted = display >= 1000 ? display.toLocaleString("en-US", { maximumFractionDigits: 0 }) : 
-    suffix === "%" && display % 1 !== 0 ? display.toFixed(1) : Math.round(display).toString();
+  const formatted = display >= 1000
+    ? (display / 1000).toFixed(1) + "K"
+    : suffix === "%" && display % 1 !== 0
+    ? display.toFixed(1)
+    : Math.round(display).toString();
 
+  return <span>{formatted}{suffix}</span>;
+}
+
+// Mini bar chart component
+function MiniBarChart() {
+  const bars = [40, 55, 35, 65, 50, 75, 60, 80, 45, 70, 55, 85, 65, 90, 50, 70, 60, 75, 80, 55, 65, 85, 70, 95];
   return (
-    <p className={`text-lg md:text-xl font-bold tracking-tight ${color}`}>
-      {prefix}{formatted}{suffix}
-    </p>
+    <div className="flex items-end gap-[3px] h-[100px] w-full">
+      {bars.map((h, i) => (
+        <motion.div
+          key={i}
+          initial={{ height: 0 }}
+          animate={{ height: `${h}%` }}
+          transition={{ delay: 1.8 + i * 0.03, duration: 0.5, ease }}
+          className="flex-1 rounded-sm bg-[hsl(262,83%,58%,0.4)] hover:bg-[hsl(262,83%,58%,0.7)] transition-colors cursor-pointer min-w-[4px]"
+        />
+      ))}
+    </div>
   );
 }
 
 export function HeroSection() {
   const { t } = useLanguage();
 
+  const sidebarIcons = [Home, BarChart3, Globe, FileText, Settings, Info];
+
   return (
     <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
-      {/* Background effects - deep purple radials like Revo */}
+      {/* Background effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Top center purple glow */}
         <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,hsl(262,83%,58%,0.15),transparent_70%)]" />
-        {/* Left purple accent */}
         <div className="absolute top-[100px] left-[5%] w-[400px] h-[400px] rounded-full bg-[hsl(280,80%,65%,0.06)] blur-[100px]" />
-        {/* Right purple accent */}
         <div className="absolute top-[200px] right-[5%] w-[350px] h-[350px] rounded-full bg-[hsl(262,83%,58%,0.05)] blur-[80px]" />
-        {/* Subtle noise overlay */}
         <div className="absolute inset-0 opacity-[0.015]"
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, hsl(262,83%,58%) 1px, transparent 0)`,
@@ -73,7 +88,7 @@ export function HeroSection() {
             <ArrowRight className="h-3 w-3" />
           </motion.div>
 
-          {/* Main heading - large and dramatic like Revo */}
+          {/* Main heading */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -132,131 +147,216 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Dashboard preview card - Revo style with glow border */}
+        {/* ===== DASHBOARD MOCKUP ===== */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.4, ease }}
-          className="mt-14 md:mt-20 max-w-4xl mx-auto relative"
+          initial={{ opacity: 0, y: 50, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 1, delay: 0.5, ease }}
+          className="mt-14 md:mt-20 max-w-5xl mx-auto relative"
         >
           {/* Glow behind card */}
-          <div className="absolute -inset-4 bg-[radial-gradient(ellipse_at_center,hsl(262,83%,58%,0.12),transparent_70%)] rounded-3xl blur-xl pointer-events-none" />
-          
+          <div className="absolute -inset-6 bg-[radial-gradient(ellipse_at_center,hsl(262,83%,58%,0.15),transparent_70%)] rounded-3xl blur-2xl pointer-events-none" />
+
           <div className="relative rounded-2xl overflow-hidden border border-[hsl(262,83%,58%,0.15)] bg-[hsl(252,30%,9%)] shadow-2xl">
-            {/* Top bar like browser */}
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-[hsl(262,83%,58%,0.08)] bg-[hsl(252,30%,8%)]">
-              <div className="flex gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-[hsl(0,60%,45%)]" />
-                <div className="h-2.5 w-2.5 rounded-full bg-[hsl(40,70%,50%)]" />
-                <div className="h-2.5 w-2.5 rounded-full bg-[hsl(140,50%,40%)]" />
-              </div>
-              <div className="flex-1 flex justify-center">
-                <div className="h-5 w-48 rounded-md bg-[hsl(250,25%,14%)] flex items-center justify-center">
-                  <span className="text-[9px] text-[hsl(250,15%,45%)] font-mono">app.pagegen.io/dashboard</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Dashboard content */}
-            <div className="p-5 md:p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-2.5 w-2.5 rounded-full bg-[hsl(142,76%,36%)] animate-pulse" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[hsl(250,15%,50%)]">{t("hero.badge")}</span>
-              </div>
-
-              {/* Workflow steps */}
-              <div className="flex items-center justify-between gap-3 md:gap-4">
-                {[
-                  { icon: FileSpreadsheet, label: "CSV", delay: 0.5 },
-                  { icon: Layers, label: "Template", delay: 0.7 },
-                  { icon: Rocket, label: "Deploy", delay: 0.9 },
-                  { icon: BarChart3, label: "Analytics", delay: 1.1 },
-                ].map((step, i) => (
-                  <div key={step.label} className="flex items-center gap-3 md:gap-4 flex-1">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: step.delay, duration: 0.5, ease }}
-                      className="flex flex-col items-center gap-1.5 flex-1"
-                    >
-                      <motion.div
-                        animate={{ 
-                          boxShadow: [
-                            "0 0 0 0 hsl(262 83% 58% / 0)",
-                            "0 0 0 8px hsl(262 83% 58% / 0.1)",
-                            "0 0 0 0 hsl(262 83% 58% / 0)",
-                          ],
-                        }}
-                        transition={{ delay: 2 + i * 0.4, duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                        className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-[hsl(262,83%,58%,0.1)] border border-[hsl(262,83%,58%,0.2)] flex items-center justify-center"
-                      >
-                        <step.icon className="h-4 w-4 md:h-5 md:w-5 text-[hsl(262,83%,68%)]" />
-                      </motion.div>
-                      <span className="text-[10px] font-medium text-[hsl(250,15%,50%)]">{step.label}</span>
-                    </motion.div>
-                    {i < 3 && (
-                      <motion.div
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ delay: step.delay + 0.2, duration: 0.4, ease }}
-                        className="h-px flex-1 origin-left hidden sm:block relative overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(262,83%,58%,0.3)] to-[hsl(262,83%,58%,0.1)]" />
-                        <motion.div
-                          animate={{ x: ["-100%", "200%"] }}
-                          transition={{ delay: 2.5 + i * 0.4, duration: 1.5, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
-                          className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-[hsl(262,83%,58%,0.4)] to-transparent"
-                        />
-                      </motion.div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Stats row */}
-              <div className="mt-5 grid grid-cols-3 gap-3">
-                {[
-                  { label: "Pages", numValue: 1248, prefix: "", suffix: "", color: "text-[hsl(142,76%,50%)]" },
-                  { label: "Indexed", numValue: 98.2, prefix: "", suffix: "%", color: "text-[hsl(262,83%,68%)]" },
-                  { label: "Traffic", numValue: 340, prefix: "+", suffix: "%", color: "text-[hsl(38,92%,60%)]" },
-                ].map((stat, i) => (
+            <div className="flex">
+              {/* Sidebar */}
+              <div className="hidden md:flex flex-col items-center w-14 py-4 gap-5 border-r border-[hsl(262,83%,58%,0.08)] bg-[hsl(252,30%,8%)]">
+                {sidebarIcons.map((Icon, i) => (
                   <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.3 + i * 0.1, duration: 0.4, ease }}
-                    className="rounded-lg bg-[hsl(250,25%,12%)] border border-[hsl(262,83%,58%,0.08)] p-3 text-center"
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.8 + i * 0.06, duration: 0.4, ease }}
+                    className={`h-8 w-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
+                      i === 0
+                        ? "bg-[hsl(262,83%,58%,0.15)] text-[hsl(262,83%,68%)]"
+                        : "text-[hsl(250,15%,40%)] hover:text-[hsl(250,15%,60%)] hover:bg-[hsl(250,25%,14%)]"
+                    }`}
                   >
-                    <AnimatedNumber value={stat.numValue} prefix={stat.prefix} suffix={stat.suffix} delay={1.5 + i * 0.15} color={stat.color} />
-                    <p className="text-[10px] text-[hsl(250,15%,45%)] mt-0.5">{stat.label}</p>
+                    <Icon className="h-4 w-4" />
                   </motion.div>
                 ))}
               </div>
 
-              {/* Progress bars */}
-              <div className="mt-4 space-y-2">
-                {[
-                  { w: "85%", delay: 1.6 },
-                  { w: "62%", delay: 1.7 },
-                ].map((bar, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-[hsl(142,76%,50%,0.6)] shrink-0" />
-                    <div className="flex-1 h-1.5 rounded-full bg-[hsl(250,25%,14%)] overflow-hidden">
+              {/* Main content */}
+              <div className="flex-1 min-w-0">
+                {/* Top bar */}
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(262,83%,58%,0.08)]">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.9, duration: 0.5 }}
+                  >
+                    <h2 className="text-sm font-bold text-foreground">Welcome back, John</h2>
+                    <p className="text-[10px] text-[hsl(250,15%,45%)]">Statistics overview</p>
+                  </motion.div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="hidden sm:flex items-center gap-2 h-7 px-3 rounded-lg bg-[hsl(250,25%,14%)] border border-[hsl(262,83%,58%,0.08)]">
+                      <Search className="h-3 w-3 text-[hsl(250,15%,40%)]" />
+                      <span className="text-[10px] text-[hsl(250,15%,40%)]">Search...</span>
+                    </div>
+                    <Bell className="h-4 w-4 text-[hsl(250,15%,40%)]" />
+                    <Mail className="h-4 w-4 text-[hsl(250,15%,40%)]" />
+                    <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[hsl(262,83%,58%)] to-[hsl(280,80%,65%)]" />
+                  </div>
+                </div>
+
+                {/* Dashboard body */}
+                <div className="p-4 md:p-5">
+                  {/* Time filter + last updated */}
+                  <div className="flex items-center justify-between mb-4">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1, duration: 0.4 }}
+                      className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-[hsl(250,25%,14%)] border border-[hsl(262,83%,58%,0.1)] text-[10px] font-medium text-[hsl(250,15%,55%)] cursor-pointer"
+                    >
+                      This week <ArrowRight className="h-2.5 w-2.5 rotate-90" />
+                    </motion.div>
+                    <span className="text-[9px] text-[hsl(250,15%,35%)]">Last updated at 10:22 AM</span>
+                  </div>
+
+                  <div className="flex gap-4">
+                    {/* Left: Stats + Chart */}
+                    <div className="flex-1 min-w-0">
+                      {/* Stat cards */}
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        {[
+                          { label: "Pages Generated", value: 1324, icon: FileText, change: "+10%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(262,83%,58%,0.1)]" },
+                          { label: "Total Views", value: 12100, icon: Eye, change: "+5%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(280,80%,65%,0.1)]" },
+                          { label: "Indexing Rate", value: 56, icon: TrendingUp, change: "+12%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(38,92%,50%,0.1)]", suffix: "%" },
+                        ].map((stat, i) => (
+                          <motion.div
+                            key={stat.label}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.1 + i * 0.1, duration: 0.5, ease }}
+                            className="rounded-xl bg-[hsl(250,25%,12%)] border border-[hsl(262,83%,58%,0.08)] p-3"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[9px] text-[hsl(250,15%,45%)] font-medium">{stat.label}</span>
+                              <span className={`text-[9px] font-semibold ${stat.changeColor} flex items-center gap-0.5`}>
+                                {stat.change} <TrendingUp className="h-2.5 w-2.5" />
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-lg font-bold text-foreground">
+                                <AnimatedNumber value={stat.value} suffix={stat.suffix || ""} delay={1.3 + i * 0.15} />
+                              </span>
+                              <div className={`h-5 w-5 rounded-md ${stat.iconBg} flex items-center justify-center`}>
+                                <stat.icon className="h-2.5 w-2.5 text-[hsl(262,83%,68%)]" />
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* Chart area */}
                       <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: bar.w }}
-                        transition={{ delay: bar.delay, duration: 0.8, ease }}
-                        className="h-full rounded-full bg-gradient-to-r from-[hsl(262,83%,58%,0.6)] to-[hsl(280,80%,65%,0.3)] relative overflow-hidden"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.5, duration: 0.5, ease }}
+                        className="rounded-xl bg-[hsl(250,25%,12%)] border border-[hsl(262,83%,58%,0.08)] p-4"
                       >
-                        <motion.div
-                          animate={{ x: ["-100%", "200%"] }}
-                          transition={{ delay: 3 + i * 0.5, duration: 1.2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
-                          className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-[hsl(262,83%,58%,0.3)] to-transparent"
-                        />
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[11px] font-semibold text-foreground">Daily visitors</span>
+                          <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(250,15%,40%)]" />
+                        </div>
+                        <MiniBarChart />
+                        <div className="flex justify-between mt-2 text-[8px] text-[hsl(250,15%,35%)]">
+                          <span>January</span>
+                          <span>February</span>
+                          <span>March</span>
+                        </div>
                       </motion.div>
                     </div>
+
+                    {/* Right: Integrations panel */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 1.3, duration: 0.6, ease }}
+                      className="hidden lg:block w-52 shrink-0"
+                    >
+                      <div className="rounded-xl bg-[hsl(250,25%,12%)] border border-[hsl(262,83%,58%,0.08)] p-3">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[11px] font-semibold text-foreground">Integrations</span>
+                          <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(250,15%,40%)]" />
+                        </div>
+
+                        {[
+                          { name: "WordPress", connected: true },
+                          { name: "Shopify", connected: true },
+                          { name: "WooCommerce", connected: false },
+                          { name: "PrestaShop", connected: false },
+                          { name: "Google Index", connected: true },
+                        ].map((item, i) => (
+                          <motion.div
+                            key={item.name}
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 1.5 + i * 0.08, duration: 0.3, ease }}
+                            className="flex items-center justify-between py-1.5"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="h-6 w-6 rounded-full bg-[hsl(250,25%,18%)] flex items-center justify-center">
+                                <Globe className="h-3 w-3 text-[hsl(250,15%,50%)]" />
+                              </div>
+                              <span className="text-[10px] text-[hsl(250,15%,60%)]">{item.name}</span>
+                            </div>
+                            {item.connected ? (
+                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(142,76%,36%,0.15)] text-[hsl(142,76%,50%)] font-medium">Connected</span>
+                            ) : (
+                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(262,83%,58%,0.1)] text-[hsl(262,83%,58%)] font-medium cursor-pointer hover:bg-[hsl(262,83%,58%,0.2)] transition-colors">Connect</span>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      {/* Recent Activity mini card */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.8, duration: 0.5, ease }}
+                        className="mt-3 rounded-xl bg-[hsl(250,25%,12%)] border border-[hsl(262,83%,58%,0.08)] p-3"
+                      >
+                        <span className="text-[11px] font-semibold text-foreground block mb-2">Recent Activity</span>
+                        {[
+                          { text: "Generated 50 pages", status: "Completed" },
+                          { text: "Sitemap updated", status: "Completed" },
+                          { text: "Indexing 12 URLs", status: "In Progress" },
+                        ].map((activity, i) => (
+                          <div key={i} className="flex items-center gap-2 py-1">
+                            <CheckCircle2 className={`h-3 w-3 shrink-0 ${activity.status === "Completed" ? "text-[hsl(142,76%,50%)]" : "text-[hsl(38,92%,50%)]"}`} />
+                            <span className="text-[9px] text-[hsl(250,15%,55%)] truncate">{activity.text}</span>
+                          </div>
+                        ))}
+                      </motion.div>
+                    </motion.div>
                   </div>
-                ))}
+                </div>
+
+                {/* Floating scheduled post card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20, x: -20 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  transition={{ delay: 2.2, duration: 0.6, ease }}
+                  className="absolute bottom-4 left-4 md:left-20 hidden sm:block"
+                >
+                  <div className="rounded-lg bg-[hsl(252,30%,12%)] border border-[hsl(262,83%,58%,0.15)] p-2.5 shadow-xl backdrop-blur-sm">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="h-2 w-2 rounded-full bg-[hsl(142,76%,50%)]" />
+                      <span className="text-[8px] text-[hsl(250,15%,45%)]">Published on 5 Mar at 19:00</span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-foreground">50 SEO Pages Deployed</span>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <span className="flex items-center gap-1 text-[8px] text-[hsl(250,15%,40%)]"><Heart className="h-2.5 w-2.5" /> —</span>
+                      <span className="flex items-center gap-1 text-[8px] text-[hsl(250,15%,40%)]"><Eye className="h-2.5 w-2.5" /> —</span>
+                      <span className="flex items-center gap-1 text-[8px] text-[hsl(250,15%,40%)]"><Users className="h-2.5 w-2.5" /> —</span>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </div>
