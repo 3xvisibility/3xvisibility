@@ -1036,6 +1036,10 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          schema_config: Json | null
+          schema_type: string | null
+          seo_description_pattern: string | null
+          seo_title_pattern: string | null
           updated_at: string
           user_id: string
           variables: string[] | null
@@ -1046,6 +1050,10 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          schema_config?: Json | null
+          schema_type?: string | null
+          seo_description_pattern?: string | null
+          seo_title_pattern?: string | null
           updated_at?: string
           user_id: string
           variables?: string[] | null
@@ -1056,6 +1064,10 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          schema_config?: Json | null
+          schema_type?: string | null
+          seo_description_pattern?: string | null
+          seo_title_pattern?: string | null
           updated_at?: string
           user_id?: string
           variables?: string[] | null
