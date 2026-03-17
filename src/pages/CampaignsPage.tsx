@@ -395,6 +395,22 @@ export default function CampaignsPage() {
 
   const { pagesUsed, pagesLimit } = useSubscription();
 
+  const filteredCampaigns = useMemo(() => {
+    let result = campaigns;
+    if (typeFilter !== "all") {
+      result = result.filter((c) => c.campaign_type === typeFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.templates?.name?.toLowerCase().includes(q) ||
+        c.websites?.name?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [campaigns, typeFilter, searchQuery]);
+
   return (
     <div className="space-y-6">
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
