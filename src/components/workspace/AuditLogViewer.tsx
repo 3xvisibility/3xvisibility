@@ -100,11 +100,28 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
   return (
     <Card className="shadow-surface">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <History className="h-5 w-5 text-primary" />
-          Audit Log
-        </CardTitle>
-        <CardDescription>Recent admin actions in this workspace.</CardDescription>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5 text-primary" />
+              Audit Log
+            </CardTitle>
+            <CardDescription className="mt-1.5">Recent admin actions in this workspace.</CardDescription>
+          </div>
+          <Select value={actionFilter} onValueChange={setActionFilter}>
+            <SelectTrigger className="w-[170px] h-9 text-xs">
+              <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="invite_member">Member Invited</SelectItem>
+              <SelectItem value="update_role">Role Changed</SelectItem>
+              <SelectItem value="remove_member">Member Removed</SelectItem>
+              <SelectItem value="rename_workspace">Workspace Renamed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
