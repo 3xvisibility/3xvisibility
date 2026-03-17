@@ -1112,7 +1112,7 @@ export default function CampaignsPage() {
                   <div className="flex items-start justify-between p-5 gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
-                        <h3 className="font-semibold truncate">{c.name}</h3>
+                        <h3 className="font-semibold truncate cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</h3>
                         <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border shrink-0`}>
                           {isPaused ? "Paused" : config.label}
                         </Badge>
