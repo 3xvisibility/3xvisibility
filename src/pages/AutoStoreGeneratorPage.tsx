@@ -63,6 +63,7 @@ const languageOptions = [
 ];
 
 export default function AutoStoreGeneratorPage() {
+  const { canUseFeature } = useSubscription();
   const [niche, setNiche] = useState("");
   const [keywords, setKeywords] = useState("");
   const [productCount, setProductCount] = useState(10);
