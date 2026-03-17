@@ -776,6 +776,16 @@ export default function CampaignsPage() {
                           </p>
                         </label>
                       </div>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        Need a template?{" "}
+                        <a
+                          href="/sample-data.csv"
+                          download="sample-data.csv"
+                          className="text-primary hover:underline font-medium"
+                        >
+                          Download sample CSV
+                        </a>
+                      </p>
                       {csvHeaders.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-1.5">
                           <span className="text-xs text-muted-foreground">Columns:</span>
