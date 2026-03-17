@@ -970,6 +970,9 @@ function CampaignActions({
             <Link2 className="h-4 w-4 mr-2" /> Internal Links
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem onClick={() => setJobDialogCampaign(c)}>
+          <Layers className="h-4 w-4 mr-2" /> View Jobs
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setLogDialogCampaign(c.id)}>
           <FileText className="h-4 w-4 mr-2" /> View Logs
         </DropdownMenuItem>
