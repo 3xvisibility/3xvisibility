@@ -438,6 +438,7 @@ export default function CampaignDetailPage() {
                 </ScrollArea>
               </CardContent>
             </Card>
+            </>
           )}
         </TabsContent>
 
