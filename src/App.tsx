@@ -95,6 +95,13 @@ const App = () => {
               }
             />
             <Route
+              path="/campaigns/:id"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><CampaignDetailPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            <Route
               path="/templates"
               element={
                 <ProtectedRoute session={session}>
