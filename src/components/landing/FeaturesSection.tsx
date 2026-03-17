@@ -84,17 +84,26 @@ export function FeaturesSection() {
           {features.map((f) => (
             <motion.div
               key={f.title}
-              className="group relative rounded-2xl border border-border/30 bg-card/60 p-6 hover:border-border/60 hover:shadow-lg hover:shadow-primary/5 transition-all duration-500"
+              className="group relative rounded-2xl p-[1px] transition-all duration-500"
+              style={{
+                background: `linear-gradient(135deg, transparent, transparent)`,
+              }}
+              whileHover={{
+                background: `linear-gradient(135deg, ${f.glowFrom}, ${f.glowTo})`,
+                boxShadow: `0 0 24px -6px ${f.glowFrom}`,
+              }}
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
               }}
             >
-              <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                <f.icon className="h-5 w-5 text-primary" />
+              <div className="relative rounded-2xl bg-card p-6 h-full transition-colors duration-500 group-hover:bg-card/95">
+                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <f.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-bold text-sm mb-2">{f.title}</h3>
+                <p className="text-[13px] text-muted-foreground leading-relaxed">{f.description}</p>
               </div>
-              <h3 className="font-bold text-sm mb-2">{f.title}</h3>
-              <p className="text-[13px] text-muted-foreground leading-relaxed">{f.description}</p>
             </motion.div>
           ))}
         </motion.div>
