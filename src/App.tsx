@@ -180,6 +180,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/workspace-settings"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><WorkspaceSettingsPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

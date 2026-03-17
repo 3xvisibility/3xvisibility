@@ -61,6 +61,7 @@ const settingsNav: NavItem[] = [
   { titleKey: "sidebar.websites", url: "/websites", icon: Globe },
   { titleKey: "sidebar.billing", url: "/billing", icon: CreditCard },
   { titleKey: "sidebar.settings", url: "/settings", icon: Settings },
+  { titleKey: "sidebar.workspaceSettings", url: "/workspace-settings", icon: Users },
 ];
 
 interface AppSidebarProps {
