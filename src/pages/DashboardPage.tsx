@@ -102,11 +102,13 @@ export default function DashboardPage() {
   });
 
   const { data: websiteCount = 0, isLoading: loadingWebsites } = useQuery({
-    queryKey: ["dashboard-website-count"],
+    queryKey: ["dashboard-website-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("websites")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
