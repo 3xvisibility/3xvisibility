@@ -202,6 +202,69 @@ export type Database = {
           },
         ]
       }
+      indexing_requests: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          google_response: Json | null
+          id: string
+          last_checked_at: string | null
+          page_id: string | null
+          retry_count: number
+          status: Database["public"]["Enums"]["indexing_status"]
+          submitted_at: string | null
+          updated_at: string
+          url: string
+          user_id: string
+          website_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          google_response?: Json | null
+          id?: string
+          last_checked_at?: string | null
+          page_id?: string | null
+          retry_count?: number
+          status?: Database["public"]["Enums"]["indexing_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+          website_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          google_response?: Json | null
+          id?: string
+          last_checked_at?: string | null
+          page_id?: string | null
+          retry_count?: number
+          status?: Database["public"]["Enums"]["indexing_status"]
+          submitted_at?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indexing_requests_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "generated_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "indexing_requests_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_link_settings: {
         Row: {
           anchor_format: string
@@ -478,6 +541,8 @@ export type Database = {
         Row: {
           created_at: string
           credentials: Json | null
+          google_indexing_enabled: boolean | null
+          google_service_account: Json | null
           id: string
           last_sync: string | null
           name: string
@@ -490,6 +555,8 @@ export type Database = {
         Insert: {
           created_at?: string
           credentials?: Json | null
+          google_indexing_enabled?: boolean | null
+          google_service_account?: Json | null
           id?: string
           last_sync?: string | null
           name: string
@@ -502,6 +569,8 @@ export type Database = {
         Update: {
           created_at?: string
           credentials?: Json | null
+          google_indexing_enabled?: boolean | null
+          google_service_account?: Json | null
           id?: string
           last_sync?: string | null
           name?: string
@@ -534,6 +603,7 @@ export type Database = {
         | "processing"
         | "completed"
         | "failed"
+      indexing_status: "pending" | "submitted" | "indexed" | "failed"
       page_status: "pending" | "published" | "failed"
       website_status: "connected" | "error" | "disconnected"
       website_type: "wordpress" | "shopify"
@@ -666,6 +736,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       campaign_status: ["draft", "queued", "processing", "completed", "failed"],
+      indexing_status: ["pending", "submitted", "indexed", "failed"],
       page_status: ["pending", "published", "failed"],
       website_status: ["connected", "error", "disconnected"],
       website_type: ["wordpress", "shopify"],
