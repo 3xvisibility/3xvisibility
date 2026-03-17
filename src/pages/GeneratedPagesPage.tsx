@@ -312,7 +312,15 @@ export default function GeneratedPagesPage() {
             onClick={() => exportPagesCsv(filtered, "generated-pages.csv")}
             disabled={filtered.length === 0}
           >
-            <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+            <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => exportPagesJson(filtered, "generated-pages.json")}
+            disabled={filtered.length === 0}
+          >
+            <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
           </Button>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[130px] h-9 text-xs">
