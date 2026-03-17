@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOverlay";
+import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
 
 const YEARLY_DISCOUNT = 0.2;
 
@@ -155,6 +156,7 @@ export default function BillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showCanceled, setShowCanceled] = useState(false);
 
   // Check Stripe subscription on mount and after checkout success
   useEffect(() => {
@@ -162,6 +164,8 @@ export default function BillingPage() {
     if (searchParams.get("success") === "true") {
       setShowSuccess(true);
       setTimeout(checkSubscription, 2000);
+    } else if (searchParams.get("canceled") === "true") {
+      setShowCanceled(true);
     }
   }, []);
 
@@ -236,6 +240,11 @@ export default function BillingPage() {
     setSearchParams({}, { replace: true });
   };
 
+  const handleCanceledDismiss = () => {
+    setShowCanceled(false);
+    setSearchParams({}, { replace: true });
+  };
+
   return (
     <div className="space-y-8">
       {showSuccess && (
@@ -243,6 +252,9 @@ export default function BillingPage() {
           planName={PLAN_FEATURES[activePlan]?.label}
           onDismiss={handleSuccessDismiss}
         />
+      )}
+      {showCanceled && (
+        <CheckoutCanceledOverlay onDismiss={handleCanceledDismiss} />
       )}
       {/* Header */}
       <div>
