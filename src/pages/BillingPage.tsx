@@ -231,8 +231,19 @@ export default function BillingPage() {
     return { label: "Downgrade", disabled: false, variant: "outline" as const };
   };
 
+  const handleSuccessDismiss = () => {
+    setShowSuccess(false);
+    setSearchParams({}, { replace: true });
+  };
+
   return (
     <div className="space-y-8">
+      {showSuccess && (
+        <CheckoutSuccessOverlay
+          planName={PLAN_FEATURES[activePlan]?.label}
+          onDismiss={handleSuccessDismiss}
+        />
+      )}
       {/* Header */}
       <div>
         <h1 className="text-display">Billing & Plans</h1>
