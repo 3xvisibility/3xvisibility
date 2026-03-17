@@ -117,7 +117,7 @@ export default function CampaignsPage() {
   const getLatestJob = (campaignId: string) =>
     generationJobs.find((j: any) => j.campaign_id === campaignId);
 
-
+  const { data: templates = [] } = useQuery({
     queryKey: ["templates", wsId],
     enabled: !!wsId,
     queryFn: async () => {
