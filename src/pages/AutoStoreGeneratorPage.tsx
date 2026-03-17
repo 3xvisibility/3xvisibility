@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Store, Sparkles, Loader2, CheckCircle, XCircle, Package, FolderTree,
-  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw
+  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Upload
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -174,6 +174,49 @@ export default function AutoStoreGeneratorPage() {
   });
 
   const [regeneratingIdx, setRegeneratingIdx] = useState<string | null>(null);
+  const fileInputRef = useState<Record<string, HTMLInputElement | null>>({});
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async ({ generationId, productIndex, file }: {
+      generationId: string; productIndex: number; file: File;
+    }) => {
+      setRegeneratingIdx(`${generationId}-${productIndex}`);
+
+      // Convert to base64 data URL
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Get current generation
+      const { data: gen, error: fetchErr } = await supabase
+        .from("store_generations")
+        .select("products")
+        .eq("id", generationId)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const products = (gen.products as any[]) || [];
+      products[productIndex] = { ...products[productIndex], image: dataUrl };
+
+      const { error } = await supabase
+        .from("store_generations")
+        .update({ products })
+        .eq("id", generationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({ title: "Image uploaded" });
+      setRegeneratingIdx(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      setRegeneratingIdx(null);
+    },
+  });
 
   const regenerateImageMutation = useMutation({
     mutationFn: async ({ generationId, productIndex, productName, niche }: {
@@ -479,29 +522,62 @@ export default function AutoStoreGeneratorPage() {
                                         <Package className="h-5 w-5 text-muted-foreground" />
                                       </div>
                                     )}
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="secondary"
-                                          size="icon"
-                                          className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-sm"
-                                          disabled={regeneratingIdx === `${gen.id}-${idx}`}
-                                          onClick={() => regenerateImageMutation.mutate({
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      id={`upload-${gen.id}-${idx}`}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          uploadImageMutation.mutate({
                                             generationId: gen.id,
                                             productIndex: idx,
-                                            productName: prod.name,
-                                            niche: gen.niche,
-                                          })}
-                                        >
-                                          {regeneratingIdx === `${gen.id}-${idx}` ? (
-                                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                                          ) : (
-                                            <RefreshCw className="h-2.5 w-2.5" />
-                                          )}
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="bottom" className="text-xs">Regenerate image</TooltipContent>
-                                    </Tooltip>
+                                            file,
+                                          });
+                                        }
+                                        e.target.value = "";
+                                      }}
+                                    />
+                                    <div className="absolute -bottom-1 -right-1 flex gap-0.5 opacity-0 group-hover/img:opacity-100 transition-opacity">
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            className="h-5 w-5 rounded-full shadow-sm"
+                                            disabled={regeneratingIdx === `${gen.id}-${idx}`}
+                                            onClick={() => document.getElementById(`upload-${gen.id}-${idx}`)?.click()}
+                                          >
+                                            <Upload className="h-2.5 w-2.5" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" className="text-xs">Upload image</TooltipContent>
+                                      </Tooltip>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            className="h-5 w-5 rounded-full shadow-sm"
+                                            disabled={regeneratingIdx === `${gen.id}-${idx}`}
+                                            onClick={() => regenerateImageMutation.mutate({
+                                              generationId: gen.id,
+                                              productIndex: idx,
+                                              productName: prod.name,
+                                              niche: gen.niche,
+                                            })}
+                                          >
+                                            {regeneratingIdx === `${gen.id}-${idx}` ? (
+                                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                                            ) : (
+                                              <RefreshCw className="h-2.5 w-2.5" />
+                                            )}
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom" className="text-xs">Regenerate image</TooltipContent>
+                                      </Tooltip>
+                                    </div>
                                   </div>
                                   <div className="min-w-0 flex-1">
                                     <div className="font-medium truncate">{prod.name}</div>
