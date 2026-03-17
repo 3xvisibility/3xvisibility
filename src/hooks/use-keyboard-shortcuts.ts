@@ -22,7 +22,6 @@ const NAV_ROUTES = [
 export function useKeyboardShortcuts(onOpenCommandPalette?: () => void) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toggleSidebar } = useSidebar();
   const { toast } = useToast();
 
   useEffect(() => {
