@@ -16,6 +16,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import StorePreviewDialog from "@/components/StorePreviewDialog";
 
 interface StoreGeneration {
   id: string;
@@ -69,6 +70,7 @@ export default function AutoStoreGeneratorPage() {
   const [language, setLanguage] = useState("en");
   const [websiteId, setWebsiteId] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [previewGen, setPreviewGen] = useState<StoreGeneration | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -482,6 +484,21 @@ export default function AutoStoreGeneratorPage() {
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0">
+                        {gen.status === "completed" && gen.products?.length > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => setPreviewGen(gen)}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="text-xs">Preview store</TooltipContent>
+                          </Tooltip>
+                        )}
                         {(gen.status === "completed" || gen.status === "publish_failed") && gen.website_id && (
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -662,6 +679,17 @@ export default function AutoStoreGeneratorPage() {
           </div>
         )}
       </div>
+
+      {/* Store Preview Dialog */}
+      <StorePreviewDialog
+        open={!!previewGen}
+        onOpenChange={(open) => !open && setPreviewGen(null)}
+        niche={previewGen?.niche || ""}
+        categories={previewGen?.categories || []}
+        products={previewGen?.products || []}
+        tone={previewGen?.content_tone}
+        language={previewGen?.language}
+      />
     </div>
   );
 }
