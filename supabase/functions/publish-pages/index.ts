@@ -231,6 +231,15 @@ Deno.serve(async (req) => {
             page.content,
             seo
           );
+        } else if (website.type === "prestashop") {
+          result = await publishToPrestaShop(
+            website.url,
+            website.credentials,
+            page.title,
+            page.content,
+            page.slug,
+            seo
+          );
         } else {
           throw new Error(`Unsupported website type: ${website.type}`);
         }
