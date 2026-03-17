@@ -29,7 +29,8 @@ import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { STRIPE_TIERS, getPlanFromProductId } from "@/lib/stripe-config";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOverlay";
 
 const YEARLY_DISCOUNT = 0.2;
 
@@ -146,19 +147,20 @@ function getFeatureList(name: PlanName): string[] {
 export default function BillingPage() {
   const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit } = useSubscription();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
   const [stripePlan, setStripePlan] = useState<PlanName | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Check Stripe subscription on mount and after checkout success
   useEffect(() => {
     checkSubscription();
     if (searchParams.get("success") === "true") {
-      toast({ title: "Payment successful!", description: "Your subscription is now active." });
-      // Re-check after a delay to allow Stripe to process
+      setShowSuccess(true);
       setTimeout(checkSubscription, 2000);
     }
   }, []);
@@ -229,8 +231,19 @@ export default function BillingPage() {
     return { label: "Downgrade", disabled: false, variant: "outline" as const };
   };
 
+  const handleSuccessDismiss = () => {
+    setShowSuccess(false);
+    setSearchParams({}, { replace: true });
+  };
+
   return (
     <div className="space-y-8">
+      {showSuccess && (
+        <CheckoutSuccessOverlay
+          planName={PLAN_FEATURES[activePlan]?.label}
+          onDismiss={handleSuccessDismiss}
+        />
+      )}
       {/* Header */}
       <div>
         <h1 className="text-display">Billing & Plans</h1>
