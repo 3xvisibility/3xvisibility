@@ -95,6 +95,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               {children}
             </div>
           </main>
+          <KeyboardShortcutsDialog />
         </div>
       </div>
     </SidebarProvider>
