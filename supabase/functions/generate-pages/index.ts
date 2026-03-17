@@ -760,13 +760,37 @@ Deno.serve(async (req) => {
           }
           const utmQueryString = utmParams.length > 0 ? `?${utmParams.join("&")}` : "";
 
+          // Apply template SEO patterns if defined, otherwise use AI
+          const tplSeoTitle = campaign.templates.seo_title_pattern as string || "";
+          const tplSeoDesc = campaign.templates.seo_description_pattern as string || "";
+
           let seoData = {
             seo_title: pageTitle.slice(0, 60),
             seo_description: pageContent.replace(/<[^>]*>/g, "").slice(0, 160),
             seo_keywords: [] as string[],
           };
 
-          if (LOVABLE_API_KEY) {
+          if (tplSeoTitle || tplSeoDesc) {
+            // Resolve variables in SEO patterns
+            const resolvePattern = (pattern: string): string => {
+              let resolved = pattern;
+              for (const [key, value] of Object.entries(allVars)) {
+                resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+              }
+              return resolved;
+            };
+            if (tplSeoTitle) seoData.seo_title = resolvePattern(tplSeoTitle).slice(0, 60);
+            if (tplSeoDesc) seoData.seo_description = resolvePattern(tplSeoDesc).slice(0, 160);
+
+            // Still generate keywords via AI if available
+            if (LOVABLE_API_KEY) {
+              try {
+                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
+                seoData.seo_keywords = aiSeo.seo_keywords;
+                aiGenerationsUsed++;
+              } catch { /* keep empty keywords */ }
+            }
+          } else if (LOVABLE_API_KEY) {
             try {
               seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
               aiGenerationsUsed++;
