@@ -1156,7 +1156,7 @@ export default function CampaignsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCampaigns.map((c, index) => {
+                {orderedCampaigns.map((c, index) => {
                   const progress = getProgressInfo(c);
                   const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
                   const config = statusConfig[c.status] || statusConfig.draft;
