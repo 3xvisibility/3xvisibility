@@ -337,6 +337,47 @@ export type Database = {
         }
         Relationships: []
       }
+      sitemaps: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          last_generated_at: string
+          page_count: number
+          updated_at: string
+          user_id: string
+          website_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_generated_at?: string
+          page_count?: number
+          updated_at?: string
+          user_id: string
+          website_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_generated_at?: string
+          page_count?: number
+          updated_at?: string
+          user_id?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sitemaps_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: true
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           ai_generations_limit: number
