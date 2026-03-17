@@ -34,11 +34,12 @@ const statusColors: Record<string, string> = {
   failed: "bg-destructive/10 text-destructive",
 };
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 export default function GeneratedPagesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
