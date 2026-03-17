@@ -689,6 +689,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.usage": "Nutzung",
     "sidebar.pagesGenerated": "Seiten diesen Monat generiert",
     "sidebar.logout": "Abmelden",
+    "sidebar.dataCsv": "Daten / CSV",
 
     // Auth
     "auth.home": "Startseite",
