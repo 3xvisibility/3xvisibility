@@ -322,24 +322,29 @@ export default function TemplatesPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Manual Template */}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
-                <Plus className="mr-2 h-4 w-4" /> New Template
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+          {/* Manual / Edit Template */}
+          <Dialog open={open || !!editingTemplate} onOpenChange={(v) => { if (!v) resetAndClose(); else setOpen(true); }}>
+            {!editingTemplate && (
+              <DialogTrigger asChild>
+                <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
+                  <Plus className="mr-2 h-4 w-4" /> New Template
+                </Button>
+              </DialogTrigger>
+            )}
+            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create Template</DialogTitle>
+                <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
                   <Label htmlFor="tpl-name">Template Name</Label>
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
-                <Tabs defaultValue="code" className="w-full">
-                  <TabsList className="w-full grid grid-cols-2">
+                <Tabs value={activeEditorTab} onValueChange={handleTabChange} className="w-full">
+                  <TabsList className="w-full grid grid-cols-3">
+                    <TabsTrigger value="visual" className="flex items-center gap-1.5">
+                      <LayoutPanelTop className="h-3.5 w-3.5" /> Visual
+                    </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5" /> Code
                     </TabsTrigger>
@@ -347,6 +352,12 @@ export default function TemplatesPage() {
                       <Eye className="h-3.5 w-3.5" /> Preview
                     </TabsTrigger>
                   </TabsList>
+                  <TabsContent value="visual" className="mt-3">
+                    <TemplateVisualEditor
+                      blocks={blocks}
+                      onChange={handleBlocksChange}
+                    />
+                  </TabsContent>
                   <TabsContent value="code" className="mt-3">
                     <p className="text-xs text-muted-foreground mb-1">Use &#123;variable&#125; syntax for dynamic fields.</p>
                     <Textarea
@@ -354,7 +365,7 @@ export default function TemplatesPage() {
                       placeholder={"<h1>{course} in {city}</h1>\n<p>Learn {course} in {city}...</p>"}
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      rows={10}
+                      rows={12}
                       className="font-mono text-xs"
                     />
                   </TabsContent>
@@ -363,7 +374,7 @@ export default function TemplatesPage() {
                       <TemplatePreview html={content} />
                     ) : (
                       <div className="flex items-center justify-center h-32 border border-dashed border-border rounded-md text-muted-foreground text-sm">
-                        Start typing in the Code tab to see a preview
+                        Add blocks in the Visual tab or write HTML in the Code tab
                       </div>
                     )}
                   </TabsContent>
@@ -377,15 +388,74 @@ export default function TemplatesPage() {
                   </div>
                 )}
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
-                    {createMutation.isPending ? "Creating..." : "Create Template"}
-                  </Button>
+                  <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
+                  {editingTemplate ? (
+                    <Button onClick={() => updateMutation.mutate()} disabled={!name || !content || updateMutation.isPending}>
+                      {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  ) : (
+                    <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
+                      {createMutation.isPending ? "Creating..." : "Create Template"}
+                    </Button>
+                  )}
                 </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}><CardContent className="p-5 space-y-3"><Skeleton className="h-5 w-32" /><Skeleton className="h-4 w-full" /><Skeleton className="h-20 w-full" /></CardContent></Card>
+          ))}
+        </div>
+      ) : templates.length === 0 ? (
+        <Card><CardContent className="p-10 text-center text-muted-foreground">No templates yet. Create your first template to get started.</CardContent></Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((tpl) => (
+            <Card key={tpl.id} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold">{tpl.name}</h3>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        setEditingTemplate(tpl);
+                        setName(tpl.name);
+                        setContent(tpl.content);
+                        setBlocks(htmlToBlocks(tpl.content));
+                        setActiveEditorTab("visual");
+                      }}
+                      title="Edit"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setPreviewTemplateId(previewTemplateId === tpl.id ? null : tpl.id)}
+                      title="Toggle preview"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate">
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(tpl.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
       </div>
 
       {isLoading ? (
