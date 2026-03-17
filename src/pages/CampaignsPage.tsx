@@ -1196,7 +1196,14 @@ export default function CampaignsPage() {
       ) : (
         /* CARD VIEW */
         <div className="grid gap-4">
-          {filteredCampaigns.map((c) => {
+          {hasCampaignCustomOrder && (
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={resetCampaignOrder} className="text-xs text-muted-foreground">
+                <RotateCcw className="h-3 w-3 mr-1.5" /> Reset order
+              </Button>
+            </div>
+          )}
+          {orderedCampaigns.map((c, idx) => {
             const progress = getProgressInfo(c);
             const isProcessing = c.status === "processing";
             const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
@@ -1204,6 +1211,7 @@ export default function CampaignsPage() {
             const completedAt = (c as any).generation_completed_at;
             const config = statusConfig[c.status] || statusConfig.draft;
             const latestJob = getLatestJob(c.id);
+            const dragProps = getCampaignDragProps(idx);
 
             return (
               <Card key={c.id} className="border-0 shadow-surface card-interactive overflow-hidden">
