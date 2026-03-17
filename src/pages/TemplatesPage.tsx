@@ -27,6 +27,8 @@ export default function TemplatesPage() {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   const detectedVars = content.match(/\{[^}]+\}/g) || [];
 
