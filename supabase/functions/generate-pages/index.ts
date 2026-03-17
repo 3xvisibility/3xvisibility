@@ -336,15 +336,25 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Support service-role calls from the scheduled runner
+    const serviceRoleHeader = req.headers.get("x-service-role-key");
+    let user: { id: string } | null = null;
+
+    if (serviceRoleHeader === supabaseServiceKey) {
+      // Service-role call — resolve user from the campaign after parsing body
+      // We'll set user below after reading campaign_id
+    } else {
+      const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
       });
+      const { data: { user: authUser }, error: userError } = await userClient.auth.getUser();
+      if (userError || !authUser) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = authUser;
     }
 
     const body = await req.json();
@@ -355,6 +365,18 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // For service-role calls, resolve user_id from the campaign
+    if (!user) {
+      const { data: campLookup } = await supabase.from("campaigns").select("user_id").eq("id", campaign_id).maybeSingle();
+      if (!campLookup) {
+        return new Response(JSON.stringify({ error: "Campaign not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = { id: campLookup.user_id };
     }
 
     // Handle pause action — update both campaign and active job
