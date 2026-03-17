@@ -285,6 +285,75 @@ export default function CampaignsPage() {
     },
   });
 
+  const replaceCsvMutation = useMutation({
+    mutationFn: async ({ campaignId, file }: { campaignId: string; file: File }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const text = await file.text();
+      const lines = text.split("\n").filter((l) => l.trim());
+      if (lines.length < 2) throw new Error("CSV must have at least a header and one data row.");
+
+      const firstLine = lines[0];
+      let delimiter = ",";
+      if (firstLine.includes("\t")) delimiter = "\t";
+      else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
+      else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
+
+      const headers = firstLine.split(delimiter).map((h) => h.trim().replace(/^["']|["']$/g, ""));
+      const rows = lines.slice(1).map((line) => {
+        const values = line.split(delimiter).map((v) => v.trim().replace(/^["']|["']$/g, ""));
+        return headers.reduce((acc, h, i) => ({ ...acc, [h]: values[i] || "" }), {} as Record<string, string>);
+      });
+
+      const sampleData = rows.slice(0, 5);
+
+      // Update campaign inline sample
+      await supabase.from("campaigns").update({
+        csv_data: sampleData as any,
+        total_rows: rows.length,
+        processed_rows: 0,
+        failed_rows: 0,
+      }).eq("id", campaignId);
+
+      // Delete old csv file records, then insert new one
+      await supabase.from("campaign_csv_files" as any).delete().eq("campaign_id", campaignId);
+      await supabase.from("campaign_csv_files" as any).insert({
+        campaign_id: campaignId,
+        workspace_id: wsId,
+        user_id: user.id,
+        file_name: file.name,
+        file_size: text.length,
+        raw_content: text,
+        headers: headers as any,
+        row_count: rows.length,
+      });
+
+      // Update data_sources
+      await supabase.from("data_sources").delete().eq("campaign_id", campaignId);
+      await supabase.from("data_sources").insert({
+        campaign_id: campaignId,
+        workspace_id: wsId,
+        user_id: user.id,
+        type: "csv",
+        file_name: file.name,
+        file_size: file.size,
+        row_count: rows.length,
+        headers: headers as any,
+      });
+
+      return { fileName: file.name, rowCount: rows.length };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "CSV replaced", description: `"${data.fileName}" uploaded with ${data.rowCount} rows.` });
+      setReplaceCsvCampaignId(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error replacing CSV", description: err.message, variant: "destructive" });
+    },
+  });
+
   const executeMutation = useMutation({
     mutationFn: async ({ id, action }: { id: string; action?: string }) => {
       const { data, error } = await supabase.functions.invoke("generate-pages", {
