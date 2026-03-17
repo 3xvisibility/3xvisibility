@@ -434,24 +434,34 @@ export default function AutoStoreGeneratorPage() {
                               <Package className="h-3.5 w-3.5 text-primary" />
                               Products ({gen.products.length})
                             </h4>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto">
                               {gen.products.map((prod: any, idx: number) => (
                                 <div
                                   key={idx}
-                                  className="rounded-lg border border-border bg-muted/30 p-3 text-xs"
+                                  className="rounded-lg border border-border bg-muted/30 p-3 text-xs flex gap-3"
                                 >
-                                  <div className="font-medium truncate">{prod.name}</div>
-                                  <div className="flex items-center justify-between mt-1 text-muted-foreground">
-                                    <span>${prod.price}</span>
-                                    <Badge variant="outline" className="text-[10px] h-4">
-                                      {prod.category}
-                                    </Badge>
-                                  </div>
-                                  {prod.seo_title && (
-                                    <div className="mt-1.5 text-muted-foreground truncate">
-                                      SEO: {prod.seo_title}
-                                    </div>
+                                  {prod.image && (
+                                    <img
+                                      src={prod.image}
+                                      alt={prod.name}
+                                      className="w-14 h-14 rounded-md object-cover shrink-0 bg-muted"
+                                      loading="lazy"
+                                    />
                                   )}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="font-medium truncate">{prod.name}</div>
+                                    <div className="flex items-center justify-between mt-1 text-muted-foreground">
+                                      <span>${prod.price}</span>
+                                      <Badge variant="outline" className="text-[10px] h-4">
+                                        {prod.category}
+                                      </Badge>
+                                    </div>
+                                    {prod.seo_title && (
+                                      <div className="mt-1.5 text-muted-foreground truncate">
+                                        SEO: {prod.seo_title}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
                             </div>
