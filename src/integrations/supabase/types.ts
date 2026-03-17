@@ -58,6 +58,60 @@ export type Database = {
           },
         ]
       }
+      campaign_csv_files: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          headers: Json | null
+          id: string
+          raw_content: string
+          row_count: number | null
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          headers?: Json | null
+          id?: string
+          raw_content: string
+          row_count?: number | null
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          headers?: Json | null
+          id?: string
+          raw_content?: string
+          row_count?: number | null
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_csv_files_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_csv_files_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_logs: {
         Row: {
           batch_number: number | null

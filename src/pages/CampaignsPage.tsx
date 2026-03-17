@@ -44,6 +44,7 @@ export default function CampaignsPage() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvRawText, setCsvRawText] = useState<string>("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
@@ -196,12 +197,14 @@ export default function CampaignsPage() {
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
+      // Store only a small sample inline for preview; full data goes to campaign_csv_files
+      const sampleData = csvData.slice(0, 5);
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
         template_id: selectedTemplate || null,
         website_id: selectedWebsite || null,
-        csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
+        csv_data: sampleData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: csvData.length,
         user_id: user.id,
         workspace_id: wsId,
@@ -209,6 +212,20 @@ export default function CampaignsPage() {
         geo_settings: geoSettings as any,
       }).select("id").single();
       if (error) throw error;
+
+      // Upload full CSV to dedicated table
+      if (csvRawText && campaign) {
+        await supabase.from("campaign_csv_files" as any).insert({
+          campaign_id: campaign.id,
+          workspace_id: wsId,
+          user_id: user.id,
+          file_name: csvFile?.name || "data.csv",
+          file_size: csvRawText.length,
+          raw_content: csvRawText,
+          headers: csvHeaders as any,
+          row_count: csvData.length,
+        });
+      }
 
       // Persist DataSource
       if (csvFile && campaign) {
@@ -320,6 +337,7 @@ export default function CampaignsPage() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
+      setCsvRawText(text);
       const lines = text.split("\n").filter((l) => l.trim());
       if (lines.length === 0) return;
 
@@ -346,6 +364,7 @@ export default function CampaignsPage() {
     setStep(1);
     setCampaignName("");
     setCampaignType("seo");
+    setCsvRawText("");
     setCsvFile(null);
     setCsvHeaders([]);
     setCsvData([]);
