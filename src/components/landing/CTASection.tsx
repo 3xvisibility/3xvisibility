@@ -12,21 +12,24 @@ export function CTASection() {
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal>
           <div className="relative rounded-3xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground/95 to-foreground/90 dark:from-card dark:via-card dark:to-card/90" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/.2),transparent_60%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(var(--primary-glow)/.15),transparent_60%)]" />
+            {/* Background with purple gradients */}
+            <div className="absolute inset-0 bg-[hsl(252,30%,9%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(262,83%,58%,0.2),transparent_60%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(280,80%,65%,0.15),transparent_60%)]" />
+            {/* Border glow */}
+            <div className="absolute inset-0 rounded-3xl border border-[hsl(262,83%,58%,0.15)]" />
 
             <div className="relative z-10 py-16 md:py-20 px-8 md:px-16 text-center">
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] text-background dark:text-foreground leading-tight max-w-lg mx-auto">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] leading-tight max-w-lg mx-auto">
                 {t("cta.title")}
               </h2>
-              <p className="mt-4 text-background/60 dark:text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">
+              <p className="mt-4 text-[hsl(250,15%,50%)] max-w-md mx-auto text-sm leading-relaxed">
                 {t("cta.description")}
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Button
                   size="lg"
-                  className="bg-background text-foreground hover:bg-background/90 dark:bg-foreground dark:text-background dark:hover:bg-foreground/90 transition-all duration-300 active:scale-[0.97] text-sm px-8 h-12 rounded-full font-semibold shadow-xl"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 active:scale-[0.97] text-sm px-8 h-12 rounded-xl font-semibold shadow-xl shadow-primary/25"
                   asChild
                 >
                   <Link to="/auth">
@@ -36,7 +39,7 @@ export function CTASection() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-background/20 dark:border-border/30 bg-transparent text-background/80 dark:text-foreground/70 hover:bg-background/10 dark:hover:bg-accent h-12 rounded-full text-sm font-medium"
+                  className="border-[hsl(262,83%,58%,0.2)] bg-transparent text-[hsl(250,15%,70%)] hover:text-foreground hover:bg-[hsl(262,83%,58%,0.08)] h-12 rounded-xl text-sm font-medium"
                   asChild
                 >
                   <a href="#pricing">{t("cta.viewPricing")}</a>

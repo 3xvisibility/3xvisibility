@@ -15,20 +15,20 @@ const reviews = [
 
 function ReviewCard({ review }: { review: typeof reviews[0] }) {
   return (
-    <div className="flex-shrink-0 w-[300px] rounded-2xl border border-border/30 bg-card/60 p-5 hover:border-border/50 transition-all duration-300">
+    <div className="flex-shrink-0 w-[300px] rounded-2xl border border-[hsl(262,83%,58%,0.1)] bg-[hsl(252,25%,10%)] p-5 hover:border-[hsl(262,83%,58%,0.2)] transition-all duration-300">
       <div className="flex items-center gap-0.5 mb-3">
         {[...Array(5)].map((_, i) => (
-          <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+          <Star key={i} className="h-3.5 w-3.5 fill-[hsl(38,92%,60%)] text-[hsl(38,92%,60%)]" />
         ))}
       </div>
-      <p className="text-[13px] text-foreground/80 leading-relaxed mb-4">"{review.text}"</p>
-      <div className="flex items-center gap-3 pt-3 border-t border-border/20">
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-[hsl(var(--primary-glow))]/20 flex items-center justify-center text-[10px] font-bold text-primary">
+      <p className="text-[13px] text-[hsl(250,15%,65%)] leading-relaxed mb-4">"{review.text}"</p>
+      <div className="flex items-center gap-3 pt-3 border-t border-[hsl(262,83%,58%,0.08)]">
+        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(262,83%,58%,0.2)] to-[hsl(280,80%,65%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(262,83%,68%)]">
           {review.avatar}
         </div>
         <div>
-          <p className="text-xs font-semibold">{review.name}</p>
-          <p className="text-[10px] text-muted-foreground">{review.role}</p>
+          <p className="text-xs font-semibold text-foreground">{review.name}</p>
+          <p className="text-[10px] text-[hsl(250,15%,45%)]">{review.role}</p>
         </div>
       </div>
     </div>
@@ -43,13 +43,13 @@ export function ReviewsSection() {
     <section id="reviews" className="py-20 md:py-28 relative overflow-hidden">
       <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-10">
         <div className="text-center max-w-2xl mx-auto">
-          <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
+          <span className="section-badge mb-6">
             {t("reviews.badge")}
           </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">
             {t("reviews.title")}
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-[hsl(250,15%,50%)]">
             {t("reviews.description")}
           </p>
         </div>
@@ -57,8 +57,8 @@ export function ReviewsSection() {
 
       <ScrollReveal delay={0.1}>
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[hsl(250,30%,6%)] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[hsl(250,30%,6%)] to-transparent z-10 pointer-events-none" />
           <div className="flex gap-4 animate-scroll-left" style={{ width: "max-content" }}>
             {allReviews.map((review, i) => (
               <ReviewCard key={`r-${i}`} review={review} />

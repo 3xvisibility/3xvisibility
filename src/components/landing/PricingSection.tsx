@@ -31,12 +31,12 @@ const YEARLY_DISCOUNT = 0.2;
 function TableCell({ val }: { val: string | boolean }) {
   if (typeof val === "boolean") {
     return val ? (
-      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
-        <Check className="h-3.5 w-3.5 text-success" />
+      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(142,76%,36%,0.1)]">
+        <Check className="h-3.5 w-3.5 text-[hsl(142,76%,50%)]" />
       </div>
     ) : (
-      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-        <X className="h-3.5 w-3.5 text-muted-foreground/40" />
+      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(250,25%,14%)]">
+        <X className="h-3.5 w-3.5 text-[hsl(250,15%,35%)]" />
       </div>
     );
   }
@@ -54,7 +54,6 @@ export function PricingSection() {
       description: t("pricing.starterDesc"),
       popular: false,
       icon: <Zap className="h-5 w-5" />,
-      gradient: "from-secondary/20 to-secondary/5",
       cta: t("pricing.getStarted"),
       pagesLimit: `100 ${t("pricing.pagesPerMonth")}`,
       features: [
@@ -73,7 +72,6 @@ export function PricingSection() {
       description: t("pricing.proDesc"),
       popular: true,
       icon: <Sparkles className="h-5 w-5" />,
-      gradient: "from-primary/20 to-primary/5",
       cta: t("pricing.startProTrial"),
       pagesLimit: `2,000 ${t("pricing.pagesPerMonth")}`,
       features: [
@@ -95,7 +93,6 @@ export function PricingSection() {
       description: t("pricing.agencyDesc"),
       popular: false,
       icon: <Crown className="h-5 w-5" />,
-      gradient: "from-warning/20 to-warning/5",
       cta: t("pricing.contactSales"),
       pagesLimit: `10,000 ${t("pricing.pagesPerMonth")}`,
       features: [
@@ -115,45 +112,47 @@ export function PricingSection() {
   ];
 
   const comparisonFeatures = [
-    { label: t("pricing.pagesMonth"), icon: <Layers className="h-4 w-4 text-primary" />, starter: "100", pro: "2,000", agency: "10,000" },
-    { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-primary" />, starter: "50", pro: "500", agency: "5,000" },
-    { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-primary" />, starter: "5", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
-    { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-primary" />, starter: "1", pro: "5", agency: t("pricing.unlimited") },
-    { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-primary" />, starter: true, pro: true, agency: true },
-    { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.socialSharing"), icon: <Share2 className="h-4 w-4 text-primary" />, starter: true, pro: true, agency: true },
-    { label: t("pricing.storeGenerator"), icon: <Store className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-primary" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-primary" />, starter: false, pro: false, agency: true },
-    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-primary" />, starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
+    { label: t("pricing.pagesMonth"), icon: <Layers className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: "100", pro: "2,000", agency: "10,000" },
+    { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: "50", pro: "500", agency: "5,000" },
+    { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: "5", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
+    { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: "1", pro: "5", agency: t("pricing.unlimited") },
+    { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: true, pro: true, agency: true },
+    { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.socialSharing"), icon: <Share2 className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: true, pro: true, agency: true },
+    { label: t("pricing.storeGenerator"), icon: <Store className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: false, pro: true, agency: true },
+    { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: false, pro: false, agency: true },
+    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-[hsl(262,83%,68%)]" />, starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
   ];
 
   return (
     <section id="pricing" className="py-20 md:py-28 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_30%_at_50%_20%,hsl(262,83%,58%,0.06),transparent)] pointer-events-none" />
+
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-10">
-          <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
+          <span className="section-badge mb-6">
             {t("pricing.badge")}
           </span>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">
             {t("pricing.title")}
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground max-w-md mx-auto">
+          <p className="mt-3 text-sm text-[hsl(250,15%,50%)] max-w-md mx-auto">
             {t("pricing.description")}
           </p>
         </ScrollReveal>
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mb-10">
-          <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>
+          <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-[hsl(250,15%,50%)]"}`}>
             {t("pricing.monthly")}
           </span>
           <button
             onClick={() => setIsYearly(!isYearly)}
             className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${
-              isYearly ? "bg-primary" : "bg-muted"
+              isYearly ? "bg-primary" : "bg-[hsl(250,25%,20%)]"
             }`}
           >
             <div
@@ -162,11 +161,11 @@ export function PricingSection() {
               }`}
             />
           </button>
-          <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
+          <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-[hsl(250,15%,50%)]"}`}>
             {t("pricing.yearly")}
           </span>
           {isYearly && (
-            <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">
+            <Badge className="bg-[hsl(262,83%,58%,0.1)] text-[hsl(262,83%,68%)] border-[hsl(262,83%,58%,0.2)] text-[10px] font-bold animate-fade-in">
               {t("pricing.save")}
             </Badge>
           )}
@@ -194,19 +193,19 @@ export function PricingSection() {
                 }}
               >
                 <Card
-                  className={`relative h-full rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
+                  className={`relative h-full rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 border-0 ${
                     plan.popular
-                      ? "border-primary/40 bg-card shadow-xl shadow-primary/10 md:scale-[1.03]"
-                      : "border-border/30 bg-card/80 hover:shadow-lg hover:border-border/50"
+                      ? "border border-[hsl(262,83%,58%,0.3)] bg-[hsl(252,25%,10%)] shadow-xl glow-purple-sm md:scale-[1.03]"
+                      : "border border-[hsl(262,83%,58%,0.1)] bg-[hsl(252,25%,10%)] hover:border-[hsl(262,83%,58%,0.2)]"
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--primary-glow))] to-secondary" />
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(280,80%,65%)] to-primary" />
                   )}
                   <CardHeader className="pb-2 pt-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center`}>
+                        <div className="h-9 w-9 rounded-xl bg-[hsl(262,83%,58%,0.1)] border border-[hsl(262,83%,58%,0.15)] flex items-center justify-center">
                           {plan.icon}
                         </div>
                         <CardTitle className="text-base font-bold">{plan.name}</CardTitle>
@@ -217,38 +216,37 @@ export function PricingSection() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">{plan.description}</p>
+                    <p className="text-xs text-[hsl(250,15%,50%)] mt-2">{plan.description}</p>
                     <div className="mt-4 flex items-baseline gap-1">
                       <span className="text-4xl font-extrabold tabular-nums tracking-tight">€{price}</span>
-                      <span className="text-muted-foreground text-sm">{t("pricing.mo")}</span>
+                      <span className="text-[hsl(250,15%,50%)] text-sm">{t("pricing.mo")}</span>
                     </div>
                     {isYearly && (
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-[hsl(250,15%,45%)] mt-0.5">
                         {t("pricing.billed")} €{price * 12}/{t("pricing.year")}{" "}
-                        <span className="line-through text-muted-foreground/50">€{plan.monthlyPrice * 12}</span>
+                        <span className="line-through text-[hsl(250,15%,35%)]">€{plan.monthlyPrice * 12}</span>
                       </p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">{plan.pagesLimit}</p>
+                    <p className="text-xs text-[hsl(250,15%,50%)] mt-1">{plan.pagesLimit}</p>
                   </CardHeader>
                   <CardContent className="pt-4 space-y-4">
-                    <Separator />
+                    <Separator className="bg-[hsl(262,83%,58%,0.08)]" />
                     <ul className="space-y-2.5">
                       {plan.features.map((f) => (
                         <li key={f} className="flex items-center gap-2.5 text-[13px]">
-                          <div className="h-5 w-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">
-                            <Check className="h-3 w-3 text-success" />
+                          <div className="h-5 w-5 rounded-full bg-[hsl(142,76%,36%,0.1)] flex items-center justify-center shrink-0">
+                            <Check className="h-3 w-3 text-[hsl(142,76%,50%)]" />
                           </div>
-                          <span className="text-foreground/80">{f}</span>
+                          <span className="text-[hsl(250,15%,65%)]">{f}</span>
                         </li>
                       ))}
                     </ul>
                     <Button
                       className={`w-full rounded-xl h-11 text-sm font-semibold transition-all duration-300 active:scale-[0.97] ${
                         plan.popular
-                          ? "bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] hover:brightness-110 shadow-lg shadow-primary/20"
-                          : ""
+                          ? "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
+                          : "bg-[hsl(250,25%,14%)] border border-[hsl(262,83%,58%,0.2)] text-foreground hover:bg-[hsl(262,83%,58%,0.1)] hover:border-[hsl(262,83%,58%,0.3)]"
                       }`}
-                      variant={plan.popular ? "default" : "outline"}
                       asChild
                     >
                       <Link to="/auth">
@@ -265,22 +263,22 @@ export function PricingSection() {
 
         {/* Comparison table */}
         <ScrollReveal className="mt-16 max-w-5xl mx-auto">
-          <Card className="rounded-2xl overflow-hidden border-border/30">
+          <Card className="rounded-2xl overflow-hidden border border-[hsl(262,83%,58%,0.1)] bg-[hsl(252,25%,10%)]">
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-xl font-bold">{t("pricing.comparePlans")}</CardTitle>
-              <p className="text-sm text-muted-foreground">{t("pricing.compareDesc")}</p>
+              <p className="text-sm text-[hsl(250,15%,50%)]">{t("pricing.compareDesc")}</p>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-muted/30">
+                    <tr className="border-b border-[hsl(262,83%,58%,0.08)] bg-[hsl(250,25%,12%)]">
                       <th className="text-left py-3.5 px-5 font-semibold text-foreground">{t("pricing.feature")}</th>
                       {plans.map((p) => (
                         <th key={p.name} className="text-center py-3.5 px-5">
                           <div className="flex flex-col items-center gap-1">
-                            <span className={`font-semibold ${p.popular ? "text-primary" : "text-foreground"}`}>{p.name}</span>
-                            <span className="text-xs text-muted-foreground tabular-nums">
+                            <span className={`font-semibold ${p.popular ? "text-[hsl(262,83%,68%)]" : "text-foreground"}`}>{p.name}</span>
+                            <span className="text-xs text-[hsl(250,15%,45%)] tabular-nums">
                               €{isYearly ? Math.round(p.monthlyPrice * (1 - YEARLY_DISCOUNT)) : p.monthlyPrice}{t("pricing.mo")}
                             </span>
                           </div>
@@ -292,8 +290,8 @@ export function PricingSection() {
                     {comparisonFeatures.map((row, i) => (
                       <tr
                         key={row.label}
-                        className={`border-b border-border/50 last:border-0 transition-colors hover:bg-muted/20 ${
-                          i % 2 === 1 ? "bg-muted/10" : ""
+                        className={`border-b border-[hsl(262,83%,58%,0.06)] last:border-0 transition-colors hover:bg-[hsl(262,83%,58%,0.03)] ${
+                          i % 2 === 1 ? "bg-[hsl(250,25%,9%)]" : ""
                         }`}
                       >
                         <td className="py-3.5 px-5">
@@ -303,7 +301,7 @@ export function PricingSection() {
                           </div>
                         </td>
                         <td className="py-3.5 px-5 text-center"><TableCell val={row.starter} /></td>
-                        <td className="py-3.5 px-5 text-center bg-primary/[0.02]"><TableCell val={row.pro} /></td>
+                        <td className="py-3.5 px-5 text-center bg-[hsl(262,83%,58%,0.02)]"><TableCell val={row.pro} /></td>
                         <td className="py-3.5 px-5 text-center"><TableCell val={row.agency} /></td>
                       </tr>
                     ))}

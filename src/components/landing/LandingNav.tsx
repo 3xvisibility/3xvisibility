@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -9,9 +9,6 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isDark, setIsDark] = useState(() =>
-    document.documentElement.classList.contains("dark")
-  );
   const { t } = useLanguage();
 
   const navLinks = [
@@ -21,13 +18,6 @@ export function LandingNav() {
     { label: t("nav.faq"), href: "#faq" },
   ];
 
-  const toggleDarkMode = () => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
-  };
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -35,57 +25,49 @@ export function LandingNav() {
   }, []);
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-5xl">
+    <header className="fixed top-0 left-0 right-0 z-50">
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`rounded-2xl border transition-all duration-300 ${
+        className={`transition-all duration-500 ${
           scrolled
-            ? "bg-background/80 backdrop-blur-2xl border-border/40 shadow-lg shadow-background/10"
-            : "bg-background/50 backdrop-blur-xl border-border/20"
+            ? "bg-[hsl(250,30%,6%)]/80 backdrop-blur-2xl border-b border-[hsl(262,83%,58%,0.08)]"
+            : "bg-transparent"
         }`}
       >
-        <div className="flex items-center justify-between h-12 px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] flex items-center justify-center">
-              <span className="text-[10px] font-black text-primary-foreground">P</span>
+        <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
+          <Link to="/" className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-[hsl(280,80%,65%)] flex items-center justify-center">
+              <span className="text-xs font-black text-primary-foreground">P</span>
             </div>
-            <span className="text-sm font-bold tracking-tight">PageGen</span>
+            <span className="text-base font-bold tracking-tight text-foreground">PageGen</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1 bg-muted/50 rounded-xl px-1 py-0.5">
+          <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className="text-xs text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-background/80 transition-all duration-200 font-medium"
+                className="text-sm text-[hsl(250,15%,60%)] hover:text-foreground px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
               >
                 {l.label}
               </a>
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-1.5">
+          <div className="hidden md:flex items-center gap-2">
             <LanguageSwitcher
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg"
+              className="h-9 w-9 text-[hsl(250,15%,55%)] hover:text-foreground rounded-lg"
             />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg"
-              onClick={toggleDarkMode}
-            >
-              {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-            </Button>
-            <Button variant="ghost" size="sm" className="text-xs h-7 px-3 rounded-lg font-medium" asChild>
+            <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(250,15%,60%)] hover:text-foreground hover:bg-[hsl(262,83%,58%,0.08)]" asChild>
               <Link to="/auth">{t("nav.login")}</Link>
             </Button>
             <Button
               size="sm"
-              className="bg-foreground text-background hover:bg-foreground/90 text-xs h-7 px-4 rounded-lg font-semibold"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-9 px-5 rounded-lg font-semibold shadow-lg shadow-primary/20"
               asChild
             >
               <Link to="/auth">{t("nav.getStarted")}</Link>
@@ -95,10 +77,10 @@ export function LandingNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-7 w-7"
+            className="md:hidden h-9 w-9 text-foreground"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
 
@@ -109,29 +91,25 @@ export function LandingNav() {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-border/20 overflow-hidden"
+              className="md:hidden border-t border-[hsl(262,83%,58%,0.1)] overflow-hidden bg-[hsl(250,30%,6%)]/95 backdrop-blur-2xl"
             >
-              <div className="px-3 py-3 space-y-0.5">
+              <div className="px-4 py-4 space-y-1">
                 {navLinks.map((l) => (
                   <a
                     key={l.href}
                     href={l.href}
-                    className="block text-sm text-muted-foreground hover:text-foreground py-2 px-3 rounded-lg hover:bg-accent/50 transition-all"
+                    className="block text-sm text-[hsl(250,15%,60%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(262,83%,58%,0.08)] transition-all"
                     onClick={() => setMobileOpen(false)}
                   >
                     {l.label}
                   </a>
                 ))}
-                <div className="pt-2 flex flex-col gap-1.5 border-t border-border/20 mt-2">
-                  <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-9 border-border/30" />
-                  <Button variant="outline" size="sm" onClick={toggleDarkMode} className="justify-start gap-2 rounded-lg h-9 border-border/30">
-                    {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-                    {isDark ? t("nav.lightMode") : t("nav.darkMode")}
-                  </Button>
-                  <Button variant="outline" size="sm" className="rounded-lg h-9" asChild>
+                <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(262,83%,58%,0.1)] mt-3">
+                  <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(262,83%,58%,0.15)]" />
+                  <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(262,83%,58%,0.15)] text-foreground" asChild>
                     <Link to="/auth">{t("nav.login")}</Link>
                   </Button>
-                  <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-lg h-9 font-semibold" asChild>
+                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-10 font-semibold" asChild>
                     <Link to="/auth">{t("nav.getStarted")}</Link>
                   </Button>
                 </div>

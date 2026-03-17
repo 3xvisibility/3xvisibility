@@ -6,18 +6,15 @@ interface FeatureConfig {
   icon: LucideIcon;
   titleKey: string;
   descKey: string;
-  gradient: string;
-  glowFrom: string;
-  glowTo: string;
 }
 
 const featureConfigs: FeatureConfig[] = [
-  { icon: Upload, titleKey: "features.csvUpload", descKey: "features.csvUploadDesc", gradient: "from-blue-500/10 to-cyan-500/10", glowFrom: "hsl(210 100% 60%)", glowTo: "hsl(185 80% 55%)" },
-  { icon: LayoutTemplate, titleKey: "features.dynamicTemplates", descKey: "features.dynamicTemplatesDesc", gradient: "from-violet-500/10 to-purple-500/10", glowFrom: "hsl(263 70% 60%)", glowTo: "hsl(280 70% 55%)" },
-  { icon: GitBranch, titleKey: "features.smartMapping", descKey: "features.smartMappingDesc", gradient: "from-emerald-500/10 to-teal-500/10", glowFrom: "hsl(155 70% 45%)", glowTo: "hsl(170 70% 45%)" },
-  { icon: Zap, titleKey: "features.bulkGeneration", descKey: "features.bulkGenerationDesc", gradient: "from-amber-500/10 to-orange-500/10", glowFrom: "hsl(38 90% 55%)", glowTo: "hsl(25 90% 55%)" },
-  { icon: Globe, titleKey: "features.multiPlatform", descKey: "features.multiPlatformDesc", gradient: "from-pink-500/10 to-rose-500/10", glowFrom: "hsl(330 80% 60%)", glowTo: "hsl(350 80% 55%)" },
-  { icon: BarChart3, titleKey: "features.campaignAnalytics", descKey: "features.campaignAnalyticsDesc", gradient: "from-indigo-500/10 to-blue-500/10", glowFrom: "hsl(239 80% 60%)", glowTo: "hsl(221 83% 53%)" },
+  { icon: Upload, titleKey: "features.csvUpload", descKey: "features.csvUploadDesc" },
+  { icon: LayoutTemplate, titleKey: "features.dynamicTemplates", descKey: "features.dynamicTemplatesDesc" },
+  { icon: GitBranch, titleKey: "features.smartMapping", descKey: "features.smartMappingDesc" },
+  { icon: Zap, titleKey: "features.bulkGeneration", descKey: "features.bulkGenerationDesc" },
+  { icon: Globe, titleKey: "features.multiPlatform", descKey: "features.multiPlatformDesc" },
+  { icon: BarChart3, titleKey: "features.campaignAnalytics", descKey: "features.campaignAnalyticsDesc" },
 ];
 
 export function FeaturesSection() {
@@ -25,6 +22,9 @@ export function FeaturesSection() {
 
   return (
     <section id="features" className="py-20 md:py-28 relative">
+      {/* Subtle background glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_0%,hsl(262,83%,58%,0.06),transparent)] pointer-events-none" />
+
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <motion.div
@@ -33,13 +33,14 @@ export function FeaturesSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
+            <span className="section-badge mb-6">
+              <Sparkles className="h-3 w-3" />
               {t("features.badge")}
             </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em] leading-tight">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] leading-tight">
               {t("features.title1")}
               <br />
-              <span className="text-muted-foreground">{t("features.title2")}</span>
+              <span className="text-gradient-primary">{t("features.title2")}</span>
             </h2>
           </motion.div>
         </div>
@@ -54,28 +55,36 @@ export function FeaturesSection() {
           {featureConfigs.map((f) => (
             <motion.div
               key={f.titleKey}
-              className="group relative rounded-2xl p-[1px] transition-all duration-500"
-              style={{ background: `linear-gradient(135deg, transparent, transparent)` }}
-              whileHover={{
-                background: `linear-gradient(135deg, ${f.glowFrom}, ${f.glowTo})`,
-                boxShadow: `0 0 24px -6px ${f.glowFrom}`,
-              }}
+              className="group relative rounded-2xl border border-[hsl(262,83%,58%,0.1)] bg-[hsl(252,25%,10%)] p-6 hover:border-[hsl(262,83%,58%,0.25)] transition-all duration-500 hover:bg-[hsl(252,25%,11%)]"
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
               }}
+              whileHover={{ y: -4 }}
             >
-              <div className="relative rounded-2xl bg-card p-6 h-full transition-colors duration-500 group-hover:bg-card/95">
-                <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <f.icon className="h-5 w-5 text-primary" />
+              {/* Hover glow */}
+              <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_center,hsl(262,83%,58%,0.04),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              
+              <div className="relative z-10">
+                <div className="h-11 w-11 rounded-xl bg-[hsl(262,83%,58%,0.1)] border border-[hsl(262,83%,58%,0.15)] flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-[hsl(262,83%,58%,0.15)] transition-all duration-300">
+                  <f.icon className="h-5 w-5 text-[hsl(262,83%,68%)]" />
                 </div>
-                <h3 className="font-bold text-sm mb-2">{t(f.titleKey)}</h3>
-                <p className="text-[13px] text-muted-foreground leading-relaxed">{t(f.descKey)}</p>
+                <h3 className="font-bold text-sm mb-2 text-foreground">{t(f.titleKey)}</h3>
+                <p className="text-[13px] text-[hsl(250,15%,50%)] leading-relaxed">{t(f.descKey)}</p>
               </div>
             </motion.div>
           ))}
         </motion.div>
       </div>
     </section>
+  );
+}
+
+function Sparkles({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      <path d="M5 3v4" /><path d="M19 17v4" /><path d="M3 5h4" /><path d="M17 19h4" />
+    </svg>
   );
 }
