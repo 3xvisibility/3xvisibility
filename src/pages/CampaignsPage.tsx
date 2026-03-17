@@ -46,11 +46,26 @@ export default function CampaignsPage() {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
+  const [campaignType, setCampaignType] = useState<"seo" | "sea" | "geo">("seo");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
   const [logDialogCampaign, setLogDialogCampaign] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  // UTM fields
+  const [utmSource, setUtmSource] = useState("");
+  const [utmMedium, setUtmMedium] = useState("");
+  const [utmCampaign, setUtmCampaign] = useState("");
+  const [utmTerm, setUtmTerm] = useState("");
+  const [utmContent, setUtmContent] = useState("");
+  // GEO fields
+  const [geoCountry, setGeoCountry] = useState("");
+  const [geoRegion, setGeoRegion] = useState("");
+  const [geoCity, setGeoCity] = useState("");
+  const [geoPostcode, setGeoPostcode] = useState("");
+  const [geoLat, setGeoLat] = useState("");
+  const [geoLng, setGeoLng] = useState("");
+  const [geoLanguage, setGeoLanguage] = useState("en");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
