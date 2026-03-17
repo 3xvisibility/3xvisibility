@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, FileSpreadsheet, Layers, Rocket, CheckCircle2, BarChart3 } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { BrandLogos } from "./BrandLogos";
 import { useEffect, useRef, useState } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -234,29 +235,7 @@ export function HeroSection() {
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="mt-16 md:mt-20 text-center"
-        >
-          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-medium mb-6">
-            {t("hero.trustedBy")}
-          </p>
-          <div className="flex items-center justify-center gap-6 md:gap-10 flex-wrap">
-            {["Shopify", "WordPress", "WooCommerce", "PrestaShop", "HubSpot", "Webflow", "Ahrefs"].map((name, i) => (
-              <motion.span
-                key={name}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 + i * 0.08 }}
-                className="text-sm md:text-base font-semibold text-foreground/30 dark:text-foreground/40 hover:text-foreground/60 dark:hover:text-foreground/70 transition-colors duration-300 select-none"
-              >
-                {name}
-              </motion.span>
-            ))}
-          </div>
-        </motion.div>
+        <BrandLogos />
       </div>
     </section>
   );
