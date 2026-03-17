@@ -280,8 +280,11 @@ export default function CampaignsPage() {
     { num: 4, label: "Website" },
   ];
 
+  const { pagesUsed, pagesLimit } = useSubscription();
+
   return (
     <div className="space-y-6">
+      <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

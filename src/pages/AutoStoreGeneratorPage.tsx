@@ -284,6 +284,18 @@ export default function AutoStoreGeneratorPage() {
     failed: { icon: <XCircle className="h-3.5 w-3.5" />, color: "bg-destructive/10 text-destructive" },
   };
 
+  if (!canUseFeature("storeGenerator")) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-display">Auto Store Generator</h1>
+          <p className="text-muted-foreground mt-1">Generate a complete ecommerce store with AI-powered products, categories, and SEO content.</p>
+        </div>
+        <UpgradePrompt feature="storeGenerator" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>

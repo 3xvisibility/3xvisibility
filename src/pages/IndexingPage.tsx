@@ -213,6 +213,18 @@ export default function IndexingPage() {
     });
   };
 
+  if (!canUseFeature("indexing")) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-display">Google Indexing</h1>
+          <p className="text-muted-foreground mt-1">Submit and track URL indexing via Google Indexing API.</p>
+        </div>
+        <UpgradePrompt feature="indexing" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
