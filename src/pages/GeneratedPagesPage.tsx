@@ -411,7 +411,7 @@ export default function GeneratedPagesPage() {
                               size="sm"
                               variant="ghost"
                               className="text-primary"
-                              onClick={() => publishMutation.mutate([page.id])}
+                              onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
                               disabled={publishMutation.isPending}
                               title="Publish"
                             >
