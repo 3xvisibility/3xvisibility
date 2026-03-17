@@ -10,6 +10,48 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+async function generateProductImage(
+  productName: string,
+  niche: string,
+  apiKey: string
+): Promise<string> {
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3.1-flash-image-preview",
+        messages: [{
+          role: "user",
+          content: `Generate a clean, professional product photo of "${productName}" for a ${niche} ecommerce store. White background, studio lighting, high quality product photography style. No text or watermarks.`,
+        }],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`Image gen failed for ${productName}: ${response.status}`);
+      return getPlaceholderImage(productName);
+    }
+
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (imageUrl) return imageUrl;
+    return getPlaceholderImage(productName);
+  } catch (err) {
+    console.error(`Image gen error for ${productName}:`, err);
+    return getPlaceholderImage(productName);
+  }
+}
+
+function getPlaceholderImage(productName: string): string {
+  const encoded = encodeURIComponent(productName);
+  return `https://placehold.co/600x600/e2e8f0/64748b?text=${encoded}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
