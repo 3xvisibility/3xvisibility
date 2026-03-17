@@ -22,7 +22,7 @@ import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
   Check, Clock, XCircle, FileText, Layers, RefreshCw, Download,
 } from "lucide-react";
-import { exportPagesCsv } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
