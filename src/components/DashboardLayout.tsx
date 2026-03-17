@@ -18,6 +18,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -29,6 +31,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { t } = useLanguage();
   useJobNotifications();
+  useKeyboardShortcuts();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -92,6 +95,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               {children}
             </div>
           </main>
+          <KeyboardShortcutsDialog />
         </div>
       </div>
     </SidebarProvider>
