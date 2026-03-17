@@ -167,6 +167,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/store-generator"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><AutoStoreGeneratorPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

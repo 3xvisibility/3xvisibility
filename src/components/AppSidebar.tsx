@@ -13,7 +13,8 @@ import {
   ScanSearch,
   Compass,
   ShieldCheck,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Store
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
