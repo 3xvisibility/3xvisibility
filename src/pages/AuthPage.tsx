@@ -63,7 +63,7 @@ export default function AuthPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -71,12 +71,21 @@ export default function AuthPage() {
         data: { full_name: fullName, ai_language: aiLanguage },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast({ title: t("auth.signupFailed"), description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: t("auth.checkEmail"), description: t("auth.confirmationSent") });
+      return;
     }
+    // Save AI language preference to profile
+    if (data.user) {
+      await supabase.from("profiles").upsert({
+        user_id: data.user.id,
+        full_name: fullName,
+        ai_language: aiLanguage,
+      }, { onConflict: "user_id" });
+    }
+    setLoading(false);
+    toast({ title: t("auth.checkEmail"), description: t("auth.confirmationSent") });
   };
 
   const handleResetPassword = async () => {
