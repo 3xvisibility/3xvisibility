@@ -20,6 +20,7 @@ import {
   Clock,
   Zap,
   Activity,
+  AlertTriangle,
 } from "lucide-react";
 import {
   AreaChart,
@@ -96,6 +97,34 @@ export default function DashboardPage() {
         .from("generated_pages")
         .select("*", { count: "exact", head: true })
         .eq("workspace_id", wsId!);
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: failedPageCount = 0 } = useQuery({
+    queryKey: ["dashboard-failed-pages", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("generated_pages")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!)
+        .eq("status", "failed");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: queuedPageCount = 0 } = useQuery({
+    queryKey: ["dashboard-queued-pages", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("generated_pages")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!)
+        .eq("status", "pending");
       if (error) throw error;
       return count || 0;
     },
@@ -222,18 +251,18 @@ export default function DashboardPage() {
       iconColor: "text-secondary",
     },
     {
-      label: "Connected Sites",
-      value: websiteCount,
-      icon: Globe,
-      change: "+2",
-      gradient: "from-success/20 to-success/5",
-      iconBg: "bg-success/15",
-      iconColor: "text-success",
+      label: "Failed Pages",
+      value: failedPageCount,
+      icon: AlertTriangle,
+      change: null,
+      gradient: "from-destructive/20 to-destructive/5",
+      iconBg: "bg-destructive/15",
+      iconColor: "text-destructive",
     },
     {
-      label: "Templates",
-      value: templateCount,
-      icon: FileText,
+      label: "In Queue",
+      value: queuedPageCount,
+      icon: Clock,
       change: null,
       gradient: "from-warning/20 to-warning/5",
       iconBg: "bg-warning/15",
@@ -243,27 +272,30 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
+      label: "Connect a Site",
+      description: "Add WordPress, Shopify, or PrestaShop",
+      icon: Globe,
+      href: "/websites",
+      gradient: "bg-gradient-to-br from-success to-secondary",
+    },
+    {
+      label: "Create Template",
+      description: "Build a reusable page template",
+      icon: FileText,
+      href: "/templates",
+      gradient: "bg-gradient-to-br from-secondary to-info",
+    },
+    {
       label: "Create Campaign",
-      description: "Start a new page generation campaign",
+      description: "Start your first page generation",
       icon: Plus,
       href: "/campaigns",
       gradient: "bg-gradient-primary",
     },
-    {
-      label: "Upload CSV",
-      description: "Import data for bulk generation",
-      icon: Upload,
-      href: "/campaigns",
-      gradient: "bg-gradient-to-br from-secondary to-info",
-    },
-    {
-      label: "Generate Pages",
-      description: "Generate content from templates",
-      icon: Zap,
-      href: "/pages",
-      gradient: "bg-gradient-to-br from-success to-secondary",
-    },
   ];
+
+  // Show "Get Started" only when the tenant has no campaigns, templates, or websites
+  const showGetStarted = campaignCount === 0 || templateCount === 0 || websiteCount === 0;
 
   const timeAgo = (date: string) => {
     const seconds = Math.floor(
@@ -311,9 +343,9 @@ export default function DashboardPage() {
         <div className="absolute -right-4 -bottom-12 h-32 w-32 rounded-full bg-secondary/20 blur-xl" />
       </div>
 
-      {/* Quick Actions */}
+      {/* Get Started / Quick Actions */}
       <div>
-        <h2 className="text-display-sm mb-4">Quick Actions</h2>
+        <h2 className="text-display-sm mb-4">{showGetStarted ? "Get Started" : "Quick Actions"}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {quickActions.map((action) => (
             <button
