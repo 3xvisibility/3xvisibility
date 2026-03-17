@@ -65,6 +65,8 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword }
         : siteType === "shopify"
         ? { admin_api_token: shopifyToken }
+        : siteType === "woocommerce"
+        ? { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret }
         : { api_key: prestashopApiKey };
       const { error } = await supabase.from("websites").insert({
         name: siteName || new URL(siteUrl).hostname,
