@@ -189,9 +189,9 @@ export function HeroSection() {
             {/* Animated stats row */}
             <div className="mt-5 grid grid-cols-3 gap-3">
               {[
-                { label: "Pages", value: "1,248", color: "text-emerald-500" },
-                { label: "Indexed", value: "98.2%", color: "text-primary" },
-                { label: "Traffic", value: "+340%", color: "text-amber-500" },
+                { label: "Pages", numValue: 1248, prefix: "", suffix: "", color: "text-emerald-500" },
+                { label: "Indexed", numValue: 98.2, prefix: "", suffix: "%", color: "text-primary" },
+                { label: "Traffic", numValue: 340, prefix: "+", suffix: "%", color: "text-amber-500" },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -200,7 +200,7 @@ export function HeroSection() {
                   transition={{ delay: 1.3 + i * 0.1, duration: 0.4, ease }}
                   className="rounded-lg bg-muted/40 border border-border/20 p-3 text-center"
                 >
-                  <p className={`text-lg md:text-xl font-bold tracking-tight ${stat.color}`}>{stat.value}</p>
+                  <AnimatedNumber value={stat.numValue} prefix={stat.prefix} suffix={stat.suffix} delay={1.5 + i * 0.15} color={stat.color} />
                   <p className="text-[10px] text-muted-foreground/60 mt-0.5">{stat.label}</p>
                 </motion.div>
               ))}
