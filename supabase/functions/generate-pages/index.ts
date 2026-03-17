@@ -547,7 +547,7 @@ Deno.serve(async (req) => {
           workspace_id: campaign.workspace_id,
           user_id: user.id,
           status: "running",
-          total_rows: csvRows.length,
+          total_rows: limitedRows.length,
           processed_rows: 0,
           success_count: 0,
           error_count: 0,
