@@ -205,6 +205,10 @@ export default function TemplatesPage() {
     setBlocks([]);
     setAiPrompt("");
     setActiveEditorTab("visual");
+    setSeoTitlePattern("");
+    setSeoDescriptionPattern("");
+    setSchemaType("WebPage");
+    setSchemaConfig({});
   };
 
   return (
