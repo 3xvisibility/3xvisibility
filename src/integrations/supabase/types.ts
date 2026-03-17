@@ -68,12 +68,14 @@ export type Database = {
       campaigns: {
         Row: {
           batch_size: number | null
+          campaign_type: Database["public"]["Enums"]["campaign_type"]
           created_at: string
           csv_data: Json | null
           current_batch: number | null
           failed_rows: number | null
           generation_completed_at: string | null
           generation_started_at: string | null
+          geo_settings: Json | null
           id: string
           is_paused: boolean | null
           mapping: Json | null
@@ -84,17 +86,20 @@ export type Database = {
           total_rows: number | null
           updated_at: string
           user_id: string
+          utm_settings: Json | null
           website_id: string | null
           workspace_id: string | null
         }
         Insert: {
           batch_size?: number | null
+          campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           csv_data?: Json | null
           current_batch?: number | null
           failed_rows?: number | null
           generation_completed_at?: string | null
           generation_started_at?: string | null
+          geo_settings?: Json | null
           id?: string
           is_paused?: boolean | null
           mapping?: Json | null
@@ -105,17 +110,20 @@ export type Database = {
           total_rows?: number | null
           updated_at?: string
           user_id: string
+          utm_settings?: Json | null
           website_id?: string | null
           workspace_id?: string | null
         }
         Update: {
           batch_size?: number | null
+          campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           csv_data?: Json | null
           current_batch?: number | null
           failed_rows?: number | null
           generation_completed_at?: string | null
           generation_started_at?: string | null
+          geo_settings?: Json | null
           id?: string
           is_paused?: boolean | null
           mapping?: Json | null
@@ -126,6 +134,7 @@ export type Database = {
           total_rows?: number | null
           updated_at?: string
           user_id?: string
+          utm_settings?: Json | null
           website_id?: string | null
           workspace_id?: string | null
         }
@@ -865,6 +874,7 @@ export type Database = {
         | "processing"
         | "completed"
         | "failed"
+      campaign_type: "seo" | "sea" | "geo"
       indexing_status: "pending" | "submitted" | "indexed" | "failed"
       page_status: "pending" | "published" | "failed"
       website_status: "connected" | "error" | "disconnected"
@@ -999,6 +1009,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       campaign_status: ["draft", "queued", "processing", "completed", "failed"],
+      campaign_type: ["seo", "sea", "geo"],
       indexing_status: ["pending", "submitted", "indexed", "failed"],
       page_status: ["pending", "published", "failed"],
       website_status: ["connected", "error", "disconnected"],
