@@ -224,6 +224,15 @@ export default function WebsitesPage() {
                   <Input id="shopify-token" type="password" placeholder="shpat_xxxxx" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} />
                 </div>
               )}
+              {siteType === "prestashop" && (
+                <div>
+                  <Label htmlFor="ps-key">Webservice API Key</Label>
+                  <Input id="ps-key" type="password" placeholder="PrestaShop API key" value={prestashopApiKey} onChange={(e) => setPrestashopApiKey(e.target.value)} />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Found in PrestaShop Back Office → Advanced Parameters → Webservice
+                  </p>
+                </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                 <Button onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
