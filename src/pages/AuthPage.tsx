@@ -134,6 +134,13 @@ export default function AuthPage() {
             <span className="text-border">/</span>
             <span className="text-foreground/70">{mode === "login" ? "Sign In" : "Sign Up"}</span>
           </Link>
+          <button
+            onClick={toggleDarkMode}
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200"
+            aria-label="Toggle dark mode"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
         </motion.nav>
 
         {/* Center form */}
