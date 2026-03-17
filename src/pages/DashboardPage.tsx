@@ -76,11 +76,13 @@ export default function DashboardPage() {
   }, []);
 
   const { data: campaignCount = 0, isLoading: loadingCampaigns } = useQuery({
-    queryKey: ["dashboard-campaign-count"],
+    queryKey: ["dashboard-campaign-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("campaigns")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
