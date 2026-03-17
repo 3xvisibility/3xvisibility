@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers } from "lucide-react";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
+import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
@@ -51,6 +52,7 @@ export default function CampaignsPage() {
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
   const [logDialogCampaign, setLogDialogCampaign] = useState<string | null>(null);
+  const [jobDialogCampaign, setJobDialogCampaign] = useState<Campaign | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
@@ -767,7 +769,7 @@ export default function CampaignsPage() {
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{progress.generated}/{progress.total}</td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="py-3 px-4 text-right">
-                        <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} />
+                        <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} />
                       </td>
                     </tr>
                   );
@@ -816,7 +818,7 @@ export default function CampaignsPage() {
                         <span>{new Date(c.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} />
+                    <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} />
                   </div>
 
                   {progress.total > 0 && (
@@ -914,6 +916,15 @@ export default function CampaignsPage() {
           onOpenChange={(v) => { if (!v) setLinkDialogCampaign(null); }}
         />
       )}
+
+      {jobDialogCampaign && (
+        <GenerationJobDialog
+          campaignId={jobDialogCampaign.id}
+          campaignName={jobDialogCampaign.name}
+          open={!!jobDialogCampaign}
+          onOpenChange={(v) => { if (!v) setJobDialogCampaign(null); }}
+        />
+      )}
     </div>
   );
 }
@@ -926,6 +937,7 @@ function CampaignActions({
   deleteMutation,
   setLinkDialogCampaign,
   setLogDialogCampaign,
+  setJobDialogCampaign,
 }: {
   campaign: any;
   isPaused: boolean;
@@ -933,6 +945,7 @@ function CampaignActions({
   deleteMutation: any;
   setLinkDialogCampaign: (c: any) => void;
   setLogDialogCampaign: (id: string) => void;
+  setJobDialogCampaign: (c: any) => void;
 }) {
   const isProcessing = c.status === "processing";
 
@@ -966,6 +979,9 @@ function CampaignActions({
             <Link2 className="h-4 w-4 mr-2" /> Internal Links
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem onClick={() => setJobDialogCampaign(c)}>
+          <Layers className="h-4 w-4 mr-2" /> View Jobs
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setLogDialogCampaign(c.id)}>
           <FileText className="h-4 w-4 mr-2" /> View Logs
         </DropdownMenuItem>
