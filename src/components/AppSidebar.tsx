@@ -173,9 +173,9 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
           <div className="px-3 py-3 rounded-xl bg-muted/50 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span className="font-medium">{t("sidebar.usage")}</span>
-              <span className="tabular-nums">42 / 100</span>
+              <span className="tabular-nums">{pagesUsed} / {pagesLimit}</span>
             </div>
-            <Progress value={42} className="h-1.5" />
+            <Progress value={usagePercent} className="h-1.5" />
             <p className="text-[11px] text-muted-foreground">{t("sidebar.pagesGenerated")}</p>
           </div>
         )}
