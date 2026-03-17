@@ -388,7 +388,10 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={pages.length === 0}>
-            <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+            <Download className="mr-1.5 h-3.5 w-3.5" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportJSON} disabled={pages.length === 0}>
+            <Download className="mr-1.5 h-3.5 w-3.5" /> JSON
           </Button>
           <Button variant="outline" size="sm" onClick={exportPDF} disabled={pages.length === 0}>
             <FileDown className="mr-1.5 h-3.5 w-3.5" /> PDF Report
