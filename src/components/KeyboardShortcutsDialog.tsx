@@ -9,7 +9,7 @@ import { Keyboard } from "lucide-react";
 
 const shortcuts = [
   { keys: ["Ctrl", "B"], description: "Toggle sidebar" },
-  { keys: ["Ctrl", "K"], description: "Focus search" },
+  { keys: ["Ctrl", "K"], description: "Open command palette" },
   { keys: ["Ctrl", "⇧", "D"], description: "Go to Dashboard" },
   { keys: ["Ctrl", "⇧", "C"], description: "Go to Campaigns" },
   { keys: ["Ctrl", "⇧", "T"], description: "Go to Templates" },
