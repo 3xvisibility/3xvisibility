@@ -1,17 +1,97 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Sparkles, ArrowRight } from "lucide-react";
-import { useSubscription } from "@/hooks/use-subscription";
-import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Check,
+  X,
+  Sparkles,
+  ArrowRight,
+  Layers,
+  Zap,
+  Globe,
+  FileText,
+  Users,
+  Headphones,
+  Store,
+  Search,
+  Link2,
+  Code,
+  Share2,
+  Crown,
+} from "lucide-react";
+import { useSubscription } from "@/hooks/use-subscription";
+import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
+import { useToast } from "@/hooks/use-toast";
 
-const plans: { name: PlanName; price: string; period: string }[] = [
-  { name: "starter", price: "$29", period: "/month" },
-  { name: "pro", price: "$79", period: "/month" },
-  { name: "agency", price: "$199", period: "/month" },
+const YEARLY_DISCOUNT = 0.2; // 20% off
+
+interface PlanConfig {
+  name: PlanName;
+  monthlyPrice: number;
+  description: string;
+  popular: boolean;
+  icon: React.ReactNode;
+  gradient: string;
+  cta: string;
+}
+
+const planConfigs: PlanConfig[] = [
+  {
+    name: "starter",
+    monthlyPrice: 29,
+    description: "Perfect for individuals and small projects",
+    popular: false,
+    icon: <Zap className="h-5 w-5" />,
+    gradient: "from-secondary/20 to-secondary/5",
+    cta: "Get Started",
+  },
+  {
+    name: "pro",
+    monthlyPrice: 79,
+    description: "Best for growing businesses and marketers",
+    popular: true,
+    icon: <Sparkles className="h-5 w-5" />,
+    gradient: "from-primary/20 to-primary/5",
+    cta: "Upgrade to Pro",
+  },
+  {
+    name: "agency",
+    monthlyPrice: 199,
+    description: "For agencies and enterprise teams",
+    popular: false,
+    icon: <Crown className="h-5 w-5" />,
+    gradient: "from-warning/20 to-warning/5",
+    cta: "Contact Sales",
+  },
 ];
+
+const featureIcons: Record<string, React.ReactNode> = {
+  pagesLimit: <Layers className="h-4 w-4 text-primary" />,
+  aiLimit: <Sparkles className="h-4 w-4 text-primary" />,
+  templates: <FileText className="h-4 w-4 text-primary" />,
+  websites: <Globe className="h-4 w-4 text-primary" />,
+  wordpress: <Globe className="h-4 w-4 text-primary" />,
+  shopify: <Store className="h-4 w-4 text-primary" />,
+  prestashop: <Store className="h-4 w-4 text-primary" />,
+  woocommerce: <Store className="h-4 w-4 text-primary" />,
+  socialShare: <Share2 className="h-4 w-4 text-primary" />,
+  storeGenerator: <Store className="h-4 w-4 text-primary" />,
+  indexing: <Search className="h-4 w-4 text-primary" />,
+  discovery: <Search className="h-4 w-4 text-primary" />,
+  internalLinks: <Link2 className="h-4 w-4 text-primary" />,
+  apiAccess: <Code className="h-4 w-4 text-primary" />,
+  teamCollaboration: <Users className="h-4 w-4 text-primary" />,
+};
 
 const featureRows: { label: string; key: string }[] = [
   { label: "Pages / month", key: "pagesLimit" },
@@ -33,39 +113,94 @@ const featureRows: { label: string; key: string }[] = [
 
 function formatValue(val: number | boolean): React.ReactNode {
   if (typeof val === "boolean") {
-    return val ? <Check className="h-4 w-4 text-success" /> : <X className="h-4 w-4 text-muted-foreground/40" />;
+    return val ? (
+      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
+        <Check className="h-3.5 w-3.5 text-success" />
+      </div>
+    ) : (
+      <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
+        <X className="h-3.5 w-3.5 text-muted-foreground/40" />
+      </div>
+    );
   }
-  return val === -1 ? "Unlimited" : val.toLocaleString();
+  return <span className="font-semibold tabular-nums">{val === -1 ? "Unlimited" : val.toLocaleString()}</span>;
+}
+
+function getFeatureList(name: PlanName): string[] {
+  const f = PLAN_FEATURES[name];
+  return [
+    `${f.pagesLimit.toLocaleString()} pages/month`,
+    `${f.aiLimit.toLocaleString()} AI generations`,
+    `${f.templates === -1 ? "Unlimited" : f.templates} templates`,
+    `${f.websites === -1 ? "Unlimited" : f.websites} website${f.websites !== 1 ? "s" : ""}`,
+    ...(f.shopify ? ["All CMS integrations"] : f.wordpress ? ["WordPress integration"] : []),
+    ...(f.socialShare ? ["Social sharing"] : []),
+    ...(f.storeGenerator ? ["AI Store Generator"] : []),
+    ...(f.indexing ? ["Google Indexing"] : []),
+    ...(f.discovery ? ["Website Discovery"] : []),
+    ...(f.internalLinks ? ["Internal link building"] : []),
+    ...(f.apiAccess ? ["API access"] : []),
+    ...(f.teamCollaboration ? ["Team collaboration"] : []),
+    name === "starter" ? "Email support" : name === "pro" ? "Priority support" : "Dedicated support",
+  ];
 }
 
 export default function BillingPage() {
   const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit } = useSubscription();
+  const { toast } = useToast();
+  const [isYearly, setIsYearly] = useState(false);
+  const [upgradeTarget, setUpgradeTarget] = useState<PlanName | null>(null);
+
   const pagesPercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
+  const planOrder: PlanName[] = ["free", "starter", "pro", "agency"];
+  const currentIdx = planOrder.indexOf(currentPlan);
+
+  const getButtonState = (name: PlanName) => {
+    const idx = planOrder.indexOf(name);
+    if (idx === currentIdx) return { label: "Current Plan", disabled: true, variant: "outline" as const };
+    if (idx > currentIdx) return { label: "Upgrade", disabled: false, variant: "default" as const };
+    return { label: "Downgrade", disabled: false, variant: "outline" as const };
+  };
+
+  const handleUpgradeConfirm = () => {
+    toast({
+      title: "Plan updated!",
+      description: `You've been switched to the ${PLAN_FEATURES[upgradeTarget!].label} plan.`,
+    });
+    setUpgradeTarget(null);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div>
-        <h1 className="text-display">Billing</h1>
-        <p className="text-muted-foreground mt-1">Manage your subscription and usage.</p>
+        <h1 className="text-display">Billing & Plans</h1>
+        <p className="text-muted-foreground mt-1">Manage your subscription, track usage, and upgrade your plan.</p>
       </div>
 
-      {/* Current usage */}
+      {/* Usage overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="shadow-surface">
-          <CardContent className="p-5 space-y-2">
-            <p className="text-sm text-muted-foreground">Current Plan</p>
+        <Card className="shadow-surface border-0">
+          <CardContent className="p-5 space-y-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current Plan</p>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold capitalize">{PLAN_FEATURES[currentPlan]?.label || "Free"}</span>
-              <Badge variant="outline" className="text-primary border-primary/30">Active</Badge>
+              <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Sparkles className="h-4.5 w-4.5 text-primary" />
+              </div>
+              <div>
+                <span className="text-xl font-bold capitalize">{PLAN_FEATURES[currentPlan]?.label || "Free"}</span>
+                <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">Active</Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-surface">
-          <CardContent className="p-5 space-y-2">
+        <Card className="shadow-surface border-0">
+          <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">Page Generations</p>
-              <span className="text-xs tabular-nums text-muted-foreground">{pagesUsed} / {pagesLimit}</span>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Page Generations</p>
+              <span className="text-xs tabular-nums font-medium text-muted-foreground">{pagesUsed} / {pagesLimit}</span>
             </div>
             <Progress value={pagesPercent} className="h-2" />
             <p className={`text-xs ${pagesPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
@@ -73,11 +208,11 @@ export default function BillingPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="shadow-surface">
-          <CardContent className="p-5 space-y-2">
+        <Card className="shadow-surface border-0">
+          <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">AI Generations</p>
-              <span className="text-xs tabular-nums text-muted-foreground">{aiUsed} / {aiLimit}</span>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">AI Generations</p>
+              <span className="text-xs tabular-nums font-medium text-muted-foreground">{aiUsed} / {aiLimit}</span>
             </div>
             <Progress value={aiPercent} className="h-2" />
             <p className={`text-xs ${aiPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
@@ -87,51 +222,108 @@ export default function BillingPage() {
         </Card>
       </div>
 
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center gap-3">
+        <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+        <button
+          onClick={() => setIsYearly(!isYearly)}
+          className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${
+            isYearly ? "bg-primary" : "bg-muted"
+          }`}
+        >
+          <div
+            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
+              isYearly ? "translate-x-[26px]" : "translate-x-0.5"
+            }`}
+          />
+        </button>
+        <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
+          Yearly
+        </span>
+        {isYearly && (
+          <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">
+            Save 20%
+          </Badge>
+        )}
+      </div>
+
       {/* Plan cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {plans.map((p) => {
-          const features = PLAN_FEATURES[p.name];
-          const isCurrent = p.name === currentPlan;
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+        {planConfigs.map((config) => {
+          const features = PLAN_FEATURES[config.name];
+          const btn = getButtonState(config.name);
+          const price = isYearly
+            ? Math.round(config.monthlyPrice * (1 - YEARLY_DISCOUNT))
+            : config.monthlyPrice;
+          const featureList = getFeatureList(config.name);
+
           return (
             <Card
-              key={p.name}
-              className={`shadow-surface hover:shadow-surface-hover transition-shadow duration-150 ${isCurrent ? "ring-2 ring-primary" : ""}`}
+              key={config.name}
+              className={`relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                config.popular
+                  ? "ring-2 ring-primary shadow-xl shadow-primary/10 md:scale-[1.03]"
+                  : "shadow-surface border-0 hover:shadow-surface-hover"
+              }`}
             >
-              <CardHeader className="pb-2">
+              {/* Popular badge glow bar */}
+              {config.popular && (
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--primary-glow))] to-secondary" />
+              )}
+
+              <CardHeader className="pb-2 pt-6">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{features.label}</CardTitle>
-                  {isCurrent && <Badge className="bg-primary/10 text-primary">Current</Badge>}
+                  <div className="flex items-center gap-2.5">
+                    <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center`}>
+                      {config.icon}
+                    </div>
+                    <CardTitle className="text-base font-bold">{features.label}</CardTitle>
+                  </div>
+                  {config.popular && (
+                    <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">
+                      Most Popular
+                    </Badge>
+                  )}
                 </div>
-                <div className="mt-2">
-                  <span className="text-3xl font-bold tabular-nums">{p.price}</span>
-                  <span className="text-muted-foreground">{p.period}</span>
+                <p className="text-xs text-muted-foreground mt-2">{config.description}</p>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold tabular-nums tracking-tight">€{price}</span>
+                  <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">{features.pagesLimit.toLocaleString()} pages/month</p>
+                {isYearly && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Billed €{price * 12}/year <span className="line-through text-muted-foreground/50">€{config.monthlyPrice * 12}</span>
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">{features.pagesLimit.toLocaleString()} pages/month</p>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <ul className="space-y-2">
-                  {[
-                    `${features.aiLimit.toLocaleString()} AI generations`,
-                    `${features.templates === -1 ? "Unlimited" : features.templates} templates`,
-                    `${features.websites === -1 ? "Unlimited" : features.websites} website${features.websites !== 1 ? "s" : ""}`,
-                    ...(features.shopify ? ["All CMS integrations"] : features.wordpress ? ["WordPress integration"] : []),
-                    ...(features.storeGenerator ? ["AI Store Generator"] : []),
-                    ...(features.indexing ? ["Google Indexing"] : []),
-                    ...(features.apiAccess ? ["API Access"] : []),
-                    ...(features.teamCollaboration ? ["Team Collaboration"] : []),
-                  ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-success shrink-0" />
-                      {f}
+              <CardContent className="pt-4 space-y-4">
+                <Separator />
+                <ul className="space-y-2.5">
+                  {featureList.map((f) => (
+                    <li key={f} className="flex items-center gap-2.5 text-sm">
+                      <div className="h-5 w-5 rounded-full bg-success/10 flex items-center justify-center shrink-0">
+                        <Check className="h-3 w-3 text-success" />
+                      </div>
+                      <span className="text-foreground/80">{f}</span>
                     </li>
                   ))}
                 </ul>
                 <Button
-                  className="w-full transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
-                  variant={isCurrent ? "outline" : "default"}
-                  disabled={isCurrent}
+                  className={`w-full rounded-xl h-11 text-sm font-semibold transition-all duration-300 active:scale-[0.97] ${
+                    config.popular && !btn.disabled
+                      ? "bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] hover:brightness-110 shadow-lg shadow-primary/20"
+                      : ""
+                  }`}
+                  variant={btn.variant}
+                  disabled={btn.disabled}
+                  onClick={() => !btn.disabled && setUpgradeTarget(config.name)}
                 >
-                  {isCurrent ? "Current Plan" : "Upgrade"}
+                  {btn.disabled ? "Current Plan" : (
+                    <>
+                      {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -142,46 +334,154 @@ export default function BillingPage() {
       <Separator />
 
       {/* Feature comparison table */}
-      <Card className="shadow-surface overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="shadow-surface border-0 overflow-hidden">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-primary" />
             Feature Comparison
           </CardTitle>
+          <p className="text-sm text-muted-foreground">See what's included in each plan</p>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground">Feature</th>
-                  {plans.map((p) => (
-                    <th key={p.name} className={`text-center py-3 px-4 font-medium ${p.name === currentPlan ? "text-primary" : "text-muted-foreground"}`}>
-                      {PLAN_FEATURES[p.name].label}
-                      {p.name === currentPlan && <span className="block text-[10px] text-primary">Current</span>}
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left py-3.5 px-5 font-semibold text-foreground">Feature</th>
+                  {planConfigs.map((p) => (
+                    <th key={p.name} className="text-center py-3.5 px-5">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className={`font-semibold ${p.name === currentPlan ? "text-primary" : "text-foreground"}`}>
+                          {PLAN_FEATURES[p.name].label}
+                        </span>
+                        {p.name === currentPlan && (
+                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 px-1.5 py-0">
+                            Current
+                          </Badge>
+                        )}
+                      </div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {featureRows.map((row, i) => (
-                  <tr key={row.key} className={`border-b border-border last:border-0 ${i % 2 === 1 ? "bg-muted/20" : ""}`}>
-                    <td className="py-3 px-4 text-foreground">{row.label}</td>
-                    {plans.map((p) => {
+                  <tr
+                    key={row.key}
+                    className={`border-b border-border/50 last:border-0 transition-colors hover:bg-muted/30 ${
+                      i % 2 === 1 ? "bg-muted/10" : ""
+                    }`}
+                  >
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center gap-2.5">
+                        {featureIcons[row.key]}
+                        <span className="text-foreground font-medium">{row.label}</span>
+                      </div>
+                    </td>
+                    {planConfigs.map((p) => {
                       const val = (PLAN_FEATURES[p.name] as any)[row.key];
                       return (
-                        <td key={p.name} className="py-3 px-4 text-center">
-                          <span className="inline-flex justify-center">{formatValue(val)}</span>
+                        <td key={p.name} className={`py-3.5 px-5 text-center ${p.name === currentPlan ? "bg-primary/[0.02]" : ""}`}>
+                          {formatValue(val)}
                         </td>
                       );
                     })}
                   </tr>
                 ))}
+                {/* Support row */}
+                <tr className="border-b border-border/50">
+                  <td className="py-3.5 px-5">
+                    <div className="flex items-center gap-2.5">
+                      <Headphones className="h-4 w-4 text-primary" />
+                      <span className="text-foreground font-medium">Support</span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-muted-foreground">Email</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">Priority</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">Dedicated</span></td>
+                </tr>
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
+
+      {/* Upgrade confirmation modal */}
+      <Dialog open={!!upgradeTarget} onOpenChange={(v) => !v && setUpgradeTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              {upgradeTarget && planOrder.indexOf(upgradeTarget) > currentIdx ? "Upgrade" : "Change"} Plan
+            </DialogTitle>
+            <DialogDescription>
+              {upgradeTarget && planOrder.indexOf(upgradeTarget) > currentIdx
+                ? "You'll get instant access to all new features."
+                : "Your plan will be adjusted at the start of the next billing cycle."
+              }
+            </DialogDescription>
+          </DialogHeader>
+          {upgradeTarget && (
+            <div className="space-y-5 mt-2">
+              {/* Comparison */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-border p-4 space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Current</p>
+                  <p className="font-bold text-lg">{PLAN_FEATURES[currentPlan].label}</p>
+                  <p className="text-xs text-muted-foreground">{PLAN_FEATURES[currentPlan].pagesLimit.toLocaleString()} pages/mo</p>
+                </div>
+                <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">New Plan</p>
+                  <p className="font-bold text-lg">{PLAN_FEATURES[upgradeTarget].label}</p>
+                  <p className="text-xs text-muted-foreground">{PLAN_FEATURES[upgradeTarget].pagesLimit.toLocaleString()} pages/mo</p>
+                </div>
+              </div>
+
+              {/* Price */}
+              <div className="rounded-xl bg-muted/50 p-4 flex items-center justify-between">
+                <span className="text-sm font-medium">New monthly price</span>
+                <span className="text-2xl font-extrabold tabular-nums">
+                  €{isYearly
+                    ? Math.round(planConfigs.find((p) => p.name === upgradeTarget)!.monthlyPrice * (1 - YEARLY_DISCOUNT))
+                    : planConfigs.find((p) => p.name === upgradeTarget)!.monthlyPrice
+                  }
+                  <span className="text-sm text-muted-foreground font-normal">/mo</span>
+                </span>
+              </div>
+
+              {/* What's new */}
+              {planOrder.indexOf(upgradeTarget) > currentIdx && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">What you'll unlock</p>
+                  <ul className="space-y-1.5">
+                    {getFeatureList(upgradeTarget)
+                      .filter((f) => !getFeatureList(currentPlan).includes(f))
+                      .slice(0, 5)
+                      .map((f) => (
+                        <li key={f} className="flex items-center gap-2 text-sm">
+                          <Check className="h-3.5 w-3.5 text-success shrink-0" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setUpgradeTarget(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] hover:brightness-110 active:scale-[0.97]"
+                  onClick={handleUpgradeConfirm}
+                >
+                  Confirm {planOrder.indexOf(upgradeTarget) > currentIdx ? "Upgrade" : "Change"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
