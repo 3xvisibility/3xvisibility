@@ -166,9 +166,13 @@ export default function TemplatesPage() {
 
   const resetAndClose = () => {
     setAiOpen(false);
+    setOpen(false);
+    setEditingTemplate(null);
     setName("");
     setContent("");
+    setBlocks([]);
     setAiPrompt("");
+    setActiveEditorTab("visual");
   };
 
   return (
