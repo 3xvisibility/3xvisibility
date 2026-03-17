@@ -443,6 +443,13 @@ Deno.serve(async (req) => {
             } catch { /* keep fallback */ }
           }
 
+          // Inject Open Graph meta tags into page content
+          const ogTags = buildOgMetaTags(
+            seoData.seo_title,
+            seoData.seo_description
+          );
+          pageContent = ogTags + "\n" + pageContent;
+
           batchPages.push({
             campaign_id,
             user_id: user.id,
