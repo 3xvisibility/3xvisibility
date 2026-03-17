@@ -173,6 +173,31 @@ export default function AutoStoreGeneratorPage() {
     },
   });
 
+  const [regeneratingIdx, setRegeneratingIdx] = useState<string | null>(null);
+
+  const regenerateImageMutation = useMutation({
+    mutationFn: async ({ generationId, productIndex, productName, niche }: {
+      generationId: string; productIndex: number; productName: string; niche: string;
+    }) => {
+      setRegeneratingIdx(`${generationId}-${productIndex}`);
+      const { data, error } = await supabase.functions.invoke("regenerate-product-image", {
+        body: { generation_id: generationId, product_index: productIndex, product_name: productName, niche },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({ title: "Image regenerated" });
+      setRegeneratingIdx(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Image regeneration failed", description: err.message, variant: "destructive" });
+      setRegeneratingIdx(null);
+    },
+  });
+
   const getProgressPercent = (gen: StoreGeneration) => {
     const total = (gen.progress.total_categories || 1) + (gen.progress.total_products || 1);
     const done = gen.progress.categories_created + gen.progress.products_created;
