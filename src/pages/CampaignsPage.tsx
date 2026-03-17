@@ -841,7 +841,7 @@ export default function CampaignsPage() {
       ) : (
         /* CARD VIEW */
         <div className="grid gap-4">
-          {campaigns.map((c) => {
+          {filteredCampaigns.map((c) => {
             const progress = getProgressInfo(c);
             const isProcessing = c.status === "processing";
             const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
