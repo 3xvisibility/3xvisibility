@@ -280,6 +280,24 @@ export default function TemplatesPage() {
           <p className="text-muted-foreground mt-1">Define reusable page layouts with dynamic variables.</p>
         </div>
         <div className="flex gap-2">
+          {/* Hidden file input for import */}
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importTemplate(file);
+            }}
+          />
+          <Button
+            variant="outline"
+            className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+            onClick={() => importFileRef.current?.click()}
+          >
+            <Upload className="mr-2 h-4 w-4" /> Import
+          </Button>
           {/* AI Template Builder */}
           <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
             <DialogTrigger asChild>
