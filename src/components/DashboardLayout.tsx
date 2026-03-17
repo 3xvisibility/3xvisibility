@@ -18,6 +18,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
