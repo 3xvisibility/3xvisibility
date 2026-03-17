@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, MessageSquareText, Download } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, MessageSquareText, Download, RefreshCw } from "lucide-react";
 import { exportPagesCsv } from "@/lib/export-csv";
 import SocialShareButtons from "@/components/SocialShareButtons";
 import SocialCaptionDialog from "@/components/SocialCaptionDialog";
@@ -178,6 +178,47 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const bulkPublishMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { page_ids: ids, publish_type: publishType },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setSelectedIds(new Set());
+      toast({
+        title: "Bulk publish complete",
+        description: `${data.published} published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const bulkStatusMutation = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      const { error } = await supabase
+        .from("generated_pages")
+        .update({ status: status as any })
+        .in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setSelectedIds(new Set());
+      toast({ title: "Status updated", description: `${count} pages set to ${status}.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const openSeoEditor = (page: GeneratedPage) => {
     setSeoEditPage(page);
     setSeoForm({
@@ -277,7 +318,43 @@ export default function GeneratedPagesPage() {
               <CheckSquare className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{selectedIds.size} page{selectedIds.size !== 1 ? "s" : ""} selected</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="bg-gradient-primary border-0 shadow-lg shadow-primary/25"
+                disabled={bulkPublishMutation.isPending}
+                onClick={() => {
+                  const pendingSelected = [...selectedIds].filter(
+                    (id) => pages.find((p) => p.id === id)?.status === "pending"
+                  );
+                  if (pendingSelected.length === 0) {
+                    toast({ title: "No pending pages", description: "Only pending pages can be published.", variant: "destructive" });
+                    return;
+                  }
+                  bulkPublishMutation.mutate(pendingSelected);
+                }}
+              >
+                <Send className="h-3.5 w-3.5 mr-1.5" />
+                {bulkPublishMutation.isPending ? "Publishing..." : "Publish Selected"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={bulkStatusMutation.isPending}
+                onClick={() => {
+                  const failedSelected = [...selectedIds].filter(
+                    (id) => pages.find((p) => p.id === id)?.status === "failed"
+                  );
+                  if (failedSelected.length === 0) {
+                    toast({ title: "No failed pages", description: "Only failed pages can be reset for re-generation.", variant: "destructive" });
+                    return;
+                  }
+                  bulkStatusMutation.mutate({ ids: failedSelected, status: "pending" });
+                }}
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                {bulkStatusMutation.isPending ? "Resetting..." : "Re-queue Failed"}
+              </Button>
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
               </Button>
