@@ -81,9 +81,10 @@ export default function CampaignsPage() {
   });
 
   const { data: templates = [] } = useQuery({
-    queryKey: ["templates"],
+    queryKey: ["templates", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name, variables").order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
