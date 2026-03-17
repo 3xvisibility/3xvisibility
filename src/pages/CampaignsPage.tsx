@@ -494,9 +494,7 @@ export default function CampaignsPage() {
     },
   });
 
-  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processCsvFile = (file: File) => {
     setCsvFile(file);
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -505,7 +503,6 @@ export default function CampaignsPage() {
       const lines = text.split("\n").filter((l) => l.trim());
       if (lines.length === 0) return;
 
-      // Auto-detect delimiter: try tab, semicolon, pipe, then comma
       const firstLine = lines[0];
       let delimiter = ",";
       if (firstLine.includes("\t")) delimiter = "\t";
@@ -521,6 +518,23 @@ export default function CampaignsPage() {
       setCsvData(rows);
     };
     reader.readAsText(file, "utf-8");
+  };
+
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processCsvFile(file);
+  };
+
+  const handleCsvDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingCsv(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.name.endsWith(".csv") || file.type === "text/csv")) {
+      processCsvFile(file);
+    } else {
+      toast({ title: "Invalid file", description: "Please drop a .csv file.", variant: "destructive" });
+    }
   };
 
   const resetForm = () => {
