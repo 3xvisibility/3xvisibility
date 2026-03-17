@@ -14,19 +14,19 @@ const reviews = [
 
 function ReviewCard({ review }: { review: typeof reviews[0] }) {
   return (
-    <div className="flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl border border-border/30 bg-card/50 p-5 hover:border-primary/20 transition-all duration-500 group">
+    <div className="flex-shrink-0 w-[300px] rounded-2xl border border-border/30 bg-card/60 p-5 hover:border-border/50 transition-all duration-300">
       <div className="flex items-center gap-0.5 mb-3">
         {[...Array(5)].map((_, i) => (
-          <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+          <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
         ))}
       </div>
-      <p className="text-[13px] text-foreground/80 leading-relaxed mb-4 line-clamp-3">"{review.text}"</p>
-      <div className="flex items-center gap-2.5 pt-3 border-t border-border/20">
-        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-bold text-primary">
+      <p className="text-[13px] text-foreground/80 leading-relaxed mb-4">"{review.text}"</p>
+      <div className="flex items-center gap-3 pt-3 border-t border-border/20">
+        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-[hsl(var(--primary-glow))]/20 flex items-center justify-center text-[10px] font-bold text-primary">
           {review.avatar}
         </div>
         <div>
-          <p className="text-[12px] font-semibold leading-tight">{review.name}</p>
+          <p className="text-xs font-semibold">{review.name}</p>
           <p className="text-[10px] text-muted-foreground">{review.role}</p>
         </div>
       </div>
@@ -38,26 +38,26 @@ export function ReviewsSection() {
   const allReviews = [...reviews, ...reviews];
 
   return (
-    <section id="reviews" className="py-16 md:py-20 relative overflow-hidden">
-      <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-8">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary mb-3 block">Reviews</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.04em] leading-[1.05]">
-              Loved by <span className="text-muted-foreground">2,000+ teams.</span>
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+    <section id="reviews" className="py-20 md:py-28 relative overflow-hidden">
+      <ScrollReveal className="container mx-auto px-4 lg:px-8 relative z-10 mb-10">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
+            Reviews
+          </span>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
+            Loved by 2,000+ teams
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground">
             See what SEO professionals say about PageGen.
           </p>
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={0.15}>
+      <ScrollReveal delay={0.1}>
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-          <div className="flex gap-3 animate-scroll-left" style={{ width: "max-content" }}>
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+          <div className="flex gap-4 animate-scroll-left" style={{ width: "max-content" }}>
             {allReviews.map((review, i) => (
               <ReviewCard key={`r-${i}`} review={review} />
             ))}

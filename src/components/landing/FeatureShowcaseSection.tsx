@@ -4,81 +4,83 @@ import { FileSpreadsheet, ArrowRight, Layers, Rocket, CheckCircle2 } from "lucid
 
 const showcases = [
   {
-    tag: "01 — Import",
+    tag: "Import",
+    step: "01",
     icon: FileSpreadsheet,
-    title: "Smart CSV Processing",
-    description: "Upload any CSV and our system auto-detects columns, data types, and suggests optimal mappings. Handle thousands of rows with validation.",
-    highlights: ["Auto-column detection", "Data validation", "Error highlighting", "Batch processing"],
+    title: "Smart CSV processing",
+    description: "Upload any CSV — columns auto-detected, data validated, and optimal mappings suggested automatically.",
+    highlights: ["Auto-detection", "Validation", "Error handling", "Batch ready"],
     visual: (
-      <div className="rounded-xl border border-border/30 bg-card/60 p-4 space-y-2">
-        {["keyword", "city", "title", "description"].map((col, i) => (
+      <div className="rounded-xl border border-border/30 bg-background/80 p-4 space-y-2.5">
+        {["keyword", "city", "title", "meta_desc"].map((col, i) => (
           <motion.div
             key={col}
-            initial={{ opacity: 0, x: -16 }}
+            initial={{ opacity: 0, x: -12 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2 + i * 0.08 }}
+            transition={{ delay: 0.15 + i * 0.06 }}
             className="flex items-center gap-2"
           >
-            <div className="h-6 w-6 rounded-md bg-primary/8 flex items-center justify-center text-[9px] font-mono text-primary font-bold">{i + 1}</div>
-            <div className="flex-1 h-6 rounded-md bg-muted/40 flex items-center px-2 text-[10px] text-muted-foreground font-mono">{col}</div>
-            <ArrowRight className="h-2.5 w-2.5 text-primary/40" />
-            <div className="flex-1 h-6 rounded-md bg-primary/5 border border-primary/10 flex items-center px-2 text-[10px] text-primary font-mono">{`{${col}}`}</div>
+            <div className="h-7 w-16 rounded-lg bg-muted/60 flex items-center px-2 text-[10px] text-muted-foreground font-mono">{col}</div>
+            <ArrowRight className="h-3 w-3 text-primary/50 shrink-0" />
+            <div className="h-7 flex-1 rounded-lg bg-primary/5 border border-primary/15 flex items-center px-2 text-[10px] text-primary font-mono">{`{${col}}`}</div>
           </motion.div>
         ))}
       </div>
     ),
   },
   {
-    tag: "02 — Build",
+    tag: "Build",
+    step: "02",
     icon: Layers,
-    title: "Visual Template Builder",
-    description: "Create page templates with a visual editor. Insert dynamic variables anywhere — titles, meta tags, body content.",
-    highlights: ["Visual editor", "Live preview", "Variable insertion", "SEO meta tags"],
+    title: "Visual template builder",
+    description: "Create templates with a visual editor. Insert dynamic variables anywhere — titles, meta, body.",
+    highlights: ["Visual editor", "Live preview", "Variables", "SEO tags"],
     visual: (
-      <div className="rounded-xl border border-border/30 bg-card/60 overflow-hidden">
-        <div className="h-7 bg-muted/30 flex items-center gap-2 px-3 border-b border-border/20">
+      <div className="rounded-xl border border-border/30 bg-background/80 overflow-hidden">
+        <div className="h-8 bg-muted/30 flex items-center gap-2 px-3 border-b border-border/20">
           <div className="flex gap-1">
-            <div className="h-2 w-2 rounded-full bg-destructive/40" />
-            <div className="h-2 w-2 rounded-full bg-amber-400/40" />
-            <div className="h-2 w-2 rounded-full bg-success/40" />
+            <div className="h-2 w-2 rounded-full bg-red-400/50" />
+            <div className="h-2 w-2 rounded-full bg-amber-400/50" />
+            <div className="h-2 w-2 rounded-full bg-green-400/50" />
           </div>
-          <span className="text-[8px] text-muted-foreground/40 ml-2 font-mono">template.html</span>
+          <span className="text-[9px] text-muted-foreground/50 ml-2 font-mono">template.html</span>
         </div>
-        <div className="p-3 space-y-1.5 font-mono text-[10px]">
+        <div className="p-4 space-y-1.5 font-mono text-[11px] leading-relaxed">
           <div className="text-muted-foreground/60">&lt;h1&gt;<span className="text-primary font-semibold">{"{title}"}</span>&lt;/h1&gt;</div>
-          <div className="text-muted-foreground/60">&lt;p&gt;<span className="text-primary font-semibold">{"{city}"}</span>, <span className="text-primary font-semibold">{"{state}"}</span>&lt;/p&gt;</div>
-          <div className="text-muted-foreground/60">&lt;div&gt;<span className="text-primary font-semibold">{"{description}"}</span>&lt;/div&gt;</div>
+          <div className="text-muted-foreground/60">&lt;meta name="desc" content="<span className="text-primary font-semibold">{"{meta_desc}"}</span>" /&gt;</div>
+          <div className="text-muted-foreground/60">&lt;p&gt;Best in <span className="text-primary font-semibold">{"{city}"}</span>&lt;/p&gt;</div>
         </div>
       </div>
     ),
   },
   {
-    tag: "03 — Deploy",
+    tag: "Deploy",
+    step: "03",
     icon: Rocket,
-    title: "One-Click Publishing",
-    description: "Execute campaigns and watch pages deploy in real-time. Track every page with live progress and instant error feedback.",
-    highlights: ["Real-time progress", "Error logging", "Direct links", "Bulk publish"],
+    title: "One-click publishing",
+    description: "Execute campaigns and watch pages go live in real-time with instant status updates.",
+    highlights: ["Real-time", "Error logs", "Direct links", "Bulk deploy"],
     visual: (
-      <div className="rounded-xl border border-border/30 bg-card/60 p-4 space-y-2">
+      <div className="rounded-xl border border-border/30 bg-background/80 p-4 space-y-2.5">
         {[
           { title: "plumber-new-york", status: "done" },
-          { title: "plumber-los-angeles", status: "done" },
+          { title: "plumber-la", status: "done" },
           { title: "plumber-chicago", status: "done" },
           { title: "plumber-houston", status: "progress" },
         ].map((page, i) => (
           <motion.div
             key={page.title}
-            initial={{ opacity: 0, x: -16 }}
+            initial={{ opacity: 0, x: -12 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2 + i * 0.1 }}
+            transition={{ delay: 0.15 + i * 0.08 }}
             className="flex items-center gap-2"
           >
-            <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${page.status === "done" ? "text-success" : "text-primary animate-pulse"}`} />
+            <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${page.status === "done" ? "text-emerald-500" : "text-primary animate-pulse"}`} />
             <span className="text-[10px] font-mono text-muted-foreground flex-1 truncate">{page.title}</span>
-            <span className={`text-[8px] font-semibold px-2 py-0.5 rounded-full ${page.status === "done" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}>
-              {page.status === "done" ? "Live" : "Deploying"}
+            <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${page.status === "done" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-primary/10 text-primary"}`}>
+              {page.status === "done" ? "Live" : "Deploying..."}
             </span>
           </motion.div>
         ))}
@@ -89,27 +91,32 @@ const showcases = [
 
 export function FeatureShowcaseSection() {
   return (
-    <section className="py-16 md:py-20 relative overflow-hidden">
+    <section className="py-20 md:py-28 relative overflow-hidden">
+      {/* Background accent */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,hsl(var(--primary)/.04),transparent)] pointer-events-none" />
+
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="space-y-12 md:space-y-16 max-w-4xl mx-auto">
+        <div className="space-y-20 max-w-5xl mx-auto">
           {showcases.map((item, idx) => (
-            <ScrollReveal key={item.tag} direction={idx % 2 === 0 ? "left" : "right"}>
-              <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center ${idx % 2 === 1 ? "lg:[direction:rtl] lg:*:[direction:ltr]" : ""}`}>
+            <ScrollReveal key={item.step} direction={idx % 2 === 0 ? "left" : "right"}>
+              <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center ${idx % 2 === 1 ? "lg:[direction:rtl] lg:*:[direction:ltr]" : ""}`}>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70 mb-3 block">{item.tag}</span>
-                  <h3 className="text-xl md:text-2xl font-extrabold tracking-[-0.03em] mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">{item.description}</p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-xs font-bold text-primary bg-primary/8 border border-primary/15 rounded-full px-3 py-1">{item.step}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{item.tag}</span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-extrabold tracking-[-0.03em] mb-3">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-5">{item.description}</p>
+                  <div className="flex flex-wrap gap-2">
                     {item.highlights.map((h) => (
-                      <div key={h} className="flex items-center gap-2 text-[12px] text-foreground/70">
-                        <div className="h-1 w-1 rounded-full bg-primary" />
+                      <span key={h} className="text-[11px] font-medium text-foreground/60 bg-muted/60 rounded-full px-3 py-1 border border-border/30">
                         {h}
-                      </div>
+                      </span>
                     ))}
                   </div>
                 </div>
                 <div className="relative">
-                  <div className="absolute -inset-4 bg-gradient-to-br from-primary/6 to-transparent rounded-2xl blur-2xl" />
+                  <div className="absolute -inset-4 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl blur-2xl pointer-events-none" />
                   <div className="relative">{item.visual}</div>
                 </div>
               </div>
