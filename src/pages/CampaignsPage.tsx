@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide } from "lucide-react";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,11 +46,26 @@ export default function CampaignsPage() {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
+  const [campaignType, setCampaignType] = useState<"seo" | "sea" | "geo">("seo");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
   const [logDialogCampaign, setLogDialogCampaign] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  // UTM fields
+  const [utmSource, setUtmSource] = useState("");
+  const [utmMedium, setUtmMedium] = useState("");
+  const [utmCampaign, setUtmCampaign] = useState("");
+  const [utmTerm, setUtmTerm] = useState("");
+  const [utmContent, setUtmContent] = useState("");
+  // GEO fields
+  const [geoCountry, setGeoCountry] = useState("");
+  const [geoRegion, setGeoRegion] = useState("");
+  const [geoCity, setGeoCity] = useState("");
+  const [geoPostcode, setGeoPostcode] = useState("");
+  const [geoLat, setGeoLat] = useState("");
+  const [geoLng, setGeoLng] = useState("");
+  const [geoLanguage, setGeoLanguage] = useState("en");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
@@ -145,14 +160,26 @@ export default function CampaignsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
+      const utmSettings = campaignType === "sea" ? {
+        utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
+        utm_term: utmTerm, utm_content: utmContent,
+      } : null;
+      const geoSettings = campaignType === "geo" ? {
+        country: geoCountry, region: geoRegion, city: geoCity,
+        postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
+        lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
+      } : null;
       const { error } = await supabase.from("campaigns").insert({
         name: campaignName,
+        campaign_type: campaignType,
         template_id: selectedTemplate || null,
         website_id: selectedWebsite || null,
         csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: csvData.length,
         user_id: user.id,
         workspace_id: wsId,
+        utm_settings: utmSettings as any,
+        geo_settings: geoSettings as any,
       });
       if (error) throw error;
     },
@@ -249,11 +276,15 @@ export default function CampaignsPage() {
     setOpen(false);
     setStep(1);
     setCampaignName("");
+    setCampaignType("seo");
     setCsvFile(null);
     setCsvHeaders([]);
     setCsvData([]);
     setSelectedTemplate("");
     setSelectedWebsite("");
+    setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
+    setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
+    setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
   };
 
   const getProgressInfo = (c: Campaign) => {
@@ -277,17 +308,31 @@ export default function CampaignsPage() {
 
   const canProceed = () => {
     if (step === 1) return !!campaignName;
-    if (step === 2) return csvData.length > 0;
-    if (step === 3) return !!selectedTemplate;
+    if (step === 2) return true; // type selection always valid
+    if (step === 3) return csvData.length > 0;
+    if (step === 4) return !!selectedTemplate;
     return true;
   };
 
-  const wizardSteps = [
-    { num: 1, label: "Name" },
-    { num: 2, label: "CSV Data" },
-    { num: 3, label: "Template" },
-    { num: 4, label: "Website" },
-  ];
+  const totalSteps = campaignType === "seo" ? 5 : 6;
+
+  const getWizardSteps = () => {
+    const steps = [
+      { num: 1, label: "Name" },
+      { num: 2, label: "Type" },
+      { num: 3, label: "CSV Data" },
+      { num: 4, label: "Template" },
+    ];
+    if (campaignType === "sea") {
+      steps.push({ num: 5, label: "UTM" });
+    } else if (campaignType === "geo") {
+      steps.push({ num: 5, label: "GEO" });
+    }
+    steps.push({ num: campaignType === "seo" ? 5 : 6, label: "Website" });
+    return steps;
+  };
+
+  const wizardSteps = getWizardSteps();
 
   const { pagesUsed, pagesLimit } = useSubscription();
 
@@ -372,6 +417,34 @@ export default function CampaignsPage() {
                 )}
 
                 {step === 2 && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium mb-2 block">Campaign Type</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { value: "seo" as const, label: "SEO", icon: SearchIconLucide, desc: "Organic search pages" },
+                        { value: "sea" as const, label: "SEA", icon: Target, desc: "Paid landing pages" },
+                        { value: "geo" as const, label: "GEO", icon: MapPin, desc: "Local / geo pages" },
+                      ].map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => setCampaignType(t.value)}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                            campaignType === t.value
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:border-primary/30 hover:bg-muted/50"
+                          }`}
+                        >
+                          <t.icon className={`h-6 w-6 ${campaignType === t.value ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className={`text-sm font-semibold ${campaignType === t.value ? "text-primary" : "text-foreground"}`}>{t.label}</span>
+                          <span className="text-[10px] text-muted-foreground text-center">{t.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {step === 3 && (
                   <div>
                     <Label className="text-sm font-medium mb-2 block">CSV File</Label>
                     <div className="border-2 border-dashed rounded-2xl p-8 text-center hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer">
@@ -397,7 +470,7 @@ export default function CampaignsPage() {
                   </div>
                 )}
 
-                {step === 3 && (
+                {step === 4 && (
                   <div className="space-y-4">
                     <div>
                       <Label className="text-sm font-medium mb-2 block">Template</Label>
@@ -446,7 +519,90 @@ export default function CampaignsPage() {
                   </div>
                 )}
 
-                {step === 4 && (
+                {step === 5 && campaignType === "sea" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Target className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-semibold">UTM Parameters</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground -mt-2">
+                      Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{variable}"}</code> syntax to pull values from CSV columns.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_source</Label>
+                        <Input value={utmSource} onChange={(e) => setUtmSource(e.target.value)} placeholder="google" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_medium</Label>
+                        <Input value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} placeholder="cpc" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_campaign</Label>
+                        <Input value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} placeholder="{campaign_name}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">utm_term</Label>
+                        <Input value={utmTerm} onChange={(e) => setUtmTerm(e.target.value)} placeholder="{keyword}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="col-span-2 space-y-1.5">
+                        <Label className="text-xs">utm_content</Label>
+                        <Input value={utmContent} onChange={(e) => setUtmContent(e.target.value)} placeholder="variant_a" className="rounded-xl h-9 text-sm" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === 5 && campaignType === "geo" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-semibold">Geographic Targeting</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground -mt-2">
+                      Set default geo values. Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{column}"}</code> to map from CSV.
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Country</Label>
+                        <Input value={geoCountry} onChange={(e) => setGeoCountry(e.target.value)} placeholder="{country} or US" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Region / State</Label>
+                        <Input value={geoRegion} onChange={(e) => setGeoRegion(e.target.value)} placeholder="{region}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">City</Label>
+                        <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder="{city}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Postcode</Label>
+                        <Input value={geoPostcode} onChange={(e) => setGeoPostcode(e.target.value)} placeholder="{postcode}" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Latitude</Label>
+                        <Input value={geoLat} onChange={(e) => setGeoLat(e.target.value)} placeholder="{lat} or 48.8566" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Longitude</Label>
+                        <Input value={geoLng} onChange={(e) => setGeoLng(e.target.value)} placeholder="{lng} or 2.3522" className="rounded-xl h-9 text-sm" />
+                      </div>
+                      <div className="col-span-2 space-y-1.5">
+                        <Label className="text-xs">Language</Label>
+                        <Select value={geoLanguage} onValueChange={setGeoLanguage}>
+                          <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {["en", "es", "fr", "de", "pt", "it", "nl", "ja", "zh", "ko", "ar"].map((l) => (
+                              <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {step === totalSteps && (
                   <div>
                     <Label className="text-sm font-medium mb-2 block">Website (optional)</Label>
                     <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
@@ -471,7 +627,7 @@ export default function CampaignsPage() {
                 >
                   {step === 1 ? "Cancel" : "Back"}
                 </Button>
-                {step < 4 ? (
+                {step < totalSteps ? (
                   <Button
                     onClick={() => setStep(step + 1)}
                     disabled={!canProceed()}
@@ -544,9 +700,14 @@ export default function CampaignsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border`}>
-                          {isPaused ? "Paused" : config.label}
-                        </Badge>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border`}>
+                            {isPaused ? "Paused" : config.label}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                            {(c as any).campaign_type || "seo"}
+                          </Badge>
+                        </div>
                       </td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{progress.generated}/{progress.total}</td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</td>
@@ -580,6 +741,9 @@ export default function CampaignsPage() {
                         <h3 className="font-semibold truncate">{c.name}</h3>
                         <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border shrink-0`}>
                           {isPaused ? "Paused" : config.label}
+                        </Badge>
+                        <Badge variant="outline" className="text-[10px] uppercase font-mono shrink-0">
+                          {(c as any).campaign_type || "seo"}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
