@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2 } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2, Copy } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -295,6 +295,81 @@ export default function CampaignsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast({ title: "Campaign deleted" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (campaign: Campaign) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
+
+      const { data: newCampaign, error } = await supabase.from("campaigns").insert({
+        name: `${campaign.name} (Copy)`,
+        campaign_type: campaign.campaign_type,
+        user_id: user.id,
+        workspace_id: wsId,
+        template_id: campaign.template_id,
+        website_id: campaign.website_id,
+        csv_data: campaign.csv_data,
+        mapping: campaign.mapping,
+        publish_mode: campaign.publish_mode,
+        max_rows: campaign.max_rows,
+        batch_size: campaign.batch_size,
+        utm_settings: campaign.utm_settings,
+        geo_settings: campaign.geo_settings,
+        status: "draft" as const,
+      }).select("id").single();
+      if (error) throw error;
+
+      // Duplicate CSV file if exists
+      const { data: csvFile } = await supabase
+        .from("campaign_csv_files")
+        .select("*")
+        .eq("campaign_id", campaign.id)
+        .maybeSingle();
+      if (csvFile && newCampaign) {
+        await supabase.from("campaign_csv_files").insert({
+          campaign_id: newCampaign.id,
+          user_id: user.id,
+          workspace_id: wsId,
+          raw_content: csvFile.raw_content,
+          headers: csvFile.headers,
+          file_name: csvFile.file_name,
+          file_size: csvFile.file_size,
+          row_count: csvFile.row_count,
+        });
+      }
+
+      // Duplicate mappings
+      const { data: mappings } = await supabase
+        .from("mappings")
+        .select("*")
+        .eq("campaign_id", campaign.id);
+      if (mappings && mappings.length > 0 && newCampaign) {
+        await supabase.from("mappings").insert(
+          mappings.map((m) => ({
+            campaign_id: newCampaign.id,
+            workspace_id: wsId,
+            user_id: user.id,
+            source_column: m.source_column,
+            target_field: m.target_field,
+            field_category: m.field_category,
+            sort_order: m.sort_order,
+            is_required: m.is_required,
+            transform_expression: m.transform_expression,
+          }))
+        );
+      }
+
+      return campaign.name;
+    },
+    onSuccess: (name) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Campaign duplicated", description: `"${name}" has been cloned as a draft.` });
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -1090,7 +1165,7 @@ export default function CampaignsPage() {
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{progress.generated}/{progress.total}</td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="py-3 px-4 text-right">
-                        <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} onReplaceCsv={(id) => { setReplaceCsvCampaignId(id); document.getElementById("replace-csv-input")?.click(); }} />
+                        <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} duplicateMutation={duplicateMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} onReplaceCsv={(id) => { setReplaceCsvCampaignId(id); document.getElementById("replace-csv-input")?.click(); }} />
                       </td>
                     </tr>
                   );
@@ -1139,7 +1214,7 @@ export default function CampaignsPage() {
                         <span>{new Date(c.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} onReplaceCsv={(id) => { setReplaceCsvCampaignId(id); document.getElementById("replace-csv-input")?.click(); }} />
+                    <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} duplicateMutation={duplicateMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} onReplaceCsv={(id) => { setReplaceCsvCampaignId(id); document.getElementById("replace-csv-input")?.click(); }} />
                   </div>
 
                   {progress.total > 0 && (
@@ -1271,6 +1346,7 @@ function CampaignActions({
   isPaused,
   executeMutation,
   deleteMutation,
+  duplicateMutation,
   setLinkDialogCampaign,
   setLogDialogCampaign,
   setJobDialogCampaign,
@@ -1280,6 +1356,7 @@ function CampaignActions({
   isPaused: boolean;
   executeMutation: any;
   deleteMutation: any;
+  duplicateMutation: any;
   setLinkDialogCampaign: (c: any) => void;
   setLogDialogCampaign: (id: string) => void;
   setJobDialogCampaign: (c: any) => void;
@@ -1327,6 +1404,9 @@ function CampaignActions({
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setLogDialogCampaign(c.id)}>
           <FileText className="h-4 w-4 mr-2" /> View Logs
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => duplicateMutation.mutate(c)} disabled={duplicateMutation.isPending}>
+          <Copy className="h-4 w-4 mr-2" /> Duplicate
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => deleteMutation.mutate(c.id)} className="text-destructive focus:text-destructive">
