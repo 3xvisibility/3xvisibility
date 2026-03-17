@@ -11,6 +11,8 @@ interface WebsiteCredentials {
   app_password?: string;
   admin_api_token?: string;
   api_key?: string; // PrestaShop
+  consumer_key?: string; // WooCommerce
+  consumer_secret?: string; // WooCommerce
 }
 
 interface SeoData {
