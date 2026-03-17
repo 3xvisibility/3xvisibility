@@ -241,7 +241,7 @@ export default function CampaignDetailPage() {
             </>
           )}
           {(campaign.status === "completed" || campaign.status === "failed") && (
-            <Button variant="outline" onClick={() => executeMutation.mutate()} disabled={executeMutation.isPending} className="rounded-xl">
+            <Button variant="outline" onClick={() => executeMutation.mutate(undefined)} disabled={executeMutation.isPending} className="rounded-xl">
               <RotateCcw className="mr-2 h-4 w-4" /> Re-run
             </Button>
           )}
