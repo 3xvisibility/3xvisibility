@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Globe, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { Plus, Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, ExternalLink, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
@@ -24,6 +24,7 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
+  const [sitemapPreview, setSitemapPreview] = useState<{ websiteId: string; content: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -38,6 +39,20 @@ export default function WebsitesPage() {
       return data as Website[];
     },
   });
+
+  // Fetch sitemaps for all websites
+  const { data: sitemaps = [] } = useQuery({
+    queryKey: ["sitemaps"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sitemaps")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getSitemap = (websiteId: string) => sitemaps.find((s: any) => s.website_id === websiteId);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -78,6 +93,45 @@ export default function WebsitesPage() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
+
+  const generateSitemapMutation = useMutation({
+    mutationFn: async (websiteId: string) => {
+      const { data, error } = await supabase.functions.invoke("generate-sitemap", {
+        body: { website_id: websiteId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["sitemaps"] });
+      toast({
+        title: "Sitemap generated",
+        description: `${data.page_count} pages included in sitemap.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Sitemap generation failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleDownloadSitemap = (site: Website) => {
+    const sitemap = getSitemap(site.id);
+    if (!sitemap) return;
+    const blob = new Blob([(sitemap as any).content], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sitemap-${site.name.toLowerCase().replace(/\s+/g, "-")}.xml`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleViewSitemap = (site: Website) => {
+    const sitemap = getSitemap(site.id);
+    if (!sitemap) return;
+    setSitemapPreview({ websiteId: site.id, content: (sitemap as any).content });
+  };
 
   const resetForm = () => {
     setOpen(false);
@@ -164,42 +218,142 @@ export default function WebsitesPage() {
         <Card><CardContent className="p-10 text-center text-muted-foreground">No websites connected. Connect your first website to start publishing.</CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {websites.map((site) => (
-            <Card key={site.id} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-primary" />
-                    <h3 className="font-semibold">{site.name}</h3>
+          {websites.map((site) => {
+            const sitemap = getSitemap(site.id);
+            const isGenerating = generateSitemapMutation.isPending && generateSitemapMutation.variables === site.id;
+
+            return (
+              <Card key={site.id} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold">{site.name}</h3>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {site.status === "connected" ? (
+                        <CheckCircle className="h-4 w-4 text-success" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      )}
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(site.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {site.status === "connected" ? (
-                      <CheckCircle className="h-4 w-4 text-success" />
+                  <p className="mt-2 text-xs text-muted-foreground truncate">{site.url}</p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <Badge variant="secondary" className="capitalize text-xs">{site.type}</Badge>
+                    <Badge variant={site.status === "connected" ? "secondary" : "destructive"} className={site.status === "connected" ? "bg-success/10 text-success" : ""}>
+                      {site.status}
+                    </Badge>
+                  </div>
+                  {site.last_sync && (
+                    <p className="mt-3 text-xs text-muted-foreground tabular-nums">
+                      Last sync: {new Date(site.last_sync).toLocaleString()}
+                    </p>
+                  )}
+
+                  {/* Sitemap Section */}
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Map className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-semibold">Sitemap</span>
+                    </div>
+                    {sitemap ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="tabular-nums">{(sitemap as any).page_count} pages</span>
+                          <span>•</span>
+                          <span className="tabular-nums">
+                            {new Date((sitemap as any).last_generated_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => handleViewSitemap(site)}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" /> View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => handleDownloadSitemap(site)}
+                          >
+                            <Download className="h-3 w-3 mr-1" /> Download
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            disabled={isGenerating}
+                            onClick={() => generateSitemapMutation.mutate(site.id)}
+                          >
+                            {isGenerating ? (
+                              <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                            ) : (
+                              <><RefreshCw className="h-3 w-3 mr-1" /> Regenerate</>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
-                      <XCircle className="h-4 w-4 text-destructive" />
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">No sitemap generated yet.</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          disabled={isGenerating}
+                          onClick={() => generateSitemapMutation.mutate(site.id)}
+                        >
+                          {isGenerating ? (
+                            <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                          ) : (
+                            <><Map className="h-3 w-3 mr-1" /> Generate Sitemap</>
+                          )}
+                        </Button>
+                      </div>
                     )}
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(site.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
                   </div>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground truncate">{site.url}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <Badge variant="secondary" className="capitalize text-xs">{site.type}</Badge>
-                  <Badge variant={site.status === "connected" ? "secondary" : "destructive"} className={site.status === "connected" ? "bg-success/10 text-success" : ""}>
-                    {site.status}
-                  </Badge>
-                </div>
-                {site.last_sync && (
-                  <p className="mt-3 text-xs text-muted-foreground tabular-nums">
-                    Last sync: {new Date(site.last_sync).toLocaleString()}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
+
+      {/* Sitemap Preview Dialog */}
+      <Dialog open={!!sitemapPreview} onOpenChange={(v) => { if (!v) setSitemapPreview(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Sitemap Preview</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 rounded-lg border border-border bg-muted/30 p-4 overflow-auto max-h-[60vh]">
+            <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap break-all">
+              {sitemapPreview?.content}
+            </pre>
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (sitemapPreview) {
+                  navigator.clipboard.writeText(sitemapPreview.content);
+                  toast({ title: "Copied to clipboard" });
+                }
+              }}
+            >
+              Copy XML
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
