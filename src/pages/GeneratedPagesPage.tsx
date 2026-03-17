@@ -217,13 +217,22 @@ export default function GeneratedPagesPage() {
           <h1 className="text-display">Generated Pages</h1>
           <p className="text-muted-foreground mt-1">Browse and manage all pages created by your campaigns.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto items-center">
+          <Select value={publishType} onValueChange={(v) => setPublishType(v as "page" | "product")}>
+            <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="page"><FileText className="h-3 w-3 mr-1 inline" />As Page</SelectItem>
+              <SelectItem value="product"><ShoppingBag className="h-3 w-3 mr-1 inline" />As Product</SelectItem>
+            </SelectContent>
+          </Select>
           {pendingPages.length > 0 && (
             <Button
               size="sm"
               className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:brightness-110 transition-all duration-200"
               disabled={publishMutation.isPending}
-              onClick={() => publishMutation.mutate(pendingPages.map((p) => p.id))}
+              onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
             >
               <Send className="h-3.5 w-3.5 mr-1.5" />
               {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
