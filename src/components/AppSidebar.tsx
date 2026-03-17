@@ -102,13 +102,9 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
       <SidebarContent className="px-3 py-4">
-        <div className="flex items-center gap-2 px-3 mb-6">
-          <div className="h-8 w-8 rounded-xl bg-gradient-primary flex items-center justify-center shrink-0">
-            <Zap className="h-4 w-4 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <span className="font-bold text-lg tracking-tight">PageGen</span>
-          )}
+        {/* Workspace Switcher */}
+        <div className="mb-4">
+          <WorkspaceSwitcher collapsed={collapsed} />
         </div>
 
         <SidebarGroup>
