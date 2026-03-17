@@ -1,16 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import {
   Check,
   X,
@@ -28,12 +21,17 @@ import {
   Code,
   Share2,
   Crown,
+  Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
+import { STRIPE_TIERS, getPlanFromProductId } from "@/lib/stripe-config";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams } from "react-router-dom";
 
-const YEARLY_DISCOUNT = 0.2; // 20% off
+const YEARLY_DISCOUNT = 0.2;
 
 interface PlanConfig {
   name: PlanName;
@@ -149,27 +147,86 @@ export default function BillingPage() {
   const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit } = useSubscription();
   const { toast } = useToast();
   const [isYearly, setIsYearly] = useState(false);
-  const [upgradeTarget, setUpgradeTarget] = useState<PlanName | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
+  const [stripePlan, setStripePlan] = useState<PlanName | null>(null);
+  const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [searchParams] = useSearchParams();
 
+  // Check Stripe subscription on mount and after checkout success
+  useEffect(() => {
+    checkSubscription();
+    if (searchParams.get("success") === "true") {
+      toast({ title: "Payment successful!", description: "Your subscription is now active." });
+      // Re-check after a delay to allow Stripe to process
+      setTimeout(checkSubscription, 2000);
+    }
+  }, []);
+
+  const checkSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) throw error;
+      if (data?.subscribed && data?.product_id) {
+        const plan = getPlanFromProductId(data.product_id);
+        setStripePlan(plan);
+        setSubscriptionEnd(data.subscription_end);
+      } else {
+        setStripePlan(null);
+        setSubscriptionEnd(null);
+      }
+    } catch (err) {
+      console.error("Failed to check subscription:", err);
+    }
+  };
+
+  const handleCheckout = async (planName: PlanName) => {
+    const tier = STRIPE_TIERS[planName];
+    if (!tier) return;
+
+    setLoadingPlan(planName);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId: tier.price_id },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast({ title: "Checkout failed", description: err.message, variant: "destructive" });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err: any) {
+      toast({ title: "Portal error", description: err.message, variant: "destructive" });
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  const activePlan = stripePlan || currentPlan;
   const pagesPercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   const planOrder: PlanName[] = ["free", "starter", "pro", "agency"];
-  const currentIdx = planOrder.indexOf(currentPlan);
+  const currentIdx = planOrder.indexOf(activePlan);
 
   const getButtonState = (name: PlanName) => {
     const idx = planOrder.indexOf(name);
     if (idx === currentIdx) return { label: "Current Plan", disabled: true, variant: "outline" as const };
     if (idx > currentIdx) return { label: "Upgrade", disabled: false, variant: "default" as const };
     return { label: "Downgrade", disabled: false, variant: "outline" as const };
-  };
-
-  const handleUpgradeConfirm = () => {
-    toast({
-      title: "Plan updated!",
-      description: `You've been switched to the ${PLAN_FEATURES[upgradeTarget!].label} plan.`,
-    });
-    setUpgradeTarget(null);
   };
 
   return (
@@ -190,10 +247,21 @@ export default function BillingPage() {
                 <Sparkles className="h-4.5 w-4.5 text-primary" />
               </div>
               <div>
-                <span className="text-xl font-bold capitalize">{PLAN_FEATURES[currentPlan]?.label || "Free"}</span>
+                <span className="text-xl font-bold capitalize">{PLAN_FEATURES[activePlan]?.label || "Free"}</span>
                 <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">Active</Badge>
               </div>
             </div>
+            {stripePlan && subscriptionEnd && (
+              <p className="text-xs text-muted-foreground">
+                Renews {new Date(subscriptionEnd).toLocaleDateString()}
+              </p>
+            )}
+            {stripePlan && (
+              <Button variant="outline" size="sm" className="w-full mt-2" onClick={handleManageSubscription} disabled={portalLoading}>
+                {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
+                Manage Subscription
+              </Button>
+            )}
           </CardContent>
         </Card>
         <Card className="shadow-surface border-0">
@@ -227,23 +295,13 @@ export default function BillingPage() {
         <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
         <button
           onClick={() => setIsYearly(!isYearly)}
-          className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${
-            isYearly ? "bg-primary" : "bg-muted"
-          }`}
+          className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-muted"}`}
         >
-          <div
-            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
-              isYearly ? "translate-x-[26px]" : "translate-x-0.5"
-            }`}
-          />
+          <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
         </button>
-        <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
-          Yearly
-        </span>
+        <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>Yearly</span>
         {isYearly && (
-          <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">
-            Save 20%
-          </Badge>
+          <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">Save 20%</Badge>
         )}
       </div>
 
@@ -252,10 +310,9 @@ export default function BillingPage() {
         {planConfigs.map((config) => {
           const features = PLAN_FEATURES[config.name];
           const btn = getButtonState(config.name);
-          const price = isYearly
-            ? Math.round(config.monthlyPrice * (1 - YEARLY_DISCOUNT))
-            : config.monthlyPrice;
+          const price = isYearly ? Math.round(config.monthlyPrice * (1 - YEARLY_DISCOUNT)) : config.monthlyPrice;
           const featureList = getFeatureList(config.name);
+          const isLoading = loadingPlan === config.name;
 
           return (
             <Card
@@ -266,7 +323,6 @@ export default function BillingPage() {
                   : "shadow-surface border-0 hover:shadow-surface-hover"
               }`}
             >
-              {/* Popular badge glow bar */}
               {config.popular && (
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-[hsl(var(--primary-glow))] to-secondary" />
               )}
@@ -280,9 +336,7 @@ export default function BillingPage() {
                     <CardTitle className="text-base font-bold">{features.label}</CardTitle>
                   </div>
                   {config.popular && (
-                    <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">
-                      Most Popular
-                    </Badge>
+                    <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">Most Popular</Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">{config.description}</p>
@@ -316,10 +370,14 @@ export default function BillingPage() {
                       : ""
                   }`}
                   variant={btn.variant}
-                  disabled={btn.disabled}
-                  onClick={() => !btn.disabled && setUpgradeTarget(config.name)}
+                  disabled={btn.disabled || isLoading}
+                  onClick={() => !btn.disabled && handleCheckout(config.name)}
                 >
-                  {btn.disabled ? "Current Plan" : (
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : btn.disabled ? (
+                    "Current Plan"
+                  ) : (
                     <>
                       {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
                     </>
@@ -351,13 +409,11 @@ export default function BillingPage() {
                   {planConfigs.map((p) => (
                     <th key={p.name} className="text-center py-3.5 px-5">
                       <div className="flex flex-col items-center gap-1">
-                        <span className={`font-semibold ${p.name === currentPlan ? "text-primary" : "text-foreground"}`}>
+                        <span className={`font-semibold ${p.name === activePlan ? "text-primary" : "text-foreground"}`}>
                           {PLAN_FEATURES[p.name].label}
                         </span>
-                        {p.name === currentPlan && (
-                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 px-1.5 py-0">
-                            Current
-                          </Badge>
+                        {p.name === activePlan && (
+                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 px-1.5 py-0">Current</Badge>
                         )}
                       </div>
                     </th>
@@ -366,12 +422,7 @@ export default function BillingPage() {
               </thead>
               <tbody>
                 {featureRows.map((row, i) => (
-                  <tr
-                    key={row.key}
-                    className={`border-b border-border/50 last:border-0 transition-colors hover:bg-muted/30 ${
-                      i % 2 === 1 ? "bg-muted/10" : ""
-                    }`}
-                  >
+                  <tr key={row.key} className={`border-b border-border/50 last:border-0 transition-colors hover:bg-muted/30 ${i % 2 === 1 ? "bg-muted/10" : ""}`}>
                     <td className="py-3.5 px-5">
                       <div className="flex items-center gap-2.5">
                         {featureIcons[row.key]}
@@ -381,14 +432,13 @@ export default function BillingPage() {
                     {planConfigs.map((p) => {
                       const val = (PLAN_FEATURES[p.name] as any)[row.key];
                       return (
-                        <td key={p.name} className={`py-3.5 px-5 text-center ${p.name === currentPlan ? "bg-primary/[0.02]" : ""}`}>
+                        <td key={p.name} className={`py-3.5 px-5 text-center ${p.name === activePlan ? "bg-primary/[0.02]" : ""}`}>
                           {formatValue(val)}
                         </td>
                       );
                     })}
                   </tr>
                 ))}
-                {/* Support row */}
                 <tr className="border-b border-border/50">
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-2.5">
@@ -405,83 +455,6 @@ export default function BillingPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Upgrade confirmation modal */}
-      <Dialog open={!!upgradeTarget} onOpenChange={(v) => !v && setUpgradeTarget(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              {upgradeTarget && planOrder.indexOf(upgradeTarget) > currentIdx ? "Upgrade" : "Change"} Plan
-            </DialogTitle>
-            <DialogDescription>
-              {upgradeTarget && planOrder.indexOf(upgradeTarget) > currentIdx
-                ? "You'll get instant access to all new features."
-                : "Your plan will be adjusted at the start of the next billing cycle."
-              }
-            </DialogDescription>
-          </DialogHeader>
-          {upgradeTarget && (
-            <div className="space-y-5 mt-2">
-              {/* Comparison */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-border p-4 space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Current</p>
-                  <p className="font-bold text-lg">{PLAN_FEATURES[currentPlan].label}</p>
-                  <p className="text-xs text-muted-foreground">{PLAN_FEATURES[currentPlan].pagesLimit.toLocaleString()} pages/mo</p>
-                </div>
-                <div className="rounded-xl border-2 border-primary bg-primary/5 p-4 space-y-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">New Plan</p>
-                  <p className="font-bold text-lg">{PLAN_FEATURES[upgradeTarget].label}</p>
-                  <p className="text-xs text-muted-foreground">{PLAN_FEATURES[upgradeTarget].pagesLimit.toLocaleString()} pages/mo</p>
-                </div>
-              </div>
-
-              {/* Price */}
-              <div className="rounded-xl bg-muted/50 p-4 flex items-center justify-between">
-                <span className="text-sm font-medium">New monthly price</span>
-                <span className="text-2xl font-extrabold tabular-nums">
-                  €{isYearly
-                    ? Math.round(planConfigs.find((p) => p.name === upgradeTarget)!.monthlyPrice * (1 - YEARLY_DISCOUNT))
-                    : planConfigs.find((p) => p.name === upgradeTarget)!.monthlyPrice
-                  }
-                  <span className="text-sm text-muted-foreground font-normal">/mo</span>
-                </span>
-              </div>
-
-              {/* What's new */}
-              {planOrder.indexOf(upgradeTarget) > currentIdx && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">What you'll unlock</p>
-                  <ul className="space-y-1.5">
-                    {getFeatureList(upgradeTarget)
-                      .filter((f) => !getFeatureList(currentPlan).includes(f))
-                      .slice(0, 5)
-                      .map((f) => (
-                        <li key={f} className="flex items-center gap-2 text-sm">
-                          <Check className="h-3.5 w-3.5 text-success shrink-0" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => setUpgradeTarget(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] hover:brightness-110 active:scale-[0.97]"
-                  onClick={handleUpgradeConfirm}
-                >
-                  Confirm {planOrder.indexOf(upgradeTarget) > currentIdx ? "Upgrade" : "Change"}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
