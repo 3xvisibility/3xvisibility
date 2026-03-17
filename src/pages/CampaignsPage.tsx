@@ -54,6 +54,8 @@ export default function CampaignsPage() {
   const [logDialogCampaign, setLogDialogCampaign] = useState<string | null>(null);
   const [jobDialogCampaign, setJobDialogCampaign] = useState<Campaign | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
@@ -393,6 +395,22 @@ export default function CampaignsPage() {
 
   const { pagesUsed, pagesLimit } = useSubscription();
 
+  const filteredCampaigns = useMemo(() => {
+    let result = campaigns;
+    if (typeFilter !== "all") {
+      result = result.filter((c) => c.campaign_type === typeFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.templates?.name?.toLowerCase().includes(q) ||
+        c.websites?.name?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [campaigns, typeFilter, searchQuery]);
+
   return (
     <div className="space-y-6">
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
@@ -714,7 +732,49 @@ export default function CampaignsPage() {
             <Card key={i} className="border-0 shadow-surface"><CardContent className="p-5"><Skeleton className="h-16 w-full" /></CardContent></Card>
           ))}
         </div>
-      ) : campaigns.length === 0 ? (
+      ) : (
+        <>
+          {/* Search & Type Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <SearchIconLucide className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search campaigns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+              {(["all", "seo", "sea", "geo"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTypeFilter(t)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
+                    typeFilter === t
+                      ? "bg-card shadow-surface text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t === "all" ? "All" : t.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {!isLoading && campaigns.length > 0 && filteredCampaigns.length === 0 ? (
+        <Card className="border-0 shadow-surface">
+          <CardContent className="p-12 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <SearchIconLucide className="h-10 w-10 text-muted-foreground/40" />
+              <h3 className="font-semibold">No matching campaigns</h3>
+              <p className="text-muted-foreground text-sm">Try adjusting your search or filter.</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : filteredCampaigns.length === 0 && campaigns.length === 0 && !isLoading ? (
         <Card className="border-0 shadow-surface">
           <CardContent className="p-12 text-center">
             <div className="flex flex-col items-center gap-3">
@@ -741,7 +801,7 @@ export default function CampaignsPage() {
                 </tr>
               </thead>
               <tbody>
-                {campaigns.map((c, index) => {
+                {filteredCampaigns.map((c, index) => {
                   const progress = getProgressInfo(c);
                   const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
                   const config = statusConfig[c.status] || statusConfig.draft;
@@ -781,7 +841,7 @@ export default function CampaignsPage() {
       ) : (
         /* CARD VIEW */
         <div className="grid gap-4">
-          {campaigns.map((c) => {
+          {filteredCampaigns.map((c) => {
             const progress = getProgressInfo(c);
             const isProcessing = c.status === "processing";
             const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
