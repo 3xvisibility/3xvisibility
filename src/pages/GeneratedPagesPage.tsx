@@ -36,6 +36,7 @@ const statusColors: Record<string, string> = {
 
 export default function GeneratedPagesPage() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
@@ -238,10 +239,11 @@ export default function GeneratedPagesPage() {
 
   const filtered = useMemo(() => pages.filter(
     (p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      (statusFilter === "all" || p.status === statusFilter) &&
+      (p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.slug.toLowerCase().includes(search.toLowerCase()) ||
-      (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase())
-  ), [pages, search]);
+      (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase()))
+  ), [pages, search, statusFilter]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -298,6 +300,17 @@ export default function GeneratedPagesPage() {
           >
             <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
           </Button>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[130px] h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="relative flex-1 sm:w-64 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
