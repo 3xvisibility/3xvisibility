@@ -585,11 +585,24 @@ export default function GeneratedPagesPage() {
             </table>
           </div>
           {/* Pagination */}
-          {filtered.length > PAGE_SIZE && (
+          {filtered.length > 0 && (
             <div className="flex items-center justify-between border-t border-border px-4 py-3">
-              <p className="text-xs text-muted-foreground">
-                Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-xs text-muted-foreground">
+                  Showing {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} of {filtered.length}
+                </p>
+                <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                  <SelectTrigger className="h-8 w-[70px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground">per page</span>
+              </div>
               <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
