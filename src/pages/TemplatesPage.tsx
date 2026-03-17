@@ -211,6 +211,67 @@ export default function TemplatesPage() {
     setSchemaConfig({});
   };
 
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const exportTemplate = (tpl: Template) => {
+    const exportData = {
+      name: tpl.name,
+      content: tpl.content,
+      variables: tpl.variables,
+      seo_title_pattern: (tpl as any).seo_title_pattern || "",
+      seo_description_pattern: (tpl as any).seo_description_pattern || "",
+      schema_type: (tpl as any).schema_type || "WebPage",
+      schema_config: (tpl as any).schema_config || {},
+      exported_at: new Date().toISOString(),
+      version: 1,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${tpl.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.template.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Template exported", description: `"${tpl.name}" saved as JSON.` });
+  };
+
+  const importTemplate = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.name || !data.content) {
+        throw new Error("Invalid template file: missing name or content.");
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
+
+      if (maxTemplates > 0 && templates.length >= maxTemplates) {
+        throw new Error(`Your plan allows a maximum of ${maxTemplates} template(s). Please upgrade to add more.`);
+      }
+
+      const { error } = await supabase.from("templates").insert({
+        name: data.name,
+        content: data.content,
+        variables: data.variables || [],
+        user_id: user.id,
+        workspace_id: wsId,
+        seo_title_pattern: data.seo_title_pattern || "",
+        seo_description_pattern: data.seo_description_pattern || "",
+        schema_type: data.schema_type || "WebPage",
+        schema_config: data.schema_config || {},
+      } as any);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Template imported", description: `"${data.name}" has been added.` });
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    }
+    // Reset file input
+    if (importFileRef.current) importFileRef.current.value = "";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
