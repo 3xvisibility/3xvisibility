@@ -102,5 +102,5 @@ export function useKeyboardShortcuts(onOpenCommandPalette?: () => void) {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [navigate, location.pathname, toggleSidebar, toast, onOpenCommandPalette]);
+  }, [navigate, location.pathname, toast, onOpenCommandPalette]);
 }
