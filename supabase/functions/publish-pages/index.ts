@@ -10,6 +10,7 @@ interface WebsiteCredentials {
   username?: string;
   app_password?: string;
   admin_api_token?: string;
+  api_key?: string; // PrestaShop
 }
 
 interface SeoData {
