@@ -20,6 +20,7 @@ import {
   Clock,
   Zap,
   Activity,
+  AlertTriangle,
 } from "lucide-react";
 import {
   AreaChart,
