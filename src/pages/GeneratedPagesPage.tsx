@@ -426,11 +426,18 @@ export default function GeneratedPagesPage() {
                             <Eye className="h-3 w-3" />
                           </Button>
                           {page.external_url && (
-                            <Button size="sm" variant="ghost" asChild title="Open live page">
-                              <a href={page.external_url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            </Button>
+                            <>
+                              <Button size="sm" variant="ghost" asChild title="Open live page">
+                                <a href={page.external_url} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </Button>
+                              <SocialShareButtons
+                                url={page.external_url}
+                                title={(page as any).seo_title || page.title}
+                                description={(page as any).seo_description || undefined}
+                              />
+                            </>
                           )}
                           <Button
                             size="sm"
