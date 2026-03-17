@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOverlay";
+import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
 
 const YEARLY_DISCOUNT = 0.2;
 
