@@ -144,6 +144,7 @@ export default function CampaignsPage() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
       const { error } = await supabase.from("campaigns").insert({
         name: campaignName,
         template_id: selectedTemplate || null,
@@ -151,6 +152,7 @@ export default function CampaignsPage() {
         csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: csvData.length,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },
