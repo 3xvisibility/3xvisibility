@@ -1214,9 +1214,15 @@ export default function CampaignsPage() {
             const dragProps = getCampaignDragProps(idx);
 
             return (
-              <Card key={c.id} className="border-0 shadow-surface card-interactive overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex items-start justify-between p-5 gap-4">
+              <Card
+                key={c.id}
+                className={`border-0 shadow-surface card-interactive overflow-hidden ${dragProps.className}`}
+                draggable={dragProps.draggable}
+                onDragStart={dragProps.onDragStart}
+                onDragOver={dragProps.onDragOver}
+                onDrop={dragProps.onDrop}
+                onDragEnd={dragProps.onDragEnd}
+              >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <h3 className="font-semibold truncate cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</h3>
