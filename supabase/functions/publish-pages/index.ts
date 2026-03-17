@@ -437,7 +437,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { page_ids } = await req.json();
+    const { page_ids, publish_type } = await req.json();
+    const pubType = publish_type || "page"; // "page" or "product"
     if (!page_ids || !Array.isArray(page_ids) || page_ids.length === 0) {
       return new Response(JSON.stringify({ error: "page_ids array is required" }), {
         status: 400,
