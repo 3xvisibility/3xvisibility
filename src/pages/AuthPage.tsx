@@ -69,6 +69,17 @@ export default function AuthPage() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    setLoading(false);
+    if (result?.error) {
+      toast({ title: "Google sign-in failed", description: String(result.error), variant: "destructive" });
+    }
+  };
+
   return (
     <div className="min-h-screen relative flex overflow-hidden">
       {/* Background effects */}
