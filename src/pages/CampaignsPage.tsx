@@ -1174,6 +1174,7 @@ export default function CampaignsPage() {
                             {c.templates?.name && <span>{c.templates.name}</span>}
                             {c.websites?.name && <span>• {c.websites.name}</span>}
                           </div>
+                          </div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
