@@ -916,6 +916,15 @@ export default function CampaignsPage() {
           onOpenChange={(v) => { if (!v) setLinkDialogCampaign(null); }}
         />
       )}
+
+      {jobDialogCampaign && (
+        <GenerationJobDialog
+          campaignId={jobDialogCampaign.id}
+          campaignName={jobDialogCampaign.name}
+          open={!!jobDialogCampaign}
+          onOpenChange={(v) => { if (!v) setJobDialogCampaign(null); }}
+        />
+      )}
     </div>
   );
 }
