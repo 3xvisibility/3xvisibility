@@ -240,17 +240,17 @@ export function HeroSection() {
           transition={{ duration: 0.8, delay: 0.8 }}
           className="mt-16 md:mt-20 text-center"
         >
-          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground/40 font-medium mb-6">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-medium mb-6">
             {t("hero.trustedBy")}
           </p>
-          <div className="flex items-center justify-center gap-8 md:gap-14 flex-wrap">
-            {["Shopify", "WordPress", "HubSpot", "Webflow", "Ahrefs"].map((name, i) => (
+          <div className="flex items-center justify-center gap-6 md:gap-10 flex-wrap">
+            {["Shopify", "WordPress", "WooCommerce", "PrestaShop", "HubSpot", "Webflow", "Ahrefs"].map((name, i) => (
               <motion.span
                 key={name}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.9 + i * 0.08 }}
-                className="text-sm md:text-base font-semibold text-foreground/10 hover:text-foreground/25 transition-colors duration-300 select-none"
+                className="text-sm md:text-base font-semibold text-foreground/30 dark:text-foreground/40 hover:text-foreground/60 dark:hover:text-foreground/70 transition-colors duration-300 select-none"
               >
                 {name}
               </motion.span>
