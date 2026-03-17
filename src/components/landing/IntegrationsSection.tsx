@@ -5,57 +5,35 @@ import { Globe, ShoppingCart, Store, Search, FileText, BarChart3 } from "lucide-
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const integrations = [
-  { name: "WordPress", icon: Globe, pos: "left-top" },
-  { name: "Shopify", icon: ShoppingCart, pos: "left-mid" },
-  { name: "WooCommerce", icon: Store, pos: "left-bot" },
-  { name: "PrestaShop", icon: FileText, pos: "right-top" },
-  { name: "Google Index", icon: Search, pos: "right-mid" },
-  { name: "Analytics", icon: BarChart3, pos: "right-bot" },
+const leftItems = [
+  { name: "WordPress", icon: Globe },
+  { name: "Shopify", icon: ShoppingCart },
+  { name: "WooCommerce", icon: Store },
 ];
-
-function ConnectorLine({ side, index }: { side: "left" | "right"; index: number }) {
-  const yOffsets = ["-40px", "0px", "40px"];
-  const y = yOffsets[index];
-
-  return (
-    <motion.div
-      initial={{ scaleX: 0, opacity: 0 }}
-      whileInView={{ scaleX: 1, opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.4 + index * 0.1, duration: 0.6, ease }}
-      className={`absolute top-1/2 h-px w-[calc(50%-80px)] ${
-        side === "left"
-          ? "right-1/2 mr-[80px] origin-right"
-          : "left-1/2 ml-[80px] origin-left"
-      }`}
-      style={{ transform: `translateY(${y}) scaleX(1)` }}
-    >
-      <div className="h-full bg-gradient-to-r from-[hsl(262,83%,58%,0.05)] via-[hsl(262,83%,58%,0.2)] to-[hsl(262,83%,58%,0.05)]" />
-      {/* Traveling light */}
-      <motion.div
-        animate={{ x: side === "left" ? ["100%", "-20%"] : ["-20%", "100%"] }}
-        transition={{ delay: 1.5 + index * 0.3, duration: 2, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
-        className="absolute inset-0 w-1/4 bg-gradient-to-r from-transparent via-[hsl(262,83%,58%,0.5)] to-transparent"
-      />
-    </motion.div>
-  );
-}
+const rightItems = [
+  { name: "PrestaShop", icon: FileText },
+  { name: "Google Index", icon: Search },
+  { name: "Analytics", icon: BarChart3 },
+];
 
 export function IntegrationsSection() {
   const { t } = useLanguage();
 
-  const leftItems = integrations.filter((_, i) => i < 3);
-  const rightItems = integrations.filter((_, i) => i >= 3);
-
   return (
     <section className="py-20 md:py-28 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,hsl(262,83%,58%,0.06),transparent)] pointer-events-none" />
+      {/* Background grid */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: `linear-gradient(hsl(262,83%,58%) 1px, transparent 1px), linear-gradient(90deg, hsl(262,83%,58%) 1px, transparent 1px)`,
+          backgroundSize: "60px 60px",
+        }}
+      />
+      {/* Center radial glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_50%_55%,hsl(262,83%,58%,0.08),transparent)] pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal>
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 md:mb-20">
             <div className="section-badge mx-auto mb-5">
               <span>✦</span>
               <span>Integrations</span>
@@ -71,102 +49,180 @@ export function IntegrationsSection() {
           </div>
         </ScrollReveal>
 
-        {/* Integration hub layout */}
-        <div className="relative max-w-4xl mx-auto h-[320px] md:h-[360px] hidden md:block">
-          {/* Connection lines */}
-          {[0, 1, 2].map((i) => (
-            <div key={`lines-${i}`}>
-              <ConnectorLine side="left" index={i} />
-              <ConnectorLine side="right" index={i} />
-            </div>
-          ))}
+        {/* Desktop hub layout */}
+        <div className="relative max-w-5xl mx-auto hidden md:block" style={{ height: 420 }}>
+          {/* SVG curved connector lines */}
+          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1000 420" fill="none" preserveAspectRatio="xMidYMid meet">
+            {/* Left paths */}
+            <motion.path
+              d="M160,100 C280,100 320,210 420,210"
+              stroke="hsl(262,83%,58%,0.15)" strokeWidth="1.5" fill="none"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.5, duration: 0.8, ease }}
+            />
+            <motion.path
+              d="M120,210 C280,210 320,210 420,210"
+              stroke="hsl(262,83%,58%,0.15)" strokeWidth="1.5" fill="none"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6, duration: 0.8, ease }}
+            />
+            <motion.path
+              d="M200,320 C320,320 360,210 420,210"
+              stroke="hsl(262,83%,58%,0.15)" strokeWidth="1.5" fill="none"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.7, duration: 0.8, ease }}
+            />
+            {/* Right paths */}
+            <motion.path
+              d="M840,100 C720,100 680,210 580,210"
+              stroke="hsl(262,83%,58%,0.15)" strokeWidth="1.5" fill="none"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.5, duration: 0.8, ease }}
+            />
+            <motion.path
+              d="M880,210 C720,210 680,210 580,210"
+              stroke="hsl(262,83%,58%,0.15)" strokeWidth="1.5" fill="none"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6, duration: 0.8, ease }}
+            />
+            <motion.path
+              d="M800,320 C680,320 640,210 580,210"
+              stroke="hsl(262,83%,58%,0.15)" strokeWidth="1.5" fill="none"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.7, duration: 0.8, ease }}
+            />
+          </svg>
 
           {/* Center hub */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.2, ease }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-          >
-            {/* Outer glow ring */}
-            <div className="absolute -inset-8 bg-[radial-gradient(circle,hsl(262,83%,58%,0.15),transparent_70%)] rounded-full blur-xl" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+            {/* Ambient glow */}
+            <div className="absolute -inset-16 bg-[radial-gradient(circle,hsl(262,83%,58%,0.12),transparent_70%)] rounded-full blur-2xl" />
+
+            {/* Horizontal light beams */}
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              whileInView={{ opacity: 1, scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.8, duration: 0.6, ease }}
+              className="absolute top-1/2 -translate-y-1/2 right-full mr-0 w-[200px] h-[2px] origin-right"
+            >
+              <div className="h-full bg-gradient-to-l from-[hsl(262,83%,58%,0.6)] via-[hsl(262,83%,58%,0.15)] to-transparent" />
+              <div className="absolute inset-y-0 right-0 w-8 h-[6px] -translate-y-[2px] bg-[hsl(262,83%,58%,0.4)] blur-sm" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, scaleX: 0 }}
+              whileInView={{ opacity: 1, scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.8, duration: 0.6, ease }}
+              className="absolute top-1/2 -translate-y-1/2 left-full ml-0 w-[200px] h-[2px] origin-left"
+            >
+              <div className="h-full bg-gradient-to-r from-[hsl(262,83%,58%,0.6)] via-[hsl(262,83%,58%,0.15)] to-transparent" />
+              <div className="absolute inset-y-0 left-0 w-8 h-[6px] -translate-y-[2px] bg-[hsl(262,83%,58%,0.4)] blur-sm" />
+            </motion.div>
+
             {/* Pulse rings */}
             <motion.div
-              animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
+              animate={{ scale: [1, 1.35, 1], opacity: [0.25, 0, 0.25] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -inset-4 rounded-3xl border border-[hsl(262,83%,58%,0.2)]"
+              className="absolute -inset-5 rounded-[22px] border border-[hsl(262,83%,58%,0.2)]"
             />
             <motion.div
-              animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0, 0.2] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              className="absolute -inset-2 rounded-3xl border border-[hsl(262,83%,58%,0.15)]"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0, 0.15] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+              className="absolute -inset-3 rounded-[20px] border border-[hsl(262,83%,58%,0.15)]"
             />
+
             {/* Hub card */}
-            <div className="relative h-28 w-28 rounded-2xl bg-gradient-to-br from-[hsl(262,83%,50%)] to-[hsl(280,80%,55%)] flex items-center justify-center shadow-[0_0_60px_hsl(262,83%,58%,0.3)]">
-              {/* Sparkle particles on edges */}
-              <div className="absolute -top-0.5 left-1/4 h-1 w-1 rounded-full bg-white/80 animate-pulse" />
-              <div className="absolute -bottom-0.5 right-1/4 h-1 w-1 rounded-full bg-white/60 animate-pulse" style={{ animationDelay: "0.5s" }} />
-              <div className="absolute top-1/4 -left-0.5 h-1 w-1 rounded-full bg-white/70 animate-pulse" style={{ animationDelay: "1s" }} />
-              <div className="absolute top-1/4 -right-0.5 h-1 w-1 rounded-full bg-white/60 animate-pulse" style={{ animationDelay: "1.5s" }} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.6 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.3, ease }}
+              className="relative h-[130px] w-[130px] rounded-2xl bg-gradient-to-b from-[hsl(262,83%,50%)] to-[hsl(270,70%,35%)] flex items-center justify-center shadow-[0_0_80px_hsl(262,83%,58%,0.35),0_0_30px_hsl(262,83%,58%,0.2)] border border-[hsl(262,83%,70%,0.2)]"
+            >
+              {/* Corner sparkles */}
+              <div className="absolute -top-[3px] left-1/3 h-1.5 w-1.5 rounded-full bg-white/80 blur-[1px]" />
+              <div className="absolute -bottom-[3px] right-1/3 h-1.5 w-1.5 rounded-full bg-white/60 blur-[1px]" />
+              <div className="absolute top-1/3 -left-[3px] h-1.5 w-1.5 rounded-full bg-white/70 blur-[1px]" />
+              <div className="absolute top-1/3 -right-[3px] h-1.5 w-1.5 rounded-full bg-white/60 blur-[1px]" />
+              <div className="absolute -bottom-[3px] left-1/3 h-1.5 w-1.5 rounded-full bg-white/50 blur-[1px]" />
+              <div className="absolute -top-[3px] right-1/3 h-1.5 w-1.5 rounded-full bg-white/50 blur-[1px]" />
+
               {/* Icon */}
-              <svg className="h-10 w-10 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="h-11 w-11 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="6" y="6" width="12" height="12" rx="2" transform="rotate(45 12 12)" />
                 <path d="M12 8v8M8 12h8" />
               </svg>
-            </div>
-          </motion.div>
 
-          {/* Left integration icons */}
+              {/* Bottom glow reflection */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-4 bg-[hsl(262,83%,58%,0.3)] blur-lg rounded-full" />
+            </motion.div>
+          </div>
+
+          {/* Left icons */}
           {leftItems.map((item, i) => {
-            const topPercent = 20 + i * 30;
+            const positions = [
+              { top: "16%", left: "10%" },
+              { top: "42%", left: "4%" },
+              { top: "68%", left: "14%" },
+            ];
             return (
               <motion.div
                 key={item.name}
-                initial={{ opacity: 0, x: -30 }}
+                initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.5 + i * 0.12, duration: 0.5, ease }}
-                className="absolute left-4 lg:left-8"
-                style={{ top: `${topPercent}%`, transform: "translateY(-50%)" }}
+                transition={{ delay: 0.4 + i * 0.1, duration: 0.5, ease }}
+                className="absolute"
+                style={{ top: positions[i].top, left: positions[i].left }}
               >
-                <div className="group flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-[hsl(252,25%,12%)] border border-[hsl(262,83%,58%,0.12)] flex items-center justify-center transition-all duration-300 group-hover:border-[hsl(262,83%,58%,0.3)] group-hover:shadow-[0_0_20px_hsl(262,83%,58%,0.1)]">
-                    <item.icon className="h-5 w-5 text-[hsl(250,15%,55%)] group-hover:text-[hsl(262,83%,68%)] transition-colors" />
-                  </div>
-                  <span className="text-xs font-medium text-[hsl(250,15%,50%)] group-hover:text-[hsl(250,15%,70%)] transition-colors hidden lg:block">{item.name}</span>
+                <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(250,25%,11%)] border border-[hsl(250,20%,18%)] flex items-center justify-center shadow-lg hover:border-[hsl(262,83%,58%,0.3)] hover:shadow-[0_0_20px_hsl(262,83%,58%,0.1)] transition-all duration-300 cursor-pointer group">
+                  <item.icon className="h-5 w-5 text-[hsl(250,15%,50%)] group-hover:text-[hsl(262,83%,68%)] transition-colors" />
                 </div>
               </motion.div>
             );
           })}
 
-          {/* Right integration icons */}
+          {/* Right icons */}
           {rightItems.map((item, i) => {
-            const topPercent = 20 + i * 30;
+            const positions = [
+              { top: "16%", right: "10%" },
+              { top: "42%", right: "4%" },
+              { top: "68%", right: "14%" },
+            ];
             return (
               <motion.div
                 key={item.name}
-                initial={{ opacity: 0, x: 30 }}
+                initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: 0.5 + i * 0.12, duration: 0.5, ease }}
-                className="absolute right-4 lg:right-8"
-                style={{ top: `${topPercent}%`, transform: "translateY(-50%)" }}
+                transition={{ delay: 0.4 + i * 0.1, duration: 0.5, ease }}
+                className="absolute"
+                style={{ top: positions[i].top, right: positions[i].right }}
               >
-                <div className="group flex items-center gap-3 flex-row-reverse">
-                  <div className="h-12 w-12 rounded-xl bg-[hsl(252,25%,12%)] border border-[hsl(262,83%,58%,0.12)] flex items-center justify-center transition-all duration-300 group-hover:border-[hsl(262,83%,58%,0.3)] group-hover:shadow-[0_0_20px_hsl(262,83%,58%,0.1)]">
-                    <item.icon className="h-5 w-5 text-[hsl(250,15%,55%)] group-hover:text-[hsl(262,83%,68%)] transition-colors" />
-                  </div>
-                  <span className="text-xs font-medium text-[hsl(250,15%,50%)] group-hover:text-[hsl(250,15%,70%)] transition-colors hidden lg:block">{item.name}</span>
+                <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(250,25%,11%)] border border-[hsl(250,20%,18%)] flex items-center justify-center shadow-lg hover:border-[hsl(262,83%,58%,0.3)] hover:shadow-[0_0_20px_hsl(262,83%,58%,0.1)] transition-all duration-300 cursor-pointer group">
+                  <item.icon className="h-5 w-5 text-[hsl(250,15%,50%)] group-hover:text-[hsl(262,83%,68%)] transition-colors" />
                 </div>
               </motion.div>
             );
           })}
         </div>
 
-        {/* Mobile layout - simple grid */}
+        {/* Mobile grid */}
         <div className="md:hidden grid grid-cols-3 gap-4 max-w-sm mx-auto">
-          {integrations.map((item, i) => (
+          {[...leftItems, ...rightItems].map((item, i) => (
             <motion.div
               key={item.name}
               initial={{ opacity: 0, y: 20 }}
@@ -175,7 +231,7 @@ export function IntegrationsSection() {
               transition={{ delay: 0.1 + i * 0.08, duration: 0.4, ease }}
               className="flex flex-col items-center gap-2"
             >
-              <div className="h-12 w-12 rounded-xl bg-[hsl(252,25%,12%)] border border-[hsl(262,83%,58%,0.12)] flex items-center justify-center">
+              <div className="h-12 w-12 rounded-xl bg-[hsl(250,25%,11%)] border border-[hsl(250,20%,18%)] flex items-center justify-center">
                 <item.icon className="h-5 w-5 text-[hsl(262,83%,68%)]" />
               </div>
               <span className="text-[10px] font-medium text-[hsl(250,15%,50%)]">{item.name}</span>
