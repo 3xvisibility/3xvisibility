@@ -453,6 +453,10 @@ export default function TemplatesPage() {
                         setContent(tpl.content);
                         setBlocks(htmlToBlocks(tpl.content));
                         setActiveEditorTab("visual");
+                        setSeoTitlePattern((tpl as any).seo_title_pattern || "");
+                        setSeoDescriptionPattern((tpl as any).seo_description_pattern || "");
+                        setSchemaType((tpl as any).schema_type || "WebPage");
+                        setSchemaConfig((tpl as any).schema_config || {});
                       }}
                       title="Edit"
                     >
