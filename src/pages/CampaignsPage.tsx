@@ -667,361 +667,373 @@ export default function CampaignsPage() {
                 <Plus className="mr-2 h-4 w-4" /> New Campaign
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create Campaign</DialogTitle>
-                <DialogDescription>Follow the steps to set up your campaign.</DialogDescription>
-              </DialogHeader>
+            <DialogContent className="sm:max-w-[540px] p-0 gap-0 overflow-hidden">
+              <div className="px-6 pt-6 pb-0">
+                <DialogHeader className="pb-0">
+                  <DialogTitle className="text-lg font-bold">Create Campaign</DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground">Follow the steps to set up your campaign.</DialogDescription>
+                </DialogHeader>
+              </div>
 
               {/* Wizard Steps Indicator */}
-              <div className="flex items-center justify-between mt-4 mb-6">
-                {wizardSteps.map((s, i) => (
-                  <div key={s.num} className="flex items-center">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-200 ${
-                          step >= s.num
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {step > s.num ? <Check className="h-4 w-4" /> : s.num}
+              <div className="px-6 pt-5 pb-2">
+                <div className="flex items-start justify-between">
+                  {wizardSteps.map((s, i) => (
+                    <div key={s.num} className="flex items-center flex-1 last:flex-none">
+                      <div className="flex flex-col items-center min-w-[40px]">
+                        <div
+                          className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ring-2 ring-offset-2 ring-offset-background ${
+                            step > s.num
+                              ? "bg-primary text-primary-foreground ring-primary"
+                              : step === s.num
+                                ? "bg-primary text-primary-foreground ring-primary shadow-sm"
+                                : "bg-muted text-muted-foreground ring-border"
+                          }`}
+                        >
+                          {step > s.num ? <Check className="h-3.5 w-3.5" /> : s.num}
+                        </div>
+                        <span className={`text-[10px] mt-1.5 font-medium transition-colors ${
+                          step >= s.num ? "text-foreground" : "text-muted-foreground"
+                        }`}>{s.label}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground mt-1">{s.label}</span>
+                      {i < wizardSteps.length - 1 && (
+                        <div className="flex-1 flex items-center px-1 -mt-3.5">
+                          <div className={`h-[2px] w-full rounded-full transition-colors duration-300 ${
+                            step > s.num ? "bg-primary" : "bg-border"
+                          }`} style={{ backgroundImage: step <= s.num ? 'repeating-linear-gradient(90deg, hsl(var(--border)) 0px, hsl(var(--border)) 4px, transparent 4px, transparent 8px)' : 'none', backgroundColor: step > s.num ? undefined : 'transparent' }} />
+                        </div>
+                      )}
                     </div>
-                    {i < wizardSteps.length - 1 && (
-                      <div className={`h-0.5 w-8 sm:w-12 mx-1 rounded transition-colors duration-200 ${
-                        step > s.num ? "bg-primary" : "bg-muted"
-                      }`} />
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Step Content */}
-              <div className="space-y-4 animate-fade-in">
-                {step === 1 && (
-                  <div>
-                    <Label htmlFor="name" className="text-sm font-medium mb-2 block">Campaign Name</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., Python Training Cities"
-                      value={campaignName}
-                      onChange={(e) => setCampaignName(e.target.value)}
-                      className="rounded-xl h-11"
-                    />
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium mb-2 block">Campaign Type</Label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { value: "seo" as const, label: "SEO", icon: SearchIconLucide, desc: "Organic search pages" },
-                        { value: "sea" as const, label: "SEA", icon: Target, desc: "Paid landing pages" },
-                        { value: "geo" as const, label: "GEO", icon: MapPin, desc: "Local / geo pages" },
-                      ].map((t) => (
-                        <button
-                          key={t.value}
-                          type="button"
-                          onClick={() => setCampaignType(t.value)}
-                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                            campaignType === t.value
-                              ? "border-primary bg-primary/5 shadow-sm"
-                              : "border-border hover:border-primary/30 hover:bg-muted/50"
-                          }`}
-                        >
-                          <t.icon className={`h-6 w-6 ${campaignType === t.value ? "text-primary" : "text-muted-foreground"}`} />
-                          <span className={`text-sm font-semibold ${campaignType === t.value ? "text-primary" : "text-foreground"}`}>{t.label}</span>
-                          <span className="text-[10px] text-muted-foreground text-center">{t.desc}</span>
-                        </button>
-                      ))}
+              <div className="px-6 py-4 min-h-[180px]">
+                <div className="space-y-4 animate-fade-in">
+                  {step === 1 && (
+                    <div>
+                      <Label htmlFor="name" className="text-sm font-semibold mb-2.5 block">Campaign Name</Label>
+                      <Input
+                        id="name"
+                        placeholder="e.g., Python Training Cities"
+                        value={campaignName}
+                        onChange={(e) => setCampaignName(e.target.value)}
+                        className="rounded-xl h-11 text-sm"
+                      />
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {step === 3 && (
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">CSV File</Label>
-                    <div className="border-2 border-dashed rounded-2xl p-8 text-center hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer">
-                      <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
-                      <label htmlFor="csv-upload" className="cursor-pointer">
-                        <Upload className="mx-auto h-10 w-10 text-muted-foreground/50 mb-3" />
-                        <p className="text-sm font-medium">
-                          {csvFile ? csvFile.name : "Drop CSV file or click to upload"}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {csvFile
-                            ? `${csvData.length} rows · ${csvFile.size < 1024 ? csvFile.size + " B" : csvFile.size < 1048576 ? (csvFile.size / 1024).toFixed(1) + " KB" : (csvFile.size / 1048576).toFixed(1) + " MB"}`
-                            : "Supports .csv files up to 20 MB"}
-                        </p>
-                      </label>
-                    </div>
-                    {csvHeaders.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        <span className="text-xs text-muted-foreground">Columns:</span>
-                        {csvHeaders.map((h) => (
-                          <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                  {step === 2 && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold mb-2 block">Campaign Type</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { value: "seo" as const, label: "SEO", icon: SearchIconLucide, desc: "Organic search pages" },
+                          { value: "sea" as const, label: "SEA", icon: Target, desc: "Paid landing pages" },
+                          { value: "geo" as const, label: "GEO", icon: MapPin, desc: "Local / geo pages" },
+                        ].map((t) => (
+                          <button
+                            key={t.value}
+                            type="button"
+                            onClick={() => setCampaignType(t.value)}
+                            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
+                              campaignType === t.value
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-border hover:border-primary/30 hover:bg-muted/50"
+                            }`}
+                          >
+                            <t.icon className={`h-6 w-6 ${campaignType === t.value ? "text-primary" : "text-muted-foreground"}`} />
+                            <span className={`text-sm font-semibold ${campaignType === t.value ? "text-primary" : "text-foreground"}`}>{t.label}</span>
+                            <span className="text-[10px] text-muted-foreground text-center">{t.desc}</span>
+                          </button>
                         ))}
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
 
-                {step === 4 && (
-                  <div className="space-y-4">
+                  {step === 3 && (
                     <div>
-                      <Label className="text-sm font-medium mb-2 block">Template</Label>
-                      <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                        <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select template" /></SelectTrigger>
-                        <SelectContent>
-                          {templates.map((t) => (
-                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {variableMapping && (
-                      <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-semibold">Variable Mapping</h4>
-                          {variableMapping.matched.every((m) => m.column) ? (
-                            <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
-                              <Check className="h-3 w-3 mr-1" /> All matched
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-destructive/10 text-destructive text-[10px] border-destructive/20 border">
-                              <AlertTriangle className="h-3 w-3 mr-1" /> Unmatched
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="space-y-1.5">
-                          {variableMapping.matched.map(({ variable, column }) => (
-                            <div key={variable} className="flex items-center gap-2 text-xs">
-                              <Badge variant="outline" className="font-mono shrink-0 rounded-lg">{`{${variable}}`}</Badge>
-                              <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                              {column ? (
-                                <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg">
-                                  <Check className="h-3 w-3 mr-1" /> {column}
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="bg-destructive/10 text-destructive font-mono rounded-lg">
-                                  <X className="h-3 w-3 mr-1" /> No match
-                                </Badge>
-                              )}
-                            </div>
+                      <Label className="text-sm font-semibold mb-2.5 block">CSV File</Label>
+                      <div className="border-2 border-dashed rounded-2xl p-8 text-center hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer">
+                        <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
+                        <label htmlFor="csv-upload" className="cursor-pointer">
+                          <Upload className="mx-auto h-10 w-10 text-muted-foreground/50 mb-3" />
+                          <p className="text-sm font-medium">
+                            {csvFile ? csvFile.name : "Drop CSV file or click to upload"}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {csvFile
+                              ? `${csvData.length} rows · ${csvFile.size < 1024 ? csvFile.size + " B" : csvFile.size < 1048576 ? (csvFile.size / 1024).toFixed(1) + " KB" : (csvFile.size / 1048576).toFixed(1) + " MB"}`
+                              : "Supports .csv files up to 20 MB"}
+                          </p>
+                        </label>
+                      </div>
+                      {csvHeaders.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                          <span className="text-xs text-muted-foreground">Columns:</span>
+                          {csvHeaders.map((h) => (
+                            <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
                           ))}
                         </div>
-                        {mappingWarning && (
-                          <div className="flex items-center gap-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                            <span>{mappingWarning}</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
 
-                {step === 5 && campaignType === "sea" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Target className="h-4 w-4 text-primary" />
-                      <Label className="text-sm font-semibold">UTM Parameters</Label>
-                    </div>
-                    <p className="text-xs text-muted-foreground -mt-2">
-                      Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{variable}"}</code> syntax to pull values from CSV columns.
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">utm_source</Label>
-                        <Input value={utmSource} onChange={(e) => setUtmSource(e.target.value)} placeholder="google" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">utm_medium</Label>
-                        <Input value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} placeholder="cpc" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">utm_campaign</Label>
-                        <Input value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} placeholder="{campaign_name}" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">utm_term</Label>
-                        <Input value={utmTerm} onChange={(e) => setUtmTerm(e.target.value)} placeholder="{keyword}" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="col-span-2 space-y-1.5">
-                        <Label className="text-xs">utm_content</Label>
-                        <Input value={utmContent} onChange={(e) => setUtmContent(e.target.value)} placeholder="variant_a" className="rounded-xl h-9 text-sm" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {step === 5 && campaignType === "geo" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <Label className="text-sm font-semibold">Geographic Targeting</Label>
-                    </div>
-                    <p className="text-xs text-muted-foreground -mt-2">
-                      Set default geo values. Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{column}"}</code> to map from CSV.
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Country</Label>
-                        <Input value={geoCountry} onChange={(e) => setGeoCountry(e.target.value)} placeholder="{country} or US" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Region / State</Label>
-                        <Input value={geoRegion} onChange={(e) => setGeoRegion(e.target.value)} placeholder="{region}" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">City</Label>
-                        <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder="{city}" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Postcode</Label>
-                        <Input value={geoPostcode} onChange={(e) => setGeoPostcode(e.target.value)} placeholder="{postcode}" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Latitude</Label>
-                        <Input value={geoLat} onChange={(e) => setGeoLat(e.target.value)} placeholder="{lat} or 48.8566" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Longitude</Label>
-                        <Input value={geoLng} onChange={(e) => setGeoLng(e.target.value)} placeholder="{lng} or 2.3522" className="rounded-xl h-9 text-sm" />
-                      </div>
-                      <div className="col-span-2 space-y-1.5">
-                        <Label className="text-xs">Language</Label>
-                        <Select value={geoLanguage} onValueChange={setGeoLanguage}>
-                          <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                  {step === 4 && (
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-semibold mb-2.5 block">Template</Label>
+                        <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                          <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select template" /></SelectTrigger>
                           <SelectContent>
-                            {["en", "es", "fr", "de", "pt", "it", "nl", "ja", "zh", "ko", "ar"].map((l) => (
-                              <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>
+                            {templates.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {step === totalSteps - 1 && (
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Website (optional)</Label>
-                    <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
-                      <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select website" /></SelectTrigger>
-                      <SelectContent>
-                        {websites.map((w) => (
-                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground mt-2">Optional — you can assign a website later.</p>
-                  </div>
-                )}
-
-                {step === totalSteps && (
-                  <div className="space-y-5">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Settings2 className="h-4 w-4 text-primary" />
-                      <Label className="text-sm font-semibold">Generation Settings</Label>
-                    </div>
-
-                    {/* Publish Mode */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Publish Mode</Label>
-                      <RadioGroup value={publishMode} onValueChange={(v) => setPublishMode(v as "draft" | "published")} className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="draft" id="mode-draft" />
-                          <Label htmlFor="mode-draft" className="text-sm cursor-pointer">Draft</Label>
+                      {variableMapping && (
+                        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-semibold">Variable Mapping</h4>
+                            {variableMapping.matched.every((m) => m.column) ? (
+                              <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
+                                <Check className="h-3 w-3 mr-1" /> All matched
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-destructive/10 text-destructive text-[10px] border-destructive/20 border">
+                                <AlertTriangle className="h-3 w-3 mr-1" /> Unmatched
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="space-y-1.5">
+                            {variableMapping.matched.map(({ variable, column }) => (
+                              <div key={variable} className="flex items-center gap-2 text-xs">
+                                <Badge variant="outline" className="font-mono shrink-0 rounded-lg">{`{${variable}}`}</Badge>
+                                <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                {column ? (
+                                  <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg">
+                                    <Check className="h-3 w-3 mr-1" /> {column}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="bg-destructive/10 text-destructive font-mono rounded-lg">
+                                    <X className="h-3 w-3 mr-1" /> No match
+                                  </Badge>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {mappingWarning && (
+                            <div className="flex items-center gap-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                              <span>{mappingWarning}</span>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="published" id="mode-published" />
-                          <Label htmlFor="mode-published" className="text-sm cursor-pointer">Published</Label>
-                        </div>
-                      </RadioGroup>
-                      <p className="text-[11px] text-muted-foreground">
-                        {publishMode === "draft" ? "Pages will be saved as drafts for review before publishing." : "Pages will be published immediately to the connected site."}
-                      </p>
-                    </div>
-
-                    {/* Max Rows */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Max Rows to Process</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={maxRows}
-                        onChange={(e) => setMaxRows(e.target.value)}
-                        placeholder={`All (${csvData.length || "—"} rows)`}
-                        className="rounded-xl h-9 text-sm w-48"
-                      />
-                      <p className="text-[11px] text-muted-foreground">Leave empty to process all rows.</p>
-                    </div>
-
-                    {/* Schedule */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Schedule</Label>
-                      <RadioGroup value={scheduleMode} onValueChange={(v) => setScheduleMode(v as "now" | "later")} className="flex gap-4">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="now" id="sched-now" />
-                          <Label htmlFor="sched-now" className="text-sm cursor-pointer">Run now</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="later" id="sched-later" />
-                          <Label htmlFor="sched-later" className="text-sm cursor-pointer">Schedule later</Label>
-                        </div>
-                      </RadioGroup>
-                      {scheduleMode === "later" && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-60 justify-start text-left font-normal rounded-xl h-9 text-sm mt-1",
-                                !scheduledDate && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {scheduledDate ? format(scheduledDate, "PPP 'at' HH:mm") : "Pick a date & time"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={scheduledDate}
-                              onSelect={setScheduledDate}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                              className={cn("p-3 pointer-events-auto")}
-                            />
-                          </PopoverContent>
-                        </Popover>
                       )}
                     </div>
+                  )}
 
-                    {/* Summary */}
-                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
-                      <h4 className="text-sm font-semibold mb-2">Summary</h4>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${csvData.length}` : `${csvData.length || "—"} (all)`}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === selectedWebsite)?.name || "None"}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
+                  {step === 5 && campaignType === "sea" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Target className="h-4 w-4 text-primary" />
+                        <Label className="text-sm font-semibold">UTM Parameters</Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground -mt-2">
+                        Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{variable}"}</code> syntax to pull values from CSV columns.
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">utm_source</Label>
+                          <Input value={utmSource} onChange={(e) => setUtmSource(e.target.value)} placeholder="google" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">utm_medium</Label>
+                          <Input value={utmMedium} onChange={(e) => setUtmMedium(e.target.value)} placeholder="cpc" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">utm_campaign</Label>
+                          <Input value={utmCampaign} onChange={(e) => setUtmCampaign(e.target.value)} placeholder="{campaign_name}" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">utm_term</Label>
+                          <Input value={utmTerm} onChange={(e) => setUtmTerm(e.target.value)} placeholder="{keyword}" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="col-span-2 space-y-1.5">
+                          <Label className="text-xs">utm_content</Label>
+                          <Input value={utmContent} onChange={(e) => setUtmContent(e.target.value)} placeholder="variant_a" className="rounded-xl h-9 text-sm" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {step === 5 && campaignType === "geo" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <Label className="text-sm font-semibold">Geographic Targeting</Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground -mt-2">
+                        Set default geo values. Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{column}"}</code> to map from CSV.
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Country</Label>
+                          <Input value={geoCountry} onChange={(e) => setGeoCountry(e.target.value)} placeholder="{country} or US" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Region / State</Label>
+                          <Input value={geoRegion} onChange={(e) => setGeoRegion(e.target.value)} placeholder="{region}" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">City</Label>
+                          <Input value={geoCity} onChange={(e) => setGeoCity(e.target.value)} placeholder="{city}" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Postcode</Label>
+                          <Input value={geoPostcode} onChange={(e) => setGeoPostcode(e.target.value)} placeholder="{postcode}" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Latitude</Label>
+                          <Input value={geoLat} onChange={(e) => setGeoLat(e.target.value)} placeholder="{lat} or 48.8566" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Longitude</Label>
+                          <Input value={geoLng} onChange={(e) => setGeoLng(e.target.value)} placeholder="{lng} or 2.3522" className="rounded-xl h-9 text-sm" />
+                        </div>
+                        <div className="col-span-2 space-y-1.5">
+                          <Label className="text-xs">Language</Label>
+                          <Select value={geoLanguage} onValueChange={setGeoLanguage}>
+                            <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["en", "es", "fr", "de", "pt", "it", "nl", "ja", "zh", "ko", "ar"].map((l) => (
+                                <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {step === totalSteps - 1 && (
+                    <div>
+                      <Label className="text-sm font-semibold mb-2.5 block">Website (optional)</Label>
+                      <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
+                        <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select website" /></SelectTrigger>
+                        <SelectContent>
+                          {websites.map((w) => (
+                            <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-2">Optional — you can assign a website later.</p>
+                    </div>
+                  )}
+
+                  {step === totalSteps && (
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Settings2 className="h-4 w-4 text-primary" />
+                        <Label className="text-sm font-semibold">Generation Settings</Label>
+                      </div>
+
+                      {/* Publish Mode */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Publish Mode</Label>
+                        <RadioGroup value={publishMode} onValueChange={(v) => setPublishMode(v as "draft" | "published")} className="flex gap-4">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="draft" id="mode-draft" />
+                            <Label htmlFor="mode-draft" className="text-sm cursor-pointer">Draft</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="published" id="mode-published" />
+                            <Label htmlFor="mode-published" className="text-sm cursor-pointer">Published</Label>
+                          </div>
+                        </RadioGroup>
+                        <p className="text-[11px] text-muted-foreground">
+                          {publishMode === "draft" ? "Pages will be saved as drafts for review before publishing." : "Pages will be published immediately to the connected site."}
+                        </p>
+                      </div>
+
+                      {/* Max Rows */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Max Rows to Process</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={maxRows}
+                          onChange={(e) => setMaxRows(e.target.value)}
+                          placeholder={`All (${csvData.length || "—"} rows)`}
+                          className="rounded-xl h-9 text-sm w-48"
+                        />
+                        <p className="text-[11px] text-muted-foreground">Leave empty to process all rows.</p>
+                      </div>
+
+                      {/* Schedule */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Schedule</Label>
+                        <RadioGroup value={scheduleMode} onValueChange={(v) => setScheduleMode(v as "now" | "later")} className="flex gap-4">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="now" id="sched-now" />
+                            <Label htmlFor="sched-now" className="text-sm cursor-pointer">Run now</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="later" id="sched-later" />
+                            <Label htmlFor="sched-later" className="text-sm cursor-pointer">Schedule later</Label>
+                          </div>
+                        </RadioGroup>
+                        {scheduleMode === "later" && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-60 justify-start text-left font-normal rounded-xl h-9 text-sm mt-1",
+                                  !scheduledDate && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {scheduledDate ? format(scheduledDate, "PPP 'at' HH:mm") : "Pick a date & time"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={scheduledDate}
+                                onSelect={setScheduledDate}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
+
+                      {/* Summary */}
+                      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
+                        <h4 className="text-sm font-semibold mb-2">Summary</h4>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${csvData.length}` : `${csvData.length || "—"} (all)`}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === selectedWebsite)?.name || "None"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Navigation */}
-              <div className="flex justify-between pt-4 border-t mt-4">
+              <div className="flex justify-between px-6 py-4 border-t border-border bg-muted/30">
                 <Button
                   variant="outline"
                   onClick={() => step === 1 ? setOpen(false) : setStep(step - 1)}
-                  className="rounded-xl"
+                  className="rounded-xl h-10 px-5"
                 >
                   {step === 1 ? "Cancel" : "Back"}
                 </Button>
@@ -1029,7 +1041,7 @@ export default function CampaignsPage() {
                   <Button
                     onClick={() => setStep(step + 1)}
                     disabled={!canProceed()}
-                    className="rounded-xl bg-gradient-primary hover:brightness-110"
+                    className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110"
                   >
                     Continue <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -1037,7 +1049,7 @@ export default function CampaignsPage() {
                   <Button
                     onClick={() => createMutation.mutate()}
                     disabled={!campaignName || createMutation.isPending}
-                    className="rounded-xl bg-gradient-primary hover:brightness-110"
+                    className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110"
                   >
                     {createMutation.isPending ? "Creating..." : scheduleMode === "later" ? "Schedule Campaign" : "Create Campaign"}
                   </Button>
