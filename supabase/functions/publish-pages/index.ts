@@ -85,7 +85,6 @@ async function publishToShopify(
   const shopDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const apiUrl = `https://${shopDomain}/admin/api/2024-01/pages.json`;
 
-  // Shopify supports metafields_global_title_tag and metafields_global_description_tag
   const pagePayload: Record<string, any> = {
     title,
     body_html: content,
@@ -117,6 +116,60 @@ async function publishToShopify(
   return {
     external_id: String(data.page.id),
     external_url: `https://${shopDomain}/pages/${data.page.handle}`,
+  };
+}
+
+async function publishProductToShopify(
+  siteUrl: string,
+  credentials: WebsiteCredentials,
+  title: string,
+  content: string,
+  slug: string,
+  seo: SeoData,
+  extraData?: Record<string, any>
+): Promise<{ external_id: string; external_url: string }> {
+  const shopDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const apiUrl = `https://${shopDomain}/admin/api/2024-01/products.json`;
+
+  const productPayload: Record<string, any> = {
+    title,
+    body_html: content,
+    handle: slugify(slug || title),
+    status: "active",
+  };
+
+  if (extraData?.price) {
+    productPayload.variants = [{ price: String(extraData.price) }];
+  }
+  if (extraData?.images || extraData?.image) {
+    const imgs = extraData.images || (extraData.image ? [extraData.image] : []);
+    productPayload.images = imgs.map((src: string) => ({ src }));
+  }
+  if (seo.seo_title) {
+    productPayload.metafields_global_title_tag = seo.seo_title;
+  }
+  if (seo.seo_description) {
+    productPayload.metafields_global_description_tag = seo.seo_description;
+  }
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": credentials.admin_api_token!,
+    },
+    body: JSON.stringify({ product: productPayload }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Shopify Product API error [${response.status}]: ${errorBody}`);
+  }
+
+  const data = await response.json();
+  return {
+    external_id: String(data.product.id),
+    external_url: `https://${shopDomain}/products/${data.product.handle}`,
   };
 }
 
