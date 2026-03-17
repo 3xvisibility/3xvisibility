@@ -502,6 +502,23 @@ Deno.serve(async (req) => {
     await logEvent(supabase, campaign_id, user.id, "completed",
       `Generation ${finalStatus}. ${processedCount - failedCount} pages generated, ${failedCount} failed.`);
 
+    // Auto-generate sitemap if campaign has a website
+    if (campaign.website_id) {
+      try {
+        const sitemapUrl = `${supabaseUrl}/functions/v1/generate-sitemap`;
+        await fetch(sitemapUrl, {
+          method: "POST",
+          headers: {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ website_id: campaign.website_id }),
+        });
+      } catch (e) {
+        console.error("Auto-sitemap generation failed:", e);
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       generated: processedCount - failedCount,
