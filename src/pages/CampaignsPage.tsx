@@ -958,7 +958,7 @@ export default function CampaignsPage() {
                     disabled={!campaignName || createMutation.isPending}
                     className="rounded-xl bg-gradient-primary hover:brightness-110"
                   >
-                    {createMutation.isPending ? "Creating..." : "Create Campaign"}
+                    {createMutation.isPending ? "Creating..." : scheduleMode === "later" ? "Schedule Campaign" : "Create Campaign"}
                   </Button>
                 )}
               </div>
