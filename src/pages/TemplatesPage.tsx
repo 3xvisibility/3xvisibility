@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,8 @@ import {
   type TemplateBlock,
 } from "@/components/templates/TemplateVisualEditor";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useDragReorder } from "@/hooks/use-drag-reorder";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Template = Tables<"templates">;
 
@@ -79,6 +81,11 @@ export default function TemplatesPage() {
 
   const { features } = useSubscription();
   const maxTemplates = features.templates;
+
+  const { ordered: orderedTemplates, getDragProps, hasCustomOrder, resetOrder } = useDragReorder(
+    templates,
+    `tpl-order-${wsId}`
+  );
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -707,11 +714,36 @@ export default function TemplatesPage() {
         <Card><CardContent className="p-10 text-center text-muted-foreground">No templates yet. Create your first template to get started.</CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((tpl) => (
-            <Card key={tpl.id} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
+          {hasCustomOrder && (
+            <div className="col-span-full flex justify-end">
+              <Button variant="ghost" size="sm" onClick={resetOrder} className="text-xs text-muted-foreground">
+                <RotateCcw className="h-3 w-3 mr-1.5" /> Reset order
+              </Button>
+            </div>
+          )}
+          {orderedTemplates.map((tpl, index) => {
+            const dragProps = getDragProps(index);
+            return (
+            <Card
+              key={tpl.id}
+              className={`shadow-surface hover:shadow-surface-hover transition-shadow duration-150 ${dragProps.className}`}
+              draggable={dragProps.draggable}
+              onDragStart={dragProps.onDragStart}
+              onDragOver={dragProps.onDragOver}
+              onDrop={dragProps.onDrop}
+              onDragEnd={dragProps.onDragEnd}
+            >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-1">
+                          <GripVertical className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-xs">Drag to reorder</TooltipContent>
+                    </Tooltip>
                     <FileText className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">{tpl.name}</h3>
                   </div>
@@ -771,7 +803,8 @@ export default function TemplatesPage() {
                 )}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

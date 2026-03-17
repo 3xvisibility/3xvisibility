@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2, Copy } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2, Copy, GripVertical } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,8 @@ import type { Tables, Database } from "@/integrations/supabase/types";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useDragReorder } from "@/hooks/use-drag-reorder";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -633,6 +635,11 @@ export default function CampaignsPage() {
     return result;
   }, [campaigns, typeFilter, statusFilter, searchQuery]);
 
+  const { ordered: orderedCampaigns, getDragProps: getCampaignDragProps, hasCustomOrder: hasCampaignCustomOrder, resetOrder: resetCampaignOrder } = useDragReorder(
+    filteredCampaigns,
+    `camp-order-${wsId}`
+  );
+
   return (
     <div className="space-y-6">
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
@@ -1149,18 +1156,24 @@ export default function CampaignsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredCampaigns.map((c, index) => {
+                {orderedCampaigns.map((c, index) => {
                   const progress = getProgressInfo(c);
                   const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
                   const config = statusConfig[c.status] || statusConfig.draft;
+                  const trDragProps = getCampaignDragProps(index);
                   return (
-                    <tr key={c.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors ${index % 2 === 1 ? "bg-muted/10" : ""}`}>
+                    <tr key={c.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors ${index % 2 === 1 ? "bg-muted/10" : ""} ${trDragProps.className}`} draggable={trDragProps.draggable} onDragStart={trDragProps.onDragStart} onDragOver={trDragProps.onDragOver} onDrop={trDragProps.onDrop} onDragEnd={trDragProps.onDragEnd}>
                       <td className="py-3 px-4">
-                        <div>
+                        <div className="flex items-center gap-2">
+                          <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                          <div>
                           <span className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</span>
                           <div className="flex gap-2 mt-0.5 text-[11px] text-muted-foreground">
                             {c.templates?.name && <span>{c.templates.name}</span>}
                             {c.websites?.name && <span>• {c.websites.name}</span>}
+                          </div>
                           </div>
                         </div>
                       </td>
@@ -1189,7 +1202,14 @@ export default function CampaignsPage() {
       ) : (
         /* CARD VIEW */
         <div className="grid gap-4">
-          {filteredCampaigns.map((c) => {
+          {hasCampaignCustomOrder && (
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={resetCampaignOrder} className="text-xs text-muted-foreground">
+                <RotateCcw className="h-3 w-3 mr-1.5" /> Reset order
+              </Button>
+            </div>
+          )}
+          {orderedCampaigns.map((c, idx) => {
             const progress = getProgressInfo(c);
             const isProcessing = c.status === "processing";
             const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
@@ -1197,11 +1217,29 @@ export default function CampaignsPage() {
             const completedAt = (c as any).generation_completed_at;
             const config = statusConfig[c.status] || statusConfig.draft;
             const latestJob = getLatestJob(c.id);
+            const dragProps = getCampaignDragProps(idx);
 
             return (
-              <Card key={c.id} className="border-0 shadow-surface card-interactive overflow-hidden">
+              <Card
+                key={c.id}
+                className={`border-0 shadow-surface card-interactive overflow-hidden ${dragProps.className}`}
+                draggable={dragProps.draggable}
+                onDragStart={dragProps.onDragStart}
+                onDragOver={dragProps.onDragOver}
+                onDrop={dragProps.onDrop}
+                onDragEnd={dragProps.onDragEnd}
+              >
                 <CardContent className="p-0">
                   <div className="flex items-start justify-between p-5 gap-4">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 shrink-0 mt-0.5">
+                            <GripVertical className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left" className="text-xs">Drag to reorder</TooltipContent>
+                      </Tooltip>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <h3 className="font-semibold truncate cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</h3>
@@ -1227,6 +1265,7 @@ export default function CampaignsPage() {
                       </div>
                     </div>
                     <CampaignActions campaign={c} isPaused={isPaused} executeMutation={executeMutation} deleteMutation={deleteMutation} duplicateMutation={duplicateMutation} setLinkDialogCampaign={setLinkDialogCampaign} setLogDialogCampaign={setLogDialogCampaign} setJobDialogCampaign={setJobDialogCampaign} onReplaceCsv={(id) => { setReplaceCsvCampaignId(id); document.getElementById("replace-csv-input")?.click(); }} />
+                    </div>
                   </div>
 
                   {progress.total > 0 && (
