@@ -24,6 +24,7 @@ import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import IndexingPage from "./pages/IndexingPage";
 import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
+import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
@@ -176,6 +177,14 @@ const App = () => {
               element={
                 <ProtectedRoute session={session}>
                   <DashboardLayout onLogout={handleLogout}><AutoStoreGeneratorPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspace-settings"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><WorkspaceSettingsPage /></DashboardLayout>
                 </ProtectedRoute>
               }
             />
