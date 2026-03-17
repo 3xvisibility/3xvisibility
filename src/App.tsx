@@ -189,6 +189,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/data"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><DataCsvPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
