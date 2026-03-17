@@ -82,6 +82,11 @@ export default function TemplatesPage() {
   const { features } = useSubscription();
   const maxTemplates = features.templates;
 
+  const { ordered: orderedTemplates, getDragProps, hasCustomOrder, resetOrder } = useDragReorder(
+    templates,
+    `tpl-order-${wsId}`
+  );
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
