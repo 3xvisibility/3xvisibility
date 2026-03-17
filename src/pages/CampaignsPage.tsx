@@ -77,9 +77,13 @@ export default function CampaignsPage() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "campaigns" }, () => {
         queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "generation_jobs" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+        queryClient.invalidateQueries({ queryKey: ["generation-jobs", wsId] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+  }, [queryClient, wsId]);
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ["campaigns", wsId],
@@ -94,6 +98,24 @@ export default function CampaignsPage() {
       return data as Campaign[];
     },
   });
+
+  // Fetch latest generation job per campaign for progress display
+  const { data: generationJobs = [] } = useQuery({
+    queryKey: ["generation-jobs", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("generation_jobs")
+        .select("id, campaign_id, status, total_rows, processed_rows, success_count, error_count, current_batch, batch_size, started_at, completed_at")
+        .eq("workspace_id", wsId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getLatestJob = (campaignId: string) =>
+    generationJobs.find((j: any) => j.campaign_id === campaignId);
 
   const { data: templates = [] } = useQuery({
     queryKey: ["templates", wsId],
@@ -169,7 +191,7 @@ export default function CampaignsPage() {
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
-      const { error } = await supabase.from("campaigns").insert({
+      const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
         template_id: selectedTemplate || null,
@@ -180,8 +202,41 @@ export default function CampaignsPage() {
         workspace_id: wsId,
         utm_settings: utmSettings as any,
         geo_settings: geoSettings as any,
-      });
+      }).select("id").single();
       if (error) throw error;
+
+      // Persist DataSource
+      if (csvFile && campaign) {
+        await supabase.from("data_sources").insert({
+          campaign_id: campaign.id,
+          workspace_id: wsId,
+          user_id: user.id,
+          type: "csv",
+          file_name: csvFile.name,
+          file_size: csvFile.size,
+          row_count: csvData.length,
+          headers: csvHeaders as any,
+        });
+      }
+
+      // Persist Mappings from variable mapping
+      if (variableMapping && campaign) {
+        const mappingRows = variableMapping.matched
+          .filter((m) => m.column)
+          .map((m, i) => ({
+            campaign_id: campaign.id,
+            workspace_id: wsId,
+            user_id: user.id,
+            source_column: m.column!,
+            target_field: m.variable,
+            field_category: "content",
+            sort_order: i,
+            is_required: true,
+          }));
+        if (mappingRows.length > 0) {
+          await supabase.from("mappings").insert(mappingRows);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
@@ -731,6 +786,7 @@ export default function CampaignsPage() {
             const startedAt = (c as any).generation_started_at;
             const completedAt = (c as any).generation_completed_at;
             const config = statusConfig[c.status] || statusConfig.draft;
+            const latestJob = getLatestJob(c.id);
 
             return (
               <Card key={c.id} className="border-0 shadow-surface card-interactive overflow-hidden">
@@ -794,6 +850,14 @@ export default function CampaignsPage() {
                               <Check className="h-3 w-3" /> Done: {new Date(completedAt).toLocaleString()}
                             </span>
                           )}
+                        </div>
+                      )}
+                      {latestJob && (
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1 border-t border-border/50 mt-2 pt-2">
+                          <span>Batch {latestJob.current_batch}/{Math.ceil(latestJob.total_rows / latestJob.batch_size)}</span>
+                          <span className="text-success">{latestJob.success_count} ok</span>
+                          {latestJob.error_count > 0 && <span className="text-destructive">{latestJob.error_count} errors</span>}
+                          <Badge variant="outline" className="text-[9px] ml-auto capitalize">{latestJob.status}</Badge>
                         </div>
                       )}
                     </div>

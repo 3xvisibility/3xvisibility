@@ -162,9 +162,7 @@ function buildOgMetaTags(
     `<meta name="twitter:title" content="${escape(title)}">`,
     `<meta name="twitter:description" content="${escape(description)}">`,
   ];
-  if (url) {
-    tags.push(`<meta property="og:url" content="${escape(url)}">`);
-  }
+  if (url) tags.push(`<meta property="og:url" content="${escape(url)}">`);
   if (imageUrl) {
     tags.push(`<meta property="og:image" content="${escape(imageUrl)}">`);
     tags.push(`<meta name="twitter:image" content="${escape(imageUrl)}">`);
@@ -172,7 +170,6 @@ function buildOgMetaTags(
   return `<!-- Open Graph Meta Tags -->\n${tags.join("\n")}`;
 }
 
-// Helper to log campaign events
 async function logEvent(
   supabase: any,
   campaignId: string,
@@ -190,6 +187,14 @@ async function logEvent(
     batch_number: batchNumber ?? null,
     pages_in_batch: pagesInBatch ?? null,
   });
+}
+
+// Update GenerationJob progress (realtime-enabled table)
+async function updateJob(supabase: any, jobId: string, updates: Record<string, any>) {
+  await supabase.from("generation_jobs").update({
+    ...updates,
+    updated_at: new Date().toISOString(),
+  }).eq("id", jobId);
 }
 
 const BATCH_SIZE = 50;
@@ -233,19 +238,40 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Handle pause/resume actions
+    // Handle pause action — update both campaign and active job
     if (action === "pause") {
       await supabase.from("campaigns").update({ is_paused: true }).eq("id", campaign_id).eq("user_id", user.id);
+      // Pause active job
+      const { data: activeJob } = await supabase
+        .from("generation_jobs")
+        .select("id")
+        .eq("campaign_id", campaign_id)
+        .eq("status", "running")
+        .maybeSingle();
+      if (activeJob) {
+        await updateJob(supabase, activeJob.id, { status: "paused" });
+      }
       await logEvent(supabase, campaign_id, user.id, "paused", "Generation paused by user");
       return new Response(JSON.stringify({ success: true, action: "paused" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Handle resume — update campaign and resume paused job
+    let existingJobId: string | null = null;
     if (action === "resume") {
       await supabase.from("campaigns").update({ is_paused: false, status: "processing" }).eq("id", campaign_id).eq("user_id", user.id);
+      const { data: pausedJob } = await supabase
+        .from("generation_jobs")
+        .select("id")
+        .eq("campaign_id", campaign_id)
+        .eq("status", "paused")
+        .maybeSingle();
+      if (pausedJob) {
+        existingJobId = pausedJob.id;
+        await updateJob(supabase, pausedJob.id, { status: "running" });
+      }
       await logEvent(supabase, campaign_id, user.id, "resumed", "Generation resumed by user");
-      // Continue processing below — fall through to batch logic
     }
 
     // Fetch campaign
@@ -278,7 +304,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Determine start offset — for resume, continue from where we left off
+    // Load custom mappings from the mappings table
+    const { data: customMappings } = await supabase
+      .from("mappings")
+      .select("source_column, target_field, transform_expression")
+      .eq("campaign_id", campaign_id)
+      .order("sort_order", { ascending: true });
+
     const alreadyProcessed = campaign.processed_rows || 0;
     const startIndex = action === "resume" ? alreadyProcessed : 0;
     const remainingRows = csvRows.slice(startIndex);
@@ -337,9 +369,41 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Mark as processing
+    // Create or reuse GenerationJob
+    let jobId = existingJobId;
     const isFirstRun = action !== "resume";
+
     if (isFirstRun) {
+      // Create a new generation job
+      const { data: newJob, error: jobErr } = await supabase
+        .from("generation_jobs")
+        .insert({
+          campaign_id,
+          workspace_id: campaign.workspace_id,
+          user_id: user.id,
+          status: "running",
+          total_rows: csvRows.length,
+          processed_rows: 0,
+          success_count: 0,
+          error_count: 0,
+          current_batch: 0,
+          batch_size: BATCH_SIZE,
+          started_at: new Date().toISOString(),
+          config: {
+            has_ai_blocks: hasAiBlocks,
+            ai_blocks_count: aiBlocks.length,
+            campaign_type: campaign.campaign_type || "seo",
+          },
+        })
+        .select("id")
+        .single();
+
+      if (jobErr) {
+        console.error("Failed to create generation job:", jobErr);
+      } else {
+        jobId = newJob.id;
+      }
+
       await supabase.from("campaigns").update({
         status: "processing",
         processed_rows: 0,
@@ -350,13 +414,14 @@ Deno.serve(async (req) => {
         generation_completed_at: null,
       }).eq("id", campaign_id);
 
-      await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate.`);
+      await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate. Job: ${jobId}`);
     }
 
     // Process in batches
     const totalBatches = Math.ceil(remainingRows.length / BATCH_SIZE);
     let processedCount = alreadyProcessed;
     let failedCount = campaign.failed_rows || 0;
+    let successCount = alreadyProcessed - (campaign.failed_rows || 0);
     let aiGenerationsUsed = 0;
     let batchesCompleted = campaign.current_batch || 0;
 
@@ -369,8 +434,9 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (freshCampaign?.is_paused) {
-        await logEvent(supabase, campaign_id, user.id, "paused_during_batch", `Paused after batch ${batchesCompleted}. ${processedCount}/${csvRows.length} pages processed.`, batchesCompleted);
-        
+        await logEvent(supabase, campaign_id, user.id, "paused_during_batch",
+          `Paused after batch ${batchesCompleted}. ${processedCount}/${csvRows.length} pages processed.`, batchesCompleted);
+
         await supabase.from("campaigns").update({
           status: "queued",
           processed_rows: processedCount,
@@ -378,13 +444,24 @@ Deno.serve(async (req) => {
           current_batch: batchesCompleted,
         }).eq("id", campaign_id);
 
+        if (jobId) {
+          await updateJob(supabase, jobId, {
+            status: "paused",
+            processed_rows: processedCount,
+            success_count: successCount,
+            error_count: failedCount,
+            current_batch: batchesCompleted,
+          });
+        }
+
         return new Response(JSON.stringify({
           success: true,
           paused: true,
-          generated: processedCount - failedCount,
+          generated: successCount,
           failed: failedCount,
           total: csvRows.length,
           remaining: csvRows.length - processedCount,
+          job_id: jobId,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -394,13 +471,36 @@ Deno.serve(async (req) => {
       const batchRows = remainingRows.slice(batchStart, batchStart + BATCH_SIZE);
       batchesCompleted++;
 
-      await logEvent(supabase, campaign_id, user.id, "batch_started", `Batch ${batchesCompleted} started (${batchRows.length} pages)`, batchesCompleted, batchRows.length);
+      await logEvent(supabase, campaign_id, user.id, "batch_started",
+        `Batch ${batchesCompleted} started (${batchRows.length} pages)`, batchesCompleted, batchRows.length);
 
       const batchPages: any[] = [];
 
       for (const row of batchRows) {
         try {
           let pageContent = templateContent;
+
+          // Apply custom mappings first if available, then fall back to direct replacement
+          if (customMappings && customMappings.length > 0) {
+            for (const mapping of customMappings) {
+              const value = row[mapping.source_column] || "";
+              let finalValue = value;
+              // Apply transform expression if present
+              if (mapping.transform_expression) {
+                try {
+                  if (mapping.transform_expression === "uppercase") finalValue = value.toUpperCase();
+                  else if (mapping.transform_expression === "lowercase") finalValue = value.toLowerCase();
+                  else if (mapping.transform_expression === "capitalize") finalValue = value.charAt(0).toUpperCase() + value.slice(1);
+                  else if (mapping.transform_expression.startsWith("prefix:")) finalValue = mapping.transform_expression.slice(7) + value;
+                  else if (mapping.transform_expression.startsWith("suffix:")) finalValue = value + mapping.transform_expression.slice(7);
+                } catch { /* use original value */ }
+              }
+              const regex = new RegExp(`\\{${mapping.target_field}\\}`, "gi");
+              pageContent = pageContent.replace(regex, finalValue);
+            }
+          }
+
+          // Standard variable replacement for any remaining placeholders
           for (const [key, value] of Object.entries(row)) {
             const regex = new RegExp(`\\{${key}\\}`, "gi");
             pageContent = pageContent.replace(regex, value || "");
@@ -443,17 +543,14 @@ Deno.serve(async (req) => {
             } catch { /* keep fallback */ }
           }
 
-          // Inject Open Graph meta tags into page content
-          const ogTags = buildOgMetaTags(
-            seoData.seo_title,
-            seoData.seo_description
-          );
+          const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description);
           pageContent = ogTags + "\n" + pageContent;
 
           batchPages.push({
             campaign_id,
             user_id: user.id,
             website_id: campaign.website_id,
+            workspace_id: campaign.workspace_id,
             title: pageTitle,
             slug,
             content: pageContent,
@@ -465,11 +562,13 @@ Deno.serve(async (req) => {
           });
 
           processedCount++;
+          successCount++;
         } catch (err: any) {
           batchPages.push({
             campaign_id,
             user_id: user.id,
             website_id: campaign.website_id,
+            workspace_id: campaign.workspace_id,
             title: `Failed Page ${processedCount + 1}`,
             slug: `failed-page-${processedCount + 1}`,
             content: "",
@@ -488,7 +587,8 @@ Deno.serve(async (req) => {
       if (batchPages.length > 0) {
         const { error: insertError } = await supabase.from("generated_pages").insert(batchPages);
         if (insertError) {
-          await logEvent(supabase, campaign_id, user.id, "batch_error", `Batch ${batchesCompleted} insert failed: ${insertError.message}`, batchesCompleted);
+          await logEvent(supabase, campaign_id, user.id, "batch_error",
+            `Batch ${batchesCompleted} insert failed: ${insertError.message}`, batchesCompleted);
           failedCount += batchPages.length;
         }
       }
@@ -498,12 +598,22 @@ Deno.serve(async (req) => {
         `Batch ${batchesCompleted} done: ${batchPages.length - batchFailed} ok, ${batchFailed} failed`,
         batchesCompleted, batchPages.length);
 
-      // Update campaign progress after each batch (realtime)
+      // Update campaign progress
       await supabase.from("campaigns").update({
         processed_rows: processedCount,
         failed_rows: failedCount,
         current_batch: batchesCompleted,
       }).eq("id", campaign_id);
+
+      // Update GenerationJob progress (realtime)
+      if (jobId) {
+        await updateJob(supabase, jobId, {
+          processed_rows: processedCount,
+          success_count: successCount,
+          error_count: failedCount,
+          current_batch: batchesCompleted,
+        });
+      }
     }
 
     // Update AI usage
@@ -531,8 +641,20 @@ Deno.serve(async (req) => {
       is_paused: false,
     }).eq("id", campaign_id);
 
+    // Finalize GenerationJob
+    if (jobId) {
+      await updateJob(supabase, jobId, {
+        status: finalStatus === "failed" ? "failed" : "completed",
+        processed_rows: processedCount,
+        success_count: successCount,
+        error_count: failedCount,
+        current_batch: batchesCompleted,
+        completed_at: new Date().toISOString(),
+      });
+    }
+
     await logEvent(supabase, campaign_id, user.id, "completed",
-      `Generation ${finalStatus}. ${processedCount - failedCount} pages generated, ${failedCount} failed.`);
+      `Generation ${finalStatus}. ${successCount} pages generated, ${failedCount} failed. Job: ${jobId}`);
 
     // Auto-generate sitemap if campaign has a website
     if (campaign.website_id) {
@@ -550,7 +672,6 @@ Deno.serve(async (req) => {
         console.error("Auto-sitemap generation failed:", e);
       }
 
-      // Auto-submit to Google Indexing if configured
       try {
         const { data: webConfig } = await supabase
           .from("websites")
@@ -576,10 +697,11 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      generated: processedCount - failedCount,
+      generated: successCount,
       failed: failedCount,
       total: csvRows.length,
       ai_generations_used: aiGenerationsUsed,
+      job_id: jobId,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
