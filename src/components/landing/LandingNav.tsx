@@ -3,13 +3,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
-];
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -17,6 +12,14 @@ export function LandingNav() {
   const [isDark, setIsDark] = useState(() =>
     document.documentElement.classList.contains("dark")
   );
+  const { t } = useLanguage();
+
+  const navLinks = [
+    { label: t("nav.features"), href: "#features" },
+    { label: t("nav.howItWorks"), href: "#how-it-works" },
+    { label: t("nav.pricing"), href: "#pricing" },
+    { label: t("nav.faq"), href: "#faq" },
+  ];
 
   const toggleDarkMode = () => {
     const next = !isDark;
@@ -64,6 +67,11 @@ export function LandingNav() {
           </nav>
 
           <div className="hidden md:flex items-center gap-1.5">
+            <LanguageSwitcher
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg"
+            />
             <Button
               variant="ghost"
               size="icon"
@@ -73,14 +81,14 @@ export function LandingNav() {
               {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
             </Button>
             <Button variant="ghost" size="sm" className="text-xs h-7 px-3 rounded-lg font-medium" asChild>
-              <Link to="/auth">Log in</Link>
+              <Link to="/auth">{t("nav.login")}</Link>
             </Button>
             <Button
               size="sm"
               className="bg-foreground text-background hover:bg-foreground/90 text-xs h-7 px-4 rounded-lg font-semibold"
               asChild
             >
-              <Link to="/auth">Get Started</Link>
+              <Link to="/auth">{t("nav.getStarted")}</Link>
             </Button>
           </div>
 
@@ -115,15 +123,16 @@ export function LandingNav() {
                   </a>
                 ))}
                 <div className="pt-2 flex flex-col gap-1.5 border-t border-border/20 mt-2">
+                  <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-9 border-border/30" />
                   <Button variant="outline" size="sm" onClick={toggleDarkMode} className="justify-start gap-2 rounded-lg h-9 border-border/30">
                     {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-                    {isDark ? "Light mode" : "Dark mode"}
+                    {isDark ? t("nav.lightMode") : t("nav.darkMode")}
                   </Button>
                   <Button variant="outline" size="sm" className="rounded-lg h-9" asChild>
-                    <Link to="/auth">Log in</Link>
+                    <Link to="/auth">{t("nav.login")}</Link>
                   </Button>
                   <Button size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-lg h-9 font-semibold" asChild>
-                    <Link to="/auth">Get Started</Link>
+                    <Link to="/auth">{t("nav.getStarted")}</Link>
                   </Button>
                 </div>
               </div>

@@ -2,22 +2,24 @@ import { ScrollReveal } from "./ScrollReveal";
 import { Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export function VideoSection() {
   const [playing, setPlaying] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <section id="demo-video" className="py-20 md:py-28 relative overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-12">
           <span className="inline-block text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-4 bg-primary/5 border border-primary/10 rounded-full px-4 py-1">
-            Demo
+            {t("video.badge")}
           </span>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em]">
-            See it in action
+            {t("video.title")}
           </h2>
           <p className="mt-3 text-sm text-muted-foreground">
-            Watch how teams generate thousands of pages in minutes.
+            {t("video.description")}
           </p>
         </ScrollReveal>
 
@@ -45,7 +47,7 @@ export function VideoSection() {
                     >
                       <Play className="h-6 w-6 ml-1 fill-current" />
                     </motion.div>
-                    <p className="text-sm font-medium text-foreground/80">Watch the 2-minute demo</p>
+                    <p className="text-sm font-medium text-foreground/80">{t("video.watchDemo")}</p>
                   </div>
                 </div>
               )}
@@ -53,18 +55,17 @@ export function VideoSection() {
           </div>
         </ScrollReveal>
 
-        {/* Stats */}
         <ScrollReveal delay={0.2}>
           <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
             {[
-              { value: "2.4M+", label: "Pages generated" },
-              { value: "340%", label: "Avg. traffic boost" },
-              { value: "< 2min", label: "Setup time" },
-              { value: "99.9%", label: "Uptime SLA" },
+              { value: "2.4M+", labelKey: "video.pagesGenerated" },
+              { value: "340%", labelKey: "video.avgTrafficBoost" },
+              { value: "< 2min", labelKey: "video.setupTime" },
+              { value: "99.9%", labelKey: "video.uptimeSLA" },
             ].map((stat) => (
-              <div key={stat.label} className="text-center py-5 rounded-2xl border border-border/20 bg-card/50">
+              <div key={stat.labelKey} className="text-center py-5 rounded-2xl border border-border/20 bg-card/50">
                 <p className="text-2xl md:text-3xl font-extrabold tracking-tight">{stat.value}</p>
-                <p className="text-[11px] text-muted-foreground/60 mt-1 uppercase tracking-wider font-medium">{stat.label}</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-1 uppercase tracking-wider font-medium">{t(stat.labelKey)}</p>
               </div>
             ))}
           </div>

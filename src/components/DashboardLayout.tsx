@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -23,6 +25,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -39,19 +42,23 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar onLogout={onLogout} />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top Header */}
           <header className="h-16 flex items-center justify-between border-b border-border bg-card px-4 lg:px-6 shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="lg:hidden" />
               <div className="hidden md:flex relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search..."
+                  placeholder={t("dashboard.search")}
                   className="pl-9 w-64 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/30 rounded-lg h-9"
                 />
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageSwitcher
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+              />
               <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground">
                 <Bell className="h-4 w-4" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
@@ -70,11 +77,11 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>Settings</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/billing")}>Billing</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/settings")}>{t("dashboard.settings")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/billing")}>{t("dashboard.billing")}</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onLogout} className="text-destructive">
-                    Log out
+                    {t("dashboard.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
