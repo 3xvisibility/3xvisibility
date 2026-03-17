@@ -82,9 +82,10 @@ export default function AutoStoreGeneratorPage() {
 
   // Fetch websites for platform selection
   const { data: websites = [] } = useQuery({
-    queryKey: ["websites"],
+    queryKey: ["websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("websites").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("websites").select("*").eq("workspace_id", wsId!).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
