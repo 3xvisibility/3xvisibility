@@ -415,6 +415,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Check if campaign is scheduled for later
+    if (campaign.scheduled_at && !action) {
+      const scheduledTime = new Date(campaign.scheduled_at).getTime();
+      if (scheduledTime > Date.now()) {
+        return new Response(JSON.stringify({
+          error: `Campaign is scheduled for ${campaign.scheduled_at}. It cannot be run before the scheduled time.`,
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Try loading CSV from dedicated storage table first, fall back to inline csv_data
     let csvRows: Record<string, string>[] = [];
     const { data: csvFile } = await supabase
