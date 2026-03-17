@@ -30,14 +30,31 @@ export default function TemplatesPage() {
   const [aiOpen, setAiOpen] = useState(false);
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
+  const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
+  const [activeEditorTab, setActiveEditorTab] = useState<string>("visual");
   const [aiPrompt, setAiPrompt] = useState("");
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
   const detectedVars = content.match(/\{[^}]+\}/g) || [];
+
+  // Sync blocks → HTML when in visual mode
+  const handleBlocksChange = useCallback((newBlocks: TemplateBlock[]) => {
+    setBlocks(newBlocks);
+    setContent(blocksToHtml(newBlocks));
+  }, []);
+
+  // Sync HTML → blocks when switching to visual tab
+  const handleTabChange = useCallback((tab: string) => {
+    if (tab === "visual" && activeEditorTab !== "visual") {
+      setBlocks(htmlToBlocks(content));
+    }
+    setActiveEditorTab(tab);
+  }, [activeEditorTab, content]);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates", wsId],
