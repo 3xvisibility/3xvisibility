@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useJobNotifications } from "@/hooks/use-job-notifications";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,6 +19,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
+import { CommandPalette } from "@/components/CommandPalette";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -28,10 +28,11 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const [email, setEmail] = useState("");
+  const [cmdOpen, setCmdOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
   useJobNotifications();
-  useKeyboardShortcuts();
+  useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -51,13 +52,16 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
           <header className="h-16 flex items-center justify-between border-b border-border bg-card px-4 lg:px-6 shrink-0 sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="lg:hidden" />
-              <div className="hidden md:flex relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t("dashboard.search")}
-                  className="pl-9 w-64 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/30 rounded-lg h-9"
-                />
-              </div>
+              <button
+                onClick={() => setCmdOpen(true)}
+                className="hidden md:flex items-center gap-2 h-9 w-64 rounded-lg bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <Search className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{t("dashboard.search")}</span>
+                <kbd className="text-[10px] font-mono border border-border rounded px-1.5 py-0.5 bg-background text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </button>
             </div>
             <div className="flex items-center gap-2">
               <LanguageSwitcher
@@ -96,6 +100,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
             </div>
           </main>
           <KeyboardShortcutsDialog />
+          <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
         </div>
       </div>
     </SidebarProvider>

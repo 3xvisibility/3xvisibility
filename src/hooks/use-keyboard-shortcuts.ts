@@ -20,7 +20,7 @@ const NAV_ROUTES = [
   "/workspace-settings",
 ];
 
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts(onOpenCommandPalette?: () => void) {
   const navigate = useNavigate();
   const location = useLocation();
   const { toggleSidebar } = useSidebar();
@@ -30,22 +30,19 @@ export function useKeyboardShortcuts() {
     function handler(e: KeyboardEvent) {
       const target = e.target as HTMLElement;
       const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
-      if (isInput) return;
 
       const mod = e.metaKey || e.ctrlKey;
 
-      // Cmd/Ctrl+K → focus search
+      // Cmd/Ctrl+K → open command palette (works even in inputs)
       if (mod && e.key === "k") {
         e.preventDefault();
-        const search = document.querySelector<HTMLInputElement>('input[placeholder]');
-        search?.focus();
+        onOpenCommandPalette?.();
         return;
       }
 
-      // Cmd/Ctrl+B → toggle sidebar (already handled by sidebar, but ensure consistency)
-      // sidebar.tsx already handles this
+      if (isInput) return;
 
-      // Cmd/Ctrl+Shift+C → navigate to campaigns (create shortcut)
+      // Cmd/Ctrl+Shift+C → navigate to campaigns
       if (mod && e.shiftKey && e.key === "C") {
         e.preventDefault();
         navigate("/campaigns");
@@ -100,13 +97,12 @@ export function useKeyboardShortcuts() {
       // ? → show shortcuts help
       if (e.key === "?" && !mod) {
         e.preventDefault();
-        const evt = new CustomEvent("show-shortcuts-help");
-        window.dispatchEvent(evt);
+        window.dispatchEvent(new CustomEvent("show-shortcuts-help"));
         return;
       }
     }
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [navigate, location.pathname, toggleSidebar, toast]);
+  }, [navigate, location.pathname, toggleSidebar, toast, onOpenCommandPalette]);
 }
