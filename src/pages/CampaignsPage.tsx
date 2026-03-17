@@ -928,6 +928,7 @@ function CampaignActions({
   deleteMutation,
   setLinkDialogCampaign,
   setLogDialogCampaign,
+  setJobDialogCampaign,
 }: {
   campaign: any;
   isPaused: boolean;
@@ -935,6 +936,7 @@ function CampaignActions({
   deleteMutation: any;
   setLinkDialogCampaign: (c: any) => void;
   setLogDialogCampaign: (id: string) => void;
+  setJobDialogCampaign: (c: any) => void;
 }) {
   const isProcessing = c.status === "processing";
 
