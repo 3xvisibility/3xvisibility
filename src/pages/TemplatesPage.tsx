@@ -50,12 +50,14 @@ export default function TemplatesPage() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
       const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
       const { error } = await supabase.from("templates").insert({
         name,
         content,
         variables,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },
