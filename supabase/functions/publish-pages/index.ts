@@ -265,6 +265,91 @@ async function publishToPrestaShop(
   };
 }
 
+async function publishProductToPrestaShop(
+  siteUrl: string,
+  credentials: WebsiteCredentials,
+  title: string,
+  content: string,
+  slug: string,
+  seo: SeoData,
+  extraData?: Record<string, any>
+): Promise<{ external_id: string; external_url: string }> {
+  const baseUrl = siteUrl.replace(/\/$/, "");
+  const apiKey = credentials.api_key;
+  if (!apiKey) throw new Error("PrestaShop API key not configured");
+
+  const auth = btoa(`${apiKey}:`);
+  const linkRewrite = slugify(slug || title);
+  const metaTitle = seo.seo_title || title;
+  const metaDescription = seo.seo_description || "";
+  const price = extraData?.price || "0.000000";
+
+  let langId = "1";
+  try {
+    const langResp = await fetch(`${baseUrl}/api/languages?output_format=JSON&filter[active]=1&limit=1`, {
+      headers: { Authorization: `Basic ${auth}` },
+    });
+    if (langResp.ok) {
+      const langData = await langResp.json();
+      if (langData.languages?.length > 0) {
+        langId = String(langData.languages[0].id);
+      }
+    }
+  } catch { /* use default lang */ }
+
+  const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+  <product>
+    <price>${price}</price>
+    <active>1</active>
+    <state>1</state>
+    <id_tax_rules_group>1</id_tax_rules_group>
+    <id_category_default>2</id_category_default>
+    <meta_title>
+      <language id="${langId}"><![CDATA[${metaTitle}]]></language>
+    </meta_title>
+    <meta_description>
+      <language id="${langId}"><![CDATA[${metaDescription}]]></language>
+    </meta_description>
+    <name>
+      <language id="${langId}"><![CDATA[${title}]]></language>
+    </name>
+    <description>
+      <language id="${langId}"><![CDATA[${content}]]></language>
+    </description>
+    <description_short>
+      <language id="${langId}"><![CDATA[${metaDescription}]]></language>
+    </description_short>
+    <link_rewrite>
+      <language id="${langId}"><![CDATA[${linkRewrite}]]></language>
+    </link_rewrite>
+  </product>
+</prestashop>`;
+
+  const response = await fetch(`${baseUrl}/api/products`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/xml",
+    },
+    body: xmlPayload,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`PrestaShop Product API error [${response.status}]: ${errorBody}`);
+  }
+
+  const responseText = await response.text();
+  const idMatch = responseText.match(/<id>(?:<!\[CDATA\[)?(\d+)(?:\]\]>)?<\/id>/);
+  const productId = idMatch ? idMatch[1] : "unknown";
+
+  return {
+    external_id: productId,
+    external_url: `${baseUrl}/${productId}-${linkRewrite}.html`,
+  };
+}
+
 async function publishToWooCommerce(
   siteUrl: string,
   credentials: WebsiteCredentials,
