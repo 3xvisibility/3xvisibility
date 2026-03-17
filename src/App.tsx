@@ -23,6 +23,7 @@ import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import IndexingPage from "./pages/IndexingPage";
+import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
