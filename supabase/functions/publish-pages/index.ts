@@ -10,6 +10,7 @@ interface WebsiteCredentials {
   username?: string;
   app_password?: string;
   admin_api_token?: string;
+  api_key?: string; // PrestaShop
 }
 
 interface SeoData {
@@ -114,6 +115,98 @@ async function publishToShopify(
   return {
     external_id: String(data.page.id),
     external_url: `https://${shopDomain}/pages/${data.page.handle}`,
+  };
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function publishToPrestaShop(
+  siteUrl: string,
+  credentials: WebsiteCredentials,
+  title: string,
+  content: string,
+  slug: string,
+  seo: SeoData
+): Promise<{ external_id: string; external_url: string }> {
+  const baseUrl = siteUrl.replace(/\/$/, "");
+  const apiKey = credentials.api_key;
+  if (!apiKey) throw new Error("PrestaShop API key not configured");
+
+  const auth = btoa(`${apiKey}:`);
+  const linkRewrite = slugify(slug || title);
+  const metaTitle = seo.seo_title || title;
+  const metaDescription = seo.seo_description || "";
+
+  // PrestaShop Webservice XML for CMS page creation
+  // We need to first get the default language ID
+  let langId = "1"; // Default
+  try {
+    const langResp = await fetch(`${baseUrl}/api/languages?output_format=JSON&filter[active]=1&limit=1`, {
+      headers: { Authorization: `Basic ${auth}` },
+    });
+    if (langResp.ok) {
+      const langData = await langResp.json();
+      if (langData.languages?.length > 0) {
+        langId = String(langData.languages[0].id);
+      }
+    }
+  } catch { /* use default lang */ }
+
+  // Get the first CMS category (usually id=1 "Home")
+  let cmsCategoryId = "1";
+
+  // Build XML payload for PrestaShop Webservice
+  const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+  <cms>
+    <id_cms_category>${cmsCategoryId}</id_cms_category>
+    <active>1</active>
+    <indexation>1</indexation>
+    <meta_title>
+      <language id="${langId}"><![CDATA[${metaTitle}]]></language>
+    </meta_title>
+    <meta_description>
+      <language id="${langId}"><![CDATA[${metaDescription}]]></language>
+    </meta_description>
+    <meta_keywords>
+      <language id="${langId}"><![CDATA[${(seo.seo_keywords || []).join(", ")}]]></language>
+    </meta_keywords>
+    <link_rewrite>
+      <language id="${langId}"><![CDATA[${linkRewrite}]]></language>
+    </link_rewrite>
+    <content>
+      <language id="${langId}"><![CDATA[${content}]]></language>
+    </content>
+  </cms>
+</prestashop>`;
+
+  const response = await fetch(`${baseUrl}/api/cms`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/xml",
+    },
+    body: xmlPayload,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`PrestaShop API error [${response.status}]: ${errorBody}`);
+  }
+
+  const responseText = await response.text();
+  // Extract ID from response XML
+  const idMatch = responseText.match(/<id>(?:<!\[CDATA\[)?(\d+)(?:\]\]>)?<\/id>/);
+  const pageId = idMatch ? idMatch[1] : "unknown";
+
+  return {
+    external_id: pageId,
+    external_url: `${baseUrl}/content/${pageId}-${linkRewrite}`,
   };
 }
 
@@ -228,6 +321,15 @@ Deno.serve(async (req) => {
             website.credentials,
             page.title,
             page.content,
+            seo
+          );
+        } else if (website.type === "prestashop") {
+          result = await publishToPrestaShop(
+            website.url,
+            website.credentials,
+            page.title,
+            page.content,
+            page.slug,
             seo
           );
         } else {

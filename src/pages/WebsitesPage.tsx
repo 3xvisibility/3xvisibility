@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, ExternalLink, Loader2 } from "lucide-react";
+import { Plus, Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, ExternalLink, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
@@ -24,6 +24,7 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
+  const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [sitemapPreview, setSitemapPreview] = useState<{ websiteId: string; content: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -60,7 +61,9 @@ export default function WebsitesPage() {
       if (!user) throw new Error("Not authenticated");
       const credentials = siteType === "wordpress"
         ? { username, app_password: appPassword }
-        : { admin_api_token: shopifyToken };
+        : siteType === "shopify"
+        ? { admin_api_token: shopifyToken }
+        : { api_key: prestashopApiKey };
       const { error } = await supabase.from("websites").insert({
         name: siteName || new URL(siteUrl).hostname,
         url: siteUrl,
@@ -133,6 +136,28 @@ export default function WebsitesPage() {
     setSitemapPreview({ websiteId: site.id, content: (sitemap as any).content });
   };
 
+  const testConnectionMutation = useMutation({
+    mutationFn: async () => {
+      const credentials = siteType === "wordpress"
+        ? { username, app_password: appPassword }
+        : siteType === "shopify"
+        ? { admin_api_token: shopifyToken }
+        : { api_key: prestashopApiKey };
+      const { data, error } = await supabase.functions.invoke("test-connection", {
+        body: { url: siteUrl, type: siteType, credentials },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ title: "Connection successful", description: data.message });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Connection failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setOpen(false);
     setSiteUrl("");
@@ -140,6 +165,7 @@ export default function WebsitesPage() {
     setUsername("");
     setAppPassword("");
     setShopifyToken("");
+    setPrestashopApiKey("");
     setSiteType("");
   };
 
@@ -168,6 +194,7 @@ export default function WebsitesPage() {
                   <SelectContent>
                     <SelectItem value="wordpress">WordPress</SelectItem>
                     <SelectItem value="shopify">Shopify</SelectItem>
+                    <SelectItem value="prestashop">PrestaShop</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -197,8 +224,28 @@ export default function WebsitesPage() {
                   <Input id="shopify-token" type="password" placeholder="shpat_xxxxx" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} />
                 </div>
               )}
+              {siteType === "prestashop" && (
+                <div>
+                  <Label htmlFor="ps-key">Webservice API Key</Label>
+                  <Input id="ps-key" type="password" placeholder="PrestaShop API key" value={prestashopApiKey} onChange={(e) => setPrestashopApiKey(e.target.value)} />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Found in PrestaShop Back Office → Advanced Parameters → Webservice
+                  </p>
+                </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => testConnectionMutation.mutate()}
+                  disabled={!siteUrl || !siteType || testConnectionMutation.isPending}
+                >
+                  {testConnectionMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
+                  ) : (
+                    <><Zap className="h-4 w-4 mr-1" /> Test Connection</>
+                  )}
+                </Button>
                 <Button onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
                   {createMutation.isPending ? "Connecting..." : "Connect"}
                 </Button>

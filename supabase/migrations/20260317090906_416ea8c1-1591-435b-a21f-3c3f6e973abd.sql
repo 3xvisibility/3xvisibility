@@ -1,0 +1,1 @@
+ALTER TYPE public.website_type ADD VALUE IF NOT EXISTS 'prestashop';
