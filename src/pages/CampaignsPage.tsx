@@ -786,6 +786,7 @@ export default function CampaignsPage() {
             const startedAt = (c as any).generation_started_at;
             const completedAt = (c as any).generation_completed_at;
             const config = statusConfig[c.status] || statusConfig.draft;
+            const latestJob = getLatestJob(c.id);
 
             return (
               <Card key={c.id} className="border-0 shadow-surface card-interactive overflow-hidden">
