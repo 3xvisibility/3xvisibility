@@ -606,7 +606,7 @@ export type Database = {
       indexing_status: "pending" | "submitted" | "indexed" | "failed"
       page_status: "pending" | "published" | "failed"
       website_status: "connected" | "error" | "disconnected"
-      website_type: "wordpress" | "shopify"
+      website_type: "wordpress" | "shopify" | "prestashop"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -739,7 +739,7 @@ export const Constants = {
       indexing_status: ["pending", "submitted", "indexed", "failed"],
       page_status: ["pending", "published", "failed"],
       website_status: ["connected", "error", "disconnected"],
-      website_type: ["wordpress", "shopify"],
+      website_type: ["wordpress", "shopify", "prestashop"],
     },
   },
 } as const
