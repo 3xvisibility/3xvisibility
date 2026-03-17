@@ -90,9 +90,9 @@ export default function GeneratedPagesPage() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: async (pageIds: string[]) => {
+    mutationFn: async ({ pageIds, type }: { pageIds: string[]; type: "page" | "product" }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: pageIds },
+        body: { page_ids: pageIds, publish_type: type },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
