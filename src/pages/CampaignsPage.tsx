@@ -66,6 +66,7 @@ export default function CampaignsPage() {
   const [replaceCsvCampaignId, setReplaceCsvCampaignId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDraggingCsv, setIsDraggingCsv] = useState(false);
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
   // Generation settings
@@ -493,9 +494,7 @@ export default function CampaignsPage() {
     },
   });
 
-  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processCsvFile = (file: File) => {
     setCsvFile(file);
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -504,7 +503,6 @@ export default function CampaignsPage() {
       const lines = text.split("\n").filter((l) => l.trim());
       if (lines.length === 0) return;
 
-      // Auto-detect delimiter: try tab, semicolon, pipe, then comma
       const firstLine = lines[0];
       let delimiter = ",";
       if (firstLine.includes("\t")) delimiter = "\t";
@@ -520,6 +518,23 @@ export default function CampaignsPage() {
       setCsvData(rows);
     };
     reader.readAsText(file, "utf-8");
+  };
+
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processCsvFile(file);
+  };
+
+  const handleCsvDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingCsv(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.name.endsWith(".csv") || file.type === "text/csv")) {
+      processCsvFile(file);
+    } else {
+      toast({ title: "Invalid file", description: "Please drop a .csv file.", variant: "destructive" });
+    }
   };
 
   const resetForm = () => {
@@ -762,12 +777,23 @@ export default function CampaignsPage() {
                   {step === 3 && (
                     <div>
                       <Label className="text-sm font-semibold mb-2.5 block">CSV File</Label>
-                      <div className="border-2 border-dashed rounded-2xl p-8 text-center hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer">
+                      <div
+                        className={cn(
+                          "border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer",
+                          isDraggingCsv
+                            ? "border-primary bg-primary/10 scale-[1.01]"
+                            : "hover:border-primary/50 hover:bg-primary/5"
+                        )}
+                        onDragOver={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
+                        onDragEnter={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
+                        onDragLeave={() => setIsDraggingCsv(false)}
+                        onDrop={handleCsvDrop}
+                      >
                         <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
                         <label htmlFor="csv-upload" className="cursor-pointer">
-                          <Upload className="mx-auto h-10 w-10 text-muted-foreground/50 mb-3" />
+                          <Upload className={cn("mx-auto h-10 w-10 mb-3 transition-colors", isDraggingCsv ? "text-primary" : "text-muted-foreground/50")} />
                           <p className="text-sm font-medium">
-                            {csvFile ? csvFile.name : "Drop CSV file or click to upload"}
+                            {csvFile ? csvFile.name : isDraggingCsv ? "Drop your CSV here" : "Drop CSV file or click to upload"}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {csvFile
