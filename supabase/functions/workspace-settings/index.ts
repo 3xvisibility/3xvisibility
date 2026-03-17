@@ -6,6 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Audit log helper
+async function auditLog(client: any, wsId: string, userId: string, action: string, entityType: string, entityId?: string, details?: any) {
+  try {
+    await client.from("audit_logs").insert({
+      workspace_id: wsId,
+      user_id: userId,
+      action,
+      entity_type: entityType,
+      entity_id: entityId || null,
+      details: details || {},
+    });
+  } catch (e) {
+    console.error("Audit log failed:", e);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
