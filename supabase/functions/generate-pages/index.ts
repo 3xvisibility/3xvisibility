@@ -500,6 +500,15 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Inject geo_settings as template variables (e.g. {city}, {region}, {country})
+          const geoSettings = (campaign.geo_settings || {}) as Record<string, string>;
+          for (const [geoKey, geoValue] of Object.entries(geoSettings)) {
+            if (typeof geoValue === "string") {
+              const geoRegex = new RegExp(`\\{${geoKey}\\}`, "gi");
+              pageContent = pageContent.replace(geoRegex, geoValue);
+            }
+          }
+
           // Standard variable replacement for any remaining placeholders
           for (const [key, value] of Object.entries(row)) {
             const regex = new RegExp(`\\{${key}\\}`, "gi");
@@ -530,6 +539,21 @@ Deno.serve(async (req) => {
 
           const slug = slugify(pageTitle) || `page-${processedCount + 1}`;
 
+          // Build UTM query string from campaign utm_settings
+          const utmSettings = (campaign.utm_settings || {}) as Record<string, string>;
+          const utmParams: string[] = [];
+          for (const [utmKey, utmVal] of Object.entries(utmSettings)) {
+            if (typeof utmVal === "string" && utmVal.trim()) {
+              // Replace any {variable} placeholders in UTM values with row data
+              let resolvedVal = utmVal;
+              for (const [rk, rv] of Object.entries(row)) {
+                resolvedVal = resolvedVal.replace(new RegExp(`\\{${rk}\\}`, "gi"), rv || "");
+              }
+              utmParams.push(`${encodeURIComponent(utmKey)}=${encodeURIComponent(resolvedVal)}`);
+            }
+          }
+          const utmQueryString = utmParams.length > 0 ? `?${utmParams.join("&")}` : "";
+
           let seoData = {
             seo_title: pageTitle.slice(0, 60),
             seo_description: pageContent.replace(/<[^>]*>/g, "").slice(0, 160),
@@ -552,7 +576,7 @@ Deno.serve(async (req) => {
             website_id: campaign.website_id,
             workspace_id: campaign.workspace_id,
             title: pageTitle,
-            slug,
+            slug: slug + utmQueryString,
             content: pageContent,
             status: "pending",
             error_message: null,
