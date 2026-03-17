@@ -272,27 +272,30 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
+      label: "Connect a Site",
+      description: "Add WordPress, Shopify, or PrestaShop",
+      icon: Globe,
+      href: "/websites",
+      gradient: "bg-gradient-to-br from-success to-secondary",
+    },
+    {
+      label: "Create Template",
+      description: "Build a reusable page template",
+      icon: FileText,
+      href: "/templates",
+      gradient: "bg-gradient-to-br from-secondary to-info",
+    },
+    {
       label: "Create Campaign",
-      description: "Start a new page generation campaign",
+      description: "Start your first page generation",
       icon: Plus,
       href: "/campaigns",
       gradient: "bg-gradient-primary",
     },
-    {
-      label: "Upload CSV",
-      description: "Import data for bulk generation",
-      icon: Upload,
-      href: "/campaigns",
-      gradient: "bg-gradient-to-br from-secondary to-info",
-    },
-    {
-      label: "Generate Pages",
-      description: "Generate content from templates",
-      icon: Zap,
-      href: "/pages",
-      gradient: "bg-gradient-to-br from-success to-secondary",
-    },
   ];
+
+  // Show "Get Started" only when the tenant has no campaigns, templates, or websites
+  const showGetStarted = campaignCount === 0 || templateCount === 0 || websiteCount === 0;
 
   const timeAgo = (date: string) => {
     const seconds = Math.floor(
