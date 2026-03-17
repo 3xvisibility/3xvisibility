@@ -337,6 +337,7 @@ export default function CampaignsPage() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
+      setCsvRawText(text);
       const lines = text.split("\n").filter((l) => l.trim());
       if (lines.length === 0) return;
 
