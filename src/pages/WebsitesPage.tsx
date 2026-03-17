@@ -24,6 +24,7 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
+  const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [sitemapPreview, setSitemapPreview] = useState<{ websiteId: string; content: string } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
