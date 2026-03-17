@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useSidebar } from "@/components/ui/sidebar";
 import { useToast } from "@/hooks/use-toast";
 
 const NAV_ROUTES = [
@@ -23,7 +22,6 @@ const NAV_ROUTES = [
 export function useKeyboardShortcuts(onOpenCommandPalette?: () => void) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toggleSidebar } = useSidebar();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,5 +102,5 @@ export function useKeyboardShortcuts(onOpenCommandPalette?: () => void) {
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [navigate, location.pathname, toggleSidebar, toast, onOpenCommandPalette]);
+  }, [navigate, location.pathname, toast, onOpenCommandPalette]);
 }
