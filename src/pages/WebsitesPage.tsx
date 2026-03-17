@@ -66,6 +66,7 @@ export default function WebsitesPage() {
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
       const credentials = siteType === "wordpress"
         ? { username, app_password: appPassword }
         : siteType === "shopify"
@@ -79,6 +80,7 @@ export default function WebsitesPage() {
         type: siteType as WebsiteType,
         credentials,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },
