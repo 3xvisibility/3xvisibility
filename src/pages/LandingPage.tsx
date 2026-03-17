@@ -12,7 +12,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col landing-page">
       <LandingNav />
       <main className="flex-1">
         <HeroSection />
