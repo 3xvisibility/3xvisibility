@@ -239,10 +239,11 @@ export default function GeneratedPagesPage() {
 
   const filtered = useMemo(() => pages.filter(
     (p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      (statusFilter === "all" || p.status === statusFilter) &&
+      (p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.slug.toLowerCase().includes(search.toLowerCase()) ||
-      (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase())
-  ), [pages, search]);
+      (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase()))
+  ), [pages, search, statusFilter]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
