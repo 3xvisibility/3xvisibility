@@ -147,6 +147,31 @@ async function generateSeoMetadata(
   return { seo_title: pageTitle.slice(0, 60), seo_description: snippet.slice(0, 160), seo_keywords: [] };
 }
 
+function buildOgMetaTags(
+  title: string,
+  description: string,
+  url?: string,
+  imageUrl?: string
+): string {
+  const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  const tags = [
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:title" content="${escape(title)}">`,
+    `<meta property="og:description" content="${escape(description)}">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="twitter:title" content="${escape(title)}">`,
+    `<meta name="twitter:description" content="${escape(description)}">`,
+  ];
+  if (url) {
+    tags.push(`<meta property="og:url" content="${escape(url)}">`);
+  }
+  if (imageUrl) {
+    tags.push(`<meta property="og:image" content="${escape(imageUrl)}">`);
+    tags.push(`<meta name="twitter:image" content="${escape(imageUrl)}">`);
+  }
+  return `<!-- Open Graph Meta Tags -->\n${tags.join("\n")}`;
+}
+
 // Helper to log campaign events
 async function logEvent(
   supabase: any,
@@ -417,6 +442,13 @@ Deno.serve(async (req) => {
               aiGenerationsUsed++;
             } catch { /* keep fallback */ }
           }
+
+          // Inject Open Graph meta tags into page content
+          const ogTags = buildOgMetaTags(
+            seoData.seo_title,
+            seoData.seo_description
+          );
+          pageContent = ogTags + "\n" + pageContent;
 
           batchPages.push({
             campaign_id,

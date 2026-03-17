@@ -512,6 +512,28 @@ export default function GeneratedPagesPage() {
             </div>
           )}
 
+          {/* OG Preview */}
+          {previewPage && (previewPage as any).seo_title && (
+            <div className="border rounded-lg p-4 bg-muted/30 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                Open Graph Preview
+              </p>
+              <div className="rounded-md border border-border overflow-hidden bg-background">
+                <div className="p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground truncate">
+                    {previewPage.external_url || "example.com"}
+                  </p>
+                  <p className="text-sm font-semibold leading-tight">
+                    {(previewPage as any).seo_title || previewPage.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {(previewPage as any).seo_description || ""}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 border rounded-lg p-6 bg-muted/30">
             <div
               className="prose prose-sm max-w-none"
