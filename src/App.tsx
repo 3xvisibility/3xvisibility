@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,6 +68,7 @@ const App = () => {
   }
 
   return (
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
       <WorkspaceProvider>
@@ -213,6 +215,7 @@ const App = () => {
       </WorkspaceProvider>
       </LanguageProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 
