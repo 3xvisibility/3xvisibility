@@ -1,42 +1,54 @@
 import { Upload, GitBranch, Globe, Zap, LayoutTemplate, BarChart3, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
-const features: { icon: LucideIcon; title: string; description: string; gradient: string }[] = [
+const features: { icon: LucideIcon; title: string; description: string; gradient: string; glowFrom: string; glowTo: string }[] = [
   {
     icon: Upload,
     title: "CSV Upload",
     description: "Drop your CSV — columns auto-detected, validated, and ready to map in seconds.",
     gradient: "from-blue-500/10 to-cyan-500/10",
+    glowFrom: "hsl(210 100% 60%)",
+    glowTo: "hsl(185 80% 55%)",
   },
   {
     icon: LayoutTemplate,
     title: "Dynamic Templates",
     description: "Build reusable templates with {variable} placeholders mapped to any CSV column.",
     gradient: "from-violet-500/10 to-purple-500/10",
+    glowFrom: "hsl(263 70% 60%)",
+    glowTo: "hsl(280 70% 55%)",
   },
   {
     icon: GitBranch,
     title: "Smart Mapping",
     description: "Drag-and-drop field mapping with instant live preview of generated output.",
     gradient: "from-emerald-500/10 to-teal-500/10",
+    glowFrom: "hsl(155 70% 45%)",
+    glowTo: "hsl(170 70% 45%)",
   },
   {
     icon: Zap,
     title: "Bulk Generation",
     description: "Generate hundreds of pages in one campaign with real-time progress tracking.",
     gradient: "from-amber-500/10 to-orange-500/10",
+    glowFrom: "hsl(38 90% 55%)",
+    glowTo: "hsl(25 90% 55%)",
   },
   {
     icon: Globe,
     title: "Multi-Platform Publish",
     description: "Publish to WordPress & Shopify via API. Connect unlimited websites.",
     gradient: "from-pink-500/10 to-rose-500/10",
+    glowFrom: "hsl(330 80% 60%)",
+    glowTo: "hsl(350 80% 55%)",
   },
   {
     icon: BarChart3,
     title: "Campaign Analytics",
     description: "Track progress, success rates, live URLs, and detailed error logs per campaign.",
     gradient: "from-indigo-500/10 to-blue-500/10",
+    glowFrom: "hsl(239 80% 60%)",
+    glowTo: "hsl(221 83% 53%)",
   },
 ];
 
