@@ -40,6 +40,7 @@ import {
   Calendar,
   Layers,
   AlertTriangle,
+  Download,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -166,6 +167,24 @@ export default function DataCsvPage() {
       return headers.reduce((acc, h, i) => ({ ...acc, [h]: values[i] || "" }), {} as Record<string, string>);
     });
     setPreviewRows(rows);
+  };
+
+  const handleDownload = async (file: any) => {
+    const { data, error } = await (supabase.from("campaign_csv_files" as any) as any)
+      .select("raw_content")
+      .eq("id", file.id)
+      .single();
+    if (error || !data?.raw_content) {
+      toast({ title: "Error downloading file", variant: "destructive" });
+      return;
+    }
+    const blob = new Blob([data.raw_content as string], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file.file_name || "data.csv";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const formatSize = (bytes: number) => {
@@ -306,6 +325,9 @@ export default function DataCsvPage() {
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem onClick={() => handlePreview(file)}>
                             <Eye className="h-4 w-4 mr-2" /> Preview
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownload(file)}>
+                            <Download className="h-4 w-4 mr-2" /> Download
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                             setReplacingFileId(file.id);
