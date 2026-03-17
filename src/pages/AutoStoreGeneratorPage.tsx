@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import StorePreviewDialog from "@/components/StorePreviewDialog";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface StoreGeneration {
   id: string;
