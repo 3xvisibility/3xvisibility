@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +64,11 @@ export default function CampaignsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
+  // Generation settings
+  const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
+  const [maxRows, setMaxRows] = useState<string>("");
+  const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
@@ -440,6 +450,10 @@ export default function CampaignsPage() {
     setCsvData([]);
     setSelectedTemplate("");
     setSelectedWebsite("");
+    setPublishMode("draft");
+    setMaxRows("");
+    setScheduleMode("now");
+    setScheduledDate(undefined);
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
@@ -495,8 +509,6 @@ export default function CampaignsPage() {
     return true;
   };
 
-  const totalSteps = campaignType === "seo" ? 5 : 6;
-
   const getWizardSteps = () => {
     const steps = [
       { num: 1, label: "Name" },
@@ -504,14 +516,18 @@ export default function CampaignsPage() {
       { num: 3, label: "CSV Data" },
       { num: 4, label: "Template" },
     ];
+    let nextNum = 5;
     if (campaignType === "sea") {
-      steps.push({ num: 5, label: "UTM" });
+      steps.push({ num: nextNum++, label: "UTM" });
     } else if (campaignType === "geo") {
-      steps.push({ num: 5, label: "GEO" });
+      steps.push({ num: nextNum++, label: "GEO" });
     }
-    steps.push({ num: campaignType === "seo" ? 5 : 6, label: "Website" });
+    steps.push({ num: nextNum++, label: "Website" });
+    steps.push({ num: nextNum++, label: "Settings" });
     return steps;
   };
+
+  const totalSteps = getWizardSteps().length;
 
   const wizardSteps = getWizardSteps();
 
@@ -810,7 +826,7 @@ export default function CampaignsPage() {
                   </div>
                 )}
 
-                {step === totalSteps && (
+                {step === totalSteps - 1 && (
                   <div>
                     <Label className="text-sm font-medium mb-2 block">Website (optional)</Label>
                     <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
@@ -822,6 +838,99 @@ export default function CampaignsPage() {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-2">Optional — you can assign a website later.</p>
+                  </div>
+                )}
+
+                {step === totalSteps && (
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Settings2 className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-semibold">Generation Settings</Label>
+                    </div>
+
+                    {/* Publish Mode */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Publish Mode</Label>
+                      <RadioGroup value={publishMode} onValueChange={(v) => setPublishMode(v as "draft" | "published")} className="flex gap-4">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="draft" id="mode-draft" />
+                          <Label htmlFor="mode-draft" className="text-sm cursor-pointer">Draft</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="published" id="mode-published" />
+                          <Label htmlFor="mode-published" className="text-sm cursor-pointer">Published</Label>
+                        </div>
+                      </RadioGroup>
+                      <p className="text-[11px] text-muted-foreground">
+                        {publishMode === "draft" ? "Pages will be saved as drafts for review before publishing." : "Pages will be published immediately to the connected site."}
+                      </p>
+                    </div>
+
+                    {/* Max Rows */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Max Rows to Process</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={maxRows}
+                        onChange={(e) => setMaxRows(e.target.value)}
+                        placeholder={`All (${csvData.length || "—"} rows)`}
+                        className="rounded-xl h-9 text-sm w-48"
+                      />
+                      <p className="text-[11px] text-muted-foreground">Leave empty to process all rows.</p>
+                    </div>
+
+                    {/* Schedule */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Schedule</Label>
+                      <RadioGroup value={scheduleMode} onValueChange={(v) => setScheduleMode(v as "now" | "later")} className="flex gap-4">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="now" id="sched-now" />
+                          <Label htmlFor="sched-now" className="text-sm cursor-pointer">Run now</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="later" id="sched-later" />
+                          <Label htmlFor="sched-later" className="text-sm cursor-pointer">Schedule later</Label>
+                        </div>
+                      </RadioGroup>
+                      {scheduleMode === "later" && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-60 justify-start text-left font-normal rounded-xl h-9 text-sm mt-1",
+                                !scheduledDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {scheduledDate ? format(scheduledDate, "PPP 'at' HH:mm") : "Pick a date & time"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={scheduledDate}
+                              onSelect={setScheduledDate}
+                              disabled={(date) => date < new Date()}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      )}
+                    </div>
+
+                    {/* Summary */}
+                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
+                      <h4 className="text-sm font-semibold mb-2">Summary</h4>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${csvData.length}` : `${csvData.length || "—"} (all)`}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === selectedWebsite)?.name || "None"}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -849,7 +958,7 @@ export default function CampaignsPage() {
                     disabled={!campaignName || createMutation.isPending}
                     className="rounded-xl bg-gradient-primary hover:brightness-110"
                   >
-                    {createMutation.isPending ? "Creating..." : "Create Campaign"}
+                    {createMutation.isPending ? "Creating..." : scheduleMode === "later" ? "Schedule Campaign" : "Create Campaign"}
                   </Button>
                 )}
               </div>
