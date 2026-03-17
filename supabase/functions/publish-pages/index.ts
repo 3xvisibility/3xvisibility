@@ -356,7 +356,8 @@ async function publishToWooCommerce(
   title: string,
   content: string,
   slug: string,
-  seo: SeoData
+  seo: SeoData,
+  extraData?: Record<string, any>
 ): Promise<{ external_id: string; external_url: string }> {
   const baseUrl = siteUrl.replace(/\/$/, "");
   const { consumer_key, consumer_secret } = credentials;
@@ -373,6 +374,14 @@ async function publishToWooCommerce(
     slug: productSlug,
     status: "publish",
   };
+
+  if (extraData?.price) {
+    productPayload.regular_price = String(extraData.price);
+  }
+  if (extraData?.images || extraData?.image) {
+    const imgs = extraData.images || (extraData.image ? [extraData.image] : []);
+    productPayload.images = imgs.filter((src: string) => src && !src.startsWith("data:")).map((src: string) => ({ src }));
+  }
 
   if (seo.seo_title) {
     productPayload.meta_data = [
