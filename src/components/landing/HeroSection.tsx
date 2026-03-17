@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, FileSpreadsheet, Layers, Rocket, CheckCircle2, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
-import heroImage from "@/assets/hero-dashboard.png";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 const ease = [0.22, 1, 0.36, 1] as const;
