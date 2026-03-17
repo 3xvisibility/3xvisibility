@@ -918,6 +918,20 @@ Deno.serve(async (req) => {
     await logEvent(supabase, campaign_id, user.id, "completed",
       `Generation ${finalStatus}. ${successCount} pages generated, ${failedCount} failed. Job: ${jobId}`);
 
+    // Create user notification
+    const notifType = finalStatus === "failed" ? "error" : "success";
+    const notifTitle = finalStatus === "failed"
+      ? `Campaign "${campaign.name}" failed`
+      : `Campaign "${campaign.name}" completed`;
+    const notifMessage = `${successCount} pages generated, ${failedCount} failed.`;
+    await supabase.from("notifications").insert({
+      user_id: user.id,
+      title: notifTitle,
+      message: notifMessage,
+      type: notifType,
+      campaign_id: campaign_id,
+    });
+
     // Auto-generate sitemap if campaign has a website
     if (campaign.website_id) {
       try {
