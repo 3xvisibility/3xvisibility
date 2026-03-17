@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, Home, BarChart3, Globe, FileText, Settings, Info,
 import { motion, animate } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { BrandLogos } from "./BrandLogos";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -50,6 +50,39 @@ function MiniBarChart() {
           className="flex-1 rounded-sm bg-[hsl(262,83%,58%,0.4)] hover:bg-[hsl(262,83%,58%,0.7)] transition-colors cursor-pointer min-w-[4px]"
         />
       ))}
+    </div>
+  );
+}
+
+function TiltCard({ children }: { children: React.ReactNode }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ rotateX: -y * 6, rotateY: x * 6 });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTilt({ rotateX: 0, rotateY: 0 });
+  }, []);
+
+  return (
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative rounded-2xl overflow-hidden border border-[hsl(262,83%,58%,0.15)] bg-[hsl(252,30%,9%)] shadow-2xl will-change-transform"
+      style={{
+        transform: `rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg)`,
+        transition: "transform 0.15s ease-out",
+      }}
+    >
+      {children}
     </div>
   );
 }
@@ -152,12 +185,12 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 50, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 1, delay: 0.5, ease }}
-          className="mt-14 md:mt-20 max-w-5xl mx-auto relative"
+          className="mt-14 md:mt-20 max-w-5xl mx-auto relative [perspective:1200px]"
         >
           {/* Glow behind card */}
           <div className="absolute -inset-6 bg-[radial-gradient(ellipse_at_center,hsl(262,83%,58%,0.15),transparent_70%)] rounded-3xl blur-2xl pointer-events-none" />
 
-          <div className="relative rounded-2xl overflow-hidden border border-[hsl(262,83%,58%,0.15)] bg-[hsl(252,30%,9%)] shadow-2xl">
+          <TiltCard>
             <div className="flex">
               {/* Sidebar */}
               <div className="hidden md:flex flex-col items-center w-14 py-4 gap-5 border-r border-[hsl(262,83%,58%,0.08)] bg-[hsl(252,30%,8%)]">
@@ -359,7 +392,7 @@ export function HeroSection() {
                 </motion.div>
               </div>
             </div>
-          </div>
+          </TiltCard>
         </motion.div>
 
         <BrandLogos />
