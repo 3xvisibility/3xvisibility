@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, Home, BarChart3, Globe, FileText, Settings, Info,
 import { motion, animate } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { BrandLogos } from "./BrandLogos";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
