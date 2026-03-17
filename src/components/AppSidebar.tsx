@@ -42,6 +42,7 @@ const mainNav = [
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Websites", url: "/websites", icon: Globe },
   { title: "Google Indexing", url: "/indexing", icon: SearchIcon },
+  { title: "Store Generator", url: "/store-generator", icon: Store },
 ];
 
 const bottomNav = [
