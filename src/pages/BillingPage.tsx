@@ -156,6 +156,7 @@ export default function BillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showCanceled, setShowCanceled] = useState(false);
 
   // Check Stripe subscription on mount and after checkout success
   useEffect(() => {
@@ -163,6 +164,8 @@ export default function BillingPage() {
     if (searchParams.get("success") === "true") {
       setShowSuccess(true);
       setTimeout(checkSubscription, 2000);
+    } else if (searchParams.get("canceled") === "true") {
+      setShowCanceled(true);
     }
   }, []);
 
