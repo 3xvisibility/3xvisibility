@@ -23,6 +23,8 @@ import {
   type TemplateBlock,
 } from "@/components/templates/TemplateVisualEditor";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useDragReorder } from "@/hooks/use-drag-reorder";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Template = Tables<"templates">;
 
