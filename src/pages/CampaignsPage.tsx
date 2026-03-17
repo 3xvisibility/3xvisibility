@@ -66,6 +66,7 @@ export default function CampaignsPage() {
   const [replaceCsvCampaignId, setReplaceCsvCampaignId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDraggingCsv, setIsDraggingCsv] = useState(false);
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
   // Generation settings
