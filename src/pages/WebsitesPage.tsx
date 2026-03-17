@@ -172,6 +172,8 @@ export default function WebsitesPage() {
     setAppPassword("");
     setShopifyToken("");
     setPrestashopApiKey("");
+    setWooConsumerKey("");
+    setWooConsumerSecret("");
     setSiteType("");
   };
 
