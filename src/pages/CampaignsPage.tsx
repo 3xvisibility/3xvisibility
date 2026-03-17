@@ -585,7 +585,9 @@ export default function CampaignsPage() {
                           {csvFile ? csvFile.name : "Drop CSV file or click to upload"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {csvFile ? `${csvData.length} rows detected` : "Supports .csv files"}
+                          {csvFile
+                            ? `${csvData.length} rows · ${csvFile.size < 1024 ? csvFile.size + " B" : csvFile.size < 1048576 ? (csvFile.size / 1024).toFixed(1) + " KB" : (csvFile.size / 1048576).toFixed(1) + " MB"}`
+                            : "Supports .csv files up to 20 MB"}
                         </p>
                       </label>
                     </div>
