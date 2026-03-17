@@ -85,7 +85,6 @@ async function publishToShopify(
   const shopDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const apiUrl = `https://${shopDomain}/admin/api/2024-01/pages.json`;
 
-  // Shopify supports metafields_global_title_tag and metafields_global_description_tag
   const pagePayload: Record<string, any> = {
     title,
     body_html: content,
@@ -117,6 +116,60 @@ async function publishToShopify(
   return {
     external_id: String(data.page.id),
     external_url: `https://${shopDomain}/pages/${data.page.handle}`,
+  };
+}
+
+async function publishProductToShopify(
+  siteUrl: string,
+  credentials: WebsiteCredentials,
+  title: string,
+  content: string,
+  slug: string,
+  seo: SeoData,
+  extraData?: Record<string, any>
+): Promise<{ external_id: string; external_url: string }> {
+  const shopDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  const apiUrl = `https://${shopDomain}/admin/api/2024-01/products.json`;
+
+  const productPayload: Record<string, any> = {
+    title,
+    body_html: content,
+    handle: slugify(slug || title),
+    status: "active",
+  };
+
+  if (extraData?.price) {
+    productPayload.variants = [{ price: String(extraData.price) }];
+  }
+  if (extraData?.images || extraData?.image) {
+    const imgs = extraData.images || (extraData.image ? [extraData.image] : []);
+    productPayload.images = imgs.map((src: string) => ({ src }));
+  }
+  if (seo.seo_title) {
+    productPayload.metafields_global_title_tag = seo.seo_title;
+  }
+  if (seo.seo_description) {
+    productPayload.metafields_global_description_tag = seo.seo_description;
+  }
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": credentials.admin_api_token!,
+    },
+    body: JSON.stringify({ product: productPayload }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Shopify Product API error [${response.status}]: ${errorBody}`);
+  }
+
+  const data = await response.json();
+  return {
+    external_id: String(data.product.id),
+    external_url: `https://${shopDomain}/products/${data.product.handle}`,
   };
 }
 
@@ -212,6 +265,91 @@ async function publishToPrestaShop(
   };
 }
 
+async function publishProductToPrestaShop(
+  siteUrl: string,
+  credentials: WebsiteCredentials,
+  title: string,
+  content: string,
+  slug: string,
+  seo: SeoData,
+  extraData?: Record<string, any>
+): Promise<{ external_id: string; external_url: string }> {
+  const baseUrl = siteUrl.replace(/\/$/, "");
+  const apiKey = credentials.api_key;
+  if (!apiKey) throw new Error("PrestaShop API key not configured");
+
+  const auth = btoa(`${apiKey}:`);
+  const linkRewrite = slugify(slug || title);
+  const metaTitle = seo.seo_title || title;
+  const metaDescription = seo.seo_description || "";
+  const price = extraData?.price || "0.000000";
+
+  let langId = "1";
+  try {
+    const langResp = await fetch(`${baseUrl}/api/languages?output_format=JSON&filter[active]=1&limit=1`, {
+      headers: { Authorization: `Basic ${auth}` },
+    });
+    if (langResp.ok) {
+      const langData = await langResp.json();
+      if (langData.languages?.length > 0) {
+        langId = String(langData.languages[0].id);
+      }
+    }
+  } catch { /* use default lang */ }
+
+  const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+  <product>
+    <price>${price}</price>
+    <active>1</active>
+    <state>1</state>
+    <id_tax_rules_group>1</id_tax_rules_group>
+    <id_category_default>2</id_category_default>
+    <meta_title>
+      <language id="${langId}"><![CDATA[${metaTitle}]]></language>
+    </meta_title>
+    <meta_description>
+      <language id="${langId}"><![CDATA[${metaDescription}]]></language>
+    </meta_description>
+    <name>
+      <language id="${langId}"><![CDATA[${title}]]></language>
+    </name>
+    <description>
+      <language id="${langId}"><![CDATA[${content}]]></language>
+    </description>
+    <description_short>
+      <language id="${langId}"><![CDATA[${metaDescription}]]></language>
+    </description_short>
+    <link_rewrite>
+      <language id="${langId}"><![CDATA[${linkRewrite}]]></language>
+    </link_rewrite>
+  </product>
+</prestashop>`;
+
+  const response = await fetch(`${baseUrl}/api/products`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${auth}`,
+      "Content-Type": "application/xml",
+    },
+    body: xmlPayload,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`PrestaShop Product API error [${response.status}]: ${errorBody}`);
+  }
+
+  const responseText = await response.text();
+  const idMatch = responseText.match(/<id>(?:<!\[CDATA\[)?(\d+)(?:\]\]>)?<\/id>/);
+  const productId = idMatch ? idMatch[1] : "unknown";
+
+  return {
+    external_id: productId,
+    external_url: `${baseUrl}/${productId}-${linkRewrite}.html`,
+  };
+}
+
 async function publishToWooCommerce(
   siteUrl: string,
   credentials: WebsiteCredentials,
@@ -299,7 +437,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { page_ids } = await req.json();
+    const { page_ids, publish_type } = await req.json();
+    const pubType = publish_type || "page"; // "page" or "product"
     if (!page_ids || !Array.isArray(page_ids) || page_ids.length === 0) {
       return new Response(JSON.stringify({ error: "page_ids array is required" }), {
         status: 400,
@@ -368,38 +507,31 @@ Deno.serve(async (req) => {
 
         if (website.type === "wordpress") {
           result = await publishToWordPress(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            page.slug,
-            seo
+            website.url, website.credentials, page.title, page.content, page.slug, seo
           );
         } else if (website.type === "shopify") {
-          result = await publishToShopify(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            seo
-          );
+          if (pubType === "product") {
+            result = await publishProductToShopify(
+              website.url, website.credentials, page.title, page.content, page.slug, seo
+            );
+          } else {
+            result = await publishToShopify(
+              website.url, website.credentials, page.title, page.content, seo
+            );
+          }
         } else if (website.type === "prestashop") {
-          result = await publishToPrestaShop(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            page.slug,
-            seo
-          );
+          if (pubType === "product") {
+            result = await publishProductToPrestaShop(
+              website.url, website.credentials, page.title, page.content, page.slug, seo
+            );
+          } else {
+            result = await publishToPrestaShop(
+              website.url, website.credentials, page.title, page.content, page.slug, seo
+            );
+          }
         } else if (website.type === "woocommerce") {
           result = await publishToWooCommerce(
-            website.url,
-            website.credentials,
-            page.title,
-            page.content,
-            page.slug,
-            seo
+            website.url, website.credentials, page.title, page.content, page.slug, seo
           );
         } else {
           throw new Error(`Unsupported website type: ${website.type}`);

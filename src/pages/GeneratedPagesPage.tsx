@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -39,6 +40,7 @@ export default function GeneratedPagesPage() {
   const [bulkSeoOpen, setBulkSeoOpen] = useState(false);
   const [bulkSeoForm, setBulkSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [bulkSeoApply, setBulkSeoApply] = useState({ title: true, description: true, keywords: true });
+  const [publishType, setPublishType] = useState<"page" | "product">("page");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -88,9 +90,9 @@ export default function GeneratedPagesPage() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: async (pageIds: string[]) => {
+    mutationFn: async ({ pageIds, type }: { pageIds: string[]; type: "page" | "product" }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: pageIds },
+        body: { page_ids: pageIds, publish_type: type },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -215,13 +217,22 @@ export default function GeneratedPagesPage() {
           <h1 className="text-display">Generated Pages</h1>
           <p className="text-muted-foreground mt-1">Browse and manage all pages created by your campaigns.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto items-center">
+          <Select value={publishType} onValueChange={(v) => setPublishType(v as "page" | "product")}>
+            <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="page"><FileText className="h-3 w-3 mr-1 inline" />As Page</SelectItem>
+              <SelectItem value="product"><ShoppingBag className="h-3 w-3 mr-1 inline" />As Product</SelectItem>
+            </SelectContent>
+          </Select>
           {pendingPages.length > 0 && (
             <Button
               size="sm"
               className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:brightness-110 transition-all duration-200"
               disabled={publishMutation.isPending}
-              onClick={() => publishMutation.mutate(pendingPages.map((p) => p.id))}
+              onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
             >
               <Send className="h-3.5 w-3.5 mr-1.5" />
               {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
@@ -400,7 +411,7 @@ export default function GeneratedPagesPage() {
                               size="sm"
                               variant="ghost"
                               className="text-primary"
-                              onClick={() => publishMutation.mutate([page.id])}
+                              onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
                               disabled={publishMutation.isPending}
                               title="Publish"
                             >
