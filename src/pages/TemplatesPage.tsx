@@ -123,7 +123,11 @@ export default function TemplatesPage() {
         name,
         content,
         variables,
-      }).eq("id", editingTemplate.id);
+        seo_title_pattern: seoTitlePattern,
+        seo_description_pattern: seoDescriptionPattern,
+        schema_type: schemaType,
+        schema_config: schemaConfig,
+      } as any).eq("id", editingTemplate.id);
       if (error) throw error;
     },
     onSuccess: () => {
