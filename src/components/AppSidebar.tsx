@@ -12,7 +12,8 @@ import {
   LogOut,
   ScanSearch,
   Compass,
-  ShieldCheck
+  ShieldCheck,
+  Search as SearchIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
