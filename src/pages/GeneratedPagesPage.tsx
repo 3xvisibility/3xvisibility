@@ -267,6 +267,9 @@ export default function GeneratedPagesPage() {
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
               </Button>
+              <Button size="sm" variant="outline" onClick={() => setBulkCaptionOpen(true)}>
+                <MessageSquareText className="h-3.5 w-3.5 mr-1.5" /> Bulk Captions
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
