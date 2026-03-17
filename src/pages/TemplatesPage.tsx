@@ -104,7 +104,28 @@ export default function TemplatesPage() {
     },
   });
 
-  const aiGenerateMutation = useMutation({
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingTemplate) throw new Error("No template to update");
+      const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
+      const { error } = await supabase.from("templates").update({
+        name,
+        content,
+        variables,
+      }).eq("id", editingTemplate.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Template updated", description: `"${name}" has been saved.` });
+      resetAndClose();
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: { prompt },
