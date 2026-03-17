@@ -39,6 +39,7 @@ const PAGE_SIZE = 25;
 export default function GeneratedPagesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
   const [seoEditPage, setSeoEditPage] = useState<GeneratedPage | null>(null);
   const [seoForm, setSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
