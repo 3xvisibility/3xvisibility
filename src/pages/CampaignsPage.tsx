@@ -1405,6 +1405,9 @@ function CampaignActions({
         <DropdownMenuItem onClick={() => setLogDialogCampaign(c.id)}>
           <FileText className="h-4 w-4 mr-2" /> View Logs
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => duplicateMutation.mutate(c)} disabled={duplicateMutation.isPending}>
+          <Copy className="h-4 w-4 mr-2" /> Duplicate
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => deleteMutation.mutate(c.id)} className="text-destructive focus:text-destructive">
           <Trash2 className="h-4 w-4 mr-2" /> Delete
