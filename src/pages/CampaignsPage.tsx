@@ -301,6 +301,81 @@ export default function CampaignsPage() {
     },
   });
 
+  const duplicateMutation = useMutation({
+    mutationFn: async (campaign: Campaign) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      if (!wsId) throw new Error("No workspace selected");
+
+      const { data: newCampaign, error } = await supabase.from("campaigns").insert({
+        name: `${campaign.name} (Copy)`,
+        campaign_type: campaign.campaign_type,
+        user_id: user.id,
+        workspace_id: wsId,
+        template_id: campaign.template_id,
+        website_id: campaign.website_id,
+        csv_data: campaign.csv_data,
+        mapping: campaign.mapping,
+        publish_mode: campaign.publish_mode,
+        max_rows: campaign.max_rows,
+        batch_size: campaign.batch_size,
+        utm_settings: campaign.utm_settings,
+        geo_settings: campaign.geo_settings,
+        status: "draft" as const,
+      }).select("id").single();
+      if (error) throw error;
+
+      // Duplicate CSV file if exists
+      const { data: csvFile } = await supabase
+        .from("campaign_csv_files")
+        .select("*")
+        .eq("campaign_id", campaign.id)
+        .maybeSingle();
+      if (csvFile && newCampaign) {
+        await supabase.from("campaign_csv_files").insert({
+          campaign_id: newCampaign.id,
+          user_id: user.id,
+          workspace_id: wsId,
+          raw_content: csvFile.raw_content,
+          headers: csvFile.headers,
+          file_name: csvFile.file_name,
+          file_size: csvFile.file_size,
+          row_count: csvFile.row_count,
+        });
+      }
+
+      // Duplicate mappings
+      const { data: mappings } = await supabase
+        .from("mappings")
+        .select("*")
+        .eq("campaign_id", campaign.id);
+      if (mappings && mappings.length > 0 && newCampaign) {
+        await supabase.from("mappings").insert(
+          mappings.map((m) => ({
+            campaign_id: newCampaign.id,
+            workspace_id: wsId,
+            user_id: user.id,
+            source_column: m.source_column,
+            target_field: m.target_field,
+            field_category: m.field_category,
+            sort_order: m.sort_order,
+            is_required: m.is_required,
+            transform_expression: m.transform_expression,
+          }))
+        );
+      }
+
+      return campaign.name;
+    },
+    onSuccess: (name) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Campaign duplicated", description: `"${name}" has been cloned as a draft.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const replaceCsvMutation = useMutation({
     mutationFn: async ({ campaignId, file }: { campaignId: string; file: File }) => {
       const { data: { user } } = await supabase.auth.getUser();
