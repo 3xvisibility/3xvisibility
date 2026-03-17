@@ -44,6 +44,8 @@ export default function IndexingPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites"],
