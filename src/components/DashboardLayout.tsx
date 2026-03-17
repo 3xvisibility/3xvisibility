@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,10 +60,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                 size="icon"
                 className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
               />
-              <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
-              </Button>
+              <NotificationsDropdown />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="h-9 gap-2 px-2 rounded-lg">
