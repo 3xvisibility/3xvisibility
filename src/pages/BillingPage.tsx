@@ -147,19 +147,20 @@ function getFeatureList(name: PlanName): string[] {
 export default function BillingPage() {
   const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit } = useSubscription();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
   const [stripePlan, setStripePlan] = useState<PlanName | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Check Stripe subscription on mount and after checkout success
   useEffect(() => {
     checkSubscription();
     if (searchParams.get("success") === "true") {
-      toast({ title: "Payment successful!", description: "Your subscription is now active." });
-      // Re-check after a delay to allow Stripe to process
+      setShowSuccess(true);
       setTimeout(checkSubscription, 2000);
     }
   }, []);
