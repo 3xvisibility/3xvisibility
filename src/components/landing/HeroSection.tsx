@@ -152,12 +152,12 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 50, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 1, delay: 0.5, ease }}
-          className="mt-14 md:mt-20 max-w-5xl mx-auto relative"
+          className="mt-14 md:mt-20 max-w-5xl mx-auto relative [perspective:1200px]"
         >
           {/* Glow behind card */}
           <div className="absolute -inset-6 bg-[radial-gradient(ellipse_at_center,hsl(262,83%,58%,0.15),transparent_70%)] rounded-3xl blur-2xl pointer-events-none" />
 
-          <div className="relative rounded-2xl overflow-hidden border border-[hsl(262,83%,58%,0.15)] bg-[hsl(252,30%,9%)] shadow-2xl">
+          <TiltCard>
             <div className="flex">
               {/* Sidebar */}
               <div className="hidden md:flex flex-col items-center w-14 py-4 gap-5 border-r border-[hsl(262,83%,58%,0.08)] bg-[hsl(252,30%,8%)]">
