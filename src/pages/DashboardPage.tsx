@@ -128,11 +128,13 @@ export default function DashboardPage() {
   });
 
   const { data: recentCampaigns = [], isLoading: loadingRecent } = useQuery({
-    queryKey: ["dashboard-recent-campaigns"],
+    queryKey: ["dashboard-recent-campaigns", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
         .select("id, name, status, processed_rows, total_rows, created_at")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false })
         .limit(6);
       if (error) throw error;
