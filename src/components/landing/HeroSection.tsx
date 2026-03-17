@@ -7,6 +7,35 @@ import { useEffect, useRef, useState } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+function AnimatedNumber({ value, prefix = "", suffix = "", delay = 0, color }: { value: number; prefix?: string; suffix?: string; delay?: number; color: string }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef(false);
+
+  useEffect(() => {
+    if (ref.current) return;
+    ref.current = true;
+    const timeout = setTimeout(() => {
+      const mv = { v: 0 };
+      const controls = animate(mv, { v: value }, {
+        duration: 1.5,
+        ease: "easeOut",
+        onUpdate: () => setDisplay(Math.round(mv.v * 10) / 10),
+      });
+      return () => controls.stop();
+    }, delay * 1000);
+    return () => clearTimeout(timeout);
+  }, [value, delay]);
+
+  const formatted = display >= 1000 ? display.toLocaleString("en-US", { maximumFractionDigits: 0 }) : 
+    suffix === "%" && display % 1 !== 0 ? display.toFixed(1) : Math.round(display).toString();
+
+  return (
+    <p className={`text-lg md:text-xl font-bold tracking-tight ${color}`}>
+      {prefix}{formatted}{suffix}
+    </p>
+  );
+}
+
 export function HeroSection() {
   const { t } = useLanguage();
 
