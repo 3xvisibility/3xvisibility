@@ -35,11 +35,13 @@ export default function WebsitesPage() {
   const wsId = currentWorkspace?.id;
 
   const { data: websites = [], isLoading } = useQuery({
-    queryKey: ["websites"],
+    queryKey: ["websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
         .select("*")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Website[];
