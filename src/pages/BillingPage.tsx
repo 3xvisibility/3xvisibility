@@ -29,7 +29,8 @@ import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 import { STRIPE_TIERS, getPlanFromProductId } from "@/lib/stripe-config";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOverlay";
 
 const YEARLY_DISCOUNT = 0.2;
 
