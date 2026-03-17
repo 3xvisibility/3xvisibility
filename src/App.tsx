@@ -101,6 +101,7 @@ const App = () => {
                   <DashboardLayout onLogout={handleLogout}><CampaignDetailPage /></DashboardLayout>
                 </ProtectedRoute>
               }
+            />
             <Route
               path="/templates"
               element={
