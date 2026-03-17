@@ -518,8 +518,25 @@ export default function GeneratedPagesPage() {
               <strong>Error:</strong> {previewPage.error_message}
             </div>
           )}
+          <div className="mt-3 flex justify-end">
+            <Button size="sm" variant="outline" onClick={() => { setPreviewPage(null); setCaptionPage(previewPage); }}>
+              <MessageSquareText className="h-3.5 w-3.5 mr-1.5" /> Generate Caption
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
+
+      {/* Social Caption Dialog */}
+      <SocialCaptionDialog
+        open={!!captionPage}
+        onOpenChange={(open) => !open && setCaptionPage(null)}
+        page={captionPage ? {
+          title: captionPage.title,
+          seo_title: (captionPage as any).seo_title,
+          seo_description: (captionPage as any).seo_description,
+          external_url: captionPage.external_url,
+        } : null}
+      />
 
       {/* Single SEO Edit Dialog */}
       <Dialog open={!!seoEditPage} onOpenChange={(open) => !open && setSeoEditPage(null)}>
