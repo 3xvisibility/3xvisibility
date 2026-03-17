@@ -747,6 +747,9 @@ export default function TemplatesPage() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate">
                       <Copy className="h-3 w-3" />
                     </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON">
+                      <Download className="h-3 w-3" />
+                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(tpl.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
