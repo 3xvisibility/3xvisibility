@@ -61,7 +61,9 @@ export default function WebsitesPage() {
       if (!user) throw new Error("Not authenticated");
       const credentials = siteType === "wordpress"
         ? { username, app_password: appPassword }
-        : { admin_api_token: shopifyToken };
+        : siteType === "shopify"
+        ? { admin_api_token: shopifyToken }
+        : { api_key: prestashopApiKey };
       const { error } = await supabase.from("websites").insert({
         name: siteName || new URL(siteUrl).hostname,
         url: siteUrl,
