@@ -500,6 +500,15 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Inject geo_settings as template variables (e.g. {city}, {region}, {country})
+          const geoSettings = (campaign.geo_settings || {}) as Record<string, string>;
+          for (const [geoKey, geoValue] of Object.entries(geoSettings)) {
+            if (typeof geoValue === "string") {
+              const geoRegex = new RegExp(`\\{${geoKey}\\}`, "gi");
+              pageContent = pageContent.replace(geoRegex, geoValue);
+            }
+          }
+
           // Standard variable replacement for any remaining placeholders
           for (const [key, value] of Object.entries(row)) {
             const regex = new RegExp(`\\{${key}\\}`, "gi");
