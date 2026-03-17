@@ -627,7 +627,7 @@ export default function CampaignsPage() {
                 >
                   {step === 1 ? "Cancel" : "Back"}
                 </Button>
-                {step < 4 ? (
+                {step < totalSteps ? (
                   <Button
                     onClick={() => setStep(step + 1)}
                     disabled={!canProceed()}
