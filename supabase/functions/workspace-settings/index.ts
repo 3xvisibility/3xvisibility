@@ -120,6 +120,7 @@ serve(async (req) => {
         .eq("id", member_id)
         .eq("workspace_id", workspace_id);
       if (error) throw error;
+      await auditLog(adminClient, workspace_id, user.id, "update_role", "workspace_member", member_id, { new_role: role });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
