@@ -517,6 +517,29 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error("Auto-sitemap generation failed:", e);
       }
+
+      // Auto-submit to Google Indexing if configured
+      try {
+        const { data: webConfig } = await supabase
+          .from("websites")
+          .select("google_indexing_enabled")
+          .eq("id", campaign.website_id)
+          .maybeSingle();
+
+        if (webConfig?.google_indexing_enabled) {
+          const indexingUrl = `${supabaseUrl}/functions/v1/google-indexing`;
+          await fetch(indexingUrl, {
+            method: "POST",
+            headers: {
+              Authorization: authHeader,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ action: "auto-submit", website_id: campaign.website_id }),
+          });
+        }
+      } catch (e) {
+        console.error("Auto-indexing failed:", e);
+      }
     }
 
     return new Response(JSON.stringify({

@@ -12,7 +12,8 @@ import {
   LogOut,
   ScanSearch,
   Compass,
-  ShieldCheck
+  ShieldCheck,
+  Search as SearchIcon
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ const mainNav = [
   { title: "Discovery", url: "/discovery", icon: Compass },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Websites", url: "/websites", icon: Globe },
+  { title: "Google Indexing", url: "/indexing", icon: SearchIcon },
 ];
 
 const bottomNav = [
