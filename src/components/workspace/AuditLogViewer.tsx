@@ -2,11 +2,11 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2 } from "lucide-react";
+import { History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2, Filter } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface AuditLog {
   id: string;
