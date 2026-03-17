@@ -169,6 +169,24 @@ export default function DataCsvPage() {
     setPreviewRows(rows);
   };
 
+  const handleDownload = async (file: any) => {
+    const { data, error } = await (supabase.from("campaign_csv_files" as any) as any)
+      .select("raw_content")
+      .eq("id", file.id)
+      .single();
+    if (error || !data?.raw_content) {
+      toast({ title: "Error downloading file", variant: "destructive" });
+      return;
+    }
+    const blob = new Blob([data.raw_content as string], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file.file_name || "data.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
