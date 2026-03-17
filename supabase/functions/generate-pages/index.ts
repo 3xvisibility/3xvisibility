@@ -418,7 +418,7 @@ Deno.serve(async (req) => {
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("*, templates(content, variables)")
+      .select("*, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
       .eq("id", campaign_id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -760,13 +760,37 @@ Deno.serve(async (req) => {
           }
           const utmQueryString = utmParams.length > 0 ? `?${utmParams.join("&")}` : "";
 
+          // Apply template SEO patterns if defined, otherwise use AI
+          const tplSeoTitle = campaign.templates.seo_title_pattern as string || "";
+          const tplSeoDesc = campaign.templates.seo_description_pattern as string || "";
+
           let seoData = {
             seo_title: pageTitle.slice(0, 60),
             seo_description: pageContent.replace(/<[^>]*>/g, "").slice(0, 160),
             seo_keywords: [] as string[],
           };
 
-          if (LOVABLE_API_KEY) {
+          if (tplSeoTitle || tplSeoDesc) {
+            // Resolve variables in SEO patterns
+            const resolvePattern = (pattern: string): string => {
+              let resolved = pattern;
+              for (const [key, value] of Object.entries(allVars)) {
+                resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+              }
+              return resolved;
+            };
+            if (tplSeoTitle) seoData.seo_title = resolvePattern(tplSeoTitle).slice(0, 60);
+            if (tplSeoDesc) seoData.seo_description = resolvePattern(tplSeoDesc).slice(0, 160);
+
+            // Still generate keywords via AI if available
+            if (LOVABLE_API_KEY) {
+              try {
+                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
+                seoData.seo_keywords = aiSeo.seo_keywords;
+                aiGenerationsUsed++;
+              } catch { /* keep empty keywords */ }
+            }
+          } else if (LOVABLE_API_KEY) {
             try {
               seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
               aiGenerationsUsed++;
@@ -783,15 +807,77 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Build JSON-LD structured data
-          const jsonLd = buildJsonLd(
-            campaign.campaign_type || "seo",
-            pageTitle,
-            seoData.seo_description,
-            slug,
-            geoSettings,
-            row
-          );
+          // Build JSON-LD structured data — use template schema config if defined
+          const tplSchemaType = campaign.templates.schema_type as string || "";
+          const tplSchemaConfig = (campaign.templates.schema_config || {}) as Record<string, string>;
+          let jsonLd: string;
+
+          if (tplSchemaType && tplSchemaType !== "WebPage") {
+            // Resolve variables in schema config values
+            const resolvedSchema: Record<string, any> = {
+              "@context": "https://schema.org",
+              "@type": tplSchemaType,
+            };
+            for (const [sk, sv] of Object.entries(tplSchemaConfig)) {
+              if (!sv) continue;
+              let resolved = sv;
+              for (const [key, value] of Object.entries(allVars)) {
+                resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+              }
+              resolvedSchema[sk] = resolved;
+            }
+            // Add description from SEO data if not set
+            if (!resolvedSchema.description) resolvedSchema.description = seoData.seo_description;
+            if (!resolvedSchema.name) resolvedSchema.name = pageTitle;
+
+            // Nest address fields for LocalBusiness
+            if (tplSchemaType === "LocalBusiness") {
+              const addrFields = ["addressLocality", "addressRegion", "addressCountry", "postalCode"];
+              const address: Record<string, string> = {};
+              for (const af of addrFields) {
+                if (resolvedSchema[af]) {
+                  address[af] = resolvedSchema[af];
+                  delete resolvedSchema[af];
+                }
+              }
+              if (Object.keys(address).length > 0) {
+                resolvedSchema.address = { "@type": "PostalAddress", ...address };
+              }
+            }
+
+            // Build Product offer structure
+            if (tplSchemaType === "Product" && resolvedSchema.price) {
+              resolvedSchema.offers = {
+                "@type": "Offer",
+                price: resolvedSchema.price,
+                priceCurrency: resolvedSchema.currency || "USD",
+              };
+              delete resolvedSchema.price;
+              delete resolvedSchema.currency;
+            }
+
+            // Build FAQ structure
+            if (tplSchemaType === "FAQPage" && resolvedSchema.question) {
+              resolvedSchema.mainEntity = [{
+                "@type": "Question",
+                name: resolvedSchema.question,
+                acceptedAnswer: { "@type": "Answer", text: resolvedSchema.answer || "" },
+              }];
+              delete resolvedSchema.question;
+              delete resolvedSchema.answer;
+            }
+
+            jsonLd = `<script type="application/ld+json">${JSON.stringify(resolvedSchema)}</script>`;
+          } else {
+            jsonLd = buildJsonLd(
+              campaign.campaign_type || "seo",
+              pageTitle,
+              seoData.seo_description,
+              slug,
+              geoSettings,
+              row
+            );
+          }
 
           // Build OG meta tags + canonical
           const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description, canonicalUrl || undefined);
