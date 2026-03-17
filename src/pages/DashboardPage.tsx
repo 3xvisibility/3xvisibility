@@ -115,11 +115,13 @@ export default function DashboardPage() {
   });
 
   const { data: templateCount = 0 } = useQuery({
-    queryKey: ["dashboard-template-count"],
+    queryKey: ["dashboard-template-count", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { count, error } = await supabase
         .from("templates")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", wsId!);
       if (error) throw error;
       return count || 0;
     },
