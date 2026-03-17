@@ -462,7 +462,10 @@ Deno.serve(async (req) => {
 
     const alreadyProcessed = campaign.processed_rows || 0;
     const startIndex = action === "resume" ? alreadyProcessed : 0;
-    const remainingRows = csvRows.slice(startIndex);
+    // Apply max_rows limit if set
+    const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvRows.length) : csvRows.length;
+    const limitedRows = csvRows.slice(0, maxRowsLimit);
+    const remainingRows = limitedRows.slice(startIndex);
 
     if (remainingRows.length === 0) {
       return new Response(JSON.stringify({ success: true, message: "All pages already generated" }), {
