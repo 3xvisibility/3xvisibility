@@ -22,6 +22,7 @@ import TemplateScannerPage from "./pages/TemplateScannerPage";
 import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import IndexingPage from "./pages/IndexingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
