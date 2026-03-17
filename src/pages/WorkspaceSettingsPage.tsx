@@ -326,6 +326,14 @@ export default function WorkspaceSettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Audit Log */}
+      {isAdminOrOwner && (
+        <>
+          <Separator />
+          <AuditLogViewer workspaceId={wsId} />
+        </>
+      )}
     </div>
   );
 }
