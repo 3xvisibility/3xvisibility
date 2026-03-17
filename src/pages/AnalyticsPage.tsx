@@ -280,7 +280,6 @@ export default function AnalyticsPage() {
       const p = page as any;
       return {
         title: page.title,
-        slug: page.slug,
         status: page.status,
         seo_title: p.seo_title || null,
         seo_description: p.seo_description || null,
