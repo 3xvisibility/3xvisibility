@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Store, Sparkles, Loader2, CheckCircle, XCircle, Package, FolderTree,
-  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Upload
+  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Upload, Send, AlertCircle
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -241,6 +241,28 @@ export default function AutoStoreGeneratorPage() {
     },
   });
 
+  const publishMutation = useMutation({
+    mutationFn: async (generationId: string) => {
+      const { data, error } = await supabase.functions.invoke("publish-store", {
+        body: { generation_id: generationId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({
+        title: "Store published!",
+        description: `${data.published} products published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const getProgressPercent = (gen: StoreGeneration) => {
     const total = (gen.progress.total_categories || 1) + (gen.progress.total_products || 1);
     const done = gen.progress.categories_created + gen.progress.products_created;
@@ -251,6 +273,9 @@ export default function AutoStoreGeneratorPage() {
     pending: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, color: "bg-muted text-muted-foreground" },
     processing: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, color: "bg-primary/10 text-primary" },
     completed: { icon: <CheckCircle className="h-3.5 w-3.5" />, color: "bg-success/10 text-success" },
+    published: { icon: <CheckCircle className="h-3.5 w-3.5" />, color: "bg-success/10 text-success" },
+    publishing: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, color: "bg-primary/10 text-primary" },
+    publish_failed: { icon: <AlertCircle className="h-3.5 w-3.5" />, color: "bg-destructive/10 text-destructive" },
     failed: { icon: <XCircle className="h-3.5 w-3.5" />, color: "bg-destructive/10 text-destructive" },
   };
 
@@ -457,12 +482,32 @@ export default function AutoStoreGeneratorPage() {
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0">
+                        {(gen.status === "completed" || gen.status === "publish_failed") && gen.website_id && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-primary"
+                                disabled={publishMutation.isPending}
+                                onClick={() => publishMutation.mutate(gen.id)}
+                              >
+                                {publishMutation.isPending ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Send className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="text-xs">Publish to store</TooltipContent>
+                          </Tooltip>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => setExpandedId(isExpanded ? null : gen.id)}
-                        >
+                          onClick={() => setExpandedId(isExpanded ? null : gen.id)}>
+
                           {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                         </Button>
                         <Button
