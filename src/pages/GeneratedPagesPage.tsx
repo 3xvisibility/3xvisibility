@@ -318,7 +318,43 @@ export default function GeneratedPagesPage() {
               <CheckSquare className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{selectedIds.size} page{selectedIds.size !== 1 ? "s" : ""} selected</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="bg-gradient-primary border-0 shadow-lg shadow-primary/25"
+                disabled={bulkPublishMutation.isPending}
+                onClick={() => {
+                  const pendingSelected = [...selectedIds].filter(
+                    (id) => pages.find((p) => p.id === id)?.status === "pending"
+                  );
+                  if (pendingSelected.length === 0) {
+                    toast({ title: "No pending pages", description: "Only pending pages can be published.", variant: "destructive" });
+                    return;
+                  }
+                  bulkPublishMutation.mutate(pendingSelected);
+                }}
+              >
+                <Send className="h-3.5 w-3.5 mr-1.5" />
+                {bulkPublishMutation.isPending ? "Publishing..." : "Publish Selected"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={bulkStatusMutation.isPending}
+                onClick={() => {
+                  const failedSelected = [...selectedIds].filter(
+                    (id) => pages.find((p) => p.id === id)?.status === "failed"
+                  );
+                  if (failedSelected.length === 0) {
+                    toast({ title: "No failed pages", description: "Only failed pages can be reset for re-generation.", variant: "destructive" });
+                    return;
+                  }
+                  bulkStatusMutation.mutate({ ids: failedSelected, status: "pending" });
+                }}
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                {bulkStatusMutation.isPending ? "Resetting..." : "Re-queue Failed"}
+              </Button>
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
               </Button>
