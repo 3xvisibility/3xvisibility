@@ -360,12 +360,18 @@ export default function TemplatesPage() {
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <Tabs value={activeEditorTab} onValueChange={handleTabChange} className="w-full">
-                  <TabsList className="w-full grid grid-cols-3">
+                  <TabsList className="w-full grid grid-cols-5">
                     <TabsTrigger value="visual" className="flex items-center gap-1.5">
                       <LayoutPanelTop className="h-3.5 w-3.5" /> Visual
                     </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5" /> Code
+                    </TabsTrigger>
+                    <TabsTrigger value="seo" className="flex items-center gap-1.5">
+                      <Globe className="h-3.5 w-3.5" /> SEO
+                    </TabsTrigger>
+                    <TabsTrigger value="schema" className="flex items-center gap-1.5">
+                      <Braces className="h-3.5 w-3.5" /> Schema
                     </TabsTrigger>
                     <TabsTrigger value="preview" className="flex items-center gap-1.5">
                       <Eye className="h-3.5 w-3.5" /> Preview
@@ -387,6 +393,194 @@ export default function TemplatesPage() {
                       rows={12}
                       className="font-mono text-xs"
                     />
+                  </TabsContent>
+                  <TabsContent value="seo" className="mt-3">
+                    <div className="space-y-4">
+                      <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-1">
+                        <p className="text-sm font-medium">SEO Meta Patterns</p>
+                        <p className="text-xs text-muted-foreground">
+                          Define patterns using &#123;variable&#125; syntax. These override AI-generated metadata when set.
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="seo-title">Meta Title Pattern</Label>
+                        <Input
+                          id="seo-title"
+                          placeholder="e.g., {keyword} in {city} | My Brand"
+                          value={seoTitlePattern}
+                          onChange={(e) => setSeoTitlePattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Recommended: under 60 characters. Current: {seoTitlePattern.length} chars
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="seo-desc">Meta Description Pattern</Label>
+                        <Textarea
+                          id="seo-desc"
+                          placeholder="e.g., Find the best {keyword} services in {city}. Contact us today for a free quote."
+                          value={seoDescriptionPattern}
+                          onChange={(e) => setSeoDescriptionPattern(e.target.value)}
+                          rows={3}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Recommended: 120-160 characters. Current: {seoDescriptionPattern.length} chars
+                        </p>
+                      </div>
+                      {detectedVars.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1.5">Available variables from template:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[...new Set(detectedVars)].map((v) => (
+                              <Badge key={v} variant="outline" className="text-xs font-mono cursor-pointer hover:bg-accent"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(v);
+                                }}>
+                                {v}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="schema" className="mt-3">
+                    <div className="space-y-4">
+                      <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-1">
+                        <p className="text-sm font-medium">Structured Data (JSON-LD)</p>
+                        <p className="text-xs text-muted-foreground">
+                          Configure Schema.org structured data that will be injected into each generated page.
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Schema Type</Label>
+                        <Select value={schemaType} onValueChange={setSchemaType}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="WebPage">WebPage</SelectItem>
+                            <SelectItem value="LocalBusiness">LocalBusiness</SelectItem>
+                            <SelectItem value="Product">Product</SelectItem>
+                            <SelectItem value="FAQPage">FAQPage</SelectItem>
+                            <SelectItem value="Article">Article</SelectItem>
+                            <SelectItem value="Service">Service</SelectItem>
+                            <SelectItem value="Organization">Organization</SelectItem>
+                            <SelectItem value="Event">Event</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {schemaType === "LocalBusiness" && (
+                        <div className="space-y-3 rounded-lg border border-border p-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">LocalBusiness Fields</p>
+                          {[
+                            { key: "name", label: "Business Name", placeholder: "{company}" },
+                            { key: "telephone", label: "Phone", placeholder: "{phone}" },
+                            { key: "email", label: "Email", placeholder: "{email}" },
+                            { key: "addressLocality", label: "City", placeholder: "{city}" },
+                            { key: "addressRegion", label: "Region", placeholder: "{region}" },
+                            { key: "addressCountry", label: "Country", placeholder: "{country}" },
+                            { key: "postalCode", label: "Postal Code", placeholder: "{postcode}" },
+                          ].map(({ key, label, placeholder }) => (
+                            <div key={key} className="grid grid-cols-3 gap-2 items-center">
+                              <Label className="text-xs">{label}</Label>
+                              <Input
+                                className="col-span-2 text-sm font-mono h-8"
+                                placeholder={placeholder}
+                                value={schemaConfig[key] || ""}
+                                onChange={(e) => setSchemaConfig({ ...schemaConfig, [key]: e.target.value })}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {schemaType === "Product" && (
+                        <div className="space-y-3 rounded-lg border border-border p-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product Fields</p>
+                          {[
+                            { key: "name", label: "Product Name", placeholder: "{name}" },
+                            { key: "description", label: "Description", placeholder: "{description}" },
+                            { key: "price", label: "Price", placeholder: "{price}" },
+                            { key: "currency", label: "Currency", placeholder: "USD" },
+                            { key: "brand", label: "Brand", placeholder: "{brand}" },
+                            { key: "sku", label: "SKU", placeholder: "{sku}" },
+                          ].map(({ key, label, placeholder }) => (
+                            <div key={key} className="grid grid-cols-3 gap-2 items-center">
+                              <Label className="text-xs">{label}</Label>
+                              <Input
+                                className="col-span-2 text-sm font-mono h-8"
+                                placeholder={placeholder}
+                                value={schemaConfig[key] || ""}
+                                onChange={(e) => setSchemaConfig({ ...schemaConfig, [key]: e.target.value })}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {schemaType === "FAQPage" && (
+                        <div className="space-y-3 rounded-lg border border-border p-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">FAQ Fields</p>
+                          {[
+                            { key: "question", label: "Question Column", placeholder: "{question}" },
+                            { key: "answer", label: "Answer Column", placeholder: "{answer}" },
+                          ].map(({ key, label, placeholder }) => (
+                            <div key={key} className="grid grid-cols-3 gap-2 items-center">
+                              <Label className="text-xs">{label}</Label>
+                              <Input
+                                className="col-span-2 text-sm font-mono h-8"
+                                placeholder={placeholder}
+                                value={schemaConfig[key] || ""}
+                                onChange={(e) => setSchemaConfig({ ...schemaConfig, [key]: e.target.value })}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {(schemaType === "Article" || schemaType === "Service" || schemaType === "Event" || schemaType === "Organization") && (
+                        <div className="space-y-3 rounded-lg border border-border p-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{schemaType} Fields</p>
+                          {[
+                            { key: "name", label: "Name", placeholder: "{name}" },
+                            { key: "description", label: "Description", placeholder: "{description}" },
+                            { key: "url", label: "URL", placeholder: "{url}" },
+                          ].map(({ key, label, placeholder }) => (
+                            <div key={key} className="grid grid-cols-3 gap-2 items-center">
+                              <Label className="text-xs">{label}</Label>
+                              <Input
+                                className="col-span-2 text-sm font-mono h-8"
+                                placeholder={placeholder}
+                                value={schemaConfig[key] || ""}
+                                onChange={(e) => setSchemaConfig({ ...schemaConfig, [key]: e.target.value })}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* JSON-LD Preview */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">JSON-LD Preview</Label>
+                        <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto max-h-48 overflow-y-auto">
+                          {JSON.stringify(
+                            {
+                              "@context": "https://schema.org",
+                              "@type": schemaType,
+                              ...Object.fromEntries(
+                                Object.entries(schemaConfig).filter(([, v]) => v)
+                              ),
+                            },
+                            null,
+                            2
+                          )}
+                        </pre>
+                      </div>
+                    </div>
                   </TabsContent>
                   <TabsContent value="preview" className="mt-3">
                     {content ? (
