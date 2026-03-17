@@ -99,7 +99,25 @@ export default function CampaignsPage() {
     },
   });
 
-  const { data: templates = [] } = useQuery({
+  // Fetch latest generation job per campaign for progress display
+  const { data: generationJobs = [] } = useQuery({
+    queryKey: ["generation-jobs", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("generation_jobs")
+        .select("id, campaign_id, status, total_rows, processed_rows, success_count, error_count, current_batch, batch_size, started_at, completed_at")
+        .eq("workspace_id", wsId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getLatestJob = (campaignId: string) =>
+    generationJobs.find((j: any) => j.campaign_id === campaignId);
+
+
     queryKey: ["templates", wsId],
     enabled: !!wsId,
     queryFn: async () => {
