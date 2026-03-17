@@ -54,11 +54,13 @@ export default function GeneratedPagesPage() {
   const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading } = useQuery({
-    queryKey: ["generated-pages"],
+    queryKey: ["generated-pages", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
         .select("*, campaigns(name), websites(name)")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as GeneratedPage[];

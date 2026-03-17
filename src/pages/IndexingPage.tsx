@@ -48,9 +48,10 @@ export default function IndexingPage() {
   const wsId = currentWorkspace?.id;
 
   const { data: websites = [] } = useQuery({
-    queryKey: ["websites"],
+    queryKey: ["websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("websites").select("*").order("name");
+      const { data, error } = await supabase.from("websites").select("*").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },

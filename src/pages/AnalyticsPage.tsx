@@ -42,11 +42,13 @@ export default function AnalyticsPage() {
 
   // Fetch all generated pages
   const { data: pages = [], isLoading: loadingPages } = useQuery({
-    queryKey: ["analytics-pages"],
+    queryKey: ["analytics-pages", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
         .select("id, title, status, created_at, seo_title, seo_description, seo_keywords, campaign_id")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data;
