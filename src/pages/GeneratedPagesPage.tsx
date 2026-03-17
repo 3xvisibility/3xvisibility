@@ -249,15 +249,15 @@ export default function GeneratedPagesPage() {
       (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase()))
   ), [pages, search, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
   const paginatedPages = useMemo(
-    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [filtered, safePage]
+    () => filtered.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filtered, safePage, pageSize]
   );
 
-  // Reset to page 1 when filters change
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter]);
+  // Reset to page 1 when filters or page size change
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
