@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useJobNotifications } from "@/hooks/use-job-notifications";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
