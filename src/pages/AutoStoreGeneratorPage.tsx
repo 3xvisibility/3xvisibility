@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Store, Sparkles, Loader2, CheckCircle, XCircle, Package, FolderTree,
-  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw
+  FileText, Play, Trash2, Eye, ChevronDown, ChevronUp, RefreshCw, Upload
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
