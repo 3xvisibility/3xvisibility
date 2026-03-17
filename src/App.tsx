@@ -23,6 +23,7 @@ import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import IndexingPage from "./pages/IndexingPage";
+import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -163,6 +164,14 @@ const App = () => {
               element={
                 <ProtectedRoute session={session}>
                   <DashboardLayout onLogout={handleLogout}><IndexingPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/store-generator"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><AutoStoreGeneratorPage /></DashboardLayout>
                 </ProtectedRoute>
               }
             />
