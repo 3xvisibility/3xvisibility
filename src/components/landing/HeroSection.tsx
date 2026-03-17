@@ -359,7 +359,7 @@ export function HeroSection() {
                 </motion.div>
               </div>
             </div>
-          </div>
+          </TiltCard>
         </motion.div>
 
         <BrandLogos />
