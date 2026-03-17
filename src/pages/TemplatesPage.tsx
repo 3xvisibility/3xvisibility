@@ -33,11 +33,13 @@ export default function TemplatesPage() {
   const detectedVars = content.match(/\{[^}]+\}/g) || [];
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ["templates"],
+    queryKey: ["templates", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("templates")
         .select("*")
+        .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Template[];
