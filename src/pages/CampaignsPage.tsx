@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2 } from "lucide-react";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,8 +38,27 @@ export default function CampaignsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
+  const [logDialogCampaign, setLogDialogCampaign] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Realtime subscription for campaign progress
+  useEffect(() => {
+    const channel = supabase
+      .channel("campaign-progress")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "campaigns" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ["campaigns"],
@@ -60,7 +81,6 @@ export default function CampaignsPage() {
     },
   });
 
-  // Get the selected template's variables
   const selectedTemplateVars = useMemo(() => {
     if (!selectedTemplate) return [];
     const tpl = templates.find((t) => t.id === selectedTemplate);
@@ -68,7 +88,6 @@ export default function CampaignsPage() {
     return (tpl.variables as string[]).map((v) => v.replace(/[{}]/g, ""));
   }, [selectedTemplate, templates]);
 
-  // Auto-match CSV columns to template variables
   const variableMapping = useMemo(() => {
     if (selectedTemplateVars.length === 0 || csvHeaders.length === 0) return null;
     const matched: { variable: string; column: string | null }[] = [];
@@ -78,7 +97,6 @@ export default function CampaignsPage() {
       if (exactMatch) {
         matched.push({ variable: v, column: exactMatch });
       } else {
-        // fuzzy: check if column contains variable or vice versa
         const fuzzy = csvHeaders.find(
           (h) => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase())
         );
@@ -95,6 +113,21 @@ export default function CampaignsPage() {
     queryKey: ["websites"],
     queryFn: async () => {
       const { data, error } = await supabase.from("websites").select("id, name").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Campaign logs query
+  const { data: campaignLogs = [] } = useQuery({
+    queryKey: ["campaign-logs", logDialogCampaign],
+    enabled: !!logDialogCampaign,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_logs")
+        .select("*")
+        .eq("campaign_id", logDialogCampaign!)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -139,9 +172,9 @@ export default function CampaignsPage() {
   });
 
   const executeMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, action }: { id: string; action?: string }) => {
       const { data, error } = await supabase.functions.invoke("generate-pages", {
-        body: { campaign_id: id },
+        body: { campaign_id: id, action },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -150,9 +183,20 @@ export default function CampaignsPage() {
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
-      toast({ title: "Pages generated", description: `${data.generated} pages created successfully.` });
 
-      // Check if auto-build internal links is enabled
+      if (data.paused) {
+        toast({ title: "Generation paused", description: `${data.generated} pages generated so far. ${data.remaining} remaining.` });
+        return;
+      }
+
+      if (data.action === "paused") {
+        toast({ title: "Generation paused" });
+        return;
+      }
+
+      toast({ title: "Pages generated", description: `${data.generated} pages created, ${data.failed} failed.` });
+
+      // Auto-build internal links
       try {
         const { data: settings } = await supabase
           .from("internal_link_settings")
@@ -168,12 +212,10 @@ export default function CampaignsPage() {
           if (linkErr || linkData?.error) {
             toast({ title: "Auto-linking failed", description: linkData?.error || linkErr?.message, variant: "destructive" });
           } else {
-            toast({ title: "Internal links built", description: `${linkData.links_created} links created across ${linkData.pages_updated} pages.` });
+            toast({ title: "Internal links built", description: `${linkData.links_created} links created.` });
           }
         }
-      } catch {
-        // Silent fail for auto-link check
-      }
+      } catch { /* Silent */ }
     },
     onError: (err: Error) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
@@ -210,6 +252,25 @@ export default function CampaignsPage() {
     setSelectedWebsite("");
   };
 
+  const getProgressInfo = (c: Campaign) => {
+    const total = (c as any).total_rows || 0;
+    const processed = (c as any).processed_rows || 0;
+    const failed = (c as any).failed_rows || 0;
+    const remaining = total - processed;
+    const percent = total > 0 ? Math.round((processed / total) * 100) : 0;
+    return { total, processed, failed, remaining, percent, generated: processed - failed };
+  };
+
+  const logEventIcon = (event: string) => {
+    if (event === "started") return "🚀";
+    if (event === "completed") return "✅";
+    if (event.includes("error")) return "❌";
+    if (event.includes("paused")) return "⏸️";
+    if (event === "resumed") return "▶️";
+    if (event.includes("batch")) return "📦";
+    return "📝";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -232,7 +293,6 @@ export default function CampaignsPage() {
                 <Label htmlFor="name">Campaign Name</Label>
                 <Input id="name" placeholder="e.g., Python Training Cities" value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
               </div>
-              {/* Variable Mapping Preview */}
               {variableMapping && (
                 <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
                   <div className="flex items-center gap-2">
@@ -334,63 +394,171 @@ export default function CampaignsPage() {
       ) : campaigns.length === 0 ? (
         <Card><CardContent className="p-10 text-center text-muted-foreground">No campaigns yet. Create your first campaign to start generating pages.</CardContent></Card>
       ) : (
-        <Card className="shadow-surface">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-4 font-medium text-muted-foreground">Campaign</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Template</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Website</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Progress</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Date</th>
-                  <th className="p-4"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {campaigns.map((c) => (
-                  <tr key={c.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors duration-150">
-                    <td className="p-4 font-medium">{c.name}</td>
-                    <td className="p-4">
-                      <Badge variant="secondary" className={statusColors[c.status]}>{c.status}</Badge>
-                    </td>
-                    <td className="p-4 text-muted-foreground">{c.templates?.name || "—"}</td>
-                    <td className="p-4 text-muted-foreground">{c.websites?.name || "—"}</td>
-                    <td className="p-4 tabular-nums">{c.processed_rows || 0}/{c.total_rows || 0}</td>
-                    <td className="p-4 tabular-nums text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</td>
-                    <td className="p-4">
-                      <div className="flex gap-1">
-                        {c.status === "draft" && (
-                          <Button size="sm" variant="ghost" className="text-primary" disabled={executeMutation.isPending} onClick={() => executeMutation.mutate(c.id)}>
-                            <Play className="h-3 w-3 mr-1" /> {executeMutation.isPending ? "Generating..." : "Execute"}
-                          </Button>
-                        )}
-                        {c.status === "processing" && (
-                          <span className="text-xs text-muted-foreground animate-pulse">Processing...</span>
-                        )}
-                        {c.status === "completed" && (
-                          <>
-                            <Button size="sm" variant="ghost" className="text-primary" onClick={() => setLinkDialogCampaign(c)} title="Internal Linking">
-                              <Link2 className="h-3 w-3 mr-1" /> Links
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-muted-foreground">
-                              <ArrowRight className="h-3 w-3 mr-1" /> View
-                            </Button>
-                          </>
-                        )}
-                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMutation.mutate(c.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+        <div className="space-y-4">
+          {campaigns.map((c) => {
+            const progress = getProgressInfo(c);
+            const isProcessing = c.status === "processing";
+            const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
+            const startedAt = (c as any).generation_started_at;
+            const completedAt = (c as any).generation_completed_at;
+
+            return (
+              <Card key={c.id} className="shadow-surface overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Header row */}
+                  <div className="flex items-start justify-between p-4 gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-sm truncate">{c.name}</h3>
+                        <Badge variant="secondary" className={statusColors[c.status]}>
+                          {isPaused ? "paused" : c.status}
+                        </Badge>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {c.templates?.name && <span>Template: {c.templates.name}</span>}
+                        {c.websites?.name && <span>Site: {c.websites.name}</span>}
+                        <span>{new Date(c.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      {/* Execute / Resume */}
+                      {(c.status === "draft" || isPaused) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-primary"
+                          disabled={executeMutation.isPending}
+                          onClick={() =>
+                            executeMutation.mutate({
+                              id: c.id,
+                              action: isPaused ? "resume" : undefined,
+                            })
+                          }
+                        >
+                          {isPaused ? (
+                            <><RotateCcw className="h-3 w-3 mr-1" /> Resume</>
+                          ) : executeMutation.isPending ? (
+                            <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Starting...</>
+                          ) : (
+                            <><Play className="h-3 w-3 mr-1" /> Execute</>
+                          )}
+                        </Button>
+                      )}
+                      {/* Pause */}
+                      {isProcessing && !(c as any).is_paused && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-muted-foreground"
+                          onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}
+                        >
+                          <Pause className="h-3 w-3 mr-1" /> Pause
+                        </Button>
+                      )}
+                      {/* Links */}
+                      {c.status === "completed" && (
+                        <Button size="sm" variant="ghost" className="text-primary" onClick={() => setLinkDialogCampaign(c)} title="Internal Linking">
+                          <Link2 className="h-3 w-3 mr-1" /> Links
+                        </Button>
+                      )}
+                      {/* Logs */}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground"
+                        onClick={() => setLogDialogCampaign(c.id)}
+                      >
+                        <FileText className="h-3 w-3 mr-1" /> Logs
+                      </Button>
+                      {/* Delete */}
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMutation.mutate(c.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Progress section - shown when has rows */}
+                  {progress.total > 0 && (
+                    <div className="px-4 pb-4 space-y-2">
+                      <Progress value={progress.percent} className="h-2" />
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex gap-4">
+                          <span className="text-muted-foreground">
+                            Total: <span className="text-foreground font-medium tabular-nums">{progress.total}</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            Generated: <span className="text-success font-medium tabular-nums">{progress.generated}</span>
+                          </span>
+                          <span className="text-muted-foreground">
+                            Remaining: <span className="text-foreground font-medium tabular-nums">{progress.remaining}</span>
+                          </span>
+                          {progress.failed > 0 && (
+                            <span className="text-muted-foreground">
+                              Failed: <span className="text-destructive font-medium tabular-nums">{progress.failed}</span>
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-muted-foreground tabular-nums font-medium">{progress.percent}%</span>
+                      </div>
+                      {/* Timing info */}
+                      {(startedAt || completedAt) && (
+                        <div className="flex gap-4 text-[11px] text-muted-foreground pt-1">
+                          {startedAt && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Started: {new Date(startedAt).toLocaleString()}
+                            </span>
+                          )}
+                          {completedAt && (
+                            <span className="flex items-center gap-1">
+                              <Check className="h-3 w-3" />
+                              Completed: {new Date(completedAt).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
+
+      {/* Campaign Logs Dialog */}
+      <Dialog open={!!logDialogCampaign} onOpenChange={(v) => { if (!v) setLogDialogCampaign(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Campaign Logs</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[400px] mt-4">
+            {campaignLogs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No logs yet for this campaign.</p>
+            ) : (
+              <div className="space-y-2">
+                {campaignLogs.map((log: any) => (
+                  <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg border border-border/50 bg-muted/20 text-sm">
+                    <span className="text-base shrink-0 mt-0.5">{logEventIcon(log.event)}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <Badge variant="outline" className="text-[10px] font-mono">{log.event}</Badge>
+                        {log.batch_number && (
+                          <span className="text-[10px] text-muted-foreground">Batch #{log.batch_number}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{log.message}</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">
+                        {new Date(log.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* Internal Linking Dialog */}
       {linkDialogCampaign && (

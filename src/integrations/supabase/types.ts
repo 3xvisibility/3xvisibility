@@ -14,11 +14,58 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_logs: {
+        Row: {
+          batch_number: number | null
+          campaign_id: string
+          created_at: string
+          event: string
+          id: string
+          message: string | null
+          pages_in_batch: number | null
+          user_id: string
+        }
+        Insert: {
+          batch_number?: number | null
+          campaign_id: string
+          created_at?: string
+          event: string
+          id?: string
+          message?: string | null
+          pages_in_batch?: number | null
+          user_id: string
+        }
+        Update: {
+          batch_number?: number | null
+          campaign_id?: string
+          created_at?: string
+          event?: string
+          id?: string
+          message?: string | null
+          pages_in_batch?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
+          batch_size: number | null
           created_at: string
           csv_data: Json | null
+          current_batch: number | null
+          failed_rows: number | null
+          generation_completed_at: string | null
+          generation_started_at: string | null
           id: string
+          is_paused: boolean | null
           mapping: Json | null
           name: string
           processed_rows: number | null
@@ -30,9 +77,15 @@ export type Database = {
           website_id: string | null
         }
         Insert: {
+          batch_size?: number | null
           created_at?: string
           csv_data?: Json | null
+          current_batch?: number | null
+          failed_rows?: number | null
+          generation_completed_at?: string | null
+          generation_started_at?: string | null
           id?: string
+          is_paused?: boolean | null
           mapping?: Json | null
           name: string
           processed_rows?: number | null
@@ -44,9 +97,15 @@ export type Database = {
           website_id?: string | null
         }
         Update: {
+          batch_size?: number | null
           created_at?: string
           csv_data?: Json | null
+          current_batch?: number | null
+          failed_rows?: number | null
+          generation_completed_at?: string | null
+          generation_started_at?: string | null
           id?: string
+          is_paused?: boolean | null
           mapping?: Json | null
           name?: string
           processed_rows?: number | null
