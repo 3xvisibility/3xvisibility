@@ -343,9 +343,9 @@ export default function DashboardPage() {
         <div className="absolute -right-4 -bottom-12 h-32 w-32 rounded-full bg-secondary/20 blur-xl" />
       </div>
 
-      {/* Quick Actions */}
+      {/* Get Started / Quick Actions */}
       <div>
-        <h2 className="text-display-sm mb-4">Quick Actions</h2>
+        <h2 className="text-display-sm mb-4">{showGetStarted ? "Get Started" : "Quick Actions"}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {quickActions.map((action) => (
             <button
