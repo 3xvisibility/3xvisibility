@@ -35,6 +35,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 export default function IndexingPage() {
+  const { canUseFeature } = useSubscription();
   const [selectedWebsite, setSelectedWebsite] = useState<string>("");
   const [search, setSearch] = useState("");
   const [configOpen, setConfigOpen] = useState(false);
