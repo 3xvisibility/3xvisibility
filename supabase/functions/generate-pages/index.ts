@@ -415,7 +415,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    const csvRows = (campaign.csv_data || []) as Record<string, string>[];
+    // Try loading CSV from dedicated storage table first, fall back to inline csv_data
+    let csvRows: Record<string, string>[] = [];
+    const { data: csvFile } = await supabase
+      .from("campaign_csv_files")
+      .select("raw_content, headers")
+      .eq("campaign_id", campaign_id)
+      .maybeSingle();
+
+    if (csvFile?.raw_content) {
+      // Parse raw CSV text
+      const lines = (csvFile.raw_content as string).split("\n").filter((l: string) => l.trim());
+      if (lines.length > 1) {
+        const firstLine = lines[0];
+        let delimiter = ",";
+        if (firstLine.includes("\t")) delimiter = "\t";
+        else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
+        else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
+
+        const headers = firstLine.split(delimiter).map((h: string) => h.trim().replace(/^["']|["']$/g, ""));
+        csvRows = lines.slice(1).map((line: string) => {
+          const values = line.split(delimiter).map((v: string) => v.trim().replace(/^["']|["']$/g, ""));
+          return headers.reduce((acc: Record<string, string>, h: string, i: number) => ({ ...acc, [h]: values[i] || "" }), {});
+        });
+      }
+    }
+
+    // Fall back to inline csv_data
+    if (csvRows.length === 0) {
+      csvRows = (campaign.csv_data || []) as Record<string, string>[];
+    }
+
     if (csvRows.length === 0) {
       return new Response(JSON.stringify({ error: "No CSV data in this campaign" }), {
         status: 400,
