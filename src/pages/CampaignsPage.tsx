@@ -625,6 +625,12 @@ export default function CampaignsPage() {
                             </div>
                           ))}
                         </div>
+                        {mappingWarning && (
+                          <div className="flex items-center gap-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                            <span>{mappingWarning}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
