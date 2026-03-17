@@ -1111,6 +1111,21 @@ export default function CampaignsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Hidden file input for CSV replacement */}
+      <input
+        type="file"
+        accept=".csv"
+        className="hidden"
+        id="replace-csv-input"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && replaceCsvCampaignId) {
+            replaceCsvMutation.mutate({ campaignId: replaceCsvCampaignId, file });
+          }
+          e.target.value = "";
+        }}
+      />
+
       {linkDialogCampaign && (
         <InternalLinkDialog
           campaignId={linkDialogCampaign.id}
