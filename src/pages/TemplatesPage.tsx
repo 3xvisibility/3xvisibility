@@ -714,11 +714,36 @@ export default function TemplatesPage() {
         <Card><CardContent className="p-10 text-center text-muted-foreground">No templates yet. Create your first template to get started.</CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {templates.map((tpl) => (
-            <Card key={tpl.id} className="shadow-surface hover:shadow-surface-hover transition-shadow duration-150">
+          {hasCustomOrder && (
+            <div className="col-span-full flex justify-end">
+              <Button variant="ghost" size="sm" onClick={resetOrder} className="text-xs text-muted-foreground">
+                <RotateCcw className="h-3 w-3 mr-1.5" /> Reset order
+              </Button>
+            </div>
+          )}
+          {orderedTemplates.map((tpl, index) => {
+            const dragProps = getDragProps(index);
+            return (
+            <Card
+              key={tpl.id}
+              className={`shadow-surface hover:shadow-surface-hover transition-shadow duration-150 ${dragProps.className}`}
+              draggable={dragProps.draggable}
+              onDragStart={dragProps.onDragStart}
+              onDragOver={dragProps.onDragOver}
+              onDrop={dragProps.onDrop}
+              onDragEnd={dragProps.onDragEnd}
+            >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-1">
+                          <GripVertical className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-xs">Drag to reorder</TooltipContent>
+                    </Tooltip>
                     <FileText className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">{tpl.name}</h3>
                   </div>
@@ -778,7 +803,8 @@ export default function TemplatesPage() {
                 )}
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
