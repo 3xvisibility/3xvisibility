@@ -754,6 +754,47 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ai_content_length: string
