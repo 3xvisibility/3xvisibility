@@ -59,6 +59,11 @@ export default function CampaignsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
+  // Generation settings
+  const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
+  const [maxRows, setMaxRows] = useState<string>("");
+  const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
