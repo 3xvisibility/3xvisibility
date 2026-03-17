@@ -36,6 +36,12 @@ export default function TemplatesPage() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
+  // SEO state
+  const [seoTitlePattern, setSeoTitlePattern] = useState("");
+  const [seoDescriptionPattern, setSeoDescriptionPattern] = useState("");
+  // Schema state
+  const [schemaType, setSchemaType] = useState("WebPage");
+  const [schemaConfig, setSchemaConfig] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
