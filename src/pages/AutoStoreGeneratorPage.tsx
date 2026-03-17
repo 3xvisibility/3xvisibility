@@ -174,6 +174,49 @@ export default function AutoStoreGeneratorPage() {
   });
 
   const [regeneratingIdx, setRegeneratingIdx] = useState<string | null>(null);
+  const fileInputRef = useState<Record<string, HTMLInputElement | null>>({});
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async ({ generationId, productIndex, file }: {
+      generationId: string; productIndex: number; file: File;
+    }) => {
+      setRegeneratingIdx(`${generationId}-${productIndex}`);
+
+      // Convert to base64 data URL
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Get current generation
+      const { data: gen, error: fetchErr } = await supabase
+        .from("store_generations")
+        .select("products")
+        .eq("id", generationId)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const products = (gen.products as any[]) || [];
+      products[productIndex] = { ...products[productIndex], image: dataUrl };
+
+      const { error } = await supabase
+        .from("store_generations")
+        .update({ products })
+        .eq("id", generationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({ title: "Image uploaded" });
+      setRegeneratingIdx(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      setRegeneratingIdx(null);
+    },
+  });
 
   const regenerateImageMutation = useMutation({
     mutationFn: async ({ generationId, productIndex, productName, niche }: {
