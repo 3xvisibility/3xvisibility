@@ -24,7 +24,22 @@ export function exportPagesCsv(
   );
 
   const csv = [header, ...rows].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  downloadBlob(csv, filename, "text/csv;charset=utf-8;");
+}
+
+/**
+ * Export any array of objects as a JSON file and trigger browser download.
+ */
+export function exportPagesJson(
+  pages: Record<string, any>[],
+  filename = "generated-pages.json"
+) {
+  const json = JSON.stringify(pages, null, 2);
+  downloadBlob(json, filename, "application/json;charset=utf-8;");
+}
+
+function downloadBlob(content: string, filename: string, type: string) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

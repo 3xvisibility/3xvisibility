@@ -22,7 +22,7 @@ import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
   Check, Clock, XCircle, FileText, Layers, RefreshCw, Download,
 } from "lucide-react";
-import { exportPagesCsv } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
@@ -371,9 +371,12 @@ export default function CampaignDetailPage() {
             </Card>
           ) : (
             <>
-              <div className="flex justify-end mb-2">
+              <div className="flex justify-end gap-2 mb-2">
                 <Button size="sm" variant="outline" onClick={() => exportPagesCsv(pages, `${campaign?.name || "pages"}-export.csv`)}>
-                  <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+                  <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => exportPagesJson(pages, `${campaign?.name || "pages"}-export.json`)}>
+                  <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
                 </Button>
               </div>
               <Card className="border-0 shadow-surface">

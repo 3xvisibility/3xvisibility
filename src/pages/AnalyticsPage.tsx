@@ -275,6 +275,22 @@ export default function AnalyticsPage() {
     toast({ title: "CSV exported", description: `${pages.length} pages exported.` });
   }, [pages, downloadFile, toast]);
 
+  const exportJSON = useCallback(() => {
+    const data = pages.map((page) => {
+      const p = page as any;
+      return {
+        title: page.title,
+        status: page.status,
+        seo_title: p.seo_title || null,
+        seo_description: p.seo_description || null,
+        seo_keywords: p.seo_keywords || [],
+        created_at: page.created_at,
+      };
+    });
+    downloadFile(JSON.stringify(data, null, 2), "analytics-report.json", "application/json");
+    toast({ title: "JSON exported", description: `${pages.length} pages exported.` });
+  }, [pages, downloadFile, toast]);
+
   const exportPDF = useCallback(() => {
     const date = new Date().toLocaleDateString();
     const seoDist = seoDistribution.map((d) => `${d.name}: ${d.value}`).join(" | ");
@@ -371,7 +387,10 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={pages.length === 0}>
-            <Download className="mr-1.5 h-3.5 w-3.5" /> Export CSV
+            <Download className="mr-1.5 h-3.5 w-3.5" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportJSON} disabled={pages.length === 0}>
+            <Download className="mr-1.5 h-3.5 w-3.5" /> JSON
           </Button>
           <Button variant="outline" size="sm" onClick={exportPDF} disabled={pages.length === 0}>
             <FileDown className="mr-1.5 h-3.5 w-3.5" /> PDF Report

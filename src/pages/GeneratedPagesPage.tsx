@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, ShoppingBag, MessageSquareText, Download, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
-import { exportPagesCsv } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import SocialShareButtons from "@/components/SocialShareButtons";
 import SocialCaptionDialog from "@/components/SocialCaptionDialog";
 import BulkCaptionDialog from "@/components/BulkCaptionDialog";
@@ -312,7 +312,15 @@ export default function GeneratedPagesPage() {
             onClick={() => exportPagesCsv(filtered, "generated-pages.csv")}
             disabled={filtered.length === 0}
           >
-            <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+            <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => exportPagesJson(filtered, "generated-pages.json")}
+            disabled={filtered.length === 0}
+          >
+            <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
           </Button>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[130px] h-9 text-xs">
