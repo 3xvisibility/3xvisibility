@@ -367,6 +367,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    // For service-role calls, resolve user_id from the campaign
+    if (!user) {
+      const { data: campLookup } = await supabase.from("campaigns").select("user_id").eq("id", campaign_id).maybeSingle();
+      if (!campLookup) {
+        return new Response(JSON.stringify({ error: "Campaign not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = { id: campLookup.user_id };
+    }
+
     // Handle pause action — update both campaign and active job
     if (action === "pause") {
       await supabase.from("campaigns").update({ is_paused: true }).eq("id", campaign_id).eq("user_id", user.id);
