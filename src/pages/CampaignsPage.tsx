@@ -852,6 +852,14 @@ export default function CampaignsPage() {
                           )}
                         </div>
                       )}
+                      {latestJob && (
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1 border-t border-border/50 mt-2 pt-2">
+                          <span>Batch {latestJob.current_batch}/{Math.ceil(latestJob.total_rows / latestJob.batch_size)}</span>
+                          <span className="text-success">{latestJob.success_count} ok</span>
+                          {latestJob.error_count > 0 && <span className="text-destructive">{latestJob.error_count} errors</span>}
+                          <Badge variant="outline" className="text-[9px] ml-auto capitalize">{latestJob.status}</Badge>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
