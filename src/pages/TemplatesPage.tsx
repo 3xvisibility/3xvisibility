@@ -97,11 +97,7 @@ export default function TemplatesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast({ title: "Template created", description: `"${name}" has been saved.` });
-      setOpen(false);
-      setAiOpen(false);
-      setName("");
-      setContent("");
-      setAiPrompt("");
+      resetAndClose();
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
