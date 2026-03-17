@@ -70,6 +70,7 @@ export default function AutoStoreGeneratorPage() {
   const [language, setLanguage] = useState("en");
   const [websiteId, setWebsiteId] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [previewGen, setPreviewGen] = useState<StoreGeneration | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
