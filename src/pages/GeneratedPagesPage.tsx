@@ -20,6 +20,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
