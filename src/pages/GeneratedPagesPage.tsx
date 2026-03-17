@@ -465,7 +465,7 @@ export default function GeneratedPagesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((page) => {
+                {paginatedPages.map((page) => {
                   const seoResult = calculateSeoScore((page as any).seo_title, (page as any).seo_description, (page as any).seo_keywords, page.title);
                   const isSelected = selectedIds.has(page.id);
                   return (
