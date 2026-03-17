@@ -28,28 +28,28 @@ export function LandingFooter() {
   };
 
   return (
-    <footer className="border-t border-border/20 py-14 md:py-16">
+    <footer className="border-t border-[hsl(262,83%,58%,0.08)] py-14 md:py-16">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] flex items-center justify-center">
+              <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-[hsl(280,80%,65%)] flex items-center justify-center">
                 <span className="text-[10px] font-black text-primary-foreground">P</span>
               </div>
               <span className="text-sm font-bold tracking-tight">PageGen</span>
             </Link>
-            <p className="mt-3 text-xs text-muted-foreground/60 leading-relaxed max-w-[200px]">
+            <p className="mt-3 text-xs text-[hsl(250,15%,40%)] leading-relaxed max-w-[200px]">
               {t("footer.description")}
             </p>
           </div>
 
           {Object.entries(footerLinks).map(([group, links]) => (
             <div key={group}>
-              <h4 className="font-semibold text-[11px] uppercase tracking-[0.15em] text-foreground/50 mb-4">{group}</h4>
+              <h4 className="font-semibold text-[11px] uppercase tracking-[0.15em] text-[hsl(250,15%,40%)] mb-4">{group}</h4>
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200">
+                    <a href={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
                       {link.label}
                     </a>
                   </li>
@@ -59,11 +59,11 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-border/15 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] text-muted-foreground/40">
+        <div className="mt-12 pt-6 border-t border-[hsl(262,83%,58%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[11px] text-[hsl(250,15%,35%)]">
             © {new Date().getFullYear()} PageGen. {t("footer.rights")}
           </p>
-          <div className="flex items-center gap-5 text-[11px] text-muted-foreground/40">
+          <div className="flex items-center gap-5 text-[11px] text-[hsl(250,15%,35%)]">
             <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
             <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
             <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
