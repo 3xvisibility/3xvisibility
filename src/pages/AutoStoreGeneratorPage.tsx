@@ -241,6 +241,28 @@ export default function AutoStoreGeneratorPage() {
     },
   });
 
+  const publishMutation = useMutation({
+    mutationFn: async (generationId: string) => {
+      const { data, error } = await supabase.functions.invoke("publish-store", {
+        body: { generation_id: generationId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({
+        title: "Store published!",
+        description: `${data.published} products published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["store-generations"] });
+      toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const getProgressPercent = (gen: StoreGeneration) => {
     const total = (gen.progress.total_categories || 1) + (gen.progress.total_products || 1);
     const done = gen.progress.categories_created + gen.progress.products_created;
@@ -251,6 +273,9 @@ export default function AutoStoreGeneratorPage() {
     pending: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, color: "bg-muted text-muted-foreground" },
     processing: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, color: "bg-primary/10 text-primary" },
     completed: { icon: <CheckCircle className="h-3.5 w-3.5" />, color: "bg-success/10 text-success" },
+    published: { icon: <CheckCircle className="h-3.5 w-3.5" />, color: "bg-success/10 text-success" },
+    publishing: { icon: <Loader2 className="h-3.5 w-3.5 animate-spin" />, color: "bg-primary/10 text-primary" },
+    publish_failed: { icon: <AlertCircle className="h-3.5 w-3.5" />, color: "bg-destructive/10 text-destructive" },
     failed: { icon: <XCircle className="h-3.5 w-3.5" />, color: "bg-destructive/10 text-destructive" },
   };
 
