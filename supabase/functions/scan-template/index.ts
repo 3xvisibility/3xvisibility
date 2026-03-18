@@ -108,6 +108,15 @@ Deno.serve(async (req) => {
       const creds = website.credentials as { username?: string; app_password?: string } | null;
       const siteUrl = website.url.replace(/\/+$/, "");
 
+      // Validate URL is not a placeholder
+      const hostname = new URL(siteUrl).hostname;
+      if (hostname.endsWith("example.com") || hostname.endsWith("example.org") || hostname.endsWith("example.net")) {
+        return new Response(
+          JSON.stringify({ error: `The website URL "${siteUrl}" is a placeholder. Please update the website URL in Settings → Websites to your actual domain.` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       try {
         const headers: Record<string, string> = {
           "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)",
@@ -140,8 +149,15 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        if (msg.includes("dns error") || msg.includes("failed to lookup address")) {
+          return new Response(
+            JSON.stringify({ error: `Could not connect to "${hostname}". Please verify the website URL is correct and the site is online.` }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
         return new Response(
-          JSON.stringify({ error: `Failed to fetch WordPress pages: ${e instanceof Error ? e.message : "Unknown error"}` }),
+          JSON.stringify({ error: `Failed to fetch WordPress pages: ${msg}` }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
