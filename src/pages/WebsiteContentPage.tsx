@@ -26,6 +26,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplateDetectorDialog } from "@/components/website-content/TemplateDetectorDialog";
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
+import { calculateContentSeoScore } from "@/lib/content-seo-score";
+import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 
 type Website = Tables<"websites">;
 
