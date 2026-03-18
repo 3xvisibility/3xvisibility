@@ -617,6 +617,9 @@ Deno.serve(async (req) => {
       if (website?.url) websiteBaseUrl = website.url.replace(/\/+$/, "");
     }
 
+    const TIMEOUT_MS = 120_000; // 120s soft limit (edge functions have ~150s hard limit)
+    const startTime = Date.now();
+
     console.log("[GENERATE-PAGES] Starting batch processing. Rows:", remainingRows.length, "AI blocks:", aiBlocks.length);
 
     // Process in batches
@@ -626,8 +629,63 @@ Deno.serve(async (req) => {
     let successCount = alreadyProcessed - (campaign.failed_rows || 0);
     let aiGenerationsUsed = 0;
     let batchesCompleted = campaign.current_batch || 0;
+    let timedOut = false;
 
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
+      // Timeout guard — save progress and return partial results
+      if (Date.now() - startTime > TIMEOUT_MS) {
+        timedOut = true;
+        console.log(`[GENERATE-PAGES] Timeout reached after ${batchesCompleted} batches. Saving partial results.`);
+        await logEvent(supabase, campaign_id, user.id, "timeout_partial",
+          `Timeout after ${batchesCompleted} batches. ${processedCount}/${limitedRows.length} processed. Will auto-resume.`,
+          batchesCompleted);
+
+        // Save progress so it can be resumed
+        await supabase.from("campaigns").update({
+          status: "queued",
+          processed_rows: processedCount,
+          failed_rows: failedCount,
+          current_batch: batchesCompleted,
+          is_paused: false,
+        }).eq("id", campaign_id);
+
+        if (jobId) {
+          await updateJob(supabase, jobId, {
+            status: "paused",
+            processed_rows: processedCount,
+            success_count: successCount,
+            error_count: failedCount,
+            current_batch: batchesCompleted,
+          });
+        }
+
+        // Auto-trigger a resume call so the next invocation picks up where we left off
+        try {
+          const resumeUrl = `${supabaseUrl}/functions/v1/generate-pages`;
+          fetch(resumeUrl, {
+            method: "POST",
+            headers: {
+              Authorization: authHeader,
+              "Content-Type": "application/json",
+              "x-service-role-key": supabaseServiceKey,
+            },
+            body: JSON.stringify({ campaign_id, action: "resume" }),
+          }).catch(() => {}); // fire-and-forget
+        } catch { /* ignore */ }
+
+        return new Response(JSON.stringify({
+          success: true,
+          partial: true,
+          generated: successCount,
+          failed: failedCount,
+          total: limitedRows.length,
+          remaining: limitedRows.length - processedCount,
+          job_id: jobId,
+          message: `Timeout reached. ${successCount} pages generated so far. Auto-resuming remaining ${limitedRows.length - processedCount} pages.`,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       // Check if paused
       const { data: freshCampaign } = await supabase
         .from("campaigns")
