@@ -103,22 +103,68 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   };
 
   const renderNavItems = (items: NavItem[]) =>
-    items.map((item) => (
-      <SidebarMenuItem key={item.titleKey}>
-        <SidebarMenuButton asChild>
-          <NavLink
-            to={item.url}
-            end={item.url === "/dashboard"}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
-            activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
-            {...(onboardingMap[item.url] ? { "data-onboarding": onboardingMap[item.url] } : {})}
+    items.map((item) => {
+      const isLocked = item.requiredFeature ? !canUseFeature(item.requiredFeature) : false;
+      const minPlanLabel = item.requiredFeature
+        ? PLAN_FEATURES[getMinimumPlanFor(item.requiredFeature)].label
+        : "";
+
+      if (isLocked) {
+        const content = (
+          <button
+            onClick={() => navigate("/billing")}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground/50 hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer"
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
-          </NavLink>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ));
+            {!collapsed && (
+              <>
+                <span className="text-sm flex-1 text-left">{t(item.titleKey)}</span>
+                <Lock className="h-3.5 w-3.5 text-muted-foreground/60" />
+              </>
+            )}
+          </button>
+        );
+
+        return (
+          <SidebarMenuItem key={item.titleKey}>
+            <SidebarMenuButton asChild>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>{content}</TooltipTrigger>
+                  <TooltipContent side="right">
+                    Requires {minPlanLabel} plan
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>{content}</TooltipTrigger>
+                  <TooltipContent side="right">
+                    Upgrade to {minPlanLabel} to unlock
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      }
+
+      return (
+        <SidebarMenuItem key={item.titleKey}>
+          <SidebarMenuButton asChild>
+            <NavLink
+              to={item.url}
+              end={item.url === "/dashboard"}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
+              activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+              {...(onboardingMap[item.url] ? { "data-onboarding": onboardingMap[item.url] } : {})}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    });
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
