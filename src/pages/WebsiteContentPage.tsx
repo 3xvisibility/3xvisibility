@@ -353,54 +353,55 @@ function ContentList({
         {items.map((item) => (
           <Card key={item.id} className="group hover:border-primary/30 transition-colors">
             <CardContent className="py-3 px-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="text-sm font-medium truncate">
-                      {item.title || "(Untitled)"}
-                    </h3>
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] shrink-0 ${
-                        item.status === "publish" || item.status === "published"
-                          ? "text-success border-success/30"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {item.status}
-                    </Badge>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      <h3 className="text-sm font-medium truncate max-w-[200px] sm:max-w-none">
+                        {item.title || "(Untitled)"}
+                      </h3>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] shrink-0 ${
+                          item.status === "publish" || item.status === "published"
+                            ? "text-green-600 border-green-500/30 dark:text-green-400"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {item.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      /{item.slug}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">
-                    /{item.slug}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs gap-1"
-                    onClick={() => onPreview(item)}
-                  >
-                    <Eye className="h-3 w-3" /> Preview
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs gap-1"
-                    onClick={() => onDetectTemplate(item)}
-                  >
-                    <Sparkles className="h-3 w-3" /> Generate
-                  </Button>
                   {item.url && (
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 w-7 p-0"
+                      className="h-7 w-7 p-0 shrink-0"
                       onClick={() => window.open(item.url, "_blank")}
                     >
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="h-3.5 w-3.5" />
                     </Button>
                   )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5 flex-1 sm:flex-none"
+                    onClick={() => onPreview(item)}
+                  >
+                    <Eye className="h-3.5 w-3.5" /> Preview
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 flex-1 sm:flex-none bg-primary text-primary-foreground"
+                    onClick={() => onDetectTemplate(item)}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" /> Generate Template
+                  </Button>
                 </div>
               </div>
             </CardContent>
