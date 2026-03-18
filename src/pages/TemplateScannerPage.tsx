@@ -28,7 +28,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { calculateContentSeoScore } from "@/lib/content-seo-score";
+import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 
 interface ContentBlock {
