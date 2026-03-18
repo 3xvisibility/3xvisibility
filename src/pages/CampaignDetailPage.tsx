@@ -582,6 +582,59 @@ export default function CampaignDetailPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Selective Overwrite Dialog */}
+      <Dialog open={showOverwriteDialog} onOpenChange={setShowOverwriteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Re-generate Pages</DialogTitle>
+            <DialogDescription>
+              Choose which fields to overwrite on existing pages. Unchecked fields will keep their current values.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {([
+              { key: "title" as const, label: "Page Title & Slug", desc: "Regenerate the H1 title and URL slug" },
+              { key: "content" as const, label: "Page Content", desc: "Regenerate the full HTML body content" },
+              { key: "seo" as const, label: "SEO Metadata", desc: "Regenerate SEO title, description, keywords & schema" },
+              { key: "images" as const, label: "Images & Media", desc: "Regenerate dynamic maps, YouTube embeds & images" },
+            ]).map(({ key, label, desc }) => (
+              <div key={key} className="flex items-start gap-3">
+                <Checkbox
+                  id={`overwrite-${key}`}
+                  checked={overwriteFields[key]}
+                  onCheckedChange={(checked) =>
+                    setOverwriteFields((prev) => ({ ...prev, [key]: !!checked }))
+                  }
+                  className="mt-0.5"
+                />
+                <div className="grid gap-0.5 leading-none">
+                  <Label htmlFor={`overwrite-${key}`} className="text-sm font-medium cursor-pointer">
+                    {label}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowOverwriteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setShowOverwriteDialog(false);
+                executeMutation.mutate({ overwrite_fields: overwriteFields });
+              }}
+              disabled={!Object.values(overwriteFields).some(Boolean)}
+              className="bg-gradient-primary hover:brightness-110"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Re-generate ({Object.values(overwriteFields).filter(Boolean).length} fields)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
