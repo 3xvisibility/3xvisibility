@@ -37,8 +37,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import PageComparisonDialog from "@/components/discovery/PageComparisonDialog";
-import { calculateContentSeoScore } from "@/lib/content-seo-score";
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
+import { computeAverageScores } from "@/components/ScoresBadgeGroup";
+import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 
 interface DiscoveredPage {
   url: string;
