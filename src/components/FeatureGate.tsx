@@ -53,6 +53,7 @@ interface FeatureGateProps {
 export function FeatureGate({ feature, children }: FeatureGateProps) {
   const { canUseFeature } = useSubscription();
   const navigate = useNavigate();
+  const [isYearly, setIsYearly] = useState(false);
 
   if (canUseFeature(feature)) {
     return <>{children}</>;
@@ -62,6 +63,13 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
   const planLabel = PLAN_FEATURES[minPlan].label;
   const featureName = FEATURE_LABELS[feature];
   const featureDesc = FEATURE_DESCRIPTIONS[feature];
+
+  const getPrice = (plan: PlanName) => {
+    const monthly = PLAN_PRICES_MONTHLY[plan];
+    if (monthly === 0) return "$0";
+    if (isYearly) return `$${Math.round(monthly * (1 - YEARLY_DISCOUNT))}`;
+    return `$${monthly}`;
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-8">
@@ -74,9 +82,34 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
       <span className="inline-block text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-3 py-1 mb-4">
         {planLabel} Plan
       </span>
-      <p className="text-muted-foreground max-w-md mb-8">
+      <p className="text-muted-foreground max-w-md mb-6">
         {featureDesc}
       </p>
+
+      {/* Billing Toggle */}
+      <div className="flex items-center gap-3 mb-6">
+        <span className={`text-sm font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+        <button
+          onClick={() => setIsYearly(!isYearly)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            isYearly ? "bg-primary" : "bg-muted-foreground/30"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 rounded-full bg-background transition-transform ${
+              isYearly ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </button>
+        <span className={`text-sm font-medium ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
+          Yearly
+        </span>
+        {isYearly && (
+          <span className="text-xs font-semibold text-primary bg-primary/10 rounded-full px-2 py-0.5">
+            Save 20%
+          </span>
+        )}
+      </div>
 
       {/* Plan Comparison Table */}
       <div className="w-full max-w-3xl overflow-x-auto mb-8 rounded-lg border border-border">
