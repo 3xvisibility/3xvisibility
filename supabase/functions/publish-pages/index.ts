@@ -469,8 +469,63 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { page_ids, publish_type } = await req.json();
-    const pubType = publish_type || "page"; // "page" or "product"
+    const body = await req.json();
+    const { page_ids, publish_type, website_id, pages: directPages } = body;
+    const pubType = publish_type || "page";
+
+    // === Direct publish mode (from TemplateDetectorDialog) ===
+    if (directPages && Array.isArray(directPages) && website_id) {
+      const { data: website } = await supabase
+        .from("websites")
+        .select("url, type, credentials")
+        .eq("id", website_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!website) {
+        return new Response(JSON.stringify({ error: "Website not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const results: { title: string; status: string; external_url?: string; error?: string }[] = [];
+
+      for (const dp of directPages) {
+        const seo: SeoData = {
+          seo_title: dp.seo_title || dp.title,
+          seo_description: dp.seo_description || "",
+        };
+        try {
+          let result: { external_id: string; external_url: string };
+          const creds = website.credentials as WebsiteCredentials;
+
+          if (website.type === "wordpress") {
+            result = await publishToWordPress(website.url, creds, dp.title, dp.content, dp.slug, seo);
+          } else if (website.type === "shopify") {
+            result = await publishToShopify(website.url, creds, dp.title, dp.content, seo);
+          } else if (website.type === "prestashop") {
+            result = await publishToPrestaShop(website.url, creds, dp.title, dp.content, dp.slug, seo);
+          } else if (website.type === "woocommerce") {
+            result = await publishToWooCommerce(website.url, creds, dp.title, dp.content, dp.slug, seo);
+          } else {
+            throw new Error(`Unsupported website type: ${website.type}`);
+          }
+          results.push({ title: dp.title, status: "published", external_url: result.external_url });
+        } catch (err) {
+          results.push({ title: dp.title, status: "failed", error: err instanceof Error ? err.message : "Unknown error" });
+        }
+      }
+
+      const published = results.filter((r) => r.status === "published").length;
+      const failed = results.filter((r) => r.status === "failed").length;
+      return new Response(
+        JSON.stringify({ success: true, published, failed, results }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // === Standard mode (publish generated_pages by IDs) ===
     if (!page_ids || !Array.isArray(page_ids) || page_ids.length === 0) {
       return new Response(JSON.stringify({ error: "page_ids array is required" }), {
         status: 400,
