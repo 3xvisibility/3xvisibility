@@ -777,13 +777,13 @@ export default function CampaignsPage() {
               </div>
 
               {/* Wizard Steps Indicator */}
-              <div className="px-6 pt-5 pb-2">
-                <div className="flex items-start justify-between">
+              <div className="px-4 sm:px-6 pt-5 pb-2 overflow-x-auto">
+                <div className="flex items-start justify-between min-w-0">
                   {wizardSteps.map((s, i) => (
                     <div key={s.num} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex flex-col items-center min-w-[40px]">
+                      <div className="flex flex-col items-center min-w-[32px] sm:min-w-[40px]">
                         <div
-                          className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ring-2 ring-offset-2 ring-offset-background ${
+                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold transition-all duration-200 ring-2 ring-offset-2 ring-offset-background ${
                             step > s.num
                               ? "bg-primary text-primary-foreground ring-primary"
                               : step === s.num
@@ -791,14 +791,14 @@ export default function CampaignsPage() {
                                 : "bg-muted text-muted-foreground ring-border"
                           }`}
                         >
-                          {step > s.num ? <Check className="h-3.5 w-3.5" /> : s.num}
+                          {step > s.num ? <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : s.num}
                         </div>
-                        <span className={`text-[10px] mt-1.5 font-medium transition-colors ${
+                        <span className={`text-[9px] sm:text-[10px] mt-1 sm:mt-1.5 font-medium transition-colors truncate max-w-[40px] sm:max-w-none text-center ${
                           step >= s.num ? "text-foreground" : "text-muted-foreground"
                         }`}>{s.label}</span>
                       </div>
                       {i < wizardSteps.length - 1 && (
-                        <div className="flex-1 flex items-center px-1 -mt-3.5">
+                        <div className="flex-1 flex items-center px-0.5 sm:px-1 -mt-3">
                           <div className={`h-[2px] w-full rounded-full transition-colors duration-300 ${
                             step > s.num ? "bg-primary" : "bg-border"
                           }`} style={{ backgroundImage: step <= s.num ? 'repeating-linear-gradient(90deg, hsl(var(--border)) 0px, hsl(var(--border)) 4px, transparent 4px, transparent 8px)' : 'none', backgroundColor: step > s.num ? undefined : 'transparent' }} />
