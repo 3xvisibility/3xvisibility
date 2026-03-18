@@ -1355,7 +1355,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Navigation */}
-              <div className="flex justify-between px-6 py-4 border-t border-border bg-muted/30">
+              <div className="flex justify-between px-4 sm:px-6 py-4 border-t border-border bg-muted/30">
                 <Button
                   variant="outline"
                   onClick={() => step === 1 ? setOpen(false) : setStep(step - 1)}
