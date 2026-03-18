@@ -227,7 +227,7 @@ export default function CampaignsPage() {
   }, [dataSource, selectedPageIds, websitePages]);
 
   const variableMapping = useMemo(() => {
-    const headers = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+    const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
     const matched: { variable: string; column: string | null }[] = [];
     for (const v of selectedTemplateVars) {
