@@ -441,8 +441,10 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode }));
-    const { campaign_id, action, test_mode } = body;
+     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields }));
+    const { campaign_id, action, test_mode, overwrite_fields } = body;
+    // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
+    const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
 
     if (!campaign_id) {
       return new Response(JSON.stringify({ error: "campaign_id is required" }), {
