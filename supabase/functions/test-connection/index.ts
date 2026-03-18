@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createConnector } from "../_shared/connectors/factory.ts";
+import type { WebsiteRecord } from "../_shared/connectors/factory.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,78 +43,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const baseUrl = url.replace(/\/$/, "");
+    const website: WebsiteRecord = { url, type, credentials: credentials || {} };
+    const connector = createConnector(website);
+    const ok = await connector.testConnection();
 
-    if (type === "wordpress") {
-      const auth = btoa(`${credentials.username}:${credentials.app_password}`);
-      const response = await fetch(`${baseUrl}/wp-json/wp/v2/pages?per_page=1`, {
-        headers: { Authorization: `Basic ${auth}` },
-      });
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`WordPress connection failed [${response.status}]: ${err}`);
-      }
-      return new Response(JSON.stringify({ success: true, message: "WordPress connection successful" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!ok) {
+      throw new Error(`${type} connection test failed`);
     }
 
-    if (type === "shopify") {
-      const shopDomain = baseUrl.replace(/^https?:\/\//, "");
-      const response = await fetch(`https://${shopDomain}/admin/api/2024-01/shop.json`, {
-        headers: { "X-Shopify-Access-Token": credentials.admin_api_token },
-      });
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Shopify connection failed [${response.status}]: ${err}`);
-      }
-      return new Response(JSON.stringify({ success: true, message: "Shopify connection successful" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (type === "prestashop") {
-      const apiKey = credentials.api_key;
-      if (!apiKey) {
-        throw new Error("PrestaShop API key is required");
-      }
-      const auth = btoa(`${apiKey}:`);
-      const response = await fetch(`${baseUrl}/api/cms?output_format=JSON&limit=1`, {
-        headers: { Authorization: `Basic ${auth}` },
-      });
-      if (!response.ok) {
-        const err = await response.text();
-        if (response.status === 401) {
-          throw new Error("PrestaShop authentication failed. Check your API key and ensure the Webservice is enabled.");
-        }
-        throw new Error(`PrestaShop connection failed [${response.status}]: ${err}`);
-      }
-      return new Response(JSON.stringify({ success: true, message: "PrestaShop connection successful" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (type === "woocommerce") {
-      const { consumer_key, consumer_secret } = credentials;
-      if (!consumer_key || !consumer_secret) {
-        throw new Error("WooCommerce Consumer Key and Consumer Secret are required");
-      }
-      const response = await fetch(
-        `${baseUrl}/wp-json/wc/v3/products?per_page=1&consumer_key=${encodeURIComponent(consumer_key)}&consumer_secret=${encodeURIComponent(consumer_secret)}`
-      );
-      if (!response.ok) {
-        const err = await response.text();
-        if (response.status === 401) {
-          throw new Error("WooCommerce authentication failed. Check your Consumer Key and Consumer Secret.");
-        }
-        throw new Error(`WooCommerce connection failed [${response.status}]: ${err}`);
-      }
-      return new Response(JSON.stringify({ success: true, message: "WooCommerce connection successful" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    throw new Error(`Unsupported website type: ${type}`);
+    return new Response(
+      JSON.stringify({ success: true, message: `${type} connection successful` }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err: any) {
     return new Response(
       JSON.stringify({ success: false, error: err.message || "Connection test failed" }),
