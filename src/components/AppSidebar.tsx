@@ -13,7 +13,6 @@ import {
   Compass,
   ShieldCheck,
   Search as SearchIcon,
-  Store,
   Zap,
   Users,
   Database,
@@ -64,7 +63,6 @@ const toolsNav: NavItem[] = [
   { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", url: "/analytics", icon: BarChart3 },
   { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon, requiredFeature: "indexing" },
-  { titleKey: "sidebar.storeGenerator", url: "/store-generator", icon: Store, requiredFeature: "storeGenerator" },
 ];
 
 const settingsNav: NavItem[] = [

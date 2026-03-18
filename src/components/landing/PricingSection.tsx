@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Share2, Search, Link2, Code, Users, Headphones } from "lucide-react";
+import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -31,9 +31,9 @@ export function PricingSection() {
   const { t } = useLanguage();
 
   const plans = [
-    { name: t("pricing.starter"), monthlyPrice: 29, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `100 ${t("pricing.pagesPerMonth")}`, features: [`100 ${t("pricing.pagesPerMonth")}`, `50 ${t("pricing.aiGenerations")}`, `5 ${t("pricing.templates")}`, `1 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), t("pricing.socialSharing"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.pro"), monthlyPrice: 79, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `2,000 ${t("pricing.pagesPerMonth")}`, features: [`2,000 ${t("pricing.pagesPerMonth")}`, `500 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `5 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.storeGenerator"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.agency"), monthlyPrice: 199, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `10,000 ${t("pricing.pagesPerMonth")}`, features: [`10,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.storeGenerator"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.starter"), monthlyPrice: 29, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `100 ${t("pricing.pagesPerMonth")}`, features: [`100 ${t("pricing.pagesPerMonth")}`, `50 ${t("pricing.aiGenerations")}`, `5 ${t("pricing.templates")}`, `1 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.pro"), monthlyPrice: 79, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `2,000 ${t("pricing.pagesPerMonth")}`, features: [`2,000 ${t("pricing.pagesPerMonth")}`, `500 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `5 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.agency"), monthlyPrice: 199, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `10,000 ${t("pricing.pagesPerMonth")}`, features: [`10,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
   ];
 
   const comparisonFeatures = [
@@ -43,8 +43,6 @@ export function PricingSection() {
     { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: "1", pro: "5", agency: t("pricing.unlimited") },
     { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: true, pro: true, agency: true },
     { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.socialSharing"), icon: <Share2 className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: true, pro: true, agency: true },
-    { label: t("pricing.storeGenerator"), icon: <Store className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
     { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
     { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
     { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },

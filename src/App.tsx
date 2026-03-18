@@ -25,7 +25,7 @@ import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import IndexingPage from "./pages/IndexingPage";
-import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
+
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
 import WebsiteContentPage from "./pages/WebsiteContentPage";
@@ -183,14 +183,6 @@ const App = () => {
               element={
                 <ProtectedRoute session={session}>
                   <DashboardLayout onLogout={handleLogout}><FeatureGate feature="indexing"><IndexingPage /></FeatureGate></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/store-generator"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="storeGenerator"><AutoStoreGeneratorPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
