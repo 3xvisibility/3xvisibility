@@ -25,7 +25,7 @@ import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import IndexingPage from "./pages/IndexingPage";
-import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
+
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
 import WebsiteContentPage from "./pages/WebsiteContentPage";
