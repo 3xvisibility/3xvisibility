@@ -217,18 +217,19 @@ export default function WebsiteDiscoveryPage() {
 
   // Fetch connected websites
   const { data: websites = [] } = useQuery({
-    queryKey: ["all-websites"],
+    queryKey: ["discovery-websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
         .select("id, name, url, type, status")
+        .eq("workspace_id", wsId!)
         .eq("status", "connected")
         .order("name");
       if (error) throw error;
       return data;
     },
   });
-
   // Crawl public URL
   const crawlUrlMutation = useMutation({
     mutationFn: async (crawlUrl: string) => {
