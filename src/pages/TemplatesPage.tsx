@@ -38,7 +38,7 @@ export default function TemplatesPage() {
   const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
   const [activeEditorTab, setActiveEditorTab] = useState<string>("visual");
   const [aiPrompt, setAiPrompt] = useState("");
-  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+  const [_previewTemplateId, _setPreviewTemplateId] = useState<string | null>(null); // legacy – kept to avoid breaking refs
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   // SEO state
   const [seoTitlePattern, setSeoTitlePattern] = useState("");
