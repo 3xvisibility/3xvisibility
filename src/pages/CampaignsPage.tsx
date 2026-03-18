@@ -1013,25 +1013,27 @@ export default function CampaignsPage() {
                                               setSelectedPageIds(next);
                                             }}
                                             className={cn(
-                                              "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
+                                              "w-full flex items-start gap-2 px-2.5 py-2 rounded-lg text-left transition-colors",
                                               isSelected ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
                                             )}
                                           >
-                                            <Checkbox checked={isSelected} className="shrink-0 pointer-events-none" />
+                                            <Checkbox checked={isSelected} className="shrink-0 pointer-events-none mt-0.5" />
                                             <div className="min-w-0 flex-1">
                                               <p className="text-xs font-medium truncate">{page.title || "(Untitled)"}</p>
-                                              <p className="text-[10px] text-muted-foreground truncate">/{page.slug}</p>
+                                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                <span className="text-[10px] text-muted-foreground truncate max-w-[140px] sm:max-w-none">/{page.slug}</span>
+                                                <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                                  page.type === "product" ? "text-primary border-primary/30" : "text-muted-foreground border-border"
+                                                }`}>
+                                                  {page.type === "product" ? "product" : "page"}
+                                                </Badge>
+                                                <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                                  page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
+                                                }`}>
+                                                  {page.status}
+                                                </Badge>
+                                              </div>
                                             </div>
-                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
-                                              page.type === "product" ? "text-primary border-primary/30" : "text-muted-foreground border-border"
-                                            }`}>
-                                              {page.type === "product" ? "product" : "page"}
-                                            </Badge>
-                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
-                                              page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
-                                            }`}>
-                                              {page.status}
-                                            </Badge>
                                           </button>
                                         );
                                       })}
