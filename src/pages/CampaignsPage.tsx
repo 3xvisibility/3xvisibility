@@ -1043,11 +1043,57 @@ export default function CampaignsPage() {
                           )}
 
                           {selectedPageIds.size > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                              <span className="text-xs text-muted-foreground">Columns:</span>
-                              {websitePagesAsCsv.headers.map((h) => (
-                                <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
-                              ))}
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="text-xs text-muted-foreground">Columns:</span>
+                                {websitePagesAsCsv.headers.map((h) => (
+                                  <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                                ))}
+                              </div>
+
+                              {/* Content preview table */}
+                              <div className="rounded-xl border border-border overflow-hidden">
+                                <div className="px-3 py-2 bg-muted/50 border-b border-border flex items-center justify-between">
+                                  <span className="text-xs font-semibold">Preview ({selectedPageIds.size} items)</span>
+                                </div>
+                                <ScrollArea className="max-h-[200px]">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-[11px]">
+                                      <thead>
+                                        <tr className="border-b border-border bg-muted/30">
+                                          {websitePagesAsCsv.headers.map((h) => (
+                                            <th key={h} className="px-2.5 py-1.5 text-left font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
+                                          ))}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {websitePagesAsCsv.rows.slice(0, 20).map((row, idx) => (
+                                          <tr key={idx} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                                            {websitePagesAsCsv.headers.map((h) => (
+                                              <td key={h} className="px-2.5 py-1.5 max-w-[160px] truncate whitespace-nowrap">
+                                                {h === "type" ? (
+                                                  <Badge variant="outline" className={`text-[9px] ${row[h] === "product" ? "text-primary border-primary/30" : "text-muted-foreground"}`}>
+                                                    {row[h]}
+                                                  </Badge>
+                                                ) : h === "url" ? (
+                                                  <span className="text-primary">{row[h]}</span>
+                                                ) : (
+                                                  row[h] || "—"
+                                                )}
+                                              </td>
+                                            ))}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  {websitePagesAsCsv.rows.length > 20 && (
+                                    <p className="text-[10px] text-muted-foreground text-center py-1.5">
+                                      +{websitePagesAsCsv.rows.length - 20} more items
+                                    </p>
+                                  )}
+                                </ScrollArea>
+                              </div>
                             </div>
                           )}
                         </>
