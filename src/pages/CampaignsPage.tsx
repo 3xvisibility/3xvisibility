@@ -70,6 +70,7 @@ export default function CampaignsPage() {
   const [isDraggingCsv, setIsDraggingCsv] = useState(false);
   const [dataSource, setDataSource] = useState<"csv" | "website">("csv");
   const [websiteForPages, setWebsiteForPages] = useState("");
+  const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [websitePagesSearch, setWebsitePagesSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
