@@ -484,7 +484,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
         });
 
         const { data, error } = await supabase.functions.invoke("publish-pages", {
-          body: { website_id: websiteId, pages: batchPages },
+          body: { website_id: websiteId, pages: batchPages, workspace_id: currentWorkspace?.id },
         });
 
         if (data?.results) {
