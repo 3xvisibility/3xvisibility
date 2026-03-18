@@ -187,6 +187,16 @@ export default function DataCsvPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleBulkDownload = async () => {
+    if (csvFiles.length === 0) return;
+    toast({ title: "Downloading…", description: `Preparing ${csvFiles.length} file(s).` });
+    for (const file of csvFiles) {
+      await handleDownload(file);
+      // Small delay to avoid browser blocking multiple downloads
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  };
+
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -212,6 +222,12 @@ export default function DataCsvPage() {
             Manage your uploaded CSV files across all campaigns.
           </p>
         </div>
+        {csvFiles.length > 0 && (
+          <Button onClick={handleBulkDownload} variant="outline" size="sm" className="gap-2">
+            <Download className="h-4 w-4" />
+            Download All ({csvFiles.length})
+          </Button>
+        )}
       </div>
 
       {/* Search */}
