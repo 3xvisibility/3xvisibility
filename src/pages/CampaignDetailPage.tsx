@@ -163,10 +163,16 @@ export default function CampaignDetailPage() {
 
   // Execute mutation
   const executeMutation = useMutation({
-    mutationFn: async (action?: string) => {
+    mutationFn: async (params?: { action?: string; overwrite_fields?: typeof overwriteFields }) => {
+      const action = params?.action;
       const isTest = action === "test";
       const { data, error } = await supabase.functions.invoke("generate-pages", {
-        body: { campaign_id: id, action: isTest ? undefined : action, test_mode: isTest },
+        body: {
+          campaign_id: id,
+          action: isTest ? undefined : action,
+          test_mode: isTest,
+          overwrite_fields: params?.overwrite_fields || undefined,
+        },
       });
       if (error) {
         try {
