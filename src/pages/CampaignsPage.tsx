@@ -70,6 +70,7 @@ export default function CampaignsPage() {
   const [isDraggingCsv, setIsDraggingCsv] = useState(false);
   const [dataSource, setDataSource] = useState<"csv" | "website">("csv");
   const [websiteForPages, setWebsiteForPages] = useState("");
+  const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [websitePagesSearch, setWebsitePagesSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
@@ -173,17 +174,27 @@ export default function CampaignsPage() {
     },
   });
 
-  // Fetch website pages for import
+  // Fetch website content (pages + products) for import
   const { data: websitePages = [], isLoading: loadingWebPages } = useQuery({
-    queryKey: ["site-content-for-campaign", websiteForPages],
+    queryKey: ["site-content-for-campaign", websiteForPages, websiteContentType],
     enabled: !!websiteForPages && dataSource === "website",
     queryFn: async () => {
+      type ContentItem = { id: string; title: string; slug: string; url: string; type: string; status: string; content: string; excerpt: string; modified: string };
+      if (websiteContentType === "all") {
+        const [pagesRes, productsRes] = await Promise.all([
+          supabase.functions.invoke("fetch-site-content", { body: { website_id: websiteForPages, content_type: "pages" } }),
+          supabase.functions.invoke("fetch-site-content", { body: { website_id: websiteForPages, content_type: "products" } }),
+        ]);
+        const pages = (pagesRes.data?.items || []) as ContentItem[];
+        const products = (productsRes.data?.items || []) as ContentItem[];
+        return [...pages, ...products];
+      }
       const { data, error } = await supabase.functions.invoke("fetch-site-content", {
-        body: { website_id: websiteForPages, content_type: "pages" },
+        body: { website_id: websiteForPages, content_type: websiteContentType },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return (data.items || []) as { id: string; title: string; slug: string; url: string; type: string; status: string; content: string; excerpt: string; modified: string }[];
+      return (data.items || []) as ContentItem[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -194,15 +205,16 @@ export default function CampaignsPage() {
     return websitePages.filter((p: any) => p.title?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q));
   }, [websitePages, websitePagesSearch]);
 
-  // Convert selected website pages to CSV-like data
+  // Convert selected website pages/products to CSV-like data
   const websitePagesAsCsv = useMemo(() => {
     if (dataSource !== "website" || selectedPageIds.size === 0) return { headers: [] as string[], rows: [] as Record<string, string>[] };
     const selected = websitePages.filter((p: any) => selectedPageIds.has(p.id));
-    const headers = ["title", "slug", "url", "status", "excerpt"];
+    const headers = ["title", "slug", "url", "type", "status", "excerpt"];
     const rows = selected.map((p: any) => ({
       title: p.title || "",
       slug: p.slug || "",
       url: p.url || "",
+      type: p.type || "page",
       status: p.status || "",
       excerpt: (p.excerpt || "").replace(/<[^>]*>/g, "").slice(0, 500),
     }));
@@ -616,6 +628,7 @@ export default function CampaignsPage() {
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
     setDataSource("csv");
     setWebsiteForPages("");
+    setWebsiteContentType("all");
     setSelectedPageIds(new Set());
     setWebsitePagesSearch("");
   };
@@ -860,7 +873,7 @@ export default function CampaignsPage() {
                             dataSource === "website" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
-                          <Globe className="h-3.5 w-3.5" /> Website Pages
+                          <Globe className="h-3.5 w-3.5" /> Website Content
                         </button>
                       </div>
 
@@ -911,7 +924,7 @@ export default function CampaignsPage() {
                           {/* Website selector */}
                           <Select value={websiteForPages} onValueChange={(v) => { setWebsiteForPages(v); setSelectedPageIds(new Set()); }}>
                             <SelectTrigger className="rounded-xl h-10 text-sm">
-                              <SelectValue placeholder="Select a website to import pages from" />
+                              <SelectValue placeholder="Select a website to import from" />
                             </SelectTrigger>
                             <SelectContent>
                               {websites.map((w) => (
@@ -919,6 +932,26 @@ export default function CampaignsPage() {
                               ))}
                             </SelectContent>
                           </Select>
+
+                          {/* Content type toggle */}
+                          <div className="flex items-center gap-1 p-0.5 bg-muted rounded-lg">
+                            {([
+                              { value: "all", label: "All" },
+                              { value: "pages", label: "Pages" },
+                              { value: "products", label: "Products" },
+                            ] as const).map((opt) => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => { setWebsiteContentType(opt.value); setSelectedPageIds(new Set()); }}
+                                className={`flex-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
+                                  websiteContentType === opt.value ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
 
                           {websiteForPages && (
                             <>
@@ -941,7 +974,7 @@ export default function CampaignsPage() {
                               ) : filteredWebPages.length === 0 ? (
                                 <div className="text-center py-6 text-muted-foreground">
                                   <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                                  <p className="text-xs">No pages found on this website.</p>
+                                  <p className="text-xs">No content found on this website.</p>
                                 </div>
                               ) : (
                                 <>
@@ -989,6 +1022,11 @@ export default function CampaignsPage() {
                                               <p className="text-xs font-medium truncate">{page.title || "(Untitled)"}</p>
                                               <p className="text-[10px] text-muted-foreground truncate">/{page.slug}</p>
                                             </div>
+                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                              page.type === "product" ? "text-primary border-primary/30" : "text-muted-foreground border-border"
+                                            }`}>
+                                              {page.type === "product" ? "product" : "page"}
+                                            </Badge>
                                             <Badge variant="outline" className={`text-[9px] shrink-0 ${
                                               page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
                                             }`}>
@@ -1253,7 +1291,7 @@ export default function CampaignsPage() {
                       {/* Summary */}
                       <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
                         <h4 className="text-sm font-semibold mb-2">Summary</h4>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Data Source</span><span className="font-medium capitalize">{dataSource === "csv" ? "CSV File" : "Website Pages"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Data Source</span><span className="font-medium capitalize">{dataSource === "csv" ? "CSV File" : `Website Content (${websiteContentType})`}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${effectiveCsvData.length}` : `${effectiveCsvData.length || "—"} (all)`}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
