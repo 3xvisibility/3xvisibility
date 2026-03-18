@@ -728,7 +728,7 @@ export default function CampaignsPage() {
   const canProceed = () => {
     if (step === 1) return !!campaignName;
     if (step === 2) return true;
-    if (step === 3) return dataSource === "csv" ? csvData.length > 0 : selectedPageIds.size > 0;
+    if (step === 3) return dataSource === "csv" ? csvData.length > 0 : dataSource === "locations" ? locationData.length > 0 : selectedPageIds.size > 0;
     if (step === 4) return !!selectedTemplate;
     return true;
   };
