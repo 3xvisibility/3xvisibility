@@ -275,8 +275,8 @@ export default function CampaignsPage() {
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
       // Resolve effective data based on data source
-      const effectiveData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
-      const effectiveHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+      const effectiveData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
+      const effectiveHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
       const effectiveRowCount = effectiveData.length;
 
       // Store full CSV data inline as fallback; also upload to campaign_csv_files
