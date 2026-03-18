@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
+import type { PagePayload } from "../_shared/connectors/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,373 +8,45 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-interface WebsiteCredentials {
-  username?: string;
-  app_password?: string;
-  admin_api_token?: string;
-  api_key?: string;
-  consumer_key?: string;
-  consumer_secret?: string;
-}
-
-interface SeoData {
-  seo_title?: string | null;
-  seo_description?: string | null;
-  seo_keywords?: string[] | null;
-}
-
-interface ElementorMeta {
-  elementor_data?: string;
-  elementor_edit_mode?: string;
-  page_template?: string;
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function publishToWordPress(
-  siteUrl: string,
-  credentials: WebsiteCredentials,
-  title: string,
-  content: string,
-  slug: string,
-  seo: SeoData,
-  elementorMeta?: ElementorMeta
-): Promise<{ external_id: string; external_url: string }> {
-  const apiUrl = `${siteUrl.replace(/\/$/, "")}/wp-json/wp/v2/pages`;
-  const auth = btoa(`${credentials.username}:${credentials.app_password}`);
-
-  const pageBody: Record<string, any> = {
-    title,
-    content,
-    slug,
+/**
+ * Build a PagePayload from page data + publish type.
+ */
+function buildPayload(
+  page: { title: string; content: string; slug: string; seo_title?: string | null; seo_description?: string | null; seo_keywords?: string[] | null; canonical_url?: string | null },
+  publishType: string,
+  elementorMeta?: { elementor_data?: string; elementor_edit_mode?: string; page_template?: string },
+  extraData?: Record<string, unknown>
+): PagePayload {
+  const payload: PagePayload = {
+    title: page.title,
+    content: page.content,
+    slug: page.slug,
     status: "publish",
+    seo_title: page.seo_title || undefined,
+    seo_description: page.seo_description || undefined,
+    seo_keywords: page.seo_keywords || undefined,
+    canonical_url: page.canonical_url || undefined,
   };
 
-  if (seo.seo_description) {
-    pageBody.excerpt = seo.seo_description;
-  }
+  if (page.seo_description) payload.excerpt = page.seo_description;
 
-  // Build meta object with SEO + Elementor data
-  const meta: Record<string, any> = {};
-  
-  if (seo.seo_title) meta._yoast_wpseo_title = seo.seo_title;
-  if (seo.seo_description) meta._yoast_wpseo_metadesc = seo.seo_description;
-  if (seo.seo_keywords?.length) meta._yoast_wpseo_focuskw = seo.seo_keywords[0];
-
-  // Preserve Elementor design by cloning builder data
   if (elementorMeta?.elementor_data) {
-    meta._elementor_data = elementorMeta.elementor_data;
-    meta._elementor_edit_mode = elementorMeta.elementor_edit_mode || "builder";
-    meta._elementor_template_type = "wp-page";
-    meta._elementor_version = "3.0.0"; // minimum version marker
+    payload.elementor_meta = {
+      elementor_data: elementorMeta.elementor_data,
+      elementor_edit_mode: elementorMeta.elementor_edit_mode || "builder",
+      page_template: elementorMeta.page_template,
+    };
   }
 
-  if (Object.keys(meta).length > 0) {
-    pageBody.meta = meta;
+  if (publishType === "product" && extraData) {
+    payload.product_data = {
+      price: extraData.price ? String(extraData.price) : undefined,
+      images: (extraData.images as { src: string }[] | undefined)
+        || (extraData.image ? [{ src: String(extraData.image) }] : undefined),
+    };
   }
 
-  // Set page template if available
-  if (elementorMeta?.page_template) {
-    pageBody.template = elementorMeta.page_template;
-  }
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${auth}`,
-    },
-    body: JSON.stringify(pageBody),
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`WordPress API error [${response.status}]: ${errorBody}`);
-  }
-
-  const data = await response.json();
-  return {
-    external_id: String(data.id),
-    external_url: data.link || `${siteUrl}/${slug}`,
-  };
-}
-
-async function publishToShopify(
-  siteUrl: string,
-  credentials: WebsiteCredentials,
-  title: string,
-  content: string,
-  seo: SeoData
-): Promise<{ external_id: string; external_url: string }> {
-  const shopDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const apiUrl = `https://${shopDomain}/admin/api/2024-01/pages.json`;
-
-  const pagePayload: Record<string, any> = {
-    title,
-    body_html: content,
-    published: true,
-  };
-
-  if (seo.seo_title) pagePayload.metafields_global_title_tag = seo.seo_title;
-  if (seo.seo_description) pagePayload.metafields_global_description_tag = seo.seo_description;
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Access-Token": credentials.admin_api_token!,
-    },
-    body: JSON.stringify({ page: pagePayload }),
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Shopify API error [${response.status}]: ${errorBody}`);
-  }
-
-  const data = await response.json();
-  return {
-    external_id: String(data.page.id),
-    external_url: `https://${shopDomain}/pages/${data.page.handle}`,
-  };
-}
-
-async function publishProductToShopify(
-  siteUrl: string,
-  credentials: WebsiteCredentials,
-  title: string,
-  content: string,
-  slug: string,
-  seo: SeoData,
-  extraData?: Record<string, any>
-): Promise<{ external_id: string; external_url: string }> {
-  const shopDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const apiUrl = `https://${shopDomain}/admin/api/2024-01/products.json`;
-
-  const productPayload: Record<string, any> = {
-    title,
-    body_html: content,
-    handle: slugify(slug || title),
-    status: "active",
-  };
-
-  if (extraData?.price) productPayload.variants = [{ price: String(extraData.price) }];
-  if (extraData?.images || extraData?.image) {
-    const imgs = extraData.images || (extraData.image ? [extraData.image] : []);
-    productPayload.images = imgs.filter((src: string) => src && !src.startsWith("data:")).map((src: string) => ({ src }));
-  }
-  if (seo.seo_title) productPayload.metafields_global_title_tag = seo.seo_title;
-  if (seo.seo_description) productPayload.metafields_global_description_tag = seo.seo_description;
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Access-Token": credentials.admin_api_token!,
-    },
-    body: JSON.stringify({ product: productPayload }),
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Shopify Product API error [${response.status}]: ${errorBody}`);
-  }
-
-  const data = await response.json();
-  return {
-    external_id: String(data.product.id),
-    external_url: `https://${shopDomain}/products/${data.product.handle}`,
-  };
-}
-
-async function publishToPrestaShop(
-  siteUrl: string,
-  credentials: WebsiteCredentials,
-  title: string,
-  content: string,
-  slug: string,
-  seo: SeoData
-): Promise<{ external_id: string; external_url: string }> {
-  const baseUrl = siteUrl.replace(/\/$/, "");
-  const apiKey = credentials.api_key;
-  if (!apiKey) throw new Error("PrestaShop API key not configured");
-
-  const auth = btoa(`${apiKey}:`);
-  const linkRewrite = slugify(slug || title);
-  const metaTitle = seo.seo_title || title;
-  const metaDescription = seo.seo_description || "";
-
-  let langId = "1";
-  try {
-    const langResp = await fetch(`${baseUrl}/api/languages?output_format=JSON&filter[active]=1&limit=1`, {
-      headers: { Authorization: `Basic ${auth}` },
-    });
-    if (langResp.ok) {
-      const langData = await langResp.json();
-      if (langData.languages?.length > 0) langId = String(langData.languages[0].id);
-    }
-  } catch { /* default */ }
-
-  const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
-  <cms>
-    <id_cms_category>1</id_cms_category>
-    <active>1</active>
-    <indexation>1</indexation>
-    <meta_title><language id="${langId}"><![CDATA[${metaTitle}]]></language></meta_title>
-    <meta_description><language id="${langId}"><![CDATA[${metaDescription}]]></language></meta_description>
-    <meta_keywords><language id="${langId}"><![CDATA[${(seo.seo_keywords || []).join(", ")}]]></language></meta_keywords>
-    <link_rewrite><language id="${langId}"><![CDATA[${linkRewrite}]]></language></link_rewrite>
-    <content><language id="${langId}"><![CDATA[${content}]]></language></content>
-  </cms>
-</prestashop>`;
-
-  const response = await fetch(`${baseUrl}/api/cms`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/xml" },
-    body: xmlPayload,
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`PrestaShop API error [${response.status}]: ${errorBody}`);
-  }
-
-  const responseText = await response.text();
-  const idMatch = responseText.match(/<id>(?:<!\[CDATA\[)?(\d+)(?:\]\]>)?<\/id>/);
-  const pageId = idMatch ? idMatch[1] : "unknown";
-
-  return { external_id: pageId, external_url: `${baseUrl}/content/${pageId}-${linkRewrite}` };
-}
-
-async function publishProductToPrestaShop(
-  siteUrl: string,
-  credentials: WebsiteCredentials,
-  title: string,
-  content: string,
-  slug: string,
-  seo: SeoData,
-  extraData?: Record<string, any>
-): Promise<{ external_id: string; external_url: string }> {
-  const baseUrl = siteUrl.replace(/\/$/, "");
-  const apiKey = credentials.api_key;
-  if (!apiKey) throw new Error("PrestaShop API key not configured");
-
-  const auth = btoa(`${apiKey}:`);
-  const linkRewrite = slugify(slug || title);
-  const metaTitle = seo.seo_title || title;
-  const metaDescription = seo.seo_description || "";
-  const price = extraData?.price || "0.000000";
-
-  let langId = "1";
-  try {
-    const langResp = await fetch(`${baseUrl}/api/languages?output_format=JSON&filter[active]=1&limit=1`, {
-      headers: { Authorization: `Basic ${auth}` },
-    });
-    if (langResp.ok) {
-      const langData = await langResp.json();
-      if (langData.languages?.length > 0) langId = String(langData.languages[0].id);
-    }
-  } catch { /* default */ }
-
-  const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
-  <product>
-    <price>${price}</price>
-    <active>1</active>
-    <state>1</state>
-    <id_tax_rules_group>1</id_tax_rules_group>
-    <id_category_default>2</id_category_default>
-    <meta_title><language id="${langId}"><![CDATA[${metaTitle}]]></language></meta_title>
-    <meta_description><language id="${langId}"><![CDATA[${metaDescription}]]></language></meta_description>
-    <name><language id="${langId}"><![CDATA[${title}]]></language></name>
-    <description><language id="${langId}"><![CDATA[${content}]]></language></description>
-    <description_short><language id="${langId}"><![CDATA[${metaDescription}]]></language></description_short>
-    <link_rewrite><language id="${langId}"><![CDATA[${linkRewrite}]]></language></link_rewrite>
-  </product>
-</prestashop>`;
-
-  const response = await fetch(`${baseUrl}/api/products`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/xml" },
-    body: xmlPayload,
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`PrestaShop Product API error [${response.status}]: ${errorBody}`);
-  }
-
-  const responseText = await response.text();
-  const idMatch = responseText.match(/<id>(?:<!\[CDATA\[)?(\d+)(?:\]\]>)?<\/id>/);
-  const productId = idMatch ? idMatch[1] : "unknown";
-
-  return { external_id: productId, external_url: `${baseUrl}/${productId}-${linkRewrite}.html` };
-}
-
-async function publishToWooCommerce(
-  siteUrl: string,
-  credentials: WebsiteCredentials,
-  title: string,
-  content: string,
-  slug: string,
-  seo: SeoData,
-  extraData?: Record<string, any>
-): Promise<{ external_id: string; external_url: string }> {
-  const baseUrl = siteUrl.replace(/\/$/, "");
-  const { consumer_key, consumer_secret } = credentials;
-  if (!consumer_key || !consumer_secret) throw new Error("WooCommerce credentials not configured");
-
-  const productSlug = slugify(slug || title);
-  const productPayload: Record<string, any> = {
-    name: title,
-    type: "simple",
-    description: content,
-    slug: productSlug,
-    status: "publish",
-  };
-
-  if (extraData?.price) productPayload.regular_price = String(extraData.price);
-  if (extraData?.images || extraData?.image) {
-    const imgs = extraData.images || (extraData.image ? [extraData.image] : []);
-    productPayload.images = imgs.filter((src: string) => src && !src.startsWith("data:")).map((src: string) => ({ src }));
-  }
-  if (seo.seo_title) {
-    productPayload.meta_data = [
-      ...(productPayload.meta_data || []),
-      { key: "_yoast_wpseo_title", value: seo.seo_title },
-    ];
-  }
-  if (seo.seo_description) {
-    productPayload.short_description = seo.seo_description;
-    productPayload.meta_data = [
-      ...(productPayload.meta_data || []),
-      { key: "_yoast_wpseo_metadesc", value: seo.seo_description },
-    ];
-  }
-
-  const apiUrl = `${baseUrl}/wp-json/wc/v3/products?consumer_key=${encodeURIComponent(consumer_key)}&consumer_secret=${encodeURIComponent(consumer_secret)}`;
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(productPayload),
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`WooCommerce API error [${response.status}]: ${errorBody}`);
-  }
-
-  const data = await response.json();
-  return {
-    external_id: String(data.id),
-    external_url: data.permalink || `${baseUrl}/product/${productSlug}`,
-  };
+  return payload;
 }
 
 Deno.serve(async (req) => {
@@ -408,7 +82,9 @@ Deno.serve(async (req) => {
     const { page_ids, publish_type, website_id, pages: directPages } = body;
     const pubType = publish_type || "page";
 
-    // === Direct publish mode (from TemplateDetectorDialog) ===
+    // ═══════════════════════════════════════════════════════════
+    // Direct publish mode (from TemplateDetectorDialog)
+    // ═══════════════════════════════════════════════════════════
     if (directPages && Array.isArray(directPages) && website_id) {
       const { data: website } = await supabase
         .from("websites")
@@ -424,35 +100,23 @@ Deno.serve(async (req) => {
         });
       }
 
+      const connector = createConnector(website as WebsiteRecord);
       const results: { title: string; status: string; external_url?: string; error?: string }[] = [];
 
       for (const dp of directPages) {
-        const seo: SeoData = {
-          seo_title: dp.seo_title || dp.title,
-          seo_description: dp.seo_description || "",
-        };
-        const elementorMeta: ElementorMeta | undefined = dp.elementor_data ? {
-          elementor_data: dp.elementor_data,
-          elementor_edit_mode: dp.elementor_edit_mode || "builder",
-          page_template: dp.page_template,
-        } : undefined;
-
         try {
-          let result: { external_id: string; external_url: string };
-          const creds = website.credentials as WebsiteCredentials;
+          const elementorMeta = dp.elementor_data
+            ? { elementor_data: dp.elementor_data, elementor_edit_mode: dp.elementor_edit_mode, page_template: dp.page_template }
+            : undefined;
 
-          if (website.type === "wordpress") {
-            result = await publishToWordPress(website.url, creds, dp.title, dp.content, dp.slug, seo, elementorMeta);
-          } else if (website.type === "shopify") {
-            result = await publishToShopify(website.url, creds, dp.title, dp.content, seo);
-          } else if (website.type === "prestashop") {
-            result = await publishToPrestaShop(website.url, creds, dp.title, dp.content, dp.slug, seo);
-          } else if (website.type === "woocommerce") {
-            result = await publishToWooCommerce(website.url, creds, dp.title, dp.content, dp.slug, seo);
-          } else {
-            throw new Error(`Unsupported website type: ${website.type}`);
-          }
-          results.push({ title: dp.title, status: "published", external_url: result.external_url });
+          const payload = buildPayload(
+            { title: dp.title, content: dp.content, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
+            pubType,
+            elementorMeta
+          );
+
+          const result = await connector.createPage(payload);
+          results.push({ title: dp.title, status: "published", external_url: result.url });
         } catch (err) {
           results.push({ title: dp.title, status: "failed", error: err instanceof Error ? err.message : "Unknown error" });
         }
@@ -466,7 +130,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // === Standard mode (publish generated_pages by IDs) ===
+    // ═══════════════════════════════════════════════════════════
+    // Standard mode – publish generated_pages by IDs
+    // ═══════════════════════════════════════════════════════════
     if (!page_ids || !Array.isArray(page_ids) || page_ids.length === 0) {
       return new Response(JSON.stringify({ error: "page_ids array is required" }), {
         status: 400,
@@ -490,6 +156,7 @@ Deno.serve(async (req) => {
     const results: { id: string; status: string; external_url?: string; error?: string }[] = [];
 
     for (const page of pages) {
+      // Resolve website if not directly joined
       if (!page.websites) {
         const { data: campaign } = await supabase
           .from("campaigns")
@@ -517,40 +184,23 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const website = page.websites as { url: string; type: string; credentials: WebsiteCredentials };
-      const seo: SeoData = { seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords };
-
       try {
-        let result: { external_id: string; external_url: string };
+        const connector = createConnector(page.websites as WebsiteRecord);
+        const payload = buildPayload(
+          { title: page.title, content: page.content, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
+          pubType
+        );
 
-        if (website.type === "wordpress") {
-          result = await publishToWordPress(website.url, website.credentials, page.title, page.content, page.slug, seo);
-        } else if (website.type === "shopify") {
-          if (pubType === "product") {
-            result = await publishProductToShopify(website.url, website.credentials, page.title, page.content, page.slug, seo);
-          } else {
-            result = await publishToShopify(website.url, website.credentials, page.title, page.content, seo);
-          }
-        } else if (website.type === "prestashop") {
-          if (pubType === "product") {
-            result = await publishProductToPrestaShop(website.url, website.credentials, page.title, page.content, page.slug, seo);
-          } else {
-            result = await publishToPrestaShop(website.url, website.credentials, page.title, page.content, page.slug, seo);
-          }
-        } else if (website.type === "woocommerce") {
-          result = await publishToWooCommerce(website.url, website.credentials, page.title, page.content, page.slug, seo);
-        } else {
-          throw new Error(`Unsupported website type: ${website.type}`);
-        }
+        const result = await connector.createPage(payload);
 
         await supabase.from("generated_pages").update({
           status: "published",
           external_id: result.external_id,
-          external_url: result.external_url,
+          external_url: result.url,
           error_message: null,
         }).eq("id", page.id);
 
-        results.push({ id: page.id, status: "published", external_url: result.external_url });
+        results.push({ id: page.id, status: "published", external_url: result.url });
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown publishing error";
         await supabase.from("generated_pages").update({ status: "failed", error_message: errorMsg }).eq("id", page.id);
