@@ -1528,8 +1528,8 @@ export default function CampaignsPage() {
                   )}
                 </div>
               </div>
+              </ScrollArea>
 
-              {/* Navigation */}
               <div className="flex justify-between px-4 sm:px-6 py-4 border-t border-border bg-muted/30">
                 <Button
                   variant="outline"
