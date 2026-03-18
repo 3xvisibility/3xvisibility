@@ -147,11 +147,11 @@ export default function CampaignDetailPage() {
   // Execute mutation
   const executeMutation = useMutation({
     mutationFn: async (action?: string) => {
+      const isTest = action === "test";
       const { data, error } = await supabase.functions.invoke("generate-pages", {
-        body: { campaign_id: id, action },
+        body: { campaign_id: id, action: isTest ? undefined : action, test_mode: isTest },
       });
       if (error) {
-        // Try to extract the JSON error message from FunctionsHttpError
         try {
           const ctx = (error as any).context;
           if (ctx && typeof ctx.json === 'function') {
