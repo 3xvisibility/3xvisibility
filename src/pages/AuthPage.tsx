@@ -1,4 +1,5 @@
 import { useState } from "react";
+import heroDashboard from "@/assets/hero-dashboard.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -422,7 +423,7 @@ export default function AuthPage() {
                     <span className="text-[10px] text-muted-foreground/50 ml-2 font-mono">pagegen.app/dashboard</span>
                   </div>
                   <img
-                    src="/src/assets/hero-dashboard.png"
+                    src={heroDashboard}
                     alt="Platform dashboard preview"
                     className="w-full"
                     loading="lazy"
