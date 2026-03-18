@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
       });
     }
     console.log("[GENERATE-PAGES] Campaign loaded:", campaign.name, "template:", !!campaign.templates);
-
+    _currentWorkspaceId = campaign.workspace_id || null;
     if (!campaign.templates) {
       return new Response(JSON.stringify({ error: "No template assigned" }), {
         status: 400,
