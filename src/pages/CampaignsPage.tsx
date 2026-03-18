@@ -987,7 +987,8 @@ export default function CampaignsPage() {
                             </div>
                           )}
                         </>
-                      ) : (
+                      )}
+                      {dataSource === "website" && (
                         <>
                           {/* Website selector */}
                           <Select value={websiteForPages} onValueChange={(v) => { setWebsiteForPages(v); setSelectedPageIds(new Set()); }}>
