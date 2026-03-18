@@ -15,13 +15,11 @@ export interface PagePayload {
   schema_json?: Record<string, unknown>;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
-  /** Elementor-specific metadata for WordPress */
   elementor_meta?: {
     elementor_data?: string;
     elementor_edit_mode?: string;
     page_template?: string;
   };
-  /** For product-type publishing */
   product_data?: {
     price?: string;
     sku?: string;
@@ -65,6 +63,7 @@ export interface ConnectorConfig {
 export interface CmsConnector {
   readonly type: string;
   createPage(payload: PagePayload): Promise<ConnectorResult>;
+  updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult>;
   testConnection(): Promise<boolean>;
   listContent(contentType: "pages" | "products"): Promise<ContentItem[]>;
 }
