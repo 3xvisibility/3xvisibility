@@ -319,6 +319,7 @@ async function updateJob(supabase: any, jobId: string, updates: Record<string, a
 const BATCH_SIZE = 50;
 
 Deno.serve(async (req) => {
+  console.log("[GENERATE-PAGES] Request received:", req.method);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -358,6 +359,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
+    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action }));
     const { campaign_id, action } = body;
 
     if (!campaign_id) {
@@ -424,11 +426,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (campaignError || !campaign) {
+      console.error("[GENERATE-PAGES] Campaign not found:", campaignError?.message);
       return new Response(JSON.stringify({ error: "Campaign not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("[GENERATE-PAGES] Campaign loaded:", campaign.name, "template:", !!campaign.templates);
 
     if (!campaign.templates) {
       return new Response(JSON.stringify({ error: "No template assigned" }), {
@@ -482,11 +486,13 @@ Deno.serve(async (req) => {
     }
 
     if (csvRows.length === 0) {
+      console.error("[GENERATE-PAGES] No CSV data found for campaign");
       return new Response(JSON.stringify({ error: "No CSV data in this campaign" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("[GENERATE-PAGES] CSV rows:", csvRows.length);
 
     // Load custom mappings from the mappings table
     const { data: customMappings } = await supabase
@@ -603,6 +609,15 @@ Deno.serve(async (req) => {
 
       await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate. Job: ${jobId}`);
     }
+
+    // Pre-fetch website URL once (instead of per-row)
+    let websiteBaseUrl: string | null = null;
+    if (campaign.website_id) {
+      const { data: website } = await supabase.from("websites").select("url").eq("id", campaign.website_id).maybeSingle();
+      if (website?.url) websiteBaseUrl = website.url.replace(/\/+$/, "");
+    }
+
+    console.log("[GENERATE-PAGES] Starting batch processing. Rows:", remainingRows.length, "AI blocks:", aiBlocks.length);
 
     // Process in batches
     const totalBatches = Math.ceil(remainingRows.length / BATCH_SIZE);
@@ -797,14 +812,10 @@ Deno.serve(async (req) => {
             } catch { /* keep fallback */ }
           }
 
-          // Build canonical URL
+          // Build canonical URL using pre-fetched website URL
           let canonicalUrl: string | null = null;
-          if (campaign.website_id) {
-            const { data: website } = await supabase.from("websites").select("url").eq("id", campaign.website_id).maybeSingle();
-            if (website?.url) {
-              const baseUrl = website.url.replace(/\/+$/, "");
-              canonicalUrl = `${baseUrl}/${slug}`;
-            }
+          if (websiteBaseUrl) {
+            canonicalUrl = `${websiteBaseUrl}/${slug}`;
           }
 
           // Build JSON-LD structured data — use template schema config if defined
@@ -1068,6 +1079,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
+    console.error("[GENERATE-PAGES] Fatal error:", err.message, err.stack);
     return new Response(
       JSON.stringify({ error: err.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
