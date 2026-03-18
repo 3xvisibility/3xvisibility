@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw } from "lucide-react";
@@ -189,32 +190,41 @@ export default function TemplatesPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // Check if any campaigns reference this template
-      const { data: linkedCampaigns, error: checkError } = await supabase
-        .from("campaigns")
-        .select("id, name")
-        .eq("template_id", id)
-        .limit(5);
-      if (checkError) throw checkError;
-      if (linkedCampaigns && linkedCampaigns.length > 0) {
-        const names = linkedCampaigns.map((c) => c.name).join(", ");
-        throw new Error(
-          `This template is used by ${linkedCampaigns.length} campaign(s): ${names}. Please unlink or delete those campaigns first.`
-        );
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; linkedCampaigns: { id: string; name: string }[] } | null>(null);
+
+  const checkAndDelete = async (id: string) => {
+    const { data: linked } = await supabase
+      .from("campaigns")
+      .select("id, name")
+      .eq("template_id", id)
+      .limit(10);
+    if (linked && linked.length > 0) {
+      setDeleteTarget({ id, linkedCampaigns: linked });
+    } else {
+      performDelete(id, false);
+    }
+  };
+
+  const performDelete = async (id: string, force: boolean) => {
+    try {
+      if (force) {
+        const { error: unlinkErr } = await supabase
+          .from("campaigns")
+          .update({ template_id: null })
+          .eq("template_id", id);
+        if (unlinkErr) throw unlinkErr;
       }
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) throw error;
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast({ title: "Template deleted" });
-    },
-    onError: (err: Error) => {
+    } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
 
   const resetAndClose = () => {
     setAiOpen(false);
@@ -795,7 +805,7 @@ export default function TemplatesPage() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON">
                       <Download className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(tpl.id)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -820,6 +830,32 @@ export default function TemplatesPage() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Template in use</AlertDialogTitle>
+            <AlertDialogDescription>
+              This template is linked to {deleteTarget?.linkedCampaigns.length} campaign(s):
+              <span className="font-medium block mt-1">
+                {deleteTarget?.linkedCampaigns.map((c) => c.name).join(", ")}
+              </span>
+              <span className="block mt-2">
+                You can <strong>force delete</strong> to unlink all campaigns and delete the template, or cancel.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTarget && performDelete(deleteTarget.id, true)}
+            >
+              Force Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
