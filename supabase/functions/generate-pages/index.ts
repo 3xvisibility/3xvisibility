@@ -296,7 +296,8 @@ async function logEvent(
   event: string,
   message: string,
   batchNumber?: number,
-  pagesInBatch?: number
+  pagesInBatch?: number,
+  workspaceId?: string | null
 ) {
   await supabase.from("campaign_logs").insert({
     campaign_id: campaignId,
@@ -305,6 +306,7 @@ async function logEvent(
     message,
     batch_number: batchNumber ?? null,
     pages_in_batch: pagesInBatch ?? null,
+    workspace_id: workspaceId ?? null,
   });
 }
 
