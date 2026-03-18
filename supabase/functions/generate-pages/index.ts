@@ -592,7 +592,28 @@ Deno.serve(async (req) => {
     const startIndex = action === "resume" ? alreadyProcessed : 0;
     // Apply max_rows limit if set
     const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvRows.length) : csvRows.length;
-    const limitedRows = csvRows.slice(0, maxRowsLimit);
+    let limitedRows = csvRows.slice(0, maxRowsLimit);
+
+    // ═══════════════════════════════════════════════════════════
+    // Generation Methods: all | sequential | random
+    // ═══════════════════════════════════════════════════════════
+    const generationMethod = (campaign as any).generation_method || "all";
+
+    if (generationMethod === "random") {
+      // Shuffle rows randomly (Fisher-Yates)
+      for (let i = limitedRows.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [limitedRows[i], limitedRows[j]] = [limitedRows[j], limitedRows[i]];
+      }
+    }
+    // "sequential" uses the rows in their original CSV order (default behavior)
+    // "all" also uses original order but is meant for "all combinations" mode
+
+    // Test mode: only generate 1 draft page
+    if (test_mode) {
+      limitedRows = [limitedRows[0]];
+    }
+
     const remainingRows = limitedRows.slice(startIndex);
 
     if (remainingRows.length === 0) {
