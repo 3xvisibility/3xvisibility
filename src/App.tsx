@@ -141,7 +141,7 @@ const App = () => {
               path="/discovery"
               element={
                 <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><WebsiteDiscoveryPage /></DashboardLayout>
+                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="discovery"><WebsiteDiscoveryPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
