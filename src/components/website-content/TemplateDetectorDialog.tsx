@@ -138,7 +138,7 @@ Only return the JSON array, nothing else. Find 3-8 key variables.`,
     const sorted = [...variables].sort((a, b) => b.original.length - a.original.length);
     for (const v of sorted) {
       if (v.original) {
-        html = html.replaceAll(v.original, `{${v.name}}`);
+        html = html.split(v.original).join(`{${v.name}}`);
       }
     }
     setTemplateHtml(html);
