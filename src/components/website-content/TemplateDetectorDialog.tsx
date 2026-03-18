@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface ContentItem {
   id: string;
@@ -230,6 +231,7 @@ export function TemplateDetectorDialog({
   const [generatedCount, setGeneratedCount] = useState(0);
   const [publishResults, setPublishResults] = useState<{ title: string; status: string; external_url?: string; error?: string }[]>([]);
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
 
   const detectVariables = async () => {
     setDetecting(true);
@@ -482,7 +484,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
         });
 
         const { data, error } = await supabase.functions.invoke("publish-pages", {
-          body: { website_id: websiteId, pages: batchPages },
+          body: { website_id: websiteId, pages: batchPages, workspace_id: currentWorkspace?.id },
         });
 
         if (data?.results) {

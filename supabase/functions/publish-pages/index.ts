@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
     if (directPages && Array.isArray(directPages) && website_id) {
       const { data: website } = await supabase
         .from("websites")
-        .select("url, type, credentials")
+        .select("url, type, credentials, workspace_id")
         .eq("id", website_id)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
 
       const connector = createConnector(website as WebsiteRecord);
       const results: { title: string; status: string; external_url?: string; error?: string }[] = [];
+      const workspaceId = website.workspace_id || body.workspace_id || null;
+      const campaignId = body.campaign_id || null;
 
       for (const dp of directPages) {
         try {
@@ -119,6 +121,28 @@ Deno.serve(async (req) => {
           const result = dp.external_id
             ? await connector.updatePage(dp.external_id, payload)
             : await connector.createPage(payload);
+
+          // Save to generated_pages so it appears in the Generated Pages view
+          try {
+            await supabase.from("generated_pages").insert({
+              title: dp.title,
+              content: dp.content,
+              slug: dp.slug,
+              seo_title: dp.seo_title || dp.title,
+              seo_description: dp.seo_description || null,
+              seo_keywords: dp.seo_keywords || null,
+              user_id: user.id,
+              website_id,
+              workspace_id: workspaceId,
+              campaign_id: campaignId,
+              status: "published",
+              external_id: result.external_id,
+              external_url: result.url,
+            });
+          } catch (insertErr) {
+            console.error("Failed to save to generated_pages:", insertErr);
+          }
+
           results.push({ title: dp.title, status: "published", external_url: result.url });
         } catch (err) {
           results.push({ title: dp.title, status: "failed", error: err instanceof Error ? err.message : "Unknown error" });
