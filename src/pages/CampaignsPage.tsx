@@ -174,17 +174,27 @@ export default function CampaignsPage() {
     },
   });
 
-  // Fetch website pages for import
+  // Fetch website content (pages + products) for import
   const { data: websitePages = [], isLoading: loadingWebPages } = useQuery({
-    queryKey: ["site-content-for-campaign", websiteForPages],
+    queryKey: ["site-content-for-campaign", websiteForPages, websiteContentType],
     enabled: !!websiteForPages && dataSource === "website",
     queryFn: async () => {
+      type ContentItem = { id: string; title: string; slug: string; url: string; type: string; status: string; content: string; excerpt: string; modified: string };
+      if (websiteContentType === "all") {
+        const [pagesRes, productsRes] = await Promise.all([
+          supabase.functions.invoke("fetch-site-content", { body: { website_id: websiteForPages, content_type: "pages" } }),
+          supabase.functions.invoke("fetch-site-content", { body: { website_id: websiteForPages, content_type: "products" } }),
+        ]);
+        const pages = (pagesRes.data?.items || []) as ContentItem[];
+        const products = (productsRes.data?.items || []) as ContentItem[];
+        return [...pages, ...products];
+      }
       const { data, error } = await supabase.functions.invoke("fetch-site-content", {
-        body: { website_id: websiteForPages, content_type: "pages" },
+        body: { website_id: websiteForPages, content_type: websiteContentType },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return (data.items || []) as { id: string; title: string; slug: string; url: string; type: string; status: string; content: string; excerpt: string; modified: string }[];
+      return (data.items || []) as ContentItem[];
     },
     staleTime: 5 * 60 * 1000,
   });
