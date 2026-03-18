@@ -33,6 +33,13 @@ const COMPARISON_ROWS: { label: string; getValue: (plan: PlanName) => string | b
   { label: "Team Collaboration", getValue: (p) => PLAN_FEATURES[p].teamCollaboration },
 ];
 
+const PLAN_PRICES: Record<PlanName, string> = {
+  free: "$0",
+  starter: "$29",
+  pro: "$79",
+  agency: "$199",
+};
+
 const PLANS: PlanName[] = ["free", "starter", "pro", "agency"];
 
 interface FeatureGateProps {
@@ -84,6 +91,9 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
                   }`}
                 >
                   {PLAN_FEATURES[plan].label}
+                  <span className="block text-xs font-normal text-muted-foreground mt-0.5">
+                    {PLAN_PRICES[plan]}/mo
+                  </span>
                   {plan === minPlan && (
                     <span className="block text-[10px] font-medium text-primary mt-0.5">
                       Recommended
