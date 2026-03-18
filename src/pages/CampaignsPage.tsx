@@ -403,11 +403,9 @@ export default function CampaignsPage() {
         return headers.reduce((acc, h, i) => ({ ...acc, [h]: values[i] || "" }), {} as Record<string, string>);
       });
 
-      const sampleData = rows.slice(0, 5);
-
-      // Update campaign inline sample
+      // Update campaign with full CSV data as fallback
       await supabase.from("campaigns").update({
-        csv_data: sampleData as any,
+        csv_data: rows as any,
         total_rows: rows.length,
         processed_rows: 0,
         failed_rows: 0,
