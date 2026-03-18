@@ -16,6 +16,13 @@ interface ContentItem {
   modified: string;
 }
 
+function decodeHtmlEntities(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 interface PagePreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,7 +34,7 @@ export function PagePreviewDialog({ open, onOpenChange, page }: PagePreviewDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-base truncate">{page.title || "(Untitled)"}</DialogTitle>
+          <DialogTitle className="text-base truncate">{decodeHtmlEntities(page.title) || "(Untitled)"}</DialogTitle>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline" className="text-[10px] capitalize">{page.type}</Badge>
             <Badge variant="outline" className="text-[10px]">{page.status}</Badge>

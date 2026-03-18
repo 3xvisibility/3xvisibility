@@ -380,7 +380,7 @@ function ContentList({
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
-                      /{item.slug}
+                      /{decodeHtmlEntities(item.slug)}
                     </p>
                   </div>
                   {item.url && (
