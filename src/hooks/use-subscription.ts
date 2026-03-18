@@ -24,7 +24,7 @@ export function useSubscription(): SubscriptionData {
   const wsId = currentWorkspace?.id;
   const queryClient = useQueryClient();
 
-  // Auto-sync with Stripe on mount (runs once per workspace)
+  // Auto-sync with Stripe on mount and every 60 seconds
   useEffect(() => {
     if (!wsId) return;
     let cancelled = false;
@@ -41,7 +41,8 @@ export function useSubscription(): SubscriptionData {
     };
 
     syncWithStripe();
-    return () => { cancelled = true; };
+    const interval = setInterval(syncWithStripe, 60_000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [wsId, queryClient]);
 
   const { data, isLoading } = useQuery({
