@@ -768,11 +768,11 @@ export default function CampaignsPage() {
                 <Plus className="mr-2 h-4 w-4" /> New Campaign
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[540px] p-0 gap-0 overflow-hidden">
-              <div className="px-6 pt-6 pb-0">
+            <DialogContent className="sm:max-w-[540px] max-h-[90vh] p-0 gap-0 overflow-hidden">
+              <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-0">
                 <DialogHeader className="pb-0">
-                  <DialogTitle className="text-lg font-bold">Create Campaign</DialogTitle>
-                  <DialogDescription className="text-sm text-muted-foreground">Follow the steps to set up your campaign.</DialogDescription>
+                  <DialogTitle className="text-base sm:text-lg font-bold">Create Campaign</DialogTitle>
+                  <DialogDescription className="text-xs sm:text-sm text-muted-foreground">Follow the steps to set up your campaign.</DialogDescription>
                 </DialogHeader>
               </div>
 
