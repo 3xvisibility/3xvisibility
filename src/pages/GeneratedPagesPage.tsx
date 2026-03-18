@@ -713,17 +713,6 @@ export default function GeneratedPagesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Social Caption Dialog */}
-      <SocialCaptionDialog
-        open={!!captionPage}
-        onOpenChange={(open) => !open && setCaptionPage(null)}
-        page={captionPage ? {
-          title: captionPage.title,
-          seo_title: (captionPage as any).seo_title,
-          seo_description: (captionPage as any).seo_description,
-          external_url: captionPage.external_url,
-        } : null}
-      />
 
       {/* Single SEO Edit Dialog */}
       <Dialog open={!!seoEditPage} onOpenChange={(open) => !open && setSeoEditPage(null)}>
