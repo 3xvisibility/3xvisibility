@@ -176,7 +176,7 @@ export default function TemplateScannerPage() {
         body: { action: "list-wp-pages", website_id: websiteId },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return data.pages as WpPage[];
     },
     onSuccess: (pages) => {
