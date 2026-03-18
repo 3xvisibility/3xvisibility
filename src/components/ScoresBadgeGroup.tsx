@@ -34,7 +34,7 @@ function ScoreItem({ label, result, size, showLabel }: { label: string; result: 
   return (
     <div className="flex items-center gap-1">
       {showLabel && <span className="text-[9px] font-semibold text-muted-foreground uppercase">{label}</span>}
-      <SeoScoreBadge score={result.score} label={result.label} color={result.color} checks={result.checks} size={size} />
+      <SeoScoreBadge score={result.score} label={result.label} color={result.color} checks={result.checks} size={size} scoreType={label} />
     </div>
   );
 }
