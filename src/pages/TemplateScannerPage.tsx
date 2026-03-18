@@ -28,6 +28,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { calculateContentSeoScore } from "@/lib/content-seo-score";
+import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 
 interface ContentBlock {
   id: string;
@@ -552,7 +554,7 @@ export default function TemplateScannerPage() {
       {blocks.length > 0 && !scanMutation.isPending && (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="shadow-surface">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -586,6 +588,26 @@ export default function TemplateScannerPage() {
                 </div>
               </CardContent>
             </Card>
+            {/* SEO Score card */}
+            {(() => {
+              const pageTitle = blocks.find(b => b.tag.startsWith("h"))?.text || "";
+              const seoResult = calculateContentSeoScore(pageTitle, bodyHtml, url);
+              return (
+                <Card className="shadow-surface">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                      seoResult.score >= 60 ? "bg-emerald-500/10" : seoResult.score >= 35 ? "bg-amber-500/10" : "bg-destructive/10"
+                    }`}>
+                      <span className={`text-lg font-bold tabular-nums ${seoResult.color}`}>{seoResult.score}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{seoResult.label}</p>
+                      <p className="text-xs text-muted-foreground">SEO Score</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </div>
 
           {/* Variables chips */}

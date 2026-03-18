@@ -26,6 +26,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplateDetectorDialog } from "@/components/website-content/TemplateDetectorDialog";
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
+import { calculateContentSeoScore } from "@/lib/content-seo-score";
+import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 
 type Website = Tables<"websites">;
 
@@ -378,6 +380,11 @@ function ContentList({
                       >
                         {item.status}
                       </Badge>
+                      {/* SEO Score */}
+                      {(() => {
+                        const seo = calculateContentSeoScore(item.title, item.content, item.slug, item.url);
+                        return <SeoScoreBadge score={seo.score} label={seo.label} color={seo.color} checks={seo.checks} size="sm" />;
+                      })()}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
                       /{decodeHtmlEntities(item.slug)}

@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +45,16 @@ export default function TemplatesPage() {
   // Schema state
   const [schemaType, setSchemaType] = useState("WebPage");
   const [schemaConfig, setSchemaConfig] = useState<Record<string, string>>({});
+  // CSV template state
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
+  const [csvTemplateText, setCsvTemplateText] = useState("");
+  const [csvTemplateName, setCsvTemplateName] = useState("");
+  // Connected site template state
+  const [siteDialogOpen, setSiteDialogOpen] = useState(false);
+  const [siteTemplateWebsite, setSiteTemplateWebsite] = useState("");
+  const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
+  const [siteLoadingPages, setSiteLoadingPages] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
@@ -80,6 +90,22 @@ export default function TemplatesPage() {
     },
   });
 
+  // Fetch connected websites for "From Site" flow
+  const { data: connectedWebsites = [] } = useQuery({
+    queryKey: ["tpl-websites", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("websites")
+        .select("id, name, url, type")
+        .eq("workspace_id", wsId!)
+        .eq("status", "connected")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { features } = useSubscription();
   const maxTemplates = features.templates;
 
@@ -87,6 +113,71 @@ export default function TemplatesPage() {
     templates,
     `tpl-order-${wsId}`
   );
+
+  // Create template from CSV headers
+  const createFromCsv = async () => {
+    if (!csvTemplateText.trim()) return;
+    const lines = csvTemplateText.split("\n").filter(l => l.trim());
+    if (lines.length === 0) { toast({ title: "Empty CSV", variant: "destructive" }); return; }
+    const headers = lines[0].split(",").map(h => h.trim()).filter(Boolean);
+    if (headers.length === 0) { toast({ title: "No headers found", variant: "destructive" }); return; }
+
+    const varHtml = headers.map(h => {
+      const varName = h.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+      return `<div class="mb-4">\n  <h3>${h}</h3>\n  <p>{${varName}}</p>\n</div>`;
+    }).join("\n");
+
+    const tplName = csvTemplateName || "CSV Template";
+    const tplContent = `<div class="template">\n<h1>{${headers[0].toLowerCase().replace(/[^a-z0-9]+/g, "_")}}</h1>\n${varHtml}\n</div>`;
+
+    setName(tplName);
+    setContent(tplContent);
+    setBlocks(htmlToBlocks(tplContent));
+    setCsvDialogOpen(false);
+    setCsvTemplateText("");
+    setCsvTemplateName("");
+    setOpen(true);
+    toast({ title: `Template created with ${headers.length} variables from CSV headers` });
+  };
+
+  // Load pages from connected site
+  const loadSitePages = async (websiteId: string) => {
+    setSiteLoadingPages(true);
+    setSitePages([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("scan-template", {
+        body: { action: "list-pages", website_id: websiteId },
+      });
+      if (error) throw error;
+      if (data?.pages) setSitePages(data.pages);
+      else if (data?.error) throw new Error(data.error);
+    } catch (err: any) {
+      toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
+    } finally {
+      setSiteLoadingPages(false);
+    }
+  };
+
+  // Import site page as template
+  const importSitePage = async (pageUrl: string, pageTitle: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("scan-template", {
+        body: { url: pageUrl },
+      });
+      if (error) throw error;
+      if (data?.bodyHtml) {
+        setName(pageTitle || "Site Page Template");
+        setContent(data.bodyHtml);
+        setBlocks(htmlToBlocks(data.bodyHtml));
+        setSiteDialogOpen(false);
+        setSitePages([]);
+        setOpen(true);
+        toast({ title: "Page imported as template", description: "Edit variables and save." });
+      }
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -323,6 +414,22 @@ export default function TemplatesPage() {
             onClick={() => importFileRef.current?.click()}
           >
             <Upload className="mr-2 h-4 w-4" /> Import
+          </Button>
+          {/* From CSV */}
+          <Button
+            variant="outline"
+            className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+            onClick={() => setCsvDialogOpen(true)}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> From CSV
+          </Button>
+          {/* From Connected Site */}
+          <Button
+            variant="outline"
+            className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+            onClick={() => setSiteDialogOpen(true)}
+          >
+            <Link2 className="mr-2 h-4 w-4" /> From Site
           </Button>
           {/* AI Template Builder */}
           <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
@@ -862,6 +969,136 @@ export default function TemplatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* CSV Template Dialog */}
+      <Dialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              Create Template from CSV
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Paste your CSV data below. The first row (headers) will be converted into template variables automatically.
+            </p>
+            <div>
+              <Label>Template Name</Label>
+              <Input
+                placeholder="e.g., Product Landing Template"
+                value={csvTemplateName}
+                onChange={(e) => setCsvTemplateName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>CSV Data (paste or type)</Label>
+              <Textarea
+                placeholder={"city,service,phone\nNew York,Plumbing,555-0100\nLos Angeles,HVAC,555-0200"}
+                value={csvTemplateText}
+                onChange={(e) => setCsvTemplateText(e.target.value)}
+                rows={6}
+                className="font-mono text-xs"
+              />
+              {csvTemplateText.trim() && (() => {
+                const headers = csvTemplateText.split("\n")[0]?.split(",").map(h => h.trim()).filter(Boolean) || [];
+                return headers.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    <span className="text-xs text-muted-foreground">Variables:</span>
+                    {headers.map(h => (
+                      <Badge key={h} variant="outline" className="text-xs font-mono">
+                        {`{${h.toLowerCase().replace(/[^a-z0-9]+/g, "_")}}`}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCsvDialogOpen(false)}>Cancel</Button>
+              <Button onClick={createFromCsv} disabled={!csvTemplateText.trim()}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Create Template
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Connected Site Template Dialog */}
+      <Dialog open={siteDialogOpen} onOpenChange={(v) => { setSiteDialogOpen(v); if (!v) { setSitePages([]); setSiteTemplateWebsite(""); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-primary" />
+              Import Template from Connected Site
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Select a connected website and choose a page to use as a template base.
+            </p>
+            {connectedWebsites.length === 0 ? (
+              <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 text-center">
+                No connected websites found. Add one in Settings → Websites first.
+              </p>
+            ) : (
+              <>
+                <Select
+                  value={siteTemplateWebsite}
+                  onValueChange={(val) => {
+                    setSiteTemplateWebsite(val);
+                    loadSitePages(val);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a connected site" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {connectedWebsites.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>
+                        <span className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 capitalize">{w.type}</Badge>
+                          {w.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {siteLoadingPages && (
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                )}
+
+                {sitePages.length > 0 && (
+                  <div className="space-y-1 max-h-60 overflow-y-auto border rounded-lg p-2">
+                    {sitePages.map((page) => (
+                      <button
+                        key={page.id}
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent/50 transition-colors text-left"
+                        onClick={() => importSitePage(page.link, page.title)}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{page.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">/{page.slug}</p>
+                        </div>
+                        <Download className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!siteLoadingPages && siteTemplateWebsite && sitePages.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No pages found on this site.</p>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
