@@ -41,6 +41,14 @@ interface ContentItem {
   modified: string;
 }
 
+/** Decode HTML entities like &#8211; &amp; &lt; etc. */
+function decodeHtmlEntities(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 export default function WebsiteContentPage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
