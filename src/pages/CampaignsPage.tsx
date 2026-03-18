@@ -564,6 +564,34 @@ export default function CampaignsPage() {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     },
   });
+  const stuckCampaignIds = useMemo(() => {
+    return campaigns
+      .filter((c) => {
+        if (c.status !== "processing") return false;
+        const latestJob = getLatestJob(c.id);
+        const hasActiveJob = latestJob && (latestJob.status === "running" || latestJob.status === "pending");
+        return !hasActiveJob;
+      })
+      .map((c) => c.id);
+  }, [campaigns, generationJobs]);
+
+  const resetStuckMutation = useMutation({
+    mutationFn: async () => {
+      if (stuckCampaignIds.length === 0) return;
+      const { error } = await supabase
+        .from("campaigns")
+        .update({ status: "draft" as any, is_paused: false, updated_at: new Date().toISOString() })
+        .in("id", stuckCampaignIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Stuck campaigns reset", description: `${stuckCampaignIds.length} campaign(s) set back to draft.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Reset failed", description: err.message, variant: "destructive" });
+    },
+  });
 
   const processCsvFile = (file: File) => {
     setCsvFile(file);
@@ -762,6 +790,18 @@ export default function CampaignsPage() {
               Table
             </button>
           </div>
+          {stuckCampaignIds.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl gap-1.5 text-warning border-warning/30 hover:bg-warning/10"
+              onClick={() => resetStuckMutation.mutate()}
+              disabled={resetStuckMutation.isPending}
+            >
+              <RotateCcw className={cn("h-3.5 w-3.5", resetStuckMutation.isPending && "animate-spin")} />
+              {resetStuckMutation.isPending ? "Resetting..." : `Reset ${stuckCampaignIds.length} stuck`}
+            </Button>
+          )}
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
             <DialogTrigger asChild>
               <Button className="rounded-xl bg-gradient-primary hover:brightness-110 transition-all duration-150 active:scale-[0.97] shadow-sm">
