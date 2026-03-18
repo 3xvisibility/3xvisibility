@@ -197,7 +197,7 @@ const App = () => {
               path="/workspace-settings"
               element={
                 <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><WorkspaceSettingsPage /></DashboardLayout>
+                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
