@@ -672,6 +672,7 @@ export default function CampaignsPage() {
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
     setDataSource("csv");
+    setLocationData([]);
     setWebsiteForPages("");
     setWebsiteContentType("all");
     setSelectedPageIds(new Set());
