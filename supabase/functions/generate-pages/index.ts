@@ -674,7 +674,7 @@ Deno.serve(async (req) => {
     let jobId = existingJobId;
     const isFirstRun = action !== "resume";
 
-    if (isFirstRun) {
+    if (isFirstRun && !test_mode) {
       // Create a new generation job
       const { data: newJob, error: jobErr } = await supabase
         .from("generation_jobs")
