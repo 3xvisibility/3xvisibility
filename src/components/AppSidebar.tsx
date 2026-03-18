@@ -59,6 +59,7 @@ const mainNav: NavItem[] = [
 ];
 
 const toolsNav: NavItem[] = [
+  { titleKey: "sidebar.websiteContent", url: "/website-content", icon: Layers },
   { titleKey: "sidebar.aiScanner", url: "/scanner", icon: ScanSearch },
   { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", url: "/analytics", icon: BarChart3 },

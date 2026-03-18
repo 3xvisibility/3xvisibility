@@ -190,7 +190,7 @@ Only return the JSON array, nothing else. Find 3-8 key variables.`,
       for (const row of rows) {
         let html = templateHtml;
         for (const [key, val] of Object.entries(row)) {
-          html = html.replaceAll(`{${key}}`, val);
+          html = html.split(`{${key}}`).join(val);
         }
 
         const title = row[variables[0]?.name] || page.title;

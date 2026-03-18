@@ -28,6 +28,7 @@ import IndexingPage from "./pages/IndexingPage";
 import AutoStoreGeneratorPage from "./pages/AutoStoreGeneratorPage";
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
+import WebsiteContentPage from "./pages/WebsiteContentPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
