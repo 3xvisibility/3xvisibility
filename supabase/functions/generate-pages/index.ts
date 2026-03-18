@@ -1147,7 +1147,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update AI usage
+    // Test mode: return the preview without saving to DB or changing campaign status
+    if (test_mode) {
+      return new Response(JSON.stringify({
+        success: true,
+        test_mode: true,
+        generated: 1,
+        preview: {
+          title: "Test page preview generated",
+          pages: [], // pages were already inserted above; we can return info
+        },
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (aiGenerationsUsed > 0) {
       const { data: currentSub } = await supabase
         .from("subscriptions")
