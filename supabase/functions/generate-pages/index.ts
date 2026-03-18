@@ -735,7 +735,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (hasAiBlocks && !LOVABLE_API_KEY) {
+    if ((hasAiBlocks || hasAiImageBlocks) && !LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "AI service not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
