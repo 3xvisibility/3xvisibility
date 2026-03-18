@@ -544,6 +544,18 @@ export default function GeneratedPagesPage() {
                               <Send className="h-3 w-3" />
                             </Button>
                           )}
+                          {page.status === "published" && page.external_id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-primary"
+                              onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
+                              disabled={publishMutation.isPending}
+                              title="Re-publish (update on CMS)"
+                            >
+                              <RotateCw className="h-3 w-3" />
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
                           </Button>
