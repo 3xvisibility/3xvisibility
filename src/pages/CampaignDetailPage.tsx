@@ -67,6 +67,13 @@ export default function CampaignDetailPage() {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
+  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
+  const [overwriteFields, setOverwriteFields] = useState({
+    title: true,
+    content: true,
+    seo: true,
+    images: true,
+  });
 
   // Fetch campaign
   const { data: campaign, isLoading: campaignLoading } = useQuery({
