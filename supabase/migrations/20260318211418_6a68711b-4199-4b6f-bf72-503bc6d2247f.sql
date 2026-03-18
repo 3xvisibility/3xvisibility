@@ -1,0 +1,1 @@
+ALTER TABLE public.generated_pages ALTER COLUMN campaign_id DROP NOT NULL;
