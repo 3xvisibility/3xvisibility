@@ -77,30 +77,35 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
 
       {/* Plan Comparison Table */}
       <div className="w-full max-w-3xl overflow-x-auto mb-8 rounded-lg border border-border">
-        <table className="w-full text-sm">
+        <table className="text-sm border-collapse" style={{ minWidth: 560 }}>
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="text-left font-medium text-muted-foreground px-4 py-3">Feature</th>
-              {PLANS.map((plan) => (
-                <th
-                  key={plan}
-                  className={`px-3 py-3 font-semibold text-center ${
-                    plan === minPlan
-                      ? "text-primary bg-primary/5"
-                      : "text-foreground"
-                  }`}
-                >
-                  {PLAN_FEATURES[plan].label}
-                  <span className="block text-xs font-normal text-muted-foreground mt-0.5">
-                    {PLAN_PRICES[plan]}/mo
-                  </span>
-                  {plan === minPlan && (
-                    <span className="block text-[10px] font-medium text-primary mt-0.5">
-                      Recommended
+              <th className="sticky left-0 z-20 bg-muted/50 text-left font-medium text-muted-foreground px-4 py-3 min-w-[120px] border-r border-border">
+                Feature
+              </th>
+              {PLANS.map((plan) => {
+                const isRec = plan === minPlan;
+                return (
+                  <th
+                    key={plan}
+                    className={`px-3 py-3 font-semibold text-center min-w-[90px] ${
+                      isRec
+                        ? "sticky left-[120px] z-10 text-primary bg-primary/5 border-x-2 border-primary/20"
+                        : "text-foreground"
+                    }`}
+                  >
+                    {PLAN_FEATURES[plan].label}
+                    <span className="block text-xs font-normal text-muted-foreground mt-0.5">
+                      {PLAN_PRICES[plan]}/mo
                     </span>
-                  )}
-                </th>
-              ))}
+                    {isRec && (
+                      <span className="block text-[10px] font-medium text-primary mt-0.5">
+                        Recommended
+                      </span>
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -109,16 +114,19 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
                 key={row.label}
                 className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}
               >
-                <td className="text-left text-muted-foreground px-4 py-2.5 font-medium">
+                <td className={`sticky left-0 z-20 text-left text-muted-foreground px-4 py-2.5 font-medium min-w-[120px] border-r border-border ${i % 2 === 0 ? "bg-background" : "bg-muted/30"}`}>
                   {row.label}
                 </td>
                 {PLANS.map((plan) => {
                   const value = row.getValue(plan);
+                  const isRec = plan === minPlan;
                   return (
                     <td
                       key={plan}
                       className={`text-center px-3 py-2.5 ${
-                        plan === minPlan ? "bg-primary/5" : ""
+                        isRec
+                          ? `sticky left-[120px] z-10 border-x-2 border-primary/20 ${i % 2 === 0 ? "bg-primary/5" : "bg-primary/10"}`
+                          : ""
                       }`}
                     >
                       {typeof value === "boolean" ? (
