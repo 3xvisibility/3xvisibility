@@ -132,7 +132,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
                   >
                     {PLAN_FEATURES[plan].label}
                     <span className="block text-xs font-normal text-muted-foreground mt-0.5">
-                      {PLAN_PRICES[plan]}/mo
+                      {getPrice(plan)}/mo
                     </span>
                     {isRec && (
                       <span className="block text-[10px] font-medium text-primary mt-0.5">
