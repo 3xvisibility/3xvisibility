@@ -35,8 +35,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    // === Auto-reset stuck campaigns (processing > 30 min with no active job) ===
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const { data: stuckCampaigns } = await supabase
+      .from("campaigns")
+      .select("id, name, generation_started_at")
+      .eq("status", "processing")
+      .lt("updated_at", thirtyMinAgo);
+
+    let resetCount = 0;
+    if (stuckCampaigns && stuckCampaigns.length > 0) {
+      for (const sc of stuckCampaigns) {
+        // Check if there's an active generation job
+        const { data: activeJobs } = await supabase
+          .from("generation_jobs")
+          .select("id")
+          .eq("campaign_id", sc.id)
+          .in("status", ["running", "pending"])
+          .limit(1);
+
+        if (!activeJobs || activeJobs.length === 0) {
+          await supabase
+            .from("campaigns")
+            .update({ status: "draft", is_paused: false, updated_at: new Date().toISOString() })
+            .eq("id", sc.id);
+          console.log(`Auto-reset stuck campaign: ${sc.id} (${sc.name})`);
+          resetCount++;
+        }
+      }
+    }
+
     if (!dueCampaigns || dueCampaigns.length === 0) {
-      return new Response(JSON.stringify({ triggered: 0, message: "No campaigns due" }), {
+      return new Response(JSON.stringify({ triggered: 0, reset_stuck: resetCount, message: "No campaigns due" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
