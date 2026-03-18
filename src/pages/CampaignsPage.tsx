@@ -1590,7 +1590,7 @@ export default function CampaignsPage() {
                     </div>
                   </div>
 
-                  {(c.status === "queued" && progress.total === 0) && (
+                   {(c.status === "queued" && progress.total === 0 && hasActiveJob) && (
                     <div className="px-5 pb-5">
                       <div className="flex items-center gap-2 text-xs text-primary">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1599,9 +1599,17 @@ export default function CampaignsPage() {
                       <Progress value={0} className="h-2 mt-2" />
                     </div>
                   )}
+                  {isStuck && (
+                    <div className="px-5 pb-5">
+                      <div className="flex items-center gap-2 text-xs text-warning">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span className="font-medium">Generation stalled — retry or resume to continue</span>
+                      </div>
+                    </div>
+                  )}
                   {progress.total > 0 && (
                     <div className="px-5 pb-5 space-y-2">
-                      {(c.status === "processing" || c.status === "queued") && (
+                      {isProcessing && (
                         <div className="flex items-center gap-2 text-xs text-primary mb-1">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           <span className="font-medium">Generating pages...</span>
