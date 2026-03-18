@@ -319,6 +319,7 @@ async function updateJob(supabase: any, jobId: string, updates: Record<string, a
 const BATCH_SIZE = 50;
 
 Deno.serve(async (req) => {
+  console.log("[GENERATE-PAGES] Request received:", req.method);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
