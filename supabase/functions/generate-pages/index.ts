@@ -441,8 +441,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action }));
-    const { campaign_id, action } = body;
+     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode }));
+    const { campaign_id, action, test_mode } = body;
 
     if (!campaign_id) {
       return new Response(JSON.stringify({ error: "campaign_id is required" }), {
