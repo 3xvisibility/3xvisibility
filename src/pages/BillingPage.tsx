@@ -20,7 +20,7 @@ import {
   Search,
   Link2,
   Code,
-  Share2,
+  
   Crown,
   Loader2,
   ExternalLink,

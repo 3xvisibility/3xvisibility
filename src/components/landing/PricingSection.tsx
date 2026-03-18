@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Share2, Search, Link2, Code, Users, Headphones } from "lucide-react";
+import { Check, X, ArrowRight, Zap, Sparkles, Crown, Layers, FileText, Globe, Store, Search, Link2, Code, Users, Headphones } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
