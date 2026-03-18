@@ -150,16 +150,15 @@ export default function TemplateScannerPage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
-  // Fetch all connected websites (not just WordPress)
+  // Fetch all websites (show status badge for each)
   const { data: connectedWebsites = [] } = useQuery({
     queryKey: ["scanner-websites", wsId],
     enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
-        .select("id, name, url, type")
+        .select("id, name, url, type, status")
         .eq("workspace_id", wsId!)
-        .eq("status", "connected")
         .order("name");
       if (error) throw error;
       return data;
