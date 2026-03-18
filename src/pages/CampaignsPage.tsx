@@ -923,7 +923,7 @@ export default function CampaignsPage() {
                           {/* Website selector */}
                           <Select value={websiteForPages} onValueChange={(v) => { setWebsiteForPages(v); setSelectedPageIds(new Set()); }}>
                             <SelectTrigger className="rounded-xl h-10 text-sm">
-                              <SelectValue placeholder="Select a website to import pages from" />
+                              <SelectValue placeholder="Select a website to import from" />
                             </SelectTrigger>
                             <SelectContent>
                               {websites.map((w) => (
@@ -931,6 +931,26 @@ export default function CampaignsPage() {
                               ))}
                             </SelectContent>
                           </Select>
+
+                          {/* Content type toggle */}
+                          <div className="flex items-center gap-1 p-0.5 bg-muted rounded-lg">
+                            {([
+                              { value: "all", label: "All" },
+                              { value: "pages", label: "Pages" },
+                              { value: "products", label: "Products" },
+                            ] as const).map((opt) => (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => { setWebsiteContentType(opt.value); setSelectedPageIds(new Set()); }}
+                                className={`flex-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
+                                  websiteContentType === opt.value ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
 
                           {websiteForPages && (
                             <>
