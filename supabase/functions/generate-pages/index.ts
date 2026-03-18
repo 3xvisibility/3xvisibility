@@ -441,8 +441,10 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode }));
-    const { campaign_id, action, test_mode } = body;
+     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields }));
+    const { campaign_id, action, test_mode, overwrite_fields } = body;
+    // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
+    const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
 
     if (!campaign_id) {
       return new Response(JSON.stringify({ error: "campaign_id is required" }), {
@@ -1114,13 +1116,93 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Insert batch
+      // Insert or selectively update batch
       if (batchPages.length > 0) {
-        const { error: insertError } = await supabase.from("generated_pages").insert(batchPages);
-        if (insertError) {
-          await logEvent(supabase, campaign_id, user.id, "batch_error",
-            `Batch ${batchesCompleted} insert failed: ${insertError.message}`, batchesCompleted);
-          failedCount += batchPages.length;
+        if (isOverwriteMode) {
+          // Selective overwrite: find existing pages by slug and update only selected fields
+          for (const page of batchPages) {
+            if (page.status === "failed") {
+              // Still insert failed pages
+              await supabase.from("generated_pages").insert(page);
+              continue;
+            }
+            const baseSlug = page.slug.split("?")[0]; // strip UTM for matching
+            const { data: existing } = await supabase
+              .from("generated_pages")
+              .select("id")
+              .eq("campaign_id", campaign_id)
+              .ilike("slug", `${baseSlug}%`)
+              .maybeSingle();
+
+            if (existing) {
+              // Build partial update based on overwrite_fields
+              const updates: Record<string, any> = {};
+              if (overwrite_fields.title) {
+                updates.title = page.title;
+                updates.slug = page.slug;
+              }
+              if (overwrite_fields.content) {
+                updates.content = page.content;
+              }
+              if (overwrite_fields.seo) {
+                updates.seo_title = page.seo_title;
+                updates.seo_description = page.seo_description;
+                updates.seo_keywords = page.seo_keywords;
+                updates.canonical_url = page.canonical_url;
+              }
+              // images: re-process content to update image-related embeds (already in content)
+              if (overwrite_fields.images && !overwrite_fields.content) {
+                // Extract and update only image/media portions in existing content
+                const { data: existingPage } = await supabase
+                  .from("generated_pages")
+                  .select("content")
+                  .eq("id", existing.id)
+                  .single();
+                if (existingPage) {
+                  let updatedContent = existingPage.content;
+                  // Replace dynamic-image divs
+                  const newImages = page.content.match(/<div class="dynamic-image"[\s\S]*?<\/div>/gi) || [];
+                  const oldImages = updatedContent.match(/<div class="dynamic-image"[\s\S]*?<\/div>/gi) || [];
+                  newImages.forEach((newImg: string, i: number) => {
+                    if (oldImages[i]) {
+                      updatedContent = updatedContent.replace(oldImages[i], newImg);
+                    }
+                  });
+                  // Replace dynamic-map divs
+                  const newMaps = page.content.match(/<div class="dynamic-map"[\s\S]*?<\/div>\s*<\/div>/gi) || [];
+                  const oldMaps = updatedContent.match(/<div class="dynamic-map"[\s\S]*?<\/div>\s*<\/div>/gi) || [];
+                  newMaps.forEach((newMap: string, i: number) => {
+                    if (oldMaps[i]) {
+                      updatedContent = updatedContent.replace(oldMaps[i], newMap);
+                    }
+                  });
+                  // Replace dynamic-youtube divs
+                  const newYT = page.content.match(/<div class="dynamic-youtube"[\s\S]*?<\/div>\s*<\/div>/gi) || [];
+                  const oldYT = updatedContent.match(/<div class="dynamic-youtube"[\s\S]*?<\/div>\s*<\/div>/gi) || [];
+                  newYT.forEach((newV: string, i: number) => {
+                    if (oldYT[i]) {
+                      updatedContent = updatedContent.replace(oldYT[i], newV);
+                    }
+                  });
+                  updates.content = updatedContent;
+                }
+              }
+              updates.status = "pending";
+              if (Object.keys(updates).length > 0) {
+                await supabase.from("generated_pages").update(updates).eq("id", existing.id);
+              }
+            } else {
+              // No existing page found, insert as new
+              await supabase.from("generated_pages").insert(page);
+            }
+          }
+        } else {
+          const { error: insertError } = await supabase.from("generated_pages").insert(batchPages);
+          if (insertError) {
+            await logEvent(supabase, campaign_id, user.id, "batch_error",
+              `Batch ${batchesCompleted} insert failed: ${insertError.message}`, batchesCompleted);
+            failedCount += batchPages.length;
+          }
         }
       }
 
