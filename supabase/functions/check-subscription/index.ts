@@ -65,18 +65,24 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const sub = subscriptions.data[0];
-      // Safely handle the period end - it may be a number (unix timestamp) or missing
-      const periodEnd = sub.current_period_end;
-      if (periodEnd && typeof periodEnd === "number") {
-        subscriptionEnd = new Date(periodEnd * 1000).toISOString();
-      } else if (periodEnd) {
-        // Try using it directly as a string/date
-        const parsed = new Date(String(periodEnd));
-        subscriptionEnd = isNaN(parsed.getTime()) ? null : parsed.toISOString();
+      const rawPeriodEnd = sub.current_period_end;
+      logStep("Raw period end value", { rawPeriodEnd, type: typeof rawPeriodEnd });
+
+      try {
+        if (rawPeriodEnd != null) {
+          const ts = Number(rawPeriodEnd);
+          if (!isNaN(ts) && ts > 0) {
+            // Unix timestamp in seconds
+            subscriptionEnd = new Date(ts * 1000).toISOString();
+          }
+        }
+      } catch (e) {
+        logStep("Failed to parse period end", { error: e.message });
       }
+
       productId = sub.items.data[0]?.price?.product ?? null;
       priceId = sub.items.data[0]?.price?.id ?? null;
-      logStep("Active subscription", { productId, priceId, subscriptionEnd, rawPeriodEnd: periodEnd });
+      logStep("Active subscription", { productId, priceId, subscriptionEnd });
     }
 
     return new Response(JSON.stringify({
