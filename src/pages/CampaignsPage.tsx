@@ -607,6 +607,10 @@ export default function CampaignsPage() {
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
+    setDataSource("csv");
+    setWebsiteForPages("");
+    setSelectedPageIds(new Set());
+    setWebsitePagesSearch("");
   };
 
   const getProgressInfo = (c: Campaign) => {
