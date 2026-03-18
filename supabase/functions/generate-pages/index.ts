@@ -7,13 +7,91 @@ const corsHeaders = {
 };
 
 function slugify(text: string): string {
-  // Normalize accents, strip diacritics, lowercase, clean
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+// ═══════════════════════════════════════════════════════════
+// Spintax / Content Spinning Support
+// Syntax: {option1|option2|option3} — randomly picks one
+// Supports nested spintax: {outer {inner1|inner2}|other}
+// ═══════════════════════════════════════════════════════════
+function processSpintax(text: string): string {
+  const MAX_DEPTH = 10;
+  let result = text;
+  for (let depth = 0; depth < MAX_DEPTH; depth++) {
+    // Match innermost {a|b|c} blocks (no nested braces inside)
+    const spintaxRegex = /\{([^{}]*?\|[^{}]*?)\}/g;
+    if (!spintaxRegex.test(result)) break;
+    result = result.replace(spintaxRegex, (_match, group: string) => {
+      const options = group.split("|");
+      return options[Math.floor(Math.random() * options.length)];
+    });
+  }
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════
+// Dynamic Elements — shortcodes for maps, videos, images
+// ═══════════════════════════════════════════════════════════
+function processDynamicElements(content: string, vars: Record<string, string>): string {
+  let result = content;
+
+  // {{MAP:query}} or {{MAP:lat,lng}} — Google Maps embed
+  result = result.replace(/\{\{MAP:(.*?)\}\}/gi, (_match, query: string) => {
+    let resolvedQuery = query;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    const encoded = encodeURIComponent(resolvedQuery.trim());
+    return `<div class="dynamic-map" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+  <iframe src="https://maps.google.com/maps?q=${encoded}&output=embed" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+</div>`;
+  });
+
+  // {{YOUTUBE:search query}} — YouTube embed (search-based)
+  result = result.replace(/\{\{YOUTUBE:(.*?)\}\}/gi, (_match, query: string) => {
+    let resolvedQuery = query;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    const encoded = encodeURIComponent(resolvedQuery.trim());
+    return `<div class="dynamic-youtube" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+  <iframe src="https://www.youtube.com/embed?listType=search&list=${encoded}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen loading="lazy"></iframe>
+</div>`;
+  });
+
+  // {{IMAGE:search query}} — Placeholder image with descriptive alt text
+  result = result.replace(/\{\{IMAGE:(.*?)\}\}/gi, (_match, query: string) => {
+    let resolvedQuery = query;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    const encoded = encodeURIComponent(resolvedQuery.trim());
+    const width = 800;
+    const height = 450;
+    return `<div class="dynamic-image" style="margin:1em 0;">
+  <img src="https://source.unsplash.com/${width}x${height}/?${encoded}" alt="${resolvedQuery.trim()}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+</div>`;
+  });
+
+  // {{WEATHER:location}} — OpenWeatherMap widget placeholder
+  result = result.replace(/\{\{WEATHER:(.*?)\}\}/gi, (_match, location: string) => {
+    let resolvedLoc = location;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedLoc = resolvedLoc.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    return `<div class="dynamic-weather" style="padding:1em;background:#f0f9ff;border-radius:8px;margin:1em 0;text-align:center;">
+  <p style="font-size:0.9em;color:#64748b;">🌤️ Weather for <strong>${resolvedLoc.trim()}</strong></p>
+  <p style="font-size:0.8em;color:#94a3b8;">Weather data loads on the published page</p>
+</div>`;
+  });
+
+  return result;
 }
 
 // Process {{#if variable}}...{{/if}} conditionals
