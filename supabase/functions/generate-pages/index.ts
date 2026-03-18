@@ -289,6 +289,9 @@ function buildOgMetaTags(
   return `<!-- Open Graph Meta Tags -->\n${tags.join("\n")}`;
 }
 
+// Module-level workspace tracker for logEvent
+let _currentWorkspaceId: string | null = null;
+
 async function logEvent(
   supabase: any,
   campaignId: string,
@@ -296,8 +299,7 @@ async function logEvent(
   event: string,
   message: string,
   batchNumber?: number,
-  pagesInBatch?: number,
-  workspaceId?: string | null
+  pagesInBatch?: number
 ) {
   await supabase.from("campaign_logs").insert({
     campaign_id: campaignId,
@@ -306,7 +308,7 @@ async function logEvent(
     message,
     batch_number: batchNumber ?? null,
     pages_in_batch: pagesInBatch ?? null,
-    workspace_id: workspaceId ?? null,
+    workspace_id: _currentWorkspaceId,
   });
 }
 
