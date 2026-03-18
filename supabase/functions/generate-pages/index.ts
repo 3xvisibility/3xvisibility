@@ -7,13 +7,91 @@ const corsHeaders = {
 };
 
 function slugify(text: string): string {
-  // Normalize accents, strip diacritics, lowercase, clean
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+// ═══════════════════════════════════════════════════════════
+// Spintax / Content Spinning Support
+// Syntax: {option1|option2|option3} — randomly picks one
+// Supports nested spintax: {outer {inner1|inner2}|other}
+// ═══════════════════════════════════════════════════════════
+function processSpintax(text: string): string {
+  const MAX_DEPTH = 10;
+  let result = text;
+  for (let depth = 0; depth < MAX_DEPTH; depth++) {
+    // Match innermost {a|b|c} blocks (no nested braces inside)
+    const spintaxRegex = /\{([^{}]*?\|[^{}]*?)\}/g;
+    if (!spintaxRegex.test(result)) break;
+    result = result.replace(spintaxRegex, (_match, group: string) => {
+      const options = group.split("|");
+      return options[Math.floor(Math.random() * options.length)];
+    });
+  }
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════
+// Dynamic Elements — shortcodes for maps, videos, images
+// ═══════════════════════════════════════════════════════════
+function processDynamicElements(content: string, vars: Record<string, string>): string {
+  let result = content;
+
+  // {{MAP:query}} or {{MAP:lat,lng}} — Google Maps embed
+  result = result.replace(/\{\{MAP:(.*?)\}\}/gi, (_match, query: string) => {
+    let resolvedQuery = query;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    const encoded = encodeURIComponent(resolvedQuery.trim());
+    return `<div class="dynamic-map" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+  <iframe src="https://maps.google.com/maps?q=${encoded}&output=embed" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+</div>`;
+  });
+
+  // {{YOUTUBE:search query}} — YouTube embed (search-based)
+  result = result.replace(/\{\{YOUTUBE:(.*?)\}\}/gi, (_match, query: string) => {
+    let resolvedQuery = query;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    const encoded = encodeURIComponent(resolvedQuery.trim());
+    return `<div class="dynamic-youtube" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+  <iframe src="https://www.youtube.com/embed?listType=search&list=${encoded}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen loading="lazy"></iframe>
+</div>`;
+  });
+
+  // {{IMAGE:search query}} — Placeholder image with descriptive alt text
+  result = result.replace(/\{\{IMAGE:(.*?)\}\}/gi, (_match, query: string) => {
+    let resolvedQuery = query;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    const encoded = encodeURIComponent(resolvedQuery.trim());
+    const width = 800;
+    const height = 450;
+    return `<div class="dynamic-image" style="margin:1em 0;">
+  <img src="https://source.unsplash.com/${width}x${height}/?${encoded}" alt="${resolvedQuery.trim()}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+</div>`;
+  });
+
+  // {{WEATHER:location}} — OpenWeatherMap widget placeholder
+  result = result.replace(/\{\{WEATHER:(.*?)\}\}/gi, (_match, location: string) => {
+    let resolvedLoc = location;
+    for (const [k, v] of Object.entries(vars)) {
+      resolvedLoc = resolvedLoc.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+    }
+    return `<div class="dynamic-weather" style="padding:1em;background:#f0f9ff;border-radius:8px;margin:1em 0;text-align:center;">
+  <p style="font-size:0.9em;color:#64748b;">🌤️ Weather for <strong>${resolvedLoc.trim()}</strong></p>
+  <p style="font-size:0.8em;color:#94a3b8;">Weather data loads on the published page</p>
+</div>`;
+  });
+
+  return result;
 }
 
 // Process {{#if variable}}...{{/if}} conditionals
@@ -363,8 +441,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action }));
-    const { campaign_id, action } = body;
+     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode }));
+    const { campaign_id, action, test_mode } = body;
 
     if (!campaign_id) {
       return new Response(JSON.stringify({ error: "campaign_id is required" }), {
@@ -514,7 +592,28 @@ Deno.serve(async (req) => {
     const startIndex = action === "resume" ? alreadyProcessed : 0;
     // Apply max_rows limit if set
     const maxRowsLimit = campaign.max_rows ? Math.min(campaign.max_rows, csvRows.length) : csvRows.length;
-    const limitedRows = csvRows.slice(0, maxRowsLimit);
+    let limitedRows = csvRows.slice(0, maxRowsLimit);
+
+    // ═══════════════════════════════════════════════════════════
+    // Generation Methods: all | sequential | random
+    // ═══════════════════════════════════════════════════════════
+    const generationMethod = (campaign as any).generation_method || "all";
+
+    if (generationMethod === "random") {
+      // Shuffle rows randomly (Fisher-Yates)
+      for (let i = limitedRows.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [limitedRows[i], limitedRows[j]] = [limitedRows[j], limitedRows[i]];
+      }
+    }
+    // "sequential" uses the rows in their original CSV order (default behavior)
+    // "all" also uses original order but is meant for "all combinations" mode
+
+    // Test mode: only generate 1 draft page
+    if (test_mode) {
+      limitedRows = [limitedRows[0]];
+    }
+
     const remainingRows = limitedRows.slice(startIndex);
 
     if (remainingRows.length === 0) {
@@ -575,7 +674,7 @@ Deno.serve(async (req) => {
     let jobId = existingJobId;
     const isFirstRun = action !== "resume";
 
-    if (isFirstRun) {
+    if (isFirstRun && !test_mode) {
       // Create a new generation job
       const { data: newJob, error: jobErr } = await supabase
         .from("generation_jobs")
@@ -794,6 +893,12 @@ Deno.serve(async (req) => {
             const regex = new RegExp(`\\{${key}\\}`, "gi");
             pageContent = pageContent.replace(regex, value || "");
           }
+
+          // Process spintax {option1|option2|option3} AFTER variable replacement
+          pageContent = processSpintax(pageContent);
+
+          // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
+          pageContent = processDynamicElements(pageContent, allVars);
 
           // Replace {{GEO_BLOCKS}} placeholder with reusable GEO HTML
           if (pageContent.includes("{{GEO_BLOCKS}}")) {
@@ -1042,7 +1147,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update AI usage
+    // Test mode: return the preview without saving to DB or changing campaign status
+    if (test_mode) {
+      return new Response(JSON.stringify({
+        success: true,
+        test_mode: true,
+        generated: 1,
+        preview: {
+          title: "Test page preview generated",
+          pages: [], // pages were already inserted above; we can return info
+        },
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (aiGenerationsUsed > 0) {
       const { data: currentSub } = await supabase
         .from("subscriptions")

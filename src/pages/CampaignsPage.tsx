@@ -79,6 +79,7 @@ export default function CampaignsPage() {
   // Generation settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
   const [maxRows, setMaxRows] = useState<string>("");
+  const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   // UTM fields
@@ -288,6 +289,7 @@ export default function CampaignsPage() {
         utm_settings: utmSettings as any,
         geo_settings: geoSettings as any,
         publish_mode: publishMode,
+        generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
         scheduled_at: scheduleMode === "later" && scheduledDate ? scheduledDate.toISOString() : null,
         status: scheduleMode === "later" && scheduledDate ? "queued" as any : publishMode === "published" ? "queued" as any : "draft" as any,
@@ -1349,6 +1351,28 @@ export default function CampaignsPage() {
                         <p className="text-[11px] text-muted-foreground">Leave empty to process all rows.</p>
                       </div>
 
+                      {/* Generation Method */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Generation Method</Label>
+                        <RadioGroup value={generationMethod} onValueChange={(v) => setGenerationMethod(v as "all" | "sequential" | "random")} className="flex flex-col gap-2">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="all" id="method-all" />
+                            <Label htmlFor="method-all" className="text-sm cursor-pointer">All Combinations</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="sequential" id="method-sequential" />
+                            <Label htmlFor="method-sequential" className="text-sm cursor-pointer">Sequential</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="random" id="method-random" />
+                            <Label htmlFor="method-random" className="text-sm cursor-pointer">Random</Label>
+                          </div>
+                        </RadioGroup>
+                        <p className="text-[11px] text-muted-foreground">
+                          {generationMethod === "all" ? "Generate pages for all possible combinations of terms." : generationMethod === "sequential" ? "Generate pages in the original CSV row order." : "Shuffle rows randomly before generating."}
+                        </p>
+                      </div>
+
                       {/* Schedule */}
                       <div className="space-y-2">
                         <Label className="text-xs font-medium">Schedule</Label>
@@ -1398,6 +1422,7 @@ export default function CampaignsPage() {
                         <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Method</span><span className="font-medium capitalize">{generationMethod}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
                       </div>

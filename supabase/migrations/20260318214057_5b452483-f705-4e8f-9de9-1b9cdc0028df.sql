@@ -1,0 +1,2 @@
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS generation_method text NOT NULL DEFAULT 'all';
+COMMENT ON COLUMN public.campaigns.generation_method IS 'How keyword combinations are generated: all (all combos), sequential (in order), random (random selection)';

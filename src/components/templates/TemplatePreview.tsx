@@ -20,6 +20,18 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
       '<span style="background:hsl(280 60% 92%);color:hsl(280 60% 35%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(280 40% 80%)">🤖 AI: $1</span>'
     );
 
+    // Highlight {{MAP:...}}, {{YOUTUBE:...}}, {{IMAGE:...}}, {{WEATHER:...}} dynamic elements
+    styled = styled.replace(
+      /\{\{(MAP|YOUTUBE|IMAGE|WEATHER):(.*?)\}\}/gi,
+      '<span style="background:hsl(150 60% 90%);color:hsl(150 60% 30%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(150 40% 78%)">🔌 $1: $2</span>'
+    );
+
+    // Highlight spintax {option1|option2|option3}
+    styled = styled.replace(
+      /\{([^{}]*?\|[^{}]*?)\}/g,
+      '<span style="background:hsl(35 90% 90%);color:hsl(35 80% 30%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(35 70% 78%)">🔀 {$1}</span>'
+    );
+
     // Highlight {variable} placeholders (but not the ones inside AI blocks already handled)
     styled = styled.replace(
       /\{([a-z_]+)\}/gi,

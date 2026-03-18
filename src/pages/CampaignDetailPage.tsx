@@ -147,11 +147,11 @@ export default function CampaignDetailPage() {
   // Execute mutation
   const executeMutation = useMutation({
     mutationFn: async (action?: string) => {
+      const isTest = action === "test";
       const { data, error } = await supabase.functions.invoke("generate-pages", {
-        body: { campaign_id: id, action },
+        body: { campaign_id: id, action: isTest ? undefined : action, test_mode: isTest },
       });
       if (error) {
-        // Try to extract the JSON error message from FunctionsHttpError
         try {
           const ctx = (error as any).context;
           if (ctx && typeof ctx.json === 'function') {
@@ -234,14 +234,25 @@ export default function CampaignDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           {campaign.status === "draft" && (
-            <Button
-              onClick={() => executeMutation.mutate(undefined)}
-              disabled={executeMutation.isPending}
-              className="rounded-xl bg-gradient-primary hover:brightness-110"
-            >
-              <Play className="mr-2 h-4 w-4" />
-              {executeMutation.isPending ? "Running..." : "Run Campaign"}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={() => executeMutation.mutate("test")}
+                disabled={executeMutation.isPending}
+                className="rounded-xl"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Test (1 Page)
+              </Button>
+              <Button
+                onClick={() => executeMutation.mutate(undefined)}
+                disabled={executeMutation.isPending}
+                className="rounded-xl bg-gradient-primary hover:brightness-110"
+              >
+                <Play className="mr-2 h-4 w-4" />
+                {executeMutation.isPending ? "Running..." : "Run Campaign"}
+              </Button>
+            </>
           )}
           {campaign.status === "processing" && (
             <>
