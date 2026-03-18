@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { getMinimumPlanFor, PLAN_FEATURES, FEATURE_LABELS, type FeatureKey, type PlanName } from "@/lib/plan-features";
 import { Lock, ArrowRight, Check, X } from "lucide-react";
