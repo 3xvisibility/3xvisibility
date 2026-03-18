@@ -187,14 +187,6 @@ const App = () => {
               }
             />
             <Route
-              path="/store-generator"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="storeGenerator"><AutoStoreGeneratorPage /></FeatureGate></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/workspace-settings"
               element={
                 <ProtectedRoute session={session}>
