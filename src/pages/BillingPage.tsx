@@ -150,6 +150,7 @@ export default function BillingPage() {
   const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
   const [stripePlan, setStripePlan] = useState<PlanName | null>(null);
@@ -164,7 +165,9 @@ export default function BillingPage() {
     checkSubscription();
     if (searchParams.get("success") === "true") {
       setShowSuccess(true);
+      // Retry a few times after checkout to allow Stripe to process
       setTimeout(checkSubscription, 2000);
+      setTimeout(checkSubscription, 5000);
     } else if (searchParams.get("canceled") === "true") {
       setShowCanceled(true);
     }
@@ -182,6 +185,9 @@ export default function BillingPage() {
         setStripePlan(null);
         setSubscriptionEnd(null);
       }
+      // Invalidate subscription cache so dashboard and other pages reflect the updated plan
+      queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-ai-usage"] });
     } catch (err) {
       console.error("Failed to check subscription:", err);
     }
