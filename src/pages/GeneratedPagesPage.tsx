@@ -334,6 +334,22 @@ export default function GeneratedPagesPage() {
           >
             <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
           </Button>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[160px] h-9 text-xs">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="seo_desc">SEO ↓ (best)</SelectItem>
+              <SelectItem value="seo_asc">SEO ↑ (worst)</SelectItem>
+              <SelectItem value="sea_desc">SEA ↓ (best)</SelectItem>
+              <SelectItem value="sea_asc">SEA ↑ (worst)</SelectItem>
+              <SelectItem value="geo_desc">GEO ↓ (best)</SelectItem>
+              <SelectItem value="geo_asc">GEO ↑ (worst)</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[130px] h-9 text-xs">
               <SelectValue />
