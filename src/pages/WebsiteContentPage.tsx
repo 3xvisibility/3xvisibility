@@ -41,6 +41,14 @@ interface ContentItem {
   modified: string;
 }
 
+/** Decode HTML entities like &#8211; &amp; &lt; etc. */
+function decodeHtmlEntities(text: string): string {
+  if (!text || typeof text !== "string") return text;
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 export default function WebsiteContentPage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
@@ -358,7 +366,7 @@ function ContentList({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <h3 className="text-sm font-medium truncate max-w-[200px] sm:max-w-none">
-                        {item.title || "(Untitled)"}
+                        {decodeHtmlEntities(item.title) || "(Untitled)"}
                       </h3>
                       <Badge
                         variant="outline"
