@@ -1315,8 +1315,23 @@ export default function CampaignsPage() {
                     </div>
                   </div>
 
+                  {(c.status === "queued" && progress.total === 0) && (
+                    <div className="px-5 pb-5">
+                      <div className="flex items-center gap-2 text-xs text-primary">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span className="font-medium">Preparing generation...</span>
+                      </div>
+                      <Progress value={0} className="h-2 mt-2" />
+                    </div>
+                  )}
                   {progress.total > 0 && (
                     <div className="px-5 pb-5 space-y-2">
+                      {(c.status === "processing" || c.status === "queued") && (
+                        <div className="flex items-center gap-2 text-xs text-primary mb-1">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span className="font-medium">Generating pages...</span>
+                        </div>
+                      )}
                       <Progress value={progress.percent} className="h-2" />
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex gap-4">
