@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import PageComparisonDialog from "@/components/discovery/PageComparisonDialog";
 
 interface DiscoveredPage {
@@ -178,6 +179,8 @@ export default function WebsiteDiscoveryPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   // Simulated progress animation
   const startProgress = useCallback(() => {
@@ -214,18 +217,19 @@ export default function WebsiteDiscoveryPage() {
 
   // Fetch connected websites
   const { data: websites = [] } = useQuery({
-    queryKey: ["all-websites"],
+    queryKey: ["discovery-websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
         .select("id, name, url, type, status")
+        .eq("workspace_id", wsId!)
         .eq("status", "connected")
         .order("name");
       if (error) throw error;
       return data;
     },
   });
-
   // Crawl public URL
   const crawlUrlMutation = useMutation({
     mutationFn: async (crawlUrl: string) => {

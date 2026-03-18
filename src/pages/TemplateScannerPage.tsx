@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface ContentBlock {
   id: string;
@@ -143,21 +144,27 @@ export default function TemplateScannerPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
-  // Fetch connected WordPress websites
-  const { data: wpWebsites = [] } = useQuery({
-    queryKey: ["wp-websites"],
+  // Fetch all connected websites (not just WordPress)
+  const { data: connectedWebsites = [] } = useQuery({
+    queryKey: ["scanner-websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
-        .select("id, name, url")
-        .eq("type", "wordpress")
+        .select("id, name, url, type")
+        .eq("workspace_id", wsId!)
         .eq("status", "connected")
         .order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  // Filter WordPress sites for the WP pages tab
+  const wpWebsites = useMemo(() => connectedWebsites.filter(w => w.type === "wordpress" || w.type === "woocommerce"), [connectedWebsites]);
 
   // Fetch WP pages for selected website
   const wpPagesMutation = useMutation({
@@ -425,8 +432,8 @@ export default function TemplateScannerPage() {
               <TabsTrigger value="url">
                 <Globe className="mr-1.5 h-3.5 w-3.5" /> Public URL
               </TabsTrigger>
-              <TabsTrigger value="wordpress">
-                <FileText className="mr-1.5 h-3.5 w-3.5" /> WordPress Page
+              <TabsTrigger value="connected">
+                <FileText className="mr-1.5 h-3.5 w-3.5" /> Connected Site
               </TabsTrigger>
             </TabsList>
 
@@ -460,11 +467,11 @@ export default function TemplateScannerPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="wordpress" className="space-y-3">
-              <Label className="text-sm font-medium">Connected WordPress Site</Label>
-              {wpWebsites.length === 0 ? (
+            <TabsContent value="connected" className="space-y-3">
+              <Label className="text-sm font-medium">Connected Website</Label>
+              {connectedWebsites.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No WordPress websites connected. Add one in the Websites section first.
+                  No websites connected. Add one in the Websites section first.
                 </p>
               ) : (
                 <>
@@ -478,11 +485,16 @@ export default function TemplateScannerPage() {
                       }}
                     >
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select a WordPress site" />
+                        <SelectValue placeholder="Select a connected site" />
                       </SelectTrigger>
                       <SelectContent>
-                        {wpWebsites.map((w) => (
-                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                        {connectedWebsites.map((w) => (
+                          <SelectItem key={w.id} value={w.id}>
+                            <span className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 capitalize">{w.type}</Badge>
+                              {w.name}
+                            </span>
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
