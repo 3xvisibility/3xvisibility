@@ -70,7 +70,9 @@ export default function CampaignsPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDraggingCsv, setIsDraggingCsv] = useState(false);
-  const [dataSource, setDataSource] = useState<"csv" | "website">("csv");
+  const [dataSource, setDataSource] = useState<"csv" | "website" | "locations">("csv");
+  const [locationData, setLocationData] = useState<Record<string, string>[]>([]);
+  const [locationDbOpen, setLocationDbOpen] = useState(false);
   const [websiteForPages, setWebsiteForPages] = useState("");
   const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
