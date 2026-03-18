@@ -426,11 +426,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (campaignError || !campaign) {
+      console.error("[GENERATE-PAGES] Campaign not found:", campaignError?.message);
       return new Response(JSON.stringify({ error: "Campaign not found" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("[GENERATE-PAGES] Campaign loaded:", campaign.name, "template:", !!campaign.templates);
 
     if (!campaign.templates) {
       return new Response(JSON.stringify({ error: "No template assigned" }), {
