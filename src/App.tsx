@@ -181,7 +181,7 @@ const App = () => {
               path="/indexing"
               element={
                 <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><IndexingPage /></DashboardLayout>
+                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="indexing"><IndexingPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
