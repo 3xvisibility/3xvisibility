@@ -375,7 +375,7 @@ Deno.serve(async (req) => {
 
     // For service-role calls, resolve user_id from the campaign
     if (!user) {
-      const { data: campLookup } = await supabase.from("campaigns").select("user_id").eq("id", campaign_id).maybeSingle();
+      const { data: campLookup } = await supabase.from("campaigns").select("user_id, workspace_id").eq("id", campaign_id).maybeSingle();
       if (!campLookup) {
         return new Response(JSON.stringify({ error: "Campaign not found" }), {
           status: 404,
@@ -383,6 +383,11 @@ Deno.serve(async (req) => {
         });
       }
       user = { id: campLookup.user_id };
+      _currentWorkspaceId = campLookup.workspace_id || null;
+    } else {
+      // Pre-fetch workspace_id for logEvent calls before full campaign load
+      const { data: wsLookup } = await supabase.from("campaigns").select("workspace_id").eq("id", campaign_id).maybeSingle();
+      _currentWorkspaceId = wsLookup?.workspace_id || null;
     }
 
     // Handle pause action — update both campaign and active job
