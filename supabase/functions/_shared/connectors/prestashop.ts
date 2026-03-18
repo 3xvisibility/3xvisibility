@@ -1,4 +1,4 @@
-import type { CmsConnector, ConnectorConfig, ConnectorResult, PagePayload } from "./types.ts";
+import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -24,6 +24,8 @@ export class PrestaShopConnector implements CmsConnector {
       if (res.ok) {
         const data = await res.json();
         if (data.languages?.length > 0) return String(data.languages[0].id);
+      } else {
+        await res.text();
       }
     } catch { /* default */ }
     return "1";
@@ -126,5 +128,46 @@ export class PrestaShopConnector implements CmsConnector {
     } catch {
       return false;
     }
+  }
+
+  async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
+    const resource = contentType === "products" ? "products" : "cms";
+    const listResp = await fetch(
+      `${this.baseUrl}/api/${resource}?output_format=JSON&display=full`,
+      { headers: { Authorization: `Basic ${this.auth}` } }
+    );
+
+    if (!listResp.ok) {
+      if (contentType === "products") { await listResp.text(); return []; }
+      const err = await listResp.text();
+      throw new Error(`PrestaShop API error [${listResp.status}]: ${err}`);
+    }
+
+    const data = await listResp.json();
+    const list = contentType === "products" ? data.products : data.cms;
+    const items: ContentItem[] = [];
+
+    for (const item of list || []) {
+      const name = contentType === "products"
+        ? (item.name?.[0]?.value || item.name || "")
+        : (item.meta_title?.[0]?.value || item.meta_title || "");
+      const content = contentType === "products"
+        ? (item.description?.[0]?.value || item.description || "")
+        : (item.content?.[0]?.value || item.content || "");
+
+      items.push({
+        id: String(item.id),
+        title: name,
+        slug: item.link_rewrite?.[0]?.value || item.link_rewrite || String(item.id),
+        url: `${this.baseUrl}/${item.link_rewrite?.[0]?.value || item.id}`,
+        type: contentType === "products" ? "product" : "page",
+        status: item.active === "1" || item.active === 1 ? "published" : "draft",
+        content,
+        excerpt: content.replace(/<[^>]*>/g, "").slice(0, 200),
+        modified: item.date_upd || "",
+      });
+    }
+
+    return items;
   }
 }

@@ -1,4 +1,4 @@
-import type { CmsConnector, ConnectorConfig, ConnectorResult, PagePayload } from "./types.ts";
+import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -22,10 +22,7 @@ export class ShopifyConnector implements CmsConnector {
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
-    // If product_data is present, publish as a product instead
-    if (payload.product_data) {
-      return this.createProduct(payload);
-    }
+    if (payload.product_data) return this.createProduct(payload);
 
     const pageBody: Record<string, unknown> = {
       title: payload.title,
@@ -98,5 +95,46 @@ export class ShopifyConnector implements CmsConnector {
     } catch {
       return false;
     }
+  }
+
+  async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
+    const items: ContentItem[] = [];
+    let url = contentType === "products"
+      ? `${this.apiBase}/products.json?limit=250`
+      : `${this.apiBase}/pages.json?limit=250`;
+
+    while (url) {
+      const response = await fetch(url, { headers: this.headers });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Shopify API error [${response.status}]: ${err}`);
+      }
+
+      const data = await response.json();
+      const list = contentType === "products" ? data.products : data.pages;
+
+      for (const item of list || []) {
+        items.push({
+          id: String(item.id),
+          title: item.title || "",
+          slug: item.handle || "",
+          url: contentType === "products"
+            ? `https://${this.shopDomain}/products/${item.handle}`
+            : `https://${this.shopDomain}/pages/${item.handle}`,
+          type: contentType === "products" ? "product" : "page",
+          status: item.published_at ? "published" : "draft",
+          content: item.body_html || "",
+          excerpt: contentType === "products" ? (item.body_html || "").replace(/<[^>]*>/g, "").slice(0, 200) : "",
+          modified: item.updated_at || "",
+        });
+      }
+
+      const linkHeader = response.headers.get("Link");
+      const nextMatch = linkHeader?.match(/<([^>]+)>;\s*rel="next"/);
+      url = nextMatch ? nextMatch[1] : "";
+    }
+
+    return items;
   }
 }
