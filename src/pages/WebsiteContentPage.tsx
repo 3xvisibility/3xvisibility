@@ -113,7 +113,7 @@ export default function WebsiteContentPage() {
         body: { website_id: effectiveWebsite, content_type: "products" },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return data.items as ContentItem[];
     },
     staleTime: 5 * 60 * 1000,

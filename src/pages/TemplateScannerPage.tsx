@@ -195,7 +195,7 @@ export default function TemplateScannerPage() {
         body: { url: scanUrl },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return data as {
         success: boolean;
         url: string;
