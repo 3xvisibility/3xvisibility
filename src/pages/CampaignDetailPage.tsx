@@ -260,7 +260,7 @@ export default function CampaignDetailPage() {
             <>
               <Button
                 variant="outline"
-                onClick={() => executeMutation.mutate("test")}
+                onClick={() => executeMutation.mutate({ action: "test" })}
                 disabled={executeMutation.isPending}
                 className="rounded-xl"
               >
@@ -268,7 +268,7 @@ export default function CampaignDetailPage() {
                 Test (1 Page)
               </Button>
               <Button
-                onClick={() => executeMutation.mutate(undefined)}
+                onClick={() => executeMutation.mutate({})}
                 disabled={executeMutation.isPending}
                 className="rounded-xl bg-gradient-primary hover:brightness-110"
               >
@@ -279,18 +279,23 @@ export default function CampaignDetailPage() {
           )}
           {campaign.status === "processing" && (
             <>
-              <Button variant="outline" onClick={() => executeMutation.mutate("pause")} disabled={executeMutation.isPending} className="rounded-xl">
+              <Button variant="outline" onClick={() => executeMutation.mutate({ action: "pause" })} disabled={executeMutation.isPending} className="rounded-xl">
                 <Pause className="mr-2 h-4 w-4" /> Pause
               </Button>
-              <Button variant="destructive" onClick={() => executeMutation.mutate("abort")} disabled={executeMutation.isPending} className="rounded-xl">
+              <Button variant="destructive" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
                 <XCircle className="mr-2 h-4 w-4" /> Abort
               </Button>
             </>
           )}
           {(campaign.status === "completed" || campaign.status === "failed") && (
-            <Button variant="outline" onClick={() => executeMutation.mutate(undefined)} disabled={executeMutation.isPending} className="rounded-xl">
-              <RotateCcw className="mr-2 h-4 w-4" /> Re-run
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
+                <RotateCcw className="mr-2 h-4 w-4" /> Re-generate
+              </Button>
+              <Button variant="outline" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
+                <Play className="mr-2 h-4 w-4" /> Re-run (New)
+              </Button>
+            </>
           )}
         </div>
       </div>
