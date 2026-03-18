@@ -17,6 +17,7 @@ import {
   Zap,
   Users,
   Database,
+  Lock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -35,13 +36,18 @@ import {
 } from "@/components/ui/sidebar";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useNavigate } from "react-router-dom";
+import type { FeatureKey } from "@/lib/plan-features";
+import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
 
 interface NavItem {
   titleKey: string;
   url: string;
   icon: typeof LayoutDashboard;
+  requiredFeature?: FeatureKey;
 }
 
 const mainNav: NavItem[] = [
@@ -54,17 +60,17 @@ const mainNav: NavItem[] = [
 
 const toolsNav: NavItem[] = [
   { titleKey: "sidebar.aiScanner", url: "/scanner", icon: ScanSearch },
-  { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass },
+  { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", url: "/analytics", icon: BarChart3 },
-  { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon },
-  { titleKey: "sidebar.storeGenerator", url: "/store-generator", icon: Store },
+  { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon, requiredFeature: "indexing" },
+  { titleKey: "sidebar.storeGenerator", url: "/store-generator", icon: Store, requiredFeature: "storeGenerator" },
 ];
 
 const settingsNav: NavItem[] = [
   { titleKey: "sidebar.websites", url: "/websites", icon: Globe },
   { titleKey: "sidebar.billing", url: "/billing", icon: CreditCard },
   { titleKey: "sidebar.settings", url: "/settings", icon: Settings },
-  { titleKey: "sidebar.workspaceSettings", url: "/workspace-settings", icon: Users },
+  { titleKey: "sidebar.workspaceSettings", url: "/workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
 ];
 
 interface AppSidebarProps {
@@ -76,7 +82,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const collapsed = state === "collapsed";
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
-  const { pagesUsed, pagesLimit } = useSubscription();
+  const navigate = useNavigate();
+  const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
 
   useEffect(() => {
@@ -96,22 +103,68 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   };
 
   const renderNavItems = (items: NavItem[]) =>
-    items.map((item) => (
-      <SidebarMenuItem key={item.titleKey}>
-        <SidebarMenuButton asChild>
-          <NavLink
-            to={item.url}
-            end={item.url === "/dashboard"}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
-            activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
-            {...(onboardingMap[item.url] ? { "data-onboarding": onboardingMap[item.url] } : {})}
+    items.map((item) => {
+      const isLocked = item.requiredFeature ? !canUseFeature(item.requiredFeature) : false;
+      const minPlanLabel = item.requiredFeature
+        ? PLAN_FEATURES[getMinimumPlanFor(item.requiredFeature)].label
+        : "";
+
+      if (isLocked) {
+        const content = (
+          <button
+            onClick={() => navigate("/billing")}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground/50 hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer"
           >
             <item.icon className="h-4 w-4 shrink-0" />
-            {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
-          </NavLink>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ));
+            {!collapsed && (
+              <>
+                <span className="text-sm flex-1 text-left">{t(item.titleKey)}</span>
+                <Lock className="h-3.5 w-3.5 text-muted-foreground/60" />
+              </>
+            )}
+          </button>
+        );
+
+        return (
+          <SidebarMenuItem key={item.titleKey}>
+            <SidebarMenuButton asChild>
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>{content}</TooltipTrigger>
+                  <TooltipContent side="right">
+                    Requires {minPlanLabel} plan
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>{content}</TooltipTrigger>
+                  <TooltipContent side="right">
+                    Upgrade to {minPlanLabel} to unlock
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      }
+
+      return (
+        <SidebarMenuItem key={item.titleKey}>
+          <SidebarMenuButton asChild>
+            <NavLink
+              to={item.url}
+              end={item.url === "/dashboard"}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
+              activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
+              {...(onboardingMap[item.url] ? { "data-onboarding": onboardingMap[item.url] } : {})}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    });
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
