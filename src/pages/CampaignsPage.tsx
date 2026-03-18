@@ -1171,6 +1171,87 @@ export default function CampaignsPage() {
                           )}
                         </>
                       )}
+                      {dataSource === "locations" && (
+                        <>
+                          <div className="text-center space-y-3">
+                            <div className="flex items-center justify-center gap-3">
+                              <MapPin className="h-8 w-8 text-primary/50" />
+                              <div className="text-left">
+                                <p className="text-sm font-semibold">Built-in Location Database</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {locationData.length > 0
+                                    ? `${locationData.length} cities selected`
+                                    : "Select cities, counties & zip codes — no CSV needed"}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant={locationData.length > 0 ? "outline" : "default"}
+                              onClick={() => setLocationDbOpen(true)}
+                              className="rounded-xl gap-2"
+                            >
+                              <Database className="h-4 w-4" />
+                              {locationData.length > 0 ? "Change Selection" : "Browse Locations"}
+                            </Button>
+                          </div>
+
+                          {locationData.length > 0 && (
+                            <>
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="text-xs text-muted-foreground">Columns:</span>
+                                {locationHeaders.map((h) => (
+                                  <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                                ))}
+                              </div>
+                              <div className="rounded-xl border border-border overflow-hidden">
+                                <div className="px-3 py-2 bg-muted/50 border-b border-border flex items-center justify-between">
+                                  <span className="text-xs font-semibold">Preview ({locationData.length} cities)</span>
+                                </div>
+                                <ScrollArea className="max-h-[200px]">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-[11px]">
+                                      <thead>
+                                        <tr className="border-b border-border bg-muted/30">
+                                          {["city", "state", "zip_code", "county", "latitude", "longitude", "population"].map((h) => (
+                                            <th key={h} className="px-2.5 py-1.5 text-left font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
+                                          ))}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {locationData.slice(0, 20).map((row, idx) => (
+                                          <tr key={idx} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                                            <td className="px-2.5 py-1.5 font-medium whitespace-nowrap">{row.city}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap">
+                                              <Badge variant="outline" className="text-[9px]">{row.state_code || row.state}</Badge>
+                                            </td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap">{row.zip_code}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap text-muted-foreground">{row.county}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap tabular-nums">{row.latitude}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap tabular-nums">{row.longitude}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap tabular-nums">{row.population}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  {locationData.length > 20 && (
+                                    <p className="text-[10px] text-muted-foreground text-center py-1.5">
+                                      +{locationData.length - 20} more cities
+                                    </p>
+                                  )}
+                                </ScrollArea>
+                              </div>
+                            </>
+                          )}
+
+                          <LocationDatabaseDialog
+                            open={locationDbOpen}
+                            onOpenChange={setLocationDbOpen}
+                            onSelect={(rows) => setLocationData(rows)}
+                          />
+                        </>
+                      )}
                     </div>
                   )}
 
