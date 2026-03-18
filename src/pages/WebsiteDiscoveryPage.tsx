@@ -672,11 +672,25 @@ export default function WebsiteDiscoveryPage() {
                         <code className="text-xs font-mono text-primary bg-primary/5 px-2 py-1 rounded truncate">{group.pattern}</code>
                       </div>
                       <p className="text-sm font-medium">{group.pages.length} matching pages</p>
-                      <div className="flex flex-wrap gap-1">
-                        {group.suggestedVariables.map((v) => (
-                          <Badge key={v} variant="outline" className="font-mono text-[10px] border-primary text-primary">{`{${v}}`}</Badge>
-                        ))}
-                      </div>
+                      {/* Average SEO score for this group */}
+                      {(() => {
+                        const groupPages = pages.filter(p => group.pages.includes(p.url));
+                        if (groupPages.length === 0) return null;
+                        const avgScore = Math.round(
+                          groupPages.reduce((sum, p) => {
+                            const s = calculateContentSeoScore(p.title, p.bodyHtml || p.textSnippet, p.url);
+                            return sum + s.score;
+                          }, 0) / groupPages.length
+                        );
+                        const color = avgScore >= 85 ? "text-emerald-600" : avgScore >= 60 ? "text-primary" : avgScore >= 35 ? "text-amber-600" : "text-destructive";
+                        const label = avgScore >= 85 ? "Excellent" : avgScore >= 60 ? "Good" : avgScore >= 35 ? "Fair" : "Poor";
+                        return (
+                          <div className="flex items-center gap-2">
+                            <SeoScoreBadge score={avgScore} label={label} color={color} size="sm" />
+                            <span className="text-[10px] text-muted-foreground">avg SEO</span>
+                          </div>
+                        );
+                      })()}
                       <ScrollArea className="max-h-24">
                         <div className="space-y-0.5 text-xs text-muted-foreground">
                           {group.pages.slice(0, 5).map((url, j) => {
