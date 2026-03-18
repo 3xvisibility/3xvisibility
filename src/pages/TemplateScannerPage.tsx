@@ -432,8 +432,8 @@ export default function TemplateScannerPage() {
               <TabsTrigger value="url">
                 <Globe className="mr-1.5 h-3.5 w-3.5" /> Public URL
               </TabsTrigger>
-              <TabsTrigger value="wordpress">
-                <FileText className="mr-1.5 h-3.5 w-3.5" /> WordPress Page
+              <TabsTrigger value="connected">
+                <FileText className="mr-1.5 h-3.5 w-3.5" /> Connected Site
               </TabsTrigger>
             </TabsList>
 
