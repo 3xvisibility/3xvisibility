@@ -191,6 +191,19 @@ export default function TemplatesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Check if any campaigns reference this template
+      const { data: linkedCampaigns, error: checkError } = await supabase
+        .from("campaigns")
+        .select("id, name")
+        .eq("template_id", id)
+        .limit(5);
+      if (checkError) throw checkError;
+      if (linkedCampaigns && linkedCampaigns.length > 0) {
+        const names = linkedCampaigns.map((c) => c.name).join(", ");
+        throw new Error(
+          `This template is used by ${linkedCampaigns.length} campaign(s): ${names}. Please unlink or delete those campaigns first.`
+        );
+      }
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) throw error;
     },
