@@ -210,6 +210,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/website-content"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><WebsiteContentPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
