@@ -690,6 +690,57 @@ export type Database = {
           },
         ]
       }
+      locations: {
+        Row: {
+          city: string
+          country: string
+          country_code: string
+          county: string | null
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          population: number | null
+          region: string | null
+          state: string
+          state_code: string | null
+          timezone: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          city: string
+          country?: string
+          country_code?: string
+          county?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          population?: number | null
+          region?: string | null
+          state: string
+          state_code?: string | null
+          timezone?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          city?: string
+          country?: string
+          country_code?: string
+          county?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          population?: number | null
+          region?: string | null
+          state?: string
+          state_code?: string | null
+          timezone?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       mappings: {
         Row: {
           campaign_id: string

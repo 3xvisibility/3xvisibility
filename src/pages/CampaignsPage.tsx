@@ -13,13 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2, Copy, GripVertical, Globe, CheckSquare } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2, Copy, GripVertical, Globe, CheckSquare, Database as DatabaseIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
+import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,7 +70,9 @@ export default function CampaignsPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDraggingCsv, setIsDraggingCsv] = useState(false);
-  const [dataSource, setDataSource] = useState<"csv" | "website">("csv");
+  const [dataSource, setDataSource] = useState<"csv" | "website" | "locations">("csv");
+  const [locationData, setLocationData] = useState<Record<string, string>[]>([]);
+  const [locationDbOpen, setLocationDbOpen] = useState(false);
   const [websiteForPages, setWebsiteForPages] = useState("");
   const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
@@ -223,8 +226,9 @@ export default function CampaignsPage() {
     return { headers, rows };
   }, [dataSource, selectedPageIds, websitePages]);
 
+  const locationHeaders = ["city", "county", "state", "state_code", "zip_code", "country", "latitude", "longitude", "population", "timezone", "region"];
   const variableMapping = useMemo(() => {
-    const headers = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+    const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
     const matched: { variable: string; column: string | null }[] = [];
     for (const v of selectedTemplateVars) {
@@ -272,8 +276,8 @@ export default function CampaignsPage() {
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
       // Resolve effective data based on data source
-      const effectiveData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
-      const effectiveHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+      const effectiveData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
+      const effectiveHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
       const effectiveRowCount = effectiveData.length;
 
       // Store full CSV data inline as fallback; also upload to campaign_csv_files
@@ -308,7 +312,7 @@ export default function CampaignsPage() {
           campaign_id: campaignId,
           workspace_id: wsId,
           user_id: user.id,
-          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : "website-pages.csv",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations.csv" : "website-pages.csv",
           file_size: rawContent.length,
           raw_content: rawContent,
           headers: effectiveHeaders as any,
@@ -320,8 +324,8 @@ export default function CampaignsPage() {
           campaign_id: campaignId,
           workspace_id: wsId,
           user_id: user.id,
-          type: dataSource === "csv" ? "csv" : "website",
-          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : "website-pages",
+          type: dataSource,
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations" : "website-pages",
           file_size: dataSource === "csv" ? (csvFile?.size || rawContent.length) : rawContent.length,
           row_count: effectiveRowCount,
           headers: effectiveHeaders as any,
@@ -669,6 +673,7 @@ export default function CampaignsPage() {
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
     setDataSource("csv");
+    setLocationData([]);
     setWebsiteForPages("");
     setWebsiteContentType("all");
     setSelectedPageIds(new Set());
@@ -713,8 +718,9 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
-  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
-  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+  // locationHeaders defined above
+  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
+  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
 
   const mappingWarning = !hasTitleMapping && effectiveCsvData.length > 0 && selectedTemplate
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
@@ -723,7 +729,7 @@ export default function CampaignsPage() {
   const canProceed = () => {
     if (step === 1) return !!campaignName;
     if (step === 2) return true;
-    if (step === 3) return dataSource === "csv" ? csvData.length > 0 : selectedPageIds.size > 0;
+    if (step === 3) return dataSource === "csv" ? csvData.length > 0 : dataSource === "locations" ? locationData.length > 0 : selectedPageIds.size > 0;
     if (step === 4) return !!selectedTemplate;
     return true;
   };
@@ -910,28 +916,37 @@ export default function CampaignsPage() {
                   {step === 3 && (
                     <div className="space-y-4">
                       {/* Data Source Toggle */}
-                      <div className="flex items-center gap-2 p-1 bg-muted rounded-xl">
+                      <div className="flex items-center gap-1 p-1 bg-muted rounded-xl">
                         <button
                           type="button"
                           onClick={() => setDataSource("csv")}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${
                             dataSource === "csv" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
-                          <Upload className="h-3.5 w-3.5" /> CSV Upload
+                          <Upload className="h-3.5 w-3.5" /> CSV
                         </button>
                         <button
                           type="button"
                           onClick={() => setDataSource("website")}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${
                             dataSource === "website" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
-                          <Globe className="h-3.5 w-3.5" /> Website Content
+                          <Globe className="h-3.5 w-3.5" /> Website
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDataSource("locations")}
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${
+                            dataSource === "locations" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <MapPin className="h-3.5 w-3.5" /> Locations
                         </button>
                       </div>
 
-                      {dataSource === "csv" ? (
+                      {dataSource === "csv" && (
                         <>
                           <div
                             className={cn(
@@ -973,7 +988,8 @@ export default function CampaignsPage() {
                             </div>
                           )}
                         </>
-                      ) : (
+                      )}
+                      {dataSource === "website" && (
                         <>
                           {/* Website selector */}
                           <Select value={websiteForPages} onValueChange={(v) => { setWebsiteForPages(v); setSelectedPageIds(new Set()); }}>
@@ -1154,6 +1170,87 @@ export default function CampaignsPage() {
                               </div>
                             </div>
                           )}
+                        </>
+                      )}
+                      {dataSource === "locations" && (
+                        <>
+                          <div className="text-center space-y-3">
+                            <div className="flex items-center justify-center gap-3">
+                              <MapPin className="h-8 w-8 text-primary/50" />
+                              <div className="text-left">
+                                <p className="text-sm font-semibold">Built-in Location Database</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {locationData.length > 0
+                                    ? `${locationData.length} cities selected`
+                                    : "Select cities, counties & zip codes — no CSV needed"}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant={locationData.length > 0 ? "outline" : "default"}
+                              onClick={() => setLocationDbOpen(true)}
+                              className="rounded-xl gap-2"
+                            >
+                              <DatabaseIcon className="h-4 w-4" />
+                              {locationData.length > 0 ? "Change Selection" : "Browse Locations"}
+                            </Button>
+                          </div>
+
+                          {locationData.length > 0 && (
+                            <>
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="text-xs text-muted-foreground">Columns:</span>
+                                {locationHeaders.map((h) => (
+                                  <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                                ))}
+                              </div>
+                              <div className="rounded-xl border border-border overflow-hidden">
+                                <div className="px-3 py-2 bg-muted/50 border-b border-border flex items-center justify-between">
+                                  <span className="text-xs font-semibold">Preview ({locationData.length} cities)</span>
+                                </div>
+                                <ScrollArea className="max-h-[200px]">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-[11px]">
+                                      <thead>
+                                        <tr className="border-b border-border bg-muted/30">
+                                          {["city", "state", "zip_code", "county", "latitude", "longitude", "population"].map((h) => (
+                                            <th key={h} className="px-2.5 py-1.5 text-left font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
+                                          ))}
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {locationData.slice(0, 20).map((row, idx) => (
+                                          <tr key={idx} className="border-b border-border/50 last:border-0 hover:bg-muted/20">
+                                            <td className="px-2.5 py-1.5 font-medium whitespace-nowrap">{row.city}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap">
+                                              <Badge variant="outline" className="text-[9px]">{row.state_code || row.state}</Badge>
+                                            </td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap">{row.zip_code}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap text-muted-foreground">{row.county}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap tabular-nums">{row.latitude}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap tabular-nums">{row.longitude}</td>
+                                            <td className="px-2.5 py-1.5 whitespace-nowrap tabular-nums">{row.population}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                  {locationData.length > 20 && (
+                                    <p className="text-[10px] text-muted-foreground text-center py-1.5">
+                                      +{locationData.length - 20} more cities
+                                    </p>
+                                  )}
+                                </ScrollArea>
+                              </div>
+                            </>
+                          )}
+
+                          <LocationDatabaseDialog
+                            open={locationDbOpen}
+                            onOpenChange={setLocationDbOpen}
+                            onSelect={(rows) => setLocationData(rows)}
+                          />
                         </>
                       )}
                     </div>
