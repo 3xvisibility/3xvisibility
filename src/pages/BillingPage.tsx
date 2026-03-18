@@ -295,7 +295,7 @@ export default function BillingPage() {
                 Renews {new Date(subscriptionEnd).toLocaleDateString()}
               </p>
             )}
-            {stripePlan && (
+            {currentPlan !== "free" && (
               <Button variant="outline" size="sm" className="w-full mt-2" onClick={handleManageSubscription} disabled={portalLoading}>
                 {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
                 Manage Subscription
