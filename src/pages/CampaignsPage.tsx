@@ -289,6 +289,7 @@ export default function CampaignsPage() {
         utm_settings: utmSettings as any,
         geo_settings: geoSettings as any,
         publish_mode: publishMode,
+        generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
         scheduled_at: scheduleMode === "later" && scheduledDate ? scheduledDate.toISOString() : null,
         status: scheduleMode === "later" && scheduledDate ? "queued" as any : publishMode === "published" ? "queued" as any : "draft" as any,
