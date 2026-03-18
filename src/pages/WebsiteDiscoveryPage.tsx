@@ -218,7 +218,7 @@ export default function WebsiteDiscoveryPage() {
     setTimeout(() => setScanProgress(0), 1000);
   }, []);
 
-  // Fetch connected websites
+  // Fetch all websites (show status badge for each)
   const { data: websites = [] } = useQuery({
     queryKey: ["discovery-websites", wsId],
     enabled: !!wsId,
@@ -227,7 +227,6 @@ export default function WebsiteDiscoveryPage() {
         .from("websites")
         .select("id, name, url, type, status")
         .eq("workspace_id", wsId!)
-        .eq("status", "connected")
         .order("name");
       if (error) throw error;
       return data;
