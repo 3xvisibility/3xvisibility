@@ -286,10 +286,17 @@ export default function CampaignsPage() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (campaignId) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast({ title: "Campaign created", description: `"${campaignName}" has been saved as a draft.` });
-      resetForm();
+      const shouldAutoRun = publishMode === "published" && scheduleMode === "now";
+      if (shouldAutoRun && campaignId) {
+        toast({ title: "Campaign created", description: `"${campaignName}" is now generating and publishing pages...` });
+        resetForm();
+        executeMutation.mutate({ id: campaignId });
+      } else {
+        toast({ title: "Campaign created", description: `"${campaignName}" has been saved as a draft.` });
+        resetForm();
+      }
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
