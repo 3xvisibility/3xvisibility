@@ -485,11 +485,16 @@ export default function TemplateScannerPage() {
                       }}
                     >
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select a WordPress site" />
+                        <SelectValue placeholder="Select a connected site" />
                       </SelectTrigger>
                       <SelectContent>
-                        {wpWebsites.map((w) => (
-                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                        {connectedWebsites.map((w) => (
+                          <SelectItem key={w.id} value={w.id}>
+                            <span className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 capitalize">{w.type}</Badge>
+                              {w.name}
+                            </span>
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
