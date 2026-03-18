@@ -8,15 +8,13 @@ export interface PlanFeatures {
   shopify: boolean;
   prestashop: boolean;
   woocommerce: boolean;
-  socialShare: boolean;
-  storeGenerator: boolean;
   indexing: boolean;
   discovery: boolean;
   internalLinks: boolean;
   apiAccess: boolean;
   teamCollaboration: boolean;
-  templates: number; // max templates
-  websites: number; // max websites
+  templates: number;
+  websites: number;
 }
 
 export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
@@ -28,8 +26,6 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     shopify: false,
     prestashop: false,
     woocommerce: false,
-    socialShare: false,
-    storeGenerator: false,
     indexing: false,
     discovery: false,
     internalLinks: false,
@@ -46,8 +42,6 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     shopify: false,
     prestashop: false,
     woocommerce: false,
-    socialShare: true,
-    storeGenerator: false,
     indexing: false,
     discovery: true,
     internalLinks: false,
@@ -64,14 +58,12 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     shopify: true,
     prestashop: true,
     woocommerce: true,
-    socialShare: true,
-    storeGenerator: true,
     indexing: true,
     discovery: true,
     internalLinks: true,
     apiAccess: true,
     teamCollaboration: false,
-    templates: -1, // unlimited
+    templates: -1,
     websites: 5,
   },
   agency: {
@@ -82,15 +74,13 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     shopify: true,
     prestashop: true,
     woocommerce: true,
-    socialShare: true,
-    storeGenerator: true,
     indexing: true,
     discovery: true,
     internalLinks: true,
     apiAccess: true,
     teamCollaboration: true,
     templates: -1,
-    websites: -1, // unlimited
+    websites: -1,
   },
 };
 
@@ -101,8 +91,6 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   shopify: "Shopify Integration",
   prestashop: "PrestaShop Integration",
   woocommerce: "WooCommerce Integration",
-  socialShare: "Social Sharing",
-  storeGenerator: "AI Store Generator",
   indexing: "Google Indexing",
   discovery: "Website Discovery",
   internalLinks: "Internal Link Building",
