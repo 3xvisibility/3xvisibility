@@ -226,6 +226,7 @@ export default function CampaignsPage() {
     return { headers, rows };
   }, [dataSource, selectedPageIds, websitePages]);
 
+  const locationHeaders = ["city", "county", "state", "state_code", "zip_code", "country", "latitude", "longitude", "population", "timezone", "region"];
   const variableMapping = useMemo(() => {
     const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
