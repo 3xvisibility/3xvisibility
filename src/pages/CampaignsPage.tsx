@@ -718,7 +718,7 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
-  const locationHeaders = ["city", "county", "state", "state_code", "zip_code", "country", "latitude", "longitude", "population", "timezone", "region"];
+  // locationHeaders defined above
   const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
   const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
 
