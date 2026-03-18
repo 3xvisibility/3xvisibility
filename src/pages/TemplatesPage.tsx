@@ -45,6 +45,16 @@ export default function TemplatesPage() {
   // Schema state
   const [schemaType, setSchemaType] = useState("WebPage");
   const [schemaConfig, setSchemaConfig] = useState<Record<string, string>>({});
+  // CSV template state
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
+  const [csvTemplateText, setCsvTemplateText] = useState("");
+  const [csvTemplateName, setCsvTemplateName] = useState("");
+  // Connected site template state
+  const [siteDialogOpen, setSiteDialogOpen] = useState(false);
+  const [siteTemplateWebsite, setSiteTemplateWebsite] = useState("");
+  const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
+  const [siteLoadingPages, setSiteLoadingPages] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
