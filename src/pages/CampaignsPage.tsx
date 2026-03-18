@@ -79,6 +79,7 @@ export default function CampaignsPage() {
   // Generation settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
   const [maxRows, setMaxRows] = useState<string>("");
+  const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   // UTM fields
