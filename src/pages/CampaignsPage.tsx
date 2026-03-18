@@ -161,25 +161,7 @@ export default function CampaignsPage() {
     return (tpl.variables as string[]).map((v) => v.replace(/[{}]/g, ""));
   }, [selectedTemplate, templates]);
 
-  const variableMapping = useMemo(() => {
-    const headers = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
-    if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
-    const matched: { variable: string; column: string | null }[] = [];
-    for (const v of selectedTemplateVars) {
-      const vLower = v.toLowerCase();
-      const exactMatch = headers.find((h) => h.toLowerCase() === vLower);
-      if (exactMatch) {
-        matched.push({ variable: v, column: exactMatch });
-      } else {
-        const fuzzy = headers.find(
-          (h) => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase())
-        );
-        matched.push({ variable: v, column: fuzzy || null });
-      }
-    }
-    const unmatchedColumns = headers.filter((h) => !matched.some((m) => m.column === h));
-    return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers]);
+  // variableMapping moved below websitePagesAsCsv
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites", wsId],
