@@ -228,9 +228,12 @@ export default function CampaignsPage() {
         publish_mode: publishMode,
         max_rows: maxRows ? parseInt(maxRows) : null,
         scheduled_at: scheduleMode === "later" && scheduledDate ? scheduledDate.toISOString() : null,
-        status: scheduleMode === "later" && scheduledDate ? "queued" as any : "draft" as any,
+        status: scheduleMode === "later" && scheduledDate ? "queued" as any : publishMode === "published" ? "queued" as any : "draft" as any,
       } as any).select("id").single();
       if (error) throw error;
+
+      // Return campaign id so onSuccess can auto-trigger generation
+      return campaign?.id;
 
       // Upload full CSV to dedicated table
       if (csvRawText && campaign) {
@@ -283,10 +286,17 @@ export default function CampaignsPage() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (campaignId) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast({ title: "Campaign created", description: `"${campaignName}" has been saved as a draft.` });
-      resetForm();
+      const shouldAutoRun = publishMode === "published" && scheduleMode === "now";
+      if (shouldAutoRun && campaignId) {
+        toast({ title: "Campaign created", description: `"${campaignName}" is now generating and publishing pages...` });
+        resetForm();
+        executeMutation.mutate({ id: campaignId });
+      } else {
+        toast({ title: "Campaign created", description: `"${campaignName}" has been saved as a draft.` });
+        resetForm();
+      }
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -1095,7 +1105,7 @@ export default function CampaignsPage() {
                     disabled={!campaignName || createMutation.isPending}
                     className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110"
                   >
-                    {createMutation.isPending ? "Creating..." : scheduleMode === "later" ? "Schedule Campaign" : "Create Campaign"}
+                    {createMutation.isPending ? "Creating..." : scheduleMode === "later" ? "Schedule Campaign" : publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
                   </Button>
                 )}
               </div>
