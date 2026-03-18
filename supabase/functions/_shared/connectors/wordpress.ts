@@ -67,6 +67,42 @@ export class WordPressConnector implements CmsConnector {
     };
   }
 
+  async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
+    const body: Record<string, unknown> = {};
+    if (payload.title) body.title = payload.title;
+    if (payload.content) body.content = payload.content;
+    if (payload.slug) body.slug = slugify(payload.slug);
+    if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
+    if (payload.excerpt) body.excerpt = payload.excerpt;
+
+    const meta: Record<string, unknown> = {};
+    if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
+    if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
+    if (payload.seo_keywords?.length) meta._yoast_wpseo_focuskw = payload.seo_keywords[0];
+    if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
+    if (payload.elementor_meta?.elementor_data) {
+      meta._elementor_data = payload.elementor_meta.elementor_data;
+      meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
+    }
+    if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
+    if (Object.keys(meta).length > 0) body.meta = meta;
+    if (payload.elementor_meta?.page_template) body.template = payload.elementor_meta.page_template;
+
+    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages/${externalId}`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`WordPress update error [${res.status}]: ${err}`);
+    }
+
+    const data = await res.json();
+    return { external_id: String(data.id), url: data.link || `${this.baseUrl}/${data.slug}` };
+  }
+
   async testConnection(): Promise<boolean> {
     try {
       const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages?per_page=1`, {

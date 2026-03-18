@@ -80,6 +80,47 @@ export class WooCommerceConnector implements CmsConnector {
     }
   }
 
+  async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
+    const body: Record<string, unknown> = {};
+    if (payload.title) body.name = payload.title;
+    if (payload.content) body.description = payload.content;
+    if (payload.slug) body.slug = slugify(payload.slug);
+    if (payload.product_data?.price) body.regular_price = String(payload.product_data.price);
+    if (payload.product_data?.images?.length) {
+      body.images = payload.product_data.images
+        .filter((img) => img.src && !img.src.startsWith("data:"))
+        .map((img) => ({ src: img.src, alt: img.alt }));
+    }
+
+    const metaData: { key: string; value: string }[] = [];
+    if (payload.seo_title) metaData.push({ key: "_yoast_wpseo_title", value: payload.seo_title });
+    if (payload.seo_description) {
+      body.short_description = payload.seo_description;
+      metaData.push({ key: "_yoast_wpseo_metadesc", value: payload.seo_description });
+    }
+    if (metaData.length > 0) body.meta_data = metaData;
+
+    const res = await fetch(
+      `${this.baseUrl}/wp-json/wc/v3/products/${externalId}?${this.authQuery}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`WooCommerce update error [${res.status}]: ${err}`);
+    }
+
+    const data = await res.json();
+    return {
+      external_id: String(data.id),
+      url: data.permalink || `${this.baseUrl}/product/${data.slug}`,
+    };
+  }
+
   async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
     if (contentType === "pages") {
       // WooCommerce doesn't have its own pages — fall back to WP REST API with consumer creds as basic auth

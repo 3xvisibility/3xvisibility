@@ -97,6 +97,67 @@ export class ShopifyConnector implements CmsConnector {
     }
   }
 
+  async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
+    if (payload.product_data) return this.updateProduct(externalId, payload);
+
+    const body: Record<string, unknown> = {};
+    if (payload.title) body.title = payload.title;
+    if (payload.content) body.body_html = payload.content;
+    if (payload.slug) body.handle = slugify(payload.slug);
+    if (payload.status) body.published = payload.status === "publish";
+    if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
+    if (payload.seo_description) body.metafields_global_description_tag = payload.seo_description;
+
+    const res = await fetch(`${this.apiBase}/pages/${externalId}.json`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify({ page: body }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Shopify Pages update error [${res.status}]: ${err}`);
+    }
+
+    const data = await res.json();
+    return {
+      external_id: String(data.page.id),
+      url: `https://${this.shopDomain}/pages/${data.page.handle}`,
+    };
+  }
+
+  private async updateProduct(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
+    const body: Record<string, unknown> = {};
+    if (payload.title) body.title = payload.title;
+    if (payload.content) body.body_html = payload.content;
+    if (payload.product_data?.handle || payload.slug) body.handle = slugify(payload.product_data?.handle || payload.slug || "");
+    if (payload.product_data?.price) body.variants = [{ price: String(payload.product_data.price) }];
+    if (payload.product_data?.images?.length) {
+      body.images = payload.product_data.images
+        .filter((img) => img.src && !img.src.startsWith("data:"))
+        .map((img) => ({ src: img.src, alt: img.alt }));
+    }
+    if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
+    if (payload.seo_description) body.metafields_global_description_tag = payload.seo_description;
+
+    const res = await fetch(`${this.apiBase}/products/${externalId}.json`, {
+      method: "PUT",
+      headers: this.headers,
+      body: JSON.stringify({ product: body }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Shopify Products update error [${res.status}]: ${err}`);
+    }
+
+    const data = await res.json();
+    return {
+      external_id: String(data.product.id),
+      url: `https://${this.shopDomain}/products/${data.product.handle}`,
+    };
+  }
+
   async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
     const items: ContentItem[] = [];
     let url = contentType === "products"
