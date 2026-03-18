@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
-import { STRIPE_TIERS, getPlanFromProductId } from "@/lib/stripe-config";
+import { STRIPE_TIERS } from "@/lib/stripe-config";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -147,51 +147,58 @@ function getFeatureList(name: PlanName): string[] {
 }
 
 export default function BillingPage() {
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit } = useSubscription();
+  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, isLoading: subLoading } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
-  const [stripePlan, setStripePlan] = useState<PlanName | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
+  const [hasSynced, setHasSynced] = useState(false);
 
-  // Check Stripe subscription on mount and after checkout success
+  // Sync with Stripe on mount and after checkout success
   useEffect(() => {
-    checkSubscription();
-    if (searchParams.get("success") === "true") {
-      setShowSuccess(true);
-      // Retry a few times after checkout to allow Stripe to process
-      setTimeout(checkSubscription, 2000);
-      setTimeout(checkSubscription, 5000);
-    } else if (searchParams.get("canceled") === "true") {
+    const isSuccess = searchParams.get("success") === "true";
+    if (searchParams.get("canceled") === "true") {
       setShowCanceled(true);
     }
-  }, []);
 
-  const checkSubscription = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke("check-subscription");
-      if (error) throw error;
-      if (data?.subscribed && data?.product_id) {
-        const plan = getPlanFromProductId(data.product_id);
-        setStripePlan(plan);
-        setSubscriptionEnd(data.subscription_end);
-      } else {
-        setStripePlan(null);
-        setSubscriptionEnd(null);
+    const syncSubscription = async (retries = 0) => {
+      try {
+        const { data, error } = await supabase.functions.invoke("check-subscription");
+        if (error) throw error;
+
+        if (data?.subscription_end) {
+          setSubscriptionEnd(data.subscription_end);
+        }
+
+        // After sync, invalidate cache so useSubscription re-reads updated DB
+        await queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
+        await queryClient.invalidateQueries({ queryKey: ["dashboard-ai-usage"] });
+
+        // For checkout success: if Stripe hasn't processed yet (still free), retry
+        if (isSuccess && !data?.subscribed && retries < 3) {
+          setTimeout(() => syncSubscription(retries + 1), 3000);
+          return;
+        }
+
+        setHasSynced(true);
+        if (isSuccess) {
+          setShowSuccess(true);
+        }
+      } catch (err) {
+        console.error("Failed to sync subscription:", err);
+        setHasSynced(true);
+        if (isSuccess) setShowSuccess(true);
       }
-      // Invalidate subscription cache so dashboard and other pages reflect the updated plan
-      queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-ai-usage"] });
-    } catch (err) {
-      console.error("Failed to check subscription:", err);
-    }
-  };
+    };
+
+    syncSubscription();
+  }, []);
 
   const handleCheckout = async (planName: PlanName) => {
     const tier = STRIPE_TIERS[planName];
@@ -228,7 +235,7 @@ export default function BillingPage() {
     }
   };
 
-  const activePlan = stripePlan || currentPlan;
+  const activePlan = currentPlan;
   const pagesPercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
@@ -283,12 +290,12 @@ export default function BillingPage() {
                 <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">Active</Badge>
               </div>
             </div>
-            {stripePlan && subscriptionEnd && (
+            {currentPlan !== "free" && subscriptionEnd && (
               <p className="text-xs text-muted-foreground">
                 Renews {new Date(subscriptionEnd).toLocaleDateString()}
               </p>
             )}
-            {stripePlan && (
+            {currentPlan !== "free" && (
               <Button variant="outline" size="sm" className="w-full mt-2" onClick={handleManageSubscription} disabled={portalLoading}>
                 {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
                 Manage Subscription
