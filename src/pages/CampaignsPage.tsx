@@ -1022,6 +1022,11 @@ export default function CampaignsPage() {
                                               <p className="text-[10px] text-muted-foreground truncate">/{page.slug}</p>
                                             </div>
                                             <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                              page.type === "product" ? "text-primary border-primary/30" : "text-muted-foreground border-border"
+                                            }`}>
+                                              {page.type === "product" ? "product" : "page"}
+                                            </Badge>
+                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
                                               page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
                                             }`}>
                                               {page.status}
