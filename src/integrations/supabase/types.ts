@@ -173,6 +173,7 @@ export type Database = {
           current_batch: number | null
           failed_rows: number | null
           generation_completed_at: string | null
+          generation_method: string
           generation_started_at: string | null
           geo_settings: Json | null
           id: string
@@ -201,6 +202,7 @@ export type Database = {
           current_batch?: number | null
           failed_rows?: number | null
           generation_completed_at?: string | null
+          generation_method?: string
           generation_started_at?: string | null
           geo_settings?: Json | null
           id?: string
@@ -229,6 +231,7 @@ export type Database = {
           current_batch?: number | null
           failed_rows?: number | null
           generation_completed_at?: string | null
+          generation_method?: string
           generation_started_at?: string | null
           geo_settings?: Json | null
           id?: string
