@@ -673,22 +673,30 @@ export default function WebsiteDiscoveryPage() {
                         <code className="text-xs font-mono text-primary bg-primary/5 px-2 py-1 rounded truncate">{group.pattern}</code>
                       </div>
                       <p className="text-sm font-medium">{group.pages.length} matching pages</p>
-                      {/* Average SEO score for this group */}
+                      {/* Average SEO / SEA / GEO scores for this group */}
                       {(() => {
                         const groupPages = pages.filter(p => group.pages.includes(p.url));
                         if (groupPages.length === 0) return null;
-                        const avgScore = Math.round(
-                          groupPages.reduce((sum, p) => {
-                            const s = calculateContentSeoScore(p.title, p.bodyHtml || p.textSnippet, p.url);
-                            return sum + s.score;
-                          }, 0) / groupPages.length
+                        const avg = computeAverageScores(
+                          groupPages.map(p => ({ title: p.title, content: p.bodyHtml || p.textSnippet, slug: p.url, url: p.url }))
                         );
-                        const color = avgScore >= 85 ? "text-emerald-600" : avgScore >= 60 ? "text-primary" : avgScore >= 35 ? "text-amber-600" : "text-destructive";
-                        const label = avgScore >= 85 ? "Excellent" : avgScore >= 60 ? "Good" : avgScore >= 35 ? "Fair" : "Poor";
+                        if (!avg) return null;
+                        const toColor = (s: number) => s >= 85 ? "text-emerald-600" : s >= 60 ? "text-primary" : s >= 35 ? "text-amber-600" : "text-destructive";
+                        const toLbl = (s: number) => s >= 85 ? "Excellent" : s >= 60 ? "Good" : s >= 35 ? "Fair" : "Poor";
                         return (
-                          <div className="flex items-center gap-2">
-                            <SeoScoreBadge score={avgScore} label={label} color={color} size="sm" />
-                            <span className="text-[10px] text-muted-foreground">avg SEO</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-semibold text-muted-foreground">SEO</span>
+                              <SeoScoreBadge score={avg.seo} label={toLbl(avg.seo)} color={toColor(avg.seo)} size="sm" />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-semibold text-muted-foreground">SEA</span>
+                              <SeoScoreBadge score={avg.sea} label={toLbl(avg.sea)} color={toColor(avg.sea)} size="sm" />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-semibold text-muted-foreground">GEO</span>
+                              <SeoScoreBadge score={avg.geo} label={toLbl(avg.geo)} color={toColor(avg.geo)} size="sm" />
+                            </div>
                           </div>
                         );
                       })()}

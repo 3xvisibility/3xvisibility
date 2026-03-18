@@ -379,11 +379,8 @@ function ContentList({
                       >
                         {item.status}
                       </Badge>
-                      {/* SEO Score */}
-                      {(() => {
-                        const seo = calculateContentSeoScore(item.title, item.content, item.slug, item.url);
-                        return <SeoScoreBadge score={seo.score} label={seo.label} color={seo.color} checks={seo.checks} size="sm" />;
-                      })()}
+                      {/* SEO / SEA / GEO Scores */}
+                      <ScoresBadgeGroup title={item.title} content={item.content} slug={item.slug} url={item.url} size="sm" showLabels />
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
                       /{decodeHtmlEntities(item.slug)}
