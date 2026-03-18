@@ -514,6 +514,7 @@ export default function GeneratedPagesPage() {
                   <th className="text-left p-4 font-medium text-muted-foreground">Title</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Campaign</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Source</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Scores</th>
                   <th className="p-4"></th>
@@ -549,6 +550,11 @@ export default function GeneratedPagesPage() {
                         <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{page.slug}</code>
                       </td>
                       <td className="p-4 text-muted-foreground hidden md:table-cell">{page.campaigns?.name || "—"}</td>
+                      <td className="p-4 hidden md:table-cell">
+                        <Badge variant="outline" className={page.campaign_id ? "border-primary/30 text-primary" : "border-accent/30 text-accent-foreground"}>
+                          {page.campaign_id ? "Campaign" : "Direct Publish"}
+                        </Badge>
+                      </td>
                       <td className="p-4">
                         <Badge variant="secondary" className={statusColors[page.status]}>{page.status}</Badge>
                       </td>
