@@ -558,11 +558,6 @@ export default function GeneratedPagesPage() {
                                   <ExternalLink className="h-3 w-3" />
                                 </a>
                               </Button>
-                              <SocialShareButtons
-                                url={page.external_url}
-                                title={(page as any).seo_title || page.title}
-                                description={(page as any).seo_description || undefined}
-                              />
                             </>
                           )}
                           <Button
