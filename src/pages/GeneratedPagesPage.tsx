@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -370,6 +370,27 @@ export default function GeneratedPagesPage() {
               <Button
                 size="sm"
                 variant="outline"
+                disabled={bulkPublishMutation.isPending}
+                onClick={() => {
+                  const publishedSelected = [...selectedIds].filter(
+                    (id) => {
+                      const p = pages.find((pg) => pg.id === id);
+                      return p?.status === "published" && p?.external_id;
+                    }
+                  );
+                  if (publishedSelected.length === 0) {
+                    toast({ title: "No re-publishable pages", description: "Select published pages with an external ID to re-publish.", variant: "destructive" });
+                    return;
+                  }
+                  bulkPublishMutation.mutate(publishedSelected);
+                }}
+              >
+                <RotateCw className="h-3.5 w-3.5 mr-1.5" />
+                {bulkPublishMutation.isPending ? "Re-publishing..." : "Re-publish Selected"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 disabled={bulkStatusMutation.isPending}
                 onClick={() => {
                   const failedSelected = [...selectedIds].filter(
@@ -542,6 +563,18 @@ export default function GeneratedPagesPage() {
                               title="Publish"
                             >
                               <Send className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {page.status === "published" && page.external_id && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-primary"
+                              onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
+                              disabled={publishMutation.isPending}
+                              title="Re-publish (update on CMS)"
+                            >
+                              <RotateCw className="h-3 w-3" />
                             </Button>
                           )}
                           <Button size="sm" variant="ghost" onClick={() => openSeoEditor(page)} title="Edit SEO">
