@@ -679,7 +679,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                     {publishResults.map((r, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs border-b pb-1">
                         {r.status === "published" ? (
-                          <Check className="h-3 w-3 text-green-500 shrink-0" />
+                          <Check className="h-3 w-3 text-primary shrink-0" />
                         ) : (
                           <span className="h-3 w-3 rounded-full bg-destructive shrink-0" />
                         )}
