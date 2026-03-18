@@ -144,21 +144,27 @@ export default function TemplateScannerPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
-  // Fetch connected WordPress websites
-  const { data: wpWebsites = [] } = useQuery({
-    queryKey: ["wp-websites"],
+  // Fetch all connected websites (not just WordPress)
+  const { data: connectedWebsites = [] } = useQuery({
+    queryKey: ["scanner-websites", wsId],
+    enabled: !!wsId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
-        .select("id, name, url")
-        .eq("type", "wordpress")
+        .select("id, name, url, type")
+        .eq("workspace_id", wsId!)
         .eq("status", "connected")
         .order("name");
       if (error) throw error;
       return data;
     },
   });
+
+  // Filter WordPress sites for the WP pages tab
+  const wpWebsites = useMemo(() => connectedWebsites.filter(w => w.type === "wordpress" || w.type === "woocommerce"), [connectedWebsites]);
 
   // Fetch WP pages for selected website
   const wpPagesMutation = useMutation({
