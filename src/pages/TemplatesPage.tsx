@@ -98,9 +98,8 @@ export default function TemplatesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("websites")
-        .select("id, name, url, type")
+        .select("id, name, url, type, status")
         .eq("workspace_id", wsId!)
-        .eq("status", "connected")
         .order("name");
       if (error) throw error;
       return data;
