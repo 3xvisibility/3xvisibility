@@ -179,6 +179,8 @@ export default function WebsiteDiscoveryPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   // Simulated progress animation
   const startProgress = useCallback(() => {
