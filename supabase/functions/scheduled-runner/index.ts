@@ -123,6 +123,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       triggered: results.filter(r => r.success).length,
       failed: results.filter(r => !r.success).length,
+      reset_stuck: resetCount,
       results,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
