@@ -198,11 +198,7 @@ export default function TemplatesPage() {
       .select("id, name")
       .eq("template_id", id)
       .limit(10);
-    if (linked && linked.length > 0) {
-      setDeleteTarget({ id, linkedCampaigns: linked });
-    } else {
-      performDelete(id, false);
-    }
+    setDeleteTarget({ id, linkedCampaigns: linked ?? [] });
   };
 
   const performDelete = async (id: string, force: boolean) => {
