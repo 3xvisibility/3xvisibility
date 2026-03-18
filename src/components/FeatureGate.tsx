@@ -34,12 +34,14 @@ const COMPARISON_ROWS: { label: string; getValue: (plan: PlanName) => string | b
   { label: "Team Collaboration", getValue: (p) => PLAN_FEATURES[p].teamCollaboration },
 ];
 
-const PLAN_PRICES: Record<PlanName, string> = {
-  free: "$0",
-  starter: "$29",
-  pro: "$79",
-  agency: "$199",
+const PLAN_PRICES_MONTHLY: Record<PlanName, number> = {
+  free: 0,
+  starter: 29,
+  pro: 79,
+  agency: 199,
 };
+
+const YEARLY_DISCOUNT = 0.2; // 20% off
 
 const PLANS: PlanName[] = ["free", "starter", "pro", "agency"];
 
