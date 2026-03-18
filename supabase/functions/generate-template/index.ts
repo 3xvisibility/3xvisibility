@@ -30,9 +30,11 @@ Rules:
 2. Use semantic HTML tags (h1, h2, p, ul, li, section, etc.).
 3. Include 3-8 relevant dynamic variables wrapped in curly braces like {variable_name}. Use lowercase_snake_case for variable names.
 4. For sections that should have unique AI-generated content per page, use the syntax {{AI:instruction using {variables}}} — for example: {{AI:Write a paragraph about {service} in {location}}}.
-5. Include at least one {{AI:...}} block for dynamic content generation.
-6. Make the template production-ready with good structure, multiple sections, and SEO-friendly layout.
-7. Include meta-relevant elements like a main heading (h1), subheadings (h2), and descriptive paragraphs.`;
+5. For sections that should have a unique AI-generated image per page, use the syntax {{AI_IMAGE:description using {variables}}} — for example: {{AI_IMAGE:A professional photo of {service} in {location}}}.
+6. Include at least one {{AI:...}} block for dynamic content generation.
+7. Optionally include one {{AI_IMAGE:...}} block for a hero or section image.
+8. Make the template production-ready with good structure, multiple sections, and SEO-friendly layout.
+9. Include meta-relevant elements like a main heading (h1), subheadings (h2), and descriptive paragraphs.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
