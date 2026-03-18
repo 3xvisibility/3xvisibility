@@ -119,15 +119,77 @@ export class PrestaShopConnector implements CmsConnector {
     };
   }
 
-  async testConnection(): Promise<boolean> {
-    try {
-      const res = await fetch(`${this.baseUrl}/api/languages?output_format=JSON&limit=1`, {
-        headers: { Authorization: `Basic ${this.auth}` },
-      });
-      return res.ok;
-    } catch {
-      return false;
+  async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
+    const langId = await this.getDefaultLangId();
+    const isProduct = !!payload.product_data;
+    const resource = isProduct ? "products" : "cms";
+    const linkRewrite = payload.slug ? slugify(payload.slug) : undefined;
+
+    // Build partial XML — PrestaShop requires full resource XML for PUT, so fetch existing first
+    const getResp = await fetch(`${this.baseUrl}/api/${resource}/${externalId}?output_format=JSON`, {
+      headers: { Authorization: `Basic ${this.auth}` },
+    });
+    if (!getResp.ok) {
+      const err = await getResp.text();
+      throw new Error(`PrestaShop fetch error [${getResp.status}]: ${err}`);
     }
+
+    const existing = await getResp.json();
+    const record = isProduct ? existing.product : existing.cms;
+
+    // Apply updates to existing record
+    if (payload.title) {
+      const field = isProduct ? "name" : "meta_title";
+      if (Array.isArray(record[field])) {
+        record[field] = record[field].map((l: any) => ({ ...l, value: payload.title }));
+      } else {
+        record[field] = [{ id: langId, value: payload.title }];
+      }
+    }
+    if (payload.content) {
+      const field = isProduct ? "description" : "content";
+      if (Array.isArray(record[field])) {
+        record[field] = record[field].map((l: any) => ({ ...l, value: payload.content }));
+      } else {
+        record[field] = [{ id: langId, value: payload.content }];
+      }
+    }
+    if (linkRewrite) {
+      if (Array.isArray(record.link_rewrite)) {
+        record.link_rewrite = record.link_rewrite.map((l: any) => ({ ...l, value: linkRewrite }));
+      } else {
+        record.link_rewrite = [{ id: langId, value: linkRewrite }];
+      }
+    }
+    if (payload.seo_description) {
+      if (Array.isArray(record.meta_description)) {
+        record.meta_description = record.meta_description.map((l: any) => ({ ...l, value: payload.seo_description }));
+      } else {
+        record.meta_description = [{ id: langId, value: payload.seo_description }];
+      }
+    }
+    if (isProduct && payload.product_data?.price) {
+      record.price = payload.product_data.price;
+    }
+
+    // PUT back as JSON
+    const putResp = await fetch(`${this.baseUrl}/api/${resource}/${externalId}?output_format=JSON`, {
+      method: "PUT",
+      headers: { Authorization: `Basic ${this.auth}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ [isProduct ? "product" : "cms"]: record }),
+    });
+
+    if (!putResp.ok) {
+      const err = await putResp.text();
+      throw new Error(`PrestaShop update error [${putResp.status}]: ${err}`);
+    }
+    await putResp.text();
+
+    const slug = linkRewrite || (Array.isArray(record.link_rewrite) ? record.link_rewrite[0]?.value : record.link_rewrite) || externalId;
+    return {
+      external_id: externalId,
+      url: isProduct ? `${this.baseUrl}/${externalId}-${slug}.html` : `${this.baseUrl}/content/${externalId}-${slug}`,
+    };
   }
 
   async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
