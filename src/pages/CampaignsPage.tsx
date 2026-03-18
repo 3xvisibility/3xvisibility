@@ -790,7 +790,7 @@ export default function CampaignsPage() {
                         onDragLeave={() => setIsDraggingCsv(false)}
                         onDrop={handleCsvDrop}
                       >
-                        <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
+                        <input type="file" accept=".csv,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
                         <label htmlFor="csv-upload" className="cursor-pointer">
                           <Upload className={cn("mx-auto h-10 w-10 mb-3 transition-colors", isDraggingCsv ? "text-primary" : "text-muted-foreground/50")} />
                           <p className="text-sm font-medium">
