@@ -235,7 +235,7 @@ export default function BillingPage() {
     }
   };
 
-  const activePlan = stripePlan || currentPlan;
+  const activePlan = currentPlan;
   const pagesPercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
