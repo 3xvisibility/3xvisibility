@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ import {
   MapPin,
   Globe,
   RefreshCw,
+  Eye,
+  Code,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +53,83 @@ interface TemplateDetectorDialogProps {
   page: ContentItem;
   websiteId: string;
   websiteType: string;
+}
+
+/** Visual preview pane – shows rendered HTML with highlighted variables, code toggle for advanced users */
+function TemplatePreviewPane({
+  templateHtml,
+  variables,
+  onChange,
+}: {
+  templateHtml: string;
+  variables: VariableEntry[];
+  onChange: (html: string) => void;
+}) {
+  const [showCode, setShowCode] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Highlight {variable} placeholders in the visual preview
+  const highlightedHtml = (() => {
+    let html = templateHtml;
+    for (const v of variables) {
+      const placeholder = `{${v.name}}`;
+      html = html.split(placeholder).join(
+        `<span style="background:#818cf8;color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;font-size:0.85em;white-space:nowrap;">${placeholder}</span>`
+      );
+    }
+    // Also highlight any remaining {…} placeholders
+    html = html.replace(
+      /\{([a-z_][a-z0-9_]*)\}/gi,
+      (match) => {
+        if (match.includes('style="background:#818cf8')) return match;
+        return `<span style="background:#818cf8;color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;font-size:0.85em;white-space:nowrap;">${match}</span>`;
+      }
+    );
+    return html;
+  })();
+
+  const previewDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui,-apple-system,sans-serif;padding:16px;margin:0;font-size:14px;color:#1a1a2e;line-height:1.6}img{max-width:100%;height:auto}</style></head><body>${highlightedHtml}</body></html>`;
+
+  return (
+    <div className="flex flex-col h-full gap-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {showCode
+            ? "Edit raw HTML — for advanced users"
+            : "Visual preview — variables are highlighted in purple"}
+        </p>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 text-xs gap-1.5"
+          onClick={() => setShowCode(!showCode)}
+        >
+          {showCode ? <Eye className="h-3 w-3" /> : <Code className="h-3 w-3" />}
+          {showCode ? "Visual Preview" : "View Code"}
+        </Button>
+      </div>
+
+      {showCode ? (
+        <ScrollArea className="flex-1 border rounded-lg">
+          <Textarea
+            value={templateHtml}
+            onChange={(e) => onChange(e.target.value)}
+            className="font-mono text-xs min-h-[400px] border-0 focus-visible:ring-0"
+          />
+        </ScrollArea>
+      ) : (
+        <div className="flex-1 border rounded-lg overflow-hidden bg-white">
+          <iframe
+            ref={iframeRef}
+            srcDoc={previewDoc}
+            className="w-full h-full min-h-[400px] border-0"
+            sandbox="allow-same-origin"
+            title="Template preview"
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function TemplateDetectorDialog({
@@ -542,15 +621,13 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                 </div>
               </TabsContent>
 
-              {/* Template Preview Tab */}
-              <TabsContent value="preview" className="flex-1 overflow-hidden mt-2">
-                <ScrollArea className="h-full">
-                  <Textarea
-                    value={templateHtml}
-                    onChange={(e) => setTemplateHtml(e.target.value)}
-                    className="font-mono text-xs min-h-[400px]"
-                  />
-                </ScrollArea>
+              {/* Template Preview Tab — Visual by default */}
+              <TabsContent value="preview" className="flex-1 overflow-hidden mt-2 flex flex-col">
+                <TemplatePreviewPane
+                  templateHtml={templateHtml}
+                  variables={variables}
+                  onChange={setTemplateHtml}
+                />
               </TabsContent>
 
               {/* Data Source Tab */}
