@@ -135,8 +135,6 @@ function getFeatureList(name: PlanName): string[] {
     `${f.templates === -1 ? "Unlimited" : f.templates} templates`,
     `${f.websites === -1 ? "Unlimited" : f.websites} website${f.websites !== 1 ? "s" : ""}`,
     ...(f.shopify ? ["All CMS integrations"] : f.wordpress ? ["WordPress integration"] : []),
-    ...(f.socialShare ? ["Social sharing"] : []),
-    ...(f.storeGenerator ? ["AI Store Generator"] : []),
     ...(f.indexing ? ["Google Indexing"] : []),
     ...(f.discovery ? ["Website Discovery"] : []),
     ...(f.internalLinks ? ["Internal link building"] : []),
