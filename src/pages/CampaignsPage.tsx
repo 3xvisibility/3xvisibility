@@ -1092,7 +1092,7 @@ export default function CampaignsPage() {
                                             <div className="min-w-0 flex-1">
                                               <p className="text-xs font-medium truncate">{page.title || "(Untitled)"}</p>
                                               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                                <span className="text-[10px] text-muted-foreground truncate max-w-[140px] sm:max-w-none">/{page.slug}</span>
+                                                <span className="text-[10px] text-muted-foreground truncate max-w-[100px] sm:max-w-[200px]">/{page.slug}</span>
                                                 <Badge variant="outline" className={`text-[9px] shrink-0 ${
                                                   page.type === "product" ? "text-primary border-primary/30" : "text-muted-foreground border-border"
                                                 }`}>
