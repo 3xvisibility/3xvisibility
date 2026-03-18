@@ -101,8 +101,6 @@ const featureRows: { label: string; key: string }[] = [
   { label: "Shopify", key: "shopify" },
   { label: "PrestaShop", key: "prestashop" },
   { label: "WooCommerce", key: "woocommerce" },
-  { label: "Social Sharing", key: "socialShare" },
-  { label: "AI Store Generator", key: "storeGenerator" },
   { label: "Google Indexing", key: "indexing" },
   { label: "Website Discovery", key: "discovery" },
   { label: "Internal Links", key: "internalLinks" },

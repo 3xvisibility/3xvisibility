@@ -43,8 +43,6 @@ export function PricingSection() {
     { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: "1", pro: "5", agency: t("pricing.unlimited") },
     { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: true, pro: true, agency: true },
     { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.socialSharing"), icon: <Share2 className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: true, pro: true, agency: true },
-    { label: t("pricing.storeGenerator"), icon: <Store className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
     { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
     { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
     { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
