@@ -194,7 +194,10 @@ Deno.serve(async (req) => {
           pubType
         );
 
-        const result = await connector.createPage(payload);
+        // If page was previously published (has external_id), update instead of creating
+        const result = page.external_id
+          ? await connector.updatePage(page.external_id, payload)
+          : await connector.createPage(payload);
 
         await supabase.from("generated_pages").update({
           status: "published",
