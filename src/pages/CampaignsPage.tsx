@@ -670,7 +670,7 @@ export default function CampaignsPage() {
     const steps = [
       { num: 1, label: "Name" },
       { num: 2, label: "Type" },
-      { num: 3, label: "CSV Data" },
+      { num: 3, label: "Data" },
       { num: 4, label: "Template" },
     ];
     let nextNum = 5;
