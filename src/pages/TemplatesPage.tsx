@@ -38,7 +38,7 @@ export default function TemplatesPage() {
   const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
   const [activeEditorTab, setActiveEditorTab] = useState<string>("visual");
   const [aiPrompt, setAiPrompt] = useState("");
-  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+  
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   // SEO state
   const [seoTitlePattern, setSeoTitlePattern] = useState("");
@@ -893,15 +893,6 @@ export default function TemplatesPage() {
                     >
                       <Pencil className="h-3 w-3" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => setPreviewTemplateId(previewTemplateId === tpl.id ? null : tpl.id)}
-                      title="Toggle preview"
-                    >
-                      <Eye className="h-3 w-3" />
-                    </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate">
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -918,15 +909,24 @@ export default function TemplatesPage() {
                     <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
                   ))}
                 </div>
-                {previewTemplateId === tpl.id ? (
-                  <div className="mt-3">
+                <Tabs defaultValue="visual" className="mt-3">
+                  <TabsList className="h-8 w-full grid grid-cols-2">
+                    <TabsTrigger value="visual" className="text-xs gap-1.5">
+                      <Eye className="h-3 w-3" /> Visual
+                    </TabsTrigger>
+                    <TabsTrigger value="code" className="text-xs gap-1.5">
+                      <Code className="h-3 w-3" /> Code
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="visual" className="mt-2">
                     <TemplatePreview html={tpl.content} />
-                  </div>
-                ) : (
-                  <pre className="mt-3 p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-40 overflow-y-auto">
-                    {tpl.content}
-                  </pre>
-                )}
+                  </TabsContent>
+                  <TabsContent value="code" className="mt-2">
+                    <pre className="p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-40 overflow-y-auto">
+                      {tpl.content}
+                    </pre>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
             );
