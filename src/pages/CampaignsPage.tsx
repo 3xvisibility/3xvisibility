@@ -1538,7 +1538,7 @@ export default function CampaignsPage() {
             const startedAt = (c as any).generation_started_at;
             const completedAt = (c as any).generation_completed_at;
             const config = statusConfig[c.status] || statusConfig.draft;
-            const latestJob = getLatestJob(c.id);
+            // latestJob already declared above
             const dragProps = getCampaignDragProps(idx);
 
             return (
