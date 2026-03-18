@@ -588,25 +588,32 @@ export default function TemplateScannerPage() {
                 </div>
               </CardContent>
             </Card>
-            {/* SEO Score card */}
+            {/* SEO / SEA / GEO Score cards */}
             {(() => {
               const pageTitle = blocks.find(b => b.tag.startsWith("h"))?.text || "";
               const seoResult = calculateContentSeoScore(pageTitle, bodyHtml, url);
-              return (
-                <Card className="shadow-surface">
+              const seaResult = calculateContentSeaScore(pageTitle, bodyHtml, url);
+              const geoResult = calculateContentGeoScore(pageTitle, bodyHtml, url);
+              const scores = [
+                { key: "SEO", result: seoResult },
+                { key: "SEA", result: seaResult },
+                { key: "GEO", result: geoResult },
+              ];
+              return scores.map(({ key, result }) => (
+                <Card key={key} className="shadow-surface">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                      seoResult.score >= 60 ? "bg-emerald-500/10" : seoResult.score >= 35 ? "bg-amber-500/10" : "bg-destructive/10"
+                      result.score >= 60 ? "bg-emerald-500/10" : result.score >= 35 ? "bg-amber-500/10" : "bg-destructive/10"
                     }`}>
-                      <span className={`text-lg font-bold tabular-nums ${seoResult.color}`}>{seoResult.score}</span>
+                      <span className={`text-lg font-bold tabular-nums ${result.color}`}>{result.score}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">{seoResult.label}</p>
-                      <p className="text-xs text-muted-foreground">SEO Score</p>
+                      <p className="text-sm font-semibold">{result.label}</p>
+                      <p className="text-xs text-muted-foreground">{key} Score</p>
                     </div>
                   </CardContent>
                 </Card>
-              );
+              ));
             })()}
           </div>
 
