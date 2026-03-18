@@ -830,6 +830,32 @@ export default function TemplatesPage() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Template in use</AlertDialogTitle>
+            <AlertDialogDescription>
+              This template is linked to {deleteTarget?.linkedCampaigns.length} campaign(s):
+              <span className="font-medium block mt-1">
+                {deleteTarget?.linkedCampaigns.map((c) => c.name).join(", ")}
+              </span>
+              <span className="block mt-2">
+                You can <strong>force delete</strong> to unlink all campaigns and delete the template, or cancel.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTarget && performDelete(deleteTarget.id, true)}
+            >
+              Force Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
