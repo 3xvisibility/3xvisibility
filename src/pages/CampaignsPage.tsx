@@ -311,7 +311,7 @@ export default function CampaignsPage() {
           campaign_id: campaignId,
           workspace_id: wsId,
           user_id: user.id,
-          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : "website-pages.csv",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations.csv" : "website-pages.csv",
           file_size: rawContent.length,
           raw_content: rawContent,
           headers: effectiveHeaders as any,
