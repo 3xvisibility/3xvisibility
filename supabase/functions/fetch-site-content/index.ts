@@ -16,7 +16,11 @@ interface ContentItem {
   content: string;
   excerpt: string;
   modified: string;
-  template_variables?: Record<string, string>;
+  // Elementor / page-builder meta for design preservation
+  elementor_data?: string;
+  elementor_edit_mode?: string;
+  page_template?: string;
+  raw_meta?: Record<string, any>;
 }
 
 async function fetchWordPressContent(
@@ -32,16 +36,14 @@ async function fetchWordPressContent(
   while (true) {
     const endpoint = contentType === "products"
       ? `${baseUrl}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}`
-      : `${baseUrl}/wp-json/wp/v2/${contentType}?per_page=${perPage}&page=${page}&_embed`;
+      : `${baseUrl}/wp-json/wp/v2/${contentType}?per_page=${perPage}&page=${page}&_embed&context=edit`;
 
     const headers: Record<string, string> = contentType === "products"
-      ? {} // WooCommerce uses query params
+      ? {}
       : { Authorization: `Basic ${auth}` };
 
     let url = endpoint;
     if (contentType === "products") {
-      // WooCommerce uses consumer keys, but we have username/app_password for WP.
-      // Try WP REST API for products first (custom post type)
       url = `${baseUrl}/wp-json/wp/v2/product?per_page=${perPage}&page=${page}&_embed`;
       headers["Authorization"] = `Basic ${auth}`;
     }
@@ -49,7 +51,6 @@ async function fetchWordPressContent(
     const response = await fetch(url, { headers });
 
     if (!response.ok) {
-      // If products endpoint fails (no WooCommerce), return empty
       if (contentType === "products") return [];
       const err = await response.text();
       throw new Error(`WordPress API error [${response.status}]: ${err}`);
@@ -59,22 +60,55 @@ async function fetchWordPressContent(
     if (!Array.isArray(data) || data.length === 0) break;
 
     for (const item of data) {
+      const meta = item.meta || {};
       items.push({
         id: String(item.id),
-        title: item.title?.rendered || item.name || "",
+        title: item.title?.rendered || item.title?.raw || item.name || "",
         slug: item.slug || "",
         url: item.link || `${baseUrl}/${item.slug}`,
         type: contentType === "products" ? "product" : "page",
         status: item.status || "publish",
-        content: item.content?.rendered || item.description || "",
-        excerpt: item.excerpt?.rendered || item.short_description || "",
+        content: item.content?.rendered || item.content?.raw || item.description || "",
+        excerpt: item.excerpt?.rendered || item.excerpt?.raw || item.short_description || "",
         modified: item.modified || item.date_modified || "",
+        // Capture Elementor data for design preservation
+        elementor_data: meta._elementor_data || undefined,
+        elementor_edit_mode: meta._elementor_edit_mode || undefined,
+        page_template: item.template || meta._wp_page_template || undefined,
+        raw_meta: meta,
       });
     }
 
     const totalPages = parseInt(response.headers.get("X-WP-TotalPages") || "1");
     if (page >= totalPages) break;
     page++;
+  }
+
+  // For pages with Elementor edit mode but missing _elementor_data, try fetching individually
+  for (const item of items) {
+    if (!item.elementor_data && item.type === "page") {
+      try {
+        const singleResp = await fetch(
+          `${baseUrl}/wp-json/wp/v2/pages/${item.id}?context=edit`,
+          { headers: { Authorization: `Basic ${auth}` } }
+        );
+        if (singleResp.ok) {
+          const singleData = await singleResp.json();
+          const meta = singleData.meta || {};
+          if (meta._elementor_data) {
+            item.elementor_data = meta._elementor_data;
+            item.elementor_edit_mode = meta._elementor_edit_mode || "builder";
+          }
+          if (singleData.template) {
+            item.page_template = singleData.template;
+          }
+          // Also get raw content (not rendered) for better template building
+          if (singleData.content?.raw) {
+            item.raw_meta = { ...item.raw_meta, _raw_content: singleData.content.raw };
+          }
+        }
+      } catch { /* skip individual fetch errors */ }
+    }
   }
 
   return items;
@@ -120,7 +154,6 @@ async function fetchShopifyContent(
       });
     }
 
-    // Pagination via Link header
     const linkHeader = response.headers.get("Link");
     const nextMatch = linkHeader?.match(/<([^>]+)>;\s*rel="next"/);
     url = nextMatch ? nextMatch[1] : "";
@@ -270,7 +303,7 @@ Deno.serve(async (req) => {
 
     const baseUrl = website.url.replace(/\/$/, "");
     const credentials = website.credentials as any;
-    const type = content_type || "pages"; // "pages" or "products"
+    const type = content_type || "pages";
     let items: ContentItem[] = [];
 
     if (website.type === "wordpress") {
@@ -283,7 +316,6 @@ Deno.serve(async (req) => {
       if (type === "products") {
         items = await fetchWooCommerceProducts(baseUrl, credentials);
       } else {
-        // WooCommerce also has WP pages
         const wpCreds = { username: credentials.consumer_key, app_password: credentials.consumer_secret };
         try {
           items = await fetchWordPressContent(baseUrl, wpCreds, "pages");
