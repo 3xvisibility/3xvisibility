@@ -717,8 +717,9 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
-  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
-  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+  const locationHeaders = ["city", "county", "state", "state_code", "zip_code", "country", "latitude", "longitude", "population", "timezone", "region"];
+  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
+  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
 
   const mappingWarning = !hasTitleMapping && effectiveCsvData.length > 0 && selectedTemplate
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
