@@ -289,6 +289,9 @@ function buildOgMetaTags(
   return `<!-- Open Graph Meta Tags -->\n${tags.join("\n")}`;
 }
 
+// Module-level workspace tracker for logEvent
+let _currentWorkspaceId: string | null = null;
+
 async function logEvent(
   supabase: any,
   campaignId: string,
@@ -305,6 +308,7 @@ async function logEvent(
     message,
     batch_number: batchNumber ?? null,
     pages_in_batch: pagesInBatch ?? null,
+    workspace_id: _currentWorkspaceId,
   });
 }
 
@@ -371,7 +375,7 @@ Deno.serve(async (req) => {
 
     // For service-role calls, resolve user_id from the campaign
     if (!user) {
-      const { data: campLookup } = await supabase.from("campaigns").select("user_id").eq("id", campaign_id).maybeSingle();
+      const { data: campLookup } = await supabase.from("campaigns").select("user_id, workspace_id").eq("id", campaign_id).maybeSingle();
       if (!campLookup) {
         return new Response(JSON.stringify({ error: "Campaign not found" }), {
           status: 404,
@@ -379,6 +383,11 @@ Deno.serve(async (req) => {
         });
       }
       user = { id: campLookup.user_id };
+      _currentWorkspaceId = campLookup.workspace_id || null;
+    } else {
+      // Pre-fetch workspace_id for logEvent calls before full campaign load
+      const { data: wsLookup } = await supabase.from("campaigns").select("workspace_id").eq("id", campaign_id).maybeSingle();
+      _currentWorkspaceId = wsLookup?.workspace_id || null;
     }
 
     // Handle pause action — update both campaign and active job
@@ -433,7 +442,7 @@ Deno.serve(async (req) => {
       });
     }
     console.log("[GENERATE-PAGES] Campaign loaded:", campaign.name, "template:", !!campaign.templates);
-
+    _currentWorkspaceId = campaign.workspace_id || null;
     if (!campaign.templates) {
       return new Response(JSON.stringify({ error: "No template assigned" }), {
         status: 400,
