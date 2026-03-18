@@ -1,6 +1,5 @@
 /**
  * Shared connector types for Deno Edge Functions.
- * Mirror of src/lib/connectors/types.ts adapted for server-side use.
  */
 
 export interface PagePayload {
@@ -37,18 +36,35 @@ export interface ConnectorResult {
   url: string;
 }
 
+export interface ContentItem {
+  id: string;
+  title: string;
+  slug: string;
+  url: string;
+  type: "page" | "product";
+  status: string;
+  content: string;
+  excerpt: string;
+  modified: string;
+  elementor_data?: string;
+  elementor_edit_mode?: string;
+  page_template?: string;
+  raw_meta?: Record<string, unknown>;
+}
+
 export interface ConnectorConfig {
   base_url: string;
   username?: string;
-  password?: string;        // WP app_password
-  api_key?: string;          // PrestaShop key
-  access_token?: string;     // Shopify admin token
-  consumer_key?: string;     // WooCommerce
-  consumer_secret?: string;  // WooCommerce
+  password?: string;
+  api_key?: string;
+  access_token?: string;
+  consumer_key?: string;
+  consumer_secret?: string;
 }
 
 export interface CmsConnector {
   readonly type: string;
   createPage(payload: PagePayload): Promise<ConnectorResult>;
   testConnection(): Promise<boolean>;
+  listContent(contentType: "pages" | "products"): Promise<ContentItem[]>;
 }

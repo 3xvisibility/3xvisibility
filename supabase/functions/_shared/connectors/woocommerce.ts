@@ -1,4 +1,4 @@
-import type { CmsConnector, ConnectorConfig, ConnectorResult, PagePayload } from "./types.ts";
+import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -17,6 +17,10 @@ export class WooCommerceConnector implements CmsConnector {
     }
     this.consumerKey = config.consumer_key;
     this.consumerSecret = config.consumer_secret;
+  }
+
+  private get authQuery() {
+    return `consumer_key=${encodeURIComponent(this.consumerKey)}&consumer_secret=${encodeURIComponent(this.consumerSecret)}`;
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
@@ -44,10 +48,8 @@ export class WooCommerceConnector implements CmsConnector {
     }
     if (metaData.length > 0) body.meta_data = metaData;
 
-    const ck = encodeURIComponent(this.consumerKey);
-    const cs = encodeURIComponent(this.consumerSecret);
     const res = await fetch(
-      `${this.baseUrl}/wp-json/wc/v3/products?consumer_key=${ck}&consumer_secret=${cs}`,
+      `${this.baseUrl}/wp-json/wc/v3/products?${this.authQuery}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -69,14 +71,93 @@ export class WooCommerceConnector implements CmsConnector {
 
   async testConnection(): Promise<boolean> {
     try {
-      const ck = encodeURIComponent(this.consumerKey);
-      const cs = encodeURIComponent(this.consumerSecret);
       const res = await fetch(
-        `${this.baseUrl}/wp-json/wc/v3/system_status?consumer_key=${ck}&consumer_secret=${cs}`
+        `${this.baseUrl}/wp-json/wc/v3/system_status?${this.authQuery}`
       );
       return res.ok;
     } catch {
       return false;
     }
+  }
+
+  async listContent(contentType: "pages" | "products"): Promise<ContentItem[]> {
+    if (contentType === "pages") {
+      // WooCommerce doesn't have its own pages — fall back to WP REST API with consumer creds as basic auth
+      const auth = btoa(`${this.consumerKey}:${this.consumerSecret}`);
+      const items: ContentItem[] = [];
+      let page = 1;
+
+      while (true) {
+        const url = `${this.baseUrl}/wp-json/wp/v2/pages?per_page=100&page=${page}&_embed`;
+        let response: Response;
+        try {
+          response = await fetch(url, { headers: { Authorization: `Basic ${auth}` } });
+        } catch {
+          return items;
+        }
+
+        if (!response.ok) { await response.text(); return items; }
+
+        const data = await response.json();
+        if (!Array.isArray(data) || data.length === 0) break;
+
+        for (const item of data) {
+          items.push({
+            id: String(item.id),
+            title: item.title?.rendered || "",
+            slug: item.slug || "",
+            url: item.link || `${this.baseUrl}/${item.slug}`,
+            type: "page",
+            status: item.status || "publish",
+            content: item.content?.rendered || "",
+            excerpt: item.excerpt?.rendered || "",
+            modified: item.modified || "",
+          });
+        }
+
+        const totalPages = parseInt(response.headers.get("X-WP-TotalPages") || "1");
+        if (page >= totalPages) break;
+        page++;
+      }
+
+      return items;
+    }
+
+    // Products via WooCommerce REST API
+    const items: ContentItem[] = [];
+    let page = 1;
+
+    while (true) {
+      const url = `${this.baseUrl}/wp-json/wc/v3/products?per_page=100&page=${page}&${this.authQuery}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`WooCommerce API error [${response.status}]: ${err}`);
+      }
+
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) break;
+
+      for (const item of data) {
+        items.push({
+          id: String(item.id),
+          title: item.name || "",
+          slug: item.slug || "",
+          url: item.permalink || `${this.baseUrl}/product/${item.slug}`,
+          type: "product",
+          status: item.status || "publish",
+          content: item.description || "",
+          excerpt: item.short_description || "",
+          modified: item.date_modified || "",
+        });
+      }
+
+      const totalPages = parseInt(response.headers.get("X-WP-TotalPages") || "1");
+      if (page >= totalPages) break;
+      page++;
+    }
+
+    return items;
   }
 }
