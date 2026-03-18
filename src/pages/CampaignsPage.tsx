@@ -1290,7 +1290,7 @@ export default function CampaignsPage() {
                       {/* Summary */}
                       <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
                         <h4 className="text-sm font-semibold mb-2">Summary</h4>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Data Source</span><span className="font-medium capitalize">{dataSource === "csv" ? "CSV File" : "Website Pages"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Data Source</span><span className="font-medium capitalize">{dataSource === "csv" ? "CSV File" : `Website Content (${websiteContentType})`}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${effectiveCsvData.length}` : `${effectiveCsvData.length || "—"} (all)`}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
