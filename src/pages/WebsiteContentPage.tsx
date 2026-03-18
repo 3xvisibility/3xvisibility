@@ -121,7 +121,16 @@ export default function WebsiteContentPage() {
       const { data, error } = await supabase.functions.invoke("fetch-site-content", {
         body: { website_id: effectiveWebsite, content_type: "products" },
       });
-      if (error) throw error;
+      if (error) {
+        try {
+          const ctx = (error as any).context;
+          if (ctx && typeof ctx.json === "function") {
+            const body = await ctx.json();
+            if (body?.error) throw new Error(friendlyError(body.error));
+          }
+        } catch (e) { if (e instanceof Error && e.message !== error.message) throw e; }
+        throw new Error(friendlyError(error.message));
+      }
       if (data?.error) throw new Error(friendlyError(data.error));
       return data.items as ContentItem[];
     },
