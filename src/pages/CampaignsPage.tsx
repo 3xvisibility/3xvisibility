@@ -768,22 +768,22 @@ export default function CampaignsPage() {
                 <Plus className="mr-2 h-4 w-4" /> New Campaign
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[540px] p-0 gap-0 overflow-hidden">
-              <div className="px-6 pt-6 pb-0">
+            <DialogContent className="sm:max-w-[540px] max-h-[90vh] p-0 gap-0 overflow-hidden">
+              <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-0">
                 <DialogHeader className="pb-0">
-                  <DialogTitle className="text-lg font-bold">Create Campaign</DialogTitle>
-                  <DialogDescription className="text-sm text-muted-foreground">Follow the steps to set up your campaign.</DialogDescription>
+                  <DialogTitle className="text-base sm:text-lg font-bold">Create Campaign</DialogTitle>
+                  <DialogDescription className="text-xs sm:text-sm text-muted-foreground">Follow the steps to set up your campaign.</DialogDescription>
                 </DialogHeader>
               </div>
 
               {/* Wizard Steps Indicator */}
-              <div className="px-6 pt-5 pb-2">
-                <div className="flex items-start justify-between">
+              <div className="px-4 sm:px-6 pt-5 pb-2 overflow-x-auto">
+                <div className="flex items-start justify-between min-w-0">
                   {wizardSteps.map((s, i) => (
                     <div key={s.num} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex flex-col items-center min-w-[40px]">
+                      <div className="flex flex-col items-center min-w-[32px] sm:min-w-[40px]">
                         <div
-                          className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ring-2 ring-offset-2 ring-offset-background ${
+                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold transition-all duration-200 ring-2 ring-offset-2 ring-offset-background ${
                             step > s.num
                               ? "bg-primary text-primary-foreground ring-primary"
                               : step === s.num
@@ -791,14 +791,14 @@ export default function CampaignsPage() {
                                 : "bg-muted text-muted-foreground ring-border"
                           }`}
                         >
-                          {step > s.num ? <Check className="h-3.5 w-3.5" /> : s.num}
+                          {step > s.num ? <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : s.num}
                         </div>
-                        <span className={`text-[10px] mt-1.5 font-medium transition-colors ${
+                        <span className={`text-[9px] sm:text-[10px] mt-1 sm:mt-1.5 font-medium transition-colors truncate max-w-[40px] sm:max-w-none text-center ${
                           step >= s.num ? "text-foreground" : "text-muted-foreground"
                         }`}>{s.label}</span>
                       </div>
                       {i < wizardSteps.length - 1 && (
-                        <div className="flex-1 flex items-center px-1 -mt-3.5">
+                        <div className="flex-1 flex items-center px-0.5 sm:px-1 -mt-3">
                           <div className={`h-[2px] w-full rounded-full transition-colors duration-300 ${
                             step > s.num ? "bg-primary" : "bg-border"
                           }`} style={{ backgroundImage: step <= s.num ? 'repeating-linear-gradient(90deg, hsl(var(--border)) 0px, hsl(var(--border)) 4px, transparent 4px, transparent 8px)' : 'none', backgroundColor: step > s.num ? undefined : 'transparent' }} />
@@ -810,7 +810,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Step Content */}
-              <div className="px-6 py-4 min-h-[180px]">
+              <div className="px-4 sm:px-6 py-4 min-h-[180px]">
                 <div className="space-y-4 animate-fade-in">
                   {step === 1 && (
                     <div>
@@ -1013,25 +1013,27 @@ export default function CampaignsPage() {
                                               setSelectedPageIds(next);
                                             }}
                                             className={cn(
-                                              "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
+                                              "w-full flex items-start gap-2 px-2.5 py-2 rounded-lg text-left transition-colors",
                                               isSelected ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
                                             )}
                                           >
-                                            <Checkbox checked={isSelected} className="shrink-0 pointer-events-none" />
+                                            <Checkbox checked={isSelected} className="shrink-0 pointer-events-none mt-0.5" />
                                             <div className="min-w-0 flex-1">
                                               <p className="text-xs font-medium truncate">{page.title || "(Untitled)"}</p>
-                                              <p className="text-[10px] text-muted-foreground truncate">/{page.slug}</p>
+                                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                <span className="text-[10px] text-muted-foreground truncate max-w-[140px] sm:max-w-none">/{page.slug}</span>
+                                                <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                                  page.type === "product" ? "text-primary border-primary/30" : "text-muted-foreground border-border"
+                                                }`}>
+                                                  {page.type === "product" ? "product" : "page"}
+                                                </Badge>
+                                                <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                                  page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
+                                                }`}>
+                                                  {page.status}
+                                                </Badge>
+                                              </div>
                                             </div>
-                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
-                                              page.type === "product" ? "text-primary border-primary/30" : "text-muted-foreground border-border"
-                                            }`}>
-                                              {page.type === "product" ? "product" : "page"}
-                                            </Badge>
-                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
-                                              page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
-                                            }`}>
-                                              {page.status}
-                                            </Badge>
                                           </button>
                                         );
                                       })}
@@ -1044,12 +1046,14 @@ export default function CampaignsPage() {
 
                           {selectedPageIds.size > 0 && (
                             <div className="space-y-2">
-                              <div className="flex flex-wrap gap-1.5">
-                                <span className="text-xs text-muted-foreground">Columns:</span>
-                                {websitePagesAsCsv.headers.map((h) => (
-                                  <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
-                                ))}
-                              </div>
+                              <ScrollArea className="w-full">
+                                <div className="flex items-center gap-1.5 pb-1">
+                                  <span className="text-xs text-muted-foreground shrink-0">Columns:</span>
+                                  {websitePagesAsCsv.headers.map((h) => (
+                                    <Badge key={h} variant="secondary" className="text-xs rounded-lg shrink-0">{h}</Badge>
+                                  ))}
+                                </div>
+                              </ScrollArea>
 
                               {/* Content preview table */}
                               <div className="rounded-xl border border-border overflow-hidden">
@@ -1351,7 +1355,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Navigation */}
-              <div className="flex justify-between px-6 py-4 border-t border-border bg-muted/30">
+              <div className="flex justify-between px-4 sm:px-6 py-4 border-t border-border bg-muted/30">
                 <Button
                   variant="outline"
                   onClick={() => step === 1 ? setOpen(false) : setStep(step - 1)}
