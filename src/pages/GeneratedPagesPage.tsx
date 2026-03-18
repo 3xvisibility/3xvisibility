@@ -484,7 +484,7 @@ export default function GeneratedPagesPage() {
                   <th className="text-left p-4 font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Campaign</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">SEO</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Scores</th>
                   <th className="p-4"></th>
                 </tr>
               </thead>
