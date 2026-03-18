@@ -580,6 +580,9 @@ export default function WebsiteDiscoveryPage() {
                           <span className="flex items-center gap-2">
                             {w.name}
                             <Badge variant="outline" className="text-[10px] ml-1">{w.type}</Badge>
+                            {w.status !== "connected" && (
+                              <Badge variant="secondary" className="text-[10px] ml-1 text-destructive">{w.status}</Badge>
+                            )}
                           </span>
                         </SelectItem>
                       ))}

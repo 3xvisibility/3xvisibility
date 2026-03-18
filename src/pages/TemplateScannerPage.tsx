@@ -495,6 +495,9 @@ export default function TemplateScannerPage() {
                             <span className="flex items-center gap-2">
                               <Badge variant="outline" className="text-[9px] px-1 py-0 capitalize">{w.type}</Badge>
                               {w.name}
+                              {w.status !== "connected" && (
+                                <Badge variant="secondary" className="text-[9px] px-1 py-0 text-destructive">{w.status}</Badge>
+                              )}
                             </span>
                           </SelectItem>
                         ))}
