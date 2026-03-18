@@ -213,14 +213,13 @@ export default function CampaignsPage() {
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
-      // Store only a small sample inline for preview; full data goes to campaign_csv_files
-      const sampleData = csvData.slice(0, 5);
+      // Store full CSV data inline as fallback; also upload to campaign_csv_files
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
         template_id: selectedTemplate || null,
         website_id: selectedWebsite || null,
-        csv_data: sampleData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
+        csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: maxRows ? Math.min(parseInt(maxRows), csvData.length) : csvData.length,
         user_id: user.id,
         workspace_id: wsId,
@@ -235,7 +234,7 @@ export default function CampaignsPage() {
 
       // Upload full CSV to dedicated table
       if (csvRawText && campaign) {
-        await supabase.from("campaign_csv_files" as any).insert({
+        const { error: csvUploadError } = await supabase.from("campaign_csv_files" as any).insert({
           campaign_id: campaign.id,
           workspace_id: wsId,
           user_id: user.id,
@@ -245,6 +244,10 @@ export default function CampaignsPage() {
           headers: csvHeaders as any,
           row_count: csvData.length,
         });
+        if (csvUploadError) {
+          console.error("CSV upload to dedicated table failed:", csvUploadError);
+          // Data is already stored in csv_data column as fallback
+        }
       }
 
       // Persist DataSource
