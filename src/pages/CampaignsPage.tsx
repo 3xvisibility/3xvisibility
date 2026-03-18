@@ -205,15 +205,16 @@ export default function CampaignsPage() {
     return websitePages.filter((p: any) => p.title?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q));
   }, [websitePages, websitePagesSearch]);
 
-  // Convert selected website pages to CSV-like data
+  // Convert selected website pages/products to CSV-like data
   const websitePagesAsCsv = useMemo(() => {
     if (dataSource !== "website" || selectedPageIds.size === 0) return { headers: [] as string[], rows: [] as Record<string, string>[] };
     const selected = websitePages.filter((p: any) => selectedPageIds.has(p.id));
-    const headers = ["title", "slug", "url", "status", "excerpt"];
+    const headers = ["title", "slug", "url", "type", "status", "excerpt"];
     const rows = selected.map((p: any) => ({
       title: p.title || "",
       slug: p.slug || "",
       url: p.url || "",
+      type: p.type || "page",
       status: p.status || "",
       excerpt: (p.excerpt || "").replace(/<[^>]*>/g, "").slice(0, 500),
     }));
