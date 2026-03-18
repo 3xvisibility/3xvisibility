@@ -66,7 +66,64 @@ function TemplatePreviewPane({
   onChange: (html: string) => void;
 }) {
   const [showCode, setShowCode] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { toast } = useToast();
+
+  // AI-powered template editing
+  const handleAiEdit = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-caption", {
+        body: {
+          pages: [{
+            id: "ai-edit",
+            title: `AI_TEMPLATE_EDIT:${aiPrompt}`,
+            description: templateHtml.slice(0, 6000),
+            url: "",
+          }],
+          tone: "professional",
+          length: "long",
+          _custom_prompt: `You are a web template editor. The user wants to modify an HTML template.
+
+CURRENT TEMPLATE HTML:
+${templateHtml.slice(0, 8000)}
+
+EXISTING VARIABLES (keep these as {variable_name} placeholders):
+${variables.map(v => `{${v.name}}`).join(", ")}
+
+USER REQUEST: "${aiPrompt}"
+
+RULES:
+- Apply the user's requested changes to the HTML template
+- KEEP all existing {variable_name} placeholders intact — do NOT replace them with real values
+- Preserve the overall page structure and design
+- You may add, remove, or modify HTML elements as requested
+- Keep styles inline or preserve existing class names
+- Return ONLY the modified HTML, nothing else — no explanation, no markdown code blocks
+- If the user asks to add a section, add it in a logical place
+- If the user asks to change text, change it directly in the HTML`,
+        },
+      });
+
+      if (data?.results?.[0]?.caption) {
+        let newHtml = data.results[0].caption;
+        // Strip markdown code blocks if present
+        newHtml = newHtml.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
+        onChange(newHtml);
+        setAiPrompt("");
+        toast({ title: "Template updated!", description: "AI applied your changes." });
+      } else {
+        throw new Error("No response from AI");
+      }
+    } catch (err: any) {
+      toast({ title: "AI edit failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // Highlight {variable} placeholders in the visual preview
   const highlightedHtml = (() => {
@@ -77,7 +134,6 @@ function TemplatePreviewPane({
         `<span style="background:#818cf8;color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;font-size:0.85em;white-space:nowrap;">${placeholder}</span>`
       );
     }
-    // Also highlight any remaining {…} placeholders
     html = html.replace(
       /\{([a-z_][a-z0-9_]*)\}/gi,
       (match) => {
@@ -92,6 +148,28 @@ function TemplatePreviewPane({
 
   return (
     <div className="flex flex-col h-full gap-2">
+      {/* AI Edit Input */}
+      <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+        <Wand2 className="h-4 w-4 text-primary shrink-0" />
+        <Input
+          value={aiPrompt}
+          onChange={(e) => setAiPrompt(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAiEdit(); } }}
+          placeholder="Describe changes… e.g. 'Add a FAQ section' or 'Change the title to bold'"
+          className="h-8 text-xs border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/60"
+          disabled={aiLoading}
+        />
+        <Button
+          size="sm"
+          onClick={handleAiEdit}
+          disabled={aiLoading || !aiPrompt.trim()}
+          className="h-7 text-xs gap-1 bg-gradient-primary border-0 shrink-0"
+        >
+          {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+          {aiLoading ? "Applying..." : "Apply"}
+        </Button>
+      </div>
+
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           {showCode
@@ -114,7 +192,7 @@ function TemplatePreviewPane({
           <Textarea
             value={templateHtml}
             onChange={(e) => onChange(e.target.value)}
-            className="font-mono text-xs min-h-[400px] border-0 focus-visible:ring-0"
+            className="font-mono text-xs min-h-[350px] border-0 focus-visible:ring-0"
           />
         </ScrollArea>
       ) : (
@@ -122,7 +200,7 @@ function TemplatePreviewPane({
           <iframe
             ref={iframeRef}
             srcDoc={previewDoc}
-            className="w-full h-full min-h-[400px] border-0"
+            className="w-full h-full min-h-[350px] border-0"
             sandbox="allow-same-origin"
             title="Template preview"
           />
