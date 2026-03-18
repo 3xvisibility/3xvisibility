@@ -90,6 +90,22 @@ export default function TemplatesPage() {
     },
   });
 
+  // Fetch connected websites for "From Site" flow
+  const { data: connectedWebsites = [] } = useQuery({
+    queryKey: ["tpl-websites", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("websites")
+        .select("id, name, url, type")
+        .eq("workspace_id", wsId!)
+        .eq("status", "connected")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { features } = useSubscription();
   const maxTemplates = features.templates;
 
@@ -97,6 +113,71 @@ export default function TemplatesPage() {
     templates,
     `tpl-order-${wsId}`
   );
+
+  // Create template from CSV headers
+  const createFromCsv = async () => {
+    if (!csvTemplateText.trim()) return;
+    const lines = csvTemplateText.split("\n").filter(l => l.trim());
+    if (lines.length === 0) { toast({ title: "Empty CSV", variant: "destructive" }); return; }
+    const headers = lines[0].split(",").map(h => h.trim()).filter(Boolean);
+    if (headers.length === 0) { toast({ title: "No headers found", variant: "destructive" }); return; }
+
+    const varHtml = headers.map(h => {
+      const varName = h.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+      return `<div class="mb-4">\n  <h3>${h}</h3>\n  <p>{${varName}}</p>\n</div>`;
+    }).join("\n");
+
+    const tplName = csvTemplateName || "CSV Template";
+    const tplContent = `<div class="template">\n<h1>{${headers[0].toLowerCase().replace(/[^a-z0-9]+/g, "_")}}</h1>\n${varHtml}\n</div>`;
+
+    setName(tplName);
+    setContent(tplContent);
+    setBlocks(htmlToBlocks(tplContent));
+    setCsvDialogOpen(false);
+    setCsvTemplateText("");
+    setCsvTemplateName("");
+    setOpen(true);
+    toast({ title: `Template created with ${headers.length} variables from CSV headers` });
+  };
+
+  // Load pages from connected site
+  const loadSitePages = async (websiteId: string) => {
+    setSiteLoadingPages(true);
+    setSitePages([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("scan-template", {
+        body: { action: "list-pages", website_id: websiteId },
+      });
+      if (error) throw error;
+      if (data?.pages) setSitePages(data.pages);
+      else if (data?.error) throw new Error(data.error);
+    } catch (err: any) {
+      toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
+    } finally {
+      setSiteLoadingPages(false);
+    }
+  };
+
+  // Import site page as template
+  const importSitePage = async (pageUrl: string, pageTitle: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("scan-template", {
+        body: { url: pageUrl },
+      });
+      if (error) throw error;
+      if (data?.bodyHtml) {
+        setName(pageTitle || "Site Page Template");
+        setContent(data.bodyHtml);
+        setBlocks(htmlToBlocks(data.bodyHtml));
+        setSiteDialogOpen(false);
+        setSitePages([]);
+        setOpen(true);
+        toast({ title: "Page imported as template", description: "Edit variables and save." });
+      }
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async () => {
