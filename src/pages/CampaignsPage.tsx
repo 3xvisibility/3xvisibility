@@ -655,10 +655,13 @@ export default function CampaignsPage() {
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
     : null;
 
+  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
+  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+
   const canProceed = () => {
     if (step === 1) return !!campaignName;
     if (step === 2) return true;
-    if (step === 3) return csvData.length > 0;
+    if (step === 3) return dataSource === "csv" ? csvData.length > 0 : selectedPageIds.size > 0;
     if (step === 4) return !!selectedTemplate;
     return true;
   };
