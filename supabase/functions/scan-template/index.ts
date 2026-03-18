@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createConnector } from "../_shared/connectors/factory.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
     const { url, action, website_id } = await req.json();
 
     // Action: list WordPress pages from a connected website
-    if (action === "list-wp-pages" && website_id) {
+    if ((action === "list-wp-pages" || action === "list-pages") && website_id) {
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -98,14 +99,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (website.type !== "wordpress") {
-        return new Response(JSON.stringify({ error: "Only WordPress websites are supported for page listing" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const creds = website.credentials as { username?: string; app_password?: string } | null;
       const siteUrl = website.url.replace(/\/+$/, "");
 
       // Validate URL is not a placeholder
@@ -118,30 +111,19 @@ Deno.serve(async (req) => {
       }
 
       try {
-        const headers: Record<string, string> = {
-          "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)",
-        };
-        if (creds?.username && creds?.app_password) {
-          headers["Authorization"] = `Basic ${btoa(`${creds.username}:${creds.app_password}`)}`;
-        }
-
-        const wpResponse = await fetch(`${siteUrl}/wp-json/wp/v2/pages?per_page=100&status=publish`, {
-          headers,
+        const connector = createConnector({
+          url: website.url,
+          type: website.type,
+          credentials: website.credentials as Record<string, string> | null,
         });
 
-        if (!wpResponse.ok) {
-          return new Response(
-            JSON.stringify({ error: `WordPress API returned ${wpResponse.status}` }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
+        const content = await connector.listContent("pages");
 
-        const wpPages = await wpResponse.json();
-        const pages = wpPages.map((p: any) => ({
+        const pages = content.map((p) => ({
           id: p.id,
-          title: p.title?.rendered || `Page ${p.id}`,
+          title: p.title || `Page ${p.id}`,
           slug: p.slug,
-          link: p.link,
+          link: p.url,
         }));
 
         return new Response(
@@ -157,7 +139,7 @@ Deno.serve(async (req) => {
           );
         }
         return new Response(
-          JSON.stringify({ error: `Failed to fetch WordPress pages: ${msg}` }),
+          JSON.stringify({ error: `Failed to fetch pages: ${msg}` }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
