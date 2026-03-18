@@ -17,6 +17,7 @@ import {
   Zap,
   Users,
   Database,
+  Lock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -35,13 +36,18 @@ import {
 } from "@/components/ui/sidebar";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useNavigate } from "react-router-dom";
+import type { FeatureKey } from "@/lib/plan-features";
+import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
 
 interface NavItem {
   titleKey: string;
   url: string;
   icon: typeof LayoutDashboard;
+  requiredFeature?: FeatureKey;
 }
 
 const mainNav: NavItem[] = [
@@ -54,17 +60,17 @@ const mainNav: NavItem[] = [
 
 const toolsNav: NavItem[] = [
   { titleKey: "sidebar.aiScanner", url: "/scanner", icon: ScanSearch },
-  { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass },
+  { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", url: "/analytics", icon: BarChart3 },
-  { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon },
-  { titleKey: "sidebar.storeGenerator", url: "/store-generator", icon: Store },
+  { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon, requiredFeature: "indexing" },
+  { titleKey: "sidebar.storeGenerator", url: "/store-generator", icon: Store, requiredFeature: "storeGenerator" },
 ];
 
 const settingsNav: NavItem[] = [
   { titleKey: "sidebar.websites", url: "/websites", icon: Globe },
   { titleKey: "sidebar.billing", url: "/billing", icon: CreditCard },
   { titleKey: "sidebar.settings", url: "/settings", icon: Settings },
-  { titleKey: "sidebar.workspaceSettings", url: "/workspace-settings", icon: Users },
+  { titleKey: "sidebar.workspaceSettings", url: "/workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
 ];
 
 interface AppSidebarProps {
