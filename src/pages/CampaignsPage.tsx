@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2, Copy, GripVertical } from "lucide-react";
+import { Plus, Upload, Play, ArrowRight, Trash2, Check, X, AlertTriangle, Link2, Pause, RotateCcw, Clock, FileText, Loader2, MoreHorizontal, Eye, MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon, Settings2, Copy, GripVertical, Globe, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,10 @@ export default function CampaignsPage() {
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [searchQuery, setSearchQuery] = useState("");
   const [isDraggingCsv, setIsDraggingCsv] = useState(false);
+  const [dataSource, setDataSource] = useState<"csv" | "website">("csv");
+  const [websiteForPages, setWebsiteForPages] = useState("");
+  const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
+  const [websitePagesSearch, setWebsitePagesSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
   // Generation settings
@@ -156,24 +161,7 @@ export default function CampaignsPage() {
     return (tpl.variables as string[]).map((v) => v.replace(/[{}]/g, ""));
   }, [selectedTemplate, templates]);
 
-  const variableMapping = useMemo(() => {
-    if (selectedTemplateVars.length === 0 || csvHeaders.length === 0) return null;
-    const matched: { variable: string; column: string | null }[] = [];
-    for (const v of selectedTemplateVars) {
-      const vLower = v.toLowerCase();
-      const exactMatch = csvHeaders.find((h) => h.toLowerCase() === vLower);
-      if (exactMatch) {
-        matched.push({ variable: v, column: exactMatch });
-      } else {
-        const fuzzy = csvHeaders.find(
-          (h) => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase())
-        );
-        matched.push({ variable: v, column: fuzzy || null });
-      }
-    }
-    const unmatchedColumns = csvHeaders.filter((h) => !matched.some((m) => m.column === h));
-    return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, csvHeaders]);
+  // variableMapping moved below websitePagesAsCsv
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites", wsId],
@@ -184,6 +172,62 @@ export default function CampaignsPage() {
       return data;
     },
   });
+
+  // Fetch website pages for import
+  const { data: websitePages = [], isLoading: loadingWebPages } = useQuery({
+    queryKey: ["site-content-for-campaign", websiteForPages],
+    enabled: !!websiteForPages && dataSource === "website",
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteForPages, content_type: "pages" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return (data.items || []) as { id: string; title: string; slug: string; url: string; type: string; status: string; content: string; excerpt: string; modified: string }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const filteredWebPages = useMemo(() => {
+    if (!websitePagesSearch) return websitePages;
+    const q = websitePagesSearch.toLowerCase();
+    return websitePages.filter((p: any) => p.title?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q));
+  }, [websitePages, websitePagesSearch]);
+
+  // Convert selected website pages to CSV-like data
+  const websitePagesAsCsv = useMemo(() => {
+    if (dataSource !== "website" || selectedPageIds.size === 0) return { headers: [] as string[], rows: [] as Record<string, string>[] };
+    const selected = websitePages.filter((p: any) => selectedPageIds.has(p.id));
+    const headers = ["title", "slug", "url", "status", "excerpt"];
+    const rows = selected.map((p: any) => ({
+      title: p.title || "",
+      slug: p.slug || "",
+      url: p.url || "",
+      status: p.status || "",
+      excerpt: (p.excerpt || "").replace(/<[^>]*>/g, "").slice(0, 500),
+    }));
+    return { headers, rows };
+  }, [dataSource, selectedPageIds, websitePages]);
+
+  const variableMapping = useMemo(() => {
+    const headers = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+    if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
+    const matched: { variable: string; column: string | null }[] = [];
+    for (const v of selectedTemplateVars) {
+      const vLower = v.toLowerCase();
+      const exactMatch = headers.find((h) => h.toLowerCase() === vLower);
+      if (exactMatch) {
+        matched.push({ variable: v, column: exactMatch });
+      } else {
+        const fuzzy = headers.find(
+          (h) => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase())
+        );
+        matched.push({ variable: v, column: fuzzy || null });
+      }
+    }
+    const unmatchedColumns = headers.filter((h) => !matched.some((m) => m.column === h));
+    return { matched, unmatchedColumns };
+  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers]);
 
   const { data: campaignLogs = [] } = useQuery({
     queryKey: ["campaign-logs", logDialogCampaign],
@@ -213,14 +257,19 @@ export default function CampaignsPage() {
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
+      // Resolve effective data based on data source
+      const effectiveData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
+      const effectiveHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+      const effectiveRowCount = effectiveData.length;
+
       // Store full CSV data inline as fallback; also upload to campaign_csv_files
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
         template_id: selectedTemplate || null,
-        website_id: selectedWebsite || null,
-        csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
-        total_rows: maxRows ? Math.min(parseInt(maxRows), csvData.length) : csvData.length,
+        website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
+        csv_data: effectiveData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
+        total_rows: maxRows ? Math.min(parseInt(maxRows), effectiveRowCount) : effectiveRowCount,
         user_id: user.id,
         workspace_id: wsId,
         utm_settings: utmSettings as any,
@@ -232,59 +281,58 @@ export default function CampaignsPage() {
       } as any).select("id").single();
       if (error) throw error;
 
-      // Return campaign id so onSuccess can auto-trigger generation
-      return campaign?.id;
+      const campaignId = campaign?.id;
 
-      // Upload full CSV to dedicated table
-      if (csvRawText && campaign) {
-        const { error: csvUploadError } = await supabase.from("campaign_csv_files" as any).insert({
-          campaign_id: campaign.id,
+      // Upload data to dedicated CSV table
+      if (campaignId) {
+        const rawContent = dataSource === "csv" && csvRawText
+          ? csvRawText
+          : [effectiveHeaders.join(","), ...effectiveData.map(r => effectiveHeaders.map(h => `"${(r[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
+
+        await supabase.from("campaign_csv_files" as any).insert({
+          campaign_id: campaignId,
           workspace_id: wsId,
           user_id: user.id,
-          file_name: csvFile?.name || "data.csv",
-          file_size: csvRawText.length,
-          raw_content: csvRawText,
-          headers: csvHeaders as any,
-          row_count: csvData.length,
-        });
-        if (csvUploadError) {
-          console.error("CSV upload to dedicated table failed:", csvUploadError);
-          // Data is already stored in csv_data column as fallback
-        }
-      }
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : "website-pages.csv",
+          file_size: rawContent.length,
+          raw_content: rawContent,
+          headers: effectiveHeaders as any,
+          row_count: effectiveRowCount,
+        }).then(({ error: csvErr }) => { if (csvErr) console.error("CSV upload failed:", csvErr); });
 
-      // Persist DataSource
-      if (csvFile && campaign) {
+        // Persist DataSource
         await supabase.from("data_sources").insert({
-          campaign_id: campaign.id,
+          campaign_id: campaignId,
           workspace_id: wsId,
           user_id: user.id,
-          type: "csv",
-          file_name: csvFile.name,
-          file_size: csvFile.size,
-          row_count: csvData.length,
-          headers: csvHeaders as any,
+          type: dataSource === "csv" ? "csv" : "website",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : "website-pages",
+          file_size: dataSource === "csv" ? (csvFile?.size || rawContent.length) : rawContent.length,
+          row_count: effectiveRowCount,
+          headers: effectiveHeaders as any,
         });
-      }
 
-      // Persist Mappings from variable mapping
-      if (variableMapping && campaign) {
-        const mappingRows = variableMapping.matched
-          .filter((m) => m.column)
-          .map((m, i) => ({
-            campaign_id: campaign.id,
-            workspace_id: wsId,
-            user_id: user.id,
-            source_column: m.column!,
-            target_field: m.variable,
-            field_category: "content",
-            sort_order: i,
-            is_required: true,
-          }));
-        if (mappingRows.length > 0) {
-          await supabase.from("mappings").insert(mappingRows);
+        // Persist Mappings from variable mapping
+        if (variableMapping) {
+          const mappingRows = variableMapping.matched
+            .filter((m) => m.column)
+            .map((m, i) => ({
+              campaign_id: campaignId,
+              workspace_id: wsId,
+              user_id: user.id,
+              source_column: m.column!,
+              target_field: m.variable,
+              field_category: "content",
+              sort_order: i,
+              is_required: true,
+            }));
+          if (mappingRows.length > 0) {
+            await supabase.from("mappings").insert(mappingRows);
+          }
         }
       }
+
+      return campaignId;
     },
     onSuccess: (campaignId) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
@@ -566,6 +614,10 @@ export default function CampaignsPage() {
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
+    setDataSource("csv");
+    setWebsiteForPages("");
+    setSelectedPageIds(new Set());
+    setWebsitePagesSearch("");
   };
 
   const getProgressInfo = (c: Campaign) => {
@@ -606,14 +658,17 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
-  const mappingWarning = !hasTitleMapping && csvData.length > 0 && selectedTemplate
+  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
+  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+
+  const mappingWarning = !hasTitleMapping && effectiveCsvData.length > 0 && selectedTemplate
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
     : null;
 
   const canProceed = () => {
     if (step === 1) return !!campaignName;
     if (step === 2) return true;
-    if (step === 3) return csvData.length > 0;
+    if (step === 3) return dataSource === "csv" ? csvData.length > 0 : selectedPageIds.size > 0;
     if (step === 4) return !!selectedTemplate;
     return true;
   };
@@ -622,7 +677,7 @@ export default function CampaignsPage() {
     const steps = [
       { num: 1, label: "Name" },
       { num: 2, label: "Type" },
-      { num: 3, label: "CSV Data" },
+      { num: 3, label: "Data" },
       { num: 4, label: "Template" },
     ];
     let nextNum = 5;
@@ -786,50 +841,178 @@ export default function CampaignsPage() {
                   )}
 
                   {step === 3 && (
-                    <div>
-                      <Label className="text-sm font-semibold mb-2.5 block">CSV File</Label>
-                      <div
-                        className={cn(
-                          "border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer",
-                          isDraggingCsv
-                            ? "border-primary bg-primary/10 scale-[1.01]"
-                            : "hover:border-primary/50 hover:bg-primary/5"
-                        )}
-                        onDragOver={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
-                        onDragEnter={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
-                        onDragLeave={() => setIsDraggingCsv(false)}
-                        onDrop={handleCsvDrop}
-                      >
-                        <input type="file" accept=".csv,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
-                        <label htmlFor="csv-upload" className="cursor-pointer">
-                          <Upload className={cn("mx-auto h-10 w-10 mb-3 transition-colors", isDraggingCsv ? "text-primary" : "text-muted-foreground/50")} />
-                          <p className="text-sm font-medium">
-                            {csvFile ? csvFile.name : isDraggingCsv ? "Drop your CSV here" : "Drop CSV file or click to upload"}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {csvFile
-                              ? `${csvData.length} rows · ${csvFile.size < 1024 ? csvFile.size + " B" : csvFile.size < 1048576 ? (csvFile.size / 1024).toFixed(1) + " KB" : (csvFile.size / 1048576).toFixed(1) + " MB"}`
-                              : "Supports .csv files up to 20 MB"}
-                          </p>
-                        </label>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2 text-center">
-                        Need a template?{" "}
-                        <a
-                          href="/sample-data.csv"
-                          download="sample-data.csv"
-                          className="text-primary hover:underline font-medium"
+                    <div className="space-y-4">
+                      {/* Data Source Toggle */}
+                      <div className="flex items-center gap-2 p-1 bg-muted rounded-xl">
+                        <button
+                          type="button"
+                          onClick={() => setDataSource("csv")}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                            dataSource === "csv" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                          }`}
                         >
-                          Download sample CSV
-                        </a>
-                      </p>
-                      {csvHeaders.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-1.5">
-                          <span className="text-xs text-muted-foreground">Columns:</span>
-                          {csvHeaders.map((h) => (
-                            <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
-                          ))}
-                        </div>
+                          <Upload className="h-3.5 w-3.5" /> CSV Upload
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDataSource("website")}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                            dataSource === "website" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Globe className="h-3.5 w-3.5" /> Website Pages
+                        </button>
+                      </div>
+
+                      {dataSource === "csv" ? (
+                        <>
+                          <div
+                            className={cn(
+                              "border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer",
+                              isDraggingCsv
+                                ? "border-primary bg-primary/10 scale-[1.01]"
+                                : "hover:border-primary/50 hover:bg-primary/5"
+                            )}
+                            onDragOver={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
+                            onDragEnter={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
+                            onDragLeave={() => setIsDraggingCsv(false)}
+                            onDrop={handleCsvDrop}
+                          >
+                            <input type="file" accept=".csv,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
+                            <label htmlFor="csv-upload" className="cursor-pointer">
+                              <Upload className={cn("mx-auto h-10 w-10 mb-3 transition-colors", isDraggingCsv ? "text-primary" : "text-muted-foreground/50")} />
+                              <p className="text-sm font-medium">
+                                {csvFile ? csvFile.name : isDraggingCsv ? "Drop your CSV here" : "Drop CSV file or click to upload"}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {csvFile
+                                  ? `${csvData.length} rows · ${csvFile.size < 1024 ? csvFile.size + " B" : csvFile.size < 1048576 ? (csvFile.size / 1024).toFixed(1) + " KB" : (csvFile.size / 1048576).toFixed(1) + " MB"}`
+                                  : "Supports .csv files up to 20 MB"}
+                              </p>
+                            </label>
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center">
+                            Need a template?{" "}
+                            <a href="/sample-data.csv" download="sample-data.csv" className="text-primary hover:underline font-medium">
+                              Download sample CSV
+                            </a>
+                          </p>
+                          {csvHeaders.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className="text-xs text-muted-foreground">Columns:</span>
+                              {csvHeaders.map((h) => (
+                                <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {/* Website selector */}
+                          <Select value={websiteForPages} onValueChange={(v) => { setWebsiteForPages(v); setSelectedPageIds(new Set()); }}>
+                            <SelectTrigger className="rounded-xl h-10 text-sm">
+                              <SelectValue placeholder="Select a website to import pages from" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {websites.map((w) => (
+                                <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          {websiteForPages && (
+                            <>
+                              {/* Search */}
+                              <div className="relative">
+                                <SearchIconLucide className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input
+                                  value={websitePagesSearch}
+                                  onChange={(e) => setWebsitePagesSearch(e.target.value)}
+                                  placeholder="Search pages..."
+                                  className="h-8 pl-8 text-xs rounded-xl"
+                                />
+                              </div>
+
+                              {loadingWebPages ? (
+                                <div className="flex items-center justify-center py-8">
+                                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                  <span className="ml-2 text-xs text-muted-foreground">Loading pages...</span>
+                                </div>
+                              ) : filteredWebPages.length === 0 ? (
+                                <div className="text-center py-6 text-muted-foreground">
+                                  <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                  <p className="text-xs">No pages found on this website.</p>
+                                </div>
+                              ) : (
+                                <>
+                                  {/* Select all / count */}
+                                  <div className="flex items-center justify-between">
+                                    <button
+                                      type="button"
+                                      className="text-xs text-primary hover:underline font-medium"
+                                      onClick={() => {
+                                        if (selectedPageIds.size === filteredWebPages.length) {
+                                          setSelectedPageIds(new Set());
+                                        } else {
+                                          setSelectedPageIds(new Set(filteredWebPages.map((p: any) => p.id)));
+                                        }
+                                      }}
+                                    >
+                                      {selectedPageIds.size === filteredWebPages.length ? "Deselect all" : "Select all"}
+                                    </button>
+                                    <span className="text-xs text-muted-foreground">
+                                      {selectedPageIds.size} / {filteredWebPages.length} selected
+                                    </span>
+                                  </div>
+
+                                  {/* Pages list */}
+                                  <ScrollArea className="h-[180px] rounded-xl border border-border">
+                                    <div className="space-y-0.5 p-1">
+                                      {filteredWebPages.map((page: any) => {
+                                        const isSelected = selectedPageIds.has(page.id);
+                                        return (
+                                          <button
+                                            key={page.id}
+                                            type="button"
+                                            onClick={() => {
+                                              const next = new Set(selectedPageIds);
+                                              if (isSelected) next.delete(page.id); else next.add(page.id);
+                                              setSelectedPageIds(next);
+                                            }}
+                                            className={cn(
+                                              "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
+                                              isSelected ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
+                                            )}
+                                          >
+                                            <Checkbox checked={isSelected} className="shrink-0 pointer-events-none" />
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-xs font-medium truncate">{page.title || "(Untitled)"}</p>
+                                              <p className="text-[10px] text-muted-foreground truncate">/{page.slug}</p>
+                                            </div>
+                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                              page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
+                                            }`}>
+                                              {page.status}
+                                            </Badge>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </ScrollArea>
+                                </>
+                              )}
+                            </>
+                          )}
+
+                          {selectedPageIds.size > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className="text-xs text-muted-foreground">Columns:</span>
+                              {websitePagesAsCsv.headers.map((h) => (
+                                <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -1020,7 +1203,7 @@ export default function CampaignsPage() {
                           min="1"
                           value={maxRows}
                           onChange={(e) => setMaxRows(e.target.value)}
-                          placeholder={`All (${csvData.length || "—"} rows)`}
+                          placeholder={`All (${effectiveCsvData.length || "—"} rows)`}
                           className="rounded-xl h-9 text-sm w-48"
                         />
                         <p className="text-[11px] text-muted-foreground">Leave empty to process all rows.</p>
@@ -1070,8 +1253,9 @@ export default function CampaignsPage() {
                       {/* Summary */}
                       <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
                         <h4 className="text-sm font-semibold mb-2">Summary</h4>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${csvData.length}` : `${csvData.length || "—"} (all)`}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === selectedWebsite)?.name || "None"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Data Source</span><span className="font-medium capitalize">{dataSource === "csv" ? "CSV File" : "Website Pages"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${effectiveCsvData.length}` : `${effectiveCsvData.length || "—"} (all)`}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
