@@ -872,7 +872,7 @@ export default function CampaignsPage() {
                             dataSource === "website" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
-                          <Globe className="h-3.5 w-3.5" /> Website Pages
+                          <Globe className="h-3.5 w-3.5" /> Website Content
                         </button>
                       </div>
 
