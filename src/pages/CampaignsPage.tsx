@@ -915,24 +915,33 @@ export default function CampaignsPage() {
                   {step === 3 && (
                     <div className="space-y-4">
                       {/* Data Source Toggle */}
-                      <div className="flex items-center gap-2 p-1 bg-muted rounded-xl">
+                      <div className="flex items-center gap-1 p-1 bg-muted rounded-xl">
                         <button
                           type="button"
                           onClick={() => setDataSource("csv")}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${
                             dataSource === "csv" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
-                          <Upload className="h-3.5 w-3.5" /> CSV Upload
+                          <Upload className="h-3.5 w-3.5" /> CSV
                         </button>
                         <button
                           type="button"
                           onClick={() => setDataSource("website")}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${
                             dataSource === "website" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
-                          <Globe className="h-3.5 w-3.5" /> Website Content
+                          <Globe className="h-3.5 w-3.5" /> Website
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDataSource("locations")}
+                          className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${
+                            dataSource === "locations" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <MapPin className="h-3.5 w-3.5" /> Locations
                         </button>
                       </div>
 
