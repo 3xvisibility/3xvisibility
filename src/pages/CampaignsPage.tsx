@@ -226,6 +226,7 @@ export default function CampaignsPage() {
     return { headers, rows };
   }, [dataSource, selectedPageIds, websitePages]);
 
+  const { data: campaignLogs = [] } = useQuery({
     queryKey: ["campaign-logs", logDialogCampaign],
     enabled: !!logDialogCampaign,
     queryFn: async () => {
