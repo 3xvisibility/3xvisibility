@@ -705,13 +705,16 @@ Deno.serve(async (req) => {
 
     const templateContent = campaign.templates.content as string;
     const aiBlocks = extractAiBlocks(templateContent);
+    const aiImageBlocks = extractAiImageBlocks(templateContent);
     const hasAiBlocks = aiBlocks.length > 0;
+    const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     // AI limit check
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
+    const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
     const seoGenerationsNeeded = LOVABLE_API_KEY ? remainingRows.length : 0;
-    const totalAiNeeded = aiGenerationsNeeded + seoGenerationsNeeded;
+    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded;
 
     if (totalAiNeeded > 0) {
       const { data: subscription } = await supabase
