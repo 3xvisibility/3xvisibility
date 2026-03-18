@@ -1203,7 +1203,7 @@ export default function CampaignsPage() {
                           min="1"
                           value={maxRows}
                           onChange={(e) => setMaxRows(e.target.value)}
-                          placeholder={`All (${csvData.length || "—"} rows)`}
+                          placeholder={`All (${effectiveCsvData.length || "—"} rows)`}
                           className="rounded-xl h-9 text-sm w-48"
                         />
                         <p className="text-[11px] text-muted-foreground">Leave empty to process all rows.</p>
