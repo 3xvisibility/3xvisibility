@@ -31,6 +31,7 @@ import DataCsvPage from "./pages/DataCsvPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
+import { FeatureGate } from "./components/FeatureGate";
 
 const queryClient = new QueryClient();
 
@@ -140,7 +141,7 @@ const App = () => {
               path="/discovery"
               element={
                 <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><WebsiteDiscoveryPage /></DashboardLayout>
+                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="discovery"><WebsiteDiscoveryPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
@@ -180,7 +181,7 @@ const App = () => {
               path="/indexing"
               element={
                 <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><IndexingPage /></DashboardLayout>
+                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="indexing"><IndexingPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
@@ -188,7 +189,7 @@ const App = () => {
               path="/store-generator"
               element={
                 <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><AutoStoreGeneratorPage /></DashboardLayout>
+                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="storeGenerator"><AutoStoreGeneratorPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
@@ -196,7 +197,7 @@ const App = () => {
               path="/workspace-settings"
               element={
                 <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><WorkspaceSettingsPage /></DashboardLayout>
+                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate></DashboardLayout>
                 </ProtectedRoute>
               }
             />
