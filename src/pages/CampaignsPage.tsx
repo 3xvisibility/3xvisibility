@@ -1351,6 +1351,28 @@ export default function CampaignsPage() {
                         <p className="text-[11px] text-muted-foreground">Leave empty to process all rows.</p>
                       </div>
 
+                      {/* Generation Method */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">Generation Method</Label>
+                        <RadioGroup value={generationMethod} onValueChange={(v) => setGenerationMethod(v as "all" | "sequential" | "random")} className="flex flex-col gap-2">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="all" id="method-all" />
+                            <Label htmlFor="method-all" className="text-sm cursor-pointer">All Combinations</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="sequential" id="method-sequential" />
+                            <Label htmlFor="method-sequential" className="text-sm cursor-pointer">Sequential</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="random" id="method-random" />
+                            <Label htmlFor="method-random" className="text-sm cursor-pointer">Random</Label>
+                          </div>
+                        </RadioGroup>
+                        <p className="text-[11px] text-muted-foreground">
+                          {generationMethod === "all" ? "Generate pages for all possible combinations of terms." : generationMethod === "sequential" ? "Generate pages in the original CSV row order." : "Shuffle rows randomly before generating."}
+                        </p>
+                      </div>
+
                       {/* Schedule */}
                       <div className="space-y-2">
                         <Label className="text-xs font-medium">Schedule</Label>
