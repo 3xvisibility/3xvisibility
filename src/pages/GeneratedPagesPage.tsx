@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown } from "lucide-react";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { calculateSeoScore } from "@/lib/seo-score";
-import { calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
@@ -38,6 +38,7 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 export default function GeneratedPagesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
@@ -238,13 +239,27 @@ export default function GeneratedPagesPage() {
 
   const pendingPages = pages.filter((p) => p.status === "pending");
 
-  const filtered = useMemo(() => pages.filter(
-    (p) =>
-      (statusFilter === "all" || p.status === statusFilter) &&
-      (p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.slug.toLowerCase().includes(search.toLowerCase()) ||
-      (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase()))
-  ), [pages, search, statusFilter]);
+  const filtered = useMemo(() => {
+    const base = pages.filter(
+      (p) =>
+        (statusFilter === "all" || p.status === statusFilter) &&
+        (p.title.toLowerCase().includes(search.toLowerCase()) ||
+        p.slug.toLowerCase().includes(search.toLowerCase()) ||
+        (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase()))
+    );
+
+    if (sortBy === "newest") return base;
+    if (sortBy === "oldest") return [...base].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+    const scoreGetter = (p: GeneratedPage) => {
+      if (sortBy === "seo_asc" || sortBy === "seo_desc") return calculateContentSeoScore(p.title, p.content, p.slug).score;
+      if (sortBy === "sea_asc" || sortBy === "sea_desc") return calculateContentSeaScore(p.title, p.content, p.slug).score;
+      if (sortBy === "geo_asc" || sortBy === "geo_desc") return calculateContentGeoScore(p.title, p.content, p.slug).score;
+      return 0;
+    };
+    const asc = sortBy.endsWith("_asc");
+    return [...base].sort((a, b) => asc ? scoreGetter(a) - scoreGetter(b) : scoreGetter(b) - scoreGetter(a));
+  }, [pages, search, statusFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -254,7 +269,7 @@ export default function GeneratedPagesPage() {
   );
 
   // Reset to page 1 when filters or page size change
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize, sortBy]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -319,6 +334,22 @@ export default function GeneratedPagesPage() {
           >
             <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
           </Button>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[160px] h-9 text-xs">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="seo_desc">SEO ↓ (best)</SelectItem>
+              <SelectItem value="seo_asc">SEO ↑ (worst)</SelectItem>
+              <SelectItem value="sea_desc">SEA ↓ (best)</SelectItem>
+              <SelectItem value="sea_asc">SEA ↑ (worst)</SelectItem>
+              <SelectItem value="geo_desc">GEO ↓ (best)</SelectItem>
+              <SelectItem value="geo_asc">GEO ↑ (worst)</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[130px] h-9 text-xs">
               <SelectValue />
