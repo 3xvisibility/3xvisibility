@@ -810,7 +810,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Step Content */}
-              <div className="px-6 py-4 min-h-[180px]">
+              <div className="px-4 sm:px-6 py-4 min-h-[180px]">
                 <div className="space-y-4 animate-fade-in">
                   {step === 1 && (
                     <div>
