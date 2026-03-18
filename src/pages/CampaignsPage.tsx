@@ -20,6 +20,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
+import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
