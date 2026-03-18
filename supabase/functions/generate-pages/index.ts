@@ -812,14 +812,10 @@ Deno.serve(async (req) => {
             } catch { /* keep fallback */ }
           }
 
-          // Build canonical URL
+          // Build canonical URL using pre-fetched website URL
           let canonicalUrl: string | null = null;
-          if (campaign.website_id) {
-            const { data: website } = await supabase.from("websites").select("url").eq("id", campaign.website_id).maybeSingle();
-            if (website?.url) {
-              const baseUrl = website.url.replace(/\/+$/, "");
-              canonicalUrl = `${baseUrl}/${slug}`;
-            }
+          if (websiteBaseUrl) {
+            canonicalUrl = `${websiteBaseUrl}/${slug}`;
           }
 
           // Build JSON-LD structured data — use template schema config if defined
