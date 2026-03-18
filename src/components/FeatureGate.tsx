@@ -10,8 +10,6 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, string> = {
   shopify: "Integrate with Shopify to create and manage product pages, collections, and SEO-optimized store content.",
   prestashop: "Connect PrestaShop to generate and publish product descriptions, category pages, and more.",
   woocommerce: "Seamlessly push generated content to your WooCommerce store including products and landing pages.",
-  socialShare: "Generate social media captions and share your pages directly to Facebook, Twitter, LinkedIn, and more.",
-  storeGenerator: "Use AI to generate a complete e-commerce store with products, descriptions, images, and SEO content.",
   indexing: "Submit your pages directly to Google for faster indexing and monitor their crawl status in real time.",
   discovery: "Analyze any website to discover its structure, pages, templates, and SEO opportunities.",
   internalLinks: "Automatically build internal links between your generated pages to boost SEO and user navigation.",
