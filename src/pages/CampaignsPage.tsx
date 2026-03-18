@@ -1422,6 +1422,7 @@ export default function CampaignsPage() {
                         <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Method</span><span className="font-medium capitalize">{generationMethod}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
                       </div>
