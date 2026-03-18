@@ -20,6 +20,12 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
       '<span style="background:hsl(280 60% 92%);color:hsl(280 60% 35%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(280 40% 80%)">🤖 AI: $1</span>'
     );
 
+    // Highlight {{AI_IMAGE:...}} blocks
+    styled = styled.replace(
+      /\{\{AI_IMAGE:(.*?)\}\}/g,
+      '<span style="background:hsl(320 60% 92%);color:hsl(320 60% 35%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(320 40% 80%)">🎨 AI Image: $1</span>'
+    );
+
     // Highlight {{MAP:...}}, {{YOUTUBE:...}}, {{IMAGE:...}}, {{WEATHER:...}} dynamic elements
     styled = styled.replace(
       /\{\{(MAP|YOUTUBE|IMAGE|WEATHER):(.*?)\}\}/gi,

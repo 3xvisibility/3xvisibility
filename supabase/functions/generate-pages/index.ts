@@ -220,6 +220,73 @@ function extractAiBlocks(content: string): { fullMatch: string; prompt: string }
   return blocks;
 }
 
+function extractAiImageBlocks(content: string): { fullMatch: string; prompt: string }[] {
+  const regex = /\{\{AI_IMAGE:([\s\S]*?)\}\}/g;
+  const blocks: { fullMatch: string; prompt: string }[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    blocks.push({ fullMatch: match[0], prompt: match[1].trim() });
+  }
+  return blocks;
+}
+
+async function generateAiImage(
+  prompt: string,
+  apiKey: string,
+  supabase: any,
+  campaignId: string,
+  pageIndex: number,
+  blockIndex: number
+): Promise<string> {
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash-image",
+      messages: [
+        { role: "user", content: `Generate a high-quality, professional image: ${prompt}` },
+      ],
+      modalities: ["image", "text"],
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("AI image generation error:", response.status, errText);
+    if (response.status === 429) throw new Error("AI rate limit exceeded.");
+    if (response.status === 402) throw new Error("AI credits exhausted.");
+    throw new Error(`AI image generation failed (${response.status})`);
+  }
+
+  const data = await response.json();
+  const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+  if (!imageData) throw new Error("No image returned from AI");
+
+  // Extract base64 data and upload to storage
+  const base64Match = imageData.match(/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/);
+  if (!base64Match) throw new Error("Invalid image data format");
+
+  const ext = base64Match[1] === "jpeg" ? "jpg" : base64Match[1];
+  const base64 = base64Match[2];
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+
+  const filePath = `${campaignId}/page-${pageIndex}-img-${blockIndex}-${Date.now()}.${ext}`;
+  const { error: uploadErr } = await supabase.storage
+    .from("ai-images")
+    .upload(filePath, bytes, { contentType: `image/${base64Match[1]}`, upsert: true });
+
+  if (uploadErr) {
+    console.error("Storage upload error:", uploadErr);
+    throw new Error("Failed to upload AI image");
+  }
+
+  const { data: publicUrl } = supabase.storage.from("ai-images").getPublicUrl(filePath);
+  return publicUrl.publicUrl;
+}
+
 async function generateAiContent(
   prompt: string,
   settings: { tone: string; contentLength: string; language: string },
@@ -638,13 +705,16 @@ Deno.serve(async (req) => {
 
     const templateContent = campaign.templates.content as string;
     const aiBlocks = extractAiBlocks(templateContent);
+    const aiImageBlocks = extractAiImageBlocks(templateContent);
     const hasAiBlocks = aiBlocks.length > 0;
+    const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     // AI limit check
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
+    const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
     const seoGenerationsNeeded = LOVABLE_API_KEY ? remainingRows.length : 0;
-    const totalAiNeeded = aiGenerationsNeeded + seoGenerationsNeeded;
+    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded;
 
     if (totalAiNeeded > 0) {
       const { data: subscription } = await supabase
@@ -665,7 +735,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (hasAiBlocks && !LOVABLE_API_KEY) {
+    if ((hasAiBlocks || hasAiImageBlocks) && !LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "AI service not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -694,7 +764,9 @@ Deno.serve(async (req) => {
           started_at: new Date().toISOString(),
           config: {
             has_ai_blocks: hasAiBlocks,
+            has_ai_image_blocks: hasAiImageBlocks,
             ai_blocks_count: aiBlocks.length,
+            ai_image_blocks_count: aiImageBlocks.length,
             campaign_type: campaign.campaign_type || "seo",
           },
         })
@@ -920,6 +992,33 @@ Deno.serve(async (req) => {
                 aiGenerationsUsed++;
               } catch (aiErr: any) {
                 pageContent = pageContent.replace(block.fullMatch, `<em style="color:#dc2626;">[AI failed: ${aiErr.message}]</em>`);
+              }
+            }
+          }
+
+          // Process {{AI_IMAGE:prompt}} blocks — generate unique images per page
+          if (hasAiImageBlocks && LOVABLE_API_KEY) {
+            const currentAiImageBlocks = extractAiImageBlocks(pageContent);
+            for (let imgIdx = 0; imgIdx < currentAiImageBlocks.length; imgIdx++) {
+              const block = currentAiImageBlocks[imgIdx];
+              try {
+                const imageUrl = await generateAiImage(
+                  block.prompt, LOVABLE_API_KEY, supabase,
+                  campaign_id, processedCount, imgIdx
+                );
+                const altText = block.prompt.replace(/"/g, '&quot;').slice(0, 200);
+                pageContent = pageContent.replace(
+                  block.fullMatch,
+                  `<div class="ai-generated-image" style="margin:1em 0;">
+  <img src="${imageUrl}" alt="${altText}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+</div>`
+                );
+                aiGenerationsUsed++;
+              } catch (imgErr: any) {
+                pageContent = pageContent.replace(
+                  block.fullMatch,
+                  `<em style="color:#dc2626;">[AI Image failed: ${imgErr.message}]</em>`
+                );
               }
             }
           }
