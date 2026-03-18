@@ -1530,7 +1530,10 @@ export default function CampaignsPage() {
           )}
           {orderedCampaigns.map((c, idx) => {
             const progress = getProgressInfo(c);
-            const isProcessing = c.status === "processing";
+            const latestJob = getLatestJob(c.id);
+            const hasActiveJob = latestJob && (latestJob.status === "running" || latestJob.status === "pending");
+            const isProcessing = c.status === "processing" && hasActiveJob;
+            const isStuck = c.status === "processing" && !hasActiveJob && progress.percent < 100;
             const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
             const startedAt = (c as any).generation_started_at;
             const completedAt = (c as any).generation_completed_at;
