@@ -994,6 +994,33 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Process {{AI_IMAGE:prompt}} blocks — generate unique images per page
+          if (hasAiImageBlocks && LOVABLE_API_KEY) {
+            const currentAiImageBlocks = extractAiImageBlocks(pageContent);
+            for (let imgIdx = 0; imgIdx < currentAiImageBlocks.length; imgIdx++) {
+              const block = currentAiImageBlocks[imgIdx];
+              try {
+                const imageUrl = await generateAiImage(
+                  block.prompt, LOVABLE_API_KEY, supabase,
+                  campaign_id, processedCount, imgIdx
+                );
+                const altText = block.prompt.replace(/"/g, '&quot;').slice(0, 200);
+                pageContent = pageContent.replace(
+                  block.fullMatch,
+                  `<div class="ai-generated-image" style="margin:1em 0;">
+  <img src="${imageUrl}" alt="${altText}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+</div>`
+                );
+                aiGenerationsUsed++;
+              } catch (imgErr: any) {
+                pageContent = pageContent.replace(
+                  block.fullMatch,
+                  `<em style="color:#dc2626;">[AI Image failed: ${imgErr.message}]</em>`
+                );
+              }
+            }
+          }
+
           const h1Match = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
           let pageTitle: string;
           if (h1Match) {
