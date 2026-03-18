@@ -764,7 +764,9 @@ Deno.serve(async (req) => {
           started_at: new Date().toISOString(),
           config: {
             has_ai_blocks: hasAiBlocks,
+            has_ai_image_blocks: hasAiImageBlocks,
             ai_blocks_count: aiBlocks.length,
+            ai_image_blocks_count: aiImageBlocks.length,
             campaign_type: campaign.campaign_type || "seo",
           },
         })
