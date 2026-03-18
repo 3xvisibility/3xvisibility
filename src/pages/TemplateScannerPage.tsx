@@ -467,11 +467,11 @@ export default function TemplateScannerPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="wordpress" className="space-y-3">
-              <Label className="text-sm font-medium">Connected WordPress Site</Label>
-              {wpWebsites.length === 0 ? (
+            <TabsContent value="connected" className="space-y-3">
+              <Label className="text-sm font-medium">Connected Website</Label>
+              {connectedWebsites.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No WordPress websites connected. Add one in the Websites section first.
+                  No websites connected. Add one in the Websites section first.
                 </p>
               ) : (
                 <>
