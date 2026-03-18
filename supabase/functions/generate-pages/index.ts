@@ -359,6 +359,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
+    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action }));
     const { campaign_id, action } = body;
 
     if (!campaign_id) {
