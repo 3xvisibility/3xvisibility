@@ -94,24 +94,26 @@ Only return the JSON array, nothing else. Find 3-8 key variables.`,
       });
 
       // Try to parse AI response as variables
+      let parsedVars: VariableEntry[] = [];
       if (data?.results?.[0]?.caption) {
         const caption = data.results[0].caption;
         const jsonMatch = caption.match(/\[[\s\S]*?\]/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
           if (Array.isArray(parsed)) {
-            setVariables(parsed.map((v: any) => ({
+            parsedVars = parsed.map((v: any) => ({
               name: v.name || "variable",
               original: v.original || "",
               value: v.value || v.original || "",
-            })));
+            }));
+            setVariables(parsedVars);
           }
         }
       }
 
-      // Build template HTML by replacing originals with {variable} placeholders
+      // Build template HTML using the freshly parsed vars (not stale state)
       let html = page.content;
-      const sortedVars = [...(variables.length ? variables : [])].sort(
+      const sortedVars = [...parsedVars].sort(
         (a, b) => b.original.length - a.original.length
       );
       for (const v of sortedVars) {
@@ -410,7 +412,7 @@ Only return the JSON array, nothing else. Find 3-8 key variables.`,
 
                 <Button
                   onClick={generatePages}
-                  disabled={variables.length === 0}
+                  disabled={generating}
                   className="bg-gradient-primary border-0 shadow-lg shadow-primary/25"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
