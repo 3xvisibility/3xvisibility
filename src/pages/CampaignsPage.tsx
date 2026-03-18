@@ -658,7 +658,7 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
-  const mappingWarning = !hasTitleMapping && csvData.length > 0 && selectedTemplate
+  const mappingWarning = !hasTitleMapping && effectiveCsvData.length > 0 && selectedTemplate
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
     : null;
 
