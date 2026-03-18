@@ -610,6 +610,15 @@ Deno.serve(async (req) => {
       await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate. Job: ${jobId}`);
     }
 
+    // Pre-fetch website URL once (instead of per-row)
+    let websiteBaseUrl: string | null = null;
+    if (campaign.website_id) {
+      const { data: website } = await supabase.from("websites").select("url").eq("id", campaign.website_id).maybeSingle();
+      if (website?.url) websiteBaseUrl = website.url.replace(/\/+$/, "");
+    }
+
+    console.log("[GENERATE-PAGES] Starting batch processing. Rows:", remainingRows.length, "AI blocks:", aiBlocks.length);
+
     // Process in batches
     const totalBatches = Math.ceil(remainingRows.length / BATCH_SIZE);
     let processedCount = alreadyProcessed;
