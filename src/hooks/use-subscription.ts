@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PLAN_FEATURES, type PlanName, type FeatureKey, type PlanFeatures } from "@/lib/plan-features";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -21,6 +22,27 @@ export interface SubscriptionData {
 export function useSubscription(): SubscriptionData {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
+  const queryClient = useQueryClient();
+
+  // Auto-sync with Stripe on mount (runs once per workspace)
+  useEffect(() => {
+    if (!wsId) return;
+    let cancelled = false;
+
+    const syncWithStripe = async () => {
+      try {
+        const { error } = await supabase.functions.invoke("check-subscription");
+        if (!error && !cancelled) {
+          queryClient.invalidateQueries({ queryKey: ["user-subscription", wsId] });
+        }
+      } catch {
+        // Silently fail — the cached DB value will be used
+      }
+    };
+
+    syncWithStripe();
+    return () => { cancelled = true; };
+  }, [wsId, queryClient]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["user-subscription", wsId],
