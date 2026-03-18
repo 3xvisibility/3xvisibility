@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { calculateSeoScore } from "@/lib/seo-score";
+import { calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -482,13 +484,15 @@ export default function GeneratedPagesPage() {
                   <th className="text-left p-4 font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Campaign</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">SEO</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Scores</th>
                   <th className="p-4"></th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedPages.map((page) => {
                   const seoResult = calculateSeoScore((page as any).seo_title, (page as any).seo_description, (page as any).seo_keywords, page.title);
+                  const seaResult = calculateContentSeaScore(page.title, page.content, page.slug);
+                  const geoResult = calculateContentGeoScore(page.title, page.content, page.slug);
                   const isSelected = selectedIds.has(page.id);
                   return (
                     <tr
@@ -518,38 +522,20 @@ export default function GeneratedPagesPage() {
                         <Badge variant="secondary" className={statusColors[page.status]}>{page.status}</Badge>
                       </td>
                       <td className="p-4 hidden lg:table-cell">
-                        <TooltipProvider delayDuration={200}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex items-center gap-1.5 cursor-default">
-                                <div className="w-8 h-1.5 rounded-full bg-muted overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full transition-all ${
-                                      seoResult.score >= 85 ? "bg-emerald-500" :
-                                      seoResult.score >= 60 ? "bg-primary" :
-                                      seoResult.score >= 35 ? "bg-amber-500" : "bg-destructive"
-                                    }`}
-                                    style={{ width: `${seoResult.score}%` }}
-                                  />
-                                </div>
-                                <span className={`text-[10px] font-semibold tabular-nums ${seoResult.color}`}>
-                                  {seoResult.score}
-                                </span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="left" className="max-w-[220px] p-3">
-                              <p className="text-xs font-semibold mb-1.5">SEO Score: {seoResult.score}/100 ({seoResult.label})</p>
-                              <div className="space-y-1">
-                                {seoResult.checks.map((c, i) => (
-                                  <div key={i} className="flex items-start gap-1.5 text-[10px]">
-                                    <span className={c.passed ? "text-emerald-500" : "text-destructive"}>{c.passed ? "✓" : "✗"}</span>
-                                    <span className={c.passed ? "text-muted-foreground" : "text-foreground"}>{c.label}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-semibold text-muted-foreground">SEO</span>
+                            <SeoScoreBadge score={seoResult.score} label={seoResult.label} color={seoResult.color} checks={seoResult.checks} size="sm" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-semibold text-muted-foreground">SEA</span>
+                            <SeoScoreBadge score={seaResult.score} label={seaResult.label} color={seaResult.color} checks={seaResult.checks} size="sm" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[9px] font-semibold text-muted-foreground">GEO</span>
+                            <SeoScoreBadge score={geoResult.score} label={geoResult.label} color={geoResult.color} checks={geoResult.checks} size="sm" />
+                          </div>
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
