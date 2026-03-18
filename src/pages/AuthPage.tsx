@@ -423,7 +423,7 @@ export default function AuthPage() {
                     <span className="text-[10px] text-muted-foreground/50 ml-2 font-mono">pagegen.app/dashboard</span>
                   </div>
                   <img
-                    src="/src/assets/hero-dashboard.png"
+                    src={heroDashboard}
                     alt="Platform dashboard preview"
                     className="w-full"
                     loading="lazy"
