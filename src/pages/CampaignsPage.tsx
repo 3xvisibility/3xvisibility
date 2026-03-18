@@ -973,7 +973,7 @@ export default function CampaignsPage() {
                               ) : filteredWebPages.length === 0 ? (
                                 <div className="text-center py-6 text-muted-foreground">
                                   <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                                  <p className="text-xs">No pages found on this website.</p>
+                                  <p className="text-xs">No content found on this website.</p>
                                 </div>
                               ) : (
                                 <>
