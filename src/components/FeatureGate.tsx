@@ -1,6 +1,6 @@
 import { useSubscription } from "@/hooks/use-subscription";
-import { getMinimumPlanFor, PLAN_FEATURES, FEATURE_LABELS, type FeatureKey } from "@/lib/plan-features";
-import { Lock, ArrowRight } from "lucide-react";
+import { getMinimumPlanFor, PLAN_FEATURES, FEATURE_LABELS, type FeatureKey, type PlanName } from "@/lib/plan-features";
+import { Lock, ArrowRight, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +17,23 @@ const FEATURE_DESCRIPTIONS: Record<FeatureKey, string> = {
   apiAccess: "Access the full API to integrate page generation into your own workflows and tools.",
   teamCollaboration: "Invite team members to your workspace with role-based permissions and shared resources.",
 };
+
+const COMPARISON_ROWS: { label: string; getValue: (plan: PlanName) => string | boolean }[] = [
+  { label: "Pages", getValue: (p) => { const v = PLAN_FEATURES[p].pagesLimit; return v === -1 ? "Unlimited" : v.toLocaleString(); } },
+  { label: "AI Credits", getValue: (p) => { const v = PLAN_FEATURES[p].aiLimit; return v === -1 ? "Unlimited" : v.toLocaleString(); } },
+  { label: "Templates", getValue: (p) => { const v = PLAN_FEATURES[p].templates; return v === -1 ? "Unlimited" : String(v); } },
+  { label: "Websites", getValue: (p) => { const v = PLAN_FEATURES[p].websites; return v === -1 ? "Unlimited" : String(v); } },
+  { label: "CMS Integrations", getValue: (p) => PLAN_FEATURES[p].wordpress },
+  { label: "Social Sharing", getValue: (p) => PLAN_FEATURES[p].socialShare },
+  { label: "Website Discovery", getValue: (p) => PLAN_FEATURES[p].discovery },
+  { label: "Google Indexing", getValue: (p) => PLAN_FEATURES[p].indexing },
+  { label: "Store Generator", getValue: (p) => PLAN_FEATURES[p].storeGenerator },
+  { label: "Internal Links", getValue: (p) => PLAN_FEATURES[p].internalLinks },
+  { label: "API Access", getValue: (p) => PLAN_FEATURES[p].apiAccess },
+  { label: "Team Collaboration", getValue: (p) => PLAN_FEATURES[p].teamCollaboration },
+];
+
+const PLANS: PlanName[] = ["free", "starter", "pro", "agency"];
 
 interface FeatureGateProps {
   feature: FeatureKey;
@@ -37,7 +54,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
   const featureDesc = FEATURE_DESCRIPTIONS[feature];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-8">
       <div className="rounded-full bg-muted p-6 mb-6">
         <Lock className="h-10 w-10 text-muted-foreground" />
       </div>
@@ -47,9 +64,71 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
       <span className="inline-block text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-3 py-1 mb-4">
         {planLabel} Plan
       </span>
-      <p className="text-muted-foreground max-w-md mb-6">
+      <p className="text-muted-foreground max-w-md mb-8">
         {featureDesc}
       </p>
+
+      {/* Plan Comparison Table */}
+      <div className="w-full max-w-3xl overflow-x-auto mb-8 rounded-lg border border-border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="text-left font-medium text-muted-foreground px-4 py-3">Feature</th>
+              {PLANS.map((plan) => (
+                <th
+                  key={plan}
+                  className={`px-3 py-3 font-semibold text-center ${
+                    plan === minPlan
+                      ? "text-primary bg-primary/5"
+                      : "text-foreground"
+                  }`}
+                >
+                  {PLAN_FEATURES[plan].label}
+                  {plan === minPlan && (
+                    <span className="block text-[10px] font-medium text-primary mt-0.5">
+                      Recommended
+                    </span>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARISON_ROWS.map((row, i) => (
+              <tr
+                key={row.label}
+                className={i % 2 === 0 ? "bg-background" : "bg-muted/30"}
+              >
+                <td className="text-left text-muted-foreground px-4 py-2.5 font-medium">
+                  {row.label}
+                </td>
+                {PLANS.map((plan) => {
+                  const value = row.getValue(plan);
+                  return (
+                    <td
+                      key={plan}
+                      className={`text-center px-3 py-2.5 ${
+                        plan === minPlan ? "bg-primary/5" : ""
+                      }`}
+                    >
+                      {typeof value === "boolean" ? (
+                        value ? (
+                          <Check className="h-4 w-4 text-primary mx-auto" />
+                        ) : (
+                          <X className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                        )
+                      ) : (
+                        <span className="text-foreground font-medium">{value}</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       <Button onClick={() => navigate("/billing")} size="lg" className="gap-2">
         Upgrade to {planLabel}
         <ArrowRight className="h-4 w-4" />
