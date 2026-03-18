@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { friendlyError } from "@/lib/friendly-errors";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -175,7 +176,7 @@ export default function TemplateScannerPage() {
         body: { action: "list-wp-pages", website_id: websiteId },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return data.pages as WpPage[];
     },
     onSuccess: (pages) => {
@@ -194,7 +195,7 @@ export default function TemplateScannerPage() {
         body: { url: scanUrl },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return data as {
         success: boolean;
         url: string;

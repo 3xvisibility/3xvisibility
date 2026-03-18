@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { friendlyError } from "@/lib/friendly-errors";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -193,7 +194,7 @@ export default function CampaignsPage() {
         body: { website_id: websiteForPages, content_type: websiteContentType },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return (data.items || []) as ContentItem[];
     },
     staleTime: 5 * 60 * 1000,

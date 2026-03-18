@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { friendlyError } from "@/lib/friendly-errors";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -92,7 +93,7 @@ export default function WebsiteContentPage() {
         body: { website_id: effectiveWebsite, content_type: "pages" },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return data.items as ContentItem[];
     },
     staleTime: 5 * 60 * 1000,
@@ -112,7 +113,7 @@ export default function WebsiteContentPage() {
         body: { website_id: effectiveWebsite, content_type: "products" },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (data?.error) throw new Error(friendlyError(data.error));
       return data.items as ContentItem[];
     },
     staleTime: 5 * 60 * 1000,

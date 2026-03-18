@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { friendlyError } from "@/lib/friendly-errors";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -150,7 +151,7 @@ export default function TemplatesPage() {
       });
       if (error) throw error;
       if (data?.pages) setSitePages(data.pages);
-      else if (data?.error) throw new Error(data.error);
+      else if (data?.error) throw new Error(friendlyError(data.error));
     } catch (err: any) {
       toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
     } finally {
