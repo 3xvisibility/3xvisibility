@@ -969,6 +969,136 @@ export default function TemplatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* CSV Template Dialog */}
+      <Dialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              Create Template from CSV
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Paste your CSV data below. The first row (headers) will be converted into template variables automatically.
+            </p>
+            <div>
+              <Label>Template Name</Label>
+              <Input
+                placeholder="e.g., Product Landing Template"
+                value={csvTemplateName}
+                onChange={(e) => setCsvTemplateName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>CSV Data (paste or type)</Label>
+              <Textarea
+                placeholder={"city,service,phone\nNew York,Plumbing,555-0100\nLos Angeles,HVAC,555-0200"}
+                value={csvTemplateText}
+                onChange={(e) => setCsvTemplateText(e.target.value)}
+                rows={6}
+                className="font-mono text-xs"
+              />
+              {csvTemplateText.trim() && (() => {
+                const headers = csvTemplateText.split("\n")[0]?.split(",").map(h => h.trim()).filter(Boolean) || [];
+                return headers.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    <span className="text-xs text-muted-foreground">Variables:</span>
+                    {headers.map(h => (
+                      <Badge key={h} variant="outline" className="text-xs font-mono">
+                        {`{${h.toLowerCase().replace(/[^a-z0-9]+/g, "_")}}`}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setCsvDialogOpen(false)}>Cancel</Button>
+              <Button onClick={createFromCsv} disabled={!csvTemplateText.trim()}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Create Template
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Connected Site Template Dialog */}
+      <Dialog open={siteDialogOpen} onOpenChange={(v) => { setSiteDialogOpen(v); if (!v) { setSitePages([]); setSiteTemplateWebsite(""); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="h-5 w-5 text-primary" />
+              Import Template from Connected Site
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Select a connected website and choose a page to use as a template base.
+            </p>
+            {connectedWebsites.length === 0 ? (
+              <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 text-center">
+                No connected websites found. Add one in Settings → Websites first.
+              </p>
+            ) : (
+              <>
+                <Select
+                  value={siteTemplateWebsite}
+                  onValueChange={(val) => {
+                    setSiteTemplateWebsite(val);
+                    loadSitePages(val);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a connected site" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {connectedWebsites.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>
+                        <span className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 capitalize">{w.type}</Badge>
+                          {w.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {siteLoadingPages && (
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                )}
+
+                {sitePages.length > 0 && (
+                  <div className="space-y-1 max-h-60 overflow-y-auto border rounded-lg p-2">
+                    {sitePages.map((page) => (
+                      <button
+                        key={page.id}
+                        className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent/50 transition-colors text-left"
+                        onClick={() => importSitePage(page.link, page.title)}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{page.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">/{page.slug}</p>
+                        </div>
+                        <Download className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!siteLoadingPages && siteTemplateWebsite && sitePages.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No pages found on this site.</p>
+                )}
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
