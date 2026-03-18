@@ -190,32 +190,41 @@ export default function TemplatesPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // Check if any campaigns reference this template
-      const { data: linkedCampaigns, error: checkError } = await supabase
-        .from("campaigns")
-        .select("id, name")
-        .eq("template_id", id)
-        .limit(5);
-      if (checkError) throw checkError;
-      if (linkedCampaigns && linkedCampaigns.length > 0) {
-        const names = linkedCampaigns.map((c) => c.name).join(", ");
-        throw new Error(
-          `This template is used by ${linkedCampaigns.length} campaign(s): ${names}. Please unlink or delete those campaigns first.`
-        );
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; linkedCampaigns: { id: string; name: string }[] } | null>(null);
+
+  const checkAndDelete = async (id: string) => {
+    const { data: linked } = await supabase
+      .from("campaigns")
+      .select("id, name")
+      .eq("template_id", id)
+      .limit(10);
+    if (linked && linked.length > 0) {
+      setDeleteTarget({ id, linkedCampaigns: linked });
+    } else {
+      performDelete(id, false);
+    }
+  };
+
+  const performDelete = async (id: string, force: boolean) => {
+    try {
+      if (force) {
+        const { error: unlinkErr } = await supabase
+          .from("campaigns")
+          .update({ template_id: null })
+          .eq("template_id", id);
+        if (unlinkErr) throw unlinkErr;
       }
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) throw error;
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast({ title: "Template deleted" });
-    },
-    onError: (err: Error) => {
+    } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
 
   const resetAndClose = () => {
     setAiOpen(false);
