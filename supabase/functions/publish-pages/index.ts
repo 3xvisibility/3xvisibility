@@ -115,7 +115,10 @@ Deno.serve(async (req) => {
             elementorMeta
           );
 
-          const result = await connector.createPage(payload);
+          // If an external_id is provided, update the existing page; otherwise create new
+          const result = dp.external_id
+            ? await connector.updatePage(dp.external_id, payload)
+            : await connector.createPage(payload);
           results.push({ title: dp.title, status: "published", external_url: result.url });
         } catch (err) {
           results.push({ title: dp.title, status: "failed", error: err instanceof Error ? err.message : "Unknown error" });
