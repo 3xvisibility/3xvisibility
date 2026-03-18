@@ -370,6 +370,27 @@ export default function GeneratedPagesPage() {
               <Button
                 size="sm"
                 variant="outline"
+                disabled={bulkPublishMutation.isPending}
+                onClick={() => {
+                  const publishedSelected = [...selectedIds].filter(
+                    (id) => {
+                      const p = pages.find((pg) => pg.id === id);
+                      return p?.status === "published" && p?.external_id;
+                    }
+                  );
+                  if (publishedSelected.length === 0) {
+                    toast({ title: "No re-publishable pages", description: "Select published pages with an external ID to re-publish.", variant: "destructive" });
+                    return;
+                  }
+                  bulkPublishMutation.mutate(publishedSelected);
+                }}
+              >
+                <RotateCw className="h-3.5 w-3.5 mr-1.5" />
+                {bulkPublishMutation.isPending ? "Re-publishing..." : "Re-publish Selected"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 disabled={bulkStatusMutation.isPending}
                 onClick={() => {
                   const failedSelected = [...selectedIds].filter(
