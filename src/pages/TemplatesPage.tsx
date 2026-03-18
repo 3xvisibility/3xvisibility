@@ -198,11 +198,7 @@ export default function TemplatesPage() {
       .select("id, name")
       .eq("template_id", id)
       .limit(10);
-    if (linked && linked.length > 0) {
-      setDeleteTarget({ id, linkedCampaigns: linked });
-    } else {
-      performDelete(id, false);
-    }
+    setDeleteTarget({ id, linkedCampaigns: linked ?? [] });
   };
 
   const performDelete = async (id: string, force: boolean) => {
@@ -834,24 +830,34 @@ export default function TemplatesPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Template in use</AlertDialogTitle>
-            <AlertDialogDescription>
-              This template is linked to {deleteTarget?.linkedCampaigns.length} campaign(s):
-              <span className="font-medium block mt-1">
-                {deleteTarget?.linkedCampaigns.map((c) => c.name).join(", ")}
-              </span>
-              <span className="block mt-2">
-                You can <strong>force delete</strong> to unlink all campaigns and delete the template, or cancel.
-              </span>
+            <AlertDialogTitle>
+              {deleteTarget && deleteTarget.linkedCampaigns.length > 0 ? "Template in use" : "Delete template?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                {deleteTarget && deleteTarget.linkedCampaigns.length > 0 ? (
+                  <>
+                    <span>This template is linked to {deleteTarget.linkedCampaigns.length} campaign(s):</span>
+                    <span className="font-medium block mt-1">
+                      {deleteTarget.linkedCampaigns.map((c) => c.name).join(", ")}
+                    </span>
+                    <span className="block mt-2">
+                      <strong>Force delete</strong> will unlink all campaigns and delete the template.
+                    </span>
+                  </>
+                ) : (
+                  <span>This action cannot be undone. The template will be permanently deleted.</span>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteTarget && performDelete(deleteTarget.id, true)}
+              onClick={() => deleteTarget && performDelete(deleteTarget.id, deleteTarget.linkedCampaigns.length > 0)}
             >
-              Force Delete
+              {deleteTarget && deleteTarget.linkedCampaigns.length > 0 ? "Force Delete" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
