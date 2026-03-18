@@ -894,6 +894,12 @@ Deno.serve(async (req) => {
             pageContent = pageContent.replace(regex, value || "");
           }
 
+          // Process spintax {option1|option2|option3} AFTER variable replacement
+          pageContent = processSpintax(pageContent);
+
+          // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
+          pageContent = processDynamicElements(pageContent, allVars);
+
           // Replace {{GEO_BLOCKS}} placeholder with reusable GEO HTML
           if (pageContent.includes("{{GEO_BLOCKS}}")) {
             const geoBlocksHtml = buildGeoBlocks(geoSettings, row);
