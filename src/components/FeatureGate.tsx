@@ -33,6 +33,13 @@ const COMPARISON_ROWS: { label: string; getValue: (plan: PlanName) => string | b
   { label: "Team Collaboration", getValue: (p) => PLAN_FEATURES[p].teamCollaboration },
 ];
 
+const PLAN_PRICES: Record<PlanName, string> = {
+  free: "$0",
+  starter: "$29",
+  pro: "$79",
+  agency: "$199",
+};
+
 const PLANS: PlanName[] = ["free", "starter", "pro", "agency"];
 
 interface FeatureGateProps {
