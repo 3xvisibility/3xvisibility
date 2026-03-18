@@ -13,7 +13,6 @@ import {
   Compass,
   ShieldCheck,
   Search as SearchIcon,
-  Store,
   Zap,
   Users,
   Database,
