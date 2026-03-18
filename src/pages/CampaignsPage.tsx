@@ -564,6 +564,34 @@ export default function CampaignsPage() {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     },
   });
+  const stuckCampaignIds = useMemo(() => {
+    return campaigns
+      .filter((c) => {
+        if (c.status !== "processing") return false;
+        const latestJob = getLatestJob(c.id);
+        const hasActiveJob = latestJob && (latestJob.status === "running" || latestJob.status === "pending");
+        return !hasActiveJob;
+      })
+      .map((c) => c.id);
+  }, [campaigns, generationJobs]);
+
+  const resetStuckMutation = useMutation({
+    mutationFn: async () => {
+      if (stuckCampaignIds.length === 0) return;
+      const { error } = await supabase
+        .from("campaigns")
+        .update({ status: "draft" as any, is_paused: false, updated_at: new Date().toISOString() })
+        .in("id", stuckCampaignIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({ title: "Stuck campaigns reset", description: `${stuckCampaignIds.length} campaign(s) set back to draft.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Reset failed", description: err.message, variant: "destructive" });
+    },
+  });
 
   const processCsvFile = (file: File) => {
     setCsvFile(file);
