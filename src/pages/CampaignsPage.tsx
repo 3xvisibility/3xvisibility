@@ -1046,12 +1046,14 @@ export default function CampaignsPage() {
 
                           {selectedPageIds.size > 0 && (
                             <div className="space-y-2">
-                              <div className="flex flex-wrap gap-1.5">
-                                <span className="text-xs text-muted-foreground">Columns:</span>
-                                {websitePagesAsCsv.headers.map((h) => (
-                                  <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
-                                ))}
-                              </div>
+                              <ScrollArea className="w-full">
+                                <div className="flex items-center gap-1.5 pb-1">
+                                  <span className="text-xs text-muted-foreground shrink-0">Columns:</span>
+                                  {websitePagesAsCsv.headers.map((h) => (
+                                    <Badge key={h} variant="secondary" className="text-xs rounded-lg shrink-0">{h}</Badge>
+                                  ))}
+                                </div>
+                              </ScrollArea>
 
                               {/* Content preview table */}
                               <div className="rounded-xl border border-border overflow-hidden">
