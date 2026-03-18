@@ -945,7 +945,7 @@ export default function CampaignsPage() {
                         </button>
                       </div>
 
-                      {dataSource === "csv" ? (
+                      {dataSource === "csv" && (
                         <>
                           <div
                             className={cn(
