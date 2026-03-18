@@ -486,11 +486,13 @@ Deno.serve(async (req) => {
     }
 
     if (csvRows.length === 0) {
+      console.error("[GENERATE-PAGES] No CSV data found for campaign");
       return new Response(JSON.stringify({ error: "No CSV data in this campaign" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("[GENERATE-PAGES] CSV rows:", csvRows.length);
 
     // Load custom mappings from the mappings table
     const { data: customMappings } = await supabase
