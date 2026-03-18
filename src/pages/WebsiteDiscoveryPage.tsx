@@ -332,6 +332,7 @@ export default function WebsiteDiscoveryPage() {
         content: templateContent,
         variables,
         user_id: user.id,
+        workspace_id: wsId,
       });
       if (error) throw error;
     },
