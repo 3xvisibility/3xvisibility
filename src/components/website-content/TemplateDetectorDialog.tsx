@@ -658,8 +658,8 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
           {/* Step 4: Done */}
           {step === "done" && (
             <div className="flex flex-col items-center justify-center py-6 space-y-4">
-              <div className="h-14 w-14 rounded-full bg-green-500/10 flex items-center justify-center">
-                <Check className="h-7 w-7 text-green-500" />
+              <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <Check className="h-7 w-7 text-primary" />
               </div>
               <div className="text-center space-y-1">
                 <h3 className="text-lg font-semibold">All Done!</h3>
