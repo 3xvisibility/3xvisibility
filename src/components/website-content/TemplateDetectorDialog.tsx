@@ -544,15 +544,13 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                 </div>
               </TabsContent>
 
-              {/* Template Preview Tab */}
-              <TabsContent value="preview" className="flex-1 overflow-hidden mt-2">
-                <ScrollArea className="h-full">
-                  <Textarea
-                    value={templateHtml}
-                    onChange={(e) => setTemplateHtml(e.target.value)}
-                    className="font-mono text-xs min-h-[400px]"
-                  />
-                </ScrollArea>
+              {/* Template Preview Tab — Visual by default */}
+              <TabsContent value="preview" className="flex-1 overflow-hidden mt-2 flex flex-col">
+                <TemplatePreviewPane
+                  templateHtml={templateHtml}
+                  variables={variables}
+                  onChange={setTemplateHtml}
+                />
               </TabsContent>
 
               {/* Data Source Tab */}
