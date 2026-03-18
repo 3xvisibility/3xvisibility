@@ -658,12 +658,12 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
+  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
+  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+
   const mappingWarning = !hasTitleMapping && effectiveCsvData.length > 0 && selectedTemplate
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
     : null;
-
-  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
-  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
 
   const canProceed = () => {
     if (step === 1) return !!campaignName;
