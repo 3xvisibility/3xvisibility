@@ -366,7 +366,7 @@ function ContentList({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                       <h3 className="text-sm font-medium truncate max-w-[200px] sm:max-w-none">
-                        {item.title || "(Untitled)"}
+                        {decodeHtmlEntities(item.title) || "(Untitled)"}
                       </h3>
                       <Badge
                         variant="outline"
