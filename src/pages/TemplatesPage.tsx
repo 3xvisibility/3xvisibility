@@ -415,6 +415,22 @@ export default function TemplatesPage() {
           >
             <Upload className="mr-2 h-4 w-4" /> Import
           </Button>
+          {/* From CSV */}
+          <Button
+            variant="outline"
+            className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+            onClick={() => setCsvDialogOpen(true)}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> From CSV
+          </Button>
+          {/* From Connected Site */}
+          <Button
+            variant="outline"
+            className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+            onClick={() => setSiteDialogOpen(true)}
+          >
+            <Link2 className="mr-2 h-4 w-4" /> From Site
+          </Button>
           {/* AI Template Builder */}
           <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
             <DialogTrigger asChild>
