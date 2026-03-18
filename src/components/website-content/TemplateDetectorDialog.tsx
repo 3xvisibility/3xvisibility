@@ -116,7 +116,7 @@ Only return the JSON array, nothing else. Find 3-8 key variables.`,
       );
       for (const v of sortedVars) {
         if (v.original) {
-          html = html.replaceAll(v.original, `{${v.name}}`);
+          html = html.split(v.original).join(`{${v.name}}`);
         }
       }
       setTemplateHtml(html || page.content);
