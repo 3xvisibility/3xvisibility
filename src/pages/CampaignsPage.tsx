@@ -162,23 +162,24 @@ export default function CampaignsPage() {
   }, [selectedTemplate, templates]);
 
   const variableMapping = useMemo(() => {
-    if (selectedTemplateVars.length === 0 || csvHeaders.length === 0) return null;
+    const headers = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+    if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
     const matched: { variable: string; column: string | null }[] = [];
     for (const v of selectedTemplateVars) {
       const vLower = v.toLowerCase();
-      const exactMatch = csvHeaders.find((h) => h.toLowerCase() === vLower);
+      const exactMatch = headers.find((h) => h.toLowerCase() === vLower);
       if (exactMatch) {
         matched.push({ variable: v, column: exactMatch });
       } else {
-        const fuzzy = csvHeaders.find(
+        const fuzzy = headers.find(
           (h) => h.toLowerCase().includes(vLower) || vLower.includes(h.toLowerCase())
         );
         matched.push({ variable: v, column: fuzzy || null });
       }
     }
-    const unmatchedColumns = csvHeaders.filter((h) => !matched.some((m) => m.column === h));
+    const unmatchedColumns = headers.filter((h) => !matched.some((m) => m.column === h));
     return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, csvHeaders]);
+  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers]);
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites", wsId],
