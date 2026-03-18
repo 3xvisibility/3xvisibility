@@ -1191,7 +1191,7 @@ export default function CampaignsPage() {
                               onClick={() => setLocationDbOpen(true)}
                               className="rounded-xl gap-2"
                             >
-                              <Database className="h-4 w-4" />
+                              <DatabaseIcon className="h-4 w-4" />
                               {locationData.length > 0 ? "Change Selection" : "Browse Locations"}
                             </Button>
                           </div>
