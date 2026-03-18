@@ -1530,12 +1530,15 @@ export default function CampaignsPage() {
           )}
           {orderedCampaigns.map((c, idx) => {
             const progress = getProgressInfo(c);
-            const isProcessing = c.status === "processing";
+            const latestJob = getLatestJob(c.id);
+            const hasActiveJob = latestJob && (latestJob.status === "running" || latestJob.status === "pending");
+            const isProcessing = c.status === "processing" && hasActiveJob;
+            const isStuck = c.status === "processing" && !hasActiveJob && progress.percent < 100;
             const isPaused = (c as any).is_paused === true || c.status === "queued" && progress.processed > 0;
             const startedAt = (c as any).generation_started_at;
             const completedAt = (c as any).generation_completed_at;
             const config = statusConfig[c.status] || statusConfig.draft;
-            const latestJob = getLatestJob(c.id);
+            // latestJob already declared above
             const dragProps = getCampaignDragProps(idx);
 
             return (
@@ -1587,7 +1590,7 @@ export default function CampaignsPage() {
                     </div>
                   </div>
 
-                  {(c.status === "queued" && progress.total === 0) && (
+                   {(c.status === "queued" && progress.total === 0 && hasActiveJob) && (
                     <div className="px-5 pb-5">
                       <div className="flex items-center gap-2 text-xs text-primary">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1596,9 +1599,17 @@ export default function CampaignsPage() {
                       <Progress value={0} className="h-2 mt-2" />
                     </div>
                   )}
+                  {isStuck && (
+                    <div className="px-5 pb-5">
+                      <div className="flex items-center gap-2 text-xs text-warning">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span className="font-medium">Generation stalled — retry or resume to continue</span>
+                      </div>
+                    </div>
+                  )}
                   {progress.total > 0 && (
                     <div className="px-5 pb-5 space-y-2">
-                      {(c.status === "processing" || c.status === "queued") && (
+                      {isProcessing && (
                         <div className="flex items-center gap-2 text-xs text-primary mb-1">
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           <span className="font-medium">Generating pages...</span>
