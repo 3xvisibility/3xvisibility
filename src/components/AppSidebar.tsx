@@ -82,7 +82,8 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const collapsed = state === "collapsed";
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLanguage();
-  const { pagesUsed, pagesLimit } = useSubscription();
+  const navigate = useNavigate();
+  const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
 
   useEffect(() => {
