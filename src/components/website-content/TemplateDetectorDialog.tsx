@@ -231,6 +231,7 @@ export function TemplateDetectorDialog({
   const [generatedCount, setGeneratedCount] = useState(0);
   const [publishResults, setPublishResults] = useState<{ title: string; status: string; external_url?: string; error?: string }[]>([]);
   const { toast } = useToast();
+  const { currentWorkspace } = useWorkspace();
 
   const detectVariables = async () => {
     setDetecting(true);
