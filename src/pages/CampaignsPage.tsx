@@ -834,50 +834,178 @@ export default function CampaignsPage() {
                   )}
 
                   {step === 3 && (
-                    <div>
-                      <Label className="text-sm font-semibold mb-2.5 block">CSV File</Label>
-                      <div
-                        className={cn(
-                          "border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer",
-                          isDraggingCsv
-                            ? "border-primary bg-primary/10 scale-[1.01]"
-                            : "hover:border-primary/50 hover:bg-primary/5"
-                        )}
-                        onDragOver={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
-                        onDragEnter={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
-                        onDragLeave={() => setIsDraggingCsv(false)}
-                        onDrop={handleCsvDrop}
-                      >
-                        <input type="file" accept=".csv,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
-                        <label htmlFor="csv-upload" className="cursor-pointer">
-                          <Upload className={cn("mx-auto h-10 w-10 mb-3 transition-colors", isDraggingCsv ? "text-primary" : "text-muted-foreground/50")} />
-                          <p className="text-sm font-medium">
-                            {csvFile ? csvFile.name : isDraggingCsv ? "Drop your CSV here" : "Drop CSV file or click to upload"}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {csvFile
-                              ? `${csvData.length} rows · ${csvFile.size < 1024 ? csvFile.size + " B" : csvFile.size < 1048576 ? (csvFile.size / 1024).toFixed(1) + " KB" : (csvFile.size / 1048576).toFixed(1) + " MB"}`
-                              : "Supports .csv files up to 20 MB"}
-                          </p>
-                        </label>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2 text-center">
-                        Need a template?{" "}
-                        <a
-                          href="/sample-data.csv"
-                          download="sample-data.csv"
-                          className="text-primary hover:underline font-medium"
+                    <div className="space-y-4">
+                      {/* Data Source Toggle */}
+                      <div className="flex items-center gap-2 p-1 bg-muted rounded-xl">
+                        <button
+                          type="button"
+                          onClick={() => setDataSource("csv")}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                            dataSource === "csv" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                          }`}
                         >
-                          Download sample CSV
-                        </a>
-                      </p>
-                      {csvHeaders.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-1.5">
-                          <span className="text-xs text-muted-foreground">Columns:</span>
-                          {csvHeaders.map((h) => (
-                            <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
-                          ))}
-                        </div>
+                          <Upload className="h-3.5 w-3.5" /> CSV Upload
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDataSource("website")}
+                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                            dataSource === "website" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Globe className="h-3.5 w-3.5" /> Website Pages
+                        </button>
+                      </div>
+
+                      {dataSource === "csv" ? (
+                        <>
+                          <div
+                            className={cn(
+                              "border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer",
+                              isDraggingCsv
+                                ? "border-primary bg-primary/10 scale-[1.01]"
+                                : "hover:border-primary/50 hover:bg-primary/5"
+                            )}
+                            onDragOver={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
+                            onDragEnter={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
+                            onDragLeave={() => setIsDraggingCsv(false)}
+                            onDrop={handleCsvDrop}
+                          >
+                            <input type="file" accept=".csv,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel" onChange={handleCsvUpload} className="hidden" id="csv-upload" />
+                            <label htmlFor="csv-upload" className="cursor-pointer">
+                              <Upload className={cn("mx-auto h-10 w-10 mb-3 transition-colors", isDraggingCsv ? "text-primary" : "text-muted-foreground/50")} />
+                              <p className="text-sm font-medium">
+                                {csvFile ? csvFile.name : isDraggingCsv ? "Drop your CSV here" : "Drop CSV file or click to upload"}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {csvFile
+                                  ? `${csvData.length} rows · ${csvFile.size < 1024 ? csvFile.size + " B" : csvFile.size < 1048576 ? (csvFile.size / 1024).toFixed(1) + " KB" : (csvFile.size / 1048576).toFixed(1) + " MB"}`
+                                  : "Supports .csv files up to 20 MB"}
+                              </p>
+                            </label>
+                          </div>
+                          <p className="text-xs text-muted-foreground text-center">
+                            Need a template?{" "}
+                            <a href="/sample-data.csv" download="sample-data.csv" className="text-primary hover:underline font-medium">
+                              Download sample CSV
+                            </a>
+                          </p>
+                          {csvHeaders.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className="text-xs text-muted-foreground">Columns:</span>
+                              {csvHeaders.map((h) => (
+                                <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {/* Website selector */}
+                          <Select value={websiteForPages} onValueChange={(v) => { setWebsiteForPages(v); setSelectedPageIds(new Set()); }}>
+                            <SelectTrigger className="rounded-xl h-10 text-sm">
+                              <SelectValue placeholder="Select a website to import pages from" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {websites.map((w) => (
+                                <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          {websiteForPages && (
+                            <>
+                              {/* Search */}
+                              <div className="relative">
+                                <SearchIconLucide className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input
+                                  value={websitePagesSearch}
+                                  onChange={(e) => setWebsitePagesSearch(e.target.value)}
+                                  placeholder="Search pages..."
+                                  className="h-8 pl-8 text-xs rounded-xl"
+                                />
+                              </div>
+
+                              {loadingWebPages ? (
+                                <div className="flex items-center justify-center py-8">
+                                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                  <span className="ml-2 text-xs text-muted-foreground">Loading pages...</span>
+                                </div>
+                              ) : filteredWebPages.length === 0 ? (
+                                <div className="text-center py-6 text-muted-foreground">
+                                  <Globe className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                  <p className="text-xs">No pages found on this website.</p>
+                                </div>
+                              ) : (
+                                <>
+                                  {/* Select all / count */}
+                                  <div className="flex items-center justify-between">
+                                    <button
+                                      type="button"
+                                      className="text-xs text-primary hover:underline font-medium"
+                                      onClick={() => {
+                                        if (selectedPageIds.size === filteredWebPages.length) {
+                                          setSelectedPageIds(new Set());
+                                        } else {
+                                          setSelectedPageIds(new Set(filteredWebPages.map((p: any) => p.id)));
+                                        }
+                                      }}
+                                    >
+                                      {selectedPageIds.size === filteredWebPages.length ? "Deselect all" : "Select all"}
+                                    </button>
+                                    <span className="text-xs text-muted-foreground">
+                                      {selectedPageIds.size} / {filteredWebPages.length} selected
+                                    </span>
+                                  </div>
+
+                                  {/* Pages list */}
+                                  <ScrollArea className="h-[180px] rounded-xl border border-border">
+                                    <div className="space-y-0.5 p-1">
+                                      {filteredWebPages.map((page: any) => {
+                                        const isSelected = selectedPageIds.has(page.id);
+                                        return (
+                                          <button
+                                            key={page.id}
+                                            type="button"
+                                            onClick={() => {
+                                              const next = new Set(selectedPageIds);
+                                              if (isSelected) next.delete(page.id); else next.add(page.id);
+                                              setSelectedPageIds(next);
+                                            }}
+                                            className={cn(
+                                              "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-colors",
+                                              isSelected ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/50"
+                                            )}
+                                          >
+                                            <Checkbox checked={isSelected} className="shrink-0 pointer-events-none" />
+                                            <div className="min-w-0 flex-1">
+                                              <p className="text-xs font-medium truncate">{page.title || "(Untitled)"}</p>
+                                              <p className="text-[10px] text-muted-foreground truncate">/{page.slug}</p>
+                                            </div>
+                                            <Badge variant="outline" className={`text-[9px] shrink-0 ${
+                                              page.status === "publish" || page.status === "published" ? "text-success border-success/30" : "text-muted-foreground"
+                                            }`}>
+                                              {page.status}
+                                            </Badge>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </ScrollArea>
+                                </>
+                              )}
+                            </>
+                          )}
+
+                          {selectedPageIds.size > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              <span className="text-xs text-muted-foreground">Columns:</span>
+                              {websitePagesAsCsv.headers.map((h) => (
+                                <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
