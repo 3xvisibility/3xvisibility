@@ -628,6 +628,7 @@ export default function CampaignsPage() {
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
     setDataSource("csv");
     setWebsiteForPages("");
+    setWebsiteContentType("all");
     setSelectedPageIds(new Set());
     setWebsitePagesSearch("");
   };
