@@ -257,14 +257,19 @@ export default function CampaignsPage() {
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
+      // Resolve effective data based on data source
+      const effectiveData = dataSource === "website" ? websitePagesAsCsv.rows : csvData;
+      const effectiveHeaders = dataSource === "website" ? websitePagesAsCsv.headers : csvHeaders;
+      const effectiveRowCount = effectiveData.length;
+
       // Store full CSV data inline as fallback; also upload to campaign_csv_files
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
         template_id: selectedTemplate || null,
-        website_id: selectedWebsite || null,
-        csv_data: csvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
-        total_rows: maxRows ? Math.min(parseInt(maxRows), csvData.length) : csvData.length,
+        website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
+        csv_data: effectiveData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
+        total_rows: maxRows ? Math.min(parseInt(maxRows), effectiveRowCount) : effectiveRowCount,
         user_id: user.id,
         workspace_id: wsId,
         utm_settings: utmSettings as any,
@@ -276,59 +281,58 @@ export default function CampaignsPage() {
       } as any).select("id").single();
       if (error) throw error;
 
-      // Return campaign id so onSuccess can auto-trigger generation
-      return campaign?.id;
+      const campaignId = campaign?.id;
 
-      // Upload full CSV to dedicated table
-      if (csvRawText && campaign) {
-        const { error: csvUploadError } = await supabase.from("campaign_csv_files" as any).insert({
-          campaign_id: campaign.id,
+      // Upload data to dedicated CSV table
+      if (campaignId) {
+        const rawContent = dataSource === "csv" && csvRawText
+          ? csvRawText
+          : [effectiveHeaders.join(","), ...effectiveData.map(r => effectiveHeaders.map(h => `"${(r[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
+
+        await supabase.from("campaign_csv_files" as any).insert({
+          campaign_id: campaignId,
           workspace_id: wsId,
           user_id: user.id,
-          file_name: csvFile?.name || "data.csv",
-          file_size: csvRawText.length,
-          raw_content: csvRawText,
-          headers: csvHeaders as any,
-          row_count: csvData.length,
-        });
-        if (csvUploadError) {
-          console.error("CSV upload to dedicated table failed:", csvUploadError);
-          // Data is already stored in csv_data column as fallback
-        }
-      }
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : "website-pages.csv",
+          file_size: rawContent.length,
+          raw_content: rawContent,
+          headers: effectiveHeaders as any,
+          row_count: effectiveRowCount,
+        }).then(({ error: csvErr }) => { if (csvErr) console.error("CSV upload failed:", csvErr); });
 
-      // Persist DataSource
-      if (csvFile && campaign) {
+        // Persist DataSource
         await supabase.from("data_sources").insert({
-          campaign_id: campaign.id,
+          campaign_id: campaignId,
           workspace_id: wsId,
           user_id: user.id,
-          type: "csv",
-          file_name: csvFile.name,
-          file_size: csvFile.size,
-          row_count: csvData.length,
-          headers: csvHeaders as any,
+          type: dataSource === "csv" ? "csv" : "website",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : "website-pages",
+          file_size: dataSource === "csv" ? (csvFile?.size || rawContent.length) : rawContent.length,
+          row_count: effectiveRowCount,
+          headers: effectiveHeaders as any,
         });
-      }
 
-      // Persist Mappings from variable mapping
-      if (variableMapping && campaign) {
-        const mappingRows = variableMapping.matched
-          .filter((m) => m.column)
-          .map((m, i) => ({
-            campaign_id: campaign.id,
-            workspace_id: wsId,
-            user_id: user.id,
-            source_column: m.column!,
-            target_field: m.variable,
-            field_category: "content",
-            sort_order: i,
-            is_required: true,
-          }));
-        if (mappingRows.length > 0) {
-          await supabase.from("mappings").insert(mappingRows);
+        // Persist Mappings from variable mapping
+        if (variableMapping) {
+          const mappingRows = variableMapping.matched
+            .filter((m) => m.column)
+            .map((m, i) => ({
+              campaign_id: campaignId,
+              workspace_id: wsId,
+              user_id: user.id,
+              source_column: m.column!,
+              target_field: m.variable,
+              field_category: "content",
+              sort_order: i,
+              is_required: true,
+            }));
+          if (mappingRows.length > 0) {
+            await supabase.from("mappings").insert(mappingRows);
+          }
         }
       }
+
+      return campaignId;
     },
     onSuccess: (campaignId) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
