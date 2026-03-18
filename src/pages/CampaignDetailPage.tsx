@@ -150,7 +150,19 @@ export default function CampaignDetailPage() {
       const { data, error } = await supabase.functions.invoke("generate-pages", {
         body: { campaign_id: id, action },
       });
-      if (error) throw error;
+      if (error) {
+        // Try to extract the JSON error message from FunctionsHttpError
+        try {
+          const ctx = (error as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            if (body?.error) throw new Error(body.error);
+          }
+        } catch (e) {
+          if (e instanceof Error && e.message !== error.message) throw e;
+        }
+        throw new Error(error.message || "Generation failed");
+      }
       if (data?.error) throw new Error(data.error);
       return data;
     },
