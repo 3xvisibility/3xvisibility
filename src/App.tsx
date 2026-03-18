@@ -31,6 +31,7 @@ import DataCsvPage from "./pages/DataCsvPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
+import { FeatureGate } from "./components/FeatureGate";
 
 const queryClient = new QueryClient();
 
