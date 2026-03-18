@@ -190,7 +190,42 @@ export default function CampaignsPage() {
     },
   });
 
-  const { data: campaignLogs = [] } = useQuery({
+  // Fetch website pages for import
+  const { data: websitePages = [], isLoading: loadingWebPages } = useQuery({
+    queryKey: ["site-content-for-campaign", websiteForPages],
+    enabled: !!websiteForPages && dataSource === "website",
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteForPages, content_type: "pages" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return (data.items || []) as { id: string; title: string; slug: string; url: string; type: string; status: string; content: string; excerpt: string; modified: string }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const filteredWebPages = useMemo(() => {
+    if (!websitePagesSearch) return websitePages;
+    const q = websitePagesSearch.toLowerCase();
+    return websitePages.filter((p: any) => p.title?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q));
+  }, [websitePages, websitePagesSearch]);
+
+  // Convert selected website pages to CSV-like data
+  const websitePagesAsCsv = useMemo(() => {
+    if (dataSource !== "website" || selectedPageIds.size === 0) return { headers: [] as string[], rows: [] as Record<string, string>[] };
+    const selected = websitePages.filter((p: any) => selectedPageIds.has(p.id));
+    const headers = ["title", "slug", "url", "status", "excerpt"];
+    const rows = selected.map((p: any) => ({
+      title: p.title || "",
+      slug: p.slug || "",
+      url: p.url || "",
+      status: p.status || "",
+      excerpt: (p.excerpt || "").replace(/<[^>]*>/g, "").slice(0, 500),
+    }));
+    return { headers, rows };
+  }, [dataSource, selectedPageIds, websitePages]);
+
     queryKey: ["campaign-logs", logDialogCampaign],
     enabled: !!logDialogCampaign,
     queryFn: async () => {
