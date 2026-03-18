@@ -290,7 +290,7 @@ export default function BillingPage() {
                 <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">Active</Badge>
               </div>
             </div>
-            {stripePlan && subscriptionEnd && (
+            {currentPlan !== "free" && subscriptionEnd && (
               <p className="text-xs text-muted-foreground">
                 Renews {new Date(subscriptionEnd).toLocaleDateString()}
               </p>
