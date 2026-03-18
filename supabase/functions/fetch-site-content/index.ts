@@ -306,23 +306,43 @@ Deno.serve(async (req) => {
     const type = content_type || "pages";
     let items: ContentItem[] = [];
 
-    if (website.type === "wordpress") {
-      items = await fetchWordPressContent(baseUrl, credentials, type);
-    } else if (website.type === "shopify") {
-      items = await fetchShopifyContent(baseUrl, credentials, type);
-    } else if (website.type === "prestashop") {
-      items = await fetchPrestaShopContent(baseUrl, credentials, type);
-    } else if (website.type === "woocommerce") {
-      if (type === "products") {
-        items = await fetchWooCommerceProducts(baseUrl, credentials);
-      } else {
-        const wpCreds = { username: credentials.consumer_key, app_password: credentials.consumer_secret };
-        try {
-          items = await fetchWordPressContent(baseUrl, wpCreds, "pages");
-        } catch {
-          items = [];
+    // Validate URL is not a placeholder
+    const hostname = new URL(baseUrl).hostname;
+    if (hostname.endsWith("example.com") || hostname.endsWith("example.org") || hostname.endsWith("example.net")) {
+      return new Response(
+        JSON.stringify({ error: `The website URL "${baseUrl}" is a placeholder. Please update the website URL in Settings → Websites to your actual domain.` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    try {
+      if (website.type === "wordpress") {
+        items = await fetchWordPressContent(baseUrl, credentials, type);
+      } else if (website.type === "shopify") {
+        items = await fetchShopifyContent(baseUrl, credentials, type);
+      } else if (website.type === "prestashop") {
+        items = await fetchPrestaShopContent(baseUrl, credentials, type);
+      } else if (website.type === "woocommerce") {
+        if (type === "products") {
+          items = await fetchWooCommerceProducts(baseUrl, credentials);
+        } else {
+          const wpCreds = { username: credentials.consumer_key, app_password: credentials.consumer_secret };
+          try {
+            items = await fetchWordPressContent(baseUrl, wpCreds, "pages");
+          } catch {
+            items = [];
+          }
         }
       }
+    } catch (fetchErr: any) {
+      const msg = fetchErr?.message || "";
+      if (msg.includes("dns error") || msg.includes("failed to lookup address")) {
+        return new Response(
+          JSON.stringify({ error: `Could not connect to "${hostname}". Please verify the website URL is correct and the site is online.` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      throw fetchErr;
     }
 
     console.log(`Fetched ${items.length} ${type} from ${website.name}`);
