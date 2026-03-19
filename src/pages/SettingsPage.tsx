@@ -350,3 +350,155 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+interface WebhookEndpoint {
+  id: string;
+  url: string;
+  secret: string | null;
+  events: string[];
+  is_active: boolean;
+  last_triggered_at: string | null;
+  last_status_code: number | null;
+}
+
+function WebhookSettings({ wsId }: { wsId: string | undefined }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [newUrl, setNewUrl] = useState("");
+  const [newSecret, setNewSecret] = useState("");
+
+  const { data: webhooks = [], isLoading } = useQuery({
+    queryKey: ["webhooks", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("webhook_endpoints")
+        .select("*")
+        .eq("workspace_id", wsId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as unknown as WebhookEndpoint[];
+    },
+  });
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("webhook_endpoints").insert({
+        user_id: user.id,
+        workspace_id: wsId!,
+        url: newUrl,
+        secret: newSecret || null,
+        events: ["campaign.completed", "campaign.failed"],
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      setNewUrl("");
+      setNewSecret("");
+      toast({ title: "Webhook added" });
+    },
+    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase.from("webhook_endpoints").update({ is_active } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["webhooks"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("webhook_endpoints").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      toast({ title: "Webhook deleted" });
+    },
+  });
+
+  return (
+    <Card className="shadow-surface">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Webhook className="h-5 w-5 text-primary" />
+          Webhooks
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Receive HTTP notifications when campaigns complete or fail. We&apos;ll POST a JSON payload to your URL.
+        </p>
+
+        {/* Add new webhook */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            placeholder="https://your-server.com/webhook"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            className="flex-1"
+          />
+          <Input
+            placeholder="Secret (optional)"
+            value={newSecret}
+            onChange={(e) => setNewSecret(e.target.value)}
+            className="sm:w-44"
+          />
+          <Button
+            onClick={() => addMutation.mutate()}
+            disabled={!newUrl || addMutation.isPending}
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-1" /> Add
+          </Button>
+        </div>
+
+        {/* List */}
+        {isLoading ? (
+          <Skeleton className="h-16 w-full" />
+        ) : webhooks.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-4">No webhooks configured.</p>
+        ) : (
+          <div className="space-y-2">
+            {webhooks.map((wh) => (
+              <div key={wh.id} className="flex items-center gap-3 p-3 rounded-md border border-border bg-muted/30">
+                <Switch
+                  checked={wh.is_active}
+                  onCheckedChange={(checked) => toggleMutation.mutate({ id: wh.id, is_active: checked })}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono truncate">{wh.url}</p>
+                  <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                    <span>{wh.events.join(", ")}</span>
+                    {wh.last_triggered_at && (
+                      <>
+                        <span>·</span>
+                        {wh.last_status_code && wh.last_status_code >= 200 && wh.last_status_code < 300 ? (
+                          <span className="flex items-center gap-0.5 text-emerald-600">
+                            <CheckCircle2 className="h-3 w-3" /> {wh.last_status_code}
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-0.5 text-destructive">
+                            <XCircle className="h-3 w-3" /> {wh.last_status_code || "Error"}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => deleteMutation.mutate(wh.id)}>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
