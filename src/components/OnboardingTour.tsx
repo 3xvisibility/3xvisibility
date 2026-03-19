@@ -207,8 +207,9 @@ export function OnboardingTour() {
                   </div>
                 </div>
                 <button
-                  onClick={skip}
-                  className="text-muted-foreground hover:text-foreground transition-colors p-1 -m-1"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); skip(); }}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-2 -m-1 cursor-pointer active:opacity-70"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -232,12 +233,13 @@ export function OnboardingTour() {
               {/* Actions */}
               <div className="flex items-center justify-between pt-1">
                 <button
-                  onClick={skip}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); skip(); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors py-2 px-1 -ml-1 cursor-pointer active:opacity-70"
                 >
                   Skip tour
                 </button>
-                <Button size="sm" onClick={next} className="h-8 px-4 text-xs gap-1.5">
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); next(); }} className="h-8 px-4 text-xs gap-1.5">
                   {currentStep < steps.length - 1 ? (
                     <>
                       Next <ChevronRight className="h-3 w-3" />
