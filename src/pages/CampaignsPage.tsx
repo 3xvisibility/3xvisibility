@@ -951,7 +951,7 @@ export default function CampaignsPage() {
                           <button
                             key={t.value}
                             type="button"
-                            onClick={() => setCampaignType(t.value)}
+                            onClick={() => toggleCampaignType(t.value)}
                             className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                               campaignType === t.value
                                 ? "border-primary bg-primary/5 shadow-sm"
