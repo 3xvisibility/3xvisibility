@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
+import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
