@@ -937,6 +937,13 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                   templateHtml={templateHtml}
                   variables={variables}
                   onChange={setTemplateHtml}
+                  onAddVariable={(name, original) => {
+                    setVariables((prev) => {
+                      // Don't add duplicate
+                      if (prev.some((v) => v.name === name)) return prev;
+                      return [...prev, { name, original, values: [original] }];
+                    });
+                  }}
                 />
               </TabsContent>
 
