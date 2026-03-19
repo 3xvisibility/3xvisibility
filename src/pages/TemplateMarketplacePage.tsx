@@ -427,6 +427,59 @@ export default function TemplateMarketplacePage() {
     },
   });
 
+  // Share template mutation
+  const shareMutation = useMutation({
+    mutationFn: async (form: typeof shareForm) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const template = userTemplates.find((t: any) => t.id === form.templateId);
+      if (!template) throw new Error("Template not found");
+      const { error } = await supabase.from("shared_templates").insert({
+        template_id: form.templateId,
+        user_id: user.id,
+        workspace_id: wsId,
+        author_name: form.authorName || "Anonymous",
+        description: form.description,
+        category: form.category,
+        tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
+        content: (template as any).content,
+        variables: (template as any).variables || [],
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shared-templates"] });
+      toast({ title: "Template shared!", description: "Your template is now available in the community marketplace." });
+      setShareOpen(false);
+      setShareForm({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Share failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Rate template mutation
+  const rateMutation = useMutation({
+    mutationFn: async ({ sharedId, rating, review }: { sharedId: string; rating: number; review: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("template_ratings").upsert({
+        shared_template_id: sharedId,
+        user_id: user.id,
+        rating,
+        review: review || null,
+      } as any, { onConflict: "shared_template_id,user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["template-ratings"] });
+      toast({ title: "Rating submitted!" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Rating failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const categoryIcon = (cat: string) => {
     const found = CATEGORIES.find((c) => c.id === cat);
     return found?.label || cat;
