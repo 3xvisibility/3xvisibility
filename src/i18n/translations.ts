@@ -680,6 +680,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.campaigns": "Kampagnen",
     "sidebar.generatedPages": "Generierte Seiten",
     "sidebar.templates": "Vorlagen",
+    "sidebar.marketplace": "Marktplatz",
     "sidebar.websiteContent": "Website-Inhalte",
     "sidebar.aiScanner": "KI-Scanner",
     "sidebar.discovery": "Entdeckung",
