@@ -61,6 +61,10 @@ export default function SettingsPage() {
   const [aiLength, setAiLength] = useState("medium");
   const [aiLanguage, setAiLanguage] = useState("en");
   const [initialized, setInitialized] = useState(false);
+  const [newWebhookUrl, setNewWebhookUrl] = useState("");
+  const [newWebhookSecret, setNewWebhookSecret] = useState("");
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
 
   // Fetch profile
   const { data: profile, isLoading: loadingProfile } = useQuery({
