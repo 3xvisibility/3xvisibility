@@ -18,6 +18,7 @@ import {
   Database,
   Lock,
   Store,
+  FlaskConical,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
