@@ -222,6 +222,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/ab-testing"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><ABTestingPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
