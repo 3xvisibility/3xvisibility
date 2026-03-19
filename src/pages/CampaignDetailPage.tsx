@@ -331,7 +331,9 @@ export default function CampaignDetailPage() {
             <div className="flex items-center gap-2">
               <h1 className="text-display">{campaign.name}</h1>
               <Badge variant="secondary" className={`${cStatus.class} border text-xs`}>{cStatus.label}</Badge>
-              <Badge variant="outline" className="uppercase text-[10px] font-semibold">{campaign.campaign_type}</Badge>
+              {((campaign as any).campaign_types?.length ? (campaign as any).campaign_types : [campaign.campaign_type]).map((t: string) => (
+                <Badge key={t} variant="outline" className="uppercase text-[10px] font-semibold">{t}</Badge>
+              ))}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
               {(campaign as any).websites?.name || "No site"} · {(campaign as any).templates?.name || "No template"} · {campaign.total_rows || 0} rows

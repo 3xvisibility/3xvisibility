@@ -60,7 +60,17 @@ export default function CampaignsPage() {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
-  const [campaignType, setCampaignType] = useState<"seo" | "sea" | "geo">("seo");
+  const [campaignTypes, setCampaignTypes] = useState<("seo" | "sea" | "geo")[]>(["seo"]);
+  const campaignType = campaignTypes[0] || "seo";
+  const toggleCampaignType = (val: "seo" | "sea" | "geo") => {
+    setCampaignTypes(prev => {
+      if (prev.includes(val)) {
+        if (prev.length === 1) return prev; // must keep at least one
+        return prev.filter(t => t !== val);
+      }
+      return [...prev, val];
+    });
+  };
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
@@ -272,18 +282,17 @@ export default function CampaignsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
-      const utmSettings = campaignType === "sea" ? {
+      const utmSettings = campaignTypes.includes("sea") ? {
         utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
         utm_term: utmTerm, utm_content: utmContent,
         ad_campaign_id: adCampaignId || null, ad_group_id: adGroupId || null,
       } : null;
-      const geoSettings = campaignType === "geo" ? {
+      const geoSettings = campaignTypes.includes("geo") ? {
         country: geoCountry, region: geoRegion, city: geoCity,
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
-      // Resolve directory structure
-      const dirStructure = campaignType === "sea" && seaDirectoryLevels
+      const dirStructure = campaignTypes.includes("sea") && seaDirectoryLevels
         ? { levels: seaDirectoryLevels.split(",").map(s => s.trim()).filter(Boolean), separator: "/" }
         : null;
       // Resolve effective data based on data source
@@ -295,6 +304,7 @@ export default function CampaignsPage() {
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
+        campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
         website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
         csv_data: effectiveData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
@@ -406,6 +416,7 @@ export default function CampaignsPage() {
       const { data: newCampaign, error } = await supabase.from("campaigns").insert({
         name: `${campaign.name} (Copy)`,
         campaign_type: campaign.campaign_type,
+        campaign_types: (campaign as any).campaign_types || [campaign.campaign_type],
         user_id: user.id,
         workspace_id: wsId,
         template_id: campaign.template_id,
@@ -698,7 +709,7 @@ export default function CampaignsPage() {
     setOpen(false);
     setStep(1);
     setCampaignName("");
-    setCampaignType("seo");
+    setCampaignTypes(["seo"]);
     setCsvRawText("");
     setCsvFile(null);
     setCsvHeaders([]);
@@ -785,9 +796,10 @@ export default function CampaignsPage() {
       { num: 4, label: "Template" },
     ];
     let nextNum = 5;
-    if (campaignType === "sea") {
+    if (campaignTypes.includes("sea")) {
       steps.push({ num: nextNum++, label: "UTM" });
-    } else if (campaignType === "geo") {
+    }
+    if (campaignTypes.includes("geo")) {
       steps.push({ num: nextNum++, label: "GEO" });
     }
     steps.push({ num: nextNum++, label: "Website" });
@@ -804,7 +816,7 @@ export default function CampaignsPage() {
   const filteredCampaigns = useMemo(() => {
     let result = campaigns;
     if (typeFilter !== "all") {
-      result = result.filter((c) => c.campaign_type === typeFilter);
+      result = result.filter((c) => c.campaign_type === typeFilter || ((c as any).campaign_types || []).includes(typeFilter));
     }
     if (statusFilter !== "all") {
       result = result.filter((c) => c.status === statusFilter);
@@ -931,28 +943,36 @@ export default function CampaignsPage() {
 
                   {step === 2 && (
                     <div className="space-y-3">
-                      <Label className="text-sm font-semibold mb-2 block">Campaign Type</Label>
+                       <Label className="text-sm font-semibold mb-2 block">Campaign Type <span className="text-muted-foreground font-normal">(select one or more)</span></Label>
                       <div className="grid grid-cols-3 gap-3">
                         {[
                           { value: "seo" as const, label: "SEO", icon: SearchIconLucide, desc: "Organic search pages" },
                           { value: "sea" as const, label: "SEA", icon: Target, desc: "Paid landing pages" },
                           { value: "geo" as const, label: "GEO", icon: MapPin, desc: "Local / geo pages" },
-                        ].map((t) => (
+                        ].map((t) => {
+                          const isSelected = campaignTypes.includes(t.value);
+                          return (
                           <button
                             key={t.value}
                             type="button"
-                            onClick={() => setCampaignType(t.value)}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                              campaignType === t.value
+                            onClick={() => toggleCampaignType(t.value)}
+                            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 relative ${
+                              isSelected
                                 ? "border-primary bg-primary/5 shadow-sm"
                                 : "border-border hover:border-primary/30 hover:bg-muted/50"
                             }`}
                           >
-                            <t.icon className={`h-6 w-6 ${campaignType === t.value ? "text-primary" : "text-muted-foreground"}`} />
-                            <span className={`text-sm font-semibold ${campaignType === t.value ? "text-primary" : "text-foreground"}`}>{t.label}</span>
+                            {isSelected && (
+                              <div className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
+                                <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                              </div>
+                            )}
+                            <t.icon className={`h-6 w-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                            <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>{t.label}</span>
                             <span className="text-[10px] text-muted-foreground text-center">{t.desc}</span>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -1355,7 +1375,7 @@ export default function CampaignsPage() {
                     </div>
                   )}
 
-                  {step === 5 && campaignType === "sea" && (
+                  {wizardSteps[step - 1]?.label === "UTM" && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-1">
                         <Target className="h-4 w-4 text-primary" />
@@ -1424,7 +1444,7 @@ export default function CampaignsPage() {
                     </div>
                   )}
 
-                  {step === 5 && campaignType === "geo" && (
+                  {wizardSteps[step - 1]?.label === "GEO" && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-1">
                         <MapPin className="h-4 w-4 text-primary" />
@@ -1658,7 +1678,7 @@ export default function CampaignsPage() {
                         <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${effectiveCsvData.length}` : `${effectiveCsvData.length || "—"} (all)`}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignTypes.join(" + ")}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Method</span><span className="font-medium capitalize">{generationMethod}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduleMode === "recurring" ? `Recurring (${recurringInterval})` : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
@@ -1815,9 +1835,11 @@ export default function CampaignsPage() {
                           <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border`}>
                             {isPaused ? "Paused" : config.label}
                           </Badge>
-                          <Badge variant="outline" className="text-[10px] uppercase font-mono">
-                            {(c as any).campaign_type || "seo"}
-                          </Badge>
+                          {((c as any).campaign_types?.length ? (c as any).campaign_types : [(c as any).campaign_type || "seo"]).map((t: string) => (
+                            <Badge key={t} variant="outline" className="text-[10px] uppercase font-mono">
+                              {t}
+                            </Badge>
+                          ))}
                         </div>
                       </td>
                       <td className="py-3 px-4 tabular-nums text-muted-foreground">{progress.generated}/{progress.total}</td>
@@ -1882,9 +1904,11 @@ export default function CampaignsPage() {
                         <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border shrink-0`}>
                           {isPaused ? "Paused" : config.label}
                         </Badge>
-                        <Badge variant="outline" className="text-[10px] uppercase font-mono shrink-0">
-                          {(c as any).campaign_type || "seo"}
-                        </Badge>
+                        {((c as any).campaign_types?.length ? (c as any).campaign_types : [(c as any).campaign_type || "seo"]).map((t: string) => (
+                          <Badge key={t} variant="outline" className="text-[10px] uppercase font-mono shrink-0">
+                            {t}
+                          </Badge>
+                        ))}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         {c.templates?.name && (

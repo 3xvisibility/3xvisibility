@@ -252,6 +252,7 @@ export type Database = {
           author_rotation: Json | null
           batch_size: number | null
           campaign_type: Database["public"]["Enums"]["campaign_type"]
+          campaign_types: string[]
           created_at: string
           csv_data: Json | null
           csv_storage_path: string | null
@@ -285,6 +286,7 @@ export type Database = {
           author_rotation?: Json | null
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
+          campaign_types?: string[]
           created_at?: string
           csv_data?: Json | null
           csv_storage_path?: string | null
@@ -318,6 +320,7 @@ export type Database = {
           author_rotation?: Json | null
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
+          campaign_types?: string[]
           created_at?: string
           csv_data?: Json | null
           csv_storage_path?: string | null
