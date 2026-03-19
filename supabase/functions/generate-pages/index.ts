@@ -667,6 +667,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let activeCampaignId: string | null = null;
+  let supabase: ReturnType<typeof createClient> | null = null;
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -678,7 +681,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Support service-role calls from the scheduled runner
     const serviceRoleHeader = req.headers.get("x-service-role-key");
@@ -702,8 +705,9 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields }));
+    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields }));
     const { campaign_id, action, test_mode, overwrite_fields } = body;
+    activeCampaignId = campaign_id ?? null;
     // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
     const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
 
