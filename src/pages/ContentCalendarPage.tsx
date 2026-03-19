@@ -272,9 +272,9 @@ export default function ContentCalendarPage() {
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-[10px]">
-                      {c.campaign_type.toUpperCase()}
-                    </Badge>
+                    {((c as any).campaign_types?.length ? (c as any).campaign_types : [c.campaign_type]).map((t: string) => (
+                      <Badge key={t} variant="outline" className="text-[10px]">{t.toUpperCase()}</Badge>
+                    ))}
                   </div>
                 ))}
               </div>
