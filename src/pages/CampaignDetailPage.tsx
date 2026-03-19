@@ -394,7 +394,12 @@ export default function CampaignDetailPage() {
           {/* Recent Executions */}
           {executionHistory.length > 0 && (
             <Card className="border-0 shadow-surface">
-              <CardHeader><CardTitle className="text-sm">Execution History</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Execution History</CardTitle>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => exportExecutionHistoryCsv(jobs as any, campaign?.name || "campaign")}>
+                  <Download className="h-3 w-3 mr-1" /> Export
+                </Button>
+              </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
