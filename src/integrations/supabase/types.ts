@@ -1254,6 +1254,7 @@ export type Database = {
       }
       workspaces: {
         Row: {
+          branding: Json | null
           created_at: string
           id: string
           name: string
@@ -1263,6 +1264,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branding?: Json | null
           created_at?: string
           id?: string
           name: string
@@ -1272,6 +1274,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branding?: Json | null
           created_at?: string
           id?: string
           name?: string

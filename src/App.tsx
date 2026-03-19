@@ -32,6 +32,7 @@ import WebsiteContentPage from "./pages/WebsiteContentPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
+import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
       <WorkspaceProvider>
+      <BrandingProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -214,6 +216,7 @@ const App = () => {
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </BrandingProvider>
       </WorkspaceProvider>
       </LanguageProvider>
     </QueryClientProvider>
