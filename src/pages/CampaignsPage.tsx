@@ -1374,7 +1374,7 @@ export default function CampaignsPage() {
                     </div>
                   )}
 
-                  {step === 5 && campaignType === "sea" && (
+                  {wizardSteps[step - 1]?.label === "UTM" && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-1">
                         <Target className="h-4 w-4 text-primary" />
