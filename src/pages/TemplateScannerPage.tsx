@@ -92,12 +92,13 @@ function SelectionPopover({
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground">Assign variable</p>
+        <p className="text-xs font-medium text-muted-foreground">Create a variable</p>
         <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onClose}>
           <X className="h-3 w-3" />
         </Button>
       </div>
       <p className="text-xs bg-muted rounded px-2 py-1 truncate font-mono">"{selectedText}"</p>
+      <p className="text-[10px] text-muted-foreground">💡 Name this variable (e.g. "city", "price"). It will become a column in your CSV.</p>
       <div className="flex gap-1.5">
         <Input
           ref={inputRef}
