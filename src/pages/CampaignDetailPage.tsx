@@ -649,6 +649,7 @@ export default function CampaignDetailPage() {
               if (csvData && csvData.length > 0) return Object.keys(csvData[0]);
               return [];
             })()}
+            csvData={(campaign.csv_data as Record<string, string>[]) || []}
             onSave={async (structure) => {
               await supabase.from("campaigns").update({
                 directory_structure: structure,
