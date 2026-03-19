@@ -342,9 +342,9 @@ ${highlightedHtml}
 </body></html>`;
 
   return (
-    <div className="flex flex-col h-full gap-2">
+    <div className="flex min-h-0 flex-col h-full gap-2">
       {/* AI Edit Input */}
-      <div data-tour="template-ai-edit" className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+      <div data-tour="template-ai-edit" className="flex flex-col sm:flex-row sm:items-center gap-2 bg-muted/50 rounded-lg p-2">
         <Wand2 className="h-4 w-4 text-primary shrink-0" />
         <Input
           value={aiPrompt}
@@ -358,14 +358,14 @@ ${highlightedHtml}
           size="sm"
           onClick={handleAiEdit}
           disabled={aiLoading || !aiPrompt.trim()}
-          className="h-7 text-xs gap-1 bg-gradient-primary border-0 shrink-0"
+          className="h-8 text-xs gap-1 bg-gradient-primary border-0 shrink-0 w-full sm:w-auto"
         >
           {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
           {aiLoading ? "Applying..." : "Apply"}
         </Button>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
           {showCode
             ? "Edit raw HTML — for advanced users"
@@ -401,25 +401,25 @@ ${highlightedHtml}
             onClick={() => setShowCode(!showCode)}
           >
             {showCode ? <Eye className="h-3 w-3" /> : <Code className="h-3 w-3" />}
-            {showCode ? "Visual Preview" : "View Code"}
+            {showCode ? "Visual" : "Code"}
           </Button>
         </div>
       </div>
 
       {showCode ? (
-        <ScrollArea className="flex-1 border rounded-lg">
+        <ScrollArea className="flex-1 border rounded-lg min-h-[260px]">
           <Textarea
             value={templateHtml}
             onChange={(e) => onChange(e.target.value)}
-            className="font-mono text-xs min-h-[350px] border-0 focus-visible:ring-0"
+            className="font-mono text-xs min-h-[260px] sm:min-h-[350px] border-0 focus-visible:ring-0"
           />
         </ScrollArea>
       ) : (
-        <div data-tour="template-preview" className="flex-1 border rounded-lg overflow-hidden bg-white relative">
+        <div data-tour="template-preview" className="flex-1 border rounded-lg overflow-hidden bg-white relative min-h-[260px] sm:min-h-[350px]">
           <iframe
             ref={iframeRef}
             srcDoc={previewDoc}
-            className="w-full h-full min-h-[350px] border-0"
+            className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin"
             title="Template preview — select text to add variables"
           />
