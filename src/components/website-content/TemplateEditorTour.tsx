@@ -210,8 +210,8 @@ export function TemplateEditorTour({ active, restartKey }: { active: boolean; re
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
-            className="fixed z-[10000]"
-            style={{ ...getTooltipPosition(), width: Math.min(300, window.innerWidth - 24) }}
+            className="fixed z-[10000] max-w-[calc(100vw-16px)]"
+            style={getTooltipPosition()}
           >
             <div className="rounded-xl border border-border bg-card shadow-xl p-4 space-y-2.5">
               <div className="flex items-start justify-between">
