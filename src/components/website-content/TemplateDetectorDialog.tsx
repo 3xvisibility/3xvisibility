@@ -341,7 +341,7 @@ ${highlightedHtml}
   return (
     <div className="flex flex-col h-full gap-2">
       {/* AI Edit Input */}
-      <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+      <div data-tour="template-ai-edit" className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
         <Wand2 className="h-4 w-4 text-primary shrink-0" />
         <Input
           value={aiPrompt}
