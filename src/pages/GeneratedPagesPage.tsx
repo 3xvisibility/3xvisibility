@@ -222,6 +222,37 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const retryFailedMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // First reset status to pending and clear error
+      const { error: resetErr } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending" as any, error_message: null })
+        .in("id", ids);
+      if (resetErr) throw resetErr;
+
+      // Then publish them
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { page_ids: ids, publish_type: publishType },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setSelectedIds(new Set());
+      toast({
+        title: "Retry complete",
+        description: `${data.published} published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({ title: "Retry failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const openSeoEditor = (page: GeneratedPage) => {
     setSeoEditPage(page);
     setSeoForm({
@@ -387,14 +418,17 @@ export default function GeneratedPagesPage() {
                 className="bg-gradient-primary border-0 shadow-lg shadow-primary/25"
                 disabled={bulkPublishMutation.isPending}
                 onClick={() => {
-                  const pendingSelected = [...selectedIds].filter(
-                    (id) => pages.find((p) => p.id === id)?.status === "pending"
+                  const publishableSelected = [...selectedIds].filter(
+                    (id) => {
+                      const p = pages.find((pg) => pg.id === id);
+                      return p?.status === "pending" || p?.status === "failed";
+                    }
                   );
-                  if (pendingSelected.length === 0) {
-                    toast({ title: "No pending pages", description: "Only pending pages can be published.", variant: "destructive" });
+                  if (publishableSelected.length === 0) {
+                    toast({ title: "No publishable pages", description: "Select pending or failed pages to publish.", variant: "destructive" });
                     return;
                   }
-                  bulkPublishMutation.mutate(pendingSelected);
+                  bulkPublishMutation.mutate(publishableSelected);
                 }}
               >
                 <Send className="h-3.5 w-3.5 mr-1.5" />
@@ -424,20 +458,20 @@ export default function GeneratedPagesPage() {
               <Button
                 size="sm"
                 variant="outline"
-                disabled={bulkStatusMutation.isPending}
+                disabled={retryFailedMutation.isPending}
                 onClick={() => {
                   const failedSelected = [...selectedIds].filter(
                     (id) => pages.find((p) => p.id === id)?.status === "failed"
                   );
                   if (failedSelected.length === 0) {
-                    toast({ title: "No failed pages", description: "Only failed pages can be reset for re-generation.", variant: "destructive" });
+                    toast({ title: "No failed pages", description: "Only failed pages can be retried.", variant: "destructive" });
                     return;
                   }
-                  bulkStatusMutation.mutate({ ids: failedSelected, status: "pending" });
+                  retryFailedMutation.mutate(failedSelected);
                 }}
               >
                 <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-                {bulkStatusMutation.isPending ? "Resetting..." : "Re-queue Failed"}
+                {retryFailedMutation.isPending ? "Retrying..." : "Retry Failed"}
               </Button>
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
@@ -606,6 +640,32 @@ export default function GeneratedPagesPage() {
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
+                          {page.status === "failed" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-warning"
+                              onClick={() => retryFailedMutation.mutate([page.id])}
+                              disabled={retryFailedMutation.isPending}
+                              title="Retry publish"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {page.status === "failed" && page.error_message && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-[9px] text-destructive border-destructive/30 max-w-[120px] truncate cursor-help">
+                                    {page.error_message}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">{page.error_message}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           {page.external_url && (
                             <>
                               <Button size="sm" variant="ghost" asChild title="Open live page">
