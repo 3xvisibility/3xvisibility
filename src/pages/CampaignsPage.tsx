@@ -1669,7 +1669,7 @@ export default function CampaignsPage() {
               </div>
               </ScrollArea>
 
-              <div className="flex justify-between px-4 sm:px-6 py-4 border-t border-border bg-muted/30">
+              <div className="flex justify-between px-4 sm:px-6 py-4 border-t border-border bg-muted/30 shrink-0">
                 <Button
                   variant="outline"
                   onClick={() => step === 1 ? setOpen(false) : setStep(step - 1)}
