@@ -217,6 +217,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.logout": "Log out",
     "sidebar.dataCsv": "Data / CSV",
     "sidebar.contentCalendar": "Calendar",
+    "sidebar.seoAudit": "SEO Audit",
 
     // Auth
     "auth.home": "Home",
