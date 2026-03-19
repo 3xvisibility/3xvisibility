@@ -228,8 +228,9 @@ export function TemplateEditorTour({ active, restartKey }: { active: boolean; re
 
               <div className="flex items-center justify-between pt-0.5">
                 <button
-                  onClick={finish}
-                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); finish(); }}
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors py-2 px-1 -ml-1 cursor-pointer active:opacity-70"
                 >
                   Skip tour
                 </button>
