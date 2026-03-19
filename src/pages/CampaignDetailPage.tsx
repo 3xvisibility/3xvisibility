@@ -524,6 +524,60 @@ export default function CampaignDetailPage() {
           )}
         </TabsContent>
 
+        {/* LOGS TAB */}
+        <TabsContent value="logs" className="space-y-4">
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => exportLogsCsv(campaignLogs, campaign?.name || "campaign")} disabled={campaignLogs.length === 0}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> Export Logs CSV
+            </Button>
+          </div>
+          {campaignLogs.length === 0 ? (
+            <Card className="border-0 shadow-surface">
+              <CardContent className="py-16 text-center">
+                <ScrollText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+                <p className="text-sm font-medium text-muted-foreground">No logs yet</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Logs will appear here once a generation runs.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-surface">
+              <CardContent className="p-0">
+                <ScrollArea className="max-h-[600px]">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-card z-10">
+                      <tr className="border-b text-xs text-muted-foreground">
+                        <th className="text-left p-3 font-medium">Timestamp</th>
+                        <th className="text-left p-3 font-medium">Event</th>
+                        <th className="text-left p-3 font-medium">Message</th>
+                        <th className="text-right p-3 font-medium">Batch</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {campaignLogs.map((log: any) => (
+                        <tr key={log.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <td className="p-3 text-xs text-muted-foreground tabular-nums whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="p-3">
+                            <Badge variant="secondary" className={`text-[10px] ${
+                              log.event.includes("error") || log.event.includes("failed") ? "bg-destructive/10 text-destructive" :
+                              log.event.includes("completed") || log.event.includes("started") ? "bg-primary/10 text-primary" :
+                              log.event.includes("paused") ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"
+                            }`}>{log.event}</Badge>
+                          </td>
+                          <td className="p-3 text-xs text-muted-foreground max-w-[300px] truncate">{log.message || "—"}</td>
+                          <td className="p-3 text-right text-xs tabular-nums text-muted-foreground">
+                            {log.batch_number != null ? `#${log.batch_number}` : "—"}
+                            {log.pages_in_batch != null && ` (${log.pages_in_batch}p)`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         {/* ERRORS TAB */}
         <TabsContent value="errors" className="space-y-4">
           {errorPages.length === 0 && jobErrors.length === 0 ? (
