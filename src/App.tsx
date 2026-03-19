@@ -27,6 +27,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
 import IndexingPage from "./pages/IndexingPage";
 import ABTestingPage from "./pages/ABTestingPage";
+import ContentCalendarPage from "./pages/ContentCalendarPage";
 
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
@@ -227,6 +228,14 @@ const App = () => {
               element={
                 <ProtectedRoute session={session}>
                   <DashboardLayout onLogout={handleLogout}><ABTestingPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/content-calendar"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><ContentCalendarPage /></DashboardLayout>
                 </ProtectedRoute>
               }
             />

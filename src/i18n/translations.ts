@@ -215,6 +215,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.pagesGenerated": "pages generated this month",
     "sidebar.logout": "Log out",
     "sidebar.dataCsv": "Data / CSV",
+    "sidebar.contentCalendar": "Calendar",
 
     // Auth
     "auth.home": "Home",
@@ -457,6 +458,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.pagesGenerated": "pages générées ce mois",
     "sidebar.logout": "Déconnexion",
     "sidebar.dataCsv": "Données / CSV",
+    "sidebar.contentCalendar": "Calendrier",
 
     // Auth
     "auth.home": "Accueil",
@@ -699,6 +701,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.pagesGenerated": "Seiten diesen Monat generiert",
     "sidebar.logout": "Abmelden",
     "sidebar.dataCsv": "Daten / CSV",
+    "sidebar.contentCalendar": "Kalender",
 
     // Auth
     "auth.home": "Startseite",

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages } from "lucide-react";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +55,8 @@ export default function GeneratedPagesPage() {
   const [bulkSeoApply, setBulkSeoApply] = useState({ title: true, description: true, keywords: true });
   const [inlineSeoEdits, setInlineSeoEdits] = useState<Record<string, { seo_title: string; seo_description: string; seo_keywords: string }>>({});
   const [publishType, setPublishType] = useState<"page" | "product">("page");
+  const [translateOpen, setTranslateOpen] = useState(false);
+  const [translateLang, setTranslateLang] = useState("fr");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -272,6 +274,29 @@ export default function GeneratedPagesPage() {
     },
     onError: (err: Error) => {
       toast({ title: "Rewrite failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const translateMutation = useMutation({
+    mutationFn: async ({ pageIds, lang }: { pageIds: string[]; lang: string }) => {
+      const { data, error } = await supabase.functions.invoke("translate-content", {
+        body: { page_ids: pageIds, target_language: lang },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setTranslateOpen(false);
+      setSelectedIds(new Set());
+      toast({
+        title: "Translation complete",
+        description: `${data.translated} page(s) translated, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Translation failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -562,6 +587,9 @@ export default function GeneratedPagesPage() {
               </Button>
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setTranslateOpen(true)}>
+                <Languages className="h-3.5 w-3.5 mr-1.5" /> Translate
               </Button>
               <Select
                 onValueChange={(status) => {
@@ -1322,6 +1350,65 @@ export default function GeneratedPagesPage() {
                 </div>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Translate Dialog */}
+      <Dialog open={translateOpen} onOpenChange={setTranslateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Languages className="h-5 w-5 text-primary" />
+              Translate Pages
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Translate {selectedIds.size} selected page{selectedIds.size !== 1 ? "s" : ""} into a new language. Translated copies will be created as new pages.
+            </p>
+            <div className="space-y-2">
+              <Label>Target Language</Label>
+              <Select value={translateLang} onValueChange={setTranslateLang}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[
+                    { code: "fr", label: "🇫🇷 French" },
+                    { code: "de", label: "🇩🇪 German" },
+                    { code: "es", label: "🇪🇸 Spanish" },
+                    { code: "it", label: "🇮🇹 Italian" },
+                    { code: "pt", label: "🇵🇹 Portuguese" },
+                    { code: "nl", label: "🇳🇱 Dutch" },
+                    { code: "pl", label: "🇵🇱 Polish" },
+                    { code: "sv", label: "🇸🇪 Swedish" },
+                    { code: "da", label: "🇩🇰 Danish" },
+                    { code: "ja", label: "🇯🇵 Japanese" },
+                    { code: "ko", label: "🇰🇷 Korean" },
+                    { code: "zh", label: "🇨🇳 Chinese" },
+                    { code: "ar", label: "🇸🇦 Arabic" },
+                    { code: "ru", label: "🇷🇺 Russian" },
+                    { code: "tr", label: "🇹🇷 Turkish" },
+                    { code: "hi", label: "🇮🇳 Hindi" },
+                    { code: "en", label: "🇬🇧 English" },
+                  ].map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setTranslateOpen(false)}>Cancel</Button>
+              <Button
+                disabled={translateMutation.isPending}
+                onClick={() => translateMutation.mutate({ pageIds: [...selectedIds], lang: translateLang })}
+              >
+                {translateMutation.isPending ? (
+                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Translating...</>
+                ) : (
+                  <><Languages className="mr-1.5 h-3.5 w-3.5" /> Translate {selectedIds.size} Page{selectedIds.size !== 1 ? "s" : ""}</>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

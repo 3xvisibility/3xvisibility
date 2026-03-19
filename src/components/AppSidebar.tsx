@@ -19,6 +19,7 @@ import {
   Lock,
   Store,
   FlaskConical,
+  CalendarDays,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -67,6 +68,7 @@ const toolsNav: NavItem[] = [
   { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", url: "/analytics", icon: BarChart3 },
   { titleKey: "sidebar.abTesting", url: "/ab-testing", icon: FlaskConical },
+  { titleKey: "sidebar.contentCalendar", url: "/content-calendar", icon: CalendarDays },
   { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon, requiredFeature: "indexing" },
 ];
 
