@@ -38,6 +38,46 @@ function parseHtmlBlocks(html: string): ContentBlock[] {
   return blocks;
 }
 
+function resolveRelativeUrls(html: string, baseUrl: string): string {
+  let origin: string;
+  let basePath: string;
+  try {
+    const u = new URL(baseUrl);
+    origin = u.origin;
+    basePath = baseUrl.replace(/\/[^/]*$/, "/");
+  } catch {
+    return html;
+  }
+
+  // Resolve src, href, srcset, poster, data-src, data-lazy-src attributes
+  return html.replace(
+    /(src|href|srcset|poster|data-src|data-lazy-src|data-original)=["']([^"']+)["']/gi,
+    (full, attr, value) => {
+      // Skip already-absolute, data URIs, anchors, javascript, mail
+      if (/^(https?:|data:|mailto:|javascript:|#|\{)/i.test(value)) return full;
+      let resolved: string;
+      if (value.startsWith("//")) {
+        resolved = "https:" + value;
+      } else if (value.startsWith("/")) {
+        resolved = origin + value;
+      } else {
+        resolved = basePath + value;
+      }
+      return `${attr}="${resolved}"`;
+    }
+  );
+}
+
+function extractImageUrls(html: string): string[] {
+  const imgs: string[] = [];
+  const regex = /(?:src|data-src|data-lazy-src)=["'](https?:\/\/[^"']+\.(?:jpg|jpeg|png|gif|webp|svg|avif)[^"']*)["']/gi;
+  let m;
+  while ((m = regex.exec(html)) !== null) {
+    if (!imgs.includes(m[1])) imgs.push(m[1]);
+  }
+  return imgs;
+}
+
 function extractBodyContent(html: string): string {
   // Try to extract just the body
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
