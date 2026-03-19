@@ -61,7 +61,7 @@ export default function ContentCalendarPage() {
   // Map campaigns to dates
   const campaignsByDate = useMemo(() => {
     const map = new Map<string, Campaign[]>();
-    const filtered = typeFilter === "all" ? campaigns : campaigns.filter(c => c.campaign_type === typeFilter);
+    const filtered = typeFilter === "all" ? campaigns : campaigns.filter(c => c.campaign_type === typeFilter || ((c as any).campaign_types || []).includes(typeFilter));
 
     filtered.forEach((c) => {
       const dates: string[] = [];
