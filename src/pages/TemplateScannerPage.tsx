@@ -772,6 +772,14 @@ ${headStyles}
                 >
                   <List className="mr-1.5 h-3.5 w-3.5" /> Block List
                 </Button>
+                <Button
+                  variant={viewMode === "terms" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setViewMode("terms")}
+                >
+                  <Tag className="mr-1.5 h-3.5 w-3.5" /> Terms
+                </Button>
               </div>
               <TooltipProvider>
                 <Tooltip>
