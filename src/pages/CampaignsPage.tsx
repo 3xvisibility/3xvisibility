@@ -292,8 +292,7 @@ export default function CampaignsPage() {
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
-      // Resolve directory structure
-      const dirStructure = campaignType === "sea" && seaDirectoryLevels
+      const dirStructure = campaignTypes.includes("sea") && seaDirectoryLevels
         ? { levels: seaDirectoryLevels.split(",").map(s => s.trim()).filter(Boolean), separator: "/" }
         : null;
       // Resolve effective data based on data source
