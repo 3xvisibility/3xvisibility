@@ -870,6 +870,9 @@ export default function CampaignDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Spintax Preview */}
+          <SpintaxPreview />
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-4">
