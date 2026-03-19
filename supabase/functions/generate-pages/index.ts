@@ -903,10 +903,11 @@ Deno.serve(async (req) => {
     const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    // AI limit check
+    // Keep campaign publishing fast: reserve AI generation for explicit AI blocks/images.
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
     const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
-    const seoGenerationsNeeded = LOVABLE_API_KEY ? remainingRows.length : 0;
+    const shouldUseAiSeo = Boolean(LOVABLE_API_KEY) && !!test_mode;
+    const seoGenerationsNeeded = shouldUseAiSeo ? remainingRows.length : 0;
     const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded;
 
     if (totalAiNeeded > 0) {
