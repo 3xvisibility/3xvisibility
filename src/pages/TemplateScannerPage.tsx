@@ -66,6 +66,16 @@ interface WpPage {
   link: string;
 }
 
+// Common local SEO terms — like Page Generator Pro
+const LOCAL_SEO_TERMS = [
+  { category: "Location", vars: ["city", "state", "county", "country", "region", "zip_code", "state_code", "area", "neighborhood", "district"] },
+  { category: "Business", vars: ["company", "phone", "address", "email", "website", "hours", "rating", "reviews_count"] },
+  { category: "Content", vars: ["title", "keyword", "service", "category", "description", "name", "brand", "price"] },
+  { category: "SEO", vars: ["slug", "canonical_url", "seo_title", "seo_description", "schema_type"] },
+  { category: "Media", vars: ["image_url", "image_alt", "logo_url", "video_url", "gallery"] },
+  { category: "Geo", vars: ["latitude", "longitude", "timezone", "population", "map_embed"] },
+];
+
 // Popover for assigning variable to selected text
 function SelectionPopover({
   position,
