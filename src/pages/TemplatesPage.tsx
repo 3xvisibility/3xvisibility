@@ -278,12 +278,16 @@ export default function TemplatesPage() {
         variables: tpl.variables,
         user_id: user.id,
         workspace_id: wsId,
-      });
+        seo_title_pattern: (tpl as any).seo_title_pattern || "",
+        seo_description_pattern: (tpl as any).seo_description_pattern || "",
+        schema_type: (tpl as any).schema_type || "WebPage",
+        schema_config: (tpl as any).schema_config || {},
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Template duplicated" });
+      toast({ title: "Template duplicated", description: "All settings including SEO patterns and schema have been copied." });
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
