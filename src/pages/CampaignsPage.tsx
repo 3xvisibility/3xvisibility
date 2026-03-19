@@ -880,7 +880,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Wizard Steps Indicator */}
-              <div className="px-4 sm:px-6 pt-5 pb-2 overflow-x-auto">
+              <div className="px-4 sm:px-6 pt-5 pb-2 overflow-x-auto shrink-0">
                 <div className="flex items-start justify-between min-w-0">
                   {wizardSteps.map((s, i) => (
                     <div key={s.num} className="flex items-center flex-1 last:flex-none">
