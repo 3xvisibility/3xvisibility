@@ -1180,7 +1180,7 @@ Deno.serve(async (req) => {
             title: pageTitle,
             slug: slug + utmQueryString,
             content: pageContent,
-            status: (campaign.publish_mode === "published" ? "published" : "pending") as any,
+            status: "pending" as any,
             error_message: null,
             seo_title: seoData.seo_title,
             seo_description: seoData.seo_description,
