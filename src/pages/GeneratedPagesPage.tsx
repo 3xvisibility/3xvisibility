@@ -447,6 +447,19 @@ export default function GeneratedPagesPage() {
               <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={freshnessFilter} onValueChange={setFreshnessFilter}>
+            <SelectTrigger className="w-[120px] h-8 text-xs">
+              <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Freshness</SelectItem>
+              <SelectItem value="fresh">Fresh (&lt;30d)</SelectItem>
+              <SelectItem value="aging">Aging (30-90d)</SelectItem>
+              <SelectItem value="stale">Stale (90-180d)</SelectItem>
+              <SelectItem value="outdated">Outdated (&gt;180d)</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="relative flex-1 min-w-[140px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
