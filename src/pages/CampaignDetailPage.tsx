@@ -874,6 +874,14 @@ export default function CampaignDetailPage() {
 
           {/* Spintax Preview */}
           <SpintaxPreview />
+
+          {/* Live Variable Preview */}
+          {campaign.template_id && templateContent && (
+            <LiveVariablePreview
+              templateContent={templateContent}
+              csvData={(campaign.csv_data as Record<string, string>[]) || []}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-4">
