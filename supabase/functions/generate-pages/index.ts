@@ -1122,7 +1122,22 @@ Deno.serve(async (req) => {
             pageTitle = values.slice(0, 2).join(" - ") || `Page ${processedCount + 1}`;
           }
 
-          const slug = slugify(pageTitle) || `page-${processedCount + 1}`;
+          // Build slug with optional directory structure (hierarchical nesting)
+          let slug = slugify(pageTitle) || `page-${processedCount + 1}`;
+          const dirStructure = (campaign as any).directory_structure as { levels?: string[]; separator?: string } | null;
+          if (dirStructure?.levels && dirStructure.levels.length > 0) {
+            const dirParts: string[] = [];
+            for (const level of dirStructure.levels) {
+              const levelValue = allVars[level] || row[level];
+              if (levelValue) {
+                dirParts.push(slugify(levelValue));
+              }
+            }
+            if (dirParts.length > 0) {
+              const sep = dirStructure.separator || "/";
+              slug = dirParts.join(sep) + sep + slug;
+            }
+          }
 
           // Build UTM query string from campaign utm_settings
           const utmSettings = (campaign.utm_settings || {}) as Record<string, string>;
