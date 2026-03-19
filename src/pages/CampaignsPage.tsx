@@ -249,6 +249,11 @@ export default function CampaignsPage() {
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
     const matched: { variable: string; column: string | null }[] = [];
     for (const v of selectedTemplateVars) {
+      // Check manual override first
+      if (manualMappings[v] && headers.includes(manualMappings[v])) {
+        matched.push({ variable: v, column: manualMappings[v] });
+        continue;
+      }
       const vLower = v.toLowerCase();
       const exactMatch = headers.find((h) => h.toLowerCase() === vLower);
       if (exactMatch) {
@@ -262,7 +267,7 @@ export default function CampaignsPage() {
     }
     const unmatchedColumns = headers.filter((h) => !matched.some((m) => m.column === h));
     return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers]);
+  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers, manualMappings]);
 
   const { data: campaignLogs = [] } = useQuery({
     queryKey: ["campaign-logs", logDialogCampaign],
