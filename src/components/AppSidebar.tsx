@@ -20,6 +20,7 @@ import {
   Store,
   FlaskConical,
   CalendarDays,
+  Activity,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
