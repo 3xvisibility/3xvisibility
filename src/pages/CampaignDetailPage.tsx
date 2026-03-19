@@ -236,6 +236,38 @@ export default function CampaignDetailPage() {
     },
   });
 
+  const bulkStatusMutation = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      const { error } = await supabase.from("generated_pages").update({ status: status as any }).in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      setSelectedPageIds(new Set());
+      toast({ title: "Status updated", description: `${count} page${count !== 1 ? "s" : ""} set to ${status}.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("generated_pages").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      setSelectedPageIds(new Set());
+      toast({ title: "Pages deleted", description: `${count} page${count !== 1 ? "s" : ""} deleted.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   if (campaignLoading) {
     return (
       <div className="space-y-6">
