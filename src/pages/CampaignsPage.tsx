@@ -463,6 +463,28 @@ export default function CampaignsPage() {
         );
       }
 
+      // Duplicate internal link settings
+      if (newCampaign) {
+        const { data: linkSettings } = await supabase
+          .from("internal_link_settings")
+          .select("*")
+          .eq("campaign_id", campaign.id)
+          .maybeSingle();
+        if (linkSettings) {
+          await supabase.from("internal_link_settings").insert({
+            campaign_id: newCampaign.id,
+            user_id: user.id,
+            workspace_id: wsId,
+            enabled: linkSettings.enabled,
+            auto_build: linkSettings.auto_build,
+            max_links_per_page: linkSettings.max_links_per_page,
+            section_title: linkSettings.section_title,
+            anchor_format: linkSettings.anchor_format,
+            grouping_variable: linkSettings.grouping_variable,
+          });
+        }
+      }
+
       return campaign.name;
     },
     onSuccess: (name) => {
