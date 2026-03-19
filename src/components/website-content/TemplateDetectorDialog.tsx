@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { TemplateEditorTour } from "./TemplateEditorTour";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -341,7 +342,7 @@ ${highlightedHtml}
   return (
     <div className="flex flex-col h-full gap-2">
       {/* AI Edit Input */}
-      <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+      <div data-tour="template-ai-edit" className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
         <Wand2 className="h-4 w-4 text-primary shrink-0" />
         <Input
           value={aiPrompt}
@@ -375,6 +376,7 @@ ${highlightedHtml}
             )}
         </p>
         <Button
+          data-tour="template-code-toggle"
           size="sm"
           variant="ghost"
           className="h-7 text-xs gap-1.5"
@@ -394,7 +396,7 @@ ${highlightedHtml}
           />
         </ScrollArea>
       ) : (
-        <div className="flex-1 border rounded-lg overflow-hidden bg-white relative">
+        <div data-tour="template-preview" className="flex-1 border rounded-lg overflow-hidden bg-white relative">
           <iframe
             ref={iframeRef}
             srcDoc={previewDoc}
@@ -407,7 +409,7 @@ ${highlightedHtml}
 
       {/* Variable badges summary under preview */}
       {variables.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 items-center">
+        <div data-tour="template-var-badges" className="flex flex-wrap gap-1.5 items-center">
           <span className="text-[10px] text-muted-foreground font-medium">Variables:</span>
           {variables.map((v) => (
             <TooltipProvider key={v.name}>
@@ -933,13 +935,13 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
 
               {/* Template Preview Tab — Visual by default */}
               <TabsContent value="preview" className="flex-1 overflow-hidden mt-2 flex flex-col">
+                <TemplateEditorTour active={step === "edit"} />
                 <TemplatePreviewPane
                   templateHtml={templateHtml}
                   variables={variables}
                   onChange={setTemplateHtml}
                   onAddVariable={(name, original) => {
                     setVariables((prev) => {
-                      // Don't add duplicate
                       if (prev.some((v) => v.name === name)) return prev;
                       return [...prev, { name, original, values: [original] }];
                     });
