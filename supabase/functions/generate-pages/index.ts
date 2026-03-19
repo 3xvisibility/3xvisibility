@@ -1471,7 +1471,9 @@ Deno.serve(async (req) => {
           // Build OG meta tags + canonical
           const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description, canonicalUrl || undefined);
           const canonicalTag = canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : "";
-          pageContent = `${ogTags}\n${canonicalTag}\n${jsonLd}\n${pageContent}`;
+          // Wrap content with responsive stylesheet and container
+          const responsiveStyles = buildResponsiveStylesheet();
+          pageContent = `${ogTags}\n${canonicalTag}\n${jsonLd}\n${responsiveStyles}\n<div class="pgp-page">\n${pageContent}\n</div>`;
 
           // Extract SEA ad IDs from utm_settings or row data
           const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;
