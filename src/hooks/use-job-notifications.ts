@@ -72,6 +72,35 @@ export function useJobNotifications() {
             type: isSuccess ? "success" : "error",
             campaign_id: job.campaign_id,
           });
+
+          // Fire webhooks for campaign completion events
+          try {
+            // Look up workspace_id from campaign
+            const { data: campaignData } = await supabase
+              .from("campaigns")
+              .select("workspace_id")
+              .eq("id", job.campaign_id)
+              .maybeSingle();
+
+            if (campaignData?.workspace_id) {
+              await supabase.functions.invoke("fire-webhooks", {
+                body: {
+                  event: isSuccess ? "campaign.completed" : "campaign.failed",
+                  campaign_id: job.campaign_id,
+                  workspace_id: campaignData.workspace_id,
+                  payload: {
+                    campaign_name: campaignName,
+                    success_count: job.success_count,
+                    error_count: job.error_count,
+                    total_rows: job.total_rows,
+                    processed_rows: job.processed_rows,
+                  },
+                },
+              });
+            }
+          } catch (webhookErr) {
+            console.warn("Webhook fire failed:", webhookErr);
+          }
         }
       )
       .subscribe();

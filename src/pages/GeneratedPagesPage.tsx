@@ -10,13 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock } from "lucide-react";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { calculateFreshness } from "@/lib/content-freshness";
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
@@ -39,6 +40,7 @@ export default function GeneratedPagesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [freshnessFilter, setFreshnessFilter] = useState<string>("all");
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [previewPage, setPreviewPage] = useState<GeneratedPage | null>(null);
@@ -319,6 +321,7 @@ export default function GeneratedPagesPage() {
     const base = pages.filter(
       (p) =>
         (statusFilter === "all" || p.status === statusFilter) &&
+        (freshnessFilter === "all" || calculateFreshness(p.created_at, p.status).level === freshnessFilter) &&
         (p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.slug.toLowerCase().includes(search.toLowerCase()) ||
         (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase()))
@@ -326,6 +329,7 @@ export default function GeneratedPagesPage() {
 
     if (sortBy === "newest") return base;
     if (sortBy === "oldest") return [...base].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    if (sortBy === "freshness") return [...base].sort((a, b) => calculateFreshness(b.created_at, b.status).ageDays - calculateFreshness(a.created_at, a.status).ageDays);
 
     const scoreGetter = (p: GeneratedPage) => {
       if (sortBy === "seo_asc" || sortBy === "seo_desc") return calculateContentSeoScore(p.title, p.content, p.slug).score;
@@ -335,7 +339,7 @@ export default function GeneratedPagesPage() {
     };
     const asc = sortBy.endsWith("_asc");
     return [...base].sort((a, b) => asc ? scoreGetter(a) - scoreGetter(b) : scoreGetter(b) - scoreGetter(a));
-  }, [pages, search, statusFilter, sortBy]);
+  }, [pages, search, statusFilter, freshnessFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -345,7 +349,7 @@ export default function GeneratedPagesPage() {
   );
 
   // Reset to page 1 when filters or page size change
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize, sortBy]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, freshnessFilter, pageSize, sortBy]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -424,6 +428,7 @@ export default function GeneratedPagesPage() {
             <SelectContent>
               <SelectItem value="newest">Newest first</SelectItem>
               <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="freshness">Stalest first</SelectItem>
               <SelectItem value="seo_desc">SEO ↓ (best)</SelectItem>
               <SelectItem value="seo_asc">SEO ↑ (worst)</SelectItem>
               <SelectItem value="sea_desc">SEA ↓ (best)</SelectItem>
@@ -441,6 +446,19 @@ export default function GeneratedPagesPage() {
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="published">Published</SelectItem>
               <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={freshnessFilter} onValueChange={setFreshnessFilter}>
+            <SelectTrigger className="w-[120px] h-8 text-xs">
+              <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Freshness</SelectItem>
+              <SelectItem value="fresh">Fresh (&lt;30d)</SelectItem>
+              <SelectItem value="aging">Aging (30-90d)</SelectItem>
+              <SelectItem value="stale">Stale (90-180d)</SelectItem>
+              <SelectItem value="outdated">Outdated (&gt;180d)</SelectItem>
             </SelectContent>
           </Select>
           <div className="relative flex-1 min-w-[140px]">
@@ -578,6 +596,24 @@ export default function GeneratedPagesPage() {
             </CardContent>
           </Card>
         ))}
+        {/* Freshness stats */}
+        {(() => {
+          const freshCounts = { fresh: 0, aging: 0, stale: 0, outdated: 0 };
+          pages.forEach((p) => { freshCounts[calculateFreshness(p.created_at, p.status).level]++; });
+          return (
+            <Card className="shadow-surface col-span-2 sm:col-span-4">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><Clock className="h-3 w-3" /> Content Freshness</p>
+                <div className="flex gap-4 text-xs">
+                  <span className="text-emerald-600 font-medium">{freshCounts.fresh} Fresh</span>
+                  <span className="text-primary font-medium">{freshCounts.aging} Aging</span>
+                  <span className="text-amber-600 font-medium">{freshCounts.stale} Stale</span>
+                  <span className="text-destructive font-medium">{freshCounts.outdated} Outdated</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
       </div>
 
       {/* Table */}
@@ -616,6 +652,7 @@ export default function GeneratedPagesPage() {
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Source</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Scores</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Freshness</th>
                   <th className="p-4"></th>
                 </tr>
               </thead>
@@ -672,6 +709,25 @@ export default function GeneratedPagesPage() {
                             <SeoScoreBadge score={geoResult.score} label={geoResult.label} color={geoResult.color} checks={geoResult.checks} size="sm" />
                           </div>
                         </div>
+                      </td>
+                      <td className="p-4 hidden lg:table-cell">
+                        {(() => {
+                          const freshness = calculateFreshness(page.created_at, page.status);
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className={`text-[10px] ${freshness.color}`}>
+                                    {freshness.label} ({freshness.ageDays}d)
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">{freshness.tip}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">

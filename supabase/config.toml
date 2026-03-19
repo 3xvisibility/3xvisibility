@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.seed-locations]
 verify_jwt = false
+
+[functions.fire-webhooks]
+verify_jwt = false
