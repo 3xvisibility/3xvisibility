@@ -165,12 +165,15 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          author_rotation: Json | null
           batch_size: number | null
           campaign_type: Database["public"]["Enums"]["campaign_type"]
           created_at: string
           csv_data: Json | null
           csv_storage_path: string | null
           current_batch: number | null
+          directory_structure: Json | null
+          drip_feed_settings: Json | null
           failed_rows: number | null
           generation_completed_at: string | null
           generation_method: string
@@ -194,12 +197,15 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          author_rotation?: Json | null
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           csv_data?: Json | null
           csv_storage_path?: string | null
           current_batch?: number | null
+          directory_structure?: Json | null
+          drip_feed_settings?: Json | null
           failed_rows?: number | null
           generation_completed_at?: string | null
           generation_method?: string
@@ -223,12 +229,15 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          author_rotation?: Json | null
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           csv_data?: Json | null
           csv_storage_path?: string | null
           current_batch?: number | null
+          directory_structure?: Json | null
+          drip_feed_settings?: Json | null
           failed_rows?: number | null
           generation_completed_at?: string | null
           generation_method?: string
