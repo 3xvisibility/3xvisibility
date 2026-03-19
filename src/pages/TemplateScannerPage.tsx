@@ -540,7 +540,22 @@ ${headStyles}
             </TabsContent>
 
             <TabsContent value="connected" className="space-y-3">
-              <Label className="text-sm font-medium">Connected Website</Label>
+              <div className="flex items-center gap-1.5">
+                <Label className="text-sm font-medium">Connected Website</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs">Import pages directly from your WordPress or WooCommerce site. The scanner will fetch the page content while keeping the original styles.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 <strong>Tip:</strong> Pick an existing page you want to replicate. The AI will suggest which parts should become dynamic variables.
+              </p>
               {connectedWebsites.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No websites connected. Add one in the Websites section first.
