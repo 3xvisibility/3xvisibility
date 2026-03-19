@@ -202,7 +202,7 @@ function processLoops(content: string, vars: Record<string, string>): string {
     (_match, varName, loopBlock) => {
       const value = vars[varName] || vars[varName.toLowerCase()];
       if (!value) return "";
-      const items = value.split(",").map(s => s.trim()).filter(Boolean);
+      const items = value.split(",").map((s) => s.trim()).filter(Boolean);
       return items.map((item, index) =>
         loopBlock
           .replace(/\{\{this\}\}/gi, item)
@@ -211,6 +211,110 @@ function processLoops(content: string, vars: Record<string, string>): string {
       ).join("\n");
     }
   );
+}
+
+function splitCsvRecords(rawContent: string): string[] {
+  const normalized = rawContent.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const records: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized[i];
+    const nextChar = normalized[i + 1];
+
+    if (char === '"') {
+      current += char;
+      if (inQuotes && nextChar === '"') {
+        current += nextChar;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "\n" && !inQuotes) {
+      if (current.trim()) records.push(current);
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim()) records.push(current);
+  return records;
+}
+
+function parseCsvLine(line: string, delimiter: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === delimiter && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values.map((value) => value.replace(/^['"]|['"]$/g, ""));
+}
+
+function parseCsvRawContent(rawContent: string): Record<string, string>[] {
+  const records = splitCsvRecords(rawContent).filter((record) => record.trim());
+  if (records.length <= 1) return [];
+
+  const firstLine = records[0];
+  let delimiter = ",";
+  if (firstLine.includes("\t")) delimiter = "\t";
+  else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
+  else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
+
+  const headers = parseCsvLine(firstLine, delimiter);
+  return records
+    .slice(1)
+    .map((record) => parseCsvLine(record, delimiter))
+    .filter((values) => values.some((value) => value.length > 0))
+    .map((values) =>
+      headers.reduce((acc: Record<string, string>, header, index) => {
+        acc[header] = values[index] || "";
+        return acc;
+      }, {})
+    );
+}
+
+function triggerBackgroundFunction(
+  url: string,
+  headers: HeadersInit,
+  body: Record<string, unknown>,
+  label: string
+) {
+  fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  }).catch((error) => {
+    console.error(`[GENERATE-PAGES] Background ${label} failed to start:`, error);
+  });
 }
 
 // Build JSON-LD structured data based on campaign type and row data
