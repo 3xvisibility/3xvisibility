@@ -213,6 +213,7 @@ Deno.serve(async (req) => {
 
     const rawHtml = await pageResponse.text();
     const bodyContent = extractBodyContent(rawHtml);
+    const headStyles = extractHeadStyles(rawHtml, formattedUrl);
     const blocks = parseHtmlBlocks(bodyContent);
 
     // Use AI to suggest variables
