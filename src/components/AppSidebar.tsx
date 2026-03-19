@@ -84,6 +84,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
+  const { appName, logoUrl, isWhitelabeled } = useBranding();
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
 
   useEffect(() => {
