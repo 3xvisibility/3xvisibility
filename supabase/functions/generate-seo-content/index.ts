@@ -26,9 +26,20 @@ serve(async (req) => {
     const kwList = Array.isArray(keywords) ? keywords.join(", ") : keywords;
     const type = contentType || "seo"; // seo | sea | geo
 
-    const systemPrompt = `You are an expert SEO content writer. Generate a complete, production-ready HTML template that scores 80+ on ALL three metrics: SEO, SEA (paid landing), and GEO (local search).
+    const systemPrompt = `You are an expert SEO content writer and web designer. Generate a complete, production-ready HTML template that scores 80+ on ALL three metrics: SEO, SEA (paid landing), and GEO (local search).
 
 OUTPUT FORMAT: Raw HTML only. No markdown fences, no explanations. Use {variable_name} for dynamic placeholders.
+
+DESIGN REQUIREMENTS (CRITICAL):
+- Use semantic HTML with CSS classes: hero-section, card, feature-card, service-card, grid, features-grid, testimonial, stars, badge, pricing, price, contact-info, btn, cta
+- Structure with clear sections: hero area, features/services grid, testimonials, CTA, contact/form section
+- Use professional stock images from https://picsum.photos/800/400?random=N (increment N for each image)
+- Broken image tag example: <img src="https://picsum.photos/800/400?random=1" alt="descriptive alt text">
+- Use responsive grid layouts with class="grid" or class="features-grid" for card-based sections
+- Add star ratings (★★★★★) in testimonial sections
+- Use class="btn cta" on call-to-action links/buttons
+- Include a hero section with class="hero-section" or class="hero"
+- Design must look professional, modern, and beautiful when published
 
 MANDATORY REQUIREMENTS TO SCORE 80+:
 
@@ -43,7 +54,7 @@ SEO (8 checks — need 7+):
 8. Rich, detailed paragraphs
 
 SEA (8 checks — need 7+):
-1. Include a <button> or CTA link with class="btn" or "cta" — e.g. <a href="{url}" class="btn cta">Get Free Quote</a>
+1. Include a CTA link with class="btn cta" — e.g. <a href="tel:{phone}" class="btn cta">Get Free Quote</a>
 2. Include a <form> with <input type="email"> or <input type="tel"> for lead capture
 3. Use action words in headings: "Get", "Book", "Free", "Save", "Start", "Order"
 4. Add trust signals: testimonials section, reviews, ratings with ★ stars, "Certified", "Guarantee"

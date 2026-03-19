@@ -87,12 +87,12 @@ function processDynamicElements(content: string, vars: Record<string, string>): 
 </div>`;
   });
 
-  // {{IMAGE:search query}} — Unsplash image
+  // {{IMAGE:search query}} — Picsum stock image (free, reliable)
   result = result.replace(/\{\{IMAGE:(.*?)\}\}/gi, (_match, query: string) => {
     const resolvedQuery = resolveVarsInQuery(query, vars);
-    const encoded = encodeURIComponent(resolvedQuery);
+    const seed = Math.abs([...resolvedQuery].reduce((a, c) => a + c.charCodeAt(0), 0)) % 1000;
     return `<div class="dynamic-image" style="margin:1em 0;">
-  <img src="https://source.unsplash.com/800x450/?${encoded}" alt="${resolvedQuery}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+  <img src="https://picsum.photos/seed/${seed}/800/450" alt="${resolvedQuery}" style="width:100%;height:auto;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);" loading="lazy">
 </div>`;
   });
 
@@ -624,6 +624,56 @@ async function generateSeoMetadata(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/**
+ * Professional responsive CSS wrapper — injected into every generated page
+ * so it looks beautiful on WordPress regardless of theme.
+ */
+function buildResponsiveStylesheet(): string {
+  return `<style>
+/* === PageGen Pro — Responsive Page Styles === */
+.pgp-page{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.7;color:#1e293b;max-width:1100px;margin:0 auto;padding:20px;word-wrap:break-word}
+.pgp-page *{box-sizing:border-box}
+.pgp-page h1{font-size:clamp(1.75rem,4vw,2.75rem);font-weight:800;line-height:1.2;margin:0 0 .75em;color:#0f172a;letter-spacing:-.02em}
+.pgp-page h2{font-size:clamp(1.35rem,3vw,2rem);font-weight:700;line-height:1.3;margin:1.5em 0 .6em;color:#0f172a;border-bottom:2px solid #e2e8f0;padding-bottom:.3em}
+.pgp-page h3{font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:600;margin:1.2em 0 .5em;color:#1e293b}
+.pgp-page p{margin:0 0 1.1em;font-size:1rem;color:#334155}
+.pgp-page img{max-width:100%;height:auto;border-radius:12px;margin:1em 0;display:block;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.pgp-page a{color:#2563eb;text-decoration:none;transition:color .2s}
+.pgp-page a:hover{color:#1d4ed8;text-decoration:underline}
+.pgp-page ul,.pgp-page ol{margin:0 0 1.2em 1.5em;padding:0}
+.pgp-page li{margin-bottom:.4em;color:#334155}
+.pgp-page section{margin:2em 0}
+.pgp-page blockquote{border-left:4px solid #3b82f6;margin:1.5em 0;padding:.75em 1.25em;background:#f8fafc;border-radius:0 8px 8px 0;color:#475569;font-style:italic}
+.pgp-page .btn,.pgp-page .cta,.pgp-page button[type="submit"],.pgp-page a.cta{display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff!important;border:none;border-radius:10px;font-size:1.05rem;font-weight:600;cursor:pointer;text-decoration:none!important;transition:all .3s;box-shadow:0 4px 14px rgba(37,99,235,.3)}
+.pgp-page .btn:hover,.pgp-page .cta:hover,.pgp-page button[type="submit"]:hover,.pgp-page a.cta:hover{background:linear-gradient(135deg,#1d4ed8,#2563eb);transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,.4)}
+.pgp-page form{background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:2em;margin:1.5em 0}
+.pgp-page input[type="text"],.pgp-page input[type="email"],.pgp-page input[type="tel"],.pgp-page input[type="url"],.pgp-page textarea,.pgp-page select{width:100%;padding:12px 16px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:1rem;margin-bottom:1em;transition:border-color .2s;background:#fff}
+.pgp-page input:focus,.pgp-page textarea:focus,.pgp-page select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+.pgp-page table{width:100%;border-collapse:collapse;margin:1.5em 0;border-radius:8px;overflow:hidden}
+.pgp-page th{background:#f1f5f9;padding:12px 16px;text-align:left;font-weight:600;color:#0f172a;border-bottom:2px solid #e2e8f0}
+.pgp-page td{padding:10px 16px;border-bottom:1px solid #f1f5f9;color:#334155}
+.pgp-page tr:hover td{background:#f8fafc}
+.pgp-page .hero-section,.pgp-page .hero{background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:#fff;padding:clamp(2em,6vw,4em) clamp(1.5em,4vw,3em);border-radius:16px;margin-bottom:2em;text-align:center}
+.pgp-page .hero h1,.pgp-page .hero-section h1{color:#fff;border:none}
+.pgp-page .hero p,.pgp-page .hero-section p{color:rgba(255,255,255,.9);font-size:1.15rem}
+.pgp-page .card,.pgp-page .feature-card,.pgp-page .service-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:1.75em;margin-bottom:1.25em;transition:all .3s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.pgp-page .card:hover,.pgp-page .feature-card:hover,.pgp-page .service-card:hover{box-shadow:0 8px 30px rgba(0,0,0,.08);transform:translateY(-2px)}
+.pgp-page .grid,.pgp-page .cards-grid,.pgp-page .features-grid,.pgp-page .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5em;margin:1.5em 0}
+.pgp-page .testimonial{background:#f8fafc;border-radius:12px;padding:1.5em;margin:1em 0;border-left:4px solid #3b82f6}
+.pgp-page .testimonial .stars{color:#f59e0b;font-size:1.2em;margin-bottom:.5em}
+.pgp-page .badge,.pgp-page .tag{display:inline-block;padding:4px 12px;background:#eff6ff;color:#2563eb;border-radius:20px;font-size:.85em;font-weight:500;margin:0 4px 4px 0}
+.pgp-page .geo-info,.pgp-page .contact-info{background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:1.5em;margin:1.5em 0}
+.pgp-page .geo-address,.pgp-page .geo-phone,.pgp-page .geo-hours{margin-bottom:1em}
+.pgp-page .dynamic-map,.pgp-page .dynamic-osm,.pgp-page .dynamic-youtube{border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.pgp-page .pricing{text-align:center;background:#fff;border:2px solid #e2e8f0;border-radius:16px;padding:2em;margin:1em 0}
+.pgp-page .pricing .price{font-size:2.5rem;font-weight:800;color:#0f172a}
+.pgp-page .pricing .price span{font-size:1rem;color:#64748b;font-weight:400}
+.pgp-page footer,.pgp-page .page-footer{margin-top:3em;padding-top:2em;border-top:1px solid #e2e8f0;color:#64748b;font-size:.9em}
+@media(max-width:768px){.pgp-page{padding:16px}.pgp-page .grid,.pgp-page .cards-grid,.pgp-page .features-grid,.pgp-page .services-grid{grid-template-columns:1fr}.pgp-page form{padding:1.25em}.pgp-page .hero,.pgp-page .hero-section{padding:2em 1.25em;border-radius:12px}}
+@media(max-width:480px){.pgp-page h1{font-size:1.5rem}.pgp-page h2{font-size:1.25rem}.pgp-page .btn,.pgp-page .cta,.pgp-page a.cta{width:100%;text-align:center;padding:14px 20px}}
+</style>`;
 }
 
 function buildOgMetaTags(
@@ -1421,7 +1471,9 @@ Deno.serve(async (req) => {
           // Build OG meta tags + canonical
           const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description, canonicalUrl || undefined);
           const canonicalTag = canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : "";
-          pageContent = `${ogTags}\n${canonicalTag}\n${jsonLd}\n${pageContent}`;
+          // Wrap content with responsive stylesheet and container
+          const responsiveStyles = buildResponsiveStylesheet();
+          pageContent = `${ogTags}\n${canonicalTag}\n${jsonLd}\n${responsiveStyles}\n<div class="pgp-page">\n${pageContent}\n</div>`;
 
           // Extract SEA ad IDs from utm_settings or row data
           const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;

@@ -23,18 +23,29 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are a template builder for programmatic SEO pages. Given a user description, generate an HTML template that uses dynamic variables in {variable} syntax (e.g. {service}, {location}, {company}).
+    const systemPrompt = `You are a professional web designer and template builder for programmatic SEO pages. Given a user description, generate a BEAUTIFUL, responsive HTML template that uses dynamic variables in {variable} syntax (e.g. {service}, {location}, {company}).
 
 Rules:
 1. Output ONLY the raw HTML template content. No markdown fences, no explanation.
-2. Use semantic HTML tags (h1, h2, p, ul, li, section, etc.).
-3. Include 3-8 relevant dynamic variables wrapped in curly braces like {variable_name}. Use lowercase_snake_case for variable names.
-4. For sections that should have unique AI-generated content per page, use the syntax {{AI:instruction using {variables}}} — for example: {{AI:Write a paragraph about {service} in {location}}}.
-5. For sections that should have a unique AI-generated image per page, use the syntax {{AI_IMAGE:description using {variables}}} — for example: {{AI_IMAGE:A professional photo of {service} in {location}}}.
-6. Include at least one {{AI:...}} block for dynamic content generation.
-7. Optionally include one {{AI_IMAGE:...}} block for a hero or section image.
-8. Make the template production-ready with good structure, multiple sections, and SEO-friendly layout.
-9. Include meta-relevant elements like a main heading (h1), subheadings (h2), and descriptive paragraphs.`;
+2. Use semantic HTML tags (h1, h2, p, ul, li, section, div, etc.) with CSS CLASSES for styling.
+3. Use these CSS classes for beautiful styling (a responsive stylesheet is automatically injected):
+   - class="hero-section" or class="hero" for hero banners
+   - class="grid" or class="features-grid" for responsive card grids
+   - class="card" or class="feature-card" or class="service-card" for card containers
+   - class="btn cta" for call-to-action buttons/links
+   - class="testimonial" for testimonial blocks, with class="stars" for star ratings
+   - class="badge" or class="tag" for small labels
+   - class="pricing" with class="price" for pricing sections
+   - class="contact-info" for contact details
+4. Include 3-8 relevant dynamic variables wrapped in curly braces like {variable_name}. Use lowercase_snake_case for variable names.
+5. For sections that should have unique AI-generated content per page, use the syntax {{AI:instruction using {variables}}} — for example: {{AI:Write a paragraph about {service} in {location}}}.
+6. For sections that should have a unique AI-generated image per page, use the syntax {{AI_IMAGE:description using {variables}}} — for example: {{AI_IMAGE:A professional photo of {service} in {location}}}.
+7. Include at least one {{AI:...}} block for dynamic content generation.
+8. Optionally include one {{AI_IMAGE:...}} block for a hero or section image.
+9. Use professional stock images from https://picsum.photos/800/400?random=N (increment N for different images) for placeholder images.
+10. Include a hero section, features/services grid with cards, testimonials with ★★★★★ ratings, a CTA section, and a contact form.
+11. Include meta-relevant elements like a main heading (h1), subheadings (h2), and descriptive paragraphs.
+12. The template must look PROFESSIONAL and MODERN when published — like a real business landing page.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
