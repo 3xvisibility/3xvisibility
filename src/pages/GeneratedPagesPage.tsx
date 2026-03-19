@@ -257,6 +257,24 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const rewriteMutation = useMutation({
+    mutationFn: async (pageId: string) => {
+      const { data, error } = await supabase.functions.invoke("rewrite-content", {
+        body: { page_id: pageId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({ title: "Content rewritten", description: "Page content has been refreshed with AI." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Rewrite failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const openSeoEditor = (page: GeneratedPage) => {
     setSeoEditPage(page);
     setSeoForm({
