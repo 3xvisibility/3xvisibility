@@ -213,7 +213,7 @@ export default function ContentCalendarPage() {
                                 <TooltipContent side="right" className="max-w-[200px]">
                                   <p className="font-medium text-xs">{c.name}</p>
                                   <p className="text-[10px] text-muted-foreground mt-0.5">
-                                    Type: {c.campaign_type.toUpperCase()} · Status: {c.status}
+                                    Type: {((c as any).campaign_types?.length ? (c as any).campaign_types : [c.campaign_type]).join("+").toUpperCase()} · Status: {c.status}
                                   </p>
                                   {c.scheduled_at && (
                                     <p className="text-[10px] text-muted-foreground">
