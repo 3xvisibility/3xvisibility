@@ -239,7 +239,7 @@ export function OnboardingTour() {
                 >
                   Skip tour
                 </button>
-                <Button size="sm" onClick={next} className="h-8 px-4 text-xs gap-1.5">
+                <Button size="sm" onClick={(e) => { e.stopPropagation(); next(); }} className="h-8 px-4 text-xs gap-1.5">
                   {currentStep < steps.length - 1 ? (
                     <>
                       Next <ChevronRight className="h-3 w-3" />
