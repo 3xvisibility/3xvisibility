@@ -83,8 +83,10 @@ export default function CampaignsPage() {
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
   const [maxRows, setMaxRows] = useState<string>("");
   const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
-  const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
+  const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
+  const [recurringInterval, setRecurringInterval] = useState<"daily" | "weekly" | "biweekly" | "monthly">("weekly");
+  const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
   const [utmMedium, setUtmMedium] = useState("");
