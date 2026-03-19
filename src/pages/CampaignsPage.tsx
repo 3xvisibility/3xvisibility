@@ -1483,8 +1483,39 @@ export default function CampaignsPage() {
                           <Select value={geoLanguage} onValueChange={setGeoLanguage}>
                             <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {["en", "es", "fr", "de", "pt", "it", "nl", "ja", "zh", "ko", "ar"].map((l) => (
-                                <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>
+                              {[
+                                { code: "en", label: "English" },
+                                { code: "es", label: "Spanish" },
+                                { code: "fr", label: "French" },
+                                { code: "de", label: "German" },
+                                { code: "pt", label: "Portuguese" },
+                                { code: "it", label: "Italian" },
+                                { code: "nl", label: "Dutch" },
+                                { code: "ja", label: "Japanese" },
+                                { code: "zh", label: "Chinese" },
+                                { code: "ko", label: "Korean" },
+                                { code: "ar", label: "Arabic" },
+                                { code: "hi", label: "Hindi" },
+                                { code: "bn", label: "Bengali" },
+                                { code: "ru", label: "Russian" },
+                                { code: "tr", label: "Turkish" },
+                                { code: "vi", label: "Vietnamese" },
+                                { code: "th", label: "Thai" },
+                                { code: "pl", label: "Polish" },
+                                { code: "uk", label: "Ukrainian" },
+                                { code: "ro", label: "Romanian" },
+                                { code: "sv", label: "Swedish" },
+                                { code: "da", label: "Danish" },
+                                { code: "fi", label: "Finnish" },
+                                { code: "no", label: "Norwegian" },
+                                { code: "el", label: "Greek" },
+                                { code: "cs", label: "Czech" },
+                                { code: "hu", label: "Hungarian" },
+                                { code: "id", label: "Indonesian" },
+                                { code: "ms", label: "Malay" },
+                                { code: "tl", label: "Filipino" },
+                              ].map((l) => (
+                                <SelectItem key={l.code} value={l.code}>{l.label} ({l.code.toUpperCase()})</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
