@@ -4,28 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Store,
-  Search,
-  Download,
-  Upload,
-  Eye,
-  Code,
-  Star,
-  Users,
-  FileText,
-  Tag,
-  Globe,
-  ShoppingBag,
-  MapPin,
-  Megaphone,
-  Briefcase,
-  GraduationCap,
-  Heart,
-  Loader2,
+  Store, Search, Download, Upload, Eye, Code, Star, Users, FileText,
+  Tag, Globe, ShoppingBag, MapPin, Megaphone, Briefcase, GraduationCap,
+  Heart, Loader2, Share2, MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -43,9 +31,12 @@ interface MarketplaceTemplate {
   author: string;
   downloads: number;
   rating: number;
+  ratingCount?: number;
   seo_title_pattern?: string;
   seo_description_pattern?: string;
   schema_type?: string;
+  isShared?: boolean; // from shared_templates table
+  shared_id?: string;
 }
 
 const CATEGORIES = [
