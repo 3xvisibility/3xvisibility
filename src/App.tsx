@@ -24,6 +24,7 @@ import TemplateScannerPage from "./pages/TemplateScannerPage";
 import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
 import IndexingPage from "./pages/IndexingPage";
 
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
