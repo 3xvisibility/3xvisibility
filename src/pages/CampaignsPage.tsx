@@ -273,12 +273,17 @@ export default function CampaignsPage() {
       const utmSettings = campaignType === "sea" ? {
         utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
         utm_term: utmTerm, utm_content: utmContent,
+        ad_campaign_id: adCampaignId || null, ad_group_id: adGroupId || null,
       } : null;
       const geoSettings = campaignType === "geo" ? {
         country: geoCountry, region: geoRegion, city: geoCity,
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
       } : null;
+      // Resolve directory structure
+      const dirStructure = campaignType === "sea" && seaDirectoryLevels
+        ? { levels: seaDirectoryLevels.split(",").map(s => s.trim()).filter(Boolean), separator: "/" }
+        : null;
       // Resolve effective data based on data source
       const effectiveData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
       const effectiveHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
