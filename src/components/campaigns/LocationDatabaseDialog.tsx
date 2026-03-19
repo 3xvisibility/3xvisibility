@@ -9,8 +9,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Search, Database, Download, Loader2, Globe, Check } from "lucide-react";
+import { Search, Database, Download, Loader2, Globe, Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 interface LocationDatabaseDialogProps {
   open: boolean;
@@ -18,18 +20,74 @@ interface LocationDatabaseDialogProps {
   onSelect: (locations: Record<string, string>[]) => void;
 }
 
-const SUPPORTED_COUNTRIES = [
-  { code: "US", name: "United States", flag: "🇺🇸" },
-  { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
-  { code: "CA", name: "Canada", flag: "🇨🇦" },
-  { code: "FR", name: "France", flag: "🇫🇷" },
-  { code: "DE", name: "Germany", flag: "🇩🇪" },
-  { code: "ES", name: "Spain", flag: "🇪🇸" },
-  { code: "IT", name: "Italy", flag: "🇮🇹" },
-  { code: "AU", name: "Australia", flag: "🇦🇺" },
-  { code: "NL", name: "Netherlands", flag: "🇳🇱" },
-  { code: "IN", name: "India", flag: "🇮🇳" },
-  { code: "BR", name: "Brazil", flag: "🇧🇷" },
+const ALL_COUNTRIES = [
+  { code: "AF", name: "Afghanistan" }, { code: "AL", name: "Albania" }, { code: "DZ", name: "Algeria" },
+  { code: "AD", name: "Andorra" }, { code: "AO", name: "Angola" }, { code: "AG", name: "Antigua and Barbuda" },
+  { code: "AR", name: "Argentina" }, { code: "AM", name: "Armenia" }, { code: "AU", name: "Australia" },
+  { code: "AT", name: "Austria" }, { code: "AZ", name: "Azerbaijan" }, { code: "BS", name: "Bahamas" },
+  { code: "BH", name: "Bahrain" }, { code: "BD", name: "Bangladesh" }, { code: "BB", name: "Barbados" },
+  { code: "BY", name: "Belarus" }, { code: "BE", name: "Belgium" }, { code: "BZ", name: "Belize" },
+  { code: "BJ", name: "Benin" }, { code: "BT", name: "Bhutan" }, { code: "BO", name: "Bolivia" },
+  { code: "BA", name: "Bosnia and Herzegovina" }, { code: "BW", name: "Botswana" }, { code: "BR", name: "Brazil" },
+  { code: "BN", name: "Brunei" }, { code: "BG", name: "Bulgaria" }, { code: "BF", name: "Burkina Faso" },
+  { code: "BI", name: "Burundi" }, { code: "KH", name: "Cambodia" }, { code: "CM", name: "Cameroon" },
+  { code: "CA", name: "Canada" }, { code: "CV", name: "Cape Verde" }, { code: "CF", name: "Central African Republic" },
+  { code: "TD", name: "Chad" }, { code: "CL", name: "Chile" }, { code: "CN", name: "China" },
+  { code: "CO", name: "Colombia" }, { code: "KM", name: "Comoros" }, { code: "CG", name: "Congo" },
+  { code: "CR", name: "Costa Rica" }, { code: "HR", name: "Croatia" }, { code: "CU", name: "Cuba" },
+  { code: "CY", name: "Cyprus" }, { code: "CZ", name: "Czech Republic" }, { code: "CD", name: "DR Congo" },
+  { code: "DK", name: "Denmark" }, { code: "DJ", name: "Djibouti" }, { code: "DM", name: "Dominica" },
+  { code: "DO", name: "Dominican Republic" }, { code: "EC", name: "Ecuador" }, { code: "EG", name: "Egypt" },
+  { code: "SV", name: "El Salvador" }, { code: "GQ", name: "Equatorial Guinea" }, { code: "ER", name: "Eritrea" },
+  { code: "EE", name: "Estonia" }, { code: "SZ", name: "Eswatini" }, { code: "ET", name: "Ethiopia" },
+  { code: "FJ", name: "Fiji" }, { code: "FI", name: "Finland" }, { code: "FR", name: "France" },
+  { code: "GA", name: "Gabon" }, { code: "GM", name: "Gambia" }, { code: "GE", name: "Georgia" },
+  { code: "DE", name: "Germany" }, { code: "GH", name: "Ghana" }, { code: "GR", name: "Greece" },
+  { code: "GD", name: "Grenada" }, { code: "GT", name: "Guatemala" }, { code: "GN", name: "Guinea" },
+  { code: "GW", name: "Guinea-Bissau" }, { code: "GY", name: "Guyana" }, { code: "HT", name: "Haiti" },
+  { code: "HN", name: "Honduras" }, { code: "HU", name: "Hungary" }, { code: "IS", name: "Iceland" },
+  { code: "IN", name: "India" }, { code: "ID", name: "Indonesia" }, { code: "IR", name: "Iran" },
+  { code: "IQ", name: "Iraq" }, { code: "IE", name: "Ireland" }, { code: "IL", name: "Israel" },
+  { code: "IT", name: "Italy" }, { code: "CI", name: "Ivory Coast" }, { code: "JM", name: "Jamaica" },
+  { code: "JP", name: "Japan" }, { code: "JO", name: "Jordan" }, { code: "KZ", name: "Kazakhstan" },
+  { code: "KE", name: "Kenya" }, { code: "KI", name: "Kiribati" }, { code: "KW", name: "Kuwait" },
+  { code: "KG", name: "Kyrgyzstan" }, { code: "LA", name: "Laos" }, { code: "LV", name: "Latvia" },
+  { code: "LB", name: "Lebanon" }, { code: "LS", name: "Lesotho" }, { code: "LR", name: "Liberia" },
+  { code: "LY", name: "Libya" }, { code: "LI", name: "Liechtenstein" }, { code: "LT", name: "Lithuania" },
+  { code: "LU", name: "Luxembourg" }, { code: "MG", name: "Madagascar" }, { code: "MW", name: "Malawi" },
+  { code: "MY", name: "Malaysia" }, { code: "MV", name: "Maldives" }, { code: "ML", name: "Mali" },
+  { code: "MT", name: "Malta" }, { code: "MH", name: "Marshall Islands" }, { code: "MR", name: "Mauritania" },
+  { code: "MU", name: "Mauritius" }, { code: "MX", name: "Mexico" }, { code: "FM", name: "Micronesia" },
+  { code: "MD", name: "Moldova" }, { code: "MC", name: "Monaco" }, { code: "MN", name: "Mongolia" },
+  { code: "ME", name: "Montenegro" }, { code: "MA", name: "Morocco" }, { code: "MZ", name: "Mozambique" },
+  { code: "MM", name: "Myanmar" }, { code: "NA", name: "Namibia" }, { code: "NR", name: "Nauru" },
+  { code: "NP", name: "Nepal" }, { code: "NL", name: "Netherlands" }, { code: "NZ", name: "New Zealand" },
+  { code: "NI", name: "Nicaragua" }, { code: "NE", name: "Niger" }, { code: "NG", name: "Nigeria" },
+  { code: "KP", name: "North Korea" }, { code: "MK", name: "North Macedonia" }, { code: "NO", name: "Norway" },
+  { code: "OM", name: "Oman" }, { code: "PK", name: "Pakistan" }, { code: "PW", name: "Palau" },
+  { code: "PS", name: "Palestine" }, { code: "PA", name: "Panama" }, { code: "PG", name: "Papua New Guinea" },
+  { code: "PY", name: "Paraguay" }, { code: "PE", name: "Peru" }, { code: "PH", name: "Philippines" },
+  { code: "PL", name: "Poland" }, { code: "PT", name: "Portugal" }, { code: "QA", name: "Qatar" },
+  { code: "RO", name: "Romania" }, { code: "RU", name: "Russia" }, { code: "RW", name: "Rwanda" },
+  { code: "KN", name: "Saint Kitts and Nevis" }, { code: "LC", name: "Saint Lucia" },
+  { code: "VC", name: "Saint Vincent" }, { code: "WS", name: "Samoa" }, { code: "SM", name: "San Marino" },
+  { code: "ST", name: "Sao Tome and Principe" }, { code: "SA", name: "Saudi Arabia" },
+  { code: "SN", name: "Senegal" }, { code: "RS", name: "Serbia" }, { code: "SC", name: "Seychelles" },
+  { code: "SL", name: "Sierra Leone" }, { code: "SG", name: "Singapore" }, { code: "SK", name: "Slovakia" },
+  { code: "SI", name: "Slovenia" }, { code: "SB", name: "Solomon Islands" }, { code: "SO", name: "Somalia" },
+  { code: "ZA", name: "South Africa" }, { code: "KR", name: "South Korea" }, { code: "SS", name: "South Sudan" },
+  { code: "ES", name: "Spain" }, { code: "LK", name: "Sri Lanka" }, { code: "SD", name: "Sudan" },
+  { code: "SR", name: "Suriname" }, { code: "SE", name: "Sweden" }, { code: "CH", name: "Switzerland" },
+  { code: "SY", name: "Syria" }, { code: "TW", name: "Taiwan" }, { code: "TJ", name: "Tajikistan" },
+  { code: "TZ", name: "Tanzania" }, { code: "TH", name: "Thailand" }, { code: "TL", name: "Timor-Leste" },
+  { code: "TG", name: "Togo" }, { code: "TO", name: "Tonga" }, { code: "TT", name: "Trinidad and Tobago" },
+  { code: "TN", name: "Tunisia" }, { code: "TR", name: "Turkey" }, { code: "TM", name: "Turkmenistan" },
+  { code: "TV", name: "Tuvalu" }, { code: "UG", name: "Uganda" }, { code: "UA", name: "Ukraine" },
+  { code: "AE", name: "United Arab Emirates" }, { code: "GB", name: "United Kingdom" },
+  { code: "US", name: "United States" }, { code: "UY", name: "Uruguay" }, { code: "UZ", name: "Uzbekistan" },
+  { code: "VU", name: "Vanuatu" }, { code: "VA", name: "Vatican City" }, { code: "VE", name: "Venezuela" },
+  { code: "VN", name: "Vietnam" }, { code: "YE", name: "Yemen" }, { code: "ZM", name: "Zambia" },
+  { code: "ZW", name: "Zimbabwe" },
 ];
 
 export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: LocationDatabaseDialogProps) {
@@ -41,8 +99,8 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   const [regionFilter, setRegionFilter] = useState<string>("all");
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [countryOpen, setCountryOpen] = useState(false);
 
-  // Seed locations for a specific country
   const seedMutation = useMutation({
     mutationFn: async (countryCode?: string) => {
       const { data, error } = await supabase.functions.invoke("seed-locations", {
@@ -72,12 +130,8 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
         .order("population", { ascending: false })
         .limit(1000);
 
-      if (stateFilter !== "all") {
-        query = query.eq("state", stateFilter);
-      }
-      if (regionFilter !== "all") {
-        query = query.eq("region", regionFilter);
-      }
+      if (stateFilter !== "all") query = query.eq("state", stateFilter);
+      if (regionFilter !== "all") query = query.eq("region", regionFilter);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -85,21 +139,6 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     },
   });
 
-  // Derive unique states and regions from loaded data for current country
-  const { availableStates, availableRegions } = useMemo(() => {
-    const states = new Set<string>();
-    const regions = new Set<string>();
-    locations.forEach((l: any) => {
-      if (l.state) states.add(l.state);
-      if (l.region) regions.add(l.region);
-    });
-    return {
-      availableStates: Array.from(states).sort(),
-      availableRegions: Array.from(regions).sort(),
-    };
-  }, [locations]);
-
-  // Also fetch all states/regions for the country (unfiltered) for dropdowns
   const { data: allCountryLocations = [] } = useQuery({
     queryKey: ["locations-db-meta", countryFilter],
     enabled: open,
@@ -138,9 +177,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     }
     if (minPop) {
       const min = parseInt(minPop);
-      if (!isNaN(min)) {
-        result = result.filter((l: any) => (l.population || 0) >= min);
-      }
+      if (!isNaN(min)) result = result.filter((l: any) => (l.population || 0) >= min);
     }
     return result;
   }, [locations, search, minPop]);
@@ -186,10 +223,11 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     setRegionFilter("all");
     setSearch("");
     setSelectedIds(new Set());
+    setCountryOpen(false);
   };
 
   const isEmpty = !isLoading && locations.length === 0;
-  const countryName = SUPPORTED_COUNTRIES.find(c => c.code === countryFilter)?.name || countryFilter;
+  const countryName = ALL_COUNTRIES.find(c => c.code === countryFilter)?.name || countryFilter;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -200,29 +238,48 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             Location Database
           </DialogTitle>
           <DialogDescription>
-            Select a country and browse cities to use as your campaign data source.
+            Select any country and browse cities to use as your campaign data source.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Country selector - always visible */}
-        <div className="flex flex-wrap gap-1.5">
-          {SUPPORTED_COUNTRIES.map((c) => (
-            <button
-              key={c.code}
-              type="button"
-              onClick={() => handleCountryChange(c.code)}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors border",
-                countryFilter === c.code
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
-              )}
+        {/* Country selector — searchable combobox */}
+        <Popover open={countryOpen} onOpenChange={setCountryOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={countryOpen}
+              className="w-full justify-between rounded-xl h-10 text-sm"
             >
-              <span>{c.flag}</span>
-              <span>{c.name}</span>
-            </button>
-          ))}
-        </div>
+              <span className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-primary shrink-0" />
+                {countryName}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search country..." />
+              <CommandList>
+                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandGroup>
+                  {ALL_COUNTRIES.map((c) => (
+                    <CommandItem
+                      key={c.code}
+                      value={c.name}
+                      onSelect={() => handleCountryChange(c.code)}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", countryFilter === c.code ? "opacity-100" : "opacity-0")} />
+                      <span className="text-xs font-medium text-muted-foreground mr-2">{c.code}</span>
+                      {c.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
@@ -230,7 +287,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             <div className="text-center">
               <p className="text-sm font-medium">No cities found for {countryName}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Load the built-in {countryName} cities database to get started.
+                Load cities for {countryName} to get started.
               </p>
             </div>
             <Button
@@ -251,7 +308,6 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
           </div>
         ) : (
           <div className="flex-1 flex flex-col gap-3 min-h-0">
-            {/* Filters */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div className="col-span-2 sm:col-span-1">
                 <div className="relative">
@@ -295,14 +351,9 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               />
             </div>
 
-            {/* Stats bar */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="text-xs text-primary hover:underline font-medium"
-                  onClick={selectAll}
-                >
+                <button type="button" className="text-xs text-primary hover:underline font-medium" onClick={selectAll}>
                   {selectedIds.size === filteredLocations.length && filteredLocations.length > 0 ? "Deselect all" : "Select all"}
                 </button>
                 <span className="text-xs text-muted-foreground">
@@ -314,7 +365,6 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               </Badge>
             </div>
 
-            {/* Locations list */}
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -359,7 +409,6 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               </ScrollArea>
             )}
 
-            {/* Available columns preview */}
             <div className="flex flex-wrap gap-1.5">
               <span className="text-xs text-muted-foreground">Columns:</span>
               {["city", "county", "state", "state_code", "zip_code", "country", "country_code", "latitude", "longitude", "population", "timezone", "region"].map((h) => (
@@ -367,7 +416,6 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               ))}
             </div>
 
-            {/* Confirm */}
             <div className="flex justify-end gap-2 pt-2 border-t border-border">
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="rounded-xl">
                 Cancel

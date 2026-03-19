@@ -274,7 +274,6 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Accept optional country_code param (default: seed ALL countries)
     let body: { country_code?: string } = {};
     try { body = await req.json(); } catch { /* empty body ok */ }
 
@@ -285,44 +284,88 @@ Deno.serve(async (req) => {
     let totalInserted = 0;
 
     for (const code of targetCodes) {
-      const cities = COUNTRY_DATA[code];
-      if (!cities) continue;
-
       // Check if already seeded for this country
       const { count } = await supabase
         .from("locations")
         .select("id", { count: "exact", head: true })
         .eq("country_code", code);
-      if (count && count >= cities.length) continue;
+      if (count && count >= 5) continue; // already has data
 
-      // Deduplicate by city+state_code
-      const seen = new Set<string>();
-      const unique = cities.filter((c) => {
-        const key = `${c.city}-${c.state_code}-${c.country_code}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+      const cities = COUNTRY_DATA[code];
 
-      // Insert in batches of 50
-      for (let i = 0; i < unique.length; i += 50) {
-        const batch = unique.slice(i, i + 50).map((c) => ({
-          city: c.city,
-          county: c.county,
-          state: c.state,
-          state_code: c.state_code,
-          zip_code: c.zip_code,
-          country: c.country,
-          country_code: c.country_code,
-          latitude: c.latitude,
-          longitude: c.longitude,
-          population: c.population,
-          timezone: c.timezone,
-          region: c.region,
-        }));
-        const { error } = await supabase.from("locations").insert(batch);
-        if (error) throw error;
-        totalInserted += batch.length;
+      if (cities) {
+        // Use hardcoded data
+        const seen = new Set<string>();
+        const unique = cities.filter((c) => {
+          const key = `${c.city}-${c.state_code}-${c.country_code}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        for (let i = 0; i < unique.length; i += 50) {
+          const batch = unique.slice(i, i + 50).map((c) => ({
+            city: c.city, county: c.county, state: c.state, state_code: c.state_code,
+            zip_code: c.zip_code, country: c.country, country_code: c.country_code,
+            latitude: c.latitude, longitude: c.longitude, population: c.population,
+            timezone: c.timezone, region: c.region,
+          }));
+          const { error } = await supabase.from("locations").insert(batch);
+          if (error) throw error;
+          totalInserted += batch.length;
+        }
+      } else {
+        // No hardcoded data — generate via AI
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        if (!LOVABLE_API_KEY) throw new Error("AI service not configured for dynamic country seeding.");
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 45_000);
+        try {
+          const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash-lite",
+              messages: [
+                {
+                  role: "system",
+                  content: `You are a geography data expert. Return ONLY a valid JSON array of the top 30-50 major cities for the given country code. Each object must have these exact keys: city (string), county (string or null), state (string - province/region name), state_code (string - 2-3 letter abbreviation), zip_code (string or null), latitude (number), longitude (number), population (number, approximate), timezone (string - IANA timezone), region (string - geographic region within the country), country (string - full country name), country_code (string - ISO 2-letter). No markdown, no explanation, ONLY the JSON array.`
+                },
+                { role: "user", content: `Generate city data for country code: ${code}` }
+              ],
+            }),
+            signal: controller.signal,
+          });
+
+          if (!response.ok) throw new Error(`AI generation failed (${response.status})`);
+
+          const data = await response.json();
+          let content = data.choices?.[0]?.message?.content ?? "";
+          content = content.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+
+          const generatedCities = JSON.parse(content) as CityEntry[];
+
+          if (!Array.isArray(generatedCities) || generatedCities.length === 0) {
+            throw new Error("AI returned no valid city data");
+          }
+
+          for (let i = 0; i < generatedCities.length; i += 50) {
+            const batch = generatedCities.slice(i, i + 50).map((c) => ({
+              city: c.city || "", county: c.county || null, state: c.state || "",
+              state_code: c.state_code || "", zip_code: c.zip_code || null,
+              country: c.country || "", country_code: code,
+              latitude: c.latitude || 0, longitude: c.longitude || 0,
+              population: c.population || 0, timezone: c.timezone || "",
+              region: c.region || "",
+            }));
+            const { error } = await supabase.from("locations").insert(batch);
+            if (error) throw error;
+            totalInserted += batch.length;
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
       }
     }
 
