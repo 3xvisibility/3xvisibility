@@ -243,12 +243,22 @@ export default function CampaignDetailPage() {
 
   const republishMutation = useMutation({
     mutationFn: async (pageId: string) => {
-      const { error } = await supabase.from("generated_pages").update({ status: "pending" }).eq("id", pageId);
+      const { error: resetError } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending", error_message: null })
+        .eq("id", pageId);
+      if (resetError) throw resetError;
+
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { page_ids: [pageId], publish_type: "page" },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
-      toast({ title: "Page queued for republish" });
+      toast({ title: "Republish complete" });
     },
   });
 

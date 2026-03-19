@@ -4,6 +4,56 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+function sanitizeWordPressContent(content?: string): string | undefined {
+  if (typeof content !== "string") return content;
+
+  const sanitized = content
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<meta\b[^>]*>/gi, "")
+    .replace(/<link\b[^>]*>/gi, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<img\b(?=[^>]*\b(?:src|srcset|poster)\s*=\s*["'][^"']*\{)[^>]*>/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return sanitized || undefined;
+}
+
+function formatSlugAsTitle(slug?: string): string {
+  if (!slug) return "";
+
+  return slugify(slug)
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function resolveWordPressTitle(payload: Partial<PagePayload>): string {
+  const candidates = [
+    payload.title,
+    payload.seo_title,
+    formatSlugAsTitle(payload.slug),
+    "Generated Page",
+  ];
+
+  return candidates.find((value) => typeof value === "string" && value.trim().length > 0)!.trim();
+}
+
+function isSoftaculousBlockedResponse(text: string): boolean {
+  return text.includes("Softaculous Webuzo") || text.includes("Default Website Page");
+}
+
+async function getWordPressError(response: Response, action: string): Promise<string> {
+  const errorText = await response.text();
+
+  if (isSoftaculousBlockedResponse(errorText)) {
+    return `WordPress ${action} failed: your host blocked unsupported HTML in the page body.`;
+  }
+
+  return `WordPress ${action} error [${response.status}]: ${errorText}`;
+}
+
 export class WordPressConnector implements CmsConnector {
   readonly type = "wordpress";
   private baseUrl: string;
@@ -14,6 +64,7 @@ export class WordPressConnector implements CmsConnector {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
     this.authString = btoa(`${config.username}:${config.password}`);
     this.headers = {
+      Accept: "application/json",
       "Content-Type": "application/json",
       Authorization: `Basic ${this.authString}`,
     };
@@ -21,8 +72,8 @@ export class WordPressConnector implements CmsConnector {
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {
-      title: payload.title,
-      content: payload.content,
+      title: resolveWordPressTitle(payload),
+      content: sanitizeWordPressContent(payload.content) || "<p></p>",
       slug: slugify(payload.slug || payload.title),
       status: payload.status === "publish" ? "publish" : "draft",
     };
@@ -56,8 +107,7 @@ export class WordPressConnector implements CmsConnector {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`WordPress API error [${res.status}]: ${err}`);
+      throw new Error(await getWordPressError(res, "publish"));
     }
 
     const data = await res.json();
@@ -69,8 +119,13 @@ export class WordPressConnector implements CmsConnector {
 
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {};
-    if (payload.title) body.title = payload.title;
-    if (payload.content) body.content = payload.content;
+
+    if (payload.title || payload.seo_title) body.title = resolveWordPressTitle(payload);
+
+    if (typeof payload.content === "string") {
+      body.content = sanitizeWordPressContent(payload.content) || "<p></p>";
+    }
+
     if (payload.slug) body.slug = slugify(payload.slug);
     if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
     if (payload.excerpt) body.excerpt = payload.excerpt;
@@ -95,8 +150,7 @@ export class WordPressConnector implements CmsConnector {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`WordPress update error [${res.status}]: ${err}`);
+      throw new Error(await getWordPressError(res, "update"));
     }
 
     const data = await res.json();
@@ -105,7 +159,7 @@ export class WordPressConnector implements CmsConnector {
 
   async testConnection(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages?per_page=1`, {
+      const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/users/me?context=edit`, {
         headers: this.headers,
       });
       return res.ok;
@@ -156,7 +210,6 @@ export class WordPressConnector implements CmsConnector {
       page++;
     }
 
-    // For pages with missing Elementor data, fetch individually
     for (const item of items) {
       if (!item.elementor_data && item.type === "page") {
         try {

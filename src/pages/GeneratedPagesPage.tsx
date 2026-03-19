@@ -715,9 +715,10 @@ export default function GeneratedPagesPage() {
               </thead>
               <tbody>
                 {paginatedPages.map((page) => {
-                  const seoResult = calculateSeoScore((page as any).seo_title, (page as any).seo_description, (page as any).seo_keywords, page.title);
-                  const seaResult = calculateContentSeaScore(page.title, page.content, page.slug);
-                  const geoResult = calculateContentGeoScore(page.title, page.content, page.slug);
+                  const displayTitle = page.title?.trim() || (page as any).seo_title?.trim() || page.slug;
+                  const seoResult = calculateSeoScore((page as any).seo_title, (page as any).seo_description, (page as any).seo_keywords, displayTitle);
+                  const seaResult = calculateContentSeaScore(displayTitle, page.content, page.slug);
+                  const geoResult = calculateContentGeoScore(displayTitle, page.content, page.slug);
                   const isSelected = selectedIds.has(page.id);
                   return (
                     <tr
@@ -730,13 +731,13 @@ export default function GeneratedPagesPage() {
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelect(page.id)}
-                          aria-label={`Select ${page.title}`}
+                          aria-label={`Select ${displayTitle}`}
                         />
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
-                          <span className="font-medium truncate max-w-[200px]">{page.title}</span>
+                          <span className="font-medium truncate max-w-[200px]">{displayTitle}</span>
                         </div>
                       </td>
                       <td className="p-4 text-muted-foreground hidden sm:table-cell">
