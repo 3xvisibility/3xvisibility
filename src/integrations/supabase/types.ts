@@ -945,6 +945,72 @@ export type Database = {
           },
         ]
       }
+      page_metrics: {
+        Row: {
+          avg_time_on_page: number
+          bounce_rate: number
+          click_through_rate: number
+          conversions: number
+          created_at: string
+          id: string
+          page_id: string
+          period_end: string
+          period_start: string
+          unique_visitors: number
+          updated_at: string
+          user_id: string
+          views: number
+          workspace_id: string | null
+        }
+        Insert: {
+          avg_time_on_page?: number
+          bounce_rate?: number
+          click_through_rate?: number
+          conversions?: number
+          created_at?: string
+          id?: string
+          page_id: string
+          period_end?: string
+          period_start?: string
+          unique_visitors?: number
+          updated_at?: string
+          user_id: string
+          views?: number
+          workspace_id?: string | null
+        }
+        Update: {
+          avg_time_on_page?: number
+          bounce_rate?: number
+          click_through_rate?: number
+          conversions?: number
+          created_at?: string
+          id?: string
+          page_id?: string
+          period_end?: string
+          period_start?: string
+          unique_visitors?: number
+          updated_at?: string
+          user_id?: string
+          views?: number
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_metrics_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "generated_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_metrics_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ai_content_length: string
@@ -985,6 +1051,81 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_templates: {
+        Row: {
+          author_name: string
+          category: string
+          content: string
+          created_at: string
+          description: string
+          downloads: number
+          id: string
+          is_approved: boolean
+          schema_type: string | null
+          seo_description_pattern: string | null
+          seo_title_pattern: string | null
+          tags: string[]
+          template_id: string
+          updated_at: string
+          user_id: string
+          variables: string[]
+          workspace_id: string | null
+        }
+        Insert: {
+          author_name?: string
+          category?: string
+          content: string
+          created_at?: string
+          description?: string
+          downloads?: number
+          id?: string
+          is_approved?: boolean
+          schema_type?: string | null
+          seo_description_pattern?: string | null
+          seo_title_pattern?: string | null
+          tags?: string[]
+          template_id: string
+          updated_at?: string
+          user_id: string
+          variables?: string[]
+          workspace_id?: string | null
+        }
+        Update: {
+          author_name?: string
+          category?: string
+          content?: string
+          created_at?: string
+          description?: string
+          downloads?: number
+          id?: string
+          is_approved?: boolean
+          schema_type?: string | null
+          seo_description_pattern?: string | null
+          seo_title_pattern?: string | null
+          tags?: string[]
+          template_id?: string
+          updated_at?: string
+          user_id?: string
+          variables?: string[]
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_templates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_templates_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1176,6 +1317,41 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number
+          review: string | null
+          shared_template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating: number
+          review?: string | null
+          shared_template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number
+          review?: string | null
+          shared_template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_ratings_shared_template_id_fkey"
+            columns: ["shared_template_id"]
+            isOneToOne: false
+            referencedRelation: "shared_templates"
             referencedColumns: ["id"]
           },
         ]
