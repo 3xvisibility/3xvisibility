@@ -1354,6 +1354,65 @@ export default function GeneratedPagesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Translate Dialog */}
+      <Dialog open={translateOpen} onOpenChange={setTranslateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Languages className="h-5 w-5 text-primary" />
+              Translate Pages
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Translate {selectedIds.size} selected page{selectedIds.size !== 1 ? "s" : ""} into a new language. Translated copies will be created as new pages.
+            </p>
+            <div className="space-y-2">
+              <Label>Target Language</Label>
+              <Select value={translateLang} onValueChange={setTranslateLang}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[
+                    { code: "fr", label: "🇫🇷 French" },
+                    { code: "de", label: "🇩🇪 German" },
+                    { code: "es", label: "🇪🇸 Spanish" },
+                    { code: "it", label: "🇮🇹 Italian" },
+                    { code: "pt", label: "🇵🇹 Portuguese" },
+                    { code: "nl", label: "🇳🇱 Dutch" },
+                    { code: "pl", label: "🇵🇱 Polish" },
+                    { code: "sv", label: "🇸🇪 Swedish" },
+                    { code: "da", label: "🇩🇰 Danish" },
+                    { code: "ja", label: "🇯🇵 Japanese" },
+                    { code: "ko", label: "🇰🇷 Korean" },
+                    { code: "zh", label: "🇨🇳 Chinese" },
+                    { code: "ar", label: "🇸🇦 Arabic" },
+                    { code: "ru", label: "🇷🇺 Russian" },
+                    { code: "tr", label: "🇹🇷 Turkish" },
+                    { code: "hi", label: "🇮🇳 Hindi" },
+                    { code: "en", label: "🇬🇧 English" },
+                  ].map((l) => (
+                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setTranslateOpen(false)}>Cancel</Button>
+              <Button
+                disabled={translateMutation.isPending}
+                onClick={() => translateMutation.mutate({ pageIds: [...selectedIds], lang: translateLang })}
+              >
+                {translateMutation.isPending ? (
+                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Translating...</>
+                ) : (
+                  <><Languages className="mr-1.5 h-3.5 w-3.5" /> Translate {selectedIds.size} Page{selectedIds.size !== 1 ? "s" : ""}</>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
