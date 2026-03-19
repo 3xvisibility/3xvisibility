@@ -1903,9 +1903,11 @@ export default function CampaignsPage() {
                         <Badge variant="secondary" className={`${config.class} text-[11px] font-medium border shrink-0`}>
                           {isPaused ? "Paused" : config.label}
                         </Badge>
-                        <Badge variant="outline" className="text-[10px] uppercase font-mono shrink-0">
-                          {(c as any).campaign_type || "seo"}
-                        </Badge>
+                        {((c as any).campaign_types?.length ? (c as any).campaign_types : [(c as any).campaign_type || "seo"]).map((t: string) => (
+                          <Badge key={t} variant="outline" className="text-[10px] uppercase font-mono shrink-0">
+                            {t}
+                          </Badge>
+                        ))}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         {c.templates?.name && (
