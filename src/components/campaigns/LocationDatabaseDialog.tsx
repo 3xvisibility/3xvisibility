@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,37 +18,43 @@ interface LocationDatabaseDialogProps {
   onSelect: (locations: Record<string, string>[]) => void;
 }
 
-const US_STATES = [
-  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
-  "Delaware","District of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois",
-  "Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts",
-  "Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada",
-  "New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota",
-  "Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina",
-  "South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington",
-  "West Virginia","Wisconsin","Wyoming",
+const SUPPORTED_COUNTRIES = [
+  { code: "US", name: "United States", flag: "🇺🇸" },
+  { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+  { code: "CA", name: "Canada", flag: "🇨🇦" },
+  { code: "FR", name: "France", flag: "🇫🇷" },
+  { code: "DE", name: "Germany", flag: "🇩🇪" },
+  { code: "ES", name: "Spain", flag: "🇪🇸" },
+  { code: "IT", name: "Italy", flag: "🇮🇹" },
+  { code: "AU", name: "Australia", flag: "🇦🇺" },
+  { code: "NL", name: "Netherlands", flag: "🇳🇱" },
+  { code: "IN", name: "India", flag: "🇮🇳" },
+  { code: "BR", name: "Brazil", flag: "🇧🇷" },
 ];
-
-const REGIONS = ["Northeast", "Southeast", "Midwest", "Southwest", "West"];
 
 export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: LocationDatabaseDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [countryFilter, setCountryFilter] = useState<string>("US");
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [regionFilter, setRegionFilter] = useState<string>("all");
   const [minPop, setMinPop] = useState<string>("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Seed locations if empty
+  // Seed locations for a specific country
   const seedMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("seed-locations");
+    mutationFn: async (countryCode?: string) => {
+      const { data, error } = await supabase.functions.invoke("seed-locations", {
+        body: countryCode ? { country_code: countryCode } : {},
+      });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },
     onSuccess: () => {
       toast({ title: "Location database loaded", description: "Cities are now available." });
+      queryClient.invalidateQueries({ queryKey: ["locations-db"] });
     },
     onError: (err: Error) => {
       toast({ title: "Seeding failed", description: err.message, variant: "destructive" });
@@ -57,12 +62,13 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
   });
 
   const { data: locations = [], isLoading, refetch } = useQuery({
-    queryKey: ["locations-db", stateFilter, regionFilter],
+    queryKey: ["locations-db", countryFilter, stateFilter, regionFilter],
     enabled: open,
     queryFn: async () => {
       let query = supabase
         .from("locations")
         .select("*")
+        .eq("country_code", countryFilter)
         .order("population", { ascending: false })
         .limit(1000);
 
@@ -78,6 +84,47 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       return data || [];
     },
   });
+
+  // Derive unique states and regions from loaded data for current country
+  const { availableStates, availableRegions } = useMemo(() => {
+    const states = new Set<string>();
+    const regions = new Set<string>();
+    locations.forEach((l: any) => {
+      if (l.state) states.add(l.state);
+      if (l.region) regions.add(l.region);
+    });
+    return {
+      availableStates: Array.from(states).sort(),
+      availableRegions: Array.from(regions).sort(),
+    };
+  }, [locations]);
+
+  // Also fetch all states/regions for the country (unfiltered) for dropdowns
+  const { data: allCountryLocations = [] } = useQuery({
+    queryKey: ["locations-db-meta", countryFilter],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("locations")
+        .select("state, region")
+        .eq("country_code", countryFilter);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { allStates, allRegions } = useMemo(() => {
+    const states = new Set<string>();
+    const regions = new Set<string>();
+    allCountryLocations.forEach((l: any) => {
+      if (l.state) states.add(l.state);
+      if (l.region) regions.add(l.region);
+    });
+    return {
+      allStates: Array.from(states).sort(),
+      allRegions: Array.from(regions).sort(),
+    };
+  }, [allCountryLocations]);
 
   const filteredLocations = useMemo(() => {
     let result = locations;
@@ -120,7 +167,8 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       state: l.state || "",
       state_code: l.state_code || "",
       zip_code: l.zip_code || "",
-      country: l.country || "United States",
+      country: l.country || "",
+      country_code: l.country_code || "",
       latitude: String(l.latitude || ""),
       longitude: String(l.longitude || ""),
       population: String(l.population || ""),
@@ -132,7 +180,16 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
     setSelectedIds(new Set());
   };
 
+  const handleCountryChange = (code: string) => {
+    setCountryFilter(code);
+    setStateFilter("all");
+    setRegionFilter("all");
+    setSearch("");
+    setSelectedIds(new Set());
+  };
+
   const isEmpty = !isLoading && locations.length === 0;
+  const countryName = SUPPORTED_COUNTRIES.find(c => c.code === countryFilter)?.name || countryFilter;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -143,22 +200,42 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             Location Database
           </DialogTitle>
           <DialogDescription>
-            Browse and select cities to use as your campaign data source. No CSV needed.
+            Select a country and browse cities to use as your campaign data source.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Country selector - always visible */}
+        <div className="flex flex-wrap gap-1.5">
+          {SUPPORTED_COUNTRIES.map((c) => (
+            <button
+              key={c.code}
+              type="button"
+              onClick={() => handleCountryChange(c.code)}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors border",
+                countryFilter === c.code
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              <span>{c.flag}</span>
+              <span>{c.name}</span>
+            </button>
+          ))}
+        </div>
 
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <Globe className="h-12 w-12 text-muted-foreground/30" />
             <div className="text-center">
-              <p className="text-sm font-medium">Location database is empty</p>
+              <p className="text-sm font-medium">No cities found for {countryName}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Load the built-in US cities database to get started.
+                Load the built-in {countryName} cities database to get started.
               </p>
             </div>
             <Button
               onClick={async () => {
-                await seedMutation.mutateAsync();
+                await seedMutation.mutateAsync(countryFilter);
                 refetch();
               }}
               disabled={seedMutation.isPending}
@@ -169,7 +246,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              {seedMutation.isPending ? "Loading cities..." : "Load US Cities Database"}
+              {seedMutation.isPending ? "Loading cities..." : `Load ${countryName} Cities`}
             </Button>
           </div>
         ) : (
@@ -192,8 +269,8 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                   <SelectValue placeholder="All states" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All States</SelectItem>
-                  {US_STATES.map((s) => (
+                  <SelectItem value="all">All States / Provinces</SelectItem>
+                  {allStates.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
@@ -204,7 +281,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Regions</SelectItem>
-                  {REGIONS.map((r) => (
+                  {allRegions.map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
                 </SelectContent>
@@ -243,7 +320,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
             ) : (
-              <ScrollArea className="flex-1 min-h-0 max-h-[360px] rounded-xl border border-border">
+              <ScrollArea className="flex-1 min-h-0 max-h-[300px] rounded-xl border border-border">
                 <div className="space-y-0.5 p-1">
                   {filteredLocations.map((loc: any) => {
                     const isSelected = selectedIds.has(loc.id);
@@ -267,12 +344,12 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
                             )}
                           </div>
                           <div className="flex items-center gap-3 mt-0.5 text-[10px] text-muted-foreground">
-                            <span>{loc.county} County</span>
-                            <span>ZIP: {loc.zip_code}</span>
+                            {loc.county && <span>{loc.county} County</span>}
+                            {loc.zip_code && <span>ZIP: {loc.zip_code}</span>}
                             {loc.population && (
                               <span>Pop: {(loc.population / 1000).toFixed(0)}K</span>
                             )}
-                            <span>{loc.latitude}, {loc.longitude}</span>
+                            {loc.latitude && <span>{loc.latitude}, {loc.longitude}</span>}
                           </div>
                         </div>
                       </button>
@@ -285,7 +362,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
             {/* Available columns preview */}
             <div className="flex flex-wrap gap-1.5">
               <span className="text-xs text-muted-foreground">Columns:</span>
-              {["city", "county", "state", "state_code", "zip_code", "country", "latitude", "longitude", "population", "timezone", "region"].map((h) => (
+              {["city", "county", "state", "state_code", "zip_code", "country", "country_code", "latitude", "longitude", "population", "timezone", "region"].map((h) => (
                 <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
               ))}
             </div>
