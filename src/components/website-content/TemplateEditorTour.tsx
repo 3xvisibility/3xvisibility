@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { MousePointer, Tag, Eye, Code, Sparkles, ChevronRight, X, Wand2 } from "lucide-react";
+import { MousePointer, Tag, Code, Sparkles, ChevronRight, X, Wand2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TourStep {
