@@ -342,9 +342,9 @@ ${highlightedHtml}
 </body></html>`;
 
   return (
-    <div className="flex flex-col h-full gap-2">
+    <div className="flex min-h-0 flex-col h-full gap-2">
       {/* AI Edit Input */}
-      <div data-tour="template-ai-edit" className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+      <div data-tour="template-ai-edit" className="flex flex-col sm:flex-row sm:items-center gap-2 bg-muted/50 rounded-lg p-2">
         <Wand2 className="h-4 w-4 text-primary shrink-0" />
         <Input
           value={aiPrompt}
@@ -358,14 +358,14 @@ ${highlightedHtml}
           size="sm"
           onClick={handleAiEdit}
           disabled={aiLoading || !aiPrompt.trim()}
-          className="h-7 text-xs gap-1 bg-gradient-primary border-0 shrink-0"
+          className="h-8 text-xs gap-1 bg-gradient-primary border-0 shrink-0 w-full sm:w-auto"
         >
           {aiLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
           {aiLoading ? "Applying..." : "Apply"}
         </Button>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
           {showCode
             ? "Edit raw HTML — for advanced users"
@@ -401,25 +401,25 @@ ${highlightedHtml}
             onClick={() => setShowCode(!showCode)}
           >
             {showCode ? <Eye className="h-3 w-3" /> : <Code className="h-3 w-3" />}
-            {showCode ? "Visual Preview" : "View Code"}
+            {showCode ? "Visual" : "Code"}
           </Button>
         </div>
       </div>
 
       {showCode ? (
-        <ScrollArea className="flex-1 border rounded-lg">
+        <ScrollArea className="flex-1 border rounded-lg min-h-[260px]">
           <Textarea
             value={templateHtml}
             onChange={(e) => onChange(e.target.value)}
-            className="font-mono text-xs min-h-[350px] border-0 focus-visible:ring-0"
+            className="font-mono text-xs min-h-[260px] sm:min-h-[350px] border-0 focus-visible:ring-0"
           />
         </ScrollArea>
       ) : (
-        <div data-tour="template-preview" className="flex-1 border rounded-lg overflow-hidden bg-white relative">
+        <div data-tour="template-preview" className="flex-1 border rounded-lg overflow-hidden bg-white relative min-h-[260px] sm:min-h-[350px]">
           <iframe
             ref={iframeRef}
             srcDoc={previewDoc}
-            className="w-full h-full min-h-[350px] border-0"
+            className="w-full h-full border-0"
             sandbox="allow-scripts allow-same-origin"
             title="Template preview — select text to add variables"
           />
@@ -785,7 +785,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2">
             <MapPin className="h-4 w-4 text-primary" />
@@ -822,7 +822,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                 <p>4. Elementor/page builder design is preserved</p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <Button
                   onClick={detectVariables}
                   disabled={detecting}
@@ -852,7 +852,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
           {/* Step 2: Edit variables */}
           {step === "edit" && (
             <Tabs defaultValue="variables" className="flex-1 overflow-hidden flex flex-col">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid h-auto w-full grid-cols-3">
                 <TabsTrigger value="variables" className="text-xs">Variables ({variables.length})</TabsTrigger>
                 <TabsTrigger value="preview" className="text-xs">Template</TabsTrigger>
                 <TabsTrigger value="data" className="text-xs">Data Source</TabsTrigger>
@@ -864,7 +864,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                   <div className="space-y-4 pr-2">
                     {variables.map((v, i) => (
                       <div key={i} className="border rounded-lg p-3 space-y-2 bg-card">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <Badge variant="outline" className="text-[10px] font-mono">{`{${v.name}}`}</Badge>
                           <Button
                             size="sm"
@@ -875,13 +875,13 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <div>
                             <Label className="text-[10px]">Variable Name</Label>
                             <Input
                               value={v.name}
                               onChange={(e) => updateVariable(i, "name", e.target.value)}
-                              className="h-7 text-xs"
+                              className="h-8 text-xs"
                               placeholder="city_name"
                             />
                           </div>
@@ -890,18 +890,18 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                             <Input
                               value={v.original}
                               onChange={(e) => updateVariable(i, "original", e.target.value)}
-                              className="h-7 text-xs"
+                              className="h-8 text-xs"
                               placeholder="New York"
                             />
                           </div>
                         </div>
                         <div>
-                          <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center justify-between gap-2 mb-1">
                             <Label className="text-[10px]">Values (comma-separated) — {v.values.length} value(s)</Label>
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-6 text-[10px] gap-1"
+                              className="h-7 text-[10px] gap-1 shrink-0"
                               onClick={() => aiSuggestValues(i)}
                               disabled={aiGenerating}
                             >
@@ -928,16 +928,16 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                   </div>
                 </ScrollArea>
 
-                <div className="flex items-center gap-2 pt-2 border-t">
-                  <Button size="sm" variant="outline" onClick={addVariable} className="text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t">
+                  <Button size="sm" variant="outline" onClick={addVariable} className="text-xs w-full sm:w-auto">
                     <Plus className="h-3 w-3 mr-1" /> Add Variable
                   </Button>
-                  <Button size="sm" variant="outline" onClick={rebuildTemplate} className="text-xs">
+                  <Button size="sm" variant="outline" onClick={rebuildTemplate} className="text-xs w-full sm:w-auto">
                     <RefreshCw className="h-3 w-3 mr-1" /> Rebuild Template
                   </Button>
                 </div>
 
-                <div className="bg-muted/50 rounded-lg p-2 flex items-center justify-between">
+                <div className="bg-muted/50 rounded-lg p-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-xs text-muted-foreground">
                     <strong>{totalPages}</strong> page(s) will be generated
                   </span>
@@ -945,7 +945,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                     onClick={generatePages}
                     disabled={generating}
                     size="sm"
-                    className="bg-gradient-primary border-0 shadow-lg shadow-primary/25"
+                    className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 w-full sm:w-auto"
                   >
                     <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                     Generate & Publish ({totalPages})

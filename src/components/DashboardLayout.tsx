@@ -52,22 +52,31 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar onLogout={onLogout} />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 flex items-center justify-between border-b border-border bg-card px-4 lg:px-6 shrink-0 sticky top-0 z-30">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="lg:hidden" />
+          <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-border bg-card px-3 py-2 sm:px-4 lg:px-6 shrink-0">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <SidebarTrigger className="shrink-0 lg:hidden" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground md:hidden"
+                onClick={() => setCmdOpen(true)}
+              >
+                <Search className="h-4 w-4" />
+                <span className="sr-only">Open search</span>
+              </Button>
               <button
                 data-onboarding="search"
                 onClick={() => setCmdOpen(true)}
-                className="hidden md:flex items-center gap-2 h-9 w-64 rounded-lg bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-muted transition-colors"
+                className="hidden md:flex items-center gap-2 h-9 w-full max-w-xs lg:w-64 rounded-lg bg-muted/50 px-3 text-sm text-muted-foreground hover:bg-muted transition-colors"
               >
                 <Search className="h-4 w-4 shrink-0" />
-                <span className="flex-1 text-left">{t("dashboard.search")}</span>
+                <span className="flex-1 text-left truncate">{t("dashboard.search")}</span>
                 <kbd className="text-[10px] font-mono border border-border rounded px-1.5 py-0.5 bg-background text-muted-foreground">
                   ⌘K
                 </kbd>
               </button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -85,8 +94,8 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               <NotificationsDropdown />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-9 gap-2 px-2 rounded-lg">
-                    <Avatar className="h-7 w-7">
+                  <Button variant="ghost" className="h-9 min-w-0 gap-2 px-2 rounded-lg">
+                    <Avatar className="h-7 w-7 shrink-0">
                       <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
                         {initials}
                       </AvatarFallback>
@@ -107,7 +116,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 p-4 lg:p-8 overflow-auto">
+          <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-8">
             <div className="max-w-7xl mx-auto animate-fade-in">
               {children}
             </div>
