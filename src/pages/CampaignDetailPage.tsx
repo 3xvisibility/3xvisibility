@@ -32,9 +32,9 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
-  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download,
+  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward,
 } from "lucide-react";
-import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
