@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns ADD COLUMN campaign_types text[] NOT NULL DEFAULT '{}'::text[];
