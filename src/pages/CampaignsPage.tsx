@@ -412,8 +412,13 @@ export default function CampaignsPage() {
         publish_mode: campaign.publish_mode,
         max_rows: campaign.max_rows,
         batch_size: campaign.batch_size,
+        total_rows: campaign.total_rows,
         utm_settings: campaign.utm_settings,
         geo_settings: campaign.geo_settings,
+        directory_structure: campaign.directory_structure,
+        author_rotation: campaign.author_rotation,
+        drip_feed_settings: campaign.drip_feed_settings,
+        generation_method: campaign.generation_method,
         status: "draft" as const,
       }).select("id").single();
       if (error) throw error;
@@ -456,6 +461,28 @@ export default function CampaignsPage() {
             transform_expression: m.transform_expression,
           }))
         );
+      }
+
+      // Duplicate internal link settings
+      if (newCampaign) {
+        const { data: linkSettings } = await supabase
+          .from("internal_link_settings")
+          .select("*")
+          .eq("campaign_id", campaign.id)
+          .maybeSingle();
+        if (linkSettings) {
+          await supabase.from("internal_link_settings").insert({
+            campaign_id: newCampaign.id,
+            user_id: user.id,
+            workspace_id: wsId,
+            enabled: linkSettings.enabled,
+            auto_build: linkSettings.auto_build,
+            max_links_per_page: linkSettings.max_links_per_page,
+            section_title: linkSettings.section_title,
+            anchor_format: linkSettings.anchor_format,
+            grouping_variable: linkSettings.grouping_variable,
+          });
+        }
       }
 
       return campaign.name;

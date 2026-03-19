@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { History, Eye, RotateCcw, Clock } from "lucide-react";
+import { History, Eye, RotateCcw, Clock, GitCompareArrows } from "lucide-react";
 import { TemplatePreview } from "./TemplatePreview";
+import { TemplateCompareDialog } from "./TemplateCompareDialog";
 
 export interface TemplateVersion {
   id: string;
@@ -19,6 +20,8 @@ export interface TemplateVersion {
 
 interface TemplateVersionHistoryProps {
   templateId: string;
+  currentContent?: string;
+  currentName?: string;
   onRestore: (version: TemplateVersion) => void;
 }
 
@@ -37,24 +40,21 @@ export function saveVersion(templateId: string, version: Omit<TemplateVersion, "
   try {
     const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
     const versions = (all[templateId] || []) as TemplateVersion[];
-    // Don't save if content hasn't changed
     if (versions.length > 0 && versions[0].content === version.content) return;
     versions.unshift({
       ...version,
       id: crypto.randomUUID(),
       savedAt: new Date().toISOString(),
     });
-    // Keep last 20 versions
     all[templateId] = versions.slice(0, 20);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  } catch {
-    // Storage full or unavailable
-  }
+  } catch {}
 }
 
-export function TemplateVersionHistory({ templateId, onRestore }: TemplateVersionHistoryProps) {
+export function TemplateVersionHistory({ templateId, currentContent, currentName, onRestore }: TemplateVersionHistoryProps) {
   const [open, setOpen] = useState(false);
   const [previewVersion, setPreviewVersion] = useState<TemplateVersion | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
   const versions = getVersions(templateId);
 
   if (versions.length === 0) return null;
@@ -77,6 +77,19 @@ export function TemplateVersionHistory({ templateId, onRestore }: TemplateVersio
               <History className="h-5 w-5 text-primary" /> Version History
             </DialogTitle>
           </DialogHeader>
+
+          {/* Compare button */}
+          {versions.length >= 1 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="self-start text-xs gap-1.5"
+              onClick={() => { setCompareOpen(true); setOpen(false); }}
+            >
+              <GitCompareArrows className="h-3 w-3" /> Compare Versions
+            </Button>
+          )}
+
           <ScrollArea className="flex-1 mt-3">
             <div className="space-y-2">
               {versions.map((v, i) => (
@@ -103,23 +116,10 @@ export function TemplateVersionHistory({ templateId, onRestore }: TemplateVersio
                     </div>
                   </div>
                   <div className="flex gap-1 ml-3 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => setPreviewVersion(v)}
-                    >
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setPreviewVersion(v)}>
                       <Eye className="h-3 w-3 mr-1" /> Preview
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={() => {
-                        onRestore(v);
-                        setOpen(false);
-                      }}
-                    >
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { onRestore(v); setOpen(false); }}>
                       <RotateCcw className="h-3 w-3 mr-1" /> Restore
                     </Button>
                   </div>
@@ -143,6 +143,15 @@ export function TemplateVersionHistory({ templateId, onRestore }: TemplateVersio
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* Compare dialog */}
+      <TemplateCompareDialog
+        open={compareOpen}
+        onOpenChange={setCompareOpen}
+        versions={versions}
+        currentContent={currentContent}
+        currentName={currentName}
+      />
     </>
   );
 }

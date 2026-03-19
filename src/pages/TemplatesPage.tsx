@@ -918,6 +918,8 @@ export default function TemplatesPage() {
                   </div>
                   <TemplateVersionHistory
                     templateId={tpl.id}
+                    currentContent={tpl.content}
+                    currentName={tpl.name}
                     onRestore={(version) => {
                       setEditingTemplate(tpl);
                       setName(version.name);
