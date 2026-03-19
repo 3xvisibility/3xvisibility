@@ -1165,6 +1165,93 @@ export default function TemplatesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* AI Content Generator Dialog */}
+      <Dialog open={aiContentOpen} onOpenChange={(v) => { setAiContentOpen(v); if (!v) { setAiKeywords(""); setAiContentType("seo"); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wand2 className="h-5 w-5 text-primary" />
+              AI Content Generator
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-1">
+              <p className="text-sm font-medium">Generate SEO-optimized content</p>
+              <p className="text-xs text-muted-foreground">
+                Enter your target keywords and we'll generate content that scores <strong>80+</strong> on SEO, SEA, and GEO metrics automatically.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Target Keywords</Label>
+              <Input
+                placeholder="e.g., plumbing services, emergency plumber, pipe repair"
+                value={aiKeywords}
+                onChange={(e) => setAiKeywords(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Separate multiple keywords with commas</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Content Focus</Label>
+              <Select value={aiContentType} onValueChange={setAiContentType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="seo">
+                    <span className="flex items-center gap-2">🔍 SEO — Organic search optimization</span>
+                  </SelectItem>
+                  <SelectItem value="sea">
+                    <span className="flex items-center gap-2">💰 SEA — Paid landing page conversion</span>
+                  </SelectItem>
+                  <SelectItem value="geo">
+                    <span className="flex items-center gap-2">📍 GEO — Local search targeting</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-xs text-muted-foreground w-full mb-1">Quick keyword ideas:</span>
+              {[
+                "plumbing services, emergency plumber",
+                "dental clinic, teeth whitening",
+                "real estate agent, home buying",
+                "restaurant, food delivery",
+                "auto repair, car service",
+                "web design, digital marketing",
+              ].map((kw) => (
+                <button
+                  key={kw}
+                  type="button"
+                  onClick={() => setAiKeywords(kw)}
+                  className="text-xs px-2.5 py-1 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                >
+                  {kw}
+                </button>
+              ))}
+            </div>
+
+            <Button
+              onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType })}
+              disabled={!aiKeywords.trim() || aiContentMutation.isPending}
+              className="w-full"
+            >
+              {aiContentMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating high-score content...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="mr-2 h-4 w-4" /> Generate Content (80+ Score)
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
