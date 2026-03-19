@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
       try {
         const connector = createConnector(page.websites as WebsiteRecord);
         const payload = buildPayload(
-          { title: page.title, content: page.content, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
+          { title: page.title, content: stripHeadTagsForCms(page.content), slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           pubType
         );
 
