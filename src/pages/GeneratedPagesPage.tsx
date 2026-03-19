@@ -349,7 +349,7 @@ export default function GeneratedPagesPage() {
   );
 
   // Reset to page 1 when filters or page size change
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, pageSize, sortBy]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, freshnessFilter, pageSize, sortBy]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
