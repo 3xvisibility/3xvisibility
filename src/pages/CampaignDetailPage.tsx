@@ -68,6 +68,8 @@ export default function CampaignDetailPage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [resumeIndex, setResumeIndex] = useState(0);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
     content: true,
