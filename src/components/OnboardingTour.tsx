@@ -189,7 +189,7 @@ export function OnboardingTour() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
-            className="fixed z-[10000] w-[340px]"
+            className="fixed z-[10000] max-w-[calc(100vw-16px)]"
             style={getTooltipPosition()}
           >
             <div className="rounded-xl border border-border bg-card shadow-xl p-5 space-y-3">
