@@ -307,8 +307,9 @@ export default function CampaignsPage() {
          publish_mode: publishMode,
          generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
-        scheduled_at: scheduleMode === "later" && scheduledDate ? scheduledDate.toISOString() : null,
-        status: scheduleMode === "later" && scheduledDate ? "queued" as any : publishMode === "published" ? "queued" as any : "draft" as any,
+        scheduled_at: (scheduleMode === "later" || scheduleMode === "recurring") && scheduledDate ? scheduledDate.toISOString() : null,
+        status: (scheduleMode === "later" || scheduleMode === "recurring") && scheduledDate ? "queued" as any : publishMode === "published" ? "queued" as any : "draft" as any,
+        recurring_schedule: scheduleMode === "recurring" ? { interval: recurringInterval, end_date: recurringEndDate?.toISOString() || null, enabled: true } as any : null,
       } as any).select("id").single();
       if (error) throw error;
 
