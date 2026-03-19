@@ -311,6 +311,11 @@ export default function SettingsPage() {
 
       <Separator />
 
+      {/* Webhooks */}
+      <WebhookSettings wsId={wsId} />
+
+      <Separator />
+
       {/* API Keys */}
       <Card className="shadow-surface">
         <CardHeader>
