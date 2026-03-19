@@ -49,19 +49,24 @@ const tourSteps: TourStep[] = [
 
 const STORAGE_KEY = "template-editor-tour-completed";
 
-export function TemplateEditorTour({ active }: { active: boolean }) {
+export function TemplateEditorTour({ active, restartKey }: { active: boolean; restartKey?: number }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     if (!active) return;
+    if (restartKey && restartKey > 0) {
+      setCurrentStep(0);
+      setIsActive(true);
+      return;
+    }
     const completed = localStorage.getItem(STORAGE_KEY);
     if (!completed) {
       const timer = setTimeout(() => setIsActive(true), 800);
       return () => clearTimeout(timer);
     }
-  }, [active]);
+  }, [active, restartKey]);
 
   const measureTarget = useCallback(() => {
     if (!isActive) return;
