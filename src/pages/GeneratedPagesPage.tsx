@@ -428,6 +428,7 @@ export default function GeneratedPagesPage() {
             <SelectContent>
               <SelectItem value="newest">Newest first</SelectItem>
               <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="freshness">Stalest first</SelectItem>
               <SelectItem value="seo_desc">SEO ↓ (best)</SelectItem>
               <SelectItem value="seo_asc">SEO ↑ (worst)</SelectItem>
               <SelectItem value="sea_desc">SEA ↓ (best)</SelectItem>
