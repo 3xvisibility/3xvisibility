@@ -679,6 +679,7 @@ export default function CampaignsPage() {
     setScheduleMode("now");
     setScheduledDate(undefined);
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
+    setAdCampaignId(""); setAdGroupId(""); setSeaDirectoryLevels("");
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
     setGeoLat(""); setGeoLng(""); setGeoLanguage("en");
     setDataSource("csv");
