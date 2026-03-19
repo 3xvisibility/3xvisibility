@@ -158,6 +158,14 @@ const App = () => {
               }
             />
             <Route
+              path="/marketplace"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><TemplateMarketplacePage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/billing"
               element={
                 <ProtectedRoute session={session}>

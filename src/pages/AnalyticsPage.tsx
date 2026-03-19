@@ -19,6 +19,7 @@ import {
   XCircle,
   Clock,
   Percent,
+  Zap,
 } from "lucide-react";
 import {
   BarChart,
