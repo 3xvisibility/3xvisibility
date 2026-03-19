@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import {
   TemplateVisualEditor,
   blocksToHtml,
