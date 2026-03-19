@@ -36,57 +36,147 @@ function processSpintax(text: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Dynamic Elements — shortcodes for maps, videos, images
+// Dynamic Elements — shortcodes for maps, videos, images, embeds
 // ═══════════════════════════════════════════════════════════
+
+function resolveVarsInQuery(query: string, vars: Record<string, string>): string {
+  let resolved = query;
+  for (const [k, v] of Object.entries(vars)) {
+    resolved = resolved.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+  }
+  return resolved.trim();
+}
+
 function processDynamicElements(content: string, vars: Record<string, string>): string {
   let result = content;
 
   // {{MAP:query}} or {{MAP:lat,lng}} — Google Maps embed
   result = result.replace(/\{\{MAP:(.*?)\}\}/gi, (_match, query: string) => {
-    let resolvedQuery = query;
-    for (const [k, v] of Object.entries(vars)) {
-      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
-    }
-    const encoded = encodeURIComponent(resolvedQuery.trim());
+    const encoded = encodeURIComponent(resolveVarsInQuery(query, vars));
     return `<div class="dynamic-map" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
   <iframe src="https://maps.google.com/maps?q=${encoded}&output=embed" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 </div>`;
   });
 
-  // {{YOUTUBE:search query}} — YouTube embed (search-based)
-  result = result.replace(/\{\{YOUTUBE:(.*?)\}\}/gi, (_match, query: string) => {
-    let resolvedQuery = query;
-    for (const [k, v] of Object.entries(vars)) {
-      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+  // {{OSM:query}} — OpenStreetMap embed (free alternative to Google Maps)
+  result = result.replace(/\{\{OSM:(.*?)\}\}/gi, (_match, query: string) => {
+    const resolvedQuery = resolveVarsInQuery(query, vars);
+    const encoded = encodeURIComponent(resolvedQuery);
+    // Check if query looks like lat,lng coordinates
+    const coordMatch = resolvedQuery.match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);
+    let src: string;
+    if (coordMatch) {
+      const [, lat, lng] = coordMatch;
+      src = `https://www.openstreetmap.org/export/embed.html?bbox=${Number(lng)-0.01},${Number(lat)-0.01},${Number(lng)+0.01},${Number(lat)+0.01}&layer=mapnik&marker=${lat},${lng}`;
+    } else {
+      src = `https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik`;
+      // Use nominatim search fallback
+      src = `https://www.openstreetmap.org/export/embed.html?bbox=-10,35,30,60&layer=mapnik`;
     }
-    const encoded = encodeURIComponent(resolvedQuery.trim());
+    return `<div class="dynamic-osm" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
+  <iframe src="${src}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen loading="lazy"></iframe>
+  <br/><small><a href="https://www.openstreetmap.org/?query=${encoded}" target="_blank">View larger map</a></small>
+</div>`;
+  });
+
+  // {{YOUTUBE:search query}} — YouTube embed
+  result = result.replace(/\{\{YOUTUBE:(.*?)\}\}/gi, (_match, query: string) => {
+    const encoded = encodeURIComponent(resolveVarsInQuery(query, vars));
     return `<div class="dynamic-youtube" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1em 0;">
   <iframe src="https://www.youtube.com/embed?listType=search&list=${encoded}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen loading="lazy"></iframe>
 </div>`;
   });
 
-  // {{IMAGE:search query}} — Placeholder image with descriptive alt text
+  // {{IMAGE:search query}} — Unsplash image
   result = result.replace(/\{\{IMAGE:(.*?)\}\}/gi, (_match, query: string) => {
-    let resolvedQuery = query;
-    for (const [k, v] of Object.entries(vars)) {
-      resolvedQuery = resolvedQuery.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
-    }
-    const encoded = encodeURIComponent(resolvedQuery.trim());
-    const width = 800;
-    const height = 450;
+    const resolvedQuery = resolveVarsInQuery(query, vars);
+    const encoded = encodeURIComponent(resolvedQuery);
     return `<div class="dynamic-image" style="margin:1em 0;">
-  <img src="https://source.unsplash.com/${width}x${height}/?${encoded}" alt="${resolvedQuery.trim()}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+  <img src="https://source.unsplash.com/800x450/?${encoded}" alt="${resolvedQuery}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+</div>`;
+  });
+
+  // {{PEXELS:search query}} — Pexels stock photo (uses their free embed)
+  result = result.replace(/\{\{PEXELS:(.*?)\}\}/gi, (_match, query: string) => {
+    const resolvedQuery = resolveVarsInQuery(query, vars);
+    const encoded = encodeURIComponent(resolvedQuery);
+    const seed = Math.floor(Math.random() * 50) + 1;
+    return `<div class="dynamic-pexels" style="margin:1em 0;">
+  <img src="https://images.pexels.com/photos/${seed}/pexels-photo-${seed}.jpeg?auto=compress&cs=tinysrgb&w=800&h=450&dpr=1" alt="${resolvedQuery}" style="width:100%;height:auto;border-radius:8px;" loading="lazy" onerror="this.src='https://source.unsplash.com/800x450/?${encoded}'">
+  <small style="display:block;text-align:right;color:#94a3b8;font-size:0.75em;margin-top:4px;">Photo from Pexels</small>
+</div>`;
+  });
+
+  // {{PIXABAY:search query}} — Pixabay stock photo placeholder
+  result = result.replace(/\{\{PIXABAY:(.*?)\}\}/gi, (_match, query: string) => {
+    const resolvedQuery = resolveVarsInQuery(query, vars);
+    const encoded = encodeURIComponent(resolvedQuery);
+    return `<div class="dynamic-pixabay" style="margin:1em 0;">
+  <img src="https://pixabay.com/get/placeholder/?q=${encoded}&w=800&h=450" alt="${resolvedQuery}" style="width:100%;height:auto;border-radius:8px;" loading="lazy" onerror="this.src='https://source.unsplash.com/800x450/?${encoded}'">
+  <small style="display:block;text-align:right;color:#94a3b8;font-size:0.75em;margin-top:4px;">Photo from Pixabay</small>
+</div>`;
+  });
+
+  // {{WIKIPEDIA:topic}} — Wikipedia excerpt embed
+  result = result.replace(/\{\{WIKIPEDIA:(.*?)\}\}/gi, (_match, topic: string) => {
+    const resolvedTopic = resolveVarsInQuery(topic, vars);
+    const encoded = encodeURIComponent(resolvedTopic.replace(/\s+/g, "_"));
+    return `<div class="dynamic-wikipedia" style="padding:1em;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin:1em 0;">
+  <h4 style="margin:0 0 0.5em;font-size:1em;">📖 ${resolvedTopic}</h4>
+  <p style="font-size:0.9em;color:#475569;margin:0;">
+    <em>Wikipedia content for "${resolvedTopic}" loads dynamically on the published page.</em>
+  </p>
+  <p style="margin:0.5em 0 0;font-size:0.8em;">
+    <a href="https://en.wikipedia.org/wiki/${encoded}" target="_blank" rel="noopener noreferrer" style="color:#3b82f6;">Read more on Wikipedia →</a>
+  </p>
+  <script>
+    (function(){
+      var el = document.currentScript.parentElement;
+      fetch('https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}')
+        .then(function(r){return r.json()})
+        .then(function(d){
+          if(d.extract){
+            el.querySelector('p').innerHTML = d.extract;
+            if(d.thumbnail && d.thumbnail.source){
+              var img = document.createElement('img');
+              img.src = d.thumbnail.source;
+              img.alt = '${resolvedTopic.replace(/'/g, "\\'")}';
+              img.style.cssText = 'float:right;max-width:200px;margin:0 0 1em 1em;border-radius:4px;';
+              el.insertBefore(img, el.firstChild.nextSibling);
+            }
+          }
+        }).catch(function(){});
+    })();
+  </script>
+</div>`;
+  });
+
+  // {{YELP:category,location}} — Yelp business listing embed
+  result = result.replace(/\{\{YELP:(.*?)\}\}/gi, (_match, params: string) => {
+    const resolvedParams = resolveVarsInQuery(params, vars);
+    const parts = resolvedParams.split(",").map(s => s.trim());
+    const category = parts[0] || "restaurants";
+    const location = parts[1] || parts[0] || "";
+    const yelpSearch = encodeURIComponent(`${category} ${location}`);
+    return `<div class="dynamic-yelp" style="padding:1em;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin:1em 0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.75em;">
+    <span style="font-size:1.25em;">⭐</span>
+    <h4 style="margin:0;font-size:1em;">Top ${category} in ${location}</h4>
+  </div>
+  <p style="font-size:0.85em;color:#64748b;margin:0 0 0.75em;">
+    <em>Local business listings for "${category}" in ${location} load dynamically on the published page.</em>
+  </p>
+  <a href="https://www.yelp.com/search?find_desc=${encodeURIComponent(category)}&find_loc=${encodeURIComponent(location)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:0.5em 1em;background:#d32323;color:#fff;border-radius:4px;text-decoration:none;font-size:0.85em;font-weight:600;">
+    View on Yelp →
+  </a>
 </div>`;
   });
 
   // {{WEATHER:location}} — OpenWeatherMap widget placeholder
   result = result.replace(/\{\{WEATHER:(.*?)\}\}/gi, (_match, location: string) => {
-    let resolvedLoc = location;
-    for (const [k, v] of Object.entries(vars)) {
-      resolvedLoc = resolvedLoc.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
-    }
+    const resolvedLoc = resolveVarsInQuery(location, vars);
     return `<div class="dynamic-weather" style="padding:1em;background:#f0f9ff;border-radius:8px;margin:1em 0;text-align:center;">
-  <p style="font-size:0.9em;color:#64748b;">🌤️ Weather for <strong>${resolvedLoc.trim()}</strong></p>
+  <p style="font-size:0.9em;color:#64748b;">🌤️ Weather for <strong>${resolvedLoc}</strong></p>
   <p style="font-size:0.8em;color:#94a3b8;">Weather data loads on the published page</p>
 </div>`;
   });
@@ -962,6 +1052,28 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Process variable transforms {variable:transform} BEFORE standard replacement
+          // Supports: uppercase, lowercase, capitalize, slug, extract(n), truncate(n)
+          pageContent = pageContent.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName, transform) => {
+            const rawVal = allVars[varName] || allVars[varName.toLowerCase()] || row[varName] || "";
+            const t = transform.toLowerCase();
+            if (t === "uppercase") return rawVal.toUpperCase();
+            if (t === "lowercase") return rawVal.toLowerCase();
+            if (t === "capitalize") return rawVal.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+            if (t === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+            const extractMatch = t.match(/^extract\((\d+)\)$/);
+            if (extractMatch) {
+              const n = parseInt(extractMatch[1]);
+              return rawVal.split(/\s+/).slice(0, n).join(" ");
+            }
+            const truncMatch = t.match(/^truncate\((\d+)\)$/);
+            if (truncMatch) {
+              const n = parseInt(truncMatch[1]);
+              return rawVal.length > n ? rawVal.slice(0, n) + "…" : rawVal;
+            }
+            return rawVal;
+          });
+
           // Standard variable replacement for any remaining placeholders
           for (const [key, value] of Object.entries(row)) {
             const regex = new RegExp(`\\{${key}\\}`, "gi");
@@ -1032,7 +1144,22 @@ Deno.serve(async (req) => {
             pageTitle = values.slice(0, 2).join(" - ") || `Page ${processedCount + 1}`;
           }
 
-          const slug = slugify(pageTitle) || `page-${processedCount + 1}`;
+          // Build slug with optional directory structure (hierarchical nesting)
+          let slug = slugify(pageTitle) || `page-${processedCount + 1}`;
+          const dirStructure = (campaign as any).directory_structure as { levels?: string[]; separator?: string } | null;
+          if (dirStructure?.levels && dirStructure.levels.length > 0) {
+            const dirParts: string[] = [];
+            for (const level of dirStructure.levels) {
+              const levelValue = allVars[level] || row[level];
+              if (levelValue) {
+                dirParts.push(slugify(levelValue));
+              }
+            }
+            if (dirParts.length > 0) {
+              const sep = dirStructure.separator || "/";
+              slug = dirParts.join(sep) + sep + slug;
+            }
+          }
 
           // Build UTM query string from campaign utm_settings
           const utmSettings = (campaign.utm_settings || {}) as Record<string, string>;

@@ -14,6 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +35,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from 
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
   Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward,
+  Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
 } from "lucide-react";
 import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv } from "@/lib/export-csv";
 
@@ -348,6 +352,7 @@ export default function CampaignDetailPage() {
         <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
           <TabsTrigger value="overview" className="gap-1.5 text-xs"><Layers className="h-3.5 w-3.5" /> Overview</TabsTrigger>
           <TabsTrigger value="pages" className="gap-1.5 text-xs"><FileText className="h-3.5 w-3.5" /> Pages <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{pages.length}</Badge></TabsTrigger>
+          <TabsTrigger value="settings" className="gap-1.5 text-xs"><Settings className="h-3.5 w-3.5" /> Settings</TabsTrigger>
           <TabsTrigger value="logs" className="gap-1.5 text-xs"><ScrollText className="h-3.5 w-3.5" /> Logs <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{campaignLogs.length}</Badge></TabsTrigger>
           <TabsTrigger value="errors" className="gap-1.5 text-xs"><AlertTriangle className="h-3.5 w-3.5" /> Errors <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5 bg-destructive/10 text-destructive">{errorPages.length + jobErrors.length}</Badge></TabsTrigger>
         </TabsList>
@@ -525,7 +530,178 @@ export default function CampaignDetailPage() {
           )}
         </TabsContent>
 
-        {/* LOGS TAB */}
+        {/* SETTINGS TAB */}
+        <TabsContent value="settings" className="space-y-6">
+          {/* Directory Structure */}
+          <Card className="border-0 shadow-surface">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FolderTree className="h-4 w-4 text-primary" /> Directory Structure
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Create hierarchical URL paths like <code className="text-[11px] bg-muted px-1 py-0.5 rounded">/state/county/city/page-slug</code> by specifying CSV columns for each level.
+              </p>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Hierarchy Levels (comma-separated column names)</Label>
+                <Input
+                  placeholder="e.g. state, county, city"
+                  defaultValue={((campaign as any).directory_structure as any)?.levels?.join(", ") || ""}
+                  onBlur={async (e) => {
+                    const levels = e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean);
+                    await supabase.from("campaigns").update({
+                      directory_structure: levels.length > 0 ? { levels, separator: "/" } : null,
+                    } as any).eq("id", id!);
+                    queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                    toast({ title: levels.length > 0 ? "Directory structure saved" : "Directory structure cleared" });
+                  }}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Example: with levels <code className="bg-muted px-1 rounded">state, city</code> and a page titled "Best Plumber", the slug becomes <code className="bg-muted px-1 rounded">/california/los-angeles/best-plumber</code>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Drip Feed / Scheduling */}
+          <Card className="border-0 shadow-surface">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <CalendarClock className="h-4 w-4 text-primary" /> Drip Feed Scheduling
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Space out page publishing over time to appear more natural to search engines.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Interval (hours between pages)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="24"
+                    defaultValue={((campaign as any).drip_feed_settings as any)?.interval_hours || ""}
+                    onBlur={async (e) => {
+                      const hours = parseInt(e.target.value) || 0;
+                      const current = ((campaign as any).drip_feed_settings || {}) as any;
+                      await supabase.from("campaigns").update({
+                        drip_feed_settings: hours > 0 ? { ...current, interval_hours: hours, enabled: true } : null,
+                      } as any).eq("id", id!);
+                      queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Start Date</Label>
+                  <Input
+                    type="datetime-local"
+                    defaultValue={((campaign as any).drip_feed_settings as any)?.start_date || ""}
+                    onBlur={async (e) => {
+                      const current = ((campaign as any).drip_feed_settings || {}) as any;
+                      await supabase.from("campaigns").update({
+                        drip_feed_settings: { ...current, start_date: e.target.value || null },
+                      } as any).eq("id", id!);
+                      queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                    }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Author Rotation */}
+          <Card className="border-0 shadow-surface">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" /> Author Rotation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Rotate page authorship across multiple WordPress authors for a more natural content footprint.
+              </p>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium">Authors (one per line)</Label>
+                <Textarea
+                  placeholder={"admin\neditor1\neditor2"}
+                  rows={3}
+                  defaultValue={((campaign as any).author_rotation as any)?.authors?.join("\n") || ""}
+                  onBlur={async (e) => {
+                    const authors = e.target.value.split("\n").map((s: string) => s.trim()).filter(Boolean);
+                    await supabase.from("campaigns").update({
+                      author_rotation: authors.length > 0 ? { enabled: true, authors } : null,
+                    } as any).eq("id", id!);
+                    queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                    toast({ title: authors.length > 0 ? `${authors.length} authors configured` : "Author rotation cleared" });
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dynamic Shortcode Reference */}
+          <Card className="border-0 shadow-surface">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Code className="h-4 w-4 text-primary" /> Shortcode Reference
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground mb-4">
+                Use these shortcodes in your templates. Variables like <code className="bg-muted px-1 rounded text-[11px]">{"{city}"}</code> inside shortcodes are resolved automatically.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { icon: <MapPin className="h-3.5 w-3.5" />, code: "{{MAP:query}}", desc: "Google Maps embed" },
+                  { icon: <MapPin className="h-3.5 w-3.5" />, code: "{{OSM:query}}", desc: "OpenStreetMap embed (free)" },
+                  { icon: <Image className="h-3.5 w-3.5" />, code: "{{IMAGE:query}}", desc: "Unsplash stock photo" },
+                  { icon: <Image className="h-3.5 w-3.5" />, code: "{{PEXELS:query}}", desc: "Pexels stock photo" },
+                  { icon: <Image className="h-3.5 w-3.5" />, code: "{{PIXABAY:query}}", desc: "Pixabay stock photo" },
+                  { icon: <BookOpen className="h-3.5 w-3.5" />, code: "{{WIKIPEDIA:topic}}", desc: "Wikipedia excerpt" },
+                  { icon: <Star className="h-3.5 w-3.5" />, code: "{{YELP:category,location}}", desc: "Yelp business listings" },
+                  { icon: <Play className="h-3.5 w-3.5" />, code: "{{YOUTUBE:search}}", desc: "YouTube video embed" },
+                  { icon: <Code className="h-3.5 w-3.5" />, code: "{{WEATHER:location}}", desc: "Weather widget" },
+                  { icon: <Code className="h-3.5 w-3.5" />, code: "{{AI:prompt}}", desc: "AI-generated text" },
+                  { icon: <Image className="h-3.5 w-3.5" />, code: "{{AI_IMAGE:prompt}}", desc: "AI-generated image" },
+                  { icon: <Code className="h-3.5 w-3.5" />, code: "{{GEO_BLOCKS}}", desc: "Auto address/phone/hours" },
+                ].map(({ icon, code, desc }) => (
+                  <div key={code} className="flex items-start gap-2 p-2.5 rounded-lg border border-border/50 bg-muted/30">
+                    <span className="text-primary mt-0.5">{icon}</span>
+                    <div className="min-w-0">
+                      <code className="text-[11px] font-mono font-semibold text-foreground break-all">{code}</code>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Separator className="my-4" />
+
+              <h4 className="text-xs font-semibold mb-2">Variable Transforms</h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                Apply transforms to variables with <code className="bg-muted px-1 rounded text-[11px]">{"{variable:transform}"}</code> syntax.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {[
+                  { code: "{city:uppercase}", desc: "LOS ANGELES" },
+                  { code: "{city:lowercase}", desc: "los angeles" },
+                  { code: "{city:capitalize}", desc: "Los Angeles" },
+                  { code: "{city:slug}", desc: "los-angeles" },
+                  { code: "{name:extract(1)}", desc: "First word only" },
+                  { code: "{desc:truncate(50)}", desc: "First 50 chars + …" },
+                ].map(({ code, desc }) => (
+                  <div key={code} className="flex items-center gap-2 text-xs p-2 rounded bg-muted/40 border border-border/40">
+                    <code className="font-mono text-[11px] text-foreground font-medium">{code}</code>
+                    <span className="text-muted-foreground">→ {desc}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="logs" className="space-y-4">
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="outline" onClick={() => exportLogsCsv(campaignLogs, campaign?.name || "campaign")} disabled={campaignLogs.length === 0}>
