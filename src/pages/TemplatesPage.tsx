@@ -58,6 +58,10 @@ export default function TemplatesPage() {
   const [siteTemplateWebsite, setSiteTemplateWebsite] = useState("");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
   const [siteLoadingPages, setSiteLoadingPages] = useState(false);
+  // AI Content Generator state
+  const [aiContentOpen, setAiContentOpen] = useState(false);
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [aiContentType, setAiContentType] = useState<string>("seo");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
