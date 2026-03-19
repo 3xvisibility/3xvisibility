@@ -659,7 +659,7 @@ async function updateJob(supabase: any, jobId: string, updates: Record<string, a
   }).eq("id", jobId);
 }
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 5;
 
 Deno.serve(async (req) => {
   console.log("[GENERATE-PAGES] Request received:", req.method);
