@@ -8,6 +8,7 @@ interface TourStep {
   target: string;
   title: string;
   description: string;
+  richDescription?: React.ReactNode;
   icon: React.ReactNode;
   position: "bottom" | "top" | "right" | "left";
 }
