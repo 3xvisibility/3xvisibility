@@ -282,12 +282,12 @@ export default function CampaignsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
-      const utmSettings = campaignType === "sea" ? {
+      const utmSettings = campaignTypes.includes("sea") ? {
         utm_source: utmSource, utm_medium: utmMedium, utm_campaign: utmCampaign,
         utm_term: utmTerm, utm_content: utmContent,
         ad_campaign_id: adCampaignId || null, ad_group_id: adGroupId || null,
       } : null;
-      const geoSettings = campaignType === "geo" ? {
+      const geoSettings = campaignTypes.includes("geo") ? {
         country: geoCountry, region: geoRegion, city: geoCity,
         postcode: geoPostcode, lat: geoLat ? parseFloat(geoLat) : null,
         lng: geoLng ? parseFloat(geoLng) : null, language: geoLanguage,
