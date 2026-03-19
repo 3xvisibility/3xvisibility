@@ -249,6 +249,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/seo-audit"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><SeoAuditPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

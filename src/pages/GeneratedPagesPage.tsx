@@ -465,6 +465,15 @@ export default function GeneratedPagesPage() {
           >
             <Download className="h-3.5 w-3.5 mr-1" /> JSON
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDuplicateOpen(true)}
+            disabled={pages.length < 2}
+            className="h-8 text-xs"
+          >
+            <Copy className="h-3.5 w-3.5 mr-1" /> Duplicates
+          </Button>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[130px] h-8 text-xs">
               <ArrowUpDown className="h-3.5 w-3.5 mr-1 shrink-0" />

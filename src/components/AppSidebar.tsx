@@ -72,6 +72,7 @@ const toolsNav: NavItem[] = [
   { titleKey: "sidebar.performance", url: "/performance", icon: Activity },
   { titleKey: "sidebar.abTesting", url: "/ab-testing", icon: FlaskConical },
   { titleKey: "sidebar.contentCalendar", url: "/content-calendar", icon: CalendarDays },
+  { titleKey: "sidebar.seoAudit", url: "/seo-audit", icon: ClipboardCheck },
   { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon, requiredFeature: "indexing" },
 ];
 
