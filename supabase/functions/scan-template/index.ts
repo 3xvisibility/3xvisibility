@@ -354,6 +354,7 @@ Return a JSON array of suggestions.`,
         headStyles,
         blocks,
         suggestions,
+        imageUrls,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
