@@ -318,25 +318,48 @@ export default function TemplateScannerPage() {
   const getVisualEditorHtml = useCallback(() => {
     let content = bodyHtml;
 
-    // Highlight already-mapped values
+    // Highlight already-mapped values with prominent labeled badges
     for (const mapping of acceptedMappings) {
       const escapedValue = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(escapedValue, "gi");
       content = content.replace(
         regex,
-        `<span data-var="${mapping.variable}" style="background:hsl(221 83% 53% / 0.15);color:hsl(221 83% 53%);padding:1px 4px;border-radius:4px;font-weight:600;cursor:pointer;" title="Variable: {${mapping.variable}}">{${mapping.variable}}</span>`
+        `<span data-var="${mapping.variable}" class="pgvar-badge" title="This will be replaced with data from your CSV column: {${mapping.variable}}">\u200B<span class="pgvar-label">{${mapping.variable}}</span>\u200B</span>`
       );
     }
 
     return `<!DOCTYPE html>
 <html>
 <head>
+${headStyles}
 <style>
-  body { font-family: system-ui, sans-serif; padding: 16px; margin: 0; font-size: 14px; line-height: 1.6; color: #1a1a2e; }
+  .pgvar-badge {
+    display: inline;
+    background: linear-gradient(135deg, hsl(263 70% 95%), hsl(263 70% 90%));
+    color: hsl(263 70% 40%);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px dashed hsl(263 70% 60%);
+    position: relative;
+    transition: all 0.15s ease;
+  }
+  .pgvar-badge:hover {
+    background: linear-gradient(135deg, hsl(263 70% 90%), hsl(263 70% 85%));
+    outline: 2px solid hsl(263 70% 55%);
+    outline-offset: 2px;
+    border-radius: 6px;
+    transform: scale(1.02);
+  }
+  .pgvar-label {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.85em;
+    letter-spacing: 0.02em;
+  }
   ::selection { background: hsl(221 83% 53% / 0.3); }
   * { max-width: 100%; box-sizing: border-box; }
   img { height: auto; }
-  [data-var]:hover { outline: 2px solid hsl(221 83% 53%); outline-offset: 2px; border-radius: 4px; }
 </style>
 </head>
 <body>${content}</body>
@@ -360,7 +383,7 @@ export default function TemplateScannerPage() {
   });
 </script>
 </html>`;
-  }, [bodyHtml, acceptedMappings]);
+  }, [bodyHtml, headStyles, acceptedMappings]);
 
   // Listen for messages from the iframe
   useEffect(() => {
