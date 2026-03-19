@@ -183,7 +183,7 @@ export function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.45 }}
-            className="mt-5 flex items-center justify-center gap-6 text-xs text-[hsl(220,15%,45%)]"
+            className="mt-5 flex items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-[hsl(220,15%,45%)] flex-wrap"
           >
             <span>{t("hero.freeStart")}</span>
             <span>{t("hero.noCreditCard")}</span>
