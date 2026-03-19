@@ -24,6 +24,7 @@ import TemplateScannerPage from "./pages/TemplateScannerPage";
 import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
 import IndexingPage from "./pages/IndexingPage";
 
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
@@ -153,6 +154,14 @@ const App = () => {
               element={
                 <ProtectedRoute session={session}>
                   <DashboardLayout onLogout={handleLogout}><AnalyticsPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/marketplace"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><TemplateMarketplacePage /></DashboardLayout>
                 </ProtectedRoute>
               }
             />

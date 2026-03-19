@@ -17,6 +17,7 @@ import {
   Users,
   Database,
   Lock,
+  Store,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -55,6 +56,7 @@ const mainNav: NavItem[] = [
   { titleKey: "sidebar.campaigns", url: "/campaigns", icon: Rocket },
   { titleKey: "sidebar.generatedPages", url: "/pages", icon: Layers },
   { titleKey: "sidebar.templates", url: "/templates", icon: FileText },
+  { titleKey: "sidebar.marketplace", url: "/marketplace", icon: Store },
   { titleKey: "sidebar.dataCsv", url: "/data", icon: Database },
 ];
 

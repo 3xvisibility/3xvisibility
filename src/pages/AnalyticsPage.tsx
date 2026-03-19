@@ -19,6 +19,7 @@ import {
   XCircle,
   Clock,
   Percent,
+  Zap,
 } from "lucide-react";
 import {
   BarChart,
@@ -90,7 +91,7 @@ export default function AnalyticsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generation_jobs")
-        .select("id, status, total_rows, processed_rows, success_count, error_count, created_at, completed_at, campaign_id")
+        .select("id, status, total_rows, processed_rows, success_count, error_count, created_at, completed_at, started_at, campaign_id, batch_size")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -217,6 +218,38 @@ export default function AnalyticsPage() {
     const avgTimeMins = Math.round(avgTimeMs / 60000);
     return { completed, failed, running, totalSuccessCount, totalErrorCount, avgSuccessRate, avgTimeMins, total: jobs.length };
   }, [jobs]);
+
+  // Generation speed trends (pages/minute per job over time)
+  const speedTrends = useMemo(() => {
+    return jobs
+      .filter((j) => j.completed_at && j.started_at && j.processed_rows > 0)
+      .map((j) => {
+        const durationMs = new Date(j.completed_at!).getTime() - new Date(j.started_at!).getTime();
+        const durationMins = durationMs / 60000;
+        const pagesPerMin = durationMins > 0 ? Math.round((j.processed_rows / durationMins) * 10) / 10 : 0;
+        const date = new Date(j.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return { date, pagesPerMin, totalPages: j.processed_rows, durationMins: Math.round(durationMins * 10) / 10 };
+      })
+      .reverse()
+      .slice(-15);
+  }, [jobs]);
+
+  // Publish success rate over time (by week)
+  const publishRateOverTime = useMemo(() => {
+    const weekMap = new Map<string, { week: string; total: number; published: number; rate: number }>();
+    for (const page of pages) {
+      const d = new Date(page.created_at);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      if (!weekMap.has(key)) weekMap.set(key, { week: key, total: 0, published: 0, rate: 0 });
+      const entry = weekMap.get(key)!;
+      entry.total++;
+      if (page.status === "published") entry.published++;
+      entry.rate = entry.total > 0 ? Math.round((entry.published / entry.total) * 100) : 0;
+    }
+    return [...weekMap.values()].slice(-12);
+  }, [pages]);
 
   // Campaign performance
   const campaignPerformance = useMemo(() => {
@@ -649,7 +682,62 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* Third row */}
+      {/* Charts row 3 — NEW: Speed Trends + Publish Rate */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Generation Speed Trends */}
+        <Card className="shadow-surface">
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              Generation Speed Trends
+            </h3>
+            {speedTrends.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                No completed jobs yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={speedTrends}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" label={{ value: "pages/min", angle: -90, position: "insideLeft", style: { fontSize: 10 } }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value: number) => [`${value} pages/min`, "Speed"]} />
+                  <Area type="monotone" dataKey="pagesPerMin" stroke="hsl(38, 92%, 50%)" fill="hsl(38, 92%, 50%, 0.15)" strokeWidth={2} name="Pages/min" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Publish Success Rate Over Time */}
+        <Card className="shadow-surface">
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              Publish Success Rate (Weekly)
+            </h3>
+            {publishRateOverTime.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                No data yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={publishRateOverTime}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="week" tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" domain={[0, 100]} unit="%" />
+                  <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value: number, name: string) => name === "rate" ? [`${value}%`, "Success Rate"] : [value, name]} />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                  <Bar dataKey="rate" fill="hsl(152, 69%, 41%)" radius={[4, 4, 0, 0]} name="Success %" />
+                  <Bar dataKey="total" fill="hsl(var(--muted-foreground) / 0.2)" radius={[4, 4, 0, 0]} name="Total Pages" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts row 4 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Campaign performance */}
         <Card className="shadow-surface">
