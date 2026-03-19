@@ -432,53 +432,60 @@ async function generateAiImage(
   pageIndex: number,
   blockIndex: number
 ): Promise<string> {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash-image",
-      messages: [
-        { role: "user", content: `Generate a high-quality, professional image: ${prompt}` },
-      ],
-      modalities: ["image", "text"],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45_000);
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          { role: "user", content: `Generate a high-quality, professional image: ${prompt}` },
+        ],
+        modalities: ["image", "text"],
+      }),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("AI image generation error:", response.status, errText);
-    if (response.status === 429) throw new Error("AI rate limit exceeded.");
-    if (response.status === 402) throw new Error("AI credits exhausted.");
-    throw new Error(`AI image generation failed (${response.status})`);
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("AI image generation error:", response.status, errText);
+      if (response.status === 429) throw new Error("AI rate limit exceeded.");
+      if (response.status === 402) throw new Error("AI credits exhausted.");
+      throw new Error(`AI image generation failed (${response.status})`);
+    }
+
+    const data = await response.json();
+    const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!imageData) throw new Error("No image returned from AI");
+
+    // Extract base64 data and upload to storage
+    const base64Match = imageData.match(/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/);
+    if (!base64Match) throw new Error("Invalid image data format");
+
+    const ext = base64Match[1] === "jpeg" ? "jpg" : base64Match[1];
+    const base64 = base64Match[2];
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+
+    const filePath = `${campaignId}/page-${pageIndex}-img-${blockIndex}-${Date.now()}.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("ai-images")
+      .upload(filePath, bytes, { contentType: `image/${base64Match[1]}`, upsert: true });
+
+    if (uploadErr) {
+      console.error("Storage upload error:", uploadErr);
+      throw new Error("Failed to upload AI image");
+    }
+
+    const { data: publicUrl } = supabase.storage.from("ai-images").getPublicUrl(filePath);
+    return publicUrl.publicUrl;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = await response.json();
-  const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-  if (!imageData) throw new Error("No image returned from AI");
-
-  // Extract base64 data and upload to storage
-  const base64Match = imageData.match(/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/);
-  if (!base64Match) throw new Error("Invalid image data format");
-
-  const ext = base64Match[1] === "jpeg" ? "jpg" : base64Match[1];
-  const base64 = base64Match[2];
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-
-  const filePath = `${campaignId}/page-${pageIndex}-img-${blockIndex}-${Date.now()}.${ext}`;
-  const { error: uploadErr } = await supabase.storage
-    .from("ai-images")
-    .upload(filePath, bytes, { contentType: `image/${base64Match[1]}`, upsert: true });
-
-  if (uploadErr) {
-    console.error("Storage upload error:", uploadErr);
-    throw new Error("Failed to upload AI image");
-  }
-
-  const { data: publicUrl } = supabase.storage.from("ai-images").getPublicUrl(filePath);
-  return publicUrl.publicUrl;
 }
 
 async function generateAiContent(
