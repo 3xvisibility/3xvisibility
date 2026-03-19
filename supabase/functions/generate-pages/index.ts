@@ -554,69 +554,76 @@ async function generateSeoMetadata(
   apiKey: string
 ): Promise<{ seo_title: string; seo_description: string; seo_keywords: string[] }> {
   const snippet = pageContent.replace(/<[^>]*>/g, "").slice(0, 1000);
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash-lite",
-      messages: [
-        {
-          role: "system",
-          content: `You are an SEO expert. Generate optimized SEO metadata.\nTone: ${settings.tone}\nLanguage: ${settings.language}`,
-        },
-        {
-          role: "user",
-          content: `Generate SEO metadata for this page:\n\nTitle: ${pageTitle}\n\nContent excerpt: ${snippet}`,
-        },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "set_seo_metadata",
-            description: "Set the SEO metadata for this page",
-            parameters: {
-              type: "object",
-              properties: {
-                seo_title: { type: "string", description: "SEO title, max 60 chars" },
-                seo_description: { type: "string", description: "Meta description, max 160 chars" },
-                seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords" },
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          {
+            role: "system",
+            content: `You are an SEO expert. Generate optimized SEO metadata.\nTone: ${settings.tone}\nLanguage: ${settings.language}`,
+          },
+          {
+            role: "user",
+            content: `Generate SEO metadata for this page:\n\nTitle: ${pageTitle}\n\nContent excerpt: ${snippet}`,
+          },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "set_seo_metadata",
+              description: "Set the SEO metadata for this page",
+              parameters: {
+                type: "object",
+                properties: {
+                  seo_title: { type: "string", description: "SEO title, max 60 chars" },
+                  seo_description: { type: "string", description: "Meta description, max 160 chars" },
+                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords" },
+                },
+                required: ["seo_title", "seo_description", "seo_keywords"],
+                additionalProperties: false,
               },
-              required: ["seo_title", "seo_description", "seo_keywords"],
-              additionalProperties: false,
             },
           },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "set_seo_metadata" } },
-    }),
-  });
+        ],
+        tool_choice: { type: "function", function: { name: "set_seo_metadata" } },
+      }),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    return {
-      seo_title: pageTitle.slice(0, 60),
-      seo_description: snippet.slice(0, 160),
-      seo_keywords: [],
-    };
-  }
-
-  const data = await response.json();
-  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (toolCall?.function?.arguments) {
-    try {
-      const parsed = JSON.parse(toolCall.function.arguments);
+    if (!response.ok) {
       return {
-        seo_title: (parsed.seo_title || pageTitle).slice(0, 60),
-        seo_description: (parsed.seo_description || snippet).slice(0, 160),
-        seo_keywords: parsed.seo_keywords || [],
+        seo_title: pageTitle.slice(0, 60),
+        seo_description: snippet.slice(0, 160),
+        seo_keywords: [],
       };
-    } catch { /* fallthrough */ }
-  }
+    }
 
-  return { seo_title: pageTitle.slice(0, 60), seo_description: snippet.slice(0, 160), seo_keywords: [] };
+    const data = await response.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall?.function?.arguments) {
+      try {
+        const parsed = JSON.parse(toolCall.function.arguments);
+        return {
+          seo_title: (parsed.seo_title || pageTitle).slice(0, 60),
+          seo_description: (parsed.seo_description || snippet).slice(0, 160),
+          seo_keywords: parsed.seo_keywords || [],
+        };
+      } catch { /* fallthrough */ }
+    }
+
+    return { seo_title: pageTitle.slice(0, 60), seo_description: snippet.slice(0, 160), seo_keywords: [] };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function buildOgMetaTags(
