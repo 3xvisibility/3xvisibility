@@ -217,6 +217,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.logout": "Log out",
     "sidebar.dataCsv": "Data / CSV",
     "sidebar.contentCalendar": "Calendar",
+    "sidebar.seoAudit": "SEO Audit",
 
     // Auth
     "auth.home": "Home",
@@ -461,6 +462,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.logout": "Déconnexion",
     "sidebar.dataCsv": "Données / CSV",
     "sidebar.contentCalendar": "Calendrier",
+    "sidebar.seoAudit": "Audit SEO",
 
     // Auth
     "auth.home": "Accueil",
@@ -705,6 +707,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.logout": "Abmelden",
     "sidebar.dataCsv": "Daten / CSV",
     "sidebar.contentCalendar": "Kalender",
+    "sidebar.seoAudit": "SEO-Audit",
 
     // Auth
     "auth.home": "Startseite",

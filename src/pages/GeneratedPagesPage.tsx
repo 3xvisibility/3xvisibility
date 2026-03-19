@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy } from "lucide-react";
+import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +58,7 @@ export default function GeneratedPagesPage() {
   const [publishType, setPublishType] = useState<"page" | "product">("page");
   const [translateOpen, setTranslateOpen] = useState(false);
   const [translateLang, setTranslateLang] = useState("fr");
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -462,6 +464,15 @@ export default function GeneratedPagesPage() {
             className="h-8 text-xs"
           >
             <Download className="h-3.5 w-3.5 mr-1" /> JSON
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDuplicateOpen(true)}
+            disabled={pages.length < 2}
+            className="h-8 text-xs"
+          >
+            <Copy className="h-3.5 w-3.5 mr-1" /> Duplicates
           </Button>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[130px] h-8 text-xs">
@@ -1412,6 +1423,12 @@ export default function GeneratedPagesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <DuplicateContentDialog
+        open={duplicateOpen}
+        onOpenChange={setDuplicateOpen}
+        pages={pages.map((p) => ({ id: p.id, title: p.title, content: p.content }))}
+      />
 
     </div>
   );
