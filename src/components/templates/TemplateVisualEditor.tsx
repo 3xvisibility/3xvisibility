@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Type,
   Image,
@@ -18,34 +19,88 @@ import {
   ChevronDown,
   Variable,
   Copy,
+  MapPin,
+  Youtube,
+  BookOpen,
+  Star,
+  CloudSun,
+  ImageIcon,
+  Map,
+  Wand2,
+  ImagePlus,
+  Hash,
 } from "lucide-react";
 
 // ── Block Types ──────────────────────────────────────────────
 
 export interface TemplateBlock {
   id: string;
-  type: "text" | "image" | "list" | "button" | "section";
+  type: "text" | "image" | "list" | "button" | "section" | "shortcode";
   content: string;
-  // type-specific
-  tag?: "h1" | "h2" | "h3" | "p"; // for text blocks
-  src?: string; // for image
+  tag?: "h1" | "h2" | "h3" | "p";
+  src?: string;
   alt?: string;
-  items?: string[]; // for list
+  items?: string[];
   listStyle?: "ul" | "ol";
   buttonText?: string;
   buttonUrl?: string;
-  children?: TemplateBlock[]; // for section
+  children?: TemplateBlock[];
   cssClass?: string;
+  shortcodeType?: string;
 }
 
 let blockCounter = 0;
 const genId = () => `block-${Date.now()}-${++blockCounter}`;
 
-const COMMON_VARIABLES = [
-  "city", "country", "region", "keyword", "company",
-  "title", "name", "description", "address", "phone",
-  "email", "price", "url", "slug", "postcode",
-  "service", "category", "brand", "rating", "date",
+// ── Variable Categories (PGP-style "Terms") ─────────────────
+
+const VARIABLE_CATEGORIES: { label: string; vars: string[] }[] = [
+  {
+    label: "Local SEO",
+    vars: ["city", "state", "country", "region", "county", "zip_code", "postcode", "latitude", "longitude", "area_code", "timezone", "population"],
+  },
+  {
+    label: "Business",
+    vars: ["company", "brand", "phone", "email", "address", "website", "opening_hours", "rating"],
+  },
+  {
+    label: "Content",
+    vars: ["keyword", "title", "name", "description", "service", "category", "price", "url", "slug"],
+  },
+  {
+    label: "Custom",
+    vars: ["custom_1", "custom_2", "custom_3"],
+  },
+];
+
+const ALL_COMMON_VARS = VARIABLE_CATEGORIES.flatMap((c) => c.vars);
+
+// ── Shortcode Definitions ───────────────────────────────────
+
+const SHORTCODES = [
+  { type: "MAP", label: "Google Map", icon: MapPin, color: "text-red-500", bgColor: "bg-red-500/10", template: "{{MAP:{city}, {state}}}", desc: "Embed Google Maps" },
+  { type: "OSM", label: "OpenStreetMap", icon: Map, color: "text-green-600", bgColor: "bg-green-500/10", template: "{{OSM:{city}, {state}}}", desc: "Free map embed" },
+  { type: "YOUTUBE", label: "YouTube", icon: Youtube, color: "text-red-600", bgColor: "bg-red-500/10", template: "{{YOUTUBE:{keyword} {city}}}", desc: "YouTube video embed" },
+  { type: "IMAGE", label: "Unsplash", icon: ImageIcon, color: "text-blue-500", bgColor: "bg-blue-500/10", template: "{{IMAGE:{keyword} {city}}}", desc: "Stock photo from Unsplash" },
+  { type: "WIKIPEDIA", label: "Wikipedia", icon: BookOpen, color: "text-gray-600", bgColor: "bg-gray-500/10", template: "{{WIKIPEDIA:{keyword}}}", desc: "Wikipedia excerpt" },
+  { type: "YELP", label: "Yelp", icon: Star, color: "text-red-700", bgColor: "bg-red-600/10", template: "{{YELP:{category}, {city}}}", desc: "Yelp business listings" },
+  { type: "WEATHER", label: "Weather", icon: CloudSun, color: "text-sky-500", bgColor: "bg-sky-500/10", template: "{{WEATHER:{city}}}", desc: "Weather widget" },
+  { type: "AI", label: "AI Content", icon: Wand2, color: "text-purple-500", bgColor: "bg-purple-500/10", template: "{{AI:Write a paragraph about {keyword} in {city}}}", desc: "AI-generated content" },
+  { type: "AI_IMAGE", label: "AI Image", icon: ImagePlus, color: "text-pink-500", bgColor: "bg-pink-500/10", template: "{{AI_IMAGE:Professional photo of {keyword} in {city}}}", desc: "AI-generated image" },
+];
+
+// ── Transform Reference ─────────────────────────────────────
+
+const TRANSFORMS = [
+  { name: ":uppercase", example: "{city:uppercase} → NEW YORK" },
+  { name: ":lowercase", example: "{city:lowercase} → new york" },
+  { name: ":capitalize", example: "{city:capitalize} → New York" },
+  { name: ":slug", example: "{title:slug} → my-page" },
+  { name: ":extract(n)", example: "{location:extract(0)} → City" },
+  { name: ":truncate(n)", example: "{desc:truncate(50)}" },
+  { name: ":prefix(text)", example: "{slug:prefix(/services/)}" },
+  { name: ":suffix(text)", example: "{city:suffix( Area)}" },
+  { name: ":default(text)", example: "{phone:default(N/A)}" },
 ];
 
 // ── Block → HTML serializer ─────────────────────────────────
@@ -81,6 +136,8 @@ function blockToHtml(block: TemplateBlock): string {
       const inner = (block.children || []).map(blockToHtml).join("\n");
       return `<section${cls}>\n${inner}\n</section>`;
     }
+    case "shortcode":
+      return block.content;
     default:
       return `<div>${block.content}</div>`;
   }
@@ -90,7 +147,6 @@ function blockToHtml(block: TemplateBlock): string {
 
 export function htmlToBlocks(html: string): TemplateBlock[] {
   if (!html.trim()) return [];
-  // Simple regex-based parser for common patterns
   const blocks: TemplateBlock[] = [];
   const tagRegex = /<(h[1-3]|p|ul|ol|section|img|a)([^>]*)>([\s\S]*?)<\/\1>|<img([^>]*?)\/?\s*>/gi;
   let match: RegExpExecArray | null;
@@ -103,61 +159,32 @@ export function htmlToBlocks(html: string): TemplateBlock[] {
     if (tag === "img") {
       const srcMatch = attrs.match(/src="([^"]*)"/);
       const altMatch = attrs.match(/alt="([^"]*)"/);
-      blocks.push({
-        id: genId(),
-        type: "image",
-        content: srcMatch?.[1] || "",
-        src: srcMatch?.[1] || "",
-        alt: altMatch?.[1] || "",
-      });
+      blocks.push({ id: genId(), type: "image", content: srcMatch?.[1] || "", src: srcMatch?.[1] || "", alt: altMatch?.[1] || "" });
     } else if (tag === "ul" || tag === "ol") {
       const items: string[] = [];
       const liRegex = /<li>([\s\S]*?)<\/li>/gi;
       let li: RegExpExecArray | null;
-      while ((li = liRegex.exec(inner)) !== null) {
-        items.push(li[1].trim());
-      }
-      blocks.push({
-        id: genId(),
-        type: "list",
-        content: "",
-        items,
-        listStyle: tag as "ul" | "ol",
-      });
+      while ((li = liRegex.exec(inner)) !== null) items.push(li[1].trim());
+      blocks.push({ id: genId(), type: "list", content: "", items, listStyle: tag as "ul" | "ol" });
     } else if (tag === "a" && /padding|button|btn/i.test(attrs)) {
       const hrefMatch = attrs.match(/href="([^"]*)"/);
-      blocks.push({
-        id: genId(),
-        type: "button",
-        content: inner.trim(),
-        buttonText: inner.trim(),
-        buttonUrl: hrefMatch?.[1] || "#",
-      });
+      blocks.push({ id: genId(), type: "button", content: inner.trim(), buttonText: inner.trim(), buttonUrl: hrefMatch?.[1] || "#" });
     } else if (tag === "section") {
-      blocks.push({
-        id: genId(),
-        type: "section",
-        content: "",
-        children: htmlToBlocks(inner),
-      });
+      blocks.push({ id: genId(), type: "section", content: "", children: htmlToBlocks(inner) });
     } else if (/^h[1-3]$/.test(tag)) {
-      blocks.push({
-        id: genId(),
-        type: "text",
-        content: inner.trim(),
-        tag: tag as "h1" | "h2" | "h3",
-      });
+      blocks.push({ id: genId(), type: "text", content: inner.trim(), tag: tag as "h1" | "h2" | "h3" });
     } else {
-      blocks.push({
-        id: genId(),
-        type: "text",
-        content: inner.trim(),
-        tag: "p",
-      });
+      blocks.push({ id: genId(), type: "text", content: inner.trim(), tag: "p" });
     }
   }
 
-  // If no blocks parsed, treat entire HTML as a single text block
+  // Detect shortcode blocks in remaining content
+  const shortcodeRegex = /\{\{(MAP|OSM|YOUTUBE|IMAGE|PEXELS|PIXABAY|WIKIPEDIA|YELP|WEATHER|AI_IMAGE|AI):[^}]*\}\}/gi;
+  let scMatch;
+  while ((scMatch = shortcodeRegex.exec(html)) !== null) {
+    blocks.push({ id: genId(), type: "shortcode", content: scMatch[0], shortcodeType: scMatch[1].toUpperCase() });
+  }
+
   if (blocks.length === 0 && html.trim()) {
     blocks.push({ id: genId(), type: "text", content: html.trim(), tag: "p" });
   }
@@ -182,7 +209,13 @@ function createBlock(type: TemplateBlock["type"]): TemplateBlock {
         { id: genId(), type: "text", content: "Section Title", tag: "h2" },
         { id: genId(), type: "text", content: "Section content goes here.", tag: "p" },
       ]};
+    case "shortcode":
+      return { id: genId(), type: "shortcode", content: "{{MAP:{city}}}", shortcodeType: "MAP" };
   }
+}
+
+function createShortcodeBlock(shortcode: typeof SHORTCODES[number]): TemplateBlock {
+  return { id: genId(), type: "shortcode", content: shortcode.template, shortcodeType: shortcode.type };
 }
 
 // ── Block palette items ─────────────────────────────────────
@@ -194,6 +227,27 @@ const BLOCK_PALETTE = [
   { type: "button" as const, label: "Button", icon: MousePointerClick, desc: "Call-to-action link" },
   { type: "section" as const, label: "Section", icon: LayoutPanelTop, desc: "Container with blocks" },
 ];
+
+// ── Draggable Variable Chip ─────────────────────────────────
+
+function DraggableVarChip({ variable, onInsert }: { variable: string; onInsert?: (v: string) => void }) {
+  return (
+    <button
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", `{${variable}}`);
+        e.dataTransfer.setData("application/x-variable", variable);
+        e.dataTransfer.effectAllowed = "copy";
+      }}
+      onClick={() => onInsert?.(variable)}
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono rounded-md bg-primary/10 text-primary border border-primary/20 cursor-grab active:cursor-grabbing hover:bg-primary/20 transition-colors select-none"
+      title={`Drag or click to insert {${variable}}`}
+    >
+      <Hash className="h-2.5 w-2.5" />
+      {variable}
+    </button>
+  );
+}
 
 // ── Variable Context Menu ───────────────────────────────────
 
@@ -224,7 +278,7 @@ function VariableContextMenu({ x, y, onInsert, onClose, customVars = [] }: VarMe
     };
   }, [onClose]);
 
-  const allVars = [...new Set([...customVars, ...COMMON_VARIABLES])];
+  const allVars = [...new Set([...customVars, ...ALL_COMMON_VARS])];
   const filtered = search
     ? allVars.filter((v) => v.toLowerCase().includes(search.toLowerCase()))
     : allVars;
@@ -295,15 +349,7 @@ interface BlockEditorProps {
 }
 
 function BlockEditor({
-  block,
-  onChange,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-  onDuplicate,
-  isFirst,
-  isLast,
-  customVars = [],
+  block, onChange, onDelete, onMoveUp, onMoveDown, onDuplicate, isFirst, isLast, customVars = [],
 }: BlockEditorProps) {
   const [varMenu, setVarMenu] = useState<{ x: number; y: number; field: string } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
@@ -313,10 +359,22 @@ function BlockEditor({
     setVarMenu({ x: e.clientX, y: e.clientY, field });
   }, []);
 
+  const handleDrop = useCallback((e: React.DragEvent, field: string) => {
+    e.preventDefault();
+    const variable = e.dataTransfer.getData("application/x-variable");
+    if (!variable) return;
+    const tag = `{${variable}}`;
+    if (field === "content") onChange({ ...block, content: block.content + " " + tag });
+    else if (field === "src") onChange({ ...block, src: tag });
+    else if (field === "alt") onChange({ ...block, alt: tag });
+    else if (field === "buttonText") onChange({ ...block, buttonText: (block.buttonText || "") + " " + tag });
+    else if (field === "buttonUrl") onChange({ ...block, buttonUrl: tag });
+    else if (field === "shortcode") onChange({ ...block, content: block.content.replace(/\}\}$/, ` ${tag}}}`) });
+  }, [block, onChange]);
+
   const insertVariable = useCallback((variable: string) => {
     const tag = `{${variable}}`;
     if (!varMenu) return;
-
     if (varMenu.field === "content") {
       const el = inputRef.current;
       if (el) {
@@ -327,15 +385,11 @@ function BlockEditor({
       } else {
         onChange({ ...block, content: block.content + tag });
       }
-    } else if (varMenu.field === "src") {
-      onChange({ ...block, src: tag });
-    } else if (varMenu.field === "alt") {
-      onChange({ ...block, alt: tag });
-    } else if (varMenu.field === "buttonText") {
-      onChange({ ...block, buttonText: (block.buttonText || "") + tag });
-    } else if (varMenu.field === "buttonUrl") {
-      onChange({ ...block, buttonUrl: tag });
-    } else if (varMenu.field.startsWith("item-")) {
+    } else if (varMenu.field === "src") onChange({ ...block, src: tag });
+    else if (varMenu.field === "alt") onChange({ ...block, alt: tag });
+    else if (varMenu.field === "buttonText") onChange({ ...block, buttonText: (block.buttonText || "") + tag });
+    else if (varMenu.field === "buttonUrl") onChange({ ...block, buttonUrl: tag });
+    else if (varMenu.field.startsWith("item-")) {
       const idx = parseInt(varMenu.field.split("-")[1]);
       const items = [...(block.items || [])];
       items[idx] = (items[idx] || "") + tag;
@@ -344,16 +398,18 @@ function BlockEditor({
   }, [varMenu, block, onChange]);
 
   const blockIcon = BLOCK_PALETTE.find((b) => b.type === block.type);
-  const IconComp = blockIcon?.icon || Type;
+  const scDef = block.type === "shortcode" ? SHORTCODES.find((s) => s.type === block.shortcodeType) : null;
+  const IconComp = scDef?.icon || blockIcon?.icon || Type;
+  const blockLabel = scDef ? scDef.label : block.type;
 
   return (
     <div className="group relative rounded-xl border border-border/60 bg-card hover:border-primary/30 transition-all duration-150">
       {/* Block Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border/40 bg-muted/20 rounded-t-xl">
         <GripVertical className="h-4 w-4 text-muted-foreground/40 cursor-grab shrink-0" />
-        <IconComp className="h-3.5 w-3.5 text-primary shrink-0" />
+        <IconComp className={`h-3.5 w-3.5 shrink-0 ${scDef?.color || "text-primary"}`} />
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex-1">
-          {block.type}
+          {blockLabel}
         </span>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveUp} disabled={isFirst}>
@@ -383,9 +439,7 @@ function BlockEditor({
                     key={t}
                     onClick={() => onChange({ ...block, tag: t })}
                     className={`px-2 py-0.5 text-[10px] font-semibold rounded-md transition-colors ${
-                      block.tag === t
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-accent"
+                      block.tag === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
                     }`}
                   >
                     {t.toUpperCase()}
@@ -398,9 +452,11 @@ function BlockEditor({
               value={block.content}
               onChange={(e) => onChange({ ...block, content: e.target.value })}
               onContextMenu={(e) => handleContextMenu(e, "content")}
+              onDrop={(e) => handleDrop(e, "content")}
+              onDragOver={(e) => e.preventDefault()}
               rows={2}
               className="w-full text-sm bg-background border border-border/60 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none"
-              placeholder="Right-click to insert variables..."
+              placeholder="Right-click or drag variables here..."
             />
           </>
         )}
@@ -413,6 +469,8 @@ function BlockEditor({
                 value={block.src || ""}
                 onChange={(e) => onChange({ ...block, src: e.target.value })}
                 onContextMenu={(e) => handleContextMenu(e, "src")}
+                onDrop={(e) => handleDrop(e, "src")}
+                onDragOver={(e) => e.preventDefault()}
                 placeholder="{image_url} or https://..."
                 className="text-sm h-9 font-mono"
               />
@@ -423,6 +481,8 @@ function BlockEditor({
                 value={block.alt || ""}
                 onChange={(e) => onChange({ ...block, alt: e.target.value })}
                 onContextMenu={(e) => handleContextMenu(e, "alt")}
+                onDrop={(e) => handleDrop(e, "alt")}
+                onDragOver={(e) => e.preventDefault()}
                 placeholder="{image_alt} or Description..."
                 className="text-sm h-9"
               />
@@ -440,9 +500,7 @@ function BlockEditor({
                     key={s}
                     onClick={() => onChange({ ...block, listStyle: s })}
                     className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-md transition-colors ${
-                      (block.listStyle || "ul") === s
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-accent"
+                      (block.listStyle || "ul") === s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
                     }`}
                   >
                     {s === "ul" ? "Bullets" : "Numbers"}
@@ -465,25 +523,15 @@ function BlockEditor({
                     className="text-sm h-8 flex-1"
                     placeholder="Right-click to insert variable..."
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
-                    onClick={() => {
-                      const items = (block.items || []).filter((_, j) => j !== i);
-                      onChange({ ...block, items });
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => {
+                    const items = (block.items || []).filter((_, j) => j !== i);
+                    onChange({ ...block, items });
+                  }}>
                     <Trash2 className="h-3 w-3 text-destructive" />
                   </Button>
                 </div>
               ))}
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs h-7"
-                onClick={() => onChange({ ...block, items: [...(block.items || []), "New item"] })}
-              >
+              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => onChange({ ...block, items: [...(block.items || []), "New item"] })}>
                 <Plus className="h-3 w-3 mr-1" /> Add Item
               </Button>
             </div>
@@ -498,6 +546,8 @@ function BlockEditor({
                 value={block.buttonText || ""}
                 onChange={(e) => onChange({ ...block, buttonText: e.target.value, content: e.target.value })}
                 onContextMenu={(e) => handleContextMenu(e, "buttonText")}
+                onDrop={(e) => handleDrop(e, "buttonText")}
+                onDragOver={(e) => e.preventDefault()}
                 placeholder="Click here"
                 className="text-sm h-9"
               />
@@ -508,11 +558,33 @@ function BlockEditor({
                 value={block.buttonUrl || ""}
                 onChange={(e) => onChange({ ...block, buttonUrl: e.target.value })}
                 onContextMenu={(e) => handleContextMenu(e, "buttonUrl")}
+                onDrop={(e) => handleDrop(e, "buttonUrl")}
+                onDragOver={(e) => e.preventDefault()}
                 placeholder="{url} or https://..."
                 className="text-sm h-9 font-mono"
               />
             </div>
           </>
+        )}
+
+        {block.type === "shortcode" && (
+          <div className="space-y-2">
+            <div className={`rounded-lg p-3 ${scDef?.bgColor || "bg-muted/50"} border border-border/40`}>
+              <textarea
+                value={block.content}
+                onChange={(e) => onChange({ ...block, content: e.target.value })}
+                onContextMenu={(e) => handleContextMenu(e, "content")}
+                onDrop={(e) => handleDrop(e, "shortcode")}
+                onDragOver={(e) => e.preventDefault()}
+                rows={2}
+                className="w-full text-sm font-mono bg-transparent border-0 outline-none resize-none placeholder:text-muted-foreground/50"
+                placeholder="Edit shortcode..."
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              💡 Use variables like {"{city}"}, {"{keyword}"} inside the shortcode. They'll be replaced at generation time.
+            </p>
+          </div>
         )}
 
         {block.type === "section" && (
@@ -527,10 +599,7 @@ function BlockEditor({
                   children[i] = updated;
                   onChange({ ...block, children });
                 }}
-                onDelete={() => {
-                  const children = (block.children || []).filter((_, j) => j !== i);
-                  onChange({ ...block, children });
-                }}
+                onDelete={() => onChange({ ...block, children: (block.children || []).filter((_, j) => j !== i) })}
                 onMoveUp={() => {
                   if (i === 0) return;
                   const children = [...(block.children || [])];
@@ -560,10 +629,7 @@ function BlockEditor({
                   variant="outline"
                   size="sm"
                   className="text-[10px] h-6 gap-1 px-2"
-                  onClick={() => {
-                    const children = [...(block.children || []), createBlock(bp.type)];
-                    onChange({ ...block, children });
-                  }}
+                  onClick={() => onChange({ ...block, children: [...(block.children || []), createBlock(bp.type)] })}
                 >
                   <bp.icon className="h-3 w-3" /> {bp.label}
                 </Button>
@@ -598,6 +664,7 @@ interface TemplateVisualEditorProps {
 export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: TemplateVisualEditorProps) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [sidebarTab, setSidebarTab] = useState<"blocks" | "variables" | "shortcodes" | "transforms">("blocks");
 
   const updateBlock = (index: number, updated: TemplateBlock) => {
     const next = [...blocks];
@@ -605,9 +672,7 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
     onChange(next);
   };
 
-  const deleteBlock = (index: number) => {
-    onChange(blocks.filter((_, i) => i !== index));
-  };
+  const deleteBlock = (index: number) => onChange(blocks.filter((_, i) => i !== index));
 
   const moveBlock = (from: number, to: number) => {
     if (to < 0 || to >= blocks.length) return;
@@ -620,53 +685,34 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
   const duplicateBlock = (index: number) => {
     const next = [...blocks];
     const deepClone = (b: TemplateBlock): TemplateBlock => ({
-      ...b,
-      id: genId(),
-      children: b.children?.map(deepClone),
-      items: b.items ? [...b.items] : undefined,
+      ...b, id: genId(), children: b.children?.map(deepClone), items: b.items ? [...b.items] : undefined,
     });
     next.splice(index + 1, 0, deepClone(blocks[index]));
     onChange(next);
   };
 
-  const addBlock = (type: TemplateBlock["type"]) => {
-    onChange([...blocks, createBlock(type)]);
-  };
+  const addBlock = (type: TemplateBlock["type"]) => onChange([...blocks, createBlock(type)]);
+
+  const addShortcode = (sc: typeof SHORTCODES[number]) => onChange([...blocks, createShortcodeBlock(sc)]);
 
   // Drag & drop handlers
-  const handleDragStart = (idx: number) => {
-    setDragIdx(idx);
-  };
-
-  const handleDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    setDragOverIdx(idx);
-  };
-
+  const handleDragStart = (idx: number) => setDragIdx(idx);
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDragOverIdx(idx); };
   const handleDrop = (idx: number) => {
-    if (dragIdx !== null && dragIdx !== idx) {
-      moveBlock(dragIdx, idx);
-    }
+    if (dragIdx !== null && dragIdx !== idx) moveBlock(dragIdx, idx);
     setDragIdx(null);
     setDragOverIdx(null);
   };
-
-  const handleDragEnd = () => {
-    setDragIdx(null);
-    setDragOverIdx(null);
-  };
+  const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   // Detect all variables used
   const detectedVars = new Set<string>();
   function scanBlocks(bList: TemplateBlock[]) {
     for (const b of bList) {
-      const matches = [
-        b.content, b.src, b.alt, b.buttonText, b.buttonUrl,
-        ...(b.items || []),
-      ]
+      const matches = [b.content, b.src, b.alt, b.buttonText, b.buttonUrl, ...(b.items || [])]
         .filter(Boolean)
         .join(" ")
-        .match(/\{([a-z_]+)\}/gi);
+        .match(/\{([a-z_][a-z0-9_]*)\}/gi);
       if (matches) matches.forEach((m) => detectedVars.add(m.replace(/[{}]/g, "")));
       if (b.children) scanBlocks(b.children);
     }
@@ -675,44 +721,144 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
 
   return (
     <div className="flex gap-4 min-h-[400px]">
-      {/* Left: Block Palette */}
-      <div className="w-48 shrink-0 space-y-3">
-        <div className="space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">Add Blocks</p>
-          {BLOCK_PALETTE.map((bp) => (
-            <button
-              key={bp.type}
-              onClick={() => addBlock(bp.type)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors group"
-            >
-              <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                <bp.icon className="h-3.5 w-3.5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs font-medium">{bp.label}</p>
-                <p className="text-[10px] text-muted-foreground leading-tight">{bp.desc}</p>
-              </div>
-            </button>
+      {/* Left: Sidebar with Tabs */}
+      <div className="w-52 shrink-0 space-y-2">
+        {/* Sidebar Tab Switcher */}
+        <div className="flex rounded-lg bg-muted/50 p-0.5 gap-0.5">
+          {([
+            { key: "blocks" as const, label: "Blocks", icon: LayoutPanelTop },
+            { key: "variables" as const, label: "Terms", icon: Variable },
+            { key: "shortcodes" as const, label: "Dynamic", icon: Wand2 },
+            { key: "transforms" as const, label: "Mods", icon: Hash },
+          ]).map((tab) => (
+            <Tooltip key={tab.key}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setSidebarTab(tab.key)}
+                  className={`flex-1 flex items-center justify-center gap-1 px-1.5 py-1.5 text-[10px] font-medium rounded-md transition-colors ${
+                    sidebarTab === tab.key
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <tab.icon className="h-3 w-3" />
+                  {tab.label}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">{tab.label}</TooltipContent>
+            </Tooltip>
           ))}
         </div>
 
-        <Separator />
+        <ScrollArea className="h-[440px]">
+          {/* Blocks Tab */}
+          {sidebarTab === "blocks" && (
+            <div className="space-y-1 pr-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-1">Add Blocks</p>
+              {BLOCK_PALETTE.map((bp) => (
+                <button
+                  key={bp.type}
+                  onClick={() => addBlock(bp.type)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors group"
+                >
+                  <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <bp.icon className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium">{bp.label}</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight">{bp.desc}</p>
+                  </div>
+                </button>
+              ))}
 
-        {/* Variables */}
-        <div className="space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">Variables Used</p>
-          {detectedVars.size === 0 ? (
-            <p className="text-[10px] text-muted-foreground/60 px-1">Right-click any text field to insert variables</p>
-          ) : (
-            <div className="flex flex-wrap gap-1 px-1">
-              {[...detectedVars].map((v) => (
-                <Badge key={v} variant="outline" className="text-[10px] font-mono rounded-md">
-                  {`{${v}}`}
-                </Badge>
+              <Separator className="my-2" />
+
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">Variables Used</p>
+              {detectedVars.size === 0 ? (
+                <p className="text-[10px] text-muted-foreground/60 px-1">Right-click or drag variables into text fields</p>
+              ) : (
+                <div className="flex flex-wrap gap-1 px-1">
+                  {[...detectedVars].map((v) => (
+                    <Badge key={v} variant="outline" className="text-[10px] font-mono rounded-md">{`{${v}}`}</Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Variables / Terms Tab */}
+          {sidebarTab === "variables" && (
+            <div className="space-y-3 pr-1">
+              <p className="text-[10px] text-muted-foreground px-1">
+                Drag or click to insert into any text field
+              </p>
+              {VARIABLE_CATEGORIES.map((cat) => (
+                <div key={cat.label} className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">{cat.label}</p>
+                  <div className="flex flex-wrap gap-1 px-1">
+                    {cat.vars.map((v) => (
+                      <DraggableVarChip key={v} variable={v} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {customVars.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">From CSV</p>
+                  <div className="flex flex-wrap gap-1 px-1">
+                    {customVars.filter((v) => !ALL_COMMON_VARS.includes(v)).map((v) => (
+                      <DraggableVarChip key={v} variable={v} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Shortcodes / Dynamic Elements Tab */}
+          {sidebarTab === "shortcodes" && (
+            <div className="space-y-1 pr-1">
+              <p className="text-[10px] text-muted-foreground px-1 mb-1">
+                Click to add dynamic content blocks
+              </p>
+              {SHORTCODES.map((sc) => (
+                <button
+                  key={sc.type}
+                  onClick={() => addShortcode(sc)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent hover:text-accent-foreground transition-colors group"
+                >
+                  <div className={`h-7 w-7 rounded-md ${sc.bgColor} flex items-center justify-center shrink-0`}>
+                    <sc.icon className={`h-3.5 w-3.5 ${sc.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium">{sc.label}</p>
+                    <p className="text-[10px] text-muted-foreground leading-tight truncate">{sc.desc}</p>
+                  </div>
+                </button>
               ))}
             </div>
           )}
-        </div>
+
+          {/* Transforms / Modifiers Tab */}
+          {sidebarTab === "transforms" && (
+            <div className="space-y-2 pr-1">
+              <p className="text-[10px] text-muted-foreground px-1">
+                Add modifiers after variable names: {"{variable:modifier}"}
+              </p>
+              {TRANSFORMS.map((t) => (
+                <div key={t.name} className="px-2 py-1.5 rounded-lg bg-muted/30">
+                  <p className="text-xs font-mono font-medium text-foreground">{t.name}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono">{t.example}</p>
+                </div>
+              ))}
+              <Separator />
+              <p className="text-[10px] text-muted-foreground px-1">
+                Chain multiple: {"{city:lowercase:slug}"}
+              </p>
+            </div>
+          )}
+        </ScrollArea>
       </div>
 
       {/* Right: Canvas */}
@@ -723,7 +869,7 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
               <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border rounded-xl text-center">
                 <LayoutPanelTop className="h-10 w-10 text-muted-foreground/30 mb-3" />
                 <p className="text-sm font-medium text-muted-foreground">No blocks yet</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Click a block type on the left to get started</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Click a block type on the left, or add a shortcode</p>
               </div>
             )}
             {blocks.map((block, i) => (
