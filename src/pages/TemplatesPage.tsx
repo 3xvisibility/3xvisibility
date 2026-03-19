@@ -63,6 +63,7 @@ export default function TemplatesPage() {
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiContentType, setAiContentType] = useState<string>("seo");
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
+  const [aiAutoFixing, setAiAutoFixing] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
