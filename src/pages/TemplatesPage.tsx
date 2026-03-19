@@ -63,6 +63,7 @@ export default function TemplatesPage() {
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiContentType, setAiContentType] = useState<string>("seo");
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
+  const [aiAutoFixing, setAiAutoFixing] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -968,6 +969,60 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                               </div>
                             </div>
                           ))}
+                          <Button
+                            size="sm"
+                            className="w-full mt-2"
+                            disabled={aiAutoFixing}
+                            onClick={async () => {
+                              setAiAutoFixing(true);
+                              try {
+                                const allFailing = targets.filter(t => !t.isTarget).flatMap(t =>
+                                  t.failed.map(c => `[${t.label}] ${c.label}: ${c.tip}`)
+                                );
+                                const vars = [...new Set(content.match(/\{([a-z_]+)\}/gi) || [])];
+                                const { data, error } = await supabase.functions.invoke("generate-template", {
+                                  body: {
+                                    prompt: `You are given an existing HTML template. Improve it so ALL three scores (SEO, SEA, GEO) reach 80+.
+
+CURRENT TEMPLATE:
+${content}
+
+CURRENT VARIABLES USED: ${vars.join(", ")}
+
+FAILING CHECKS TO FIX:
+${allFailing.join("\n")}
+
+RULES:
+- Keep ALL existing {variable} placeholders intact — do NOT remove or rename them
+- Keep the existing structure and design intent
+- ADD missing elements to pass the failing checks:
+  * For SEO: ensure h1/h2/h3 headings, 300+ words, images with alt text, links, descriptive content
+  * For SEA: add <button> or <a class="btn cta">, <form> with inputs, trust signals (★ reviews, "Guarantee"), pricing section, action words in headings
+  * For GEO: add {city}/{state} in title, street address pattern, "Phone: {phone}", map/directions reference, opening hours, "near me"/"serving {city}" phrases, LocalBusiness schema mention
+- Output ONLY the improved raw HTML. No markdown fences, no explanations.`
+                                  },
+                                });
+                                if (error) throw error;
+                                if (data?.error) throw new Error(data.error);
+                                const improved = (data.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+                                if (improved) {
+                                  setContent(improved);
+                                  setBlocks(htmlToBlocks(improved));
+                                  toast({ title: "Content auto-fixed!", description: "AI has improved your template to target 80+ on all scores." });
+                                }
+                              } catch (err: any) {
+                                toast({ title: "Auto-fix failed", description: err.message, variant: "destructive" });
+                              } finally {
+                                setAiAutoFixing(false);
+                              }
+                            }}
+                          >
+                            {aiAutoFixing ? (
+                              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Auto-fixing content...</>
+                            ) : (
+                              <><Sparkles className="mr-2 h-4 w-4" /> Auto-Fix with AI</>
+                            )}
+                          </Button>
                         </div>
                       )}
                       {allAbove80 && (
