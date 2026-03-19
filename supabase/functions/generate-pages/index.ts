@@ -1302,15 +1302,15 @@ Deno.serve(async (req) => {
             if (tplSeoTitle) seoData.seo_title = resolvePattern(tplSeoTitle).slice(0, 60);
             if (tplSeoDesc) seoData.seo_description = resolvePattern(tplSeoDesc).slice(0, 160);
 
-            // Still generate keywords via AI if available
-            if (LOVABLE_API_KEY) {
+            // Still generate keywords via AI for test previews only to keep campaign publishing fast.
+            if (shouldUseAiSeo) {
               try {
                 const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
                 seoData.seo_keywords = aiSeo.seo_keywords;
                 aiGenerationsUsed++;
               } catch { /* keep empty keywords */ }
             }
-          } else if (LOVABLE_API_KEY) {
+          } else if (shouldUseAiSeo) {
             try {
               seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
               aiGenerationsUsed++;
