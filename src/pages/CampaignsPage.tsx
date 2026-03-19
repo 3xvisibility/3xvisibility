@@ -816,6 +816,7 @@ export default function CampaignsPage() {
     let result = campaigns;
     if (typeFilter !== "all") {
       result = result.filter((c) => c.campaign_type === typeFilter || ((c as any).campaign_types || []).includes(typeFilter));
+    }
     if (statusFilter !== "all") {
       result = result.filter((c) => c.status === statusFilter);
     }
