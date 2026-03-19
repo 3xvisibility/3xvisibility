@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useBranding, type BrandingConfig } from "@/contexts/BrandingContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Crown, Shield, User, Trash2, UserPlus, Building2 } from "lucide-react";
+import { Users, Crown, Shield, User, Trash2, UserPlus, Building2, Palette, ImageIcon, Type } from "lucide-react";
 import AuditLogViewer from "@/components/workspace/AuditLogViewer";
 
 interface Member {
