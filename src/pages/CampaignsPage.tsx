@@ -795,9 +795,10 @@ export default function CampaignsPage() {
       { num: 4, label: "Template" },
     ];
     let nextNum = 5;
-    if (campaignType === "sea") {
+    if (campaignTypes.includes("sea")) {
       steps.push({ num: nextNum++, label: "UTM" });
-    } else if (campaignType === "geo") {
+    }
+    if (campaignTypes.includes("geo")) {
       steps.push({ num: nextNum++, label: "GEO" });
     }
     steps.push({ num: nextNum++, label: "Website" });
