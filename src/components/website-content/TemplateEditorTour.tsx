@@ -120,31 +120,52 @@ export function TemplateEditorTour({ active, restartKey }: { active: boolean; re
   const progress = ((currentStep + 1) / tourSteps.length) * 100;
 
   const getTooltipPosition = (): React.CSSProperties => {
-    if (!targetRect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
-    const gap = 12;
-    const tooltipWidth = Math.min(300, window.innerWidth - 24);
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const pad = 8;
+    const tooltipWidth = Math.min(300, vw - pad * 2);
+
+    if (!targetRect) return { top: "50%", left: pad, right: pad, transform: "translateY(-50%)" };
+
+    const gap = 10;
+    const centerX = Math.max(pad, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, vw - tooltipWidth - pad));
+
+    // On small screens, always position below or above the target, centered horizontally
+    const spaceBelow = vh - targetRect.bottom - gap;
+    const spaceAbove = targetRect.top - gap;
+
+    if (vw < 480) {
+      // Mobile: always horizontally centered with padding
+      if (spaceBelow >= 160) {
+        return { top: targetRect.bottom + gap, left: pad, right: pad };
+      }
+      return { bottom: vh - targetRect.top + gap, left: pad, right: pad };
+    }
 
     switch (step.position) {
       case "bottom":
-        return {
-          top: targetRect.bottom + gap,
-          left: Math.max(12, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 12)),
-        };
+        return { top: targetRect.bottom + gap, left: centerX, width: tooltipWidth };
       case "top":
-        return {
-          bottom: window.innerHeight - targetRect.top + gap,
-          left: Math.max(12, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 12)),
-        };
-      case "right":
-        return {
-          top: targetRect.top + targetRect.height / 2 - 60,
-          left: targetRect.right + gap,
-        };
-      case "left":
-        return {
-          top: targetRect.top + targetRect.height / 2 - 60,
-          right: window.innerWidth - targetRect.left + gap,
-        };
+        return { bottom: vh - targetRect.top + gap, left: centerX, width: tooltipWidth };
+      case "right": {
+        const rightSpace = vw - targetRect.right - gap;
+        if (rightSpace >= tooltipWidth + pad) {
+          return { top: Math.max(pad, targetRect.top + targetRect.height / 2 - 60), left: targetRect.right + gap, width: tooltipWidth };
+        }
+        // Fallback to bottom/top
+        return spaceBelow >= 160
+          ? { top: targetRect.bottom + gap, left: centerX, width: tooltipWidth }
+          : { bottom: vh - targetRect.top + gap, left: centerX, width: tooltipWidth };
+      }
+      case "left": {
+        const leftSpace = targetRect.left - gap;
+        if (leftSpace >= tooltipWidth + pad) {
+          return { top: Math.max(pad, targetRect.top + targetRect.height / 2 - 60), right: vw - targetRect.left + gap, width: tooltipWidth };
+        }
+        return spaceBelow >= 160
+          ? { top: targetRect.bottom + gap, left: centerX, width: tooltipWidth }
+          : { bottom: vh - targetRect.top + gap, left: centerX, width: tooltipWidth };
+      }
     }
   };
 
@@ -189,8 +210,8 @@ export function TemplateEditorTour({ active, restartKey }: { active: boolean; re
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
-            className="fixed z-[10000]"
-            style={{ ...getTooltipPosition(), width: Math.min(300, window.innerWidth - 24) }}
+            className="fixed z-[10000] max-w-[calc(100vw-16px)]"
+            style={getTooltipPosition()}
           >
             <div className="rounded-xl border border-border bg-card shadow-xl p-4 space-y-2.5">
               <div className="flex items-start justify-between">

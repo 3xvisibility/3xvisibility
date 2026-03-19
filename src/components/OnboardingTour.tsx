@@ -106,32 +106,47 @@ export function OnboardingTour() {
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   const getTooltipPosition = (): React.CSSProperties => {
-    if (!targetRect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const pad = 8;
+    const tooltipWidth = Math.min(340, vw - pad * 2);
+
+    if (!targetRect) return { top: "50%", left: pad, right: pad, transform: "translateY(-50%)" };
 
     const gap = 12;
-    const tooltipWidth = 340;
+    const centerX = Math.max(pad, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, vw - tooltipWidth - pad));
+    const spaceBelow = vh - targetRect.bottom - gap;
+
+    if (vw < 480) {
+      if (spaceBelow >= 180) {
+        return { top: targetRect.bottom + gap, left: pad, right: pad };
+      }
+      return { bottom: vh - targetRect.top + gap, left: pad, right: pad };
+    }
 
     switch (step.position) {
       case "bottom":
-        return {
-          top: targetRect.bottom + gap,
-          left: targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
-        };
-      case "right":
-        return {
-          top: targetRect.top + targetRect.height / 2 - 60,
-          left: targetRect.right + gap,
-        };
-      case "left":
-        return {
-          top: targetRect.top + targetRect.height / 2 - 60,
-          right: window.innerWidth - targetRect.left + gap,
-        };
+        return { top: targetRect.bottom + gap, left: centerX, width: tooltipWidth };
       case "top":
-        return {
-          bottom: window.innerHeight - targetRect.top + gap,
-          left: targetRect.left + targetRect.width / 2 - tooltipWidth / 2,
-        };
+        return { bottom: vh - targetRect.top + gap, left: centerX, width: tooltipWidth };
+      case "right": {
+        const rightSpace = vw - targetRect.right - gap;
+        if (rightSpace >= tooltipWidth + pad) {
+          return { top: Math.max(pad, targetRect.top + targetRect.height / 2 - 60), left: targetRect.right + gap, width: tooltipWidth };
+        }
+        return spaceBelow >= 180
+          ? { top: targetRect.bottom + gap, left: centerX, width: tooltipWidth }
+          : { bottom: vh - targetRect.top + gap, left: centerX, width: tooltipWidth };
+      }
+      case "left": {
+        const leftSpace = targetRect.left - gap;
+        if (leftSpace >= tooltipWidth + pad) {
+          return { top: Math.max(pad, targetRect.top + targetRect.height / 2 - 60), right: vw - targetRect.left + gap, width: tooltipWidth };
+        }
+        return spaceBelow >= 180
+          ? { top: targetRect.bottom + gap, left: centerX, width: tooltipWidth }
+          : { bottom: vh - targetRect.top + gap, left: centerX, width: tooltipWidth };
+      }
     }
   };
 
@@ -174,7 +189,7 @@ export function OnboardingTour() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
-            className="fixed z-[10000] w-[340px]"
+            className="fixed z-[10000] max-w-[calc(100vw-16px)]"
             style={getTooltipPosition()}
           >
             <div className="rounded-xl border border-border bg-card shadow-xl p-5 space-y-3">
