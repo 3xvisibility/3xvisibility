@@ -101,6 +101,21 @@ export default function CampaignDetailPage() {
     },
   });
 
+  // Fetch template content for live preview
+  const { data: templateContent } = useQuery({
+    queryKey: ["template-content", campaign?.template_id],
+    enabled: !!campaign?.template_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("content")
+        .eq("id", campaign!.template_id!)
+        .single();
+      if (error) throw error;
+      return data?.content || "";
+    },
+  });
+
   // Fetch generated pages
   const { data: pages = [], isLoading: pagesLoading } = useQuery({
     queryKey: ["campaign-pages", id],
