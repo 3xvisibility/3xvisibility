@@ -596,6 +596,24 @@ export default function GeneratedPagesPage() {
             </CardContent>
           </Card>
         ))}
+        {/* Freshness stats */}
+        {(() => {
+          const freshCounts = { fresh: 0, aging: 0, stale: 0, outdated: 0 };
+          pages.forEach((p) => { freshCounts[calculateFreshness(p.created_at, p.status).level]++; });
+          return (
+            <Card className="shadow-surface col-span-2 sm:col-span-4">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1"><Clock className="h-3 w-3" /> Content Freshness</p>
+                <div className="flex gap-4 text-xs">
+                  <span className="text-emerald-600 font-medium">{freshCounts.fresh} Fresh</span>
+                  <span className="text-primary font-medium">{freshCounts.aging} Aging</span>
+                  <span className="text-amber-600 font-medium">{freshCounts.stale} Stale</span>
+                  <span className="text-destructive font-medium">{freshCounts.outdated} Outdated</span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
       </div>
 
       {/* Table */}
