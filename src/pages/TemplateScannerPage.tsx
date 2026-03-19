@@ -1012,11 +1012,18 @@ ${headStyles}
                 <DialogTitle>Save Template</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
+                <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
+                  <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
+                    Once saved, you can use this template in a <strong>campaign</strong> to generate hundreds of unique pages. Each variable will be filled with data from your CSV or location database.
+                  </p>
+                </div>
                 <div>
                   <Label htmlFor="tpl-name">Template Name</Label>
+                  <p className="text-[10px] text-muted-foreground mb-1">Give it a descriptive name so you can find it later</p>
                   <Input
                     id="tpl-name"
-                    placeholder="e.g., Course Landing Page"
+                    placeholder="e.g., Dental City Landing Page"
                     value={templateName}
                     onChange={(e) => setTemplateName(e.target.value)}
                   />
