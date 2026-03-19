@@ -66,6 +66,16 @@ interface WpPage {
   link: string;
 }
 
+// Common local SEO terms — like Page Generator Pro
+const LOCAL_SEO_TERMS = [
+  { category: "Location", vars: ["city", "state", "county", "country", "region", "zip_code", "state_code", "area", "neighborhood", "district"] },
+  { category: "Business", vars: ["company", "phone", "address", "email", "website", "hours", "rating", "reviews_count"] },
+  { category: "Content", vars: ["title", "keyword", "service", "category", "description", "name", "brand", "price"] },
+  { category: "SEO", vars: ["slug", "canonical_url", "seo_title", "seo_description", "schema_type"] },
+  { category: "Media", vars: ["image_url", "image_alt", "logo_url", "video_url", "gallery"] },
+  { category: "Geo", vars: ["latitude", "longitude", "timezone", "population", "map_embed"] },
+];
+
 // Popover for assigning variable to selected text
 function SelectionPopover({
   position,
@@ -135,6 +145,7 @@ export default function TemplateScannerPage() {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [bodyHtml, setBodyHtml] = useState("");
   const [headStyles, setHeadStyles] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [mappings, setMappings] = useState<VariableMapping[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -145,7 +156,7 @@ export default function TemplateScannerPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [wpPages, setWpPages] = useState<WpPage[]>([]);
-  const [viewMode, setViewMode] = useState<"visual" | "blocks">("visual");
+  const [viewMode, setViewMode] = useState<"visual" | "blocks" | "terms">("visual");
   const [selectionPopover, setSelectionPopover] = useState<{
     position: { x: number; y: number };
     text: string;
@@ -209,12 +220,14 @@ export default function TemplateScannerPage() {
         headStyles?: string;
         blocks: ContentBlock[];
         suggestions: VariableSuggestion[];
+        imageUrls?: string[];
       };
     },
     onSuccess: (data) => {
       setBlocks(data.blocks);
       setBodyHtml(data.bodyHtml);
       setHeadStyles(data.headStyles || "");
+      setImageUrls(data.imageUrls || []);
       const initialMappings = data.suggestions.map((s) => ({
         ...s,
         accepted: true,
@@ -245,11 +258,16 @@ export default function TemplateScannerPage() {
         templateContent = templateContent.replace(regex, `{${mapping.variable}}`);
       }
 
+      // Wrap with head styles to preserve original design
+      const fullTemplate = headStyles
+        ? `<!-- STYLES -->\n${headStyles}\n<!-- /STYLES -->\n${templateContent}`
+        : templateContent;
+
       const variables = [...new Set(acceptedMappings.map((m) => `{${m.variable}}`))];
 
       const { error } = await supabase.from("templates").insert({
         name: templateName,
-        content: templateContent,
+        content: fullTemplate,
         variables,
         user_id: user.id,
         workspace_id: wsId,
@@ -754,6 +772,14 @@ ${headStyles}
                 >
                   <List className="mr-1.5 h-3.5 w-3.5" /> Block List
                 </Button>
+                <Button
+                  variant={viewMode === "terms" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setViewMode("terms")}
+                >
+                  <Tag className="mr-1.5 h-3.5 w-3.5" /> Terms
+                </Button>
               </div>
               <TooltipProvider>
                 <Tooltip>
@@ -992,7 +1018,132 @@ ${headStyles}
             </div>
           )}
 
-          {/* Template Preview Dialog */}
+          {/* Terms / Local SEO Panel */}
+          {viewMode === "terms" && (
+            <div className="space-y-4">
+              <Card className="shadow-surface">
+                <CardContent className="p-4 space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-1">
+                      <Tag className="h-3.5 w-3.5 text-primary" />
+                      Local SEO Terms & Variables
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Click any variable to copy its placeholder. Use these in your template to generate location-specific pages.
+                    </p>
+                  </div>
+                  {LOCAL_SEO_TERMS.map((group) => (
+                    <div key={group.category}>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group.category}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {group.vars.map((v) => {
+                          const isUsed = acceptedMappings.some((m) => m.variable === v);
+                          return (
+                            <Badge
+                              key={v}
+                              variant="outline"
+                              className={`font-mono text-xs cursor-pointer transition-all hover:bg-primary/10 ${
+                                isUsed ? "border-primary text-primary bg-primary/5" : "border-border text-muted-foreground"
+                              }`}
+                              onClick={() => {
+                                navigator.clipboard.writeText(`{${v}}`);
+                                toast({ title: "Copied!", description: `{${v}} copied to clipboard` });
+                              }}
+                            >
+                              {`{${v}}`}
+                              {isUsed && <Check className="ml-1 h-2.5 w-2.5" />}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Detected Images */}
+              {imageUrls.length > 0 && (
+                <Card className="shadow-surface">
+                  <CardContent className="p-4 space-y-3">
+                    <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                      <Eye className="h-3.5 w-3.5 text-primary" />
+                      Detected Images ({imageUrls.length})
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Images found on the scanned page. These URLs are preserved in the template. Click to copy.
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {imageUrls.slice(0, 20).map((imgUrl, i) => (
+                        <div
+                          key={i}
+                          className="group relative rounded-lg border border-border overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                          onClick={() => {
+                            navigator.clipboard.writeText(imgUrl);
+                            toast({ title: "Image URL copied", description: imgUrl.slice(0, 60) + "..." });
+                          }}
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={`Image ${i + 1}`}
+                            className="w-full h-24 object-cover"
+                            loading="lazy"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                            <span className="text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">Copy URL</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Keyword Transforms Reference */}
+              <Card className="shadow-surface">
+                <CardContent className="p-4 space-y-3">
+                  <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    Variable Transforms
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Modify variable output with transforms: <code className="bg-muted px-1 rounded text-[10px]">{"{city:uppercase}"}</code>
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {[
+                      { syntax: "{var:uppercase}", desc: "FULL UPPERCASE" },
+                      { syntax: "{var:lowercase}", desc: "full lowercase" },
+                      { syntax: "{var:capitalize}", desc: "Title Case" },
+                      { syntax: "{var:slug}", desc: "url-safe-slug" },
+                      { syntax: "{var:extract(0)}", desc: "First part (comma-split)" },
+                      { syntax: "{var:truncate(50)}", desc: "First 50 chars" },
+                      { syntax: "{var:prefix(/services/)}", desc: "Prepend text" },
+                      { syntax: "{var:suffix( Area)}", desc: "Append text" },
+                      { syntax: "{var:replace(old,new)}", desc: "Replace text" },
+                      { syntax: "{var:default(N/A)}", desc: "Fallback if empty" },
+                      { syntax: "{var:urlencode}", desc: "URL-encode" },
+                      { syntax: "{var:words(10)}", desc: "First 10 words" },
+                    ].map((t) => (
+                      <div key={t.syntax} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1.5">
+                        <code
+                          className="font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded cursor-pointer hover:bg-primary/20 transition-colors"
+                          onClick={() => {
+                            navigator.clipboard.writeText(t.syntax);
+                            toast({ title: "Copied!", description: t.syntax });
+                          }}
+                        >
+                          {t.syntax}
+                        </code>
+                        <span className="text-muted-foreground">{t.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+
           <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
             <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
