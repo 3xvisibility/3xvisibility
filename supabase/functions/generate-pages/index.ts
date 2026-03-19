@@ -923,6 +923,7 @@ Deno.serve(async (req) => {
     const hasAiBlocks = aiBlocks.length > 0;
     const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : BATCH_SIZE;
 
     // Keep campaign publishing fast: reserve AI generation for explicit AI blocks/images.
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
@@ -975,7 +976,7 @@ Deno.serve(async (req) => {
           success_count: 0,
           error_count: 0,
           current_batch: 0,
-          batch_size: BATCH_SIZE,
+          batch_size: effectiveBatchSize,
           started_at: new Date().toISOString(),
           config: {
             has_ai_blocks: hasAiBlocks,
@@ -983,6 +984,7 @@ Deno.serve(async (req) => {
             ai_blocks_count: aiBlocks.length,
             ai_image_blocks_count: aiImageBlocks.length,
             campaign_type: campaign.campaign_type || "seo",
+            effective_batch_size: effectiveBatchSize,
           },
         })
         .select("id")
@@ -1017,10 +1019,10 @@ Deno.serve(async (req) => {
     const TIMEOUT_MS = 120_000; // 120s soft limit (edge functions have ~150s hard limit)
     const startTime = Date.now();
 
-    console.log("[GENERATE-PAGES] Starting batch processing. Rows:", remainingRows.length, "AI blocks:", aiBlocks.length);
+    console.log("[GENERATE-PAGES] Starting batch processing. Rows:", remainingRows.length, "AI blocks:", aiBlocks.length, "Batch size:", effectiveBatchSize);
 
     // Process in batches
-    const totalBatches = Math.ceil(remainingRows.length / BATCH_SIZE);
+    const totalBatches = Math.ceil(remainingRows.length / effectiveBatchSize);
     let processedCount = alreadyProcessed;
     let failedCount = campaign.failed_rows || 0;
     let successCount = alreadyProcessed - (campaign.failed_rows || 0);
@@ -1068,7 +1070,7 @@ Deno.serve(async (req) => {
               "x-service-role-key": supabaseServiceKey,
             },
             body: JSON.stringify({ campaign_id, action: "resume" }),
-          }).catch(() => {}); // fire-and-forget
+          }).catch(() => {});
         } catch { /* ignore */ }
 
         return new Response(JSON.stringify({
@@ -1125,8 +1127,8 @@ Deno.serve(async (req) => {
         });
       }
 
-      const batchStart = batchIdx * BATCH_SIZE;
-      const batchRows = remainingRows.slice(batchStart, batchStart + BATCH_SIZE);
+      const batchStart = batchIdx * effectiveBatchSize;
+      const batchRows = remainingRows.slice(batchStart, batchStart + effectiveBatchSize);
       batchesCompleted++;
 
       await logEvent(supabase, campaign_id, user.id, "batch_started",
