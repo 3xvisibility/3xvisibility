@@ -511,33 +511,40 @@ Language: ${languageMap[settings.language] || "English"}
 
 IMPORTANT: Return ONLY the generated content text. No markdown formatting, no headers, no extra commentary.`;
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: prompt },
-      ],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+      }),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("AI generation error:", response.status, errText);
-    if (response.status === 429) throw new Error("AI rate limit exceeded.");
-    if (response.status === 402) throw new Error("AI credits exhausted.");
-    throw new Error(`AI generation failed (${response.status})`);
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("AI generation error:", response.status, errText);
+      if (response.status === 429) throw new Error("AI rate limit exceeded.");
+      if (response.status === 402) throw new Error("AI credits exhausted.");
+      throw new Error(`AI generation failed (${response.status})`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error("No content returned from AI");
+    return content.trim();
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("No content returned from AI");
-  return content.trim();
 }
 
 async function generateSeoMetadata(
