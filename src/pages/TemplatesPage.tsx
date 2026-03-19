@@ -855,6 +855,47 @@ export default function TemplatesPage() {
                     )}
                   </TabsContent>
                 </Tabs>
+                {/* Live Score Preview Panel */}
+                {content.trim().length > 0 && (() => {
+                  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                  const seoScore = calculateContentSeoScore(name, content, slug);
+                  const seaScore = calculateContentSeaScore(name, content, slug);
+                  const geoScore = calculateContentGeoScore(name, content, slug);
+                  const avgScore = Math.round((seoScore.score + seaScore.score + geoScore.score) / 3);
+                  const avgColor = avgScore >= 85 ? "text-emerald-600" : avgScore >= 60 ? "text-primary" : avgScore >= 35 ? "text-amber-600" : "text-destructive";
+                  return (
+                    <div className="rounded-lg border border-border bg-muted/30 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold flex items-center gap-2">
+                          <Wand2 className="h-4 w-4 text-primary" />
+                          Live Score Preview
+                        </p>
+                        <span className={`text-sm font-bold ${avgColor}`}>
+                          Avg: {avgScore}/100
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-background p-3">
+                          <span className="text-xs font-medium text-muted-foreground">🔍 SEO</span>
+                          <SeoScoreBadge score={seoScore.score} label={seoScore.label} color={seoScore.color} checks={seoScore.checks} size="md" scoreType="SEO" />
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-background p-3">
+                          <span className="text-xs font-medium text-muted-foreground">💰 SEA</span>
+                          <SeoScoreBadge score={seaScore.score} label={seaScore.label} color={seaScore.color} checks={seaScore.checks} size="md" scoreType="SEA" />
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-background p-3">
+                          <span className="text-xs font-medium text-muted-foreground">📍 GEO</span>
+                          <SeoScoreBadge score={geoScore.score} label={geoScore.label} color={geoScore.color} checks={geoScore.checks} size="md" scoreType="GEO" />
+                        </div>
+                      </div>
+                      {avgScore < 80 && (
+                        <p className="text-xs text-muted-foreground mt-2 text-center">
+                          Click any score to see improvement suggestions. Aim for 80+ on all three.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
                 {detectedVars.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     <span className="text-xs text-muted-foreground">Detected variables:</span>
