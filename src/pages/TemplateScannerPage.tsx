@@ -707,48 +707,95 @@ ${headStyles}
 
           {/* Variables chips */}
           {uniqueVars.length > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-sm text-muted-foreground">Variables:</span>
-              {uniqueVars.map((v) => (
-                <Badge key={v} className="bg-primary/10 text-primary font-mono text-xs">
-                  {`{${v}}`}
-                </Badge>
-              ))}
-            </div>
+            <Card className="border-dashed border-primary/30 bg-primary/5 shadow-none">
+              <CardContent className="p-3">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-sm font-medium text-foreground flex items-center gap-1 cursor-help">
+                          <CircleDot className="h-3.5 w-3.5 text-primary" />
+                          Dynamic Variables ({uniqueVars.length}):
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">These are the parts of your page that will change for each generated page. Each variable maps to a column in your CSV data or location database.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  {uniqueVars.map((v) => (
+                    <Badge key={v} className="bg-primary/10 text-primary font-mono text-xs border border-primary/20">
+                      {`{${v}}`}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* View mode tabs + actions */}
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-              <Button
-                variant={viewMode === "visual" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setViewMode("visual")}
-              >
-                <MousePointer className="mr-1.5 h-3.5 w-3.5" /> Visual Editor
-              </Button>
-              <Button
-                variant={viewMode === "blocks" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setViewMode("blocks")}
-              >
-                <List className="mr-1.5 h-3.5 w-3.5" /> Block List
-              </Button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <Button
+                  variant={viewMode === "visual" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setViewMode("visual")}
+                >
+                  <MousePointer className="mr-1.5 h-3.5 w-3.5" /> Visual Editor
+                </Button>
+                <Button
+                  variant={viewMode === "blocks" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setViewMode("blocks")}
+                >
+                  <List className="mr-1.5 h-3.5 w-3.5" /> Block List
+                </Button>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs"><strong>Visual Editor:</strong> See your page as it looks on the web. Select any text to make it a variable.</p>
+                    <p className="text-xs mt-1"><strong>Block List:</strong> See each content element separately. Good for reviewing AI suggestions one by one.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
-                <Eye className="mr-1.5 h-3.5 w-3.5" /> Preview
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setSaveDialogOpen(true)}
-                disabled={acceptedMappings.length === 0}
-                className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
-              >
-                <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Template
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+                      <Eye className="mr-1.5 h-3.5 w-3.5" /> Preview
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">See how variables will appear in the final template</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      onClick={() => setSaveDialogOpen(true)}
+                      disabled={acceptedMappings.length === 0}
+                      className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+                    >
+                      <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Template
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{acceptedMappings.length === 0 ? "Add at least one variable first" : "Save this template to use in campaigns"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
@@ -756,18 +803,22 @@ ${headStyles}
           {viewMode === "visual" && (
             <div className="space-y-4">
               <Card className="shadow-surface overflow-hidden">
-                <div className="bg-muted/50 border-b border-border px-4 py-2 flex items-center gap-2">
-                  <MousePointer className="h-3.5 w-3.5 text-primary" />
+                <div className="bg-gradient-to-r from-primary/5 to-transparent border-b border-border px-4 py-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <MousePointer className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-medium text-foreground">Visual Variable Editor</p>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">Select text</span> in the preview below to assign it as a variable.
-                    Already-mapped values are highlighted in blue.
+                    👇 This preview shows your page <strong>with its original design</strong>. 
+                    <span className="text-primary font-medium"> Select any text</span> you want to make dynamic — it will be replaced with data from your CSV.
+                    Variables appear as <span className="font-mono text-primary bg-primary/10 px-1 rounded text-[10px]">{"{variable}"}</span> purple badges.
                   </p>
                 </div>
                 <iframe
                   ref={iframeRef}
                   srcDoc={getVisualEditorHtml()}
                   className="w-full border-0"
-                  style={{ height: "500px" }}
+                  style={{ height: "600px" }}
                   sandbox="allow-scripts allow-same-origin"
                   title="Visual template editor"
                 />
