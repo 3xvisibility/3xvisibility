@@ -1443,7 +1443,7 @@ export default function CampaignsPage() {
                     </div>
                   )}
 
-                  {step === 5 && campaignType === "geo" && (
+                  {wizardSteps[step - 1]?.label === "GEO" && (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-1">
                         <MapPin className="h-4 w-4 text-primary" />
