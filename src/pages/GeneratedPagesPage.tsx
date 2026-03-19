@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles } from "lucide-react";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -254,6 +254,24 @@ export default function GeneratedPagesPage() {
     onError: (err: Error) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({ title: "Retry failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const rewriteMutation = useMutation({
+    mutationFn: async (pageId: string) => {
+      const { data, error } = await supabase.functions.invoke("rewrite-content", {
+        body: { page_id: pageId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({ title: "Content rewritten", description: "Page content has been refreshed with AI." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Rewrite failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -761,6 +779,25 @@ export default function GeneratedPagesPage() {
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-primary"
+                                  onClick={() => rewriteMutation.mutate(page.id)}
+                                  disabled={rewriteMutation.isPending}
+                                  title="AI Rewrite"
+                                >
+                                  <Sparkles className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Refresh content with AI</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {page.status === "failed" && (
                             <Button
                               size="sm"

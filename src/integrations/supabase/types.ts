@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_tests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          name: string
+          status: string
+          template_id: string | null
+          updated_at: string
+          user_id: string
+          variant_a_content: string
+          variant_a_failed: number
+          variant_a_label: string
+          variant_a_pages: number
+          variant_a_published: number
+          variant_b_content: string
+          variant_b_failed: number
+          variant_b_label: string
+          variant_b_pages: number
+          variant_b_published: number
+          winner: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          user_id: string
+          variant_a_content: string
+          variant_a_failed?: number
+          variant_a_label?: string
+          variant_a_pages?: number
+          variant_a_published?: number
+          variant_b_content: string
+          variant_b_failed?: number
+          variant_b_label?: string
+          variant_b_pages?: number
+          variant_b_published?: number
+          winner?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          user_id?: string
+          variant_a_content?: string
+          variant_a_failed?: number
+          variant_a_label?: string
+          variant_a_pages?: number
+          variant_a_published?: number
+          variant_b_content?: string
+          variant_b_failed?: number
+          variant_b_label?: string
+          variant_b_pages?: number
+          variant_b_published?: number
+          winner?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_tests_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ab_tests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
