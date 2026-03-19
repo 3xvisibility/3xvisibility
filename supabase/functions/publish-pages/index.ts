@@ -2,6 +2,30 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
 
+/**
+ * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
+ * before publishing to a CMS that already has its own <head>, header, and footer.
+ * Only the body content (inside <div class="pgp-page">) is sent to the CMS.
+ */
+function stripHeadTagsForCms(content: string): string {
+  let cleaned = content
+    // Remove HTML comments (e.g. <!-- Open Graph Meta Tags -->)
+    .replace(/<!--[\s\S]*?-->/g, "")
+    // Remove <meta ...> tags
+    .replace(/<meta\b[^>]*\/?>/gi, "")
+    // Remove <link rel="canonical" ...> tags
+    .replace(/<link\b[^>]*\/?>/gi, "")
+    // Remove <script type="application/ld+json">...</script> blocks
+    .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "")
+    // Remove the injected <style>...</style> block (CMS theme handles styling)
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    // Clean up excess whitespace left behind
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  return cleaned;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
