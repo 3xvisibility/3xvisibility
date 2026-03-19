@@ -375,16 +375,33 @@ ${highlightedHtml}
               </>
             )}
         </p>
-        <Button
-          data-tour="template-code-toggle"
-          size="sm"
-          variant="ghost"
-          className="h-7 text-xs gap-1.5"
-          onClick={() => setShowCode(!showCode)}
-        >
-          {showCode ? <Eye className="h-3 w-3" /> : <Code className="h-3 w-3" />}
-          {showCode ? "Visual Preview" : "View Code"}
-        </Button>
+        <div className="flex items-center gap-1">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs gap-1 text-muted-foreground"
+                  onClick={() => onRestartTour?.()}
+                >
+                  <HelpCircle className="h-3 w-3" /> Guide
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p className="text-xs">Replay the visual editor tour</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <Button
+            data-tour="template-code-toggle"
+            size="sm"
+            variant="ghost"
+            className="h-7 text-xs gap-1.5"
+            onClick={() => setShowCode(!showCode)}
+          >
+            {showCode ? <Eye className="h-3 w-3" /> : <Code className="h-3 w-3" />}
+            {showCode ? "Visual Preview" : "View Code"}
+          </Button>
+        </div>
       </div>
 
       {showCode ? (
