@@ -387,14 +387,17 @@ export default function GeneratedPagesPage() {
                 className="bg-gradient-primary border-0 shadow-lg shadow-primary/25"
                 disabled={bulkPublishMutation.isPending}
                 onClick={() => {
-                  const pendingSelected = [...selectedIds].filter(
-                    (id) => pages.find((p) => p.id === id)?.status === "pending"
+                  const publishableSelected = [...selectedIds].filter(
+                    (id) => {
+                      const p = pages.find((pg) => pg.id === id);
+                      return p?.status === "pending" || p?.status === "failed";
+                    }
                   );
-                  if (pendingSelected.length === 0) {
-                    toast({ title: "No pending pages", description: "Only pending pages can be published.", variant: "destructive" });
+                  if (publishableSelected.length === 0) {
+                    toast({ title: "No publishable pages", description: "Select pending or failed pages to publish.", variant: "destructive" });
                     return;
                   }
-                  bulkPublishMutation.mutate(pendingSelected);
+                  bulkPublishMutation.mutate(publishableSelected);
                 }}
               >
                 <Send className="h-3.5 w-3.5 mr-1.5" />
@@ -424,20 +427,20 @@ export default function GeneratedPagesPage() {
               <Button
                 size="sm"
                 variant="outline"
-                disabled={bulkStatusMutation.isPending}
+                disabled={retryFailedMutation.isPending}
                 onClick={() => {
                   const failedSelected = [...selectedIds].filter(
                     (id) => pages.find((p) => p.id === id)?.status === "failed"
                   );
                   if (failedSelected.length === 0) {
-                    toast({ title: "No failed pages", description: "Only failed pages can be reset for re-generation.", variant: "destructive" });
+                    toast({ title: "No failed pages", description: "Only failed pages can be retried.", variant: "destructive" });
                     return;
                   }
-                  bulkStatusMutation.mutate({ ids: failedSelected, status: "pending" });
+                  retryFailedMutation.mutate(failedSelected);
                 }}
               >
                 <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-                {bulkStatusMutation.isPending ? "Resetting..." : "Re-queue Failed"}
+                {retryFailedMutation.isPending ? "Retrying..." : "Retry Failed"}
               </Button>
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
