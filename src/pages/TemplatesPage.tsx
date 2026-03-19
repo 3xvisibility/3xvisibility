@@ -916,6 +916,19 @@ export default function TemplatesPage() {
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
+                  <TemplateVersionHistory
+                    templateId={tpl.id}
+                    onRestore={(version) => {
+                      setEditingTemplate(tpl);
+                      setName(version.name);
+                      setContent(version.content);
+                      setBlocks(htmlToBlocks(version.content));
+                      setActiveEditorTab("visual");
+                      setSeoTitlePattern(version.seo_title_pattern || "");
+                      setSeoDescriptionPattern(version.seo_description_pattern || "");
+                      toast({ title: "Version restored", description: "Review and save to confirm." });
+                    }}
+                  />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {(tpl.variables || []).map((v) => (
