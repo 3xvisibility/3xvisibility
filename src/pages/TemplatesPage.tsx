@@ -666,6 +666,49 @@ export default function TemplatesPage() {
                           Define patterns using &#123;variable&#125; syntax. These override AI-generated metadata when set.
                         </p>
                       </div>
+
+                      {/* AI Generate SEO Button */}
+                      <Button
+                        variant="outline"
+                        className="w-full border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 transition-all"
+                        disabled={aiSeoGenerating}
+                        onClick={async () => {
+                          setAiSeoGenerating(true);
+                          try {
+                            const vars = [...new Set(content.match(/\{([a-z_]+)\}/gi) || [])];
+                            const varNames = vars.map(v => v.replace(/[{}]/g, "")).join(", ");
+                            const { data, error } = await supabase.functions.invoke("generate-template", {
+                              body: {
+                                prompt: `Generate ONLY two lines of text, nothing else:
+Line 1: An SEO-optimized meta title pattern (under 60 chars) using these variables: ${varNames || "keyword, city"}
+Line 2: An SEO-optimized meta description pattern (120-160 chars) using the same variables.
+
+Use {variable_name} syntax. Include action words like "Best", "Top", "Professional", "Free Quote".
+Make it compelling for both search engines and users.
+Do NOT output HTML, markdown, or explanations — just two plain text lines.`
+                              },
+                            });
+                            if (error) throw error;
+                            if (data?.error) throw new Error(data.error);
+                            const raw = (data.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
+                            const lines = raw.split("\n").map((l: string) => l.replace(/^(line\s*\d+\s*[:：]\s*)/i, "").replace(/^(meta\s*(title|description)\s*(pattern)?\s*[:：]\s*)/i, "").trim()).filter(Boolean);
+                            if (lines[0]) setSeoTitlePattern(lines[0]);
+                            if (lines[1]) setSeoDescriptionPattern(lines[1]);
+                            toast({ title: "SEO patterns generated!", description: "AI-optimized meta title & description are ready." });
+                          } catch (err: any) {
+                            toast({ title: "AI generation failed", description: err.message, variant: "destructive" });
+                          } finally {
+                            setAiSeoGenerating(false);
+                          }
+                        }}
+                      >
+                        {aiSeoGenerating ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating optimized SEO patterns...</>
+                        ) : (
+                          <><Sparkles className="mr-2 h-4 w-4 text-primary" /> AI Generate SEO Meta Patterns</>
+                        )}
+                      </Button>
+
                       <div className="space-y-1.5">
                         <Label htmlFor="seo-title">Meta Title Pattern</Label>
                         <Input
