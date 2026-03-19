@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generation_jobs")
-        .select("id, status, total_rows, processed_rows, success_count, error_count, created_at, completed_at, campaign_id")
+        .select("id, status, total_rows, processed_rows, success_count, error_count, created_at, completed_at, started_at, campaign_id, batch_size")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
