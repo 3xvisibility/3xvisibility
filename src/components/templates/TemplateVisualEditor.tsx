@@ -863,7 +863,7 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
 
       {/* Right: Canvas */}
       <div className="flex-1 min-w-0">
-        <ScrollArea className="h-[480px]">
+        <ScrollArea className="h-[300px] sm:h-[480px]">
           <div className="space-y-2 pr-2">
             {blocks.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border rounded-xl text-center">
