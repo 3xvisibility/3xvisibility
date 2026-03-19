@@ -1424,6 +1424,12 @@ export default function GeneratedPagesPage() {
         </DialogContent>
       </Dialog>
 
+      <DuplicateContentDialog
+        open={duplicateOpen}
+        onOpenChange={setDuplicateOpen}
+        pages={pages.map((p) => ({ id: p.id, title: p.title, content: p.content }))}
+      />
+
     </div>
   );
 }
