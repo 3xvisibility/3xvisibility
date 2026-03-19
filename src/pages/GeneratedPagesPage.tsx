@@ -55,6 +55,8 @@ export default function GeneratedPagesPage() {
   const [bulkSeoApply, setBulkSeoApply] = useState({ title: true, description: true, keywords: true });
   const [inlineSeoEdits, setInlineSeoEdits] = useState<Record<string, { seo_title: string; seo_description: string; seo_keywords: string }>>({});
   const [publishType, setPublishType] = useState<"page" | "product">("page");
+  const [translateOpen, setTranslateOpen] = useState(false);
+  const [translateLang, setTranslateLang] = useState("fr");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
