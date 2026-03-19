@@ -54,7 +54,7 @@ const TRANSFORMS: Record<string, TransformFn> = {
   trim: (v) => v.trim(),
   prefix: (v, args) => (args[0] || "") + v,
   suffix: (v, args) => v + (args[0] || ""),
-  replace: (v, args) => v.replaceAll(args[0] || "", args[1] || ""),
+  replace: (v, args) => v.split(args[0] || "").join(args[1] || ""),
   truncate: (v, args) => {
     const n = parseInt(args[0] || "50", 10);
     return v.length > n ? v.slice(0, n) + "…" : v;
