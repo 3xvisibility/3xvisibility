@@ -8,55 +8,36 @@ interface TourStep {
   target: string;
   title: string;
   description: string;
-  richDescription?: React.ReactNode;
   icon: React.ReactNode;
   position: "bottom" | "top" | "right" | "left";
 }
-
-const Kbd = ({ children }: { children: React.ReactNode }) => (
-  <kbd className="inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded border border-border bg-muted text-[10px] font-mono text-muted-foreground align-middle mx-0.5">
-    {children}
-  </kbd>
-);
 
 const tourSteps: TourStep[] = [
   {
     target: '[data-tour="template-preview"]',
     title: "Visual Preview",
-    description: "",
-    richDescription: (
-      <>Select any text to make it dynamic — like a city name or price. Just highlight it and name the variable. Tip: use <Kbd>Ctrl</Kbd><Kbd>A</Kbd> to select all text in a section.</>
-    ),
+    description: "Select any text to make it dynamic — like a city name or price. Just highlight it and name the variable.",
     icon: <MousePointer className="h-5 w-5" />,
     position: "top",
   },
   {
     target: '[data-tour="template-ai-edit"]',
     title: "AI Editor",
-    description: "",
-    richDescription: (
-      <>Describe changes in plain text (e.g. "Add a FAQ section") and AI updates the template. Press <Kbd>Enter</Kbd> to submit your prompt.</>
-    ),
+    description: "Describe changes in plain text (e.g. \"Add a FAQ section\") and AI updates the template.",
     icon: <Wand2 className="h-5 w-5" />,
     position: "bottom",
   },
   {
     target: '[data-tour="template-code-toggle"]',
     title: "Code View",
-    description: "",
-    richDescription: (
-      <>Switch to raw HTML for precise edits. Variables appear as {"{variable_name}"}. Use <Kbd>Ctrl</Kbd><Kbd>F</Kbd> to find and replace placeholders quickly.</>
-    ),
+    description: "Switch to raw HTML for precise edits. Variables appear as {variable_name}.",
     icon: <Code className="h-5 w-5" />,
     position: "bottom",
   },
   {
     target: '[data-tour="template-var-badges"]',
     title: "Variable Badges",
-    description: "",
-    richDescription: (
-      <>All variables are listed here — each maps to a data column. Click any badge to rename or remove it. Use <Kbd>Ctrl</Kbd><Kbd>Z</Kbd> to undo accidental changes.</>
-    ),
+    description: "All variables are listed here — each maps to a data column. Click any badge to rename or remove it.",
     icon: <Tag className="h-5 w-5" />,
     position: "top",
   },
