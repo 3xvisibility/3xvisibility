@@ -48,8 +48,10 @@ export default function GeneratedPagesPage() {
   // Selection & bulk SEO
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkSeoOpen, setBulkSeoOpen] = useState(false);
+  const [bulkSeoMode, setBulkSeoMode] = useState<"blanket" | "inline">("inline");
   const [bulkSeoForm, setBulkSeoForm] = useState({ seo_title: "", seo_description: "", seo_keywords: "" });
   const [bulkSeoApply, setBulkSeoApply] = useState({ title: true, description: true, keywords: true });
+  const [inlineSeoEdits, setInlineSeoEdits] = useState<Record<string, { seo_title: string; seo_description: string; seo_keywords: string }>>({});
   const [publishType, setPublishType] = useState<"page" | "product">("page");
 
   const { toast } = useToast();
