@@ -6,13 +6,14 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -30,9 +31,9 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
-  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download,
+  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward,
 } from "lucide-react";
-import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
@@ -68,6 +69,8 @@ export default function CampaignDetailPage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [resumeIndex, setResumeIndex] = useState(0);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
     content: true,
@@ -113,6 +116,21 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generation_jobs")
+        .select("*")
+        .eq("campaign_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch campaign logs
+  const { data: campaignLogs = [] } = useQuery({
+    queryKey: ["campaign-logs", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_logs")
         .select("*")
         .eq("campaign_id", id!)
         .order("created_at", { ascending: false });
@@ -294,6 +312,9 @@ export default function CampaignDetailPage() {
               <Button variant="outline" size="sm" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
                 <RotateCcw className="mr-1.5 h-4 w-4" /> Re-generate
               </Button>
+              <Button variant="outline" size="sm" onClick={() => { setResumeIndex(campaign.processed_rows || 0); setShowResumeDialog(true); }} disabled={executeMutation.isPending} className="rounded-xl">
+                <SkipForward className="mr-1.5 h-4 w-4" /> Resume from…
+              </Button>
               <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
                 <Play className="mr-1.5 h-4 w-4" /> Re-run
               </Button>
@@ -327,6 +348,7 @@ export default function CampaignDetailPage() {
         <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
           <TabsTrigger value="overview" className="gap-1.5 text-xs"><Layers className="h-3.5 w-3.5" /> Overview</TabsTrigger>
           <TabsTrigger value="pages" className="gap-1.5 text-xs"><FileText className="h-3.5 w-3.5" /> Pages <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{pages.length}</Badge></TabsTrigger>
+          <TabsTrigger value="logs" className="gap-1.5 text-xs"><ScrollText className="h-3.5 w-3.5" /> Logs <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{campaignLogs.length}</Badge></TabsTrigger>
           <TabsTrigger value="errors" className="gap-1.5 text-xs"><AlertTriangle className="h-3.5 w-3.5" /> Errors <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5 bg-destructive/10 text-destructive">{errorPages.length + jobErrors.length}</Badge></TabsTrigger>
         </TabsList>
 
@@ -373,7 +395,12 @@ export default function CampaignDetailPage() {
           {/* Recent Executions */}
           {executionHistory.length > 0 && (
             <Card className="border-0 shadow-surface">
-              <CardHeader><CardTitle className="text-sm">Execution History</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Execution History</CardTitle>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => exportExecutionHistoryCsv(jobs as any, campaign?.name || "campaign")}>
+                  <Download className="h-3 w-3 mr-1" /> Export
+                </Button>
+              </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -495,6 +522,60 @@ export default function CampaignDetailPage() {
               </CardContent>
             </Card>
             </>
+          )}
+        </TabsContent>
+
+        {/* LOGS TAB */}
+        <TabsContent value="logs" className="space-y-4">
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => exportLogsCsv(campaignLogs, campaign?.name || "campaign")} disabled={campaignLogs.length === 0}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> Export Logs CSV
+            </Button>
+          </div>
+          {campaignLogs.length === 0 ? (
+            <Card className="border-0 shadow-surface">
+              <CardContent className="py-16 text-center">
+                <ScrollText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+                <p className="text-sm font-medium text-muted-foreground">No logs yet</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Logs will appear here once a generation runs.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-surface">
+              <CardContent className="p-0">
+                <ScrollArea className="max-h-[600px]">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-card z-10">
+                      <tr className="border-b text-xs text-muted-foreground">
+                        <th className="text-left p-3 font-medium">Timestamp</th>
+                        <th className="text-left p-3 font-medium">Event</th>
+                        <th className="text-left p-3 font-medium">Message</th>
+                        <th className="text-right p-3 font-medium">Batch</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {campaignLogs.map((log: any) => (
+                        <tr key={log.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <td className="p-3 text-xs text-muted-foreground tabular-nums whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                          <td className="p-3">
+                            <Badge variant="secondary" className={`text-[10px] ${
+                              log.event.includes("error") || log.event.includes("failed") ? "bg-destructive/10 text-destructive" :
+                              log.event.includes("completed") || log.event.includes("started") ? "bg-primary/10 text-primary" :
+                              log.event.includes("paused") ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"
+                            }`}>{log.event}</Badge>
+                          </td>
+                          <td className="p-3 text-xs text-muted-foreground max-w-[300px] truncate">{log.message || "—"}</td>
+                          <td className="p-3 text-right text-xs tabular-nums text-muted-foreground">
+                            {log.batch_number != null ? `#${log.batch_number}` : "—"}
+                            {log.pages_in_batch != null && ` (${log.pages_in_batch}p)`}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </ScrollArea>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
@@ -633,6 +714,48 @@ export default function CampaignDetailPage() {
             >
               <RotateCcw className="mr-2 h-4 w-4" />
               Re-generate ({Object.values(overwriteFields).filter(Boolean).length} fields)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resume from Index Dialog */}
+      <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Resume Generation</DialogTitle>
+            <DialogDescription>
+              Start generating from a specific row index. Useful if a previous generation stopped partway.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="resume-index" className="text-sm font-medium">Start from row</Label>
+              <Input
+                id="resume-index"
+                type="number"
+                min={0}
+                max={campaign?.total_rows || 0}
+                value={resumeIndex}
+                onChange={(e) => setResumeIndex(parseInt(e.target.value) || 0)}
+                className="tabular-nums"
+              />
+              <p className="text-xs text-muted-foreground">
+                Last processed: row {campaign?.processed_rows || 0} of {campaign?.total_rows || 0}
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowResumeDialog(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setShowResumeDialog(false);
+                executeMutation.mutate({ action: "resume" });
+              }}
+              className="bg-gradient-primary hover:brightness-110"
+            >
+              <SkipForward className="mr-2 h-4 w-4" />
+              Resume from row {resumeIndex}
             </Button>
           </DialogFooter>
         </DialogContent>
