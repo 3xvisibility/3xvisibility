@@ -321,6 +321,7 @@ export default function GeneratedPagesPage() {
     const base = pages.filter(
       (p) =>
         (statusFilter === "all" || p.status === statusFilter) &&
+        (freshnessFilter === "all" || calculateFreshness(p.created_at, p.status).level === freshnessFilter) &&
         (p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.slug.toLowerCase().includes(search.toLowerCase()) ||
         (p.campaigns?.name || "").toLowerCase().includes(search.toLowerCase()))
@@ -328,6 +329,7 @@ export default function GeneratedPagesPage() {
 
     if (sortBy === "newest") return base;
     if (sortBy === "oldest") return [...base].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    if (sortBy === "freshness") return [...base].sort((a, b) => calculateFreshness(b.created_at, b.status).ageDays - calculateFreshness(a.created_at, a.status).ageDays);
 
     const scoreGetter = (p: GeneratedPage) => {
       if (sortBy === "seo_asc" || sortBy === "seo_desc") return calculateContentSeoScore(p.title, p.content, p.slug).score;
@@ -337,7 +339,7 @@ export default function GeneratedPagesPage() {
     };
     const asc = sortBy.endsWith("_asc");
     return [...base].sort((a, b) => asc ? scoreGetter(a) - scoreGetter(b) : scoreGetter(b) - scoreGetter(a));
-  }, [pages, search, statusFilter, sortBy]);
+  }, [pages, search, statusFilter, freshnessFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
