@@ -750,7 +750,7 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
           ))}
         </div>
 
-        <ScrollArea className="h-[440px]">
+        <ScrollArea className="h-[200px] sm:h-[440px]">
           {/* Blocks Tab */}
           {sidebarTab === "blocks" && (
             <div className="space-y-1 pr-1">
