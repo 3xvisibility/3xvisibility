@@ -396,7 +396,7 @@ export default function TemplatesPage() {
           <h1 className="text-display">Templates</h1>
           <p className="text-muted-foreground mt-1">Define reusable page layouts with dynamic variables.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {/* Hidden file input for import */}
           <input
             ref={importFileRef}
