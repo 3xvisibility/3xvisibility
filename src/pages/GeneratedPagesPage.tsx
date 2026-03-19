@@ -267,8 +267,51 @@ export default function GeneratedPagesPage() {
   const openBulkSeoEditor = () => {
     setBulkSeoForm({ seo_title: "", seo_description: "", seo_keywords: "" });
     setBulkSeoApply({ title: true, description: true, keywords: true });
+    setBulkSeoMode("inline");
+    // Pre-populate inline edits from current page data
+    const edits: Record<string, { seo_title: string; seo_description: string; seo_keywords: string }> = {};
+    for (const id of selectedIds) {
+      const page = pages.find((p) => p.id === id);
+      if (page) {
+        edits[id] = {
+          seo_title: (page as any).seo_title || "",
+          seo_description: (page as any).seo_description || "",
+          seo_keywords: ((page as any).seo_keywords || []).join(", "),
+        };
+      }
+    }
+    setInlineSeoEdits(edits);
     setBulkSeoOpen(true);
   };
+
+  const inlineSeoSaveMutation = useMutation({
+    mutationFn: async (edits: Record<string, { seo_title: string; seo_description: string; seo_keywords: string }>) => {
+      const promises = Object.entries(edits).map(([id, fields]) => {
+        const keywordsArr = fields.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean);
+        return supabase
+          .from("generated_pages")
+          .update({
+            seo_title: fields.seo_title || null,
+            seo_description: fields.seo_description || null,
+            seo_keywords: keywordsArr.length > 0 ? keywordsArr : null,
+          })
+          .eq("id", id);
+      });
+      const results = await Promise.all(promises);
+      const errors = results.filter((r) => r.error);
+      if (errors.length > 0) throw new Error(`${errors.length} updates failed`);
+      return Object.keys(edits).length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setBulkSeoOpen(false);
+      setSelectedIds(new Set());
+      toast({ title: "SEO updated", description: `Updated ${count} pages individually.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
 
   const pendingPages = pages.filter((p) => p.status === "pending");
 
