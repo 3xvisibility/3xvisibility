@@ -1007,9 +1007,9 @@ export default function GeneratedPagesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Bulk SEO Edit Dialog */}
+      {/* Bulk SEO Edit Dialog — Enhanced */}
       <Dialog open={bulkSeoOpen} onOpenChange={setBulkSeoOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className={bulkSeoMode === "inline" ? "sm:max-w-5xl max-h-[90vh] overflow-y-auto" : "sm:max-w-lg"}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckSquare className="h-5 w-5 text-primary" />
@@ -1017,98 +1017,218 @@ export default function GeneratedPagesPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <p className="text-xs text-muted-foreground">
-              Set SEO metadata for all selected pages at once. Use template variables like <code className="font-mono bg-muted px-1 py-0.5 rounded text-primary">{"{title}"}</code> in fields — they won't be auto-replaced here but serve as a pattern reference.
-            </p>
-
-            <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Fields to update</p>
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                  <Checkbox
-                    checked={bulkSeoApply.title}
-                    onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, title: !!v })}
-                  />
-                  SEO Title
-                </label>
-                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                  <Checkbox
-                    checked={bulkSeoApply.description}
-                    onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, description: !!v })}
-                  />
-                  Meta Description
-                </label>
-                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                  <Checkbox
-                    checked={bulkSeoApply.keywords}
-                    onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, keywords: !!v })}
-                  />
-                  Keywords
-                </label>
-              </div>
-            </div>
-
-            {bulkSeoApply.title && (
-              <div className="space-y-1.5">
-                <Label className="text-xs">
-                  SEO Title
-                  <span className="text-muted-foreground ml-1">({bulkSeoForm.seo_title.length}/60)</span>
-                </Label>
-                <Input
-                  value={bulkSeoForm.seo_title}
-                  onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_title: e.target.value })}
-                  placeholder="e.g., Best {service} in {location}"
-                  maxLength={60}
-                />
-              </div>
-            )}
-
-            {bulkSeoApply.description && (
-              <div className="space-y-1.5">
-                <Label className="text-xs">
-                  Meta Description
-                  <span className="text-muted-foreground ml-1">({bulkSeoForm.seo_description.length}/160)</span>
-                </Label>
-                <Textarea
-                  value={bulkSeoForm.seo_description}
-                  onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_description: e.target.value })}
-                  placeholder="e.g., Discover professional {service} services in {location}."
-                  maxLength={160}
-                  rows={3}
-                />
-              </div>
-            )}
-
-            {bulkSeoApply.keywords && (
-              <div className="space-y-1.5">
-                <Label className="text-xs">Keywords <span className="text-muted-foreground">(comma-separated)</span></Label>
-                <Input
-                  value={bulkSeoForm.seo_keywords}
-                  onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_keywords: e.target.value })}
-                  placeholder="e.g., plumbing, new york, emergency service"
-                />
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setBulkSeoOpen(false)}>Cancel</Button>
+            {/* Mode toggle */}
+            <div className="flex gap-2">
               <Button
-                onClick={() =>
-                  bulkSeoSaveMutation.mutate({
-                    ids: [...selectedIds],
-                    ...bulkSeoForm,
-                    apply: bulkSeoApply,
-                  })
-                }
-                disabled={bulkSeoSaveMutation.isPending || (!bulkSeoApply.title && !bulkSeoApply.description && !bulkSeoApply.keywords)}
+                size="sm"
+                variant={bulkSeoMode === "inline" ? "default" : "outline"}
+                onClick={() => setBulkSeoMode("inline")}
+                className="text-xs"
               >
-                {bulkSeoSaveMutation.isPending ? (
-                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Updating...</>
-                ) : (
-                  <><Save className="mr-1.5 h-3.5 w-3.5" /> Update {selectedIds.size} Pages</>
-                )}
+                <Pencil className="h-3 w-3 mr-1.5" /> Per-Page Editor
+              </Button>
+              <Button
+                size="sm"
+                variant={bulkSeoMode === "blanket" ? "default" : "outline"}
+                onClick={() => setBulkSeoMode("blanket")}
+                className="text-xs"
+              >
+                <Tag className="h-3 w-3 mr-1.5" /> Apply Same to All
               </Button>
             </div>
+
+            {bulkSeoMode === "inline" ? (
+              /* Inline spreadsheet editor */
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Edit SEO fields for each page individually. Changes are saved all at once.
+                </p>
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto max-h-[50vh] overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead className="sticky top-0 z-10">
+                        <tr className="bg-muted border-b">
+                          <th className="text-left p-2 font-medium text-muted-foreground min-w-[180px]">Page Title</th>
+                          <th className="text-left p-2 font-medium text-muted-foreground min-w-[200px]">
+                            SEO Title <span className="text-muted-foreground/50">(60)</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-muted-foreground min-w-[260px]">
+                            Meta Description <span className="text-muted-foreground/50">(160)</span>
+                          </th>
+                          <th className="text-left p-2 font-medium text-muted-foreground min-w-[160px]">Keywords</th>
+                          <th className="text-center p-2 font-medium text-muted-foreground w-16">Score</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...selectedIds].map((id) => {
+                          const page = pages.find((p) => p.id === id);
+                          if (!page) return null;
+                          const edit = inlineSeoEdits[id] || { seo_title: "", seo_description: "", seo_keywords: "" };
+                          const liveKw = edit.seo_keywords.split(",").map((k) => k.trim()).filter(Boolean);
+                          const liveScore = calculateSeoScore(edit.seo_title, edit.seo_description, liveKw, page.title);
+                          return (
+                            <tr key={id} className="border-b last:border-0 hover:bg-muted/30">
+                              <td className="p-2">
+                                <span className="font-medium truncate block max-w-[180px]" title={page.title}>{page.title}</span>
+                              </td>
+                              <td className="p-1.5">
+                                <Input
+                                  value={edit.seo_title}
+                                  onChange={(e) => setInlineSeoEdits((prev) => ({
+                                    ...prev,
+                                    [id]: { ...edit, seo_title: e.target.value },
+                                  }))}
+                                  placeholder="SEO title..."
+                                  maxLength={60}
+                                  className="h-7 text-xs"
+                                />
+                              </td>
+                              <td className="p-1.5">
+                                <Input
+                                  value={edit.seo_description}
+                                  onChange={(e) => setInlineSeoEdits((prev) => ({
+                                    ...prev,
+                                    [id]: { ...edit, seo_description: e.target.value },
+                                  }))}
+                                  placeholder="Meta description..."
+                                  maxLength={160}
+                                  className="h-7 text-xs"
+                                />
+                              </td>
+                              <td className="p-1.5">
+                                <Input
+                                  value={edit.seo_keywords}
+                                  onChange={(e) => setInlineSeoEdits((prev) => ({
+                                    ...prev,
+                                    [id]: { ...edit, seo_keywords: e.target.value },
+                                  }))}
+                                  placeholder="keyword1, keyword2..."
+                                  className="h-7 text-xs"
+                                />
+                              </td>
+                              <td className="p-2 text-center">
+                                <span className={`text-xs font-bold tabular-nums ${liveScore.color}`}>
+                                  {liveScore.score}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setBulkSeoOpen(false)}>Cancel</Button>
+                  <Button
+                    onClick={() => inlineSeoSaveMutation.mutate(inlineSeoEdits)}
+                    disabled={inlineSeoSaveMutation.isPending}
+                  >
+                    {inlineSeoSaveMutation.isPending ? (
+                      <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Saving...</>
+                    ) : (
+                      <><Save className="mr-1.5 h-3.5 w-3.5" /> Save All Changes</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Blanket apply mode (existing behavior) */
+              <div className="space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Set the same SEO metadata for all selected pages. Use variables like <code className="font-mono bg-muted px-1 py-0.5 rounded text-primary">{"{title}"}</code> as pattern references.
+                </p>
+
+                <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Fields to update</p>
+                  <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox
+                        checked={bulkSeoApply.title}
+                        onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, title: !!v })}
+                      />
+                      SEO Title
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox
+                        checked={bulkSeoApply.description}
+                        onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, description: !!v })}
+                      />
+                      Meta Description
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox
+                        checked={bulkSeoApply.keywords}
+                        onCheckedChange={(v) => setBulkSeoApply({ ...bulkSeoApply, keywords: !!v })}
+                      />
+                      Keywords
+                    </label>
+                  </div>
+                </div>
+
+                {bulkSeoApply.title && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">
+                      SEO Title
+                      <span className="text-muted-foreground ml-1">({bulkSeoForm.seo_title.length}/60)</span>
+                    </Label>
+                    <Input
+                      value={bulkSeoForm.seo_title}
+                      onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_title: e.target.value })}
+                      placeholder="e.g., Best {service} in {location}"
+                      maxLength={60}
+                    />
+                  </div>
+                )}
+
+                {bulkSeoApply.description && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">
+                      Meta Description
+                      <span className="text-muted-foreground ml-1">({bulkSeoForm.seo_description.length}/160)</span>
+                    </Label>
+                    <Textarea
+                      value={bulkSeoForm.seo_description}
+                      onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_description: e.target.value })}
+                      placeholder="e.g., Discover professional {service} services in {location}."
+                      maxLength={160}
+                      rows={3}
+                    />
+                  </div>
+                )}
+
+                {bulkSeoApply.keywords && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Keywords <span className="text-muted-foreground">(comma-separated)</span></Label>
+                    <Input
+                      value={bulkSeoForm.seo_keywords}
+                      onChange={(e) => setBulkSeoForm({ ...bulkSeoForm, seo_keywords: e.target.value })}
+                      placeholder="e.g., plumbing, new york, emergency service"
+                    />
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setBulkSeoOpen(false)}>Cancel</Button>
+                  <Button
+                    onClick={() =>
+                      bulkSeoSaveMutation.mutate({
+                        ids: [...selectedIds],
+                        ...bulkSeoForm,
+                        apply: bulkSeoApply,
+                      })
+                    }
+                    disabled={bulkSeoSaveMutation.isPending || (!bulkSeoApply.title && !bulkSeoApply.description && !bulkSeoApply.keywords)}
+                  >
+                    {bulkSeoSaveMutation.isPending ? (
+                      <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Updating...</>
+                    ) : (
+                      <><Save className="mr-1.5 h-3.5 w-3.5" /> Update {selectedIds.size} Pages</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
