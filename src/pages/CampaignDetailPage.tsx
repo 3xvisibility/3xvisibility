@@ -491,13 +491,63 @@ export default function CampaignDetailPage() {
             </Card>
           ) : (
             <>
-              <div className="flex justify-end gap-2 mb-2">
-                <Button size="sm" variant="outline" onClick={() => exportPagesCsv(pages, `${campaign?.name || "pages"}-export.csv`)}>
-                  <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => exportPagesJson(pages, `${campaign?.name || "pages"}-export.json`)}>
-                  <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
-                </Button>
+              <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  {selectedPageIds.size > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/20">
+                      <Check className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-medium">{selectedPageIds.size} selected</span>
+                      <Separator orientation="vertical" className="h-4" />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-[10px] px-2 text-primary"
+                        onClick={() => bulkStatusMutation.mutate({ ids: [...selectedPageIds], status: "pending" })}
+                        disabled={bulkStatusMutation.isPending}
+                      >
+                        <Clock className="h-2.5 w-2.5 mr-1" /> Set Pending
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-[10px] px-2 text-primary"
+                        onClick={() => bulkStatusMutation.mutate({ ids: [...selectedPageIds], status: "published" })}
+                        disabled={bulkStatusMutation.isPending}
+                      >
+                        <Check className="h-2.5 w-2.5 mr-1" /> Set Published
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-[10px] px-2 text-destructive"
+                        onClick={() => {
+                          if (window.confirm(`Delete ${selectedPageIds.size} selected pages? This cannot be undone.`)) {
+                            bulkDeleteMutation.mutate([...selectedPageIds]);
+                          }
+                        }}
+                        disabled={bulkDeleteMutation.isPending}
+                      >
+                        <XCircle className="h-2.5 w-2.5 mr-1" /> Delete
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-[10px] px-2"
+                        onClick={() => setSelectedPageIds(new Set())}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => exportPagesCsv(pages, `${campaign?.name || "pages"}-export.csv`)}>
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => exportPagesJson(pages, `${campaign?.name || "pages"}-export.json`)}>
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
+                  </Button>
+                </div>
               </div>
               <Card className="border-0 shadow-surface">
               <CardContent className="p-0">
@@ -505,6 +555,18 @@ export default function CampaignDetailPage() {
                   <table className="w-full text-sm">
                     <thead className="sticky top-0 bg-card z-10">
                       <tr className="border-b text-xs text-muted-foreground">
+                        <th className="p-3 w-8">
+                          <Checkbox
+                            checked={selectedPageIds.size === pages.length && pages.length > 0}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedPageIds(new Set(pages.map(p => p.id)));
+                              } else {
+                                setSelectedPageIds(new Set());
+                              }
+                            }}
+                          />
+                        </th>
                         <th className="text-left p-3 font-medium">Title</th>
                         <th className="text-left p-3 font-medium">Slug</th>
                         <th className="text-left p-3 font-medium">Status</th>
@@ -516,8 +578,19 @@ export default function CampaignDetailPage() {
                     <tbody>
                       {pages.map((page) => {
                         const ps = statusBadge[page.status] || statusBadge.pending;
+                        const isSelected = selectedPageIds.has(page.id);
                         return (
-                          <tr key={page.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                          <tr key={page.id} className={`border-b border-border/50 transition-colors ${isSelected ? "bg-primary/5" : "hover:bg-muted/30"}`}>
+                            <td className="p-3 w-8">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                  const next = new Set(selectedPageIds);
+                                  if (checked) next.add(page.id); else next.delete(page.id);
+                                  setSelectedPageIds(next);
+                                }}
+                              />
+                            </td>
                             <td className="p-3">
                               <div>
                                 <p className="font-medium text-xs truncate max-w-[240px]">{page.title}</p>
