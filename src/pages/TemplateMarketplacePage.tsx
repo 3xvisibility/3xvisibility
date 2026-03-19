@@ -487,14 +487,40 @@ export default function TemplateMarketplacePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-display flex items-center gap-2">
-          <Store className="h-6 w-6 text-primary" />
-          Template Marketplace
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Browse and import community templates to jumpstart your campaigns.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-display flex items-center gap-2">
+            <Store className="h-6 w-6 text-primary" />
+            Template Marketplace
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Browse, share, and rate community templates.
+          </p>
+        </div>
+        <Button onClick={() => setShareOpen(true)} variant="outline" className="gap-2">
+          <Share2 className="h-4 w-4" /> Share Template
+        </Button>
+      </div>
+
+      {/* Tab switcher */}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={activeTab === "browse" ? "default" : "outline"}
+          onClick={() => setActiveTab("browse")}
+        >
+          <Store className="h-3.5 w-3.5 mr-1.5" /> All Templates
+        </Button>
+        <Button
+          size="sm"
+          variant={activeTab === "community" ? "default" : "outline"}
+          onClick={() => setActiveTab("community")}
+        >
+          <Users className="h-3.5 w-3.5 mr-1.5" /> Community Shared
+          {communityTemplates.length > 0 && (
+            <Badge variant="secondary" className="ml-1.5 text-[10px]">{communityTemplates.length}</Badge>
+          )}
+        </Button>
       </div>
 
       {/* Search and filters */}
