@@ -4,28 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Store,
-  Search,
-  Download,
-  Upload,
-  Eye,
-  Code,
-  Star,
-  Users,
-  FileText,
-  Tag,
-  Globe,
-  ShoppingBag,
-  MapPin,
-  Megaphone,
-  Briefcase,
-  GraduationCap,
-  Heart,
-  Loader2,
+  Store, Search, Download, Upload, Eye, Code, Star, Users, FileText,
+  Tag, Globe, ShoppingBag, MapPin, Megaphone, Briefcase, GraduationCap,
+  Heart, Loader2, Share2, MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -43,9 +31,12 @@ interface MarketplaceTemplate {
   author: string;
   downloads: number;
   rating: number;
+  ratingCount?: number;
   seo_title_pattern?: string;
   seo_description_pattern?: string;
   schema_type?: string;
+  isShared?: boolean; // from shared_templates table
+  shared_id?: string;
 }
 
 const CATEGORIES = [
@@ -311,14 +302,93 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+  const [ratingValue, setRatingValue] = useState(5);
+  const [reviewText, setReviewText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
+  // Fetch user's templates for sharing
+  const { data: userTemplates = [] } = useQuery({
+    queryKey: ["user-templates-share", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("id, name, content, variables")
+        .eq("workspace_id", wsId!);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch community shared templates
+  const { data: sharedTemplates = [], isLoading: loadingShared } = useQuery({
+    queryKey: ["shared-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shared_templates")
+        .select("*")
+        .eq("is_approved", true)
+        .order("downloads", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch ratings for shared templates
+  const { data: allRatings = [] } = useQuery({
+    queryKey: ["template-ratings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("template_ratings")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Convert shared templates to MarketplaceTemplate format
+  const communityTemplates: MarketplaceTemplate[] = useMemo(() => {
+    return sharedTemplates.map((st: any) => {
+      const ratings = allRatings.filter((r: any) => r.shared_template_id === st.id);
+      const avgRating = ratings.length > 0
+        ? Math.round(ratings.reduce((s: number, r: any) => s + r.rating, 0) / ratings.length * 10) / 10
+        : 0;
+      return {
+        id: st.id,
+        shared_id: st.id,
+        name: st.description ? st.description.slice(0, 40) : `Template by ${st.author_name || "Anonymous"}`,
+        description: st.description,
+        content: st.content,
+        variables: st.variables || [],
+        category: st.category,
+        tags: st.tags || [],
+        author: st.author_name || "Anonymous",
+        downloads: st.downloads || 0,
+        rating: avgRating,
+        ratingCount: ratings.length,
+        seo_title_pattern: st.seo_title_pattern,
+        seo_description_pattern: st.seo_description_pattern,
+        schema_type: st.schema_type,
+        isShared: true,
+      };
+    });
+  }, [sharedTemplates, allRatings]);
+
+  // Merge built-in + community for "browse" tab
+  const allTemplates = useMemo(() => {
+    return [...COMMUNITY_TEMPLATES, ...communityTemplates];
+  }, [communityTemplates]);
+
   const filteredTemplates = useMemo(() => {
-    return COMMUNITY_TEMPLATES.filter((tpl) => {
+    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    return source.filter((tpl) => {
       const matchesCategory = selectedCategory === "all" || tpl.category === selectedCategory;
       const matchesSearch =
         !searchQuery ||
@@ -327,7 +397,7 @@ export default function TemplateMarketplacePage() {
         tpl.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
 
   const importMutation = useMutation({
     mutationFn: async (tpl: MarketplaceTemplate) => {
@@ -357,6 +427,59 @@ export default function TemplateMarketplacePage() {
     },
   });
 
+  // Share template mutation
+  const shareMutation = useMutation({
+    mutationFn: async (form: typeof shareForm) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const template = userTemplates.find((t: any) => t.id === form.templateId);
+      if (!template) throw new Error("Template not found");
+      const { error } = await supabase.from("shared_templates").insert({
+        template_id: form.templateId,
+        user_id: user.id,
+        workspace_id: wsId,
+        author_name: form.authorName || "Anonymous",
+        description: form.description,
+        category: form.category,
+        tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
+        content: (template as any).content,
+        variables: (template as any).variables || [],
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shared-templates"] });
+      toast({ title: "Template shared!", description: "Your template is now available in the community marketplace." });
+      setShareOpen(false);
+      setShareForm({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Share failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Rate template mutation
+  const rateMutation = useMutation({
+    mutationFn: async ({ sharedId, rating, review }: { sharedId: string; rating: number; review: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase.from("template_ratings").upsert({
+        shared_template_id: sharedId,
+        user_id: user.id,
+        rating,
+        review: review || null,
+      } as any, { onConflict: "shared_template_id,user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["template-ratings"] });
+      toast({ title: "Rating submitted!" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Rating failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const categoryIcon = (cat: string) => {
     const found = CATEGORIES.find((c) => c.id === cat);
     return found?.label || cat;
@@ -364,14 +487,40 @@ export default function TemplateMarketplacePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-display flex items-center gap-2">
-          <Store className="h-6 w-6 text-primary" />
-          Template Marketplace
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Browse and import community templates to jumpstart your campaigns.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-display flex items-center gap-2">
+            <Store className="h-6 w-6 text-primary" />
+            Template Marketplace
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Browse, share, and rate community templates.
+          </p>
+        </div>
+        <Button onClick={() => setShareOpen(true)} variant="outline" className="gap-2">
+          <Share2 className="h-4 w-4" /> Share Template
+        </Button>
+      </div>
+
+      {/* Tab switcher */}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={activeTab === "browse" ? "default" : "outline"}
+          onClick={() => setActiveTab("browse")}
+        >
+          <Store className="h-3.5 w-3.5 mr-1.5" /> All Templates
+        </Button>
+        <Button
+          size="sm"
+          variant={activeTab === "community" ? "default" : "outline"}
+          onClick={() => setActiveTab("community")}
+        >
+          <Users className="h-3.5 w-3.5 mr-1.5" /> Community Shared
+          {communityTemplates.length > 0 && (
+            <Badge variant="secondary" className="ml-1.5 text-[10px]">{communityTemplates.length}</Badge>
+          )}
+        </Button>
       </div>
 
       {/* Search and filters */}
@@ -545,6 +694,55 @@ export default function TemplateMarketplacePage() {
                   </TabsContent>
                 </Tabs>
 
+                {/* Rating section for shared templates */}
+                {previewTemplate.isShared && previewTemplate.shared_id && (
+                  <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+                    <h4 className="text-xs font-semibold flex items-center gap-1.5">
+                      <MessageSquare className="h-3.5 w-3.5" /> Rate this template
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setRatingValue(s)}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              className={`h-5 w-5 transition-colors ${
+                                s <= ratingValue ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <Input
+                        placeholder="Optional review..."
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        className="h-8 text-xs flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={rateMutation.isPending}
+                        onClick={() => rateMutation.mutate({
+                          sharedId: previewTemplate.shared_id!,
+                          rating: ratingValue,
+                          review: reviewText,
+                        })}
+                      >
+                        {rateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Submit"}
+                      </Button>
+                    </div>
+                    {previewTemplate.ratingCount !== undefined && previewTemplate.ratingCount > 0 && (
+                      <p className="text-[10px] text-muted-foreground">
+                        {previewTemplate.ratingCount} rating{previewTemplate.ratingCount !== 1 ? "s" : ""} · avg {previewTemplate.rating}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
                   <Button
@@ -561,6 +759,81 @@ export default function TemplateMarketplacePage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Dialog */}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-primary" /> Share Your Template
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Template to Share</Label>
+              <Select value={shareForm.templateId} onValueChange={(v) => setShareForm(f => ({ ...f, templateId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
+                <SelectContent>
+                  {userTemplates.map((t: any) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Your Name</Label>
+              <Input
+                placeholder="Your name or alias"
+                value={shareForm.authorName}
+                onChange={(e) => setShareForm(f => ({ ...f, authorName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Describe what this template is for..."
+                value={shareForm.description}
+                onChange={(e) => setShareForm(f => ({ ...f, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={shareForm.category} onValueChange={(v) => setShareForm(f => ({ ...f, category: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.filter(c => c.id !== "all").map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tags (comma separated)</Label>
+                <Input
+                  placeholder="seo, blog, local"
+                  value={shareForm.tags}
+                  onChange={(e) => setShareForm(f => ({ ...f, tags: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShareOpen(false)}>Cancel</Button>
+              <Button
+                disabled={!shareForm.templateId || !shareForm.description || shareMutation.isPending}
+                onClick={() => shareMutation.mutate(shareForm)}
+              >
+                {shareMutation.isPending ? (
+                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Sharing...</>
+                ) : (
+                  <><Share2 className="mr-1.5 h-3.5 w-3.5" /> Share to Marketplace</>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
