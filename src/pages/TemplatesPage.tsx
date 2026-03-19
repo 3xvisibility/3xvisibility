@@ -273,6 +273,30 @@ export default function TemplatesPage() {
     },
   });
 
+  const aiContentMutation = useMutation({
+    mutationFn: async ({ keywords, contentType }: { keywords: string; contentType: string }) => {
+      const { data, error } = await supabase.functions.invoke("generate-seo-content", {
+        body: { keywords: keywords.split(",").map(k => k.trim()).filter(Boolean), contentType },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { content: string; variables: string[]; seoTitle: string; seoDescription: string; suggestedName: string };
+    },
+    onSuccess: (data) => {
+      setContent(data.content);
+      setBlocks(htmlToBlocks(data.content));
+      setName(data.suggestedName);
+      setSeoTitlePattern(data.seoTitle);
+      setSeoDescriptionPattern(data.seoDescription);
+      setAiContentOpen(false);
+      setOpen(true);
+      toast({ title: "AI Content generated!", description: "High-scoring SEO/SEA/GEO content is ready. Review and save." });
+    },
+    onError: (err: Error) => {
+      toast({ title: "AI content generation failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const duplicateMutation = useMutation({
     mutationFn: async (tpl: Template) => {
       const { data: { user } } = await supabase.auth.getUser();
