@@ -17,7 +17,7 @@ const tourSteps: TourStep[] = [
     target: '[data-tour="template-preview"]',
     title: "Visual Preview",
     description:
-      "This shows your page exactly as it looks on the web. Select any text you want to make dynamic — like a city name, price, or service — and it becomes a variable.",
+      "Select any text to make it dynamic — like a city name or price. Just highlight it and name the variable. Tip: use Ctrl+A to select all text in a section.",
     icon: <MousePointer className="h-5 w-5" />,
     position: "top",
   },
@@ -25,7 +25,7 @@ const tourSteps: TourStep[] = [
     target: '[data-tour="template-ai-edit"]',
     title: "AI Editor",
     description:
-      'Describe changes in plain text (e.g. "Add a FAQ section" or "Make the title bigger") and AI will update the template for you.',
+      'Describe changes in plain text (e.g. "Add a FAQ section") and AI updates the template. Press Enter to submit your prompt.',
     icon: <Wand2 className="h-5 w-5" />,
     position: "bottom",
   },
@@ -33,7 +33,7 @@ const tourSteps: TourStep[] = [
     target: '[data-tour="template-code-toggle"]',
     title: "Code View",
     description:
-      "Switch to raw HTML to make precise edits. Variables appear as {variable_name} placeholders that you can add or modify directly.",
+      "Switch to raw HTML for precise edits. Variables appear as {variable_name}. Use Ctrl+F in the code editor to find and replace placeholders quickly.",
     icon: <Code className="h-5 w-5" />,
     position: "bottom",
   },
@@ -41,7 +41,7 @@ const tourSteps: TourStep[] = [
     target: '[data-tour="template-var-badges"]',
     title: "Variable Badges",
     description:
-      "All your variables are listed here. Each one maps to a column in your data — when pages are generated, the variable text is swapped with real values.",
+      "All variables are listed here — each maps to a data column. Click any badge to rename or remove it. Use Ctrl+Z to undo accidental changes.",
     icon: <Tag className="h-5 w-5" />,
     position: "top",
   },
