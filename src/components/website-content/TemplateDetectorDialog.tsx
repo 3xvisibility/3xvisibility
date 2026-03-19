@@ -62,21 +62,144 @@ interface TemplateDetectorDialogProps {
   websiteType: string;
 }
 
+/** Popover for assigning a variable to selected text inside the preview */
+function VisualSelectionPopover({
+  position,
+  selectedText,
+  onAssign,
+  onClose,
+}: {
+  position: { x: number; y: number };
+  selectedText: string;
+  onAssign: (varName: string) => void;
+  onClose: () => void;
+}) {
+  const [varName, setVarName] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
+
+  return (
+    <div
+      className="fixed z-[100] bg-popover border border-border rounded-lg shadow-xl p-3 space-y-2 w-64"
+      style={{ left: position.x, top: position.y }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-foreground flex items-center gap-1">
+          <Tag className="h-3 w-3 text-primary" /> Create Variable
+        </p>
+        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onClose}>
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+      <p className="text-[10px] bg-muted rounded px-2 py-1 truncate font-mono">"{selectedText}"</p>
+      <p className="text-[10px] text-muted-foreground">
+        💡 Name this variable (e.g. "city", "price"). This text will change for each generated page.
+      </p>
+      <div className="flex gap-1.5">
+        <Input
+          ref={inputRef}
+          placeholder="e.g., city_name"
+          value={varName}
+          onChange={(e) => setVarName(e.target.value)}
+          className="h-7 text-xs font-mono flex-1"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && varName.trim()) {
+              onAssign(varName.trim().toLowerCase().replace(/\s+/g, "_"));
+            }
+            if (e.key === "Escape") onClose();
+          }}
+        />
+        <Button
+          size="sm"
+          className="h-7 text-xs px-2"
+          onClick={() => {
+            if (varName.trim()) {
+              onAssign(varName.trim().toLowerCase().replace(/\s+/g, "_"));
+            }
+          }}
+          disabled={!varName.trim()}
+        >
+          <Tag className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /** Visual preview pane – shows rendered HTML with highlighted variables, code toggle for advanced users */
 function TemplatePreviewPane({
   templateHtml,
   variables,
   onChange,
+  onAddVariable,
 }: {
   templateHtml: string;
   variables: VariableEntry[];
   onChange: (html: string) => void;
+  onAddVariable?: (name: string, original: string) => void;
 }) {
   const [showCode, setShowCode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [selectionPopover, setSelectionPopover] = useState<{
+    position: { x: number; y: number };
+    text: string;
+  } | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
+
+  // Listen for messages from the iframe (text selection)
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "template-text-selected") {
+        const iframe = iframeRef.current;
+        if (!iframe) return;
+        const iframeRect = iframe.getBoundingClientRect();
+        setSelectionPopover({
+          text: e.data.text,
+          position: {
+            x: Math.min(iframeRect.left + e.data.x, window.innerWidth - 280),
+            y: Math.min(iframeRect.top + e.data.y, window.innerHeight - 150),
+          },
+        });
+      }
+      if (e.data?.type === "template-selection-cleared") {
+        // Don't clear if popover is open
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  // Handle variable assignment from visual selection
+  const handleVisualAssign = useCallback(
+    (varName: string) => {
+      if (!selectionPopover) return;
+      const selectedText = selectionPopover.text;
+
+      // Replace in template HTML
+      const escapedValue = selectedText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedValue, "g");
+      const newHtml = templateHtml.replace(regex, `{${varName}}`);
+      onChange(newHtml);
+
+      // Notify parent to add variable entry
+      if (onAddVariable) {
+        onAddVariable(varName, selectedText);
+      }
+
+      setSelectionPopover(null);
+      toast({
+        title: "Variable created",
+        description: `"${selectedText.slice(0, 30)}${selectedText.length > 30 ? "…" : ""}" → {${varName}}`,
+      });
+    },
+    [selectionPopover, templateHtml, onChange, onAddVariable, toast]
+  );
 
   // AI-powered template editing
   const handleAiEdit = async () => {
@@ -117,7 +240,6 @@ RULES:
 
       if (data?.results?.[0]?.caption) {
         let newHtml = data.results[0].caption;
-        // Strip markdown code blocks if present
         newHtml = newHtml.replace(/^```html?\n?/i, "").replace(/\n?```$/i, "").trim();
         onChange(newHtml);
         setAiPrompt("");
@@ -132,26 +254,89 @@ RULES:
     }
   };
 
-  // Highlight {variable} placeholders in the visual preview
+  // Highlight {variable} placeholders in the visual preview with interactive badges
   const highlightedHtml = (() => {
     let html = templateHtml;
+    // Highlight known variables
     for (const v of variables) {
       const placeholder = `{${v.name}}`;
       html = html.split(placeholder).join(
-        `<span style="background:#818cf8;color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;font-size:0.85em;white-space:nowrap;">${placeholder}</span>`
+        `<span class="pgvar-badge" title="Variable: {${v.name}} — will be replaced with data for each generated page"><span class="pgvar-label">${placeholder}</span></span>`
       );
     }
+    // Highlight any remaining {variable} patterns
     html = html.replace(
       /\{([a-z_][a-z0-9_]*)\}/gi,
       (match) => {
-        if (match.includes('style="background:#818cf8')) return match;
-        return `<span style="background:#818cf8;color:#fff;padding:1px 6px;border-radius:4px;font-weight:600;font-size:0.85em;white-space:nowrap;">${match}</span>`;
+        if (match.includes('class="pgvar-badge"') || match.includes('pgvar-label')) return match;
+        return `<span class="pgvar-badge" title="Variable: ${match} — will be replaced with data"><span class="pgvar-label">${match}</span></span>`;
       }
     );
     return html;
   })();
 
-  const previewDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui,-apple-system,sans-serif;padding:16px;margin:0;font-size:14px;color:#1a1a2e;line-height:1.6}img{max-width:100%;height:auto}</style></head><body>${highlightedHtml}</body></html>`;
+  const previewDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; margin: 0; font-size: 14px; color: #1a1a2e; line-height: 1.6; }
+  img { max-width: 100%; height: auto; }
+  .pgvar-badge {
+    display: inline;
+    background: linear-gradient(135deg, hsl(263 70% 95%), hsl(263 70% 90%));
+    color: hsl(263 70% 40%);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px dashed hsl(263 70% 60%);
+    transition: all 0.15s ease;
+  }
+  .pgvar-badge:hover {
+    background: linear-gradient(135deg, hsl(263 70% 90%), hsl(263 70% 85%));
+    outline: 2px solid hsl(263 70% 55%);
+    outline-offset: 2px;
+    transform: scale(1.02);
+  }
+  .pgvar-label {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.85em;
+    letter-spacing: 0.02em;
+  }
+  ::selection { background: hsl(221 83% 53% / 0.3); }
+  .select-hint {
+    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+    background: hsl(221 83% 53%); color: #fff; font-size: 11px; padding: 6px 14px;
+    border-radius: 20px; z-index: 100; pointer-events: none; opacity: 0.9;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); white-space: nowrap;
+  }
+</style>
+</head><body>
+<div class="select-hint">👆 Select any text to make it a variable</div>
+${highlightedHtml}
+<script>
+  document.addEventListener('mouseup', function(e) {
+    var sel = window.getSelection();
+    var text = sel ? sel.toString().trim() : '';
+    if (text && text.length > 0 && text.length < 300) {
+      var range = sel.getRangeAt(0);
+      var rect = range.getBoundingClientRect();
+      window.parent.postMessage({
+        type: 'template-text-selected',
+        text: text,
+        x: rect.left + rect.width / 2,
+        y: rect.bottom + 8,
+      }, '*');
+    }
+  });
+  document.addEventListener('mousedown', function() {
+    window.parent.postMessage({ type: 'template-selection-cleared' }, '*');
+  });
+  // Hide hint after 5 seconds
+  setTimeout(function() {
+    var hint = document.querySelector('.select-hint');
+    if (hint) hint.style.display = 'none';
+  }, 5000);
+</script>
+</body></html>`;
 
   return (
     <div className="flex flex-col h-full gap-2">
@@ -162,7 +347,7 @@ RULES:
           value={aiPrompt}
           onChange={(e) => setAiPrompt(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAiEdit(); } }}
-          placeholder="Describe changes… e.g. 'Add a FAQ section' or 'Change the title to bold'"
+          placeholder="Describe changes… e.g. 'Add a FAQ section'"
           className="h-8 text-xs border-0 bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/60"
           disabled={aiLoading}
         />
@@ -181,7 +366,13 @@ RULES:
         <p className="text-xs text-muted-foreground">
           {showCode
             ? "Edit raw HTML — for advanced users"
-            : "Visual preview — variables are highlighted in purple"}
+            : (
+              <>
+                <MousePointer className="inline h-3 w-3 mr-0.5 text-primary" />
+                <span className="text-primary font-medium">Select text</span> to add variables — shown as{" "}
+                <span className="font-mono text-primary bg-primary/10 px-1 rounded text-[10px]">{"{variable}"}</span> badges
+              </>
+            )}
         </p>
         <Button
           size="sm"
@@ -203,15 +394,48 @@ RULES:
           />
         </ScrollArea>
       ) : (
-        <div className="flex-1 border rounded-lg overflow-hidden bg-white">
+        <div className="flex-1 border rounded-lg overflow-hidden bg-white relative">
           <iframe
             ref={iframeRef}
             srcDoc={previewDoc}
             className="w-full h-full min-h-[350px] border-0"
-            sandbox="allow-same-origin"
-            title="Template preview"
+            sandbox="allow-scripts allow-same-origin"
+            title="Template preview — select text to add variables"
           />
         </div>
+      )}
+
+      {/* Variable badges summary under preview */}
+      {variables.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 items-center">
+          <span className="text-[10px] text-muted-foreground font-medium">Variables:</span>
+          {variables.map((v) => (
+            <TooltipProvider key={v.name}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="font-mono text-[10px] border-primary/30 text-primary cursor-help">
+                    {`{${v.name}}`}
+                    <ArrowRight className="h-2 w-2 mx-0.5" />
+                    <span className="text-muted-foreground font-sans">{v.original.slice(0, 15)}{v.original.length > 15 ? "…" : ""}</span>
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Replaces "{v.original}" → will change for each generated page</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ))}
+        </div>
+      )}
+
+      {/* Selection Popover */}
+      {selectionPopover && (
+        <VisualSelectionPopover
+          position={selectionPopover.position}
+          selectedText={selectionPopover.text}
+          onAssign={handleVisualAssign}
+          onClose={() => setSelectionPopover(null)}
+        />
       )}
     </div>
   );
