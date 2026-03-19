@@ -121,6 +121,21 @@ export default function CampaignDetailPage() {
     },
   });
 
+  // Fetch campaign logs
+  const { data: campaignLogs = [] } = useQuery({
+    queryKey: ["campaign-logs", id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaign_logs")
+        .select("*")
+        .eq("campaign_id", id!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const latestJob = jobs[0];
 
   // Overview stats
