@@ -1052,6 +1052,28 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Process variable transforms {variable:transform} BEFORE standard replacement
+          // Supports: uppercase, lowercase, capitalize, slug, extract(n), truncate(n)
+          pageContent = pageContent.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName, transform) => {
+            const rawVal = allVars[varName] || allVars[varName.toLowerCase()] || row[varName] || "";
+            const t = transform.toLowerCase();
+            if (t === "uppercase") return rawVal.toUpperCase();
+            if (t === "lowercase") return rawVal.toLowerCase();
+            if (t === "capitalize") return rawVal.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+            if (t === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+            const extractMatch = t.match(/^extract\((\d+)\)$/);
+            if (extractMatch) {
+              const n = parseInt(extractMatch[1]);
+              return rawVal.split(/\s+/).slice(0, n).join(" ");
+            }
+            const truncMatch = t.match(/^truncate\((\d+)\)$/);
+            if (truncMatch) {
+              const n = parseInt(truncMatch[1]);
+              return rawVal.length > n ? rawVal.slice(0, n) + "…" : rawVal;
+            }
+            return rawVal;
+          });
+
           // Standard variable replacement for any remaining placeholders
           for (const [key, value] of Object.entries(row)) {
             const regex = new RegExp(`\\{${key}\\}`, "gi");
