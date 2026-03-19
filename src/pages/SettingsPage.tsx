@@ -10,10 +10,11 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Moon, Sun, Monitor } from "lucide-react";
+import { Sparkles, Moon, Sun, Monitor, Webhook, Plus, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const AI_PLAN_LIMITS: Record<string, number> = {
   free: 0,
