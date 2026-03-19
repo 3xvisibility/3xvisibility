@@ -408,7 +408,7 @@ ${highlightedHtml}
 
       {/* Variable badges summary under preview */}
       {variables.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 items-center">
+        <div data-tour="template-var-badges" className="flex flex-wrap gap-1.5 items-center">
           <span className="text-[10px] text-muted-foreground font-medium">Variables:</span>
           {variables.map((v) => (
             <TooltipProvider key={v.name}>
