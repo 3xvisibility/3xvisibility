@@ -203,6 +203,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.aiScanner": "AI Scanner",
     "sidebar.discovery": "Discovery",
     "sidebar.analytics": "Analytics",
+    "sidebar.abTesting": "A/B Testing",
     "sidebar.indexing": "Indexing",
     "sidebar.storeGenerator": "Store Generator",
     "sidebar.websites": "Websites",
