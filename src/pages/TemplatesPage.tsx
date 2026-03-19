@@ -863,9 +863,23 @@ export default function TemplatesPage() {
                   const geoScore = calculateContentGeoScore(name, content, slug);
                   const avgScore = Math.round((seoScore.score + seaScore.score + geoScore.score) / 3);
                   const avgColor = avgScore >= 85 ? "text-emerald-600" : avgScore >= 60 ? "text-primary" : avgScore >= 35 ? "text-amber-600" : "text-destructive";
+                  const targetChecks = 7; // 7 out of 8 checks = 87.5% ≈ 80+
+                  const buildTargetInfo = (scoreResult: typeof seoScore, label: string) => {
+                    const failed = scoreResult.checks.filter(c => !c.passed);
+                    const passed = scoreResult.checks.filter(c => c.passed);
+                    const needMore = Math.max(0, targetChecks - passed.length);
+                    const isTarget = scoreResult.score >= 80;
+                    return { failed, passed, needMore, isTarget, label };
+                  };
+                  const targets = [
+                    { emoji: "🔍", ...buildTargetInfo(seoScore, "SEO"), score: seoScore },
+                    { emoji: "💰", ...buildTargetInfo(seaScore, "SEA"), score: seaScore },
+                    { emoji: "📍", ...buildTargetInfo(geoScore, "GEO"), score: geoScore },
+                  ];
+                  const allAbove80 = targets.every(t => t.isTarget);
                   return (
-                    <div className="rounded-lg border border-border bg-muted/30 p-4">
-                      <div className="flex items-center justify-between mb-3">
+                    <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold flex items-center gap-2">
                           <Wand2 className="h-4 w-4 text-primary" />
                           Live Score Preview
@@ -875,22 +889,46 @@ export default function TemplatesPage() {
                         </span>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
-                        <div className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-background p-3">
-                          <span className="text-xs font-medium text-muted-foreground">🔍 SEO</span>
-                          <SeoScoreBadge score={seoScore.score} label={seoScore.label} color={seoScore.color} checks={seoScore.checks} size="md" scoreType="SEO" />
-                        </div>
-                        <div className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-background p-3">
-                          <span className="text-xs font-medium text-muted-foreground">💰 SEA</span>
-                          <SeoScoreBadge score={seaScore.score} label={seaScore.label} color={seaScore.color} checks={seaScore.checks} size="md" scoreType="SEA" />
-                        </div>
-                        <div className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-background p-3">
-                          <span className="text-xs font-medium text-muted-foreground">📍 GEO</span>
-                          <SeoScoreBadge score={geoScore.score} label={geoScore.label} color={geoScore.color} checks={geoScore.checks} size="md" scoreType="GEO" />
-                        </div>
+                        {targets.map((t) => (
+                          <div key={t.label} className={`flex flex-col items-center gap-1.5 rounded-md border bg-background p-3 ${t.isTarget ? "border-emerald-500/50" : "border-border"}`}>
+                            <span className="text-xs font-medium text-muted-foreground">{t.emoji} {t.label}</span>
+                            <SeoScoreBadge score={t.score.score} label={t.score.label} color={t.score.color} checks={t.score.checks} size="md" scoreType={t.label} />
+                            {t.isTarget ? (
+                              <span className="text-[10px] font-medium text-emerald-600">✓ Target reached</span>
+                            ) : (
+                              <span className="text-[10px] font-medium text-amber-600">Need {t.needMore} more check{t.needMore !== 1 ? "s" : ""}</span>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {avgScore < 80 && (
-                        <p className="text-xs text-muted-foreground mt-2 text-center">
-                          Click any score to see improvement suggestions. Aim for 80+ on all three.
+
+                      {/* Target indicator: show failing checks that matter most */}
+                      {!allAbove80 && (
+                        <div className="rounded-md border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-3 space-y-2">
+                          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                            🎯 Fix these to reach 80+ on all metrics
+                          </p>
+                          {targets.filter(t => !t.isTarget).map((t) => (
+                            <div key={t.label} className="space-y-1">
+                              <p className="text-[11px] font-semibold text-foreground">{t.emoji} {t.label} — need {t.needMore} of {t.failed.length} failing:</p>
+                              <div className="grid gap-1 pl-2">
+                                {t.failed.map((check, i) => (
+                                  <div key={i} className="flex items-start gap-1.5">
+                                    <span className="text-destructive text-[10px] mt-px shrink-0">✕</span>
+                                    <div>
+                                      <span className="text-[11px] font-medium text-foreground">{check.label}</span>
+                                      {check.tip && <span className="text-[10px] text-muted-foreground ml-1">— {check.tip}</span>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {allAbove80 && (
+                        <p className="text-xs text-emerald-600 font-medium text-center">
+                          ✅ All scores are above 80 — your content is well-optimized!
                         </p>
                       )}
                     </div>
