@@ -108,12 +108,12 @@ export default function CampaignsPage() {
   const [adGroupId, setAdGroupId] = useState("");
   const [seaDirectoryLevels, setSeaDirectoryLevels] = useState("");
   // GEO fields
-  const [geoCountry, setGeoCountry] = useState("");
-  const [geoRegion, setGeoRegion] = useState("");
-  const [geoCity, setGeoCity] = useState("");
-  const [geoPostcode, setGeoPostcode] = useState("");
-  const [geoLat, setGeoLat] = useState("");
-  const [geoLng, setGeoLng] = useState("");
+  const [geoCountry, setGeoCountry] = useState("{country}");
+  const [geoRegion, setGeoRegion] = useState("{region}");
+  const [geoCity, setGeoCity] = useState("{city}");
+  const [geoPostcode, setGeoPostcode] = useState("{zip_code}");
+  const [geoLat, setGeoLat] = useState("{latitude}");
+  const [geoLng, setGeoLng] = useState("{longitude}");
   const [geoLanguage, setGeoLanguage] = useState("en");
   const { toast } = useToast();
   const queryClient = useQueryClient();
