@@ -304,6 +304,7 @@ export default function CampaignsPage() {
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
         campaign_type: campaignType,
+        campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
         website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
         csv_data: effectiveData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
