@@ -227,6 +227,7 @@ export default function TemplateScannerPage() {
       setBlocks(data.blocks);
       setBodyHtml(data.bodyHtml);
       setHeadStyles(data.headStyles || "");
+      setImageUrls(data.imageUrls || []);
       const initialMappings = data.suggestions.map((s) => ({
         ...s,
         accepted: true,
