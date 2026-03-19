@@ -717,6 +717,48 @@ export default function CampaignDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Resume from Index Dialog */}
+      <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Resume Generation</DialogTitle>
+            <DialogDescription>
+              Start generating from a specific row index. Useful if a previous generation stopped partway.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="resume-index" className="text-sm font-medium">Start from row</Label>
+              <Input
+                id="resume-index"
+                type="number"
+                min={0}
+                max={campaign?.total_rows || 0}
+                value={resumeIndex}
+                onChange={(e) => setResumeIndex(parseInt(e.target.value) || 0)}
+                className="tabular-nums"
+              />
+              <p className="text-xs text-muted-foreground">
+                Last processed: row {campaign?.processed_rows || 0} of {campaign?.total_rows || 0}
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowResumeDialog(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                setShowResumeDialog(false);
+                executeMutation.mutate({ action: "resume" });
+              }}
+              className="bg-gradient-primary hover:brightness-110"
+            >
+              <SkipForward className="mr-2 h-4 w-4" />
+              Resume from row {resumeIndex}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
