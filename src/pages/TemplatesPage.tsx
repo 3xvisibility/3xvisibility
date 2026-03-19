@@ -572,20 +572,20 @@ export default function TemplatesPage() {
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <Tabs value={activeEditorTab} onValueChange={handleTabChange} className="w-full">
-                  <TabsList className="w-full grid grid-cols-5">
-                    <TabsTrigger value="visual" className="flex items-center gap-1.5">
+                  <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-5">
+                    <TabsTrigger value="visual" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <LayoutPanelTop className="h-3.5 w-3.5" /> Visual
                     </TabsTrigger>
-                    <TabsTrigger value="code" className="flex items-center gap-1.5">
+                    <TabsTrigger value="code" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Code className="h-3.5 w-3.5" /> Code
                     </TabsTrigger>
-                    <TabsTrigger value="seo" className="flex items-center gap-1.5">
+                    <TabsTrigger value="seo" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Globe className="h-3.5 w-3.5" /> SEO
                     </TabsTrigger>
-                    <TabsTrigger value="schema" className="flex items-center gap-1.5">
+                    <TabsTrigger value="schema" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Braces className="h-3.5 w-3.5" /> Schema
                     </TabsTrigger>
-                    <TabsTrigger value="preview" className="flex items-center gap-1.5">
+                    <TabsTrigger value="preview" className="flex items-center gap-1.5 text-xs sm:text-sm col-span-2 sm:col-span-1">
                       <Eye className="h-3.5 w-3.5" /> Preview
                     </TabsTrigger>
                   </TabsList>
