@@ -1316,11 +1316,30 @@ export default function CampaignsPage() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-1">
                         <Target className="h-4 w-4 text-primary" />
-                        <Label className="text-sm font-semibold">UTM Parameters</Label>
+                        <Label className="text-sm font-semibold">Google Ads & UTM Settings</Label>
                       </div>
                       <p className="text-xs text-muted-foreground -mt-2">
-                        Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{variable}"}</code> syntax to pull values from CSV columns.
+                        Map ad identifiers and UTM params. Use <code className="bg-muted px-1 py-0.5 rounded font-mono text-primary">{"{variable}"}</code> to pull from CSV columns.
                       </p>
+                      
+                      {/* Ad Group Mapping */}
+                      <div className="rounded-xl border border-border bg-muted/20 p-3 space-y-3">
+                        <h4 className="text-xs font-semibold flex items-center gap-1.5">
+                          <Target className="h-3.5 w-3.5 text-primary" /> Ad Identifiers
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Ad Campaign ID</Label>
+                            <Input value={adCampaignId} onChange={(e) => setAdCampaignId(e.target.value)} placeholder="{ad_campaign_id}" className="rounded-xl h-9 text-sm" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Ad Group ID</Label>
+                            <Input value={adGroupId} onChange={(e) => setAdGroupId(e.target.value)} placeholder="{ad_group_id}" className="rounded-xl h-9 text-sm" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* UTM Parameters */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label className="text-xs">utm_source</Label>
@@ -1342,6 +1361,22 @@ export default function CampaignsPage() {
                           <Label className="text-xs">utm_content</Label>
                           <Input value={utmContent} onChange={(e) => setUtmContent(e.target.value)} placeholder="variant_a" className="rounded-xl h-9 text-sm" />
                         </div>
+                      </div>
+
+                      {/* Directory Structure for SEA */}
+                      <div className="rounded-xl border border-border bg-muted/20 p-3 space-y-3">
+                        <h4 className="text-xs font-semibold flex items-center gap-1.5">
+                          <Layers className="h-3.5 w-3.5 text-primary" /> Landing Page Paths
+                        </h4>
+                        <p className="text-[11px] text-muted-foreground">
+                          Optional: organize landing pages into a directory hierarchy (e.g. <code className="bg-muted px-1 rounded">/ads/{"{campaign}"}/{"{keyword}"}/</code>)
+                        </p>
+                        <Input
+                          value={seaDirectoryLevels}
+                          onChange={(e) => setSeaDirectoryLevels(e.target.value)}
+                          placeholder="e.g. campaign_name, keyword"
+                          className="rounded-xl h-9 text-sm"
+                        />
                       </div>
                     </div>
                   )}
