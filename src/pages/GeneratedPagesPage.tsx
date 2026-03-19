@@ -300,6 +300,7 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const openSeoEditor = (page: GeneratedPage) => {
     setSeoEditPage(page);
     setSeoForm({
       seo_title: (page as any).seo_title || "",
