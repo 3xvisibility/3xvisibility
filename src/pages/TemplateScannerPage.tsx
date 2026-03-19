@@ -25,7 +25,12 @@ import {
   FileText,
   MousePointer,
   List,
+  HelpCircle,
+  Info,
+  Lightbulb,
+  CircleDot,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
