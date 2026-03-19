@@ -779,6 +779,25 @@ export default function GeneratedPagesPage() {
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-primary"
+                                  onClick={() => rewriteMutation.mutate(page.id)}
+                                  disabled={rewriteMutation.isPending}
+                                  title="AI Rewrite"
+                                >
+                                  <Sparkles className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Refresh content with AI</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {page.status === "failed" && (
                             <Button
                               size="sm"
