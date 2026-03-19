@@ -375,6 +375,7 @@ ${highlightedHtml}
             )}
         </p>
         <Button
+          data-tour="template-code-toggle"
           size="sm"
           variant="ghost"
           className="h-7 text-xs gap-1.5"
