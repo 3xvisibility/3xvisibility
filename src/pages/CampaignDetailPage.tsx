@@ -255,45 +255,47 @@ export default function CampaignDetailPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {campaign.status === "draft" && (
             <>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => executeMutation.mutate({ action: "test" })}
                 disabled={executeMutation.isPending}
                 className="rounded-xl"
               >
-                <Eye className="mr-2 h-4 w-4" />
-                Test (1 Page)
+                <Eye className="mr-1.5 h-4 w-4" />
+                Test
               </Button>
               <Button
+                size="sm"
                 onClick={() => executeMutation.mutate({})}
                 disabled={executeMutation.isPending}
                 className="rounded-xl bg-gradient-primary hover:brightness-110"
               >
-                <Play className="mr-2 h-4 w-4" />
-                {executeMutation.isPending ? "Running..." : "Run Campaign"}
+                <Play className="mr-1.5 h-4 w-4" />
+                {executeMutation.isPending ? "Running..." : "Run"}
               </Button>
             </>
           )}
           {campaign.status === "processing" && (
             <>
-              <Button variant="outline" onClick={() => executeMutation.mutate({ action: "pause" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <Pause className="mr-2 h-4 w-4" /> Pause
+              <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({ action: "pause" })} disabled={executeMutation.isPending} className="rounded-xl">
+                <Pause className="mr-1.5 h-4 w-4" /> Pause
               </Button>
-              <Button variant="destructive" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <XCircle className="mr-2 h-4 w-4" /> Abort
+              <Button variant="destructive" size="sm" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
+                <XCircle className="mr-1.5 h-4 w-4" /> Abort
               </Button>
             </>
           )}
           {(campaign.status === "completed" || campaign.status === "failed") && (
             <>
-              <Button variant="outline" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
-                <RotateCcw className="mr-2 h-4 w-4" /> Re-generate
+              <Button variant="outline" size="sm" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
+                <RotateCcw className="mr-1.5 h-4 w-4" /> Re-generate
               </Button>
-              <Button variant="outline" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
-                <Play className="mr-2 h-4 w-4" /> Re-run (New)
+              <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
+                <Play className="mr-1.5 h-4 w-4" /> Re-run
               </Button>
             </>
           )}
