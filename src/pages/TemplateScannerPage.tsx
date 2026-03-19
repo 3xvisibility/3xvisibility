@@ -133,6 +133,7 @@ export default function TemplateScannerPage() {
   const [url, setUrl] = useState("");
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [bodyHtml, setBodyHtml] = useState("");
+  const [headStyles, setHeadStyles] = useState("");
   const [mappings, setMappings] = useState<VariableMapping[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
