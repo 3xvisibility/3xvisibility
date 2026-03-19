@@ -941,28 +941,36 @@ export default function CampaignsPage() {
 
                   {step === 2 && (
                     <div className="space-y-3">
-                      <Label className="text-sm font-semibold mb-2 block">Campaign Type</Label>
+                       <Label className="text-sm font-semibold mb-2 block">Campaign Type <span className="text-muted-foreground font-normal">(select one or more)</span></Label>
                       <div className="grid grid-cols-3 gap-3">
                         {[
                           { value: "seo" as const, label: "SEO", icon: SearchIconLucide, desc: "Organic search pages" },
                           { value: "sea" as const, label: "SEA", icon: Target, desc: "Paid landing pages" },
                           { value: "geo" as const, label: "GEO", icon: MapPin, desc: "Local / geo pages" },
-                        ].map((t) => (
+                        ].map((t) => {
+                          const isSelected = campaignTypes.includes(t.value);
+                          return (
                           <button
                             key={t.value}
                             type="button"
                             onClick={() => toggleCampaignType(t.value)}
-                            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
-                              campaignType === t.value
+                            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 relative ${
+                              isSelected
                                 ? "border-primary bg-primary/5 shadow-sm"
                                 : "border-border hover:border-primary/30 hover:bg-muted/50"
                             }`}
                           >
-                            <t.icon className={`h-6 w-6 ${campaignType === t.value ? "text-primary" : "text-muted-foreground"}`} />
-                            <span className={`text-sm font-semibold ${campaignType === t.value ? "text-primary" : "text-foreground"}`}>{t.label}</span>
+                            {isSelected && (
+                              <div className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
+                                <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                              </div>
+                            )}
+                            <t.icon className={`h-6 w-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                            <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>{t.label}</span>
                             <span className="text-[10px] text-muted-foreground text-center">{t.desc}</span>
                           </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
