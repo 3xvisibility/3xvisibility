@@ -659,7 +659,7 @@ async function updateJob(supabase: any, jobId: string, updates: Record<string, a
   }).eq("id", jobId);
 }
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 5;
 
 Deno.serve(async (req) => {
   console.log("[GENERATE-PAGES] Request received:", req.method);
@@ -903,10 +903,11 @@ Deno.serve(async (req) => {
     const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    // AI limit check
+    // Keep campaign publishing fast: reserve AI generation for explicit AI blocks/images.
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
     const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
-    const seoGenerationsNeeded = LOVABLE_API_KEY ? remainingRows.length : 0;
+    const shouldUseAiSeo = Boolean(LOVABLE_API_KEY) && !!test_mode;
+    const seoGenerationsNeeded = shouldUseAiSeo ? remainingRows.length : 0;
     const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded;
 
     if (totalAiNeeded > 0) {
@@ -1004,6 +1005,7 @@ Deno.serve(async (req) => {
     let successCount = alreadyProcessed - (campaign.failed_rows || 0);
     let aiGenerationsUsed = 0;
     let batchesCompleted = campaign.current_batch || 0;
+    let publishQueuedCount = 0;
     let timedOut = false;
 
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
@@ -1300,15 +1302,15 @@ Deno.serve(async (req) => {
             if (tplSeoTitle) seoData.seo_title = resolvePattern(tplSeoTitle).slice(0, 60);
             if (tplSeoDesc) seoData.seo_description = resolvePattern(tplSeoDesc).slice(0, 160);
 
-            // Still generate keywords via AI if available
-            if (LOVABLE_API_KEY) {
+            // Still generate keywords via AI for test previews only to keep campaign publishing fast.
+            if (shouldUseAiSeo) {
               try {
                 const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
                 seoData.seo_keywords = aiSeo.seo_keywords;
                 aiGenerationsUsed++;
               } catch { /* keep empty keywords */ }
             }
-          } else if (LOVABLE_API_KEY) {
+          } else if (shouldUseAiSeo) {
             try {
               seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
               aiGenerationsUsed++;
@@ -1446,6 +1448,7 @@ Deno.serve(async (req) => {
       }
 
       // Insert or selectively update batch
+      const pageIdsToPublish: string[] = [];
       if (batchPages.length > 0) {
         if (isOverwriteMode) {
           // Selective overwrite: find existing pages by slug and update only selected fields
@@ -1518,20 +1521,89 @@ Deno.serve(async (req) => {
               }
               updates.status = "pending";
               if (Object.keys(updates).length > 0) {
-                await supabase.from("generated_pages").update(updates).eq("id", existing.id);
+                const { error: updateError } = await supabase.from("generated_pages").update(updates).eq("id", existing.id);
+                if (updateError) {
+                  throw updateError;
+                }
+                if (campaign.publish_mode === "published" && campaign.website_id) {
+                  pageIdsToPublish.push(existing.id);
+                }
               }
             } else {
               // No existing page found, insert as new
-              await supabase.from("generated_pages").insert(page);
+              const { data: insertedPage, error: insertedPageError } = await supabase
+                .from("generated_pages")
+                .insert(page)
+                .select("id")
+                .single();
+              if (insertedPageError) {
+                throw insertedPageError;
+              }
+              if (campaign.publish_mode === "published" && campaign.website_id && insertedPage?.id) {
+                pageIdsToPublish.push(insertedPage.id);
+              }
             }
           }
         } else {
-          const { error: insertError } = await supabase.from("generated_pages").insert(batchPages);
-          if (insertError) {
-            await logEvent(supabase, campaign_id, user.id, "batch_error",
-              `Batch ${batchesCompleted} insert failed: ${insertError.message}`, batchesCompleted);
-            failedCount += batchPages.length;
+          const successfulPages = batchPages.filter((page) => page.status !== "failed");
+          const failedPages = batchPages.filter((page) => page.status === "failed");
+
+          if (successfulPages.length > 0) {
+            const { data: insertedPages, error: insertError } = await supabase
+              .from("generated_pages")
+              .insert(successfulPages)
+              .select("id");
+            if (insertError) {
+              await logEvent(supabase, campaign_id, user.id, "batch_error",
+                `Batch ${batchesCompleted} insert failed: ${insertError.message}`, batchesCompleted);
+              failedCount += successfulPages.length;
+              successCount = Math.max(0, successCount - successfulPages.length);
+            } else if (campaign.publish_mode === "published" && campaign.website_id) {
+              pageIdsToPublish.push(...(insertedPages || []).map((page: any) => page.id).filter(Boolean));
+            }
           }
+
+          if (failedPages.length > 0) {
+            const { error: failedInsertError } = await supabase.from("generated_pages").insert(failedPages);
+            if (failedInsertError) {
+              await logEvent(supabase, campaign_id, user.id, "batch_error",
+                `Batch ${batchesCompleted} failed-page insert error: ${failedInsertError.message}`, batchesCompleted);
+            }
+          }
+        }
+      }
+
+      if (pageIdsToPublish.length > 0) {
+        const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
+        const PUBLISH_CHUNK = 5;
+        publishQueuedCount += pageIdsToPublish.length;
+
+        console.log(`[GENERATE-PAGES] Queueing background publish for batch of ${pageIdsToPublish.length} pages`);
+        await logEvent(
+          supabase,
+          campaign_id,
+          user.id,
+          "auto_publish_started",
+          `Queued auto-publish for batch ${batchesCompleted} (${pageIdsToPublish.length} pages)` ,
+          batchesCompleted,
+          pageIdsToPublish.length
+        );
+
+        for (let i = 0; i < pageIdsToPublish.length; i += PUBLISH_CHUNK) {
+          const chunk = pageIdsToPublish.slice(i, i + PUBLISH_CHUNK);
+          triggerBackgroundFunction(
+            publishUrl,
+            {
+              Authorization: authHeader,
+              "Content-Type": "application/json",
+            },
+            {
+              page_ids: chunk,
+              publish_type: "page",
+              website_id: campaign.website_id,
+            },
+            "publish-pages"
+          );
         }
       }
 
@@ -1626,8 +1698,8 @@ Deno.serve(async (req) => {
       campaign_id: campaign_id,
     });
 
-    // Trigger post-generation work asynchronously so campaign completion is not blocked.
-    if (campaign.publish_mode === "published" && campaign.website_id && successCount > 0) {
+    // Fallback queue for any pending pages that were not already queued during batch processing.
+    if (campaign.publish_mode === "published" && campaign.website_id && successCount > 0 && publishQueuedCount === 0) {
       try {
         const { data: pendingPages } = await supabase
           .from("generated_pages")
@@ -1638,15 +1710,15 @@ Deno.serve(async (req) => {
         if (pendingPages && pendingPages.length > 0) {
           const pageIds = pendingPages.map((p: any) => p.id);
           const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
-          const PUBLISH_CHUNK = 10;
+          const PUBLISH_CHUNK = 5;
 
-          console.log(`[GENERATE-PAGES] Queueing background publish for ${pageIds.length} pages`);
+          console.log(`[GENERATE-PAGES] Queueing fallback publish for ${pageIds.length} pages`);
           await logEvent(
             supabase,
             campaign_id,
             user.id,
             "auto_publish_started",
-            `Queued auto-publish for ${pageIds.length} pages to the connected website`
+            `Queued fallback auto-publish for ${pageIds.length} pages to the connected website`
           );
 
           for (let i = 0; i < pageIds.length; i += PUBLISH_CHUNK) {
@@ -1665,6 +1737,7 @@ Deno.serve(async (req) => {
               "publish-pages"
             );
           }
+          publishQueuedCount += pageIds.length;
         }
       } catch (pubErr) {
         console.error("[GENERATE-PAGES] Auto-publish queue error:", pubErr);
