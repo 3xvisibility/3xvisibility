@@ -498,9 +498,21 @@ ${headStyles}
             </TabsList>
 
             <TabsContent value="url" className="space-y-2">
-              <Label htmlFor="scan-url" className="text-sm font-medium">Webpage URL</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="scan-url" className="text-sm font-medium">Webpage URL</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs">Paste the URL of any live webpage. The scanner will download its content and preserve the original design so your template looks exactly like the source page.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Enter any public URL to scan and convert into a template.
+                💡 <strong>Tip:</strong> Use a page that represents what you want to generate at scale (e.g. a single city page that you want to replicate for 100+ cities).
               </p>
               <div className="flex gap-2">
                 <div className="relative flex-1">
