@@ -720,7 +720,7 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
   scanBlocks(blocks);
 
   return (
-    <div className="flex gap-4 min-h-[400px]">
+    <div className="flex flex-col sm:flex-row gap-4 min-h-[400px]">
       {/* Left: Sidebar with Tabs */}
       <div className="w-52 shrink-0 space-y-2">
         {/* Sidebar Tab Switcher */}
