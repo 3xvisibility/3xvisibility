@@ -220,6 +220,7 @@ export default function TemplateScannerPage() {
         headStyles?: string;
         blocks: ContentBlock[];
         suggestions: VariableSuggestion[];
+        imageUrls?: string[];
       };
     },
     onSuccess: (data) => {
