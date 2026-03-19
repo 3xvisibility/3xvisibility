@@ -681,7 +681,62 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* Third row */}
+      {/* Charts row 3 — NEW: Speed Trends + Publish Rate */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Generation Speed Trends */}
+        <Card className="shadow-surface">
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              Generation Speed Trends
+            </h3>
+            {speedTrends.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                No completed jobs yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={speedTrends}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" label={{ value: "pages/min", angle: -90, position: "insideLeft", style: { fontSize: 10 } }} />
+                  <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value: number) => [`${value} pages/min`, "Speed"]} />
+                  <Area type="monotone" dataKey="pagesPerMin" stroke="hsl(38, 92%, 50%)" fill="hsl(38, 92%, 50%, 0.15)" strokeWidth={2} name="Pages/min" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Publish Success Rate Over Time */}
+        <Card className="shadow-surface">
+          <CardContent className="p-5">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              Publish Success Rate (Weekly)
+            </h3>
+            {publishRateOverTime.length === 0 ? (
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                No data yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={publishRateOverTime}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="week" tick={{ fontSize: 10 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 10 }} className="text-muted-foreground" domain={[0, 100]} unit="%" />
+                  <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value: number, name: string) => name === "rate" ? [`${value}%`, "Success Rate"] : [value, name]} />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                  <Bar dataKey="rate" fill="hsl(152, 69%, 41%)" radius={[4, 4, 0, 0]} name="Success %" />
+                  <Bar dataKey="total" fill="hsl(var(--muted-foreground) / 0.2)" radius={[4, 4, 0, 0]} name="Total Pages" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts row 4 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Campaign performance */}
         <Card className="shadow-surface">
