@@ -222,6 +222,37 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  const retryFailedMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // First reset status to pending and clear error
+      const { error: resetErr } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending" as any, error_message: null })
+        .in("id", ids);
+      if (resetErr) throw resetErr;
+
+      // Then publish them
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: { page_ids: ids, publish_type: publishType },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setSelectedIds(new Set());
+      toast({
+        title: "Retry complete",
+        description: `${data.published} published, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      toast({ title: "Retry failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const openSeoEditor = (page: GeneratedPage) => {
     setSeoEditPage(page);
     setSeoForm({
