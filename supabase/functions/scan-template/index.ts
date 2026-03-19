@@ -42,13 +42,52 @@ function extractBodyContent(html: string): string {
   // Try to extract just the body
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
-  // Remove script and style tags
+  // Remove script tags but keep styles
   return content
     .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<nav[\s\S]*?<\/nav>/gi, "")
     .replace(/<footer[\s\S]*?<\/footer>/gi, "")
     .replace(/<!--[\s\S]*?-->/g, "");
+}
+
+function extractHeadStyles(html: string, baseUrl: string): string {
+  const styles: string[] = [];
+  
+  // Extract <link rel="stylesheet"> tags and resolve relative URLs
+  const linkRegex = /<link[^>]*rel=["']stylesheet["'][^>]*>/gi;
+  let match;
+  while ((match = linkRegex.exec(html)) !== null) {
+    let tag = match[0];
+    // Resolve relative href to absolute
+    const hrefMatch = tag.match(/href=["']([^"']+)["']/i);
+    if (hrefMatch) {
+      let href = hrefMatch[1];
+      if (href.startsWith("//")) {
+        href = "https:" + href;
+      } else if (href.startsWith("/")) {
+        try {
+          const u = new URL(baseUrl);
+          href = u.origin + href;
+        } catch { /* keep as-is */ }
+      } else if (!href.startsWith("http")) {
+        href = baseUrl.replace(/\/[^/]*$/, "/") + href;
+      }
+      tag = tag.replace(hrefMatch[1], href);
+    }
+    styles.push(tag);
+  }
+
+  // Extract inline <style> blocks from <head>
+  const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  if (headMatch) {
+    const styleRegex = /<style[^>]*>[\s\S]*?<\/style>/gi;
+    let sMatch;
+    while ((sMatch = styleRegex.exec(headMatch[1])) !== null) {
+      styles.push(sMatch[0]);
+    }
+  }
+
+  return styles.join("\n");
 }
 
 Deno.serve(async (req) => {
@@ -174,6 +213,7 @@ Deno.serve(async (req) => {
 
     const rawHtml = await pageResponse.text();
     const bodyContent = extractBodyContent(rawHtml);
+    const headStyles = extractHeadStyles(rawHtml, formattedUrl);
     const blocks = parseHtmlBlocks(bodyContent);
 
     // Use AI to suggest variables
@@ -268,6 +308,7 @@ Return a JSON array of suggestions.`,
         success: true,
         url: formattedUrl,
         bodyHtml: bodyContent,
+        headStyles,
         blocks,
         suggestions,
       }),

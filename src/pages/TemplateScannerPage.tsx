@@ -25,7 +25,12 @@ import {
   FileText,
   MousePointer,
   List,
+  HelpCircle,
+  Info,
+  Lightbulb,
+  CircleDot,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -87,12 +92,13 @@ function SelectionPopover({
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground">Assign variable</p>
+        <p className="text-xs font-medium text-muted-foreground">Create a variable</p>
         <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onClose}>
           <X className="h-3 w-3" />
         </Button>
       </div>
       <p className="text-xs bg-muted rounded px-2 py-1 truncate font-mono">"{selectedText}"</p>
+      <p className="text-[10px] text-muted-foreground">💡 Name this variable (e.g. "city", "price"). It will become a column in your CSV.</p>
       <div className="flex gap-1.5">
         <Input
           ref={inputRef}
@@ -128,6 +134,7 @@ export default function TemplateScannerPage() {
   const [url, setUrl] = useState("");
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [bodyHtml, setBodyHtml] = useState("");
+  const [headStyles, setHeadStyles] = useState("");
   const [mappings, setMappings] = useState<VariableMapping[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -199,6 +206,7 @@ export default function TemplateScannerPage() {
         success: boolean;
         url: string;
         bodyHtml: string;
+        headStyles?: string;
         blocks: ContentBlock[];
         suggestions: VariableSuggestion[];
       };
@@ -206,6 +214,7 @@ export default function TemplateScannerPage() {
     onSuccess: (data) => {
       setBlocks(data.blocks);
       setBodyHtml(data.bodyHtml);
+      setHeadStyles(data.headStyles || "");
       const initialMappings = data.suggestions.map((s) => ({
         ...s,
         accepted: true,
@@ -310,25 +319,48 @@ export default function TemplateScannerPage() {
   const getVisualEditorHtml = useCallback(() => {
     let content = bodyHtml;
 
-    // Highlight already-mapped values
+    // Highlight already-mapped values with prominent labeled badges
     for (const mapping of acceptedMappings) {
       const escapedValue = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(escapedValue, "gi");
       content = content.replace(
         regex,
-        `<span data-var="${mapping.variable}" style="background:hsl(221 83% 53% / 0.15);color:hsl(221 83% 53%);padding:1px 4px;border-radius:4px;font-weight:600;cursor:pointer;" title="Variable: {${mapping.variable}}">{${mapping.variable}}</span>`
+        `<span data-var="${mapping.variable}" class="pgvar-badge" title="This will be replaced with data from your CSV column: {${mapping.variable}}">\u200B<span class="pgvar-label">{${mapping.variable}}</span>\u200B</span>`
       );
     }
 
     return `<!DOCTYPE html>
 <html>
 <head>
+${headStyles}
 <style>
-  body { font-family: system-ui, sans-serif; padding: 16px; margin: 0; font-size: 14px; line-height: 1.6; color: #1a1a2e; }
+  .pgvar-badge {
+    display: inline;
+    background: linear-gradient(135deg, hsl(263 70% 95%), hsl(263 70% 90%));
+    color: hsl(263 70% 40%);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px dashed hsl(263 70% 60%);
+    position: relative;
+    transition: all 0.15s ease;
+  }
+  .pgvar-badge:hover {
+    background: linear-gradient(135deg, hsl(263 70% 90%), hsl(263 70% 85%));
+    outline: 2px solid hsl(263 70% 55%);
+    outline-offset: 2px;
+    border-radius: 6px;
+    transform: scale(1.02);
+  }
+  .pgvar-label {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.85em;
+    letter-spacing: 0.02em;
+  }
   ::selection { background: hsl(221 83% 53% / 0.3); }
   * { max-width: 100%; box-sizing: border-box; }
   img { height: auto; }
-  [data-var]:hover { outline: 2px solid hsl(221 83% 53%); outline-offset: 2px; border-radius: 4px; }
 </style>
 </head>
 <body>${content}</body>
@@ -352,7 +384,7 @@ export default function TemplateScannerPage() {
   });
 </script>
 </html>`;
-  }, [bodyHtml, acceptedMappings]);
+  }, [bodyHtml, headStyles, acceptedMappings]);
 
   // Listen for messages from the iframe
   useEffect(() => {
@@ -427,6 +459,32 @@ export default function TemplateScannerPage() {
         </p>
       </div>
 
+      {/* Step-by-step guide banner */}
+      <Card className="border-primary/20 bg-primary/5 shadow-none">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Lightbulb className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-foreground">How it works — 3 simple steps:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-primary text-primary-foreground shrink-0 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">1</Badge>
+                  <p className="text-xs text-muted-foreground"><strong className="text-foreground">Scan a page</strong> — Enter a URL or pick a page from your connected site</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-primary text-primary-foreground shrink-0 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">2</Badge>
+                  <p className="text-xs text-muted-foreground"><strong className="text-foreground">Mark variables</strong> — Select text that should change per page (e.g. city, service name)</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge className="bg-primary text-primary-foreground shrink-0 h-5 w-5 p-0 flex items-center justify-center rounded-full text-[10px]">3</Badge>
+                  <p className="text-xs text-muted-foreground"><strong className="text-foreground">Save template</strong> — Use it in campaigns to generate hundreds of unique pages</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Input Section */}
       <Card className="shadow-surface">
         <CardContent className="p-5">
@@ -441,9 +499,21 @@ export default function TemplateScannerPage() {
             </TabsList>
 
             <TabsContent value="url" className="space-y-2">
-              <Label htmlFor="scan-url" className="text-sm font-medium">Webpage URL</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="scan-url" className="text-sm font-medium">Webpage URL</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs">Paste the URL of any live webpage. The scanner will download its content and preserve the original design so your template looks exactly like the source page.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Enter any public URL to scan and convert into a template.
+                💡 <strong>Tip:</strong> Use a page that represents what you want to generate at scale (e.g. a single city page that you want to replicate for 100+ cities).
               </p>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -471,7 +541,22 @@ export default function TemplateScannerPage() {
             </TabsContent>
 
             <TabsContent value="connected" className="space-y-3">
-              <Label className="text-sm font-medium">Connected Website</Label>
+              <div className="flex items-center gap-1.5">
+                <Label className="text-sm font-medium">Connected Website</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs">
+                      <p className="text-xs">Import pages directly from your WordPress or WooCommerce site. The scanner will fetch the page content while keeping the original styles.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 <strong>Tip:</strong> Pick an existing page you want to replicate. The AI will suggest which parts should become dynamic variables.
+              </p>
               {connectedWebsites.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No websites connected. Add one in the Websites section first.
@@ -623,48 +708,95 @@ export default function TemplateScannerPage() {
 
           {/* Variables chips */}
           {uniqueVars.length > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-sm text-muted-foreground">Variables:</span>
-              {uniqueVars.map((v) => (
-                <Badge key={v} className="bg-primary/10 text-primary font-mono text-xs">
-                  {`{${v}}`}
-                </Badge>
-              ))}
-            </div>
+            <Card className="border-dashed border-primary/30 bg-primary/5 shadow-none">
+              <CardContent className="p-3">
+                <div className="flex flex-wrap gap-2 items-center">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-sm font-medium text-foreground flex items-center gap-1 cursor-help">
+                          <CircleDot className="h-3.5 w-3.5 text-primary" />
+                          Dynamic Variables ({uniqueVars.length}):
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">These are the parts of your page that will change for each generated page. Each variable maps to a column in your CSV data or location database.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  {uniqueVars.map((v) => (
+                    <Badge key={v} className="bg-primary/10 text-primary font-mono text-xs border border-primary/20">
+                      {`{${v}}`}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* View mode tabs + actions */}
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-              <Button
-                variant={viewMode === "visual" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setViewMode("visual")}
-              >
-                <MousePointer className="mr-1.5 h-3.5 w-3.5" /> Visual Editor
-              </Button>
-              <Button
-                variant={viewMode === "blocks" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setViewMode("blocks")}
-              >
-                <List className="mr-1.5 h-3.5 w-3.5" /> Block List
-              </Button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <Button
+                  variant={viewMode === "visual" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setViewMode("visual")}
+                >
+                  <MousePointer className="mr-1.5 h-3.5 w-3.5" /> Visual Editor
+                </Button>
+                <Button
+                  variant={viewMode === "blocks" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => setViewMode("blocks")}
+                >
+                  <List className="mr-1.5 h-3.5 w-3.5" /> Block List
+                </Button>
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p className="text-xs"><strong>Visual Editor:</strong> See your page as it looks on the web. Select any text to make it a variable.</p>
+                    <p className="text-xs mt-1"><strong>Block List:</strong> See each content element separately. Good for reviewing AI suggestions one by one.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
-                <Eye className="mr-1.5 h-3.5 w-3.5" /> Preview
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setSaveDialogOpen(true)}
-                disabled={acceptedMappings.length === 0}
-                className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
-              >
-                <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Template
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+                      <Eye className="mr-1.5 h-3.5 w-3.5" /> Preview
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">See how variables will appear in the final template</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      onClick={() => setSaveDialogOpen(true)}
+                      disabled={acceptedMappings.length === 0}
+                      className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
+                    >
+                      <Save className="mr-1.5 h-3.5 w-3.5" /> Save as Template
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">{acceptedMappings.length === 0 ? "Add at least one variable first" : "Save this template to use in campaigns"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
@@ -672,18 +804,22 @@ export default function TemplateScannerPage() {
           {viewMode === "visual" && (
             <div className="space-y-4">
               <Card className="shadow-surface overflow-hidden">
-                <div className="bg-muted/50 border-b border-border px-4 py-2 flex items-center gap-2">
-                  <MousePointer className="h-3.5 w-3.5 text-primary" />
+                <div className="bg-gradient-to-r from-primary/5 to-transparent border-b border-border px-4 py-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <MousePointer className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-medium text-foreground">Visual Variable Editor</p>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">Select text</span> in the preview below to assign it as a variable.
-                    Already-mapped values are highlighted in blue.
+                    👇 This preview shows your page <strong>with its original design</strong>. 
+                    <span className="text-primary font-medium"> Select any text</span> you want to make dynamic — it will be replaced with data from your CSV.
+                    Variables appear as <span className="font-mono text-primary bg-primary/10 px-1 rounded text-[10px]">{"{variable}"}</span> purple badges.
                   </p>
                 </div>
                 <iframe
                   ref={iframeRef}
                   srcDoc={getVisualEditorHtml()}
                   className="w-full border-0"
-                  style={{ height: "500px" }}
+                  style={{ height: "600px" }}
                   sandbox="allow-scripts allow-same-origin"
                   title="Visual template editor"
                 />
@@ -693,7 +829,13 @@ export default function TemplateScannerPage() {
               {acceptedMappings.length > 0 && (
                 <Card className="shadow-surface">
                   <CardContent className="p-4">
-                    <h3 className="text-sm font-semibold mb-3">Mapped Variables</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                        <Tag className="h-3.5 w-3.5 text-primary" />
+                        Mapped Variables ({acceptedMappings.length})
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground">💡 Each variable maps to a CSV column when generating pages</p>
+                    </div>
                     <div className="space-y-2">
                       {acceptedMappings.map((mapping, i) => (
                         <div
@@ -870,11 +1012,18 @@ export default function TemplateScannerPage() {
                 <DialogTitle>Save Template</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
+                <div className="flex items-start gap-2 p-3 bg-muted/50 rounded-lg">
+                  <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
+                    Once saved, you can use this template in a <strong>campaign</strong> to generate hundreds of unique pages. Each variable will be filled with data from your CSV or location database.
+                  </p>
+                </div>
                 <div>
                   <Label htmlFor="tpl-name">Template Name</Label>
+                  <p className="text-[10px] text-muted-foreground mb-1">Give it a descriptive name so you can find it later</p>
                   <Input
                     id="tpl-name"
-                    placeholder="e.g., Course Landing Page"
+                    placeholder="e.g., Dental City Landing Page"
                     value={templateName}
                     onChange={(e) => setTemplateName(e.target.value)}
                   />
@@ -909,12 +1058,19 @@ export default function TemplateScannerPage() {
       {/* Empty state */}
       {blocks.length === 0 && !scanMutation.isPending && (
         <Card>
-          <CardContent className="p-10 text-center text-muted-foreground">
-            <ScanSearch className="mx-auto h-10 w-10 mb-3 opacity-50" />
-            <p className="font-medium">Enter a URL above to scan a webpage</p>
-            <p className="text-sm mt-1">
-              The AI will analyze the page structure and suggest dynamic variables automatically.
+          <CardContent className="p-10 text-center text-muted-foreground space-y-3">
+            <ScanSearch className="mx-auto h-12 w-12 mb-2 opacity-40" />
+            <p className="font-semibold text-foreground text-lg">Scan a webpage to get started</p>
+            <p className="text-sm max-w-md mx-auto">
+              Enter any URL above — the scanner will download the page, <strong>preserve its design</strong>, and use AI to suggest which text should become dynamic variables.
             </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <Badge variant="outline" className="text-xs">🏙️ City pages</Badge>
+              <Badge variant="outline" className="text-xs">🏪 Store locators</Badge>
+              <Badge variant="outline" className="text-xs">🦷 Service pages</Badge>
+              <Badge variant="outline" className="text-xs">📦 Product listings</Badge>
+              <Badge variant="outline" className="text-xs">📝 Blog templates</Badge>
+            </div>
           </CardContent>
         </Card>
       )}
