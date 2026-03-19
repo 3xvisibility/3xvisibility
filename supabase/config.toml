@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.fire-webhooks]
 verify_jwt = false
+
+[functions.rewrite-content]
+verify_jwt = false
