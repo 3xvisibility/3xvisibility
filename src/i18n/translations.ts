@@ -439,6 +439,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.campaigns": "Campagnes",
     "sidebar.generatedPages": "Pages générées",
     "sidebar.templates": "Modèles",
+    "sidebar.marketplace": "Marketplace",
     "sidebar.websiteContent": "Contenu du Site",
     "sidebar.aiScanner": "Scanner IA",
     "sidebar.discovery": "Découverte",
