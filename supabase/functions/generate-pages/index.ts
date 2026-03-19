@@ -1004,6 +1004,7 @@ Deno.serve(async (req) => {
     let successCount = alreadyProcessed - (campaign.failed_rows || 0);
     let aiGenerationsUsed = 0;
     let batchesCompleted = campaign.current_batch || 0;
+    let publishQueuedCount = 0;
     let timedOut = false;
 
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
