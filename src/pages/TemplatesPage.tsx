@@ -218,6 +218,14 @@ export default function TemplatesPage() {
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!editingTemplate) throw new Error("No template to update");
+      // Save current version before overwriting
+      saveVersion(editingTemplate.id, {
+        name: editingTemplate.name,
+        content: editingTemplate.content,
+        variables: editingTemplate.variables || [],
+        seo_title_pattern: (editingTemplate as any).seo_title_pattern || "",
+        seo_description_pattern: (editingTemplate as any).seo_description_pattern || "",
+      });
       const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
       const { error } = await supabase.from("templates").update({
         name,
