@@ -20,6 +20,7 @@ import {
   Store,
   FlaskConical,
   CalendarDays,
+  ClipboardCheck,
   Activity,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
