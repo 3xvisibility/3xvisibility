@@ -58,6 +58,7 @@ export default function GeneratedPagesPage() {
   const [publishType, setPublishType] = useState<"page" | "product">("page");
   const [translateOpen, setTranslateOpen] = useState(false);
   const [translateLang, setTranslateLang] = useState("fr");
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
