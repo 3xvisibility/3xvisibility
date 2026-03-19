@@ -451,7 +451,7 @@ export default function TemplatesPage() {
                 <Sparkles className="mr-2 h-4 w-4" /> AI Builder
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-4xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto rounded-lg">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
@@ -575,7 +575,7 @@ export default function TemplatesPage() {
                 </Button>
               </DialogTrigger>
             )}
-            <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-4xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto rounded-lg">
               <DialogHeader>
                 <DialogTitle>{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
               </DialogHeader>
@@ -872,21 +872,21 @@ export default function TemplatesPage() {
               onDrop={dragProps.onDrop}
               onDragEnd={dragProps.onDragEnd}
             >
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-1">
+                        <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-1 shrink-0">
                           <GripVertical className="h-4 w-4" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="left" className="text-xs">Drag to reorder</TooltipContent>
                     </Tooltip>
-                    <FileText className="h-4 w-4 text-primary" />
-                    <h3 className="font-semibold">{tpl.name}</h3>
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <h3 className="font-semibold truncate">{tpl.name}</h3>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex items-center gap-0.5 shrink-0 flex-wrap justify-end">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -915,22 +915,22 @@ export default function TemplatesPage() {
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
+                    <TemplateVersionHistory
+                      templateId={tpl.id}
+                      currentContent={tpl.content}
+                      currentName={tpl.name}
+                      onRestore={(version) => {
+                        setEditingTemplate(tpl);
+                        setName(version.name);
+                        setContent(version.content);
+                        setBlocks(htmlToBlocks(version.content));
+                        setActiveEditorTab("visual");
+                        setSeoTitlePattern(version.seo_title_pattern || "");
+                        setSeoDescriptionPattern(version.seo_description_pattern || "");
+                        toast({ title: "Version restored", description: "Review and save to confirm." });
+                      }}
+                    />
                   </div>
-                  <TemplateVersionHistory
-                    templateId={tpl.id}
-                    currentContent={tpl.content}
-                    currentName={tpl.name}
-                    onRestore={(version) => {
-                      setEditingTemplate(tpl);
-                      setName(version.name);
-                      setContent(version.content);
-                      setBlocks(htmlToBlocks(version.content));
-                      setActiveEditorTab("visual");
-                      setSeoTitlePattern(version.seo_title_pattern || "");
-                      setSeoDescriptionPattern(version.seo_description_pattern || "");
-                      toast({ title: "Version restored", description: "Review and save to confirm." });
-                    }}
-                  />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {(tpl.variables || []).map((v) => (

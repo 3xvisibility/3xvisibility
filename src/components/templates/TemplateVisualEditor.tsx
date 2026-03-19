@@ -720,9 +720,9 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
   scanBlocks(blocks);
 
   return (
-    <div className="flex gap-4 min-h-[400px]">
+    <div className="flex flex-col sm:flex-row gap-4 min-h-[400px]">
       {/* Left: Sidebar with Tabs */}
-      <div className="w-52 shrink-0 space-y-2">
+      <div className="w-full sm:w-52 shrink-0 space-y-2">
         {/* Sidebar Tab Switcher */}
         <div className="flex rounded-lg bg-muted/50 p-0.5 gap-0.5">
           {([
@@ -750,7 +750,7 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
           ))}
         </div>
 
-        <ScrollArea className="h-[440px]">
+        <ScrollArea className="h-[200px] sm:h-[440px]">
           {/* Blocks Tab */}
           {sidebarTab === "blocks" && (
             <div className="space-y-1 pr-1">
@@ -863,7 +863,7 @@ export function TemplateVisualEditor({ blocks, onChange, customVars = [] }: Temp
 
       {/* Right: Canvas */}
       <div className="flex-1 min-w-0">
-        <ScrollArea className="h-[480px]">
+        <ScrollArea className="h-[300px] sm:h-[480px]">
           <div className="space-y-2 pr-2">
             {blocks.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border rounded-xl text-center">
