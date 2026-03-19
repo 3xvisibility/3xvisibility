@@ -694,6 +694,55 @@ export default function TemplateMarketplacePage() {
                   </TabsContent>
                 </Tabs>
 
+                {/* Rating section for shared templates */}
+                {previewTemplate.isShared && previewTemplate.shared_id && (
+                  <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+                    <h4 className="text-xs font-semibold flex items-center gap-1.5">
+                      <MessageSquare className="h-3.5 w-3.5" /> Rate this template
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => setRatingValue(s)}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              className={`h-5 w-5 transition-colors ${
+                                s <= ratingValue ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <Input
+                        placeholder="Optional review..."
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        className="h-8 text-xs flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={rateMutation.isPending}
+                        onClick={() => rateMutation.mutate({
+                          sharedId: previewTemplate.shared_id!,
+                          rating: ratingValue,
+                          review: reviewText,
+                        })}
+                      >
+                        {rateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Submit"}
+                      </Button>
+                    </div>
+                    {previewTemplate.ratingCount !== undefined && previewTemplate.ratingCount > 0 && (
+                      <p className="text-[10px] text-muted-foreground">
+                        {previewTemplate.ratingCount} rating{previewTemplate.ratingCount !== 1 ? "s" : ""} · avg {previewTemplate.rating}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
                   <Button
@@ -710,6 +759,81 @@ export default function TemplateMarketplacePage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Dialog */}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-primary" /> Share Your Template
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Template to Share</Label>
+              <Select value={shareForm.templateId} onValueChange={(v) => setShareForm(f => ({ ...f, templateId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
+                <SelectContent>
+                  {userTemplates.map((t: any) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Your Name</Label>
+              <Input
+                placeholder="Your name or alias"
+                value={shareForm.authorName}
+                onChange={(e) => setShareForm(f => ({ ...f, authorName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Describe what this template is for..."
+                value={shareForm.description}
+                onChange={(e) => setShareForm(f => ({ ...f, description: e.target.value }))}
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select value={shareForm.category} onValueChange={(v) => setShareForm(f => ({ ...f, category: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.filter(c => c.id !== "all").map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tags (comma separated)</Label>
+                <Input
+                  placeholder="seo, blog, local"
+                  value={shareForm.tags}
+                  onChange={(e) => setShareForm(f => ({ ...f, tags: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShareOpen(false)}>Cancel</Button>
+              <Button
+                disabled={!shareForm.templateId || !shareForm.description || shareMutation.isPending}
+                onClick={() => shareMutation.mutate(shareForm)}
+              >
+                {shareMutation.isPending ? (
+                  <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Sharing...</>
+                ) : (
+                  <><Share2 className="mr-1.5 h-3.5 w-3.5" /> Share to Marketplace</>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
