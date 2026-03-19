@@ -1661,7 +1661,7 @@ export default function CampaignsPage() {
                         <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignType}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Method</span><span className="font-medium capitalize">{generationMethod}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduleMode === "recurring" ? `Recurring (${recurringInterval})` : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>
                       </div>
                     </div>
                   )}
