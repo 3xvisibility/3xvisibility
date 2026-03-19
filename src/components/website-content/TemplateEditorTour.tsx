@@ -206,8 +206,9 @@ export function TemplateEditorTour({ active, restartKey }: { active: boolean; re
                   </div>
                 </div>
                 <button
-                  onClick={finish}
-                  className="text-muted-foreground hover:text-foreground transition-colors p-1 -m-1"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); finish(); }}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-2 -m-1 cursor-pointer active:opacity-70"
                 >
                   <X className="h-4 w-4" />
                 </button>
