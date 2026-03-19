@@ -1058,12 +1058,19 @@ ${headStyles}
       {/* Empty state */}
       {blocks.length === 0 && !scanMutation.isPending && (
         <Card>
-          <CardContent className="p-10 text-center text-muted-foreground">
-            <ScanSearch className="mx-auto h-10 w-10 mb-3 opacity-50" />
-            <p className="font-medium">Enter a URL above to scan a webpage</p>
-            <p className="text-sm mt-1">
-              The AI will analyze the page structure and suggest dynamic variables automatically.
+          <CardContent className="p-10 text-center text-muted-foreground space-y-3">
+            <ScanSearch className="mx-auto h-12 w-12 mb-2 opacity-40" />
+            <p className="font-semibold text-foreground text-lg">Scan a webpage to get started</p>
+            <p className="text-sm max-w-md mx-auto">
+              Enter any URL above — the scanner will download the page, <strong>preserve its design</strong>, and use AI to suggest which text should become dynamic variables.
             </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <Badge variant="outline" className="text-xs">🏙️ City pages</Badge>
+              <Badge variant="outline" className="text-xs">🏪 Store locators</Badge>
+              <Badge variant="outline" className="text-xs">🦷 Service pages</Badge>
+              <Badge variant="outline" className="text-xs">📦 Product listings</Badge>
+              <Badge variant="outline" className="text-xs">📝 Blog templates</Badge>
+            </div>
           </CardContent>
         </Card>
       )}
