@@ -87,12 +87,12 @@ function processDynamicElements(content: string, vars: Record<string, string>): 
 </div>`;
   });
 
-  // {{IMAGE:search query}} — Unsplash image
+  // {{IMAGE:search query}} — Picsum stock image (free, reliable)
   result = result.replace(/\{\{IMAGE:(.*?)\}\}/gi, (_match, query: string) => {
     const resolvedQuery = resolveVarsInQuery(query, vars);
-    const encoded = encodeURIComponent(resolvedQuery);
+    const seed = Math.abs([...resolvedQuery].reduce((a, c) => a + c.charCodeAt(0), 0)) % 1000;
     return `<div class="dynamic-image" style="margin:1em 0;">
-  <img src="https://source.unsplash.com/800x450/?${encoded}" alt="${resolvedQuery}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+  <img src="https://picsum.photos/seed/${seed}/800/450" alt="${resolvedQuery}" style="width:100%;height:auto;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);" loading="lazy">
 </div>`;
   });
 
