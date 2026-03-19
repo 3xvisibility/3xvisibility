@@ -302,14 +302,94 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+  const [ratingValue, setRatingValue] = useState(5);
+  const [reviewText, setReviewText] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
+  // Fetch user's templates for sharing
+  const { data: userTemplates = [] } = useQuery({
+    queryKey: ["user-templates-share", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("id, name, content, variables")
+        .eq("workspace_id", wsId!);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch community shared templates
+  const { data: sharedTemplates = [], isLoading: loadingShared } = useQuery({
+    queryKey: ["shared-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shared_templates")
+        .select("*")
+        .eq("is_approved", true)
+        .order("downloads", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch ratings for shared templates
+  const { data: allRatings = [] } = useQuery({
+    queryKey: ["template-ratings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("template_ratings")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Convert shared templates to MarketplaceTemplate format
+  const communityTemplates: MarketplaceTemplate[] = useMemo(() => {
+    return sharedTemplates.map((st: any) => {
+      const ratings = allRatings.filter((r: any) => r.shared_template_id === st.id);
+      const avgRating = ratings.length > 0
+        ? Math.round(ratings.reduce((s: number, r: any) => s + r.rating, 0) / ratings.length * 10) / 10
+        : 0;
+      return {
+        id: st.id,
+        shared_id: st.id,
+        name: st.author_name ? `${st.author_name}'s ${st.category}` : st.id,
+        description: st.description,
+        content: st.content,
+        variables: st.variables || [],
+        category: st.category,
+        tags: st.tags || [],
+        author: st.author_name || "Anonymous",
+        downloads: st.downloads || 0,
+        rating: avgRating,
+        ratingCount: ratings.length,
+        seo_title_pattern: st.seo_title_pattern,
+        seo_description_pattern: st.seo_description_pattern,
+        schema_type: st.schema_type,
+        isShared: true,
+        name: st.description ? st.description.slice(0, 40) : `Template by ${st.author_name}`,
+      };
+    });
+  }, [sharedTemplates, allRatings]);
+
+  // Merge built-in + community for "browse" tab
+  const allTemplates = useMemo(() => {
+    return [...COMMUNITY_TEMPLATES, ...communityTemplates];
+  }, [communityTemplates]);
+
   const filteredTemplates = useMemo(() => {
-    return COMMUNITY_TEMPLATES.filter((tpl) => {
+    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    return source.filter((tpl) => {
       const matchesCategory = selectedCategory === "all" || tpl.category === selectedCategory;
       const matchesSearch =
         !searchQuery ||
@@ -318,7 +398,7 @@ export default function TemplateMarketplacePage() {
         tpl.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
 
   const importMutation = useMutation({
     mutationFn: async (tpl: MarketplaceTemplate) => {
