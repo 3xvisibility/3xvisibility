@@ -183,7 +183,7 @@ export function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.45 }}
-            className="mt-5 flex items-center justify-center gap-6 text-xs text-[hsl(220,15%,45%)]"
+            className="mt-5 flex items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-[hsl(220,15%,45%)] flex-wrap"
           >
             <span>{t("hero.freeStart")}</span>
             <span>{t("hero.noCreditCard")}</span>
@@ -252,7 +252,7 @@ export function HeroSection() {
 
                   <div className="flex gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
                         {[
                           { label: "Pages Generated", value: 1324, icon: FileText, change: "+10%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(217,91%,60%,0.1)]" },
                           { label: "Total Views", value: 12100, icon: Eye, change: "+5%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(210,100%,70%,0.1)]" },

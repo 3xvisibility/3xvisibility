@@ -357,11 +357,11 @@ export default function AdminPage() {
       )}
 
       <Tabs defaultValue="activity">
-        <TabsList>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
+        <TabsList className="flex-wrap h-auto gap-1 p-1">
+          <TabsTrigger value="activity" className="text-xs">Activity</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
+          <TabsTrigger value="campaigns" className="text-xs">Campaigns</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="text-xs">Subs</TabsTrigger>
         </TabsList>
 
         {/* Activity feed tab */}

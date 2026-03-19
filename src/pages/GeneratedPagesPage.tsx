@@ -323,14 +323,29 @@ export default function GeneratedPagesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-display">Generated Pages</h1>
-          <p className="text-muted-foreground mt-1">Browse and manage all pages created by your campaigns.</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-display">Generated Pages</h1>
+            <p className="text-muted-foreground mt-1 text-sm">Browse and manage all pages created by your campaigns.</p>
+          </div>
+          <div className="flex gap-2 items-center">
+            {pendingPages.length > 0 && (
+              <Button
+                size="sm"
+                className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:brightness-110 transition-all duration-200"
+                disabled={publishMutation.isPending}
+                onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
+              >
+                <Send className="h-3.5 w-3.5 mr-1.5" />
+                {publishMutation.isPending ? "Publishing..." : `Publish (${pendingPages.length})`}
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           <Select value={publishType} onValueChange={(v) => setPublishType(v as "page" | "product")}>
-            <SelectTrigger className="w-[130px] h-8 text-xs">
+            <SelectTrigger className="w-[110px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -338,36 +353,27 @@ export default function GeneratedPagesPage() {
               <SelectItem value="product"><FileText className="h-3 w-3 mr-1 inline" />As Product</SelectItem>
             </SelectContent>
           </Select>
-          {pendingPages.length > 0 && (
-            <Button
-              size="sm"
-              className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:brightness-110 transition-all duration-200"
-              disabled={publishMutation.isPending}
-              onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
-            >
-              <Send className="h-3.5 w-3.5 mr-1.5" />
-              {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
-            </Button>
-          )}
           <Button
             size="sm"
             variant="outline"
             onClick={() => exportPagesCsv(filtered, "generated-pages.csv")}
             disabled={filtered.length === 0}
+            className="h-8 text-xs"
           >
-            <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+            <Download className="h-3.5 w-3.5 mr-1" /> CSV
           </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={() => exportPagesJson(filtered, "generated-pages.json")}
             disabled={filtered.length === 0}
+            className="h-8 text-xs"
           >
-            <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
+            <Download className="h-3.5 w-3.5 mr-1" /> JSON
           </Button>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[160px] h-9 text-xs">
-              <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+            <SelectTrigger className="w-[130px] h-8 text-xs">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1 shrink-0" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -382,7 +388,7 @@ export default function GeneratedPagesPage() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[130px] h-9 text-xs">
+            <SelectTrigger className="w-[110px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -392,13 +398,13 @@ export default function GeneratedPagesPage() {
               <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
-          <div className="relative flex-1 sm:w-64 sm:flex-none">
+          <div className="relative flex-1 min-w-[140px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search pages..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 h-8 text-xs"
             />
           </div>
         </div>

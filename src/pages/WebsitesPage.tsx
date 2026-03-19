@@ -197,14 +197,14 @@ export default function WebsitesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-display">Websites</h1>
-          <p className="text-muted-foreground mt-1">Connect your websites for page publishing.</p>
+          <p className="text-muted-foreground mt-1 text-sm">Connect your websites for page publishing.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
+            <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97] w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" /> Connect Website
             </Button>
           </DialogTrigger>
@@ -275,20 +275,21 @@ export default function WebsitesPage() {
                   </div>
                 </>
               )}
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">Cancel</Button>
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => testConnectionMutation.mutate()}
                   disabled={!siteUrl || !siteType || testConnectionMutation.isPending}
                 >
                   {testConnectionMutation.isPending ? (
                     <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
                   ) : (
-                    <><Zap className="h-4 w-4 mr-1" /> Test Connection</>
+                    <><Zap className="h-4 w-4 mr-1" /> Test</>
                   )}
                 </Button>
-                <Button onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
+                <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
                   {createMutation.isPending ? "Connecting..." : "Connect"}
                 </Button>
               </div>

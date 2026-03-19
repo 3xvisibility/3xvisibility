@@ -509,23 +509,25 @@ export default function WebsiteDiscoveryPage() {
             <TabsContent value="url" className="space-y-3">
               <Label className="text-sm font-medium">Website URL</Label>
               <p className="text-xs text-muted-foreground">Enter a website URL to crawl and discover pages (up to {maxPages} pages, depth {maxDepth}).</p>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="https://example.com" value={url} onChange={(e) => setUrl(e.target.value)} className="pl-9" />
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => setShowSettings(!showSettings)}
-                  title="Scan settings"
-                >
-                  <Settings2 className="h-4 w-4" />
-                </Button>
-                <Button onClick={() => crawlUrlMutation.mutate(url)} disabled={!url.trim() || isCrawling} className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
-                  {isCrawling ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...</> : <><Compass className="mr-2 h-4 w-4" /> Scan</>}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => setShowSettings(!showSettings)}
+                    title="Scan settings"
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
+                  <Button onClick={() => crawlUrlMutation.mutate(url)} disabled={!url.trim() || isCrawling} className="flex-1 sm:flex-none transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
+                    {isCrawling ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...</> : <><Compass className="mr-2 h-4 w-4" /> Scan</>}
+                  </Button>
+                </div>
               </div>
 
               {/* Scan settings */}

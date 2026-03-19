@@ -255,45 +255,47 @@ export default function CampaignDetailPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {campaign.status === "draft" && (
             <>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => executeMutation.mutate({ action: "test" })}
                 disabled={executeMutation.isPending}
                 className="rounded-xl"
               >
-                <Eye className="mr-2 h-4 w-4" />
-                Test (1 Page)
+                <Eye className="mr-1.5 h-4 w-4" />
+                Test
               </Button>
               <Button
+                size="sm"
                 onClick={() => executeMutation.mutate({})}
                 disabled={executeMutation.isPending}
                 className="rounded-xl bg-gradient-primary hover:brightness-110"
               >
-                <Play className="mr-2 h-4 w-4" />
-                {executeMutation.isPending ? "Running..." : "Run Campaign"}
+                <Play className="mr-1.5 h-4 w-4" />
+                {executeMutation.isPending ? "Running..." : "Run"}
               </Button>
             </>
           )}
           {campaign.status === "processing" && (
             <>
-              <Button variant="outline" onClick={() => executeMutation.mutate({ action: "pause" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <Pause className="mr-2 h-4 w-4" /> Pause
+              <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({ action: "pause" })} disabled={executeMutation.isPending} className="rounded-xl">
+                <Pause className="mr-1.5 h-4 w-4" /> Pause
               </Button>
-              <Button variant="destructive" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <XCircle className="mr-2 h-4 w-4" /> Abort
+              <Button variant="destructive" size="sm" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
+                <XCircle className="mr-1.5 h-4 w-4" /> Abort
               </Button>
             </>
           )}
           {(campaign.status === "completed" || campaign.status === "failed") && (
             <>
-              <Button variant="outline" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
-                <RotateCcw className="mr-2 h-4 w-4" /> Re-generate
+              <Button variant="outline" size="sm" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
+                <RotateCcw className="mr-1.5 h-4 w-4" /> Re-generate
               </Button>
-              <Button variant="outline" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
-                <Play className="mr-2 h-4 w-4" /> Re-run (New)
+              <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
+                <Play className="mr-1.5 h-4 w-4" /> Re-run
               </Button>
             </>
           )}
@@ -322,10 +324,10 @@ export default function CampaignDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="overview" className="gap-1.5"><Layers className="h-3.5 w-3.5" /> Overview</TabsTrigger>
-          <TabsTrigger value="pages" className="gap-1.5"><FileText className="h-3.5 w-3.5" /> Generated Pages <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{pages.length}</Badge></TabsTrigger>
-          <TabsTrigger value="errors" className="gap-1.5"><AlertTriangle className="h-3.5 w-3.5" /> Errors <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5 bg-destructive/10 text-destructive">{errorPages.length + jobErrors.length}</Badge></TabsTrigger>
+        <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
+          <TabsTrigger value="overview" className="gap-1.5 text-xs"><Layers className="h-3.5 w-3.5" /> Overview</TabsTrigger>
+          <TabsTrigger value="pages" className="gap-1.5 text-xs"><FileText className="h-3.5 w-3.5" /> Pages <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{pages.length}</Badge></TabsTrigger>
+          <TabsTrigger value="errors" className="gap-1.5 text-xs"><AlertTriangle className="h-3.5 w-3.5" /> Errors <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5 bg-destructive/10 text-destructive">{errorPages.length + jobErrors.length}</Badge></TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
