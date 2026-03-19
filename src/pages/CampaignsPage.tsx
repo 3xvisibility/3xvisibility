@@ -709,6 +709,8 @@ export default function CampaignsPage() {
     setMaxRows("");
     setScheduleMode("now");
     setScheduledDate(undefined);
+    setRecurringInterval("weekly");
+    setRecurringEndDate(undefined);
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
     setAdCampaignId(""); setAdGroupId(""); setSeaDirectoryLevels("");
     setGeoCountry(""); setGeoRegion(""); setGeoCity(""); setGeoPostcode("");
