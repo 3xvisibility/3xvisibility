@@ -1,0 +1,2 @@
+UPDATE generation_jobs SET status = 'failed', completed_at = now() WHERE id = 'd1f1a4fa-e929-4d0c-8b4a-d3b9b8f1ea4e' AND status = 'running';
+UPDATE campaigns SET status = 'draft', is_paused = false, generation_completed_at = now() WHERE id = '43f3eed7-2d0b-4211-9de6-ee0cb819ce55' AND status = 'processing';
