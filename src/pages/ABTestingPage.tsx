@@ -316,13 +316,13 @@ export default function ABTestingPage() {
                 <div>
                   <p className="text-xs font-medium mb-1 text-muted-foreground">{variantALabel} Preview</p>
                   <div className="border rounded-md overflow-hidden h-40">
-                    <TemplatePreview content={variantAContent} />
+                    <TemplatePreview html={variantAContent} />
                   </div>
                 </div>
                 <div>
                   <p className="text-xs font-medium mb-1 text-muted-foreground">{variantBLabel} Preview</p>
                   <div className="border rounded-md overflow-hidden h-40">
-                    <TemplatePreview content={variantBContent} />
+                    <TemplatePreview html={variantBContent} />
                   </div>
                 </div>
               </div>
@@ -362,13 +362,13 @@ export default function ABTestingPage() {
                     <div>
                       <p className="text-sm font-medium mb-2">{viewTest.variant_a_label}</p>
                       <div className="border rounded-md overflow-hidden h-64">
-                        <TemplatePreview content={viewTest.variant_a_content} />
+                        <TemplatePreview html={viewTest.variant_a_content} />
                       </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium mb-2">{viewTest.variant_b_label}</p>
                       <div className="border rounded-md overflow-hidden h-64">
-                        <TemplatePreview content={viewTest.variant_b_content} />
+                        <TemplatePreview html={viewTest.variant_b_content} />
                       </div>
                     </div>
                   </div>
