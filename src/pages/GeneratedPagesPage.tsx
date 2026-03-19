@@ -277,7 +277,29 @@ export default function GeneratedPagesPage() {
     },
   });
 
-  const openSeoEditor = (page: GeneratedPage) => {
+  const translateMutation = useMutation({
+    mutationFn: async ({ pageIds, lang }: { pageIds: string[]; lang: string }) => {
+      const { data, error } = await supabase.functions.invoke("translate-content", {
+        body: { page_ids: pageIds, target_language: lang },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
+      setTranslateOpen(false);
+      setSelectedIds(new Set());
+      toast({
+        title: "Translation complete",
+        description: `${data.translated} page(s) translated, ${data.failed} failed.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Translation failed", description: err.message, variant: "destructive" });
+    },
+  });
+
     setSeoEditPage(page);
     setSeoForm({
       seo_title: (page as any).seo_title || "",
