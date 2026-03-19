@@ -329,6 +329,14 @@ export default function WorkspaceSettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Whitelabel Branding */}
+      {isOwner && (
+        <>
+          <Separator />
+          <WhitelabelBrandingCard workspaceId={wsId} onSaved={refetchWorkspaces} />
+        </>
+      )}
+
       {/* Audit Log */}
       {isAdminOrOwner && (
         <>
@@ -337,5 +345,166 @@ export default function WorkspaceSettingsPage() {
         </>
       )}
     </div>
+  );
+}
+
+function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
+  const { toast } = useToast();
+  const { branding } = useBranding();
+
+  const [appName, setAppName] = useState(branding.app_name || "");
+  const [logoUrl, setLogoUrl] = useState(branding.logo_url || "");
+  const [primaryColor, setPrimaryColor] = useState(branding.primary_color || "");
+  const [accentColor, setAccentColor] = useState(branding.accent_color || "");
+  const [faviconUrl, setFaviconUrl] = useState(branding.favicon_url || "");
+  const [hidePoweredBy, setHidePoweredBy] = useState(branding.hide_powered_by || false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setAppName(branding.app_name || "");
+    setLogoUrl(branding.logo_url || "");
+    setPrimaryColor(branding.primary_color || "");
+    setAccentColor(branding.accent_color || "");
+    setFaviconUrl(branding.favicon_url || "");
+    setHidePoweredBy(branding.hide_powered_by || false);
+  }, [branding]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const newBranding: BrandingConfig = {
+        app_name: appName.trim() || undefined,
+        logo_url: logoUrl.trim() || undefined,
+        primary_color: primaryColor.trim() || undefined,
+        accent_color: accentColor.trim() || undefined,
+        favicon_url: faviconUrl.trim() || undefined,
+        hide_powered_by: hidePoweredBy,
+      };
+      const { error } = await supabase
+        .from("workspaces")
+        .update({ branding: newBranding as any, updated_at: new Date().toISOString() })
+        .eq("id", workspaceId);
+      if (error) throw error;
+      onSaved();
+      toast({ title: "Branding saved", description: "Your whitelabel settings have been updated." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="shadow-surface">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Palette className="h-5 w-5 text-primary" />
+          Whitelabel / Agency Branding
+        </CardTitle>
+        <CardDescription>
+          Customize the app appearance for your clients. Set a custom name, logo, and color scheme.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* App Name */}
+        <div className="space-y-2">
+          <Label htmlFor="brand-name" className="flex items-center gap-1.5">
+            <Type className="h-3.5 w-3.5" /> App Name
+          </Label>
+          <Input
+            id="brand-name"
+            placeholder="e.g., My Agency SEO Tool"
+            value={appName}
+            onChange={(e) => setAppName(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">Replaces "PageGen" throughout the dashboard</p>
+        </div>
+
+        {/* Logo URL */}
+        <div className="space-y-2">
+          <Label htmlFor="brand-logo" className="flex items-center gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5" /> Logo URL
+          </Label>
+          <Input
+            id="brand-logo"
+            placeholder="https://example.com/logo.png"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+          />
+          {logoUrl && (
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+              <img src={logoUrl} alt="Logo preview" className="h-10 w-10 rounded-lg object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+              <span className="text-xs text-muted-foreground">Preview</span>
+            </div>
+          )}
+        </div>
+
+        {/* Colors */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="brand-primary">Primary Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="brand-primary"
+                placeholder="e.g., 217 91% 60%"
+                value={primaryColor}
+                onChange={(e) => setPrimaryColor(e.target.value)}
+                className="flex-1"
+              />
+              {primaryColor && (
+                <div
+                  className="h-10 w-10 rounded-lg border border-border shrink-0"
+                  style={{ backgroundColor: `hsl(${primaryColor})` }}
+                />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">HSL values (e.g., 217 91% 60%)</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="brand-accent">Accent Color</Label>
+            <div className="flex gap-2">
+              <Input
+                id="brand-accent"
+                placeholder="e.g., 262 83% 58%"
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+                className="flex-1"
+              />
+              {accentColor && (
+                <div
+                  className="h-10 w-10 rounded-lg border border-border shrink-0"
+                  style={{ backgroundColor: `hsl(${accentColor})` }}
+                />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">HSL values (e.g., 262 83% 58%)</p>
+          </div>
+        </div>
+
+        {/* Favicon */}
+        <div className="space-y-2">
+          <Label htmlFor="brand-favicon">Favicon URL</Label>
+          <Input
+            id="brand-favicon"
+            placeholder="https://example.com/favicon.ico"
+            value={faviconUrl}
+            onChange={(e) => setFaviconUrl(e.target.value)}
+          />
+        </div>
+
+        {/* Hide powered by */}
+        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+          <div>
+            <p className="text-sm font-medium">Hide "Powered by" branding</p>
+            <p className="text-xs text-muted-foreground">Remove any platform branding for a fully whitelabeled experience</p>
+          </div>
+          <Switch checked={hidePoweredBy} onCheckedChange={setHidePoweredBy} />
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+          {saving ? "Saving..." : "Save Branding"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
