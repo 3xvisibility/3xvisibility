@@ -1396,6 +1396,69 @@ Deno.serve(async (req) => {
       campaign_id: campaign_id,
     });
 
+    // Auto-publish pages to CMS when publish_mode is "published"
+    if (campaign.publish_mode === "published" && campaign.website_id && successCount > 0) {
+      try {
+        // Fetch all pending page IDs from this campaign
+        const { data: pendingPages } = await supabase
+          .from("generated_pages")
+          .select("id")
+          .eq("campaign_id", campaign_id)
+          .eq("status", "pending");
+
+        if (pendingPages && pendingPages.length > 0) {
+          const pageIds = pendingPages.map((p: any) => p.id);
+          console.log(`[GENERATE-PAGES] Auto-publishing ${pageIds.length} pages to CMS`);
+          await logEvent(supabase, campaign_id, user.id, "auto_publish_started",
+            `Auto-publishing ${pageIds.length} pages to connected website`);
+
+          // Process in chunks of 10 to avoid timeouts
+          const PUBLISH_CHUNK = 10;
+          let publishedCount = 0;
+          let publishFailedCount = 0;
+
+          for (let i = 0; i < pageIds.length; i += PUBLISH_CHUNK) {
+            const chunk = pageIds.slice(i, i + PUBLISH_CHUNK);
+            try {
+              const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
+              const publishRes = await fetch(publishUrl, {
+                method: "POST",
+                headers: {
+                  Authorization: authHeader,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  page_ids: chunk,
+                  publish_type: "page",
+                  website_id: campaign.website_id,
+                }),
+              });
+
+              if (publishRes.ok) {
+                const publishResult = await publishRes.json();
+                publishedCount += publishResult.published || 0;
+                publishFailedCount += publishResult.failed || 0;
+              } else {
+                const errText = await publishRes.text();
+                console.error(`[GENERATE-PAGES] Publish chunk failed:`, errText);
+                publishFailedCount += chunk.length;
+              }
+            } catch (pubErr) {
+              console.error(`[GENERATE-PAGES] Publish chunk error:`, pubErr);
+              publishFailedCount += chunk.length;
+            }
+          }
+
+          await logEvent(supabase, campaign_id, user.id, "auto_publish_completed",
+            `Auto-publish done: ${publishedCount} published, ${publishFailedCount} failed`);
+        }
+      } catch (pubErr) {
+        console.error("[GENERATE-PAGES] Auto-publish error:", pubErr);
+        await logEvent(supabase, campaign_id, user.id, "auto_publish_error",
+          `Auto-publish failed: ${pubErr instanceof Error ? pubErr.message : "Unknown error"}`);
+      }
+    }
+
     // Auto-generate sitemap if campaign has a website
     if (campaign.website_id) {
       try {
