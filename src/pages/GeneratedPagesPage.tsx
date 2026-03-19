@@ -652,6 +652,7 @@ export default function GeneratedPagesPage() {
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Source</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Scores</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Freshness</th>
                   <th className="p-4"></th>
                 </tr>
               </thead>
