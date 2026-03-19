@@ -216,6 +216,7 @@ const App = () => {
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </BrandingProvider>
       </WorkspaceProvider>
       </LanguageProvider>
     </QueryClientProvider>

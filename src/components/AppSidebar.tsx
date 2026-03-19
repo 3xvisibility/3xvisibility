@@ -170,7 +170,19 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
       <SidebarContent className="px-3 py-4">
-        {/* Workspace Switcher */}
+        {/* Branding / Workspace Switcher */}
+        {isWhitelabeled && !collapsed && (
+          <div className="mb-3 px-3 flex items-center gap-2.5">
+            {logoUrl ? (
+              <img src={logoUrl} alt={appName} className="h-7 w-7 rounded-lg object-contain shrink-0" />
+            ) : (
+              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Zap className="h-3.5 w-3.5 text-primary" />
+              </div>
+            )}
+            <span className="text-sm font-semibold truncate">{appName}</span>
+          </div>
+        )}
         <div className="mb-4">
           <WorkspaceSwitcher collapsed={collapsed} />
         </div>
