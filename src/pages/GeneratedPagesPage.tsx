@@ -482,6 +482,20 @@ export default function GeneratedPagesPage() {
               <Button size="sm" variant="outline" onClick={openBulkSeoEditor}>
                 <Tag className="h-3.5 w-3.5 mr-1.5" /> Bulk Edit SEO
               </Button>
+              <Select
+                onValueChange={(status) => {
+                  bulkStatusMutation.mutate({ ids: [...selectedIds], status });
+                }}
+              >
+                <SelectTrigger className="h-8 w-[130px] text-xs">
+                  <SelectValue placeholder="Set Status..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Set Pending</SelectItem>
+                  <SelectItem value="published">Set Published</SelectItem>
+                  <SelectItem value="failed">Set Failed</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 size="sm"
                 variant="outline"
