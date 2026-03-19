@@ -145,6 +145,7 @@ export default function TemplateScannerPage() {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [bodyHtml, setBodyHtml] = useState("");
   const [headStyles, setHeadStyles] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [mappings, setMappings] = useState<VariableMapping[]>([]);
   const [templateName, setTemplateName] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -155,7 +156,7 @@ export default function TemplateScannerPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [wpPages, setWpPages] = useState<WpPage[]>([]);
-  const [viewMode, setViewMode] = useState<"visual" | "blocks">("visual");
+  const [viewMode, setViewMode] = useState<"visual" | "blocks" | "terms">("visual");
   const [selectionPopover, setSelectionPopover] = useState<{
     position: { x: number; y: number };
     text: string;
