@@ -29,6 +29,7 @@ import IndexingPage from "./pages/IndexingPage";
 import ABTestingPage from "./pages/ABTestingPage";
 import ContentCalendarPage from "./pages/ContentCalendarPage";
 import PagePerformancePage from "./pages/PagePerformancePage";
+import SeoAuditPage from "./pages/SeoAuditPage";
 
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
