@@ -1552,7 +1552,7 @@ export default function CampaignsPage() {
                       {/* Schedule */}
                       <div className="space-y-2">
                         <Label className="text-xs font-medium">Schedule</Label>
-                        <RadioGroup value={scheduleMode} onValueChange={(v) => setScheduleMode(v as "now" | "later")} className="flex gap-4">
+                        <RadioGroup value={scheduleMode} onValueChange={(v) => setScheduleMode(v as "now" | "later" | "recurring")} className="flex flex-wrap gap-4">
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="now" id="sched-now" />
                             <Label htmlFor="sched-now" className="text-sm cursor-pointer">Run now</Label>
@@ -1561,32 +1561,93 @@ export default function CampaignsPage() {
                             <RadioGroupItem value="later" id="sched-later" />
                             <Label htmlFor="sched-later" className="text-sm cursor-pointer">Schedule later</Label>
                           </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="recurring" id="sched-recurring" />
+                            <Label htmlFor="sched-recurring" className="text-sm cursor-pointer">Recurring</Label>
+                          </div>
                         </RadioGroup>
-                        {scheduleMode === "later" && (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-60 justify-start text-left font-normal rounded-xl h-9 text-sm mt-1",
-                                  !scheduledDate && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {scheduledDate ? format(scheduledDate, "PPP 'at' HH:mm") : "Pick a date & time"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={scheduledDate}
-                                onSelect={setScheduledDate}
-                                disabled={(date) => date < new Date()}
-                                initialFocus
-                                className={cn("p-3 pointer-events-auto")}
-                              />
-                            </PopoverContent>
-                          </Popover>
+                        {(scheduleMode === "later" || scheduleMode === "recurring") && (
+                          <div className="space-y-3 mt-2">
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1 block">
+                                {scheduleMode === "recurring" ? "First run date" : "Scheduled date"}
+                              </Label>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-60 justify-start text-left font-normal rounded-xl h-9 text-sm",
+                                      !scheduledDate && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {scheduledDate ? format(scheduledDate, "PPP 'at' HH:mm") : "Pick a date & time"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    selected={scheduledDate}
+                                    onSelect={setScheduledDate}
+                                    disabled={(date) => date < new Date()}
+                                    initialFocus
+                                    className={cn("p-3 pointer-events-auto")}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+
+                            {scheduleMode === "recurring" && (
+                              <>
+                                <div>
+                                  <Label className="text-xs text-muted-foreground mb-1 block">Repeat interval</Label>
+                                  <Select value={recurringInterval} onValueChange={(v) => setRecurringInterval(v as any)}>
+                                    <SelectTrigger className="w-48 h-9 text-sm rounded-xl">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="daily">Every day</SelectItem>
+                                      <SelectItem value="weekly">Every week</SelectItem>
+                                      <SelectItem value="biweekly">Every 2 weeks</SelectItem>
+                                      <SelectItem value="monthly">Every month</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label className="text-xs text-muted-foreground mb-1 block">End date (optional)</Label>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-60 justify-start text-left font-normal rounded-xl h-9 text-sm",
+                                          !recurringEndDate && "text-muted-foreground"
+                                        )}
+                                      >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {recurringEndDate ? format(recurringEndDate, "PPP") : "No end date (runs indefinitely)"}
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                      <Calendar
+                                        mode="single"
+                                        selected={recurringEndDate}
+                                        onSelect={setRecurringEndDate}
+                                        disabled={(date) => date < new Date()}
+                                        initialFocus
+                                        className={cn("p-3 pointer-events-auto")}
+                                      />
+                                    </PopoverContent>
+                                  </Popover>
+                                </div>
+                                <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
+                                  <p className="font-medium text-foreground mb-1">🔄 Recurring generation</p>
+                                  <p>This campaign will automatically re-generate pages <strong className="text-foreground">{recurringInterval}</strong> starting {scheduledDate ? format(scheduledDate, "PPP") : "on the selected date"}{recurringEndDate ? ` until ${format(recurringEndDate, "PPP")}` : ""}.</p>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
 
