@@ -75,22 +75,54 @@ Deno.serve(async (req) => {
 
     for (const campaign of dueCampaigns) {
       try {
-        // Clear scheduled_at so it won't be picked up again
-        await supabase
+        // Check for recurring schedule
+        const { data: fullCampaign } = await supabase
           .from("campaigns")
-          .update({ scheduled_at: null, status: "processing" })
-          .eq("id", campaign.id);
+          .select("recurring_schedule")
+          .eq("id", campaign.id)
+          .single();
 
-        // Invoke generate-pages with the service role (no user JWT needed)
-        // We call the function URL directly with the user's anon key + service auth
+        const recurring = fullCampaign?.recurring_schedule as { interval?: string; end_date?: string | null; enabled?: boolean } | null;
+
+        if (recurring && recurring.enabled) {
+          // Calculate next run date
+          const intervalMap: Record<string, number> = {
+            daily: 1, weekly: 7, biweekly: 14, monthly: 30,
+          };
+          const days = intervalMap[recurring.interval || "weekly"] || 7;
+          const nextRun = new Date(Date.now() + days * 86400000);
+
+          // Check if end_date has passed
+          const pastEnd = recurring.end_date && new Date(recurring.end_date) < nextRun;
+
+          if (pastEnd) {
+            // Disable recurring, clear schedule
+            await supabase
+              .from("campaigns")
+              .update({ scheduled_at: null, status: "processing", recurring_schedule: { ...recurring, enabled: false } })
+              .eq("id", campaign.id);
+          } else {
+            // Schedule next run, set current to processing
+            await supabase
+              .from("campaigns")
+              .update({ scheduled_at: nextRun.toISOString(), status: "processing" })
+              .eq("id", campaign.id);
+          }
+        } else {
+          // Non-recurring: clear scheduled_at
+          await supabase
+            .from("campaigns")
+            .update({ scheduled_at: null, status: "processing" })
+            .eq("id", campaign.id);
+        }
+
+        // Invoke generate-pages
         const fnUrl = `${supabaseUrl}/functions/v1/generate-pages`;
         const response = await fetch(fnUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${anonKey}`,
-            // Pass user context via a custom service-level approach:
-            // generate-pages validates auth, so we use service key instead
             "x-service-role-key": serviceKey,
           },
           body: JSON.stringify({ campaign_id: campaign.id }),
@@ -100,14 +132,21 @@ Deno.serve(async (req) => {
 
         if (!response.ok) {
           console.error(`Failed to trigger campaign ${campaign.id}:`, body);
-          // Revert status on failure
           await supabase
             .from("campaigns")
             .update({ status: "failed" })
             .eq("id", campaign.id);
           results.push({ campaign_id: campaign.id, name: campaign.name, success: false, error: body });
         } else {
-          console.log(`Triggered campaign ${campaign.id} (${campaign.name})`);
+          console.log(`Triggered campaign ${campaign.id} (${campaign.name})${recurring?.enabled ? ` [recurring: ${recurring.interval}]` : ""}`);
+          
+          // For recurring campaigns, re-queue after generation completes
+          if (recurring?.enabled) {
+            // The campaign was already set to "processing" with a future scheduled_at
+            // After completion, the generate-pages function will set status back to "queued"
+            // if scheduled_at is set in the future
+          }
+          
           results.push({ campaign_id: campaign.id, name: campaign.name, success: true });
         }
       } catch (err: any) {
