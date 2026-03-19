@@ -258,11 +258,16 @@ export default function TemplateScannerPage() {
         templateContent = templateContent.replace(regex, `{${mapping.variable}}`);
       }
 
+      // Wrap with head styles to preserve original design
+      const fullTemplate = headStyles
+        ? `<!-- STYLES -->\n${headStyles}\n<!-- /STYLES -->\n${templateContent}`
+        : templateContent;
+
       const variables = [...new Set(acceptedMappings.map((m) => `{${m.variable}}`))];
 
       const { error } = await supabase.from("templates").insert({
         name: templateName,
-        content: templateContent,
+        content: fullTemplate,
         variables,
         user_id: user.id,
         workspace_id: wsId,
