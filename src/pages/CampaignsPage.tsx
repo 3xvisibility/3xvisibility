@@ -60,7 +60,17 @@ export default function CampaignsPage() {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
-  const [campaignType, setCampaignType] = useState<"seo" | "sea" | "geo">("seo");
+  const [campaignTypes, setCampaignTypes] = useState<("seo" | "sea" | "geo")[]>(["seo"]);
+  const campaignType = campaignTypes[0] || "seo";
+  const toggleCampaignType = (val: "seo" | "sea" | "geo") => {
+    setCampaignTypes(prev => {
+      if (prev.includes(val)) {
+        if (prev.length === 1) return prev; // must keep at least one
+        return prev.filter(t => t !== val);
+      }
+      return [...prev, val];
+    });
+  };
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [linkDialogCampaign, setLinkDialogCampaign] = useState<Campaign | null>(null);
