@@ -205,6 +205,7 @@ export default function TemplateScannerPage() {
         success: boolean;
         url: string;
         bodyHtml: string;
+        headStyles?: string;
         blocks: ContentBlock[];
         suggestions: VariableSuggestion[];
       };
@@ -212,6 +213,7 @@ export default function TemplateScannerPage() {
     onSuccess: (data) => {
       setBlocks(data.blocks);
       setBodyHtml(data.bodyHtml);
+      setHeadStyles(data.headStyles || "");
       const initialMappings = data.suggestions.map((s) => ({
         ...s,
         accepted: true,
