@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Rocket, FileText, Search, BarChart3, ChevronRight, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,6 +47,7 @@ const steps: OnboardingStep[] = [
 const STORAGE_KEY = "onboarding-completed";
 
 export function OnboardingTour() {
+  const { pathname } = useLocation();
   const [currentStep, setCurrentStep] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -53,12 +55,14 @@ export function OnboardingTour() {
 
   useEffect(() => {
     const completed = localStorage.getItem(STORAGE_KEY);
-    if (!completed) {
-      // Delay start to let the page render
-      const timer = setTimeout(() => setIsActive(true), 1200);
-      return () => clearTimeout(timer);
+    if (completed || pathname !== "/dashboard") {
+      setIsActive(false);
+      return;
     }
-  }, []);
+
+    const timer = setTimeout(() => setIsActive(true), 1200);
+    return () => clearTimeout(timer);
+  }, [pathname]);
 
   const measureTarget = useCallback(() => {
     if (!isActive) return;
