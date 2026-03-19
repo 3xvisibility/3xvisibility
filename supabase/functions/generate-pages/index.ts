@@ -1622,10 +1622,9 @@ Deno.serve(async (req) => {
       campaign_id: campaign_id,
     });
 
-    // Auto-publish pages to CMS when publish_mode is "published"
+    // Trigger post-generation work asynchronously so campaign completion is not blocked.
     if (campaign.publish_mode === "published" && campaign.website_id && successCount > 0) {
       try {
-        // Fetch all pending page IDs from this campaign
         const { data: pendingPages } = await supabase
           .from("generated_pages")
           .select("id")
@@ -1634,72 +1633,58 @@ Deno.serve(async (req) => {
 
         if (pendingPages && pendingPages.length > 0) {
           const pageIds = pendingPages.map((p: any) => p.id);
-          console.log(`[GENERATE-PAGES] Auto-publishing ${pageIds.length} pages to CMS`);
-          await logEvent(supabase, campaign_id, user.id, "auto_publish_started",
-            `Auto-publishing ${pageIds.length} pages to connected website`);
-
-          // Process in chunks of 10 to avoid timeouts
+          const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
           const PUBLISH_CHUNK = 10;
-          let publishedCount = 0;
-          let publishFailedCount = 0;
+
+          console.log(`[GENERATE-PAGES] Queueing background publish for ${pageIds.length} pages`);
+          await logEvent(
+            supabase,
+            campaign_id,
+            user.id,
+            "auto_publish_started",
+            `Queued auto-publish for ${pageIds.length} pages to the connected website`
+          );
 
           for (let i = 0; i < pageIds.length; i += PUBLISH_CHUNK) {
             const chunk = pageIds.slice(i, i + PUBLISH_CHUNK);
-            try {
-              const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
-              const publishRes = await fetch(publishUrl, {
-                method: "POST",
-                headers: {
-                  Authorization: authHeader,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  page_ids: chunk,
-                  publish_type: "page",
-                  website_id: campaign.website_id,
-                }),
-              });
-
-              if (publishRes.ok) {
-                const publishResult = await publishRes.json();
-                publishedCount += publishResult.published || 0;
-                publishFailedCount += publishResult.failed || 0;
-              } else {
-                const errText = await publishRes.text();
-                console.error(`[GENERATE-PAGES] Publish chunk failed:`, errText);
-                publishFailedCount += chunk.length;
-              }
-            } catch (pubErr) {
-              console.error(`[GENERATE-PAGES] Publish chunk error:`, pubErr);
-              publishFailedCount += chunk.length;
-            }
+            triggerBackgroundFunction(
+              publishUrl,
+              {
+                Authorization: authHeader,
+                "Content-Type": "application/json",
+              },
+              {
+                page_ids: chunk,
+                publish_type: "page",
+                website_id: campaign.website_id,
+              },
+              "publish-pages"
+            );
           }
-
-          await logEvent(supabase, campaign_id, user.id, "auto_publish_completed",
-            `Auto-publish done: ${publishedCount} published, ${publishFailedCount} failed`);
         }
       } catch (pubErr) {
-        console.error("[GENERATE-PAGES] Auto-publish error:", pubErr);
-        await logEvent(supabase, campaign_id, user.id, "auto_publish_error",
-          `Auto-publish failed: ${pubErr instanceof Error ? pubErr.message : "Unknown error"}`);
+        console.error("[GENERATE-PAGES] Auto-publish queue error:", pubErr);
+        await logEvent(
+          supabase,
+          campaign_id,
+          user.id,
+          "auto_publish_error",
+          `Auto-publish could not be queued: ${pubErr instanceof Error ? pubErr.message : "Unknown error"}`
+        );
       }
     }
 
-    // Auto-generate sitemap if campaign has a website
     if (campaign.website_id) {
-      try {
-        const sitemapUrl = `${supabaseUrl}/functions/v1/generate-sitemap`;
-        await fetch(sitemapUrl, {
-          method: "POST",
-          headers: {
-            Authorization: authHeader,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ website_id: campaign.website_id }),
-        });
-      } catch (e) {
-        console.error("Auto-sitemap generation failed:", e);
-      }
+      const sitemapUrl = `${supabaseUrl}/functions/v1/generate-sitemap`;
+      triggerBackgroundFunction(
+        sitemapUrl,
+        {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        { website_id: campaign.website_id },
+        "generate-sitemap"
+      );
 
       try {
         const { data: webConfig } = await supabase
@@ -1710,17 +1695,18 @@ Deno.serve(async (req) => {
 
         if (webConfig?.google_indexing_enabled) {
           const indexingUrl = `${supabaseUrl}/functions/v1/google-indexing`;
-          await fetch(indexingUrl, {
-            method: "POST",
-            headers: {
+          triggerBackgroundFunction(
+            indexingUrl,
+            {
               Authorization: authHeader,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ action: "auto-submit", website_id: campaign.website_id }),
-          });
+            { action: "auto-submit", website_id: campaign.website_id },
+            "google-indexing"
+          );
         }
       } catch (e) {
-        console.error("Auto-indexing failed:", e);
+        console.error("Auto-indexing queue failed:", e);
       }
     }
 
@@ -1731,11 +1717,42 @@ Deno.serve(async (req) => {
       total: csvRows.length,
       ai_generations_used: aiGenerationsUsed,
       job_id: jobId,
+      publishing_queued: campaign.publish_mode === "published" && campaign.website_id && successCount > 0,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
     console.error("[GENERATE-PAGES] Fatal error:", err.message, err.stack);
+
+    if (supabase && activeCampaignId) {
+      const failedAt = new Date().toISOString();
+      try {
+        await supabase.from("campaigns").update({
+          status: "failed",
+          generation_completed_at: failedAt,
+          is_paused: false,
+        }).eq("id", activeCampaignId);
+
+        const { data: latestActiveJob } = await supabase
+          .from("generation_jobs")
+          .select("id")
+          .eq("campaign_id", activeCampaignId)
+          .in("status", ["running", "pending", "paused"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (latestActiveJob?.id) {
+          await updateJob(supabase, latestActiveJob.id, {
+            status: "failed",
+            completed_at: failedAt,
+          });
+        }
+      } catch (cleanupErr) {
+        console.error("[GENERATE-PAGES] Fatal cleanup failed:", cleanupErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({ error: err.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
