@@ -17,6 +17,7 @@ import {
   Users,
   Database,
   Lock,
+  Store,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
