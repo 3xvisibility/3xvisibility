@@ -363,7 +363,7 @@ export default function TemplateMarketplacePage() {
       return {
         id: st.id,
         shared_id: st.id,
-        name: st.author_name ? `${st.author_name}'s ${st.category}` : st.id,
+        name: st.description ? st.description.slice(0, 40) : `Template by ${st.author_name || "Anonymous"}`,
         description: st.description,
         content: st.content,
         variables: st.variables || [],
@@ -377,7 +377,6 @@ export default function TemplateMarketplacePage() {
         seo_description_pattern: st.seo_description_pattern,
         schema_type: st.schema_type,
         isShared: true,
-        name: st.description ? st.description.slice(0, 40) : `Template by ${st.author_name}`,
       };
     });
   }, [sharedTemplates, allRatings]);
