@@ -395,7 +395,7 @@ ${highlightedHtml}
           />
         </ScrollArea>
       ) : (
-        <div className="flex-1 border rounded-lg overflow-hidden bg-white relative">
+        <div data-tour="template-preview" className="flex-1 border rounded-lg overflow-hidden bg-white relative">
           <iframe
             ref={iframeRef}
             srcDoc={previewDoc}
