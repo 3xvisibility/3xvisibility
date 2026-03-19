@@ -214,7 +214,7 @@ export function TemplateEditorTour({ active, restartKey }: { active: boolean; re
               </div>
 
               <p className="text-xs text-muted-foreground leading-relaxed">
-                {step.description}
+                {step.richDescription || step.description}
               </p>
 
               <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
