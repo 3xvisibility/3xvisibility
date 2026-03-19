@@ -710,6 +710,25 @@ export default function GeneratedPagesPage() {
                           </div>
                         </div>
                       </td>
+                      <td className="p-4 hidden lg:table-cell">
+                        {(() => {
+                          const freshness = calculateFreshness(page.created_at, page.status);
+                          return (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className={`text-[10px] ${freshness.color}`}>
+                                    {freshness.label} ({freshness.ageDays}d)
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-xs">{freshness.tip}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
+                      </td>
                       <td className="p-4">
                         <div className="flex gap-1">
                           {page.status === "pending" && (
