@@ -935,13 +935,13 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
 
               {/* Template Preview Tab — Visual by default */}
               <TabsContent value="preview" className="flex-1 overflow-hidden mt-2 flex flex-col">
+                <TemplateEditorTour active={step === "edit"} />
                 <TemplatePreviewPane
                   templateHtml={templateHtml}
                   variables={variables}
                   onChange={setTemplateHtml}
                   onAddVariable={(name, original) => {
                     setVariables((prev) => {
-                      // Don't add duplicate
                       if (prev.some((v) => v.name === name)) return prev;
                       return [...prev, { name, original, values: [original] }];
                     });
