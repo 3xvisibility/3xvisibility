@@ -233,8 +233,9 @@ export function OnboardingTour() {
               {/* Actions */}
               <div className="flex items-center justify-between pt-1">
                 <button
-                  onClick={skip}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); skip(); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors py-2 px-1 -ml-1 cursor-pointer active:opacity-70"
                 >
                   Skip tour
                 </button>
