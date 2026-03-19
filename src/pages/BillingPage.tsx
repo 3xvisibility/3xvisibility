@@ -425,7 +425,7 @@ export default function BillingPage() {
       <Separator />
 
       {/* Feature comparison table */}
-      <Card className="shadow-surface border-0 overflow-hidden">
+      <Card className="shadow-surface border-0 overflow-hidden hidden md:block">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-primary" />

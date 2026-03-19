@@ -275,20 +275,21 @@ export default function WebsitesPage() {
                   </div>
                 </>
               )}
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">Cancel</Button>
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => testConnectionMutation.mutate()}
                   disabled={!siteUrl || !siteType || testConnectionMutation.isPending}
                 >
                   {testConnectionMutation.isPending ? (
                     <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
                   ) : (
-                    <><Zap className="h-4 w-4 mr-1" /> Test Connection</>
+                    <><Zap className="h-4 w-4 mr-1" /> Test</>
                   )}
                 </Button>
-                <Button onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
+                <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
                   {createMutation.isPending ? "Connecting..." : "Connect"}
                 </Button>
               </div>

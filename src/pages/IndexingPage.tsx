@@ -236,9 +236,9 @@ export default function IndexingPage() {
           <h1 className="text-display">Google Indexing</h1>
           <p className="text-muted-foreground mt-1">Submit and track URL indexing via Google Indexing API.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="flex-1 sm:w-[200px]">
               <SelectValue placeholder="Select website" />
             </SelectTrigger>
             <SelectContent>
@@ -252,7 +252,7 @@ export default function IndexingPage() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => setConfigOpen(true)} title="Configure Google Indexing">
+          <Button variant="outline" size="icon" className="shrink-0" onClick={() => setConfigOpen(true)} title="Configure Google Indexing">
             <Settings2 className="h-4 w-4" />
           </Button>
         </div>

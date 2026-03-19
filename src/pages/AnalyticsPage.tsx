@@ -375,17 +375,17 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-display flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
             Campaign Analytics
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Track generation success rates, publishing performance, and SEO quality.
+          <p className="text-muted-foreground mt-1 text-sm">
+            Track generation success, publishing, and SEO quality.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={pages.length === 0}>
             <Download className="mr-1.5 h-3.5 w-3.5" /> CSV
           </Button>
@@ -393,7 +393,7 @@ export default function AnalyticsPage() {
             <Download className="mr-1.5 h-3.5 w-3.5" /> JSON
           </Button>
           <Button variant="outline" size="sm" onClick={exportPDF} disabled={pages.length === 0}>
-            <FileDown className="mr-1.5 h-3.5 w-3.5" /> PDF Report
+            <FileDown className="mr-1.5 h-3.5 w-3.5" /> PDF
           </Button>
         </div>
       </div>
