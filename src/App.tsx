@@ -240,6 +240,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/performance"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><PagePerformancePage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
