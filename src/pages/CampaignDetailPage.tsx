@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
+import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +98,21 @@ export default function CampaignDetailPage() {
         .single();
       if (error) throw error;
       return data;
+    },
+  });
+
+  // Fetch template content for live preview
+  const { data: templateContent } = useQuery({
+    queryKey: ["template-content", campaign?.template_id],
+    enabled: !!campaign?.template_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("templates")
+        .select("content")
+        .eq("id", campaign!.template_id!)
+        .single();
+      if (error) throw error;
+      return data?.content || "";
     },
   });
 
@@ -874,6 +890,14 @@ export default function CampaignDetailPage() {
 
           {/* Spintax Preview */}
           <SpintaxPreview />
+
+          {/* Live Variable Preview */}
+          {campaign.template_id && templateContent && (
+            <LiveVariablePreview
+              templateContent={templateContent}
+              csvData={(campaign.csv_data as Record<string, string>[]) || []}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-4">

@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2 } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ import {
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useDragReorder } from "@/hooks/use-drag-reorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TemplateVersionHistory, saveVersion, type TemplateVersion } from "@/components/templates/TemplateVersionHistory";
 
 type Template = Tables<"templates">;
 
@@ -217,6 +218,14 @@ export default function TemplatesPage() {
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!editingTemplate) throw new Error("No template to update");
+      // Save current version before overwriting
+      saveVersion(editingTemplate.id, {
+        name: editingTemplate.name,
+        content: editingTemplate.content,
+        variables: editingTemplate.variables || [],
+        seo_title_pattern: (editingTemplate as any).seo_title_pattern || "",
+        seo_description_pattern: (editingTemplate as any).seo_description_pattern || "",
+      });
       const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
       const { error } = await supabase.from("templates").update({
         name,
@@ -269,12 +278,16 @@ export default function TemplatesPage() {
         variables: tpl.variables,
         user_id: user.id,
         workspace_id: wsId,
-      });
+        seo_title_pattern: (tpl as any).seo_title_pattern || "",
+        seo_description_pattern: (tpl as any).seo_description_pattern || "",
+        schema_type: (tpl as any).schema_type || "WebPage",
+        schema_config: (tpl as any).schema_config || {},
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Template duplicated" });
+      toast({ title: "Template duplicated", description: "All settings including SEO patterns and schema have been copied." });
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -903,6 +916,19 @@ export default function TemplatesPage() {
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
+                  <TemplateVersionHistory
+                    templateId={tpl.id}
+                    onRestore={(version) => {
+                      setEditingTemplate(tpl);
+                      setName(version.name);
+                      setContent(version.content);
+                      setBlocks(htmlToBlocks(version.content));
+                      setActiveEditorTab("visual");
+                      setSeoTitlePattern(version.seo_title_pattern || "");
+                      setSeoDescriptionPattern(version.seo_description_pattern || "");
+                      toast({ title: "Version restored", description: "Review and save to confirm." });
+                    }}
+                  />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {(tpl.variables || []).map((v) => (
