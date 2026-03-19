@@ -532,37 +532,99 @@ export default function CampaignDetailPage() {
 
         {/* SETTINGS TAB */}
         <TabsContent value="settings" className="space-y-6">
-          {/* Directory Structure */}
-          <Card className="border-0 shadow-surface">
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FolderTree className="h-4 w-4 text-primary" /> Directory Structure
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-xs text-muted-foreground">
-                Create hierarchical URL paths like <code className="text-[11px] bg-muted px-1 py-0.5 rounded">/state/county/city/page-slug</code> by specifying CSV columns for each level.
-              </p>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Hierarchy Levels (comma-separated column names)</Label>
-                <Input
-                  placeholder="e.g. state, county, city"
-                  defaultValue={((campaign as any).directory_structure as any)?.levels?.join(", ") || ""}
-                  onBlur={async (e) => {
-                    const levels = e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean);
-                    await supabase.from("campaigns").update({
-                      directory_structure: levels.length > 0 ? { levels, separator: "/" } : null,
-                    } as any).eq("id", id!);
-                    queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
-                    toast({ title: levels.length > 0 ? "Directory structure saved" : "Directory structure cleared" });
-                  }}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Example: with levels <code className="bg-muted px-1 rounded">state, city</code> and a page titled "Best Plumber", the slug becomes <code className="bg-muted px-1 rounded">/california/los-angeles/best-plumber</code>
+          {/* Directory Structure Builder */}
+          <DirectoryStructureBuilder
+            campaignId={id!}
+            directoryStructure={(campaign as any).directory_structure as any}
+            csvHeaders={(() => {
+              const csvData = campaign.csv_data as any[];
+              if (csvData && csvData.length > 0) return Object.keys(csvData[0]);
+              return [];
+            })()}
+            onSave={async (structure) => {
+              await supabase.from("campaigns").update({
+                directory_structure: structure,
+              } as any).eq("id", id!);
+              queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+              toast({ title: structure ? "Directory structure saved" : "Directory structure cleared" });
+            }}
+          />
+
+          {/* SEA Ad Group Mapping */}
+          {campaign.campaign_type === "sea" && (
+            <Card className="border-0 shadow-surface">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-primary" /> Google Ads Mapping
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-xs text-muted-foreground">
+                  Map CSV columns to Google Ads identifiers for tracking. Use <code className="bg-muted px-1 rounded text-[11px]">{"{column}"}</code> syntax for dynamic values.
                 </p>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Ad Campaign ID</Label>
+                    <Input
+                      placeholder="{ad_campaign_id} or fixed value"
+                      defaultValue={((campaign as any).utm_settings as any)?.ad_campaign_id || ""}
+                      onBlur={async (e) => {
+                        const current = ((campaign as any).utm_settings || {}) as any;
+                        await supabase.from("campaigns").update({
+                          utm_settings: { ...current, ad_campaign_id: e.target.value || null },
+                        } as any).eq("id", id!);
+                        queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Ad Group ID</Label>
+                    <Input
+                      placeholder="{ad_group_id} or fixed value"
+                      defaultValue={((campaign as any).utm_settings as any)?.ad_group_id || ""}
+                      onBlur={async (e) => {
+                        const current = ((campaign as any).utm_settings || {}) as any;
+                        await supabase.from("campaigns").update({
+                          utm_settings: { ...current, ad_group_id: e.target.value || null },
+                        } as any).eq("id", id!);
+                        queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">utm_source</Label>
+                    <Input
+                      placeholder="google"
+                      defaultValue={((campaign as any).utm_settings as any)?.utm_source || ""}
+                      onBlur={async (e) => {
+                        const current = ((campaign as any).utm_settings || {}) as any;
+                        await supabase.from("campaigns").update({
+                          utm_settings: { ...current, utm_source: e.target.value || null },
+                        } as any).eq("id", id!);
+                        queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">utm_medium</Label>
+                    <Input
+                      placeholder="cpc"
+                      defaultValue={((campaign as any).utm_settings as any)?.utm_medium || ""}
+                      onBlur={async (e) => {
+                        const current = ((campaign as any).utm_settings || {}) as any;
+                        await supabase.from("campaigns").update({
+                          utm_settings: { ...current, utm_medium: e.target.value || null },
+                        } as any).eq("id", id!);
+                        queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
+                      }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Drip Feed / Scheduling */}
           <Card className="border-0 shadow-surface">
