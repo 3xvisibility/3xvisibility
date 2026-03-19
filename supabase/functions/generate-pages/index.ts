@@ -202,7 +202,7 @@ function processLoops(content: string, vars: Record<string, string>): string {
     (_match, varName, loopBlock) => {
       const value = vars[varName] || vars[varName.toLowerCase()];
       if (!value) return "";
-      const items = value.split(",").map(s => s.trim()).filter(Boolean);
+      const items = value.split(",").map((s) => s.trim()).filter(Boolean);
       return items.map((item, index) =>
         loopBlock
           .replace(/\{\{this\}\}/gi, item)
@@ -211,6 +211,110 @@ function processLoops(content: string, vars: Record<string, string>): string {
       ).join("\n");
     }
   );
+}
+
+function splitCsvRecords(rawContent: string): string[] {
+  const normalized = rawContent.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const records: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < normalized.length; i++) {
+    const char = normalized[i];
+    const nextChar = normalized[i + 1];
+
+    if (char === '"') {
+      current += char;
+      if (inQuotes && nextChar === '"') {
+        current += nextChar;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "\n" && !inQuotes) {
+      if (current.trim()) records.push(current);
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.trim()) records.push(current);
+  return records;
+}
+
+function parseCsvLine(line: string, delimiter: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === delimiter && !inQuotes) {
+      values.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values.map((value) => value.replace(/^['"]|['"]$/g, ""));
+}
+
+function parseCsvRawContent(rawContent: string): Record<string, string>[] {
+  const records = splitCsvRecords(rawContent).filter((record) => record.trim());
+  if (records.length <= 1) return [];
+
+  const firstLine = records[0];
+  let delimiter = ",";
+  if (firstLine.includes("\t")) delimiter = "\t";
+  else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
+  else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
+
+  const headers = parseCsvLine(firstLine, delimiter);
+  return records
+    .slice(1)
+    .map((record) => parseCsvLine(record, delimiter))
+    .filter((values) => values.some((value) => value.length > 0))
+    .map((values) =>
+      headers.reduce((acc: Record<string, string>, header, index) => {
+        acc[header] = values[index] || "";
+        return acc;
+      }, {})
+    );
+}
+
+function triggerBackgroundFunction(
+  url: string,
+  headers: HeadersInit,
+  body: Record<string, unknown>,
+  label: string
+) {
+  fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  }).catch((error) => {
+    console.error(`[GENERATE-PAGES] Background ${label} failed to start:`, error);
+  });
 }
 
 // Build JSON-LD structured data based on campaign type and row data
@@ -563,6 +667,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let activeCampaignId: string | null = null;
+  let supabase: ReturnType<typeof createClient> | null = null;
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -574,7 +681,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Support service-role calls from the scheduled runner
     const serviceRoleHeader = req.headers.get("x-service-role-key");
@@ -598,8 +705,9 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-     console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields }));
+    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields }));
     const { campaign_id, action, test_mode, overwrite_fields } = body;
+    activeCampaignId = campaign_id ?? null;
     // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
     const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
 
@@ -704,25 +812,20 @@ Deno.serve(async (req) => {
     let csvRows: Record<string, string>[] = [];
     const { data: csvFile } = await supabase
       .from("campaign_csv_files")
-      .select("raw_content, headers")
+      .select("raw_content, headers, row_count")
       .eq("campaign_id", campaign_id)
       .maybeSingle();
 
     if (csvFile?.raw_content) {
-      // Parse raw CSV text
-      const lines = (csvFile.raw_content as string).split("\n").filter((l: string) => l.trim());
-      if (lines.length > 1) {
-        const firstLine = lines[0];
-        let delimiter = ",";
-        if (firstLine.includes("\t")) delimiter = "\t";
-        else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
-        else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
+      const parsedRows = parseCsvRawContent(csvFile.raw_content as string);
+      const expectedRowCount = typeof csvFile.row_count === "number" ? csvFile.row_count : null;
 
-        const headers = firstLine.split(delimiter).map((h: string) => h.trim().replace(/^["']|["']$/g, ""));
-        csvRows = lines.slice(1).map((line: string) => {
-          const values = line.split(delimiter).map((v: string) => v.trim().replace(/^["']|["']$/g, ""));
-          return headers.reduce((acc: Record<string, string>, h: string, i: number) => ({ ...acc, [h]: values[i] || "" }), {});
-        });
+      if (!expectedRowCount || parsedRows.length === expectedRowCount) {
+        csvRows = parsedRows;
+      } else {
+        console.warn(
+          `[GENERATE-PAGES] CSV parse mismatch for campaign ${campaign_id}: parsed ${parsedRows.length}, expected ${expectedRowCount}. Falling back to inline csv_data.`
+        );
       }
     }
 
@@ -1523,10 +1626,9 @@ Deno.serve(async (req) => {
       campaign_id: campaign_id,
     });
 
-    // Auto-publish pages to CMS when publish_mode is "published"
+    // Trigger post-generation work asynchronously so campaign completion is not blocked.
     if (campaign.publish_mode === "published" && campaign.website_id && successCount > 0) {
       try {
-        // Fetch all pending page IDs from this campaign
         const { data: pendingPages } = await supabase
           .from("generated_pages")
           .select("id")
@@ -1535,72 +1637,58 @@ Deno.serve(async (req) => {
 
         if (pendingPages && pendingPages.length > 0) {
           const pageIds = pendingPages.map((p: any) => p.id);
-          console.log(`[GENERATE-PAGES] Auto-publishing ${pageIds.length} pages to CMS`);
-          await logEvent(supabase, campaign_id, user.id, "auto_publish_started",
-            `Auto-publishing ${pageIds.length} pages to connected website`);
-
-          // Process in chunks of 10 to avoid timeouts
+          const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
           const PUBLISH_CHUNK = 10;
-          let publishedCount = 0;
-          let publishFailedCount = 0;
+
+          console.log(`[GENERATE-PAGES] Queueing background publish for ${pageIds.length} pages`);
+          await logEvent(
+            supabase,
+            campaign_id,
+            user.id,
+            "auto_publish_started",
+            `Queued auto-publish for ${pageIds.length} pages to the connected website`
+          );
 
           for (let i = 0; i < pageIds.length; i += PUBLISH_CHUNK) {
             const chunk = pageIds.slice(i, i + PUBLISH_CHUNK);
-            try {
-              const publishUrl = `${supabaseUrl}/functions/v1/publish-pages`;
-              const publishRes = await fetch(publishUrl, {
-                method: "POST",
-                headers: {
-                  Authorization: authHeader,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  page_ids: chunk,
-                  publish_type: "page",
-                  website_id: campaign.website_id,
-                }),
-              });
-
-              if (publishRes.ok) {
-                const publishResult = await publishRes.json();
-                publishedCount += publishResult.published || 0;
-                publishFailedCount += publishResult.failed || 0;
-              } else {
-                const errText = await publishRes.text();
-                console.error(`[GENERATE-PAGES] Publish chunk failed:`, errText);
-                publishFailedCount += chunk.length;
-              }
-            } catch (pubErr) {
-              console.error(`[GENERATE-PAGES] Publish chunk error:`, pubErr);
-              publishFailedCount += chunk.length;
-            }
+            triggerBackgroundFunction(
+              publishUrl,
+              {
+                Authorization: authHeader,
+                "Content-Type": "application/json",
+              },
+              {
+                page_ids: chunk,
+                publish_type: "page",
+                website_id: campaign.website_id,
+              },
+              "publish-pages"
+            );
           }
-
-          await logEvent(supabase, campaign_id, user.id, "auto_publish_completed",
-            `Auto-publish done: ${publishedCount} published, ${publishFailedCount} failed`);
         }
       } catch (pubErr) {
-        console.error("[GENERATE-PAGES] Auto-publish error:", pubErr);
-        await logEvent(supabase, campaign_id, user.id, "auto_publish_error",
-          `Auto-publish failed: ${pubErr instanceof Error ? pubErr.message : "Unknown error"}`);
+        console.error("[GENERATE-PAGES] Auto-publish queue error:", pubErr);
+        await logEvent(
+          supabase,
+          campaign_id,
+          user.id,
+          "auto_publish_error",
+          `Auto-publish could not be queued: ${pubErr instanceof Error ? pubErr.message : "Unknown error"}`
+        );
       }
     }
 
-    // Auto-generate sitemap if campaign has a website
     if (campaign.website_id) {
-      try {
-        const sitemapUrl = `${supabaseUrl}/functions/v1/generate-sitemap`;
-        await fetch(sitemapUrl, {
-          method: "POST",
-          headers: {
-            Authorization: authHeader,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ website_id: campaign.website_id }),
-        });
-      } catch (e) {
-        console.error("Auto-sitemap generation failed:", e);
-      }
+      const sitemapUrl = `${supabaseUrl}/functions/v1/generate-sitemap`;
+      triggerBackgroundFunction(
+        sitemapUrl,
+        {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        { website_id: campaign.website_id },
+        "generate-sitemap"
+      );
 
       try {
         const { data: webConfig } = await supabase
@@ -1611,17 +1699,18 @@ Deno.serve(async (req) => {
 
         if (webConfig?.google_indexing_enabled) {
           const indexingUrl = `${supabaseUrl}/functions/v1/google-indexing`;
-          await fetch(indexingUrl, {
-            method: "POST",
-            headers: {
+          triggerBackgroundFunction(
+            indexingUrl,
+            {
               Authorization: authHeader,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ action: "auto-submit", website_id: campaign.website_id }),
-          });
+            { action: "auto-submit", website_id: campaign.website_id },
+            "google-indexing"
+          );
         }
       } catch (e) {
-        console.error("Auto-indexing failed:", e);
+        console.error("Auto-indexing queue failed:", e);
       }
     }
 
@@ -1632,11 +1721,42 @@ Deno.serve(async (req) => {
       total: csvRows.length,
       ai_generations_used: aiGenerationsUsed,
       job_id: jobId,
+      publishing_queued: campaign.publish_mode === "published" && campaign.website_id && successCount > 0,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
     console.error("[GENERATE-PAGES] Fatal error:", err.message, err.stack);
+
+    if (supabase && activeCampaignId) {
+      const failedAt = new Date().toISOString();
+      try {
+        await supabase.from("campaigns").update({
+          status: "failed",
+          generation_completed_at: failedAt,
+          is_paused: false,
+        }).eq("id", activeCampaignId);
+
+        const { data: latestActiveJob } = await supabase
+          .from("generation_jobs")
+          .select("id")
+          .eq("campaign_id", activeCampaignId)
+          .in("status", ["running", "pending", "paused"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (latestActiveJob?.id) {
+          await updateJob(supabase, latestActiveJob.id, {
+            status: "failed",
+            completed_at: failedAt,
+          });
+        }
+      } catch (cleanupErr) {
+        console.error("[GENERATE-PAGES] Fatal cleanup failed:", cleanupErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({ error: err.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
