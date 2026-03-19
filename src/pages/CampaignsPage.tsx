@@ -91,6 +91,10 @@ export default function CampaignsPage() {
   const [utmCampaign, setUtmCampaign] = useState("");
   const [utmTerm, setUtmTerm] = useState("");
   const [utmContent, setUtmContent] = useState("");
+  // SEA fields
+  const [adCampaignId, setAdCampaignId] = useState("");
+  const [adGroupId, setAdGroupId] = useState("");
+  const [seaDirectoryLevels, setSeaDirectoryLevels] = useState("");
   // GEO fields
   const [geoCountry, setGeoCountry] = useState("");
   const [geoRegion, setGeoRegion] = useState("");
