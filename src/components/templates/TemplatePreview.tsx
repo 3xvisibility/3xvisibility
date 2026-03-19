@@ -7,8 +7,8 @@ interface TemplatePreviewProps {
 
 /**
  * Renders an HTML template string inside a sandboxed iframe.
- * Variable placeholders like {variable} are highlighted with styled badges.
- * AI blocks like {{AI:...}} are highlighted differently.
+ * Variable placeholders, transforms, shortcodes, spintax, and AI blocks
+ * are all highlighted with distinct color-coded badges.
  */
 export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -26,10 +26,22 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
       '<span style="background:hsl(320 60% 92%);color:hsl(320 60% 35%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(320 40% 80%)">🎨 AI Image: $1</span>'
     );
 
-    // Highlight {{MAP:...}}, {{YOUTUBE:...}}, {{IMAGE:...}}, {{WEATHER:...}} dynamic elements
+    // Highlight {{MAP:...}}, {{OSM:...}}, {{YOUTUBE:...}}, {{IMAGE:...}}, {{WEATHER:...}}, {{WIKIPEDIA:...}}, {{YELP:...}} dynamic elements
     styled = styled.replace(
-      /\{\{(MAP|YOUTUBE|IMAGE|WEATHER):(.*?)\}\}/gi,
+      /\{\{(MAP|OSM|YOUTUBE|IMAGE|PEXELS|PIXABAY|WEATHER):(.*?)\}\}/gi,
       '<span style="background:hsl(150 60% 90%);color:hsl(150 60% 30%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(150 40% 78%)">🔌 $1: $2</span>'
+    );
+
+    // Highlight {{WIKIPEDIA:...}} with book icon
+    styled = styled.replace(
+      /\{\{WIKIPEDIA:(.*?)\}\}/gi,
+      '<span style="background:hsl(45 80% 92%);color:hsl(45 70% 30%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(45 60% 78%)">📖 Wikipedia: $1</span>'
+    );
+
+    // Highlight {{YELP:...}} with star icon
+    styled = styled.replace(
+      /\{\{YELP:(.*?)\}\}/gi,
+      '<span style="background:hsl(0 70% 94%);color:hsl(0 60% 35%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(0 50% 82%)">⭐ Yelp: $1</span>'
     );
 
     // Highlight spintax {option1|option2|option3}
@@ -38,10 +50,26 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
       '<span style="background:hsl(35 90% 90%);color:hsl(35 80% 30%);padding:2px 6px;border-radius:4px;font-size:0.8em;font-family:monospace;border:1px solid hsl(35 70% 78%)">🔀 {$1}</span>'
     );
 
-    // Highlight {variable} placeholders (but not the ones inside AI blocks already handled)
+    // Highlight {variable:transform} patterns (with transforms)
     styled = styled.replace(
-      /\{([a-z_]+)\}/gi,
+      /\{([a-z_][a-z0-9_]*):([a-z_]+(?:\([^)]*\))?(?::[a-z_]+(?:\([^)]*\))?)*)\}/gi,
+      '<span style="background:hsl(270 70% 93%);color:hsl(270 60% 35%);padding:1px 5px;border-radius:3px;font-size:0.85em;font-family:monospace;border:1px solid hsl(270 50% 82%)">⚡ {$1:$2}</span>'
+    );
+
+    // Highlight {variable} placeholders (simple, no transforms)
+    styled = styled.replace(
+      /\{([a-z_][a-z0-9_]*)\}/gi,
       '<span style="background:hsl(210 80% 92%);color:hsl(210 80% 35%);padding:1px 5px;border-radius:3px;font-size:0.85em;font-family:monospace;border:1px solid hsl(210 60% 82%)">$&</span>'
+    );
+
+    // Highlight {{#if ...}}...{{/if}} conditionals
+    styled = styled.replace(
+      /\{\{#(if|else|each)\s*([^}]*)\}\}/gi,
+      '<span style="background:hsl(180 50% 90%);color:hsl(180 60% 30%);padding:1px 5px;border-radius:3px;font-size:0.8em;font-family:monospace;border:1px solid hsl(180 40% 78%)">🔀 {{#$1 $2}}</span>'
+    );
+    styled = styled.replace(
+      /\{\{\/(if|each)\}\}/gi,
+      '<span style="background:hsl(180 50% 90%);color:hsl(180 60% 30%);padding:1px 5px;border-radius:3px;font-size:0.8em;font-family:monospace;border:1px solid hsl(180 40% 78%)">🔀 {{/$1}}</span>'
     );
 
     return `<!DOCTYPE html>
@@ -83,14 +111,12 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
     doc.write(getStyledHtml(html));
     doc.close();
 
-    // Auto-resize iframe to content height
     const resize = () => {
       if (doc.body) {
         iframe.style.height = doc.body.scrollHeight + 24 + "px";
       }
     };
     resize();
-    // Observe for layout shifts
     const observer = new MutationObserver(resize);
     if (doc.body) observer.observe(doc.body, { childList: true, subtree: true });
     return () => observer.disconnect();
