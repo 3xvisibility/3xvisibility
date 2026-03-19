@@ -207,8 +207,9 @@ export function OnboardingTour() {
                   </div>
                 </div>
                 <button
-                  onClick={skip}
-                  className="text-muted-foreground hover:text-foreground transition-colors p-1 -m-1"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); skip(); }}
+                  className="text-muted-foreground hover:text-foreground transition-colors p-2 -m-1 cursor-pointer active:opacity-70"
                 >
                   <X className="h-4 w-4" />
                 </button>
