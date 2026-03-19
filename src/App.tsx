@@ -231,6 +231,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/content-calendar"
+              element={
+                <ProtectedRoute session={session}>
+                  <DashboardLayout onLogout={handleLogout}><ContentCalendarPage /></DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

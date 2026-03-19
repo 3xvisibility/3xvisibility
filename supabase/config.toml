@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.rewrite-content]
 verify_jwt = false
+
+[functions.translate-content]
+verify_jwt = false
