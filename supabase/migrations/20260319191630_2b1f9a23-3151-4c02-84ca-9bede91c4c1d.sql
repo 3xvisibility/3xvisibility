@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS recurring_schedule jsonb DEFAULT NULL;
