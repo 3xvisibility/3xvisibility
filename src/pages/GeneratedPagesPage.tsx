@@ -640,6 +640,32 @@ export default function GeneratedPagesPage() {
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
+                          {page.status === "failed" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-warning"
+                              onClick={() => retryFailedMutation.mutate([page.id])}
+                              disabled={retryFailedMutation.isPending}
+                              title="Retry publish"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {page.status === "failed" && page.error_message && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-[9px] text-destructive border-destructive/30 max-w-[120px] truncate cursor-help">
+                                    {page.error_message}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <p className="text-xs">{page.error_message}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           {page.external_url && (
                             <>
                               <Button size="sm" variant="ghost" asChild title="Open live page">
