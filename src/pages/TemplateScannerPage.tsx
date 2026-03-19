@@ -828,7 +828,13 @@ ${headStyles}
               {acceptedMappings.length > 0 && (
                 <Card className="shadow-surface">
                   <CardContent className="p-4">
-                    <h3 className="text-sm font-semibold mb-3">Mapped Variables</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                        <Tag className="h-3.5 w-3.5 text-primary" />
+                        Mapped Variables ({acceptedMappings.length})
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground">💡 Each variable maps to a CSV column when generating pages</p>
+                    </div>
                     <div className="space-y-2">
                       {acceptedMappings.map((mapping, i) => (
                         <div
