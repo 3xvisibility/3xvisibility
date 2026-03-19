@@ -27,6 +27,7 @@ import {
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useDragReorder } from "@/hooks/use-drag-reorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TemplateVersionHistory, saveVersion, type TemplateVersion } from "@/components/templates/TemplateVersionHistory";
 
 type Template = Tables<"templates">;
 
