@@ -252,9 +252,12 @@ Deno.serve(async (req) => {
     }
 
     const rawHtml = await pageResponse.text();
-    const bodyContent = extractBodyContent(rawHtml);
-    const headStyles = extractHeadStyles(rawHtml, formattedUrl);
+    // Resolve all relative URLs to absolute before any processing
+    const resolvedHtml = resolveRelativeUrls(rawHtml, formattedUrl);
+    const bodyContent = extractBodyContent(resolvedHtml);
+    const headStyles = extractHeadStyles(resolvedHtml, formattedUrl);
     const blocks = parseHtmlBlocks(bodyContent);
+    const imageUrls = extractImageUrls(bodyContent);
 
     // Use AI to suggest variables
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
