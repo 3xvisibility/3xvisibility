@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
             : undefined;
 
           const payload = buildPayload(
-            { title: dp.title, content: dp.content, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
+            { title: dp.title, content: stripHeadTagsForCms(dp.content), slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
             elementorMeta
           );
