@@ -87,6 +87,7 @@ export default function CampaignsPage() {
   const [websiteContentType, setWebsiteContentType] = useState<"pages" | "products" | "all">("all");
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [websitePagesSearch, setWebsitePagesSearch] = useState("");
+  const [manualMappings, setManualMappings] = useState<Record<string, string>>({});
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
   // Generation settings
