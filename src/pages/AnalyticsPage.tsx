@@ -218,6 +218,38 @@ export default function AnalyticsPage() {
     return { completed, failed, running, totalSuccessCount, totalErrorCount, avgSuccessRate, avgTimeMins, total: jobs.length };
   }, [jobs]);
 
+  // Generation speed trends (pages/minute per job over time)
+  const speedTrends = useMemo(() => {
+    return jobs
+      .filter((j) => j.completed_at && j.started_at && j.processed_rows > 0)
+      .map((j) => {
+        const durationMs = new Date(j.completed_at!).getTime() - new Date(j.started_at!).getTime();
+        const durationMins = durationMs / 60000;
+        const pagesPerMin = durationMins > 0 ? Math.round((j.processed_rows / durationMins) * 10) / 10 : 0;
+        const date = new Date(j.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        return { date, pagesPerMin, totalPages: j.processed_rows, durationMins: Math.round(durationMins * 10) / 10 };
+      })
+      .reverse()
+      .slice(-15);
+  }, [jobs]);
+
+  // Publish success rate over time (by week)
+  const publishRateOverTime = useMemo(() => {
+    const weekMap = new Map<string, { week: string; total: number; published: number; rate: number }>();
+    for (const page of pages) {
+      const d = new Date(page.created_at);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      if (!weekMap.has(key)) weekMap.set(key, { week: key, total: 0, published: 0, rate: 0 });
+      const entry = weekMap.get(key)!;
+      entry.total++;
+      if (page.status === "published") entry.published++;
+      entry.rate = entry.total > 0 ? Math.round((entry.published / entry.total) * 100) : 0;
+    }
+    return [...weekMap.values()].slice(-12);
+  }, [pages]);
+
   // Campaign performance
   const campaignPerformance = useMemo(() => {
     return campaigns.slice(-10).map((c) => ({
