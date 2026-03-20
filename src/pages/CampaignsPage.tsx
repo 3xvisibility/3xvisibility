@@ -1394,7 +1394,7 @@ export default function CampaignsPage() {
                           })()}
 
                           <div className="space-y-1.5">
-                            {variableMapping.matched.map(({ variable, column, aiFill }) => {
+                            {variableMapping.matched.map(({ variable, column, customValue }) => {
                               const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
                               const isAiBlock = variable.toLowerCase().startsWith("ai:") || variable.toLowerCase().startsWith("ai_image:");
                               const isSchemaBlock = variable.includes("@context") || variable.includes("@type") || variable.includes("schema.org");
@@ -1408,16 +1408,16 @@ export default function CampaignsPage() {
                                     <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[10px]">
                                       <Check className="h-3 w-3 mr-1" /> {column}
                                     </Badge>
-                                  ) : aiFill ? (
+                                  ) : customValue ? (
                                     <div className="flex items-center gap-1">
-                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px]">
-                                        <Check className="h-3 w-3 mr-1" /> AI Fill
+                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px] max-w-[40vw] truncate" title={customValue}>
+                                        <Check className="h-3 w-3 mr-1" /> {customValue}
                                       </Badge>
                                       <Button
                                         variant="ghost"
                                         size="icon"
                                         className="h-5 w-5"
-                                        onClick={() => setAiFillVars(prev => { const next = new Set(prev); next.delete(variable); return next; })}
+                                        onClick={() => setCustomValues(prev => { const next = { ...prev }; delete next[variable]; return next; })}
                                       >
                                         <X className="h-3 w-3" />
                                       </Button>
@@ -1441,17 +1441,16 @@ export default function CampaignsPage() {
                                           ))}
                                         </SelectContent>
                                       </Select>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 text-[10px] px-2 rounded-lg border-primary/30 text-primary hover:bg-primary/10"
-                                        onClick={() => {
-                                          setAiFillVars(prev => new Set(prev).add(variable));
-                                          setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
+                                      <span className="text-muted-foreground text-[10px]">or</span>
+                                      <Input
+                                        className="h-7 w-full sm:w-[140px] text-xs rounded-lg border-primary/30"
+                                        placeholder={`Type ${variable}…`}
+                                        value={customValues[variable] || ""}
+                                        onChange={(e) => {
+                                          setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
+                                          if (e.target.value) setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
                                         }}
-                                      >
-                                        ✨ AI Fill
-                                      </Button>
+                                      />
                                     </div>
                                   )}
                                 </div>
