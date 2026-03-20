@@ -248,11 +248,11 @@ export default function CampaignsPage() {
   const variableMapping = useMemo(() => {
     const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
-    const matched: { variable: string; column: string | null; aiFill?: boolean }[] = [];
+    const matched: { variable: string; column: string | null; customValue?: string }[] = [];
     for (const v of selectedTemplateVars) {
-      // AI Fill takes priority
-      if (aiFillVars.has(v)) {
-        matched.push({ variable: v, column: null, aiFill: true });
+      // Custom value takes priority
+      if (customValues[v] !== undefined && customValues[v] !== "") {
+        matched.push({ variable: v, column: null, customValue: customValues[v] });
         continue;
       }
       // Check manual override first
@@ -273,7 +273,7 @@ export default function CampaignsPage() {
     }
     const unmatchedColumns = headers.filter((h) => !matched.some((m) => m.column === h));
     return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers, manualMappings, aiFillVars]);
+  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers, manualMappings, customValues]);
 
   const { data: campaignLogs = [] } = useQuery({
     queryKey: ["campaign-logs", logDialogCampaign],
