@@ -1348,7 +1348,7 @@ export default function CampaignsPage() {
                         </Select>
                       </div>
                       {variableMapping && (
-                        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                        <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-3 overflow-hidden">
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-semibold">Variable Mapping</h4>
                             {variableMapping.matched.every((m) => m.column || m.aiFill) ? (
@@ -1371,7 +1371,7 @@ export default function CampaignsPage() {
                               return v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema");
                             });
                             return (
-                              <div className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-2 space-y-1">
+                              <div className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-2 space-y-1 overflow-hidden">
                                 {isAllAiOrSchema ? (
                                   <p className="text-muted-foreground">
                                     <span className="font-medium text-foreground">ℹ AI & Schema blocks</span> don't need data columns — they are generated automatically during page creation.
@@ -1405,7 +1405,7 @@ export default function CampaignsPage() {
                                       ✨ AI Fill all unmatched
                                     </Button>
                                     {headers.length > 0 && (
-                                      <p className="text-muted-foreground mt-1">Available columns: <span className="font-mono text-primary">{headers.join(", ")}</span></p>
+                                      <p className="text-muted-foreground mt-1 break-words">Available columns: <span className="font-mono text-primary text-[10px] break-all">{headers.join(", ")}</span></p>
                                     )}
                                   </>
                                 )}
@@ -1421,16 +1421,16 @@ export default function CampaignsPage() {
                               const isSpecialBlock = isAiBlock || isSchemaBlock;
 
                               return (
-                                <div key={variable} className="flex items-center gap-2 text-xs">
-                                  <Badge variant="outline" className="font-mono shrink-0 rounded-lg max-w-[200px] truncate" title={`{${variable}}`}>{`{${variable}}`}</Badge>
+                                <div key={variable} className="flex flex-wrap items-center gap-1.5 text-xs py-1">
+                                  <Badge variant="outline" className="font-mono shrink-0 rounded-lg max-w-[45vw] truncate text-[10px]" title={`{${variable}}`}>{`{${variable}}`}</Badge>
                                   <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
                                   {column ? (
-                                    <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg">
+                                    <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[10px]">
                                       <Check className="h-3 w-3 mr-1" /> {column}
                                     </Badge>
                                   ) : aiFill ? (
                                     <div className="flex items-center gap-1">
-                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
+                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px]">
                                         <Check className="h-3 w-3 mr-1" /> AI Fill
                                       </Badge>
                                       <Button
@@ -1443,16 +1443,16 @@ export default function CampaignsPage() {
                                       </Button>
                                     </div>
                                   ) : isSpecialBlock ? (
-                                    <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
+                                    <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px]">
                                       <Check className="h-3 w-3 mr-1" /> Auto-generated
                                     </Badge>
                                   ) : (
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto mt-0.5 sm:mt-0">
                                       <Select
                                         value={manualMappings[variable] || ""}
                                         onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
                                       >
-                                        <SelectTrigger className="h-7 w-[140px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
+                                        <SelectTrigger className="h-7 w-full sm:w-[140px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
                                           <SelectValue placeholder="Select column…" />
                                         </SelectTrigger>
                                         <SelectContent>
