@@ -1427,12 +1427,12 @@ export default function CampaignsPage() {
                                       <Check className="h-3 w-3 mr-1" /> Auto-generated
                                     </Badge>
                                   ) : (
-                                    <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto mt-0.5 sm:mt-0">
+                                    <div className="flex flex-col gap-1.5 w-full mt-0.5">
                                       <Select
                                         value={manualMappings[variable] || ""}
                                         onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
                                       >
-                                        <SelectTrigger className="h-7 w-full sm:w-[140px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
+                                        <SelectTrigger className="h-7 w-full text-xs rounded-lg border-destructive/40 bg-destructive/5">
                                           <SelectValue placeholder="Select column…" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1441,10 +1441,10 @@ export default function CampaignsPage() {
                                           ))}
                                         </SelectContent>
                                       </Select>
-                                      <span className="text-muted-foreground text-[10px]">or</span>
+                                      <span className="text-muted-foreground text-[10px]">or type a custom value:</span>
                                       <Input
-                                        className="h-7 w-full sm:w-[140px] text-xs rounded-lg border-primary/30"
-                                        placeholder={`Type ${variable}…`}
+                                        className="h-8 w-full text-xs rounded-lg border-primary/30"
+                                        placeholder={`e.g. Web Design, Plumbing Services…`}
                                         value={customValues[variable] || ""}
                                         onChange={(e) => {
                                           setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
