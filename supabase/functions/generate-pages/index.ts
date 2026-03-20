@@ -979,7 +979,7 @@ Deno.serve(async (req) => {
     const aiFillCount = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__").length;
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
     const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
-    const aiFillGenerationsNeeded = aiFillCount * remainingRows.length;
+    const aiFillGenerationsNeeded = aiFillCount > 0 ? remainingRows.length : 0; // 1 batch call per row
     const shouldUseAiSeo = Boolean(LOVABLE_API_KEY) && !!test_mode;
     const seoGenerationsNeeded = shouldUseAiSeo ? remainingRows.length : 0;
     const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded + aiFillGenerationsNeeded;
@@ -1267,21 +1267,59 @@ Deno.serve(async (req) => {
 
           // AI Fill: generate content for unmatched variables marked as AI-fill
           if (aiFillMappings.length > 0 && LOVABLE_API_KEY) {
-            for (const mapping of aiFillMappings) {
-              const varName = mapping.target_field;
-              const varRegex = new RegExp(`\\{${varName}\\}`, "gi");
-              if (varRegex.test(pageContent)) {
-                try {
-                  const contextVars = Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(", ");
-                  const aiPrompt = `Generate a short, natural value for the variable "${varName}" based on this context: ${contextVars}. Return ONLY the value, no explanation, no quotes.`;
-                  const generated = await generateAiContent(aiPrompt, aiSettings, LOVABLE_API_KEY);
-                  pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), generated.trim());
-                  aiGenerationsUsed++;
-                } catch (aiErr: any) {
-                  console.error(`AI Fill failed for ${varName}:`, aiErr.message);
-                  // Replace with variable name as fallback
-                  pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), varName.replace(/_/g, " "));
+            // Extract a snippet of the template to give AI context about the niche/industry
+            const templateSnippet = templateContent
+              .replace(/<[^>]*>/g, " ")
+              .replace(/\{\{AI[\s\S]*?\}\}/gi, "")
+              .replace(/\{\{AI_IMAGE[\s\S]*?\}\}/gi, "")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 800);
+
+            // Collect all AI-fill variable names for a single batch-aware prompt
+            const aiFillVarNames = aiFillMappings.map(m => m.target_field);
+
+            // Generate all AI-fill values in a single call for consistency
+            try {
+              const contextVars = Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(", ");
+              const aiPrompt = `You are filling in dynamic variables for a website page template.
+
+TEMPLATE CONTEXT (this tells you the niche/industry/services):
+"${templateSnippet}"
+
+EXISTING DATA FOR THIS PAGE ROW:
+${contextVars}
+
+VARIABLES TO FILL: ${aiFillVarNames.map(v => `{${v}}`).join(", ")}
+
+For each variable, generate a realistic, contextually relevant value that matches the template's industry/niche/services. The values must make sense within the template content.
+
+Return ONLY a JSON object like: {"variable_name": "value", ...}
+No explanation, no markdown fences.`;
+
+              const generated = await generateAiContent(aiPrompt, { ...aiSettings, contentLength: "short" }, LOVABLE_API_KEY);
+              aiGenerationsUsed++;
+
+              // Parse JSON response
+              let values: Record<string, string> = {};
+              try {
+                const cleaned = generated.trim().replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+                values = JSON.parse(cleaned);
+              } catch {
+                // Fallback: if single variable, use raw text
+                if (aiFillVarNames.length === 1) {
+                  values[aiFillVarNames[0]] = generated.trim();
                 }
+              }
+
+              for (const varName of aiFillVarNames) {
+                const val = values[varName] || values[varName.toLowerCase()] || varName.replace(/_/g, " ");
+                pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), val);
+              }
+            } catch (aiErr: any) {
+              console.error("AI Fill batch failed:", aiErr.message);
+              for (const varName of aiFillVarNames) {
+                pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), varName.replace(/_/g, " "));
               }
             }
           }
