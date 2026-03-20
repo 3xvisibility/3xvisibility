@@ -1405,7 +1405,7 @@ Deno.serve(async (req) => {
             }
           } else if (shouldUseAiSeo) {
             try {
-              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
+              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
               aiGenerationsUsed++;
             } catch { /* keep fallback */ }
           }
