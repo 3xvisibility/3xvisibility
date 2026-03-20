@@ -1076,6 +1076,7 @@ Deno.serve(async (req) => {
     let processedCount = alreadyProcessed;
     let failedCount = campaign.failed_rows || 0;
     let successCount = alreadyProcessed - (campaign.failed_rows || 0);
+    let newSuccessCount = 0; // Only counts pages generated in THIS run (for usage tracking)
     let aiGenerationsUsed = 0;
     let batchesCompleted = campaign.current_batch || 0;
     let publishQueuedCount = 0;
