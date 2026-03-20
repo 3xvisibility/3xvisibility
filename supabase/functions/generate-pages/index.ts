@@ -975,14 +975,13 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : BATCH_SIZE;
 
-    // Count AI-fill mappings
-    const aiFillCount = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__").length;
+    // Count custom value mappings (no AI needed for these)
+    const customValueMappings = (customMappings || []).filter((m: any) => m.source_column?.startsWith("__custom__:"));
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
     const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
-    const aiFillGenerationsNeeded = aiFillCount > 0 ? remainingRows.length : 0; // 1 batch call per row
     const shouldUseAiSeo = Boolean(LOVABLE_API_KEY) && !!test_mode;
     const seoGenerationsNeeded = shouldUseAiSeo ? remainingRows.length : 0;
-    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded + aiFillGenerationsNeeded;
+    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded;
 
     if (totalAiNeeded > 0) {
       const { data: subscription } = await supabase
