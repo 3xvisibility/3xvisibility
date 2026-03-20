@@ -1237,7 +1237,41 @@ Deno.serve(async (req) => {
             }
           }
 
-          pageContent = processSpintax(pageContent);
+          // Inject geo_settings as template variables
+          for (const [geoKey, geoValue] of Object.entries(geoSettings)) {
+            if (typeof geoValue === "string") {
+              const geoRegex = new RegExp(`\\{${geoKey}\\}`, "gi");
+              pageContent = pageContent.replace(geoRegex, geoValue);
+            }
+          }
+
+          // Process variable transforms {variable:transform}
+          pageContent = pageContent.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName, transform) => {
+            const rawVal = allVars[varName] || allVars[varName.toLowerCase()] || row[varName] || "";
+            const t = transform.toLowerCase();
+            if (t === "uppercase") return rawVal.toUpperCase();
+            if (t === "lowercase") return rawVal.toLowerCase();
+            if (t === "capitalize") return rawVal.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+            if (t === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+            const extractMatch = t.match(/^extract\((\d+)\)$/);
+            if (extractMatch) {
+              const n = parseInt(extractMatch[1]);
+              return rawVal.split(/\s+/).slice(0, n).join(" ");
+            }
+            const truncMatch = t.match(/^truncate\((\d+)\)$/);
+            if (truncMatch) {
+              const n = parseInt(truncMatch[1]);
+              return rawVal.length > n ? rawVal.slice(0, n) + "…" : rawVal;
+            }
+            return rawVal;
+          });
+
+          // Standard variable replacement for any remaining placeholders
+          for (const [key, value] of Object.entries(row)) {
+            const regex = new RegExp(`\\{${key}\\}`, "gi");
+            pageContent = pageContent.replace(regex, value || "");
+          }
+
 
           // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
           pageContent = processDynamicElements(pageContent, allVars);
