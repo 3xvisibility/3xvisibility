@@ -1363,9 +1363,9 @@ export default function CampaignsPage() {
                           </div>
 
                           {/* Help text for unmatched variables */}
-                          {variableMapping.matched.some((m) => !m.column && !m.aiFill) && (() => {
+                          {variableMapping.matched.some((m) => !m.column && !m.customValue) && (() => {
                             const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
-                            const unmatchedVars = variableMapping.matched.filter((m) => !m.column && !m.aiFill);
+                            const unmatchedVars = variableMapping.matched.filter((m) => !m.column && !m.customValue);
                             const isAllAiOrSchema = unmatchedVars.every(m => {
                               const v = m.variable.toLowerCase();
                               return v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema");
@@ -1381,29 +1381,9 @@ export default function CampaignsPage() {
                                     <p className="font-medium text-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" /> How to fix unmatched variables:</p>
                                     <ul className="text-muted-foreground space-y-0.5 ml-4 list-disc">
                                       <li>Use the dropdown to <strong>manually map</strong> each variable to a column</li>
-                                      <li>Click <strong>✨ AI Fill</strong> to let AI auto-generate values for unmatched variables</li>
+                                      <li>Type a <strong>custom value</strong> to use the same value for all pages</li>
                                       <li>Or <strong>rename your CSV columns</strong> to match template variables</li>
                                     </ul>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="mt-2 text-xs h-7 border-primary/30 text-primary hover:bg-primary/10"
-                                      onClick={() => {
-                                        const toFill = unmatchedVars
-                                          .filter(m => {
-                                            const v = m.variable.toLowerCase();
-                                            return !(v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema"));
-                                          })
-                                          .map(m => m.variable);
-                                        setAiFillVars(prev => {
-                                          const next = new Set(prev);
-                                          toFill.forEach(v => next.add(v));
-                                          return next;
-                                        });
-                                      }}
-                                    >
-                                      ✨ AI Fill all unmatched
-                                    </Button>
                                     {headers.length > 0 && (
                                       <p className="text-muted-foreground mt-1 break-words">Available columns: <span className="font-mono text-primary text-[10px] break-all">{headers.join(", ")}</span></p>
                                     )}
