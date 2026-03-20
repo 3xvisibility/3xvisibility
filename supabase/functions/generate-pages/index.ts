@@ -1204,9 +1204,13 @@ Deno.serve(async (req) => {
           // Process loops {{#each}}...{{/each}}
           pageContent = processLoops(pageContent, allVars);
 
-          // Apply custom mappings first if available, then fall back to direct replacement
-          if (customMappings && customMappings.length > 0) {
-            for (const mapping of customMappings) {
+          // Separate AI-fill mappings from regular custom mappings
+          const aiFillMappings = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__");
+          const regularMappings = (customMappings || []).filter((m: any) => m.source_column !== "__ai_fill__");
+
+          // Apply regular custom mappings first
+          if (regularMappings.length > 0) {
+            for (const mapping of regularMappings) {
               const value = row[mapping.source_column] || "";
               let finalValue = value;
               if (mapping.transform_expression) {
