@@ -1205,11 +1205,20 @@ Deno.serve(async (req) => {
           // Process loops {{#each}}...{{/each}}
           pageContent = processLoops(pageContent, allVars);
 
-          // Separate AI-fill mappings from regular custom mappings
-          const aiFillMappings = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__");
-          const regularMappings = (customMappings || []).filter((m: any) => m.source_column !== "__ai_fill__");
+          // Separate custom-value mappings from regular custom mappings
+          const customValueMaps = (customMappings || []).filter((m: any) => m.source_column?.startsWith("__custom__:"));
+          const regularMappings = (customMappings || []).filter((m: any) => !m.source_column?.startsWith("__custom__:"));
 
-          // Apply regular custom mappings first
+          // Apply custom value mappings (user-typed static values)
+          if (customValueMaps.length > 0) {
+            for (const mapping of customValueMaps) {
+              const staticValue = mapping.source_column.replace("__custom__:", "");
+              const regex = new RegExp(`\\{${mapping.target_field}\\}`, "gi");
+              pageContent = pageContent.replace(regex, staticValue);
+            }
+          }
+
+          // Apply regular custom mappings
           if (regularMappings.length > 0) {
             for (const mapping of regularMappings) {
               const value = row[mapping.source_column] || "";
@@ -1225,101 +1234,6 @@ Deno.serve(async (req) => {
               }
               const regex = new RegExp(`\\{${mapping.target_field}\\}`, "gi");
               pageContent = pageContent.replace(regex, finalValue);
-            }
-          }
-
-          // Inject geo_settings as template variables
-          for (const [geoKey, geoValue] of Object.entries(geoSettings)) {
-            if (typeof geoValue === "string") {
-              const geoRegex = new RegExp(`\\{${geoKey}\\}`, "gi");
-              pageContent = pageContent.replace(geoRegex, geoValue);
-            }
-          }
-
-          // Process variable transforms {variable:transform} BEFORE standard replacement
-          // Supports: uppercase, lowercase, capitalize, slug, extract(n), truncate(n)
-          pageContent = pageContent.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName, transform) => {
-            const rawVal = allVars[varName] || allVars[varName.toLowerCase()] || row[varName] || "";
-            const t = transform.toLowerCase();
-            if (t === "uppercase") return rawVal.toUpperCase();
-            if (t === "lowercase") return rawVal.toLowerCase();
-            if (t === "capitalize") return rawVal.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-            if (t === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-            const extractMatch = t.match(/^extract\((\d+)\)$/);
-            if (extractMatch) {
-              const n = parseInt(extractMatch[1]);
-              return rawVal.split(/\s+/).slice(0, n).join(" ");
-            }
-            const truncMatch = t.match(/^truncate\((\d+)\)$/);
-            if (truncMatch) {
-              const n = parseInt(truncMatch[1]);
-              return rawVal.length > n ? rawVal.slice(0, n) + "…" : rawVal;
-            }
-            return rawVal;
-          });
-
-          // Standard variable replacement for any remaining placeholders
-          for (const [key, value] of Object.entries(row)) {
-            const regex = new RegExp(`\\{${key}\\}`, "gi");
-            pageContent = pageContent.replace(regex, value || "");
-          }
-
-          // AI Fill: generate content for unmatched variables marked as AI-fill
-          if (aiFillMappings.length > 0 && LOVABLE_API_KEY) {
-            // Extract a snippet of the template to give AI context about the niche/industry
-            const templateSnippet = templateContent
-              .replace(/<[^>]*>/g, " ")
-              .replace(/\{\{AI[\s\S]*?\}\}/gi, "")
-              .replace(/\{\{AI_IMAGE[\s\S]*?\}\}/gi, "")
-              .replace(/\s+/g, " ")
-              .trim()
-              .slice(0, 800);
-
-            // Collect all AI-fill variable names for a single batch-aware prompt
-            const aiFillVarNames = aiFillMappings.map(m => m.target_field);
-
-            // Generate all AI-fill values in a single call for consistency
-            try {
-              const contextVars = Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(", ");
-              const aiPrompt = `You are filling in dynamic variables for a website page template.
-
-TEMPLATE CONTEXT (this tells you the niche/industry/services):
-"${templateSnippet}"
-
-EXISTING DATA FOR THIS PAGE ROW:
-${contextVars}
-
-VARIABLES TO FILL: ${aiFillVarNames.map(v => `{${v}}`).join(", ")}
-
-For each variable, generate a realistic, contextually relevant value that matches the template's industry/niche/services. The values must make sense within the template content.
-
-Return ONLY a JSON object like: {"variable_name": "value", ...}
-No explanation, no markdown fences.`;
-
-              const generated = await generateAiContent(aiPrompt, { ...aiSettings, contentLength: "short" }, LOVABLE_API_KEY);
-              aiGenerationsUsed++;
-
-              // Parse JSON response
-              let values: Record<string, string> = {};
-              try {
-                const cleaned = generated.trim().replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
-                values = JSON.parse(cleaned);
-              } catch {
-                // Fallback: if single variable, use raw text
-                if (aiFillVarNames.length === 1) {
-                  values[aiFillVarNames[0]] = generated.trim();
-                }
-              }
-
-              for (const varName of aiFillVarNames) {
-                const val = values[varName] || values[varName.toLowerCase()] || varName.replace(/_/g, " ");
-                pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), val);
-              }
-            } catch (aiErr: any) {
-              console.error("AI Fill batch failed:", aiErr.message);
-              for (const varName of aiFillVarNames) {
-                pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), varName.replace(/_/g, " "));
-              }
             }
           }
 
