@@ -1361,9 +1361,9 @@ export default function CampaignsPage() {
                           </div>
 
                           {/* Help text for unmatched variables */}
-                          {variableMapping.matched.some((m) => !m.column) && (() => {
+                          {variableMapping.matched.some((m) => !m.column && !m.aiFill) && (() => {
                             const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
-                            const unmatchedVars = variableMapping.matched.filter((m) => !m.column);
+                            const unmatchedVars = variableMapping.matched.filter((m) => !m.column && !m.aiFill);
                             const isAllAiOrSchema = unmatchedVars.every(m => {
                               const v = m.variable.toLowerCase();
                               return v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema");
