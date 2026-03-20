@@ -979,7 +979,7 @@ Deno.serve(async (req) => {
     const aiFillCount = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__").length;
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
     const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
-    const aiFillGenerationsNeeded = aiFillCount * remainingRows.length;
+    const aiFillGenerationsNeeded = aiFillCount > 0 ? remainingRows.length : 0; // 1 batch call per row
     const shouldUseAiSeo = Boolean(LOVABLE_API_KEY) && !!test_mode;
     const seoGenerationsNeeded = shouldUseAiSeo ? remainingRows.length : 0;
     const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded + aiFillGenerationsNeeded;
