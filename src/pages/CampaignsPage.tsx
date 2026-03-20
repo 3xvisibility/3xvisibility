@@ -1421,16 +1421,16 @@ export default function CampaignsPage() {
                               const isSpecialBlock = isAiBlock || isSchemaBlock;
 
                               return (
-                                <div key={variable} className="flex items-center gap-2 text-xs">
-                                  <Badge variant="outline" className="font-mono shrink-0 rounded-lg max-w-[200px] truncate" title={`{${variable}}`}>{`{${variable}}`}</Badge>
+                                <div key={variable} className="flex flex-wrap items-center gap-1.5 text-xs py-1">
+                                  <Badge variant="outline" className="font-mono shrink-0 rounded-lg max-w-[45vw] truncate text-[10px]" title={`{${variable}}`}>{`{${variable}}`}</Badge>
                                   <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
                                   {column ? (
-                                    <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg">
+                                    <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[10px]">
                                       <Check className="h-3 w-3 mr-1" /> {column}
                                     </Badge>
                                   ) : aiFill ? (
                                     <div className="flex items-center gap-1">
-                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
+                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px]">
                                         <Check className="h-3 w-3 mr-1" /> AI Fill
                                       </Badge>
                                       <Button
@@ -1443,16 +1443,16 @@ export default function CampaignsPage() {
                                       </Button>
                                     </div>
                                   ) : isSpecialBlock ? (
-                                    <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
+                                    <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px]">
                                       <Check className="h-3 w-3 mr-1" /> Auto-generated
                                     </Badge>
                                   ) : (
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto mt-0.5 sm:mt-0">
                                       <Select
                                         value={manualMappings[variable] || ""}
                                         onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
                                       >
-                                        <SelectTrigger className="h-7 w-[140px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
+                                        <SelectTrigger className="h-7 w-full sm:w-[140px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
                                           <SelectValue placeholder="Select column…" />
                                         </SelectTrigger>
                                         <SelectContent>
