@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { workspaces, currentWorkspace, setCurrentWorkspace, refetch } = useWorkspace();
+  const { plan } = useSubscription();
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
