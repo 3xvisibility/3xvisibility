@@ -1500,6 +1500,7 @@ Deno.serve(async (req) => {
 
           processedCount++;
           successCount++;
+          newSuccessCount++;
         } catch (err: any) {
           batchPages.push({
             campaign_id,
