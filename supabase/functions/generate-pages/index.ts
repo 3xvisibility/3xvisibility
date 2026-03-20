@@ -1263,7 +1263,27 @@ Deno.serve(async (req) => {
             pageContent = pageContent.replace(regex, value || "");
           }
 
-          // Process spintax {option1|option2|option3} AFTER variable replacement
+          // AI Fill: generate content for unmatched variables marked as AI-fill
+          if (aiFillMappings.length > 0 && LOVABLE_API_KEY) {
+            for (const mapping of aiFillMappings) {
+              const varName = mapping.target_field;
+              const varRegex = new RegExp(`\\{${varName}\\}`, "gi");
+              if (varRegex.test(pageContent)) {
+                try {
+                  const contextVars = Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(", ");
+                  const aiPrompt = `Generate a short, natural value for the variable "${varName}" based on this context: ${contextVars}. Return ONLY the value, no explanation, no quotes.`;
+                  const generated = await generateAiContent(aiPrompt, aiSettings, LOVABLE_API_KEY);
+                  pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), generated.trim());
+                  aiGenerationsUsed++;
+                } catch (aiErr: any) {
+                  console.error(`AI Fill failed for ${varName}:`, aiErr.message);
+                  // Replace with variable name as fallback
+                  pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), varName.replace(/_/g, " "));
+                }
+              }
+            }
+          }
+
           pageContent = processSpintax(pageContent);
 
           // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
