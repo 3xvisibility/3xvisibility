@@ -273,7 +273,7 @@ export default function CampaignsPage() {
     }
     const unmatchedColumns = headers.filter((h) => !matched.some((m) => m.column === h));
     return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers, manualMappings]);
+  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers, manualMappings, aiFillVars]);
 
   const { data: campaignLogs = [] } = useQuery({
     queryKey: ["campaign-logs", logDialogCampaign],
