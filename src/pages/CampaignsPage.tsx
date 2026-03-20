@@ -1348,8 +1348,8 @@ export default function CampaignsPage() {
                         </Select>
                       </div>
                       {variableMapping && (
-                        <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-3 overflow-hidden">
-                          <div className="flex items-center gap-2">
+                        <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-4 overflow-hidden">
+                          <div className="flex items-center gap-2 sticky top-0 z-10 bg-muted/20 backdrop-blur-sm -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 -mt-3 sm:-mt-4 border-b border-border/50">
                             <h4 className="text-sm font-semibold">Variable Mapping</h4>
                             {variableMapping.matched.every((m) => m.column || m.customValue) ? (
                               <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
@@ -1393,7 +1393,7 @@ export default function CampaignsPage() {
                             );
                           })()}
 
-                          <div className="space-y-1.5">
+                          <div className="space-y-3">
                             {variableMapping.matched.map(({ variable, column, customValue }) => {
                               const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
                               const isAiBlock = variable.toLowerCase().startsWith("ai:") || variable.toLowerCase().startsWith("ai_image:");
@@ -1401,29 +1401,37 @@ export default function CampaignsPage() {
                               const isSpecialBlock = isAiBlock || isSchemaBlock;
 
                               return (
-                                <div key={variable} className="flex flex-wrap items-center gap-1.5 text-xs py-1">
-                                  <Badge variant="outline" className="font-mono shrink-0 rounded-lg max-w-[45vw] truncate text-[10px]" title={`{${variable}}`}>{`{${variable}}`}</Badge>
-                                  <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                                  {column ? (
-                                    <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[10px]">
-                                      <Check className="h-3 w-3 mr-1" /> {column}
-                                    </Badge>
-                                  ) : customValue ? (
-                                    <div className="flex flex-col gap-1.5 w-full mt-0.5">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <span className="text-muted-foreground text-[10px]">Custom value:</span>
+                                <div key={variable} className="rounded-lg border border-border/60 bg-background/50 p-3 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="font-mono shrink-0 rounded-lg max-w-[60vw] truncate text-[11px] py-1 px-2" title={`{${variable}}`}>{`{${variable}}`}</Badge>
+                                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                    {column && (
+                                      <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[11px] py-1 px-2">
+                                        <Check className="h-3 w-3 mr-1" /> {column}
+                                      </Badge>
+                                    )}
+                                    {isSpecialBlock && !column && !customValue && (
+                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[11px] py-1 px-2">
+                                        <Check className="h-3 w-3 mr-1" /> Auto-generated
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {customValue ? (
+                                    <div className="space-y-1.5">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-muted-foreground text-[11px] font-medium">Custom value:</span>
                                         <Button
                                           type="button"
                                           variant="ghost"
                                           size="icon"
-                                          className="h-5 w-5 shrink-0"
+                                          className="h-7 w-7 shrink-0"
                                           onClick={() => setCustomValues(prev => { const next = { ...prev }; delete next[variable]; return next; })}
                                         >
-                                          <X className="h-3 w-3" />
+                                          <X className="h-3.5 w-3.5" />
                                         </Button>
                                       </div>
                                       <Input
-                                        className="h-8 w-full text-xs rounded-lg border-primary/30"
+                                        className="h-10 w-full text-sm rounded-lg border-primary/30 focus:border-primary"
                                         placeholder="e.g. Web Design, Plumbing Services…"
                                         value={customValues[variable] || ""}
                                         onChange={(e) => {
@@ -1432,29 +1440,25 @@ export default function CampaignsPage() {
                                         }}
                                       />
                                     </div>
-                                  ) : isSpecialBlock ? (
-                                    <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px]">
-                                      <Check className="h-3 w-3 mr-1" /> Auto-generated
-                                    </Badge>
-                                  ) : (
-                                    <div className="flex flex-col gap-1.5 w-full mt-0.5">
+                                  ) : !column && !isSpecialBlock ? (
+                                    <div className="space-y-2">
                                       <Select
                                         value={manualMappings[variable] || ""}
                                         onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
                                       >
-                                        <SelectTrigger className="h-7 w-full text-xs rounded-lg border-destructive/40 bg-destructive/5">
+                                        <SelectTrigger className="h-10 w-full text-sm rounded-lg border-destructive/40 bg-destructive/5">
                                           <SelectValue placeholder="Select column…" />
                                         </SelectTrigger>
                                         <SelectContent>
                                           {headers.map((h) => (
-                                            <SelectItem key={h} value={h} className="text-xs font-mono">{h}</SelectItem>
+                                            <SelectItem key={h} value={h} className="text-sm font-mono py-2">{h}</SelectItem>
                                           ))}
                                         </SelectContent>
                                       </Select>
-                                      <span className="text-muted-foreground text-[10px]">or type a custom value:</span>
+                                      <span className="text-muted-foreground text-[11px] font-medium block">or type a custom value:</span>
                                       <Input
-                                        className="h-8 w-full text-xs rounded-lg border-primary/30"
-                                        placeholder={`e.g. Web Design, Plumbing Services…`}
+                                        className="h-10 w-full text-sm rounded-lg border-primary/30 focus:border-primary"
+                                        placeholder="e.g. Web Design, Plumbing Services…"
                                         value={customValues[variable] || ""}
                                         onChange={(e) => {
                                           setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
@@ -1462,7 +1466,7 @@ export default function CampaignsPage() {
                                         }}
                                       />
                                     </div>
-                                  )}
+                                  ) : null}
                                 </div>
                               );
                             })}
