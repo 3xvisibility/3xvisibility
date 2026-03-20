@@ -745,7 +745,7 @@ export default function CampaignsPage() {
     setSelectedPageIds(new Set());
     setWebsitePagesSearch("");
     setManualMappings({});
-    setAiFillVars(new Set());
+    setCustomValues({});
   };
 
   const getProgressInfo = (c: Campaign) => {
