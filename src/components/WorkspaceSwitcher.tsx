@@ -1,4 +1,5 @@
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
