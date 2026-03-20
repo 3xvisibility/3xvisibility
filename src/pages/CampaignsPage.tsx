@@ -1349,7 +1349,7 @@ export default function CampaignsPage() {
                         <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-semibold">Variable Mapping</h4>
-                            {variableMapping.matched.every((m) => m.column) ? (
+                            {variableMapping.matched.every((m) => m.column || m.aiFill) ? (
                               <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
                                 <Check className="h-3 w-3 mr-1" /> All matched
                               </Badge>
