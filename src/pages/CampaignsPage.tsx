@@ -1405,7 +1405,7 @@ export default function CampaignsPage() {
                                       ✨ AI Fill all unmatched
                                     </Button>
                                     {headers.length > 0 && (
-                                      <p className="text-muted-foreground mt-1">Available columns: <span className="font-mono text-primary">{headers.join(", ")}</span></p>
+                                      <p className="text-muted-foreground mt-1 break-words">Available columns: <span className="font-mono text-primary text-[10px] break-all">{headers.join(", ")}</span></p>
                                     )}
                                   </>
                                 )}
