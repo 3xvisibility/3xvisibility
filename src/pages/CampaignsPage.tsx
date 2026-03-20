@@ -1392,7 +1392,7 @@ export default function CampaignsPage() {
                           })()}
 
                           <div className="space-y-1.5">
-                            {variableMapping.matched.map(({ variable, column }) => {
+                            {variableMapping.matched.map(({ variable, column, aiFill }) => {
                               const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
                               const isAiBlock = variable.toLowerCase().startsWith("ai:") || variable.toLowerCase().startsWith("ai_image:");
                               const isSchemaBlock = variable.includes("@context") || variable.includes("@type") || variable.includes("schema.org");
@@ -1406,24 +1406,51 @@ export default function CampaignsPage() {
                                     <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg">
                                       <Check className="h-3 w-3 mr-1" /> {column}
                                     </Badge>
+                                  ) : aiFill ? (
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
+                                        <Check className="h-3 w-3 mr-1" /> AI Fill
+                                      </Badge>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => setAiFillVars(prev => { const next = new Set(prev); next.delete(variable); return next; })}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
                                   ) : isSpecialBlock ? (
                                     <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
                                       <Check className="h-3 w-3 mr-1" /> Auto-generated
                                     </Badge>
                                   ) : (
-                                    <Select
-                                      value={manualMappings[variable] || ""}
-                                      onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
-                                    >
-                                      <SelectTrigger className="h-7 w-[180px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
-                                        <SelectValue placeholder="Select column…" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {headers.map((h) => (
-                                          <SelectItem key={h} value={h} className="text-xs font-mono">{h}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    <div className="flex items-center gap-1.5">
+                                      <Select
+                                        value={manualMappings[variable] || ""}
+                                        onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
+                                      >
+                                        <SelectTrigger className="h-7 w-[140px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
+                                          <SelectValue placeholder="Select column…" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {headers.map((h) => (
+                                            <SelectItem key={h} value={h} className="text-xs font-mono">{h}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-[10px] px-2 rounded-lg border-primary/30 text-primary hover:bg-primary/10"
+                                        onClick={() => {
+                                          setAiFillVars(prev => new Set(prev).add(variable));
+                                          setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
+                                        }}
+                                      >
+                                        ✨ AI Fill
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
                               );
