@@ -369,14 +369,14 @@ export default function CampaignsPage() {
         // Persist Mappings from variable mapping
         if (variableMapping) {
           const mappingRows = variableMapping.matched
-            .filter((m) => m.column)
+            .filter((m) => m.column || m.aiFill)
             .map((m, i) => ({
               campaign_id: campaignId,
               workspace_id: wsId,
               user_id: user.id,
-              source_column: m.column!,
+              source_column: m.aiFill ? "__ai_fill__" : m.column!,
               target_field: m.variable,
-              field_category: "content",
+              field_category: m.aiFill ? "ai_fill" : "content",
               sort_order: i,
               is_required: true,
             }));
