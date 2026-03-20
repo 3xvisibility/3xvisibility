@@ -551,11 +551,17 @@ async function generateSeoMetadata(
   pageTitle: string,
   pageContent: string,
   settings: { tone: string; language: string },
-  apiKey: string
+  apiKey: string,
+  websiteContext?: { name?: string; url?: string }
 ): Promise<{ seo_title: string; seo_description: string; seo_keywords: string[] }> {
-  const snippet = pageContent.replace(/<[^>]*>/g, "").slice(0, 1000);
+  const snippet = pageContent.replace(/<[^>]*>/g, "").slice(0, 2000);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20_000);
+
+  const websiteInfo = websiteContext?.name || websiteContext?.url
+    ? `\nWebsite: ${websiteContext.name || ""}${websiteContext.url ? ` (${websiteContext.url})` : ""}`
+    : "";
+
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -568,11 +574,11 @@ async function generateSeoMetadata(
         messages: [
           {
             role: "system",
-            content: `You are an SEO expert. Generate optimized SEO metadata.\nTone: ${settings.tone}\nLanguage: ${settings.language}`,
+            content: `You are an SEO expert. Generate optimized SEO metadata that accurately reflects the page content and matches the website brand/domain.\nTone: ${settings.tone}\nLanguage: ${settings.language}${websiteInfo}\n\nRules:\n- The SEO title MUST include the website/brand name (e.g. "Page Title | Brand Name")\n- The meta description MUST summarize the actual page content, not generic filler\n- Keywords MUST be extracted from the real page text\n- Match the language and tone of the page content`,
           },
           {
             role: "user",
-            content: `Generate SEO metadata for this page:\n\nTitle: ${pageTitle}\n\nContent excerpt: ${snippet}`,
+            content: `Generate SEO metadata for this page:\n\nTitle: ${pageTitle}\n\nFull content text:\n${snippet}`,
           },
         ],
         tools: [
