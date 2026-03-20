@@ -1,4 +1,5 @@
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { workspaces, currentWorkspace, setCurrentWorkspace, refetch } = useWorkspace();
+  const { plan } = useSubscription();
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -74,7 +76,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
               <>
                 <div className="flex flex-col items-start text-left min-w-0 flex-1">
                   <span className="text-sm font-medium truncate w-full">{currentWorkspace.name}</span>
-                  <span className="text-[10px] text-muted-foreground capitalize">{currentWorkspace.plan} plan</span>
+                  <span className="text-[10px] text-muted-foreground capitalize">{plan} plan</span>
                 </div>
                 <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               </>
