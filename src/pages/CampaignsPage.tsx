@@ -248,8 +248,13 @@ export default function CampaignsPage() {
   const variableMapping = useMemo(() => {
     const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
-    const matched: { variable: string; column: string | null }[] = [];
+    const matched: { variable: string; column: string | null; aiFill?: boolean }[] = [];
     for (const v of selectedTemplateVars) {
+      // AI Fill takes priority
+      if (aiFillVars.has(v)) {
+        matched.push({ variable: v, column: null, aiFill: true });
+        continue;
+      }
       // Check manual override first
       if (manualMappings[v] && headers.includes(manualMappings[v])) {
         matched.push({ variable: v, column: manualMappings[v] });
