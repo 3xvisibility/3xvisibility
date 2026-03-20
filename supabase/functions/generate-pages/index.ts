@@ -1732,7 +1732,7 @@ Deno.serve(async (req) => {
 
       if (currentSub) {
         const updates: Record<string, number> = {
-          pages_used: (currentSub.pages_used || 0) + successCount,
+          pages_used: (currentSub.pages_used || 0) + newSuccessCount,
         };
         if (aiGenerationsUsed > 0) {
           updates.ai_generations_used = (currentSub.ai_generations_used || 0) + aiGenerationsUsed;
