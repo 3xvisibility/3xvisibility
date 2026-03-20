@@ -1348,7 +1348,7 @@ export default function CampaignsPage() {
                         </Select>
                       </div>
                       {variableMapping && (
-                        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                        <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-3 overflow-hidden">
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-semibold">Variable Mapping</h4>
                             {variableMapping.matched.every((m) => m.column || m.aiFill) ? (
