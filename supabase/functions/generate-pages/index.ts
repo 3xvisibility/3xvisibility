@@ -975,12 +975,14 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : BATCH_SIZE;
 
-    // Keep campaign publishing fast: reserve AI generation for explicit AI blocks/images.
+    // Count AI-fill mappings
+    const aiFillCount = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__").length;
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
     const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
+    const aiFillGenerationsNeeded = aiFillCount * remainingRows.length;
     const shouldUseAiSeo = Boolean(LOVABLE_API_KEY) && !!test_mode;
     const seoGenerationsNeeded = shouldUseAiSeo ? remainingRows.length : 0;
-    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded;
+    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded + aiFillGenerationsNeeded;
 
     if (totalAiNeeded > 0) {
       const { data: subscription } = await supabase
