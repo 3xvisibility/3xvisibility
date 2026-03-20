@@ -1371,7 +1371,7 @@ export default function CampaignsPage() {
                               return v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema");
                             });
                             return (
-                              <div className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-2 space-y-1">
+                              <div className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-2 space-y-1 overflow-hidden">
                                 {isAllAiOrSchema ? (
                                   <p className="text-muted-foreground">
                                     <span className="font-medium text-foreground">ℹ AI & Schema blocks</span> don't need data columns — they are generated automatically during page creation.
