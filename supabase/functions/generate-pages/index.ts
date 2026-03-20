@@ -1066,11 +1066,13 @@ Deno.serve(async (req) => {
       await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate. Job: ${jobId}`);
     }
 
-    // Pre-fetch website URL once (instead of per-row)
+    // Pre-fetch website URL and name once (instead of per-row)
     let websiteBaseUrl: string | null = null;
+    let websiteName: string | null = null;
     if (campaign.website_id) {
-      const { data: website } = await supabase.from("websites").select("url").eq("id", campaign.website_id).maybeSingle();
+      const { data: website } = await supabase.from("websites").select("url, name").eq("id", campaign.website_id).maybeSingle();
       if (website?.url) websiteBaseUrl = website.url.replace(/\/+$/, "");
+      if (website?.name) websiteName = website.name;
     }
 
     const TIMEOUT_MS = 120_000; // 120s soft limit (edge functions have ~150s hard limit)
