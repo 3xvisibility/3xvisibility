@@ -551,11 +551,17 @@ async function generateSeoMetadata(
   pageTitle: string,
   pageContent: string,
   settings: { tone: string; language: string },
-  apiKey: string
+  apiKey: string,
+  websiteContext?: { name?: string; url?: string }
 ): Promise<{ seo_title: string; seo_description: string; seo_keywords: string[] }> {
-  const snippet = pageContent.replace(/<[^>]*>/g, "").slice(0, 1000);
+  const snippet = pageContent.replace(/<[^>]*>/g, "").slice(0, 2000);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20_000);
+
+  const websiteInfo = websiteContext?.name || websiteContext?.url
+    ? `\nWebsite: ${websiteContext.name || ""}${websiteContext.url ? ` (${websiteContext.url})` : ""}`
+    : "";
+
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -568,11 +574,11 @@ async function generateSeoMetadata(
         messages: [
           {
             role: "system",
-            content: `You are an SEO expert. Generate optimized SEO metadata.\nTone: ${settings.tone}\nLanguage: ${settings.language}`,
+            content: `You are an SEO expert. Generate optimized SEO metadata that accurately reflects the page content and matches the website brand/domain.\nTone: ${settings.tone}\nLanguage: ${settings.language}${websiteInfo}\n\nRules:\n- The SEO title MUST include the website/brand name (e.g. "Page Title | Brand Name")\n- The meta description MUST summarize the actual page content, not generic filler\n- Keywords MUST be extracted from the real page text\n- Match the language and tone of the page content`,
           },
           {
             role: "user",
-            content: `Generate SEO metadata for this page:\n\nTitle: ${pageTitle}\n\nContent excerpt: ${snippet}`,
+            content: `Generate SEO metadata for this page:\n\nTitle: ${pageTitle}\n\nFull content text:\n${snippet}`,
           },
         ],
         tools: [
@@ -1060,11 +1066,13 @@ Deno.serve(async (req) => {
       await logEvent(supabase, campaign_id, user.id, "started", `Generation started. ${csvRows.length} total pages to generate. Job: ${jobId}`);
     }
 
-    // Pre-fetch website URL once (instead of per-row)
+    // Pre-fetch website URL and name once (instead of per-row)
     let websiteBaseUrl: string | null = null;
+    let websiteName: string | null = null;
     if (campaign.website_id) {
-      const { data: website } = await supabase.from("websites").select("url").eq("id", campaign.website_id).maybeSingle();
+      const { data: website } = await supabase.from("websites").select("url, name").eq("id", campaign.website_id).maybeSingle();
       if (website?.url) websiteBaseUrl = website.url.replace(/\/+$/, "");
+      if (website?.name) websiteName = website.name;
     }
 
     const TIMEOUT_MS = 120_000; // 120s soft limit (edge functions have ~150s hard limit)
@@ -1390,14 +1398,14 @@ Deno.serve(async (req) => {
             // Still generate keywords via AI for test previews only to keep campaign publishing fast.
             if (shouldUseAiSeo) {
               try {
-                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
+                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
                 seoData.seo_keywords = aiSeo.seo_keywords;
                 aiGenerationsUsed++;
               } catch { /* keep empty keywords */ }
             }
           } else if (shouldUseAiSeo) {
             try {
-              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY);
+              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
               aiGenerationsUsed++;
             } catch { /* keep fallback */ }
           }
