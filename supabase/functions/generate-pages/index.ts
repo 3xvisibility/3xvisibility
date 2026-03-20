@@ -1720,16 +1720,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (aiGenerationsUsed > 0) {
+    // Update subscription usage counters (pages + AI generations)
+    {
       const { data: currentSub } = await supabase
         .from("subscriptions")
-        .select("ai_generations_used")
+        .select("ai_generations_used, pages_used")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (currentSub) {
+        const updates: Record<string, number> = {
+          pages_used: (currentSub.pages_used || 0) + successCount,
+        };
+        if (aiGenerationsUsed > 0) {
+          updates.ai_generations_used = (currentSub.ai_generations_used || 0) + aiGenerationsUsed;
+        }
         await supabase.from("subscriptions")
-          .update({ ai_generations_used: (currentSub.ai_generations_used || 0) + aiGenerationsUsed })
+          .update(updates)
           .eq("user_id", user.id);
       }
     }
