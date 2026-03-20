@@ -1409,18 +1409,28 @@ export default function CampaignsPage() {
                                       <Check className="h-3 w-3 mr-1" /> {column}
                                     </Badge>
                                   ) : customValue ? (
-                                    <div className="flex items-center gap-1">
-                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px] max-w-[40vw] truncate" title={customValue}>
-                                        <Check className="h-3 w-3 mr-1" /> {customValue}
-                                      </Badge>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-5 w-5"
-                                        onClick={() => setCustomValues(prev => { const next = { ...prev }; delete next[variable]; return next; })}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </Button>
+                                    <div className="flex flex-col gap-1.5 w-full mt-0.5">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-muted-foreground text-[10px]">Custom value:</span>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-5 w-5 shrink-0"
+                                          onClick={() => setCustomValues(prev => { const next = { ...prev }; delete next[variable]; return next; })}
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                      <Input
+                                        className="h-8 w-full text-xs rounded-lg border-primary/30"
+                                        placeholder="e.g. Web Design, Plumbing Services…"
+                                        value={customValues[variable] || ""}
+                                        onChange={(e) => {
+                                          setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
+                                          if (e.target.value) setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
+                                        }}
+                                      />
                                     </div>
                                   ) : isSpecialBlock ? (
                                     <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[10px]">
