@@ -88,6 +88,7 @@ export default function CampaignsPage() {
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [websitePagesSearch, setWebsitePagesSearch] = useState("");
   const [manualMappings, setManualMappings] = useState<Record<string, string>>({});
+  const [aiFillVars, setAiFillVars] = useState<Set<string>>(new Set());
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
   // Generation settings
@@ -247,8 +248,13 @@ export default function CampaignsPage() {
   const variableMapping = useMemo(() => {
     const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
-    const matched: { variable: string; column: string | null }[] = [];
+    const matched: { variable: string; column: string | null; aiFill?: boolean }[] = [];
     for (const v of selectedTemplateVars) {
+      // AI Fill takes priority
+      if (aiFillVars.has(v)) {
+        matched.push({ variable: v, column: null, aiFill: true });
+        continue;
+      }
       // Check manual override first
       if (manualMappings[v] && headers.includes(manualMappings[v])) {
         matched.push({ variable: v, column: manualMappings[v] });
@@ -267,7 +273,7 @@ export default function CampaignsPage() {
     }
     const unmatchedColumns = headers.filter((h) => !matched.some((m) => m.column === h));
     return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers, manualMappings]);
+  }, [selectedTemplateVars, csvHeaders, dataSource, websitePagesAsCsv.headers, manualMappings, aiFillVars]);
 
   const { data: campaignLogs = [] } = useQuery({
     queryKey: ["campaign-logs", logDialogCampaign],
@@ -363,14 +369,14 @@ export default function CampaignsPage() {
         // Persist Mappings from variable mapping
         if (variableMapping) {
           const mappingRows = variableMapping.matched
-            .filter((m) => m.column)
+            .filter((m) => m.column || m.aiFill)
             .map((m, i) => ({
               campaign_id: campaignId,
               workspace_id: wsId,
               user_id: user.id,
-              source_column: m.column!,
+              source_column: m.aiFill ? "__ai_fill__" : m.column!,
               target_field: m.variable,
-              field_category: "content",
+              field_category: m.aiFill ? "ai_fill" : "content",
               sort_order: i,
               is_required: true,
             }));
@@ -738,6 +744,8 @@ export default function CampaignsPage() {
     setWebsiteContentType("all");
     setSelectedPageIds(new Set());
     setWebsitePagesSearch("");
+    setManualMappings({});
+    setAiFillVars(new Set());
   };
 
   const getProgressInfo = (c: Campaign) => {
@@ -1343,7 +1351,7 @@ export default function CampaignsPage() {
                         <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-semibold">Variable Mapping</h4>
-                            {variableMapping.matched.every((m) => m.column) ? (
+                            {variableMapping.matched.every((m) => m.column || m.aiFill) ? (
                               <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
                                 <Check className="h-3 w-3 mr-1" /> All matched
                               </Badge>
@@ -1355,9 +1363,9 @@ export default function CampaignsPage() {
                           </div>
 
                           {/* Help text for unmatched variables */}
-                          {variableMapping.matched.some((m) => !m.column) && (() => {
+                          {variableMapping.matched.some((m) => !m.column && !m.aiFill) && (() => {
                             const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
-                            const unmatchedVars = variableMapping.matched.filter((m) => !m.column);
+                            const unmatchedVars = variableMapping.matched.filter((m) => !m.column && !m.aiFill);
                             const isAllAiOrSchema = unmatchedVars.every(m => {
                               const v = m.variable.toLowerCase();
                               return v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema");
@@ -1372,10 +1380,30 @@ export default function CampaignsPage() {
                                   <>
                                     <p className="font-medium text-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" /> How to fix unmatched variables:</p>
                                     <ul className="text-muted-foreground space-y-0.5 ml-4 list-disc">
-                                      <li>Use the dropdown below to <strong>manually map</strong> each variable to an available column</li>
-                                      <li>Or <strong>rename your CSV columns</strong> to match the template variables exactly (e.g. rename "ville" → "city")</li>
-                                      <li>Or <strong>edit your template</strong> to use the column names from your data source</li>
+                                      <li>Use the dropdown to <strong>manually map</strong> each variable to a column</li>
+                                      <li>Click <strong>✨ AI Fill</strong> to let AI auto-generate values for unmatched variables</li>
+                                      <li>Or <strong>rename your CSV columns</strong> to match template variables</li>
                                     </ul>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="mt-2 text-xs h-7 border-primary/30 text-primary hover:bg-primary/10"
+                                      onClick={() => {
+                                        const toFill = unmatchedVars
+                                          .filter(m => {
+                                            const v = m.variable.toLowerCase();
+                                            return !(v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema"));
+                                          })
+                                          .map(m => m.variable);
+                                        setAiFillVars(prev => {
+                                          const next = new Set(prev);
+                                          toFill.forEach(v => next.add(v));
+                                          return next;
+                                        });
+                                      }}
+                                    >
+                                      ✨ AI Fill all unmatched
+                                    </Button>
                                     {headers.length > 0 && (
                                       <p className="text-muted-foreground mt-1">Available columns: <span className="font-mono text-primary">{headers.join(", ")}</span></p>
                                     )}
@@ -1386,7 +1414,7 @@ export default function CampaignsPage() {
                           })()}
 
                           <div className="space-y-1.5">
-                            {variableMapping.matched.map(({ variable, column }) => {
+                            {variableMapping.matched.map(({ variable, column, aiFill }) => {
                               const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
                               const isAiBlock = variable.toLowerCase().startsWith("ai:") || variable.toLowerCase().startsWith("ai_image:");
                               const isSchemaBlock = variable.includes("@context") || variable.includes("@type") || variable.includes("schema.org");
@@ -1400,24 +1428,51 @@ export default function CampaignsPage() {
                                     <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg">
                                       <Check className="h-3 w-3 mr-1" /> {column}
                                     </Badge>
+                                  ) : aiFill ? (
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
+                                        <Check className="h-3 w-3 mr-1" /> AI Fill
+                                      </Badge>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => setAiFillVars(prev => { const next = new Set(prev); next.delete(variable); return next; })}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
                                   ) : isSpecialBlock ? (
                                     <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg">
                                       <Check className="h-3 w-3 mr-1" /> Auto-generated
                                     </Badge>
                                   ) : (
-                                    <Select
-                                      value={manualMappings[variable] || ""}
-                                      onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
-                                    >
-                                      <SelectTrigger className="h-7 w-[180px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
-                                        <SelectValue placeholder="Select column…" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {headers.map((h) => (
-                                          <SelectItem key={h} value={h} className="text-xs font-mono">{h}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    <div className="flex items-center gap-1.5">
+                                      <Select
+                                        value={manualMappings[variable] || ""}
+                                        onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
+                                      >
+                                        <SelectTrigger className="h-7 w-[140px] text-xs rounded-lg border-destructive/40 bg-destructive/5">
+                                          <SelectValue placeholder="Select column…" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {headers.map((h) => (
+                                            <SelectItem key={h} value={h} className="text-xs font-mono">{h}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-[10px] px-2 rounded-lg border-primary/30 text-primary hover:bg-primary/10"
+                                        onClick={() => {
+                                          setAiFillVars(prev => new Set(prev).add(variable));
+                                          setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
+                                        }}
+                                      >
+                                        ✨ AI Fill
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
                               );

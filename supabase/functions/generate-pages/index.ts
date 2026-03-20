@@ -975,12 +975,14 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : BATCH_SIZE;
 
-    // Keep campaign publishing fast: reserve AI generation for explicit AI blocks/images.
+    // Count AI-fill mappings
+    const aiFillCount = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__").length;
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
     const aiImageGenerationsNeeded = hasAiImageBlocks ? remainingRows.length * aiImageBlocks.length : 0;
+    const aiFillGenerationsNeeded = aiFillCount * remainingRows.length;
     const shouldUseAiSeo = Boolean(LOVABLE_API_KEY) && !!test_mode;
     const seoGenerationsNeeded = shouldUseAiSeo ? remainingRows.length : 0;
-    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded;
+    const totalAiNeeded = aiGenerationsNeeded + aiImageGenerationsNeeded + seoGenerationsNeeded + aiFillGenerationsNeeded;
 
     if (totalAiNeeded > 0) {
       const { data: subscription } = await supabase
@@ -1001,7 +1003,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    if ((hasAiBlocks || hasAiImageBlocks) && !LOVABLE_API_KEY) {
+    if ((hasAiBlocks || hasAiImageBlocks || aiFillCount > 0) && !LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "AI service not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1204,9 +1206,13 @@ Deno.serve(async (req) => {
           // Process loops {{#each}}...{{/each}}
           pageContent = processLoops(pageContent, allVars);
 
-          // Apply custom mappings first if available, then fall back to direct replacement
-          if (customMappings && customMappings.length > 0) {
-            for (const mapping of customMappings) {
+          // Separate AI-fill mappings from regular custom mappings
+          const aiFillMappings = (customMappings || []).filter((m: any) => m.source_column === "__ai_fill__");
+          const regularMappings = (customMappings || []).filter((m: any) => m.source_column !== "__ai_fill__");
+
+          // Apply regular custom mappings first
+          if (regularMappings.length > 0) {
+            for (const mapping of regularMappings) {
               const value = row[mapping.source_column] || "";
               let finalValue = value;
               if (mapping.transform_expression) {
@@ -1259,7 +1265,27 @@ Deno.serve(async (req) => {
             pageContent = pageContent.replace(regex, value || "");
           }
 
-          // Process spintax {option1|option2|option3} AFTER variable replacement
+          // AI Fill: generate content for unmatched variables marked as AI-fill
+          if (aiFillMappings.length > 0 && LOVABLE_API_KEY) {
+            for (const mapping of aiFillMappings) {
+              const varName = mapping.target_field;
+              const varRegex = new RegExp(`\\{${varName}\\}`, "gi");
+              if (varRegex.test(pageContent)) {
+                try {
+                  const contextVars = Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(", ");
+                  const aiPrompt = `Generate a short, natural value for the variable "${varName}" based on this context: ${contextVars}. Return ONLY the value, no explanation, no quotes.`;
+                  const generated = await generateAiContent(aiPrompt, aiSettings, LOVABLE_API_KEY);
+                  pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), generated.trim());
+                  aiGenerationsUsed++;
+                } catch (aiErr: any) {
+                  console.error(`AI Fill failed for ${varName}:`, aiErr.message);
+                  // Replace with variable name as fallback
+                  pageContent = pageContent.replace(new RegExp(`\\{${varName}\\}`, "gi"), varName.replace(/_/g, " "));
+                }
+              }
+            }
+          }
+
           pageContent = processSpintax(pageContent);
 
           // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
