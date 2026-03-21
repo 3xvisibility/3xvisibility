@@ -28,6 +28,7 @@ const WorkspaceContext = createContext<WorkspaceContextType>({
   setCurrentWorkspace: () => {},
   isLoading: true,
   refetch: async () => {},
+  basePath: "",
 });
 
 export function useWorkspace() {
