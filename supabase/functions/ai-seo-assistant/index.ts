@@ -1,0 +1,188 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+type Action = "titles" | "meta" | "headings" | "body" | "faq" | "keywords" | "full_rewrite";
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const {
+      data: { user },
+      error: authErr,
+    } = await supabase.auth.getUser();
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { page_id, action, instruction, context } = (await req.json()) as {
+      page_id: string;
+      action: Action;
+      instruction?: string;
+      context?: { campaign_name?: string; keywords?: string[]; language?: string };
+    };
+
+    if (!page_id || !action) {
+      return new Response(JSON.stringify({ error: "page_id and action are required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fetch page
+    const { data: page, error: pageErr } = await supabase
+      .from("generated_pages")
+      .select("id, title, slug, content, seo_title, seo_description, seo_keywords, campaign_id")
+      .eq("id", page_id)
+      .maybeSingle();
+
+    if (pageErr || !page) {
+      return new Response(JSON.stringify({ error: "Page not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const lang = context?.language || "en";
+    const kw = context?.keywords?.join(", ") || page.seo_keywords?.join(", ") || "";
+    const campaignCtx = context?.campaign_name ? `Campaign: "${context.campaign_name}".` : "";
+    const userNote = instruction ? `\nUser instruction: ${instruction}` : "";
+
+    const contentSnippet = (page.content || "").slice(0, 3000);
+
+    const prompts: Record<Action, { system: string; user: string }> = {
+      titles: {
+        system: `You are an expert SEO copywriter. Generate 5 optimized title variations for a web page. Each title must be 20-70 characters. Include the primary keyword naturally. Return ONLY a JSON array of strings.`,
+        user: `Page: "${page.title}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nGenerate 5 SEO-optimized title variations.`,
+      },
+      meta: {
+        system: `You are an expert SEO copywriter. Generate 3 meta description variations for a web page. Each must be 120-160 characters, include a call to action, and use the primary keyword. Return ONLY a JSON object: {"descriptions": string[], "suggested_title": string}`,
+        user: `Title: "${page.seo_title || page.title}"\nCurrent meta: "${page.seo_description || ""}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}`,
+      },
+      headings: {
+        system: `You are an SEO content editor. Rewrite the headings (h1, h2, h3) in the HTML to be more keyword-rich, engaging, and SEO-optimized. Return ONLY the updated HTML content with improved headings. Keep the rest of the content unchanged.`,
+        user: `Keywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nHTML:\n${contentSnippet}`,
+      },
+      body: {
+        system: `You are an expert content writer. Rewrite the body content to be more engaging, SEO-optimized, and comprehensive. Maintain the HTML structure and tags. Add relevant details, improve readability, and naturally incorporate keywords. Return ONLY the updated HTML.`,
+        user: `Title: "${page.title}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nHTML:\n${contentSnippet}`,
+      },
+      faq: {
+        system: `You are an SEO content specialist. Generate a FAQ section in HTML format with 5-7 relevant questions and answers based on the page content and keywords. Use <div class="faq-section"> with <details>/<summary> tags for each Q&A. Include schema-friendly markup. Return ONLY the HTML.`,
+        user: `Title: "${page.title}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nPage context:\n${contentSnippet.slice(0, 1500)}`,
+      },
+      keywords: {
+        system: `You are an SEO keyword researcher. Analyze the page content and suggest relevant keywords. Return ONLY a JSON object: {"primary": string[], "secondary": string[], "long_tail": string[], "lsi": string[]}. Each array should have 3-5 items.`,
+        user: `Title: "${page.title}"\nCurrent keywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nContent:\n${contentSnippet.slice(0, 2000)}`,
+      },
+      full_rewrite: {
+        system: `You are an expert SEO content editor. Fully rewrite the page content to be fresher, more engaging, better structured, and more SEO-optimized. Maintain the same HTML structure and topic. Return ONLY the rewritten HTML.`,
+        user: `Title: "${page.title}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nHTML:\n${contentSnippet}`,
+      },
+    };
+
+    const prompt = prompts[action];
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: prompt.system },
+          { role: "user", content: prompt.user },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const text = await response.text();
+      console.error("AI gateway error:", response.status, text);
+      return new Response(JSON.stringify({ error: "AI generation failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const aiResult = await response.json();
+    let content = aiResult.choices?.[0]?.message?.content ?? "";
+
+    // Strip markdown fences
+    content = content.replace(/^```(?:json|html)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+
+    // Log AI action in audit_logs
+    const workspaceId = (
+      await supabase.from("generated_pages").select("workspace_id").eq("id", page_id).single()
+    ).data?.workspace_id;
+
+    if (workspaceId) {
+      await supabase.from("audit_logs").insert({
+        workspace_id: workspaceId,
+        user_id: user.id,
+        action: `ai_seo_${action}`,
+        entity_type: "generated_page",
+        entity_id: page_id,
+        details: { action, source: "ai", instruction: instruction || null },
+      });
+    }
+
+    return new Response(
+      JSON.stringify({ result: content, action, page_id }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (err: any) {
+    console.error("ai-seo-assistant error:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
