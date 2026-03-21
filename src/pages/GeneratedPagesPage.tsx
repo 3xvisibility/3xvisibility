@@ -128,12 +128,13 @@ export default function GeneratedPagesPage() {
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({
         title: "Publishing complete",
         description: `${data.published} published, ${data.failed} failed.`,
       });
+      if (wsId) logAudit(wsId, "page_published", "page", variables.pageIds[0], { count: variables.pageIds.length });
     },
     onError: (err: Error) => {
       toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
