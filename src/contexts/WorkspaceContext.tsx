@@ -18,6 +18,8 @@ interface WorkspaceContextType {
   setCurrentWorkspace: (ws: Workspace) => void;
   isLoading: boolean;
   refetch: () => Promise<void>;
+  /** Returns the base path for the current workspace, e.g. "/w/my-workspace" */
+  basePath: string;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType>({
@@ -26,6 +28,7 @@ const WorkspaceContext = createContext<WorkspaceContextType>({
   setCurrentWorkspace: () => {},
   isLoading: true,
   refetch: async () => {},
+  basePath: "",
 });
 
 export function useWorkspace() {
@@ -92,6 +95,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("current_workspace_id", ws.id);
   }, []);
 
+  const basePath = currentWorkspace ? `/w/${currentWorkspace.slug}` : "";
+
   useEffect(() => {
     fetchWorkspaces();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
@@ -108,6 +113,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setCurrentWorkspace,
         isLoading,
         refetch: fetchWorkspaces,
+        basePath,
       }}
     >
       {children}

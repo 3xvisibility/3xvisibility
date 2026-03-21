@@ -6,6 +6,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { WorkspaceRouter } from "@/components/WorkspaceRouter";
+import { WorkspaceRedirect } from "@/components/WorkspaceRedirect";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
@@ -47,6 +49,42 @@ function ProtectedRoute({ children, session }: { children: React.ReactNode; sess
   return <>{children}</>;
 }
 
+/** All the dashboard child routes, rendered inside DashboardLayout */
+function DashboardRoutes({ session, onLogout }: { session: Session | null; onLogout: () => void }) {
+  const wrap = (el: React.ReactNode) => (
+    <ProtectedRoute session={session}>
+      <DashboardLayout onLogout={onLogout}>{el}</DashboardLayout>
+    </ProtectedRoute>
+  );
+
+  return (
+    <Routes>
+      <Route path="dashboard" element={wrap(<DashboardPage />)} />
+      <Route path="campaigns" element={wrap(<CampaignsPage />)} />
+      <Route path="campaigns/:id" element={wrap(<CampaignDetailPage />)} />
+      <Route path="templates" element={wrap(<TemplatesPage />)} />
+      <Route path="websites" element={wrap(<WebsitesPage />)} />
+      <Route path="pages" element={wrap(<GeneratedPagesPage />)} />
+      <Route path="scanner" element={wrap(<TemplateScannerPage />)} />
+      <Route path="discovery" element={wrap(<FeatureGate feature="discovery"><WebsiteDiscoveryPage /></FeatureGate>)} />
+      <Route path="analytics" element={wrap(<AnalyticsPage />)} />
+      <Route path="marketplace" element={wrap(<TemplateMarketplacePage />)} />
+      <Route path="billing" element={wrap(<BillingPage />)} />
+      <Route path="settings" element={wrap(<SettingsPage />)} />
+      <Route path="admin" element={wrap(<AdminPage />)} />
+      <Route path="indexing" element={wrap(<FeatureGate feature="indexing"><IndexingPage /></FeatureGate>)} />
+      <Route path="workspace-settings" element={wrap(<FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate>)} />
+      <Route path="data" element={wrap(<DataCsvPage />)} />
+      <Route path="website-content" element={wrap(<WebsiteContentPage />)} />
+      <Route path="ab-testing" element={wrap(<ABTestingPage />)} />
+      <Route path="content-calendar" element={wrap(<ContentCalendarPage />)} />
+      <Route path="performance" element={wrap(<PagePerformancePage />)} />
+      <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
+      <Route path="*" element={<Navigate to="dashboard" replace />} />
+    </Routes>
+  );
+}
+
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +99,6 @@ const App = () => {
       setLoading(false);
     });
 
-    // When "Remember me" was unchecked, clear session on tab/browser close
     const handleUnload = () => {
       if (localStorage.getItem("sessionEphemeral") === "true") {
         supabase.auth.signOut();
@@ -102,174 +139,35 @@ const App = () => {
             <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><DashboardPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/campaigns"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><CampaignsPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/campaigns/:id"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><CampaignDetailPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/templates"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><TemplatesPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/websites"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><WebsitesPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/pages"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><GeneratedPagesPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/scanner"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><TemplateScannerPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/discovery"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="discovery"><WebsiteDiscoveryPage /></FeatureGate></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><AnalyticsPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/marketplace"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><TemplateMarketplacePage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/billing"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><BillingPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><SettingsPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><AdminPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/indexing"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="indexing"><IndexingPage /></FeatureGate></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workspace-settings"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/data"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><DataCsvPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/website-content"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><WebsiteContentPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/ab-testing"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><ABTestingPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/content-calendar"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><ContentCalendarPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/performance"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><PagePerformancePage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/seo-audit"
-              element={
-                <ProtectedRoute session={session}>
-                  <DashboardLayout onLogout={handleLogout}><SeoAuditPage /></DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
+
+            {/* Workspace-prefixed routes */}
+            <Route path="/w/:workspaceSlug" element={<WorkspaceRouter />}>
+              <Route path="*" element={<DashboardRoutes session={session} onLogout={handleLogout} />} />
+            </Route>
+
+            {/* Legacy redirects — redirect old paths to workspace-prefixed versions */}
+            <Route path="/dashboard" element={<ProtectedRoute session={session}><WorkspaceRedirect path="dashboard" /></ProtectedRoute>} />
+            <Route path="/campaigns" element={<ProtectedRoute session={session}><WorkspaceRedirect path="campaigns" /></ProtectedRoute>} />
+            <Route path="/campaigns/:id" element={<ProtectedRoute session={session}><WorkspaceRedirect path="campaigns" /></ProtectedRoute>} />
+            <Route path="/templates" element={<ProtectedRoute session={session}><WorkspaceRedirect path="templates" /></ProtectedRoute>} />
+            <Route path="/websites" element={<ProtectedRoute session={session}><WorkspaceRedirect path="websites" /></ProtectedRoute>} />
+            <Route path="/pages" element={<ProtectedRoute session={session}><WorkspaceRedirect path="pages" /></ProtectedRoute>} />
+            <Route path="/scanner" element={<ProtectedRoute session={session}><WorkspaceRedirect path="scanner" /></ProtectedRoute>} />
+            <Route path="/discovery" element={<ProtectedRoute session={session}><WorkspaceRedirect path="discovery" /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute session={session}><WorkspaceRedirect path="analytics" /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute session={session}><WorkspaceRedirect path="marketplace" /></ProtectedRoute>} />
+            <Route path="/billing" element={<ProtectedRoute session={session}><WorkspaceRedirect path="billing" /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute session={session}><WorkspaceRedirect path="settings" /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute session={session}><WorkspaceRedirect path="admin" /></ProtectedRoute>} />
+            <Route path="/indexing" element={<ProtectedRoute session={session}><WorkspaceRedirect path="indexing" /></ProtectedRoute>} />
+            <Route path="/workspace-settings" element={<ProtectedRoute session={session}><WorkspaceRedirect path="workspace-settings" /></ProtectedRoute>} />
+            <Route path="/data" element={<ProtectedRoute session={session}><WorkspaceRedirect path="data" /></ProtectedRoute>} />
+            <Route path="/website-content" element={<ProtectedRoute session={session}><WorkspaceRedirect path="website-content" /></ProtectedRoute>} />
+            <Route path="/ab-testing" element={<ProtectedRoute session={session}><WorkspaceRedirect path="ab-testing" /></ProtectedRoute>} />
+            <Route path="/content-calendar" element={<ProtectedRoute session={session}><WorkspaceRedirect path="content-calendar" /></ProtectedRoute>} />
+            <Route path="/performance" element={<ProtectedRoute session={session}><WorkspaceRedirect path="performance" /></ProtectedRoute>} />
+            <Route path="/seo-audit" element={<ProtectedRoute session={session}><WorkspaceRedirect path="seo-audit" /></ProtectedRoute>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

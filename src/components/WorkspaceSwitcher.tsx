@@ -1,5 +1,6 @@
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,12 +19,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
-  const { workspaces, currentWorkspace, setCurrentWorkspace, refetch } = useWorkspace();
+  const { workspaces, currentWorkspace, setCurrentWorkspace, refetch, basePath } = useWorkspace();
   const { plan } = useSubscription();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
+
+  /** Switch workspace and navigate to the same sub-path under the new workspace */
+  const handleSwitch = (ws: typeof currentWorkspace) => {
+    if (!ws) return;
+    setCurrentWorkspace(ws);
+    // Extract the sub-path after the current basePath (e.g. /w/old-slug/campaigns -> campaigns)
+    const currentSub = basePath && location.pathname.startsWith(basePath)
+      ? location.pathname.slice(basePath.length + 1) || "dashboard"
+      : "dashboard";
+    navigate(`/w/${ws.slug}/${currentSub}`);
+  };
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -48,9 +62,11 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
       });
 
       await refetch();
-      setCurrentWorkspace({ ...ws, role: "owner" });
+      const created = { ...ws, role: "owner" } as any;
+      setCurrentWorkspace(created);
       setCreateOpen(false);
       setNewName("");
+      navigate(`/w/${ws.slug}/dashboard`);
       toast({ title: "Workspace created", description: `"${newName}" is ready.` });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -87,7 +103,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
           {workspaces.map((ws) => (
             <DropdownMenuItem
               key={ws.id}
-              onClick={() => setCurrentWorkspace(ws)}
+              onClick={() => handleSwitch(ws)}
               className="flex items-center gap-2 py-2"
             >
               <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />

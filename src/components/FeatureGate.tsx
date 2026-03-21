@@ -4,6 +4,7 @@ import { getMinimumPlanFor, PLAN_FEATURES, FEATURE_LABELS, type FeatureKey, type
 import { Lock, ArrowRight, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const FEATURE_DESCRIPTIONS: Record<FeatureKey, string> = {
   wordpress: "Connect your WordPress site to automatically publish generated pages and keep your content in sync.",
@@ -49,6 +50,7 @@ interface FeatureGateProps {
 export function FeatureGate({ feature, children }: FeatureGateProps) {
   const { canUseFeature } = useSubscription();
   const navigate = useNavigate();
+  const { basePath } = useWorkspace();
   const [isYearly, setIsYearly] = useState(false);
 
   if (canUseFeature(feature)) {
@@ -179,7 +181,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
         </table>
       </div>
 
-      <Button onClick={() => navigate("/billing")} size="lg" className="gap-2">
+      <Button onClick={() => navigate(`${basePath}/billing`)} size="lg" className="gap-2">
         Upgrade to {planLabel}
         <ArrowRight className="h-4 w-4" />
       </Button>

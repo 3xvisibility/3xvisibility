@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
@@ -35,6 +36,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const { basePath } = useWorkspace();
   useJobNotifications();
   useSessionTimeout();
   useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));
@@ -108,8 +110,8 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>{t("dashboard.settings")}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/billing")}>{t("dashboard.billing")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`${basePath}/settings`)}>{t("dashboard.settings")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`${basePath}/billing`)}>{t("dashboard.billing")}</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onLogout} className="text-destructive">
                     {t("dashboard.logout")}

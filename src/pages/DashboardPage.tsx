@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [greeting, setGreeting] = useState("Welcome back");
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
   useEffect(() => {
@@ -650,7 +650,7 @@ export default function DashboardPage() {
                 variant="ghost"
                 size="sm"
                 className="text-xs text-muted-foreground hover:text-primary"
-                onClick={() => navigate("/campaigns")}
+                onClick={() => navigate(`${basePath}/campaigns`)}
               >
                 View all <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
@@ -708,7 +708,7 @@ export default function DashboardPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => navigate("/campaigns")}
+                                onClick={() => navigate(`${basePath}/campaigns`)}
                                 className="mt-1 rounded-xl"
                               >
                                 Create your first campaign
@@ -723,7 +723,7 @@ export default function DashboardPage() {
                             className={`border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors duration-150 cursor-pointer ${
                               index % 2 === 1 ? "bg-muted/10" : ""
                             }`}
-                            onClick={() => navigate("/campaigns")}
+                            onClick={() => navigate(`${basePath}/campaigns`)}
                           >
                             <td className="py-3 px-4 sm:px-6 font-medium text-sm">
                               {campaign.name}
@@ -762,7 +762,7 @@ export default function DashboardPage() {
                 variant="ghost"
                 size="sm"
                 className="text-xs text-muted-foreground hover:text-primary"
-                onClick={() => navigate("/pages")}
+                onClick={() => navigate(`${basePath}/pages`)}
               >
                 View all <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
