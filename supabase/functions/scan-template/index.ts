@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
       }
 
       try {
-        const connector = createConnector({
+        const connector = await createConnector({
           url: website.url,
           type: website.type,
           credentials: website.credentials as Record<string, string> | null,

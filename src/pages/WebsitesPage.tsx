@@ -17,6 +17,7 @@ import type { Tables, Database } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WebsiteCard } from "@/components/websites/WebsiteCard";
 import { SiteTypeFilter } from "@/components/websites/SiteTypeFilter";
+import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
@@ -29,12 +30,17 @@ export default function WebsitesPage() {
   const [siteType, setSiteType] = useState<WebsiteType | "">("");
   const [siteName, setSiteName] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
+  // WordPress
+  const [wpAuthMethod, setWpAuthMethod] = useState<WpAuthMethod>("application_password");
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
+  const [jwtToken, setJwtToken] = useState("");
+  // Other platforms
   const [shopifyToken, setShopifyToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
@@ -64,37 +70,41 @@ export default function WebsitesPage() {
   });
 
   const getSitemap = (websiteId: string) => sitemaps.find((s: any) => s.website_id === websiteId);
-
   const { features } = useSubscription();
   const maxSites = features.websites;
-
   const filteredWebsites = filterType === "all" ? websites : websites.filter((s) => s.type === filterType);
+
+  const buildCredentials = () => {
+    if (siteType === "wordpress") {
+      return wpAuthMethod === "application_password"
+        ? { username, app_password: appPassword, auth_method: "application_password" }
+        : { jwt_token: jwtToken, auth_method: "jwt" };
+    }
+    if (siteType === "shopify") return { admin_api_token: shopifyToken };
+    if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
+    return { api_key: prestashopApiKey };
+  };
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
       if (maxSites > 0 && websites.length >= maxSites) {
         throw new Error(`Your plan allows a maximum of ${maxSites} website(s). Please upgrade to add more.`);
       }
       if (!siteUrl || !siteType) throw new Error("Missing website info");
-      const credentials = siteType === "wordpress"
-        ? { username, app_password: appPassword }
-        : siteType === "shopify"
-        ? { admin_api_token: shopifyToken }
-        : siteType === "woocommerce"
-        ? { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret }
-        : { api_key: prestashopApiKey };
-      const { error } = await supabase.from("websites").insert({
-        name: siteName || new URL(siteUrl).hostname,
-        url: siteUrl,
-        type: siteType as WebsiteType,
-        credentials,
-        user_id: user.id,
-        workspace_id: wsId,
+
+      const { data, error } = await supabase.functions.invoke("save-website", {
+        body: {
+          name: siteName || new URL(siteUrl).hostname,
+          url: siteUrl,
+          type: siteType,
+          credentials: buildCredentials(),
+          workspace_id: wsId,
+        },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
@@ -103,6 +113,23 @@ export default function WebsitesPage() {
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const testConnectionMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("test-connection", {
+        body: { url: siteUrl, type: siteType, credentials: buildCredentials() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ title: "Connection successful", description: data.message });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Connection failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -120,41 +147,19 @@ export default function WebsitesPage() {
     },
   });
 
-  const testConnectionMutation = useMutation({
-    mutationFn: async () => {
-      const credentials = siteType === "wordpress"
-        ? { username, app_password: appPassword }
-        : siteType === "shopify"
-        ? { admin_api_token: shopifyToken }
-        : siteType === "woocommerce"
-        ? { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret }
-        : { api_key: prestashopApiKey };
-      const { data, error } = await supabase.functions.invoke("test-connection", {
-        body: { url: siteUrl, type: siteType, credentials },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      toast({ title: "Connection successful", description: data.message });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Connection failed", description: err.message, variant: "destructive" });
-    },
-  });
-
   const resetForm = () => {
     setOpen(false);
     setSiteUrl("");
     setSiteName("");
     setUsername("");
     setAppPassword("");
+    setJwtToken("");
     setShopifyToken("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
     setSiteType("");
+    setWpAuthMethod("application_password");
   };
 
   return (
@@ -183,7 +188,7 @@ export default function WebsitesPage() {
                 <Plus className="mr-2 h-4 w-4" /> Connect Website
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Connect Website</DialogTitle>
               </DialogHeader>
@@ -208,17 +213,18 @@ export default function WebsitesPage() {
                   <Label htmlFor="site-url">Site URL</Label>
                   <Input id="site-url" placeholder="https://example.com" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
                 </div>
+
                 {siteType === "wordpress" && (
-                  <>
-                    <div>
-                      <Label htmlFor="wp-user">Username</Label>
-                      <Input id="wp-user" placeholder="admin" value={username} onChange={(e) => setUsername(e.target.value)} />
-                    </div>
-                    <div>
-                      <Label htmlFor="wp-pass">Application Password</Label>
-                      <Input id="wp-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" value={appPassword} onChange={(e) => setAppPassword(e.target.value)} />
-                    </div>
-                  </>
+                  <WordPressCredentialFields
+                    authMethod={wpAuthMethod}
+                    onAuthMethodChange={setWpAuthMethod}
+                    username={username}
+                    onUsernameChange={setUsername}
+                    appPassword={appPassword}
+                    onAppPasswordChange={setAppPassword}
+                    jwtToken={jwtToken}
+                    onJwtTokenChange={setJwtToken}
+                  />
                 )}
                 {siteType === "shopify" && (
                   <div>
@@ -246,6 +252,7 @@ export default function WebsitesPage() {
                     </div>
                   </>
                 )}
+
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">Cancel</Button>
                   <Button

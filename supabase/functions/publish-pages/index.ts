@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const connector = createConnector(website as WebsiteRecord);
+      const connector = await createConnector(website as WebsiteRecord);
       const results: { title: string; status: string; external_url?: string; error?: string }[] = [];
       const workspaceId = website.workspace_id || body.workspace_id || null;
       const campaignId = body.campaign_id || null;
@@ -342,7 +342,7 @@ Deno.serve(async (req) => {
       }
 
       try {
-        const connector = createConnector(page.websites as WebsiteRecord);
+        const connector = await createConnector(page.websites as WebsiteRecord);
         const cleanedContent = stripHeadTagsForCms(page.content);
 
         // Auto-detect Elementor for this website (cached)

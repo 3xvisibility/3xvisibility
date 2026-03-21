@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         type: website.type,
         credentials: website.credentials as Record<string, string> | null,
       };
-      const connector = createConnector(record);
+      const connector = await createConnector(record);
       const items = await connector.listContent(type);
 
       console.log(`Fetched ${items.length} ${type} from ${website.name}`);

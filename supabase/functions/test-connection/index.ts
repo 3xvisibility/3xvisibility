@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
     }
 
     const website: WebsiteRecord = { url, type, credentials: credentials || {} };
-    const connector = createConnector(website);
+    const connector = await createConnector(website);
     const ok = await connector.testConnection();
 
     if (!ok) {

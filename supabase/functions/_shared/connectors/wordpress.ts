@@ -62,12 +62,23 @@ export class WordPressConnector implements CmsConnector {
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
-    this.authString = btoa(`${config.username}:${config.password}`);
-    this.headers = {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Basic ${this.authString}`,
-    };
+
+    // Support both Application Password (Basic) and JWT auth
+    if (config.access_token) {
+      this.authString = "";
+      this.headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.access_token}`,
+      };
+    } else {
+      this.authString = btoa(`${config.username}:${config.password}`);
+      this.headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Basic ${this.authString}`,
+      };
+    }
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
@@ -175,7 +186,7 @@ export class WordPressConnector implements CmsConnector {
 
     while (true) {
       const url = `${this.baseUrl}/wp-json/wp/v2/${contentType === "products" ? "product" : "pages"}?per_page=${perPage}&page=${page}&_embed&context=edit`;
-      const response = await fetch(url, { headers: { Authorization: `Basic ${this.authString}` } });
+      const response = await fetch(url, { headers: this.headers });
 
       if (!response.ok) {
         if (contentType === "products") { await response.text(); return items; }
@@ -215,7 +226,7 @@ export class WordPressConnector implements CmsConnector {
         try {
           const singleResp = await fetch(
             `${this.baseUrl}/wp-json/wp/v2/pages/${item.id}?context=edit`,
-            { headers: { Authorization: `Basic ${this.authString}` } }
+            { headers: this.headers }
           );
           if (singleResp.ok) {
             const singleData = await singleResp.json();

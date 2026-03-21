@@ -6,6 +6,7 @@ import { WordPressConnector } from "./wordpress.ts";
 import { ShopifyConnector } from "./shopify.ts";
 import { PrestaShopConnector } from "./prestashop.ts";
 import { WooCommerceConnector } from "./woocommerce.ts";
+import { decryptCredentials } from "../crypto.ts";
 
 export interface WebsiteRecord {
   url: string;
@@ -13,14 +14,23 @@ export interface WebsiteRecord {
   credentials: Record<string, string> | null;
 }
 
-export function createConnector(website: WebsiteRecord): CmsConnector {
-  const creds = website.credentials || {};
+export async function createConnector(website: WebsiteRecord): Promise<CmsConnector> {
+  const rawCreds = website.credentials || {};
+
+  // Try decrypting – falls back to plaintext for legacy unencrypted values
+  let creds: Record<string, string>;
+  try {
+    creds = await decryptCredentials(rawCreds);
+  } catch {
+    creds = rawCreds;
+  }
+
   const config: ConnectorConfig = {
     base_url: website.url,
     username: creds.username,
-    password: creds.app_password || creds.password,
+    password: creds.app_password || creds.jwt_token || creds.password,
     api_key: creds.api_key,
-    access_token: creds.admin_api_token || creds.access_token,
+    access_token: creds.admin_api_token || creds.access_token || creds.jwt_token,
     consumer_key: creds.consumer_key,
     consumer_secret: creds.consumer_secret,
   };
