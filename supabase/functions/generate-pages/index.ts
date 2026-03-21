@@ -1602,8 +1602,17 @@ Deno.serve(async (req) => {
             );
           }
 
-          // Build OG meta tags + canonical
-          const ogTags = buildOgMetaTags(seoData.seo_title, seoData.seo_description, canonicalUrl || undefined);
+          // Build OG meta tags + canonical — use US16 OG/Twitter patterns from schema_config
+          const resolveOgPattern = (pattern: string) => {
+            let r = pattern;
+            for (const [k, v] of Object.entries({ ...allVars, slug })) r = r.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+            return r;
+          };
+          const ogTitle = tplSchemaConfig._ogTitle ? resolveOgPattern(tplSchemaConfig._ogTitle) : seoData.seo_title;
+          const ogDesc = tplSchemaConfig._ogDescription ? resolveOgPattern(tplSchemaConfig._ogDescription) : seoData.seo_description;
+          const ogImage = tplSchemaConfig._ogImage ? resolveOgPattern(tplSchemaConfig._ogImage) : undefined;
+          const twitterCardType = tplSchemaConfig._twitterCard || "summary_large_image";
+          const ogTags = buildOgMetaTags(ogTitle, ogDesc, canonicalUrl || undefined, ogImage, twitterCardType);
           const canonicalTag = canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : "";
           // Wrap content with responsive stylesheet and container
           const responsiveStyles = buildResponsiveStylesheet();
