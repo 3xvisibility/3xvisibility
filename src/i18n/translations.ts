@@ -241,6 +241,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.terms": "By continuing, you agree to our Terms of Service and Privacy Policy.",
     "auth.loginFailed": "Login failed",
     "auth.signupFailed": "Signup failed",
+    "auth.passwordTooWeak": "Your password does not meet all complexity requirements.",
     "auth.checkEmail": "Check your email",
     "auth.confirmationSent": "We sent you a confirmation link.",
     "auth.enterEmail": "Enter your email",
