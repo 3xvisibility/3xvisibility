@@ -1082,6 +1082,56 @@ export default function GeneratedPagesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* JSON Payload Dialog */}
+      <Dialog open={!!jsonPayloadPage} onOpenChange={(open) => !open && setJsonPayloadPage(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5 text-primary" />
+              JSON Payload
+            </DialogTitle>
+          </DialogHeader>
+          {jsonPayloadPage && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Raw data for <span className="font-medium text-foreground">{jsonPayloadPage.title}</span>
+              </p>
+              <div className="relative">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="absolute top-2 right-2 h-7 text-xs z-10"
+                  onClick={() => {
+                    navigator.clipboard.writeText(JSON.stringify(jsonPayloadPage, null, 2));
+                    toast({ title: "Copied to clipboard" });
+                  }}
+                >
+                  <Copy className="h-3 w-3 mr-1" /> Copy
+                </Button>
+                <pre className="bg-muted rounded-lg p-4 text-xs font-mono overflow-x-auto max-h-[50vh] whitespace-pre-wrap break-all">
+                  {JSON.stringify({
+                    id: jsonPayloadPage.id,
+                    title: jsonPayloadPage.title,
+                    slug: jsonPayloadPage.slug,
+                    status: jsonPayloadPage.status,
+                    external_id: jsonPayloadPage.external_id,
+                    external_url: jsonPayloadPage.external_url,
+                    seo_title: (jsonPayloadPage as any).seo_title,
+                    seo_description: (jsonPayloadPage as any).seo_description,
+                    seo_keywords: (jsonPayloadPage as any).seo_keywords,
+                    canonical_url: jsonPayloadPage.canonical_url,
+                    campaign_id: jsonPayloadPage.campaign_id,
+                    website_id: jsonPayloadPage.website_id,
+                    content: jsonPayloadPage.content,
+                    error_message: jsonPayloadPage.error_message,
+                    created_at: jsonPayloadPage.created_at,
+                  }, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Single SEO Edit Dialog */}
       <Dialog open={!!seoEditPage} onOpenChange={(open) => !open && setSeoEditPage(null)}>
