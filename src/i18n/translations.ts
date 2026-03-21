@@ -500,6 +500,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.appleFailed": "Échec de la connexion Apple",
     "auth.contentLanguage": "Langue du contenu",
     "auth.contentLanguageDesc": "Le contenu généré par IA sera dans cette langue",
+    "auth.rememberMe": "Se souvenir de moi",
+    "auth.errorInvalidCredentials": "L'e-mail ou le mot de passe est incorrect. Veuillez réessayer.",
+    "auth.errorEmailNotVerified": "Votre adresse e-mail n'a pas encore été vérifiée. Consultez votre boîte de réception.",
+    "auth.errorTooManyAttempts": "Trop de tentatives. Veuillez patienter un moment.",
   },
   de: {
     // Nav
