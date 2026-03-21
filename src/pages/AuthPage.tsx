@@ -347,6 +347,14 @@ export default function AuthPage() {
                           className="pl-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
                         />
                       </div>
+                      {showEmailError && (
+                        <p className="text-[11px] text-destructive flex items-center gap-1">
+                          <X className="h-3 w-3" />
+                          {t("auth.invalidEmail")}
+                        </p>
+                      )}
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-1.5">
