@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useJobNotifications } from "@/hooks/use-job-notifications";
+import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
   useJobNotifications();
+  useSessionTimeout();
   useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));
 
   useEffect(() => {
