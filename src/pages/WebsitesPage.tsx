@@ -201,6 +201,14 @@ export default function WebsitesPage() {
 
   return (
     <div className="space-y-6">
+      <UsageLimitBanner type="sites" used={sitesConnected} limit={sitesLimit} />
+      <UsageLimitDialog
+        open={limitDialogOpen}
+        onOpenChange={setLimitDialogOpen}
+        type="sites"
+        used={sitesConnected}
+        limit={sitesLimit === -1 ? sitesConnected : sitesLimit}
+      />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-display">Websites</h1>
@@ -208,7 +216,15 @@ export default function WebsitesPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97] w-full sm:w-auto">
+            <Button
+              className="transition-all duration-150 hover:brightness-110 active:scale-[0.97] w-full sm:w-auto"
+              onClick={(e) => {
+                if (hasReachedSiteLimit()) {
+                  e.preventDefault();
+                  setLimitDialogOpen(true);
+                }
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" /> Connect Website
             </Button>
           </DialogTrigger>
