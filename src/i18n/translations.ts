@@ -251,6 +251,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.appleFailed": "Apple sign-in failed",
     "auth.contentLanguage": "Content Language",
     "auth.contentLanguageDesc": "AI-generated content will be in this language",
+    "auth.rememberMe": "Remember me",
+    "auth.errorInvalidCredentials": "The email or password you entered is incorrect. Please try again.",
+    "auth.errorEmailNotVerified": "Your email address has not been verified yet. Please check your inbox for the confirmation link.",
+    "auth.errorTooManyAttempts": "Too many login attempts. Please wait a moment and try again.",
   },
   fr: {
     // Nav
