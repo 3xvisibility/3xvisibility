@@ -250,6 +250,24 @@ export default function DashboardPage() {
     },
   });
 
+  // ── Improvement stats ──────────────────────────
+  const { data: improvementStats } = useQuery({
+    queryKey: ["dashboard-improvements", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      // Count campaigns with improvements
+      const { data: improvements, error } = await supabase
+        .from("page_improvements" as any)
+        .select("details")
+        .eq("workspace_id", wsId!);
+      if (error) return { improved: 0, total: 0 };
+      const improvedCampaignIds = new Set(
+        (improvements || []).map((i: any) => (i.details as any)?.campaign_id).filter(Boolean)
+      );
+      return { improved: improvedCampaignIds.size, total: campaignCount };
+    },
+  });
+
   // ── Chart data (synthetic from counts) ──────────────────────────
   const pageChartData = [
     { name: "Mon", pages: Math.round(pageCount * 0.1) || 2 },
