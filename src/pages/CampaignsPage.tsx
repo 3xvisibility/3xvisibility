@@ -2007,6 +2007,7 @@ export default function CampaignsPage() {
             </DialogContent>
           </Dialog>
         </div>
+        <TestPagePreviewDialog open={testPreviewOpen} onOpenChange={setTestPreviewOpen} result={testPreviewResult} />
       </div>
 
       {/* Campaign List */}
