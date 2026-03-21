@@ -71,7 +71,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
       // Ensure a free subscription row exists
-      await upsertSubscription(supabaseClient, user.id, workspaceId, "free", null, null, null);
+      await upsertSubscription(supabaseClient, userId, workspaceId, "free", null, null, null);
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
