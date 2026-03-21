@@ -288,7 +288,7 @@ export default function AuthPage() {
                   {(["login", "signup"] as const).map((m) => (
                     <button
                       key={m}
-                      onClick={() => setMode(m)}
+                      onClick={() => { setMode(m); setConfirmPassword(""); }}
                       className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                         mode === m
                           ? "bg-background text-foreground shadow-sm"
