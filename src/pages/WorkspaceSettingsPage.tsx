@@ -222,6 +222,7 @@ export default function WorkspaceSettingsPage() {
   const roleIcon = (role: string) => {
     if (role === "owner") return <Crown className="h-3.5 w-3.5" />;
     if (role === "admin") return <Shield className="h-3.5 w-3.5" />;
+    if (role === "readonly") return <Eye className="h-3.5 w-3.5" />;
     return <User className="h-3.5 w-3.5" />;
   };
 
