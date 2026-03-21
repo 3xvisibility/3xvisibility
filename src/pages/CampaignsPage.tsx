@@ -764,6 +764,8 @@ export default function CampaignsPage() {
     setWebsitePagesSearch("");
     setManualMappings({});
     setCustomValues({});
+    setTransforms({});
+    setTargetFieldMappings({});
   };
 
   // locationHeaders defined above
