@@ -550,6 +550,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleSpecial": "Un caractère spécial",
     "auth.rateLimited": "Veuillez patienter",
     "auth.rateLimitedDesc": "Vous pourrez demander une nouvelle réinitialisation dans {seconds} secondes.",
+    "auth.passwordStrength": "Force du mot de passe",
+    "auth.strengthWeak": "Faible",
+    "auth.strengthMedium": "Moyen",
+    "auth.strengthStrong": "Fort",
   },
   de: {
     // Nav
