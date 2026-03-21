@@ -160,7 +160,7 @@ serve(async (req) => {
     if (action === "invite_member") {
       const { email, role } = params;
       if (!email || !role) return jsonRes({ error: "email and role are required" }, 400);
-      if (!["member", "admin"].includes(role)) return jsonRes({ error: "Invalid role" }, 400);
+      if (!["member", "admin", "readonly"].includes(role)) return jsonRes({ error: "Invalid role" }, 400);
 
       // Only owner can add admins
       if (role === "admin" && callerRole !== "owner") {
