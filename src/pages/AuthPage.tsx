@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, Check, X } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, Check, X, Building2 } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -42,6 +42,8 @@ export default function AuthPage() {
   const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -62,7 +64,7 @@ export default function AuthPage() {
   const signupPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const showEmailError = mode === "signup" && email.length > 0 && !isValidEmail;
-  const canSignup = allSignupRulesPassed && signupPasswordsMatch && isValidEmail;
+  const canSignup = allSignupRulesPassed && signupPasswordsMatch && isValidEmail && termsAccepted && companyName.trim().length > 0;
   const signupStrength: "none" | "weak" | "medium" | "strong" =
     password.length === 0 ? "none" : signupPassedCount <= 2 ? "weak" : signupPassedCount <= 4 ? "medium" : "strong";
   const signupStrengthConfig = {
@@ -125,6 +127,14 @@ export default function AuthPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSignup) {
+      if (!termsAccepted) {
+        toast({ title: t("auth.signupFailed"), description: t("auth.termsRequired"), variant: "destructive" });
+        return;
+      }
+      if (!companyName.trim()) {
+        toast({ title: t("auth.signupFailed"), description: t("auth.companyRequired"), variant: "destructive" });
+        return;
+      }
       toast({ title: t("auth.signupFailed"), description: !allSignupRulesPassed ? t("auth.passwordTooWeak") : t("auth.passwordsMismatch"), variant: "destructive" });
       return;
     }
@@ -134,7 +144,7 @@ export default function AuthPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, ai_language: aiLanguage },
+        data: { full_name: fullName, ai_language: aiLanguage, company: companyName.trim() },
       },
     });
     if (error) {
@@ -142,12 +152,13 @@ export default function AuthPage() {
       toast({ title: t("auth.signupFailed"), description: error.message, variant: "destructive" });
       return;
     }
-    // Save AI language preference to profile
+    // Save AI language preference and company to profile
     if (data.user) {
       await supabase.from("profiles").upsert({
         user_id: data.user.id,
         full_name: fullName,
         ai_language: aiLanguage,
+        company: companyName.trim(),
       }, { onConflict: "user_id" });
     }
     setLoading(false);
@@ -331,6 +342,26 @@ export default function AuthPage() {
                       </div>
                     )}
 
+                    {mode === "signup" && (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="signup-company" className="text-xs font-medium text-muted-foreground">
+                          {t("auth.companyName")}
+                        </Label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                          <Input
+                            id="signup-company"
+                            placeholder={t("auth.companyPlaceholder")}
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            required
+                            maxLength={100}
+                            className="pl-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-1.5">
                       <Label htmlFor="auth-email" className="text-xs font-medium text-muted-foreground">
                         {t("auth.email")}
@@ -480,6 +511,28 @@ export default function AuthPage() {
                         </Select>
                         <p className="text-[10px] text-muted-foreground/60">{t("auth.contentLanguageDesc")}</p>
                       </div>
+                    )}
+
+                    {/* Terms acceptance - signup only */}
+                    {mode === "signup" && (
+                      <label className="flex items-start gap-2.5 cursor-pointer select-none py-1">
+                        <input
+                          type="checkbox"
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
+                          className="h-4 w-4 mt-0.5 rounded border-border/60 text-primary focus:ring-primary/20 accent-primary shrink-0"
+                        />
+                        <span className="text-xs text-muted-foreground leading-relaxed">
+                          {t("auth.acceptTerms")}{" "}
+                          <a href="/terms" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
+                            {t("auth.termsOfService")}
+                          </a>{" "}
+                          {t("auth.and")}{" "}
+                          <a href="/privacy" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
+                            {t("auth.privacyPolicy")}
+                          </a>
+                        </span>
+                      </label>
                     )}
 
                     {mode === "login" && (
