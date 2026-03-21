@@ -83,6 +83,12 @@ export default function AuthPage() {
       const mapped = mapAuthError(error.message);
       toast({ title: mapped.title, description: mapped.description, variant: "destructive" });
     } else {
+      // When "Remember me" is unchecked, sign out on tab/browser close
+      if (!rememberMe) {
+        localStorage.setItem("sessionEphemeral", "true");
+      } else {
+        localStorage.removeItem("sessionEphemeral");
+      }
       navigate("/dashboard");
     }
   };
