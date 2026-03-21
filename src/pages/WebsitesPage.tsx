@@ -219,10 +219,12 @@ export default function WebsitesPage() {
                   <Label htmlFor="site-name">Site Name</Label>
                   <Input id="site-name" placeholder="My Blog" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
                 </div>
-                <div>
-                  <Label htmlFor="site-url">Site URL</Label>
-                  <Input id="site-url" placeholder="https://example.com" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
-                </div>
+                {siteType !== "shopify" && (
+                  <div>
+                    <Label htmlFor="site-url">Site URL</Label>
+                    <Input id="site-url" placeholder="https://example.com" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
+                  </div>
+                )}
 
                 {siteType === "wordpress" && (
                   <WordPressCredentialFields
@@ -237,10 +239,12 @@ export default function WebsitesPage() {
                   />
                 )}
                 {siteType === "shopify" && (
-                  <div>
-                    <Label htmlFor="shopify-token">Admin API Access Token</Label>
-                    <Input id="shopify-token" type="password" placeholder="shpat_xxxxx" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} />
-                  </div>
+                  <ShopifyCredentialFields
+                    shopDomain={shopDomain}
+                    onShopDomainChange={setShopDomain}
+                    accessToken={shopifyToken}
+                    onAccessTokenChange={setShopifyToken}
+                  />
                 )}
                 {siteType === "prestashop" && (
                   <div>
