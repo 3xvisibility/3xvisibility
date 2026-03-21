@@ -17,13 +17,87 @@ function stripHeadTagsForCms(content: string): string {
     .replace(/<link\b[^>]*\/?>/gi, "")
     // Remove <script type="application/ld+json">...</script> blocks
     .replace(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "")
-    // Remove the injected <style>...</style> block (CMS theme handles styling)
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    // Keep the .pgp-page responsive stylesheet — WordPress themes won't style our content
+    // Only remove non-pgp styles that could conflict with the CMS theme
     // Clean up excess whitespace left behind
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
   return cleaned;
+}
+
+/**
+ * Convert HTML content into an Elementor JSON structure (text editor widget).
+ * This ensures the page renders correctly in Elementor's visual builder.
+ */
+function buildElementorData(htmlContent: string): string {
+  const elementorStructure = [
+    {
+      id: generateElementorId(),
+      elType: "section",
+      settings: {
+        structure: "10",
+        padding: { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false },
+      },
+      elements: [
+        {
+          id: generateElementorId(),
+          elType: "column",
+          settings: { _column_size: 100, _inline_size: null },
+          elements: [
+            {
+              id: generateElementorId(),
+              elType: "widget",
+              widgetType: "text-editor",
+              settings: {
+                editor: htmlContent,
+              },
+              elements: [],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  return JSON.stringify(elementorStructure);
+}
+
+function generateElementorId(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let id = "";
+  for (let i = 0; i < 7; i++) {
+    id += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return id;
+}
+
+/**
+ * Check if a WordPress site uses Elementor by looking at existing pages' meta.
+ */
+async function detectElementor(
+  supabase: any,
+  websiteId: string,
+  websiteType: string,
+  connector: any
+): Promise<{ usesElementor: boolean; pageTemplate?: string }> {
+  if (websiteType !== "wordpress") return { usesElementor: false };
+
+  try {
+    // Try listing a few pages to check for Elementor meta
+    if (typeof connector.listContent === "function") {
+      const pages = await connector.listContent("pages");
+      const elementorPage = pages.find((p: any) => p.elementor_data || p.elementor_edit_mode);
+      if (elementorPage) {
+        return {
+          usesElementor: true,
+          pageTemplate: elementorPage.page_template || "elementor_header_footer",
+        };
+      }
+    }
+  } catch (err) {
+    console.log("[PUBLISH] Elementor detection failed, using standard publish:", err);
+  }
+  return { usesElementor: false };
 }
 
 const corsHeaders = {
@@ -129,14 +203,31 @@ Deno.serve(async (req) => {
       const workspaceId = website.workspace_id || body.workspace_id || null;
       const campaignId = body.campaign_id || null;
 
+      // Auto-detect Elementor on first direct publish
+      const elementorInfo = await detectElementor(supabase, website_id, website.type, connector);
+      if (elementorInfo.usesElementor) {
+        console.log("[PUBLISH] Detected Elementor on site, will publish with Elementor format");
+      }
+
       for (const dp of directPages) {
         try {
-          const elementorMeta = dp.elementor_data
+          const cleanedContent = stripHeadTagsForCms(dp.content);
+
+          // If page already has Elementor data, use it; otherwise auto-generate if site uses Elementor
+          let elementorMeta = dp.elementor_data
             ? { elementor_data: dp.elementor_data, elementor_edit_mode: dp.elementor_edit_mode, page_template: dp.page_template }
             : undefined;
 
+          if (!elementorMeta && elementorInfo.usesElementor) {
+            elementorMeta = {
+              elementor_data: buildElementorData(cleanedContent),
+              elementor_edit_mode: "builder",
+              page_template: elementorInfo.pageTemplate || "elementor_header_footer",
+            };
+          }
+
           const payload = buildPayload(
-            { title: dp.title, content: stripHeadTagsForCms(dp.content), slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
+            { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
             elementorMeta
           );
@@ -206,6 +297,9 @@ Deno.serve(async (req) => {
 
     const results: { id: string; status: string; external_url?: string; error?: string }[] = [];
 
+    // Cache Elementor detection per website to avoid redundant checks
+    const elementorCache = new Map<string, { usesElementor: boolean; pageTemplate?: string }>();
+
     for (const page of pages) {
       // Resolve website if not directly joined
       if (!page.websites) {
@@ -237,9 +331,30 @@ Deno.serve(async (req) => {
 
       try {
         const connector = createConnector(page.websites as WebsiteRecord);
+        const cleanedContent = stripHeadTagsForCms(page.content);
+
+        // Auto-detect Elementor for this website (cached)
+        const wsKey = page.website_id || "default";
+        if (!elementorCache.has(wsKey)) {
+          const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
+          elementorCache.set(wsKey, detected);
+        }
+        const elementorInfo = elementorCache.get(wsKey)!;
+
+        // Build Elementor meta if the site uses Elementor
+        let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
+        if (elementorInfo.usesElementor) {
+          elementorMeta = {
+            elementor_data: buildElementorData(cleanedContent),
+            elementor_edit_mode: "builder",
+            page_template: elementorInfo.pageTemplate || "elementor_header_footer",
+          };
+        }
+
         const payload = buildPayload(
-          { title: page.title, content: stripHeadTagsForCms(page.content), slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
-          pubType
+          { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
+          pubType,
+          elementorMeta
         );
 
         // If page was previously published (has external_id), update instead of creating
