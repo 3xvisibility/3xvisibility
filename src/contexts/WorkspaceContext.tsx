@@ -18,6 +18,8 @@ interface WorkspaceContextType {
   setCurrentWorkspace: (ws: Workspace) => void;
   isLoading: boolean;
   refetch: () => Promise<void>;
+  /** Returns the base path for the current workspace, e.g. "/w/my-workspace" */
+  basePath: string;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType>({
