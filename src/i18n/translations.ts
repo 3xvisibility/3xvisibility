@@ -22,7 +22,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.badge": "Now with AI-powered content generation",
     "hero.title1": "Turn your data into",
     "hero.title2": "published pages",
-    "hero.description": "Upload a CSV, map it to a template, and generate hundreds of SEO-optimized pages — deployed to WordPress or Shopify in minutes.",
+    "hero.description": "The multi-tenant platform for programmatic SEO, SEA & GEO pages. Upload a CSV, map it to a template, and bulk-generate hundreds of optimised pages — deployed to WordPress, Shopify or PrestaShop in minutes.",
     "hero.cta": "Start for free",
     "hero.watchDemo": "Watch demo",
     "hero.freeStart": "✓ Free to start",
