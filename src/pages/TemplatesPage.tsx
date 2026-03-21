@@ -1284,7 +1284,9 @@ RULES:
                     <TableHead>Site type</TableHead>
                     <TableHead>Campaign types</TableHead>
                     <TableHead>Variables</TableHead>
+                    <TableHead>Copies</TableHead>
                     <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
+                    <TableHead>Last used</TableHead>
                     <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -1294,6 +1296,7 @@ RULES:
                     const info = campaignsByTemplate[tpl.id];
                     const siteTypes = templateSiteTypes[tpl.id];
                     const cTypes = info?.campaignTypes;
+                    const copies = dupCounts[tpl.id] ?? 0;
                     return (
                       <TableRow key={tpl.id} data-state={selectedIds.has(tpl.id) ? "selected" : undefined}>
                         <TableCell><Checkbox checked={selectedIds.has(tpl.id)} onCheckedChange={() => toggleSelect(tpl.id)} aria-label={`Select ${tpl.name}`} /></TableCell>
@@ -1315,7 +1318,17 @@ RULES:
                         </TableCell>
                         <TableCell><span className="text-xs text-muted-foreground">{(tpl.variables || []).length}</span></TableCell>
                         <TableCell>
+                          {copies > 0 ? (
+                            <Badge variant="outline" className="text-[10px]"><Copy className="h-3 w-3 mr-1" />{copies}</Badge>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
                           <span className="text-sm">{info?.count ?? 0} campaign{(info?.count ?? 0) !== 1 ? "s" : ""}</span>
+                        </TableCell>
+                        <TableCell>
+                          {info?.lastUsedAt ? (
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(info.lastUsedAt).toLocaleDateString()}</span>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(tpl.updated_at).toLocaleDateString()}</span>
