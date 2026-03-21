@@ -433,6 +433,8 @@ export default function CampaignsPage() {
 
       const { data: newCampaign, error } = await supabase.from("campaigns").insert({
         name: `${campaign.name} (Copy)`,
+        language: (campaign as any).language || "en",
+        country: (campaign as any).country || "US",
         campaign_type: campaign.campaign_type,
         campaign_types: (campaign as any).campaign_types || [campaign.campaign_type],
         user_id: user.id,
