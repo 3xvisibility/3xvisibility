@@ -187,22 +187,45 @@ export default function ResetPasswordPage() {
               </div>
             </div>
 
-            {/* Password rules */}
+            {/* Strength meter + rules */}
             {password.length > 0 && (
-              <ul className="space-y-1 text-xs">
-                {ruleResults.map((r) => (
-                  <li key={r.key} className="flex items-center gap-1.5">
-                    {r.passed ? (
-                      <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                    ) : (
-                      <X className="h-3.5 w-3.5 text-destructive shrink-0" />
-                    )}
-                    <span className={r.passed ? "text-muted-foreground" : "text-foreground"}>
-                      {t(r.label)}
+              <div className="space-y-3">
+                {/* Strength bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{t("auth.passwordStrength")}</span>
+                    <span className={`text-xs font-medium ${
+                      strength === "weak" ? "text-destructive" :
+                      strength === "medium" ? "text-yellow-500" :
+                      "text-green-500"
+                    }`}>
+                      {strengthConfig[strength].label}
                     </span>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${strengthConfig[strength].color}`}
+                      style={{ width: strengthConfig[strength].width }}
+                    />
+                  </div>
+                </div>
+
+                {/* Rules checklist */}
+                <ul className="space-y-1 text-xs">
+                  {ruleResults.map((r) => (
+                    <li key={r.key} className="flex items-center gap-1.5">
+                      {r.passed ? (
+                        <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      )}
+                      <span className={r.passed ? "text-muted-foreground" : "text-foreground"}>
+                        {t(r.label)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             {/* Confirm password */}
