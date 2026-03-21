@@ -73,7 +73,7 @@ export default function CampaignDetailPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
   const [showResumeDialog, setShowResumeDialog] = useState(false);

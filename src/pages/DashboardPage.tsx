@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [greeting, setGreeting] = useState("Welcome back");
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
   useEffect(() => {
