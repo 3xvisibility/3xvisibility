@@ -1985,13 +1985,23 @@ export default function CampaignsPage() {
                     Continue <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button
-                    onClick={() => createMutation.mutate()}
-                    disabled={!campaignName || createMutation.isPending}
-                    className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110"
-                  >
-                    {createMutation.isPending ? "Creating..." : scheduleMode === "recurring" ? "Set Up Recurring" : scheduleMode === "later" ? "Schedule Campaign" : publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleTestOnePage}
+                      disabled={!selectedTemplate || effectiveCsvData.length === 0 || testGenerating}
+                      className="rounded-xl h-10 px-4"
+                    >
+                      {testGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : <><Eye className="mr-2 h-4 w-4" /> Test (1 Page)</>}
+                    </Button>
+                    <Button
+                      onClick={() => createMutation.mutate()}
+                      disabled={!campaignName || createMutation.isPending}
+                      className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110"
+                    >
+                      {createMutation.isPending ? "Creating..." : scheduleMode === "recurring" ? "Set Up Recurring" : scheduleMode === "later" ? "Schedule Campaign" : publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </DialogContent>
