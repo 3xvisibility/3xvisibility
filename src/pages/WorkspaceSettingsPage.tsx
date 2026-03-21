@@ -318,6 +318,7 @@ export default function WorkspaceSettingsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="readonly">Read-only</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
