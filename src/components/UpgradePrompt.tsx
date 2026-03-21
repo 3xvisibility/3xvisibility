@@ -86,7 +86,7 @@ export function FeatureGate({ feature, children, fallback, allowed }: FeatureGat
 }
 
 interface UsageLimitBannerProps {
-  type: "pages" | "ai";
+  type: "pages" | "ai" | "sites";
   used: number;
   limit: number;
   className?: string;
@@ -95,12 +95,17 @@ interface UsageLimitBannerProps {
 export function UsageLimitBanner({ type, used, limit, className = "" }: UsageLimitBannerProps) {
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
+
+  // Unlimited = no banner
+  if (limit === -1) return null;
+
   const percent = limit > 0 ? Math.round((used / limit) * 100) : 0;
 
   if (percent < 80) return null;
 
   const isExhausted = used >= limit;
-  const label = type === "pages" ? "page generations" : "AI generations";
+  const labels: Record<string, string> = { pages: "page generations", ai: "AI generations", sites: "connected websites" };
+  const label = labels[type] ?? type;
 
   return (
     <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${
@@ -111,9 +116,9 @@ export function UsageLimitBanner({ type, used, limit, className = "" }: UsageLim
       <Sparkles className={`h-4 w-4 shrink-0 ${isExhausted ? "text-destructive" : "text-warning"}`} />
       <p className="text-sm flex-1">
         {isExhausted ? (
-          <>You've used all <span className="font-semibold">{limit}</span> {label} this month.</>
+          <>You've reached the limit of <span className="font-semibold">{limit}</span> {label} on your plan.</>
         ) : (
-          <>You've used <span className="font-semibold">{used}</span> of <span className="font-semibold">{limit}</span> {label} this month ({percent}%).</>
+          <>You've used <span className="font-semibold">{used}</span> of <span className="font-semibold">{limit}</span> {label} ({percent}%).</>
         )}
       </p>
       <Button size="sm" variant={isExhausted ? "default" : "outline"} onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5">

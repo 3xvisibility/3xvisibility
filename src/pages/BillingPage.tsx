@@ -141,7 +141,7 @@ function getFeatureList(name: PlanName): string[] {
 }
 
 export default function BillingPage() {
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, isLoading: subLoading } = useSubscription();
+  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, isLoading: subLoading } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -271,7 +271,7 @@ export default function BillingPage() {
       </div>
 
       {/* Usage overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current Plan</p>
@@ -305,7 +305,9 @@ export default function BillingPage() {
             </div>
             <Progress value={pagesPercent} className="h-2" />
             <p className={`text-xs ${pagesPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-              {pagesLimit - pagesUsed} remaining this month
+              {pagesPercent >= 100
+                ? "Limit reached — upgrade to continue"
+                : `${pagesLimit - pagesUsed} remaining this month`}
             </p>
           </CardContent>
         </Card>
@@ -317,7 +319,27 @@ export default function BillingPage() {
             </div>
             <Progress value={aiPercent} className="h-2" />
             <p className={`text-xs ${aiPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-              {aiLimit - aiUsed} remaining this month
+              {aiPercent >= 100
+                ? "Limit reached — upgrade to continue"
+                : `${aiLimit - aiUsed} remaining this month`}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-surface border-0">
+          <CardContent className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected Sites</p>
+              <span className="text-xs tabular-nums font-medium text-muted-foreground">
+                {sitesConnected} / {sitesLimit === -1 ? "∞" : sitesLimit}
+              </span>
+            </div>
+            <Progress value={sitesLimit === -1 ? 0 : (sitesLimit > 0 ? Math.round((sitesConnected / sitesLimit) * 100) : 0)} className="h-2" />
+            <p className={`text-xs ${sitesLimit !== -1 && sitesConnected >= sitesLimit ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+              {sitesLimit === -1
+                ? "Unlimited websites"
+                : sitesConnected >= sitesLimit
+                  ? "Limit reached — upgrade to add more"
+                  : `${sitesLimit - sitesConnected} slots available`}
             </p>
           </CardContent>
         </Card>

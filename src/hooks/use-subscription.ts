@@ -11,12 +11,16 @@ export interface SubscriptionData {
   pagesLimit: number;
   aiUsed: number;
   aiLimit: number;
+  sitesConnected: number;
+  sitesLimit: number;
   isLoading: boolean;
   canUseFeature: (feature: FeatureKey) => boolean;
   hasReachedPageLimit: () => boolean;
   hasReachedAiLimit: () => boolean;
+  hasReachedSiteLimit: () => boolean;
   pagesRemaining: number;
   aiRemaining: number;
+  sitesRemaining: number;
 }
 
 export function useSubscription(): SubscriptionData {
@@ -53,15 +57,26 @@ export function useSubscription(): SubscriptionData {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      const query = supabase
+
+      // Fetch subscription
+      const subQuery = supabase
         .from("subscriptions")
         .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit")
         .eq("user_id", user.id);
+      if (wsId) subQuery.eq("workspace_id", wsId);
+      const { data: subData } = await subQuery.maybeSingle();
+
+      // Count connected websites for this workspace
+      let sitesConnected = 0;
       if (wsId) {
-        query.eq("workspace_id", wsId);
+        const { count } = await supabase
+          .from("websites")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", wsId);
+        sitesConnected = count ?? 0;
       }
-      const { data } = await query.maybeSingle();
-      return data;
+
+      return { ...subData, sitesConnected };
     },
     staleTime: 60_000,
   });
@@ -72,6 +87,8 @@ export function useSubscription(): SubscriptionData {
   const pagesLimit = data?.pages_limit ?? features.pagesLimit;
   const aiUsed = data?.ai_generations_used ?? 0;
   const aiLimit = data?.ai_generations_limit ?? features.aiLimit;
+  const sitesConnected = data?.sitesConnected ?? 0;
+  const sitesLimit = features.websites; // -1 means unlimited
 
   return {
     plan,
@@ -80,11 +97,15 @@ export function useSubscription(): SubscriptionData {
     pagesLimit,
     aiUsed,
     aiLimit,
+    sitesConnected,
+    sitesLimit,
     isLoading,
     canUseFeature: (feature: FeatureKey) => features[feature],
     hasReachedPageLimit: () => pagesUsed >= pagesLimit,
     hasReachedAiLimit: () => aiUsed >= aiLimit,
+    hasReachedSiteLimit: () => sitesLimit !== -1 && sitesConnected >= sitesLimit,
     pagesRemaining: Math.max(0, pagesLimit - pagesUsed),
     aiRemaining: Math.max(0, aiLimit - aiUsed),
+    sitesRemaining: sitesLimit === -1 ? Infinity : Math.max(0, sitesLimit - sitesConnected),
   };
 }
