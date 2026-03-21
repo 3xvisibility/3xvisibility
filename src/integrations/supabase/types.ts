@@ -1130,6 +1130,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          notification_preferences: Json
           updated_at: string
           user_id: string
           workspace_id: string | null
@@ -1142,6 +1143,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          notification_preferences?: Json
           updated_at?: string
           user_id: string
           workspace_id?: string | null
@@ -1154,6 +1156,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          notification_preferences?: Json
           updated_at?: string
           user_id?: string
           workspace_id?: string | null
@@ -1721,30 +1724,39 @@ export type Database = {
           branding: Json | null
           created_at: string
           id: string
+          locale: string
           name: string
           owner_id: string
           plan: string
+          seo_defaults: Json
           slug: string
+          timezone: string
           updated_at: string
         }
         Insert: {
           branding?: Json | null
           created_at?: string
           id?: string
+          locale?: string
           name: string
           owner_id: string
           plan?: string
+          seo_defaults?: Json
           slug: string
+          timezone?: string
           updated_at?: string
         }
         Update: {
           branding?: Json | null
           created_at?: string
           id?: string
+          locale?: string
           name?: string
           owner_id?: string
           plan?: string
+          seo_defaults?: Json
           slug?: string
+          timezone?: string
           updated_at?: string
         }
         Relationships: []
