@@ -36,6 +36,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const { basePath } = useWorkspace();
   useJobNotifications();
   useSessionTimeout();
   useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));

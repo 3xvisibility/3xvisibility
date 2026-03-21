@@ -45,42 +45,44 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useBranding } from "@/contexts/BrandingContext";
 import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { FeatureKey } from "@/lib/plan-features";
 import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
 
 interface NavItem {
   titleKey: string;
-  url: string;
+  /** Relative path within workspace, e.g. "dashboard" */
+  path: string;
   icon: typeof LayoutDashboard;
   requiredFeature?: FeatureKey;
 }
 
 const mainNav: NavItem[] = [
-  { titleKey: "sidebar.dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { titleKey: "sidebar.campaigns", url: "/campaigns", icon: Rocket },
-  { titleKey: "sidebar.generatedPages", url: "/pages", icon: Layers },
-  { titleKey: "sidebar.templates", url: "/templates", icon: FileText },
-  { titleKey: "sidebar.marketplace", url: "/marketplace", icon: Store },
-  { titleKey: "sidebar.dataCsv", url: "/data", icon: Database },
+  { titleKey: "sidebar.dashboard", path: "dashboard", icon: LayoutDashboard },
+  { titleKey: "sidebar.campaigns", path: "campaigns", icon: Rocket },
+  { titleKey: "sidebar.generatedPages", path: "pages", icon: Layers },
+  { titleKey: "sidebar.templates", path: "templates", icon: FileText },
+  { titleKey: "sidebar.marketplace", path: "marketplace", icon: Store },
+  { titleKey: "sidebar.dataCsv", path: "data", icon: Database },
 ];
 
 const toolsNav: NavItem[] = [
-  { titleKey: "sidebar.websiteContent", url: "/website-content", icon: Layers },
-  { titleKey: "sidebar.aiScanner", url: "/scanner", icon: ScanSearch },
-  { titleKey: "sidebar.discovery", url: "/discovery", icon: Compass, requiredFeature: "discovery" },
-  { titleKey: "sidebar.analytics", url: "/analytics", icon: BarChart3 },
-  { titleKey: "sidebar.performance", url: "/performance", icon: Activity },
-  { titleKey: "sidebar.abTesting", url: "/ab-testing", icon: FlaskConical },
-  { titleKey: "sidebar.contentCalendar", url: "/content-calendar", icon: CalendarDays },
-  { titleKey: "sidebar.seoAudit", url: "/seo-audit", icon: ClipboardCheck },
-  { titleKey: "sidebar.indexing", url: "/indexing", icon: SearchIcon, requiredFeature: "indexing" },
+  { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers },
+  { titleKey: "sidebar.aiScanner", path: "scanner", icon: ScanSearch },
+  { titleKey: "sidebar.discovery", path: "discovery", icon: Compass, requiredFeature: "discovery" },
+  { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
+  { titleKey: "sidebar.performance", path: "performance", icon: Activity },
+  { titleKey: "sidebar.abTesting", path: "ab-testing", icon: FlaskConical },
+  { titleKey: "sidebar.contentCalendar", path: "content-calendar", icon: CalendarDays },
+  { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
+  { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
 ];
 
 const settingsNav: NavItem[] = [
-  { titleKey: "sidebar.websites", url: "/websites", icon: Globe },
-  { titleKey: "sidebar.billing", url: "/billing", icon: CreditCard },
-  { titleKey: "sidebar.settings", url: "/settings", icon: Settings },
-  { titleKey: "sidebar.workspaceSettings", url: "/workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
+  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
+  { titleKey: "sidebar.billing", path: "billing", icon: CreditCard },
+  { titleKey: "sidebar.settings", path: "settings", icon: Settings },
+  { titleKey: "sidebar.workspaceSettings", path: "workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
 ];
 
 interface AppSidebarProps {
@@ -95,6 +97,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   const navigate = useNavigate();
   const { pagesUsed, pagesLimit, canUseFeature } = useSubscription();
   const { appName, logoUrl, isWhitelabeled } = useBranding();
+  const { basePath } = useWorkspace();
   const usagePercent = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
 
   useEffect(() => {
@@ -108,13 +111,14 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
   }, []);
 
   const onboardingMap: Record<string, string> = {
-    "/campaigns": "campaigns",
-    "/templates": "templates",
-    "/analytics": "analytics",
+    "campaigns": "campaigns",
+    "templates": "templates",
+    "analytics": "analytics",
   };
 
   const renderNavItems = (items: NavItem[]) =>
     items.map((item) => {
+      const fullPath = `${basePath}/${item.path}`;
       const isLocked = item.requiredFeature ? !canUseFeature(item.requiredFeature) : false;
       const minPlanLabel = item.requiredFeature
         ? PLAN_FEATURES[getMinimumPlanFor(item.requiredFeature)].label
@@ -123,7 +127,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
       if (isLocked) {
         const content = (
           <button
-            onClick={() => navigate("/billing")}
+            onClick={() => navigate(`${basePath}/billing`)}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground/50 hover:bg-muted/50 transition-all duration-150 w-full cursor-pointer"
           >
             <item.icon className="h-4 w-4 shrink-0" />
@@ -163,11 +167,11 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         <SidebarMenuItem key={item.titleKey}>
           <SidebarMenuButton asChild>
             <NavLink
-              to={item.url}
-              end={item.url === "/dashboard"}
+              to={fullPath}
+              end={item.path === "dashboard"}
               className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
               activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
-              {...(onboardingMap[item.url] ? { "data-onboarding": onboardingMap[item.url] } : {})}
+              {...(onboardingMap[item.path] ? { "data-onboarding": onboardingMap[item.path] } : {})}
             >
               <item.icon className="h-4 w-4 shrink-0" />
               {!collapsed && <span className="text-sm">{t(item.titleKey)}</span>}
@@ -239,7 +243,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to="/admin"
+                      to={`${basePath}/admin`}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
                       activeClassName="bg-primary/10 text-primary font-medium shadow-sm"
                     >
