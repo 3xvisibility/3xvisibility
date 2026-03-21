@@ -19,6 +19,7 @@ import { WebsiteCard } from "@/components/websites/WebsiteCard";
 import { SiteTypeFilter } from "@/components/websites/SiteTypeFilter";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
 import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
+import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
@@ -247,11 +248,10 @@ export default function WebsitesPage() {
                   />
                 )}
                 {siteType === "prestashop" && (
-                  <div>
-                    <Label htmlFor="ps-key">Webservice API Key</Label>
-                    <Input id="ps-key" type="password" placeholder="PrestaShop API key" value={prestashopApiKey} onChange={(e) => setPrestashopApiKey(e.target.value)} />
-                    <p className="text-[11px] text-muted-foreground mt-1">Found in PrestaShop Back Office → Advanced Parameters → Webservice</p>
-                  </div>
+                  <PrestaShopCredentialFields
+                    apiKey={prestashopApiKey}
+                    onApiKeyChange={setPrestashopApiKey}
+                  />
                 )}
                 {siteType === "woocommerce" && (
                   <>
