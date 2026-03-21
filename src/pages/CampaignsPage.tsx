@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { friendlyError } from "@/lib/friendly-errors";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +22,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
+import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
+import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Database } from "@/integrations/supabase/types";
@@ -120,6 +122,9 @@ export default function CampaignsPage() {
   const [geoLat, setGeoLat] = useState("{latitude}");
   const [geoLng, setGeoLng] = useState("{longitude}");
   const [geoLanguage, setGeoLanguage] = useState("en");
+  const [testPreviewOpen, setTestPreviewOpen] = useState(false);
+  const [testPreviewResult, setTestPreviewResult] = useState<RenderResult | null>(null);
+  const [testGenerating, setTestGenerating] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
@@ -175,7 +180,7 @@ export default function CampaignsPage() {
     queryKey: ["templates", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name, variables").eq("workspace_id", wsId!).order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables, content, seo_title_pattern, seo_description_pattern, schema_type, schema_config").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
@@ -758,6 +763,61 @@ export default function CampaignsPage() {
     setCustomValues({});
   };
 
+  // locationHeaders defined above
+  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
+  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
+
+  const handleTestOnePage = useCallback(async () => {
+    if (!selectedTemplate || effectiveCsvData.length === 0) {
+      toast({ title: "Cannot test", description: "Select a template and add data first.", variant: "destructive" });
+      return;
+    }
+    setTestGenerating(true);
+    try {
+      const tpl = templates.find((t) => t.id === selectedTemplate);
+      if (!tpl) throw new Error("Template not found");
+      const templateConfig: TemplateConfig = {
+        content: tpl.content || "",
+        seo_title_pattern: tpl.seo_title_pattern || "",
+        seo_description_pattern: tpl.seo_description_pattern || "",
+        schema_type: tpl.schema_type || "WebPage",
+        schema_config: (tpl.schema_config as Record<string, string>) || {},
+      };
+      const firstRow = effectiveCsvData[0];
+      // Build row with mapping applied
+      const mappedRow: Record<string, string> = {};
+      if (variableMapping) {
+        for (const m of variableMapping.matched) {
+          if (m.customValue) {
+            mappedRow[m.variable] = m.customValue;
+          } else if (m.column && firstRow[m.column] !== undefined) {
+            mappedRow[m.variable] = firstRow[m.column];
+          }
+        }
+      } else {
+        Object.assign(mappedRow, firstRow);
+      }
+      const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+      const ctx: RenderContext = {
+        row: mappedRow,
+        extraVars: campaignTypes.includes("geo") ? {
+          country: geoCountry, region: geoRegion, city: geoCity,
+          postcode: geoPostcode, lat: geoLat, lng: geoLng,
+        } : undefined,
+        website: ws ? { name: ws.name } : undefined,
+        campaignType: campaignType,
+        rowIndex: 0,
+      };
+      const result = renderPage(templateConfig, ctx);
+      setTestPreviewResult(result);
+      setTestPreviewOpen(true);
+    } catch (err: any) {
+      toast({ title: "Test failed", description: err.message, variant: "destructive" });
+    } finally {
+      setTestGenerating(false);
+    }
+  }, [selectedTemplate, effectiveCsvData, templates, variableMapping, websites, selectedWebsite, websiteForPages, campaignTypes, campaignType, geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, toast]);
+
   const getProgressInfo = (c: Campaign) => {
     const total = (c as any).total_rows || 0;
     const processed = (c as any).processed_rows || 0;
@@ -796,9 +856,6 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
-  // locationHeaders defined above
-  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
-  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
 
   const mappingWarning = !hasTitleMapping && effectiveCsvData.length > 0 && selectedTemplate
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
@@ -1928,18 +1985,29 @@ export default function CampaignsPage() {
                     Continue <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button
-                    onClick={() => createMutation.mutate()}
-                    disabled={!campaignName || createMutation.isPending}
-                    className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110"
-                  >
-                    {createMutation.isPending ? "Creating..." : scheduleMode === "recurring" ? "Set Up Recurring" : scheduleMode === "later" ? "Schedule Campaign" : publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleTestOnePage}
+                      disabled={!selectedTemplate || effectiveCsvData.length === 0 || testGenerating}
+                      className="rounded-xl h-10 px-4"
+                    >
+                      {testGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : <><Eye className="mr-2 h-4 w-4" /> Test (1 Page)</>}
+                    </Button>
+                    <Button
+                      onClick={() => createMutation.mutate()}
+                      disabled={!campaignName || createMutation.isPending}
+                      className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110"
+                    >
+                      {createMutation.isPending ? "Creating..." : scheduleMode === "recurring" ? "Set Up Recurring" : scheduleMode === "later" ? "Schedule Campaign" : publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </DialogContent>
           </Dialog>
         </div>
+        <TestPagePreviewDialog open={testPreviewOpen} onOpenChange={setTestPreviewOpen} result={testPreviewResult} />
       </div>
 
       {/* Campaign List */}
