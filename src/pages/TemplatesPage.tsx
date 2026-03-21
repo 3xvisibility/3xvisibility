@@ -200,23 +200,19 @@ export default function TemplatesPage() {
     return m;
   }, [templates]);
 
-  // Filtered templates (reset page on filter change)
+  // Filtered templates
   const filteredTemplates = useMemo(() => {
-    setCurrentPage(1);
     return templates.filter((tpl) => {
-      // Search
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const nameMatch = tpl.name.toLowerCase().includes(q);
         const varMatch = (tpl.variables || []).some(v => v.toLowerCase().includes(q));
         if (!nameMatch && !varMatch) return false;
       }
-      // Site type filter
       if (siteTypeFilter !== "all") {
         const types = templateSiteTypes[tpl.id];
         if (!types || !types.has(siteTypeFilter)) return false;
       }
-      // Campaign type filter
       if (campaignTypeFilter !== "all") {
         const info = campaignsByTemplate[tpl.id];
         if (!info || !info.campaignTypes.has(campaignTypeFilter)) return false;
@@ -224,6 +220,9 @@ export default function TemplatesPage() {
       return true;
     });
   }, [templates, searchQuery, siteTypeFilter, campaignTypeFilter, templateSiteTypes, campaignsByTemplate]);
+
+  // Reset pagination when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, siteTypeFilter, campaignTypeFilter]);
 
   const { features } = useSubscription();
   const maxTemplates = features.templates;
