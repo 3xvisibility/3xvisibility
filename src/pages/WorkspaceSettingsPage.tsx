@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useBranding, type BrandingConfig } from "@/contexts/BrandingContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Crown, Shield, User, Trash2, UserPlus, Building2, Palette, ImageIcon, Type } from "lucide-react";
+import {
+  Users, Crown, Shield, User, Trash2, UserPlus, Building2, Palette, ImageIcon, Type,
+  Search, Clock, X, Mail,
+} from "lucide-react";
 import AuditLogViewer from "@/components/workspace/AuditLogViewer";
 
 interface Member {
@@ -22,6 +25,15 @@ interface Member {
   role: string;
   email: string;
   created_at: string;
+}
+
+interface PendingInvitation {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
 }
 
 function callWorkspaceSettings(body: Record<string, unknown>) {
@@ -39,6 +51,8 @@ export default function WorkspaceSettingsPage() {
   const [workspaceName, setWorkspaceName] = useState(currentWorkspace?.name || "");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<string>("member");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
 
   // Sync workspace name when workspace changes
   const displayName = currentWorkspace?.name || "";
@@ -60,6 +74,40 @@ export default function WorkspaceSettingsPage() {
     },
     enabled: !!wsId && isAdminOrOwner,
   });
+
+  // Fetch pending invitations
+  const { data: pendingInvitations } = useQuery({
+    queryKey: ["workspace-invitations", wsId],
+    queryFn: async () => {
+      if (!wsId) return [];
+      const { data, error } = await callWorkspaceSettings({
+        action: "list_pending_invitations",
+        workspace_id: wsId,
+      });
+      if (error) throw error;
+      return (data as any)?.invitations as PendingInvitation[] || [];
+    },
+    enabled: !!wsId && isAdminOrOwner,
+  });
+
+  // Filter members
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+    return members.filter((m) => {
+      const matchesSearch = !searchQuery || m.email.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = roleFilter === "all" || m.role === roleFilter;
+      return matchesSearch && matchesRole;
+    });
+  }, [members, searchQuery, roleFilter]);
+
+  // Filter pending invitations
+  const filteredInvitations = useMemo(() => {
+    if (!pendingInvitations) return [];
+    if (roleFilter !== "all" && roleFilter !== "pending") return [];
+    return pendingInvitations.filter((i) =>
+      !searchQuery || i.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [pendingInvitations, searchQuery, roleFilter]);
 
   // Rename mutation
   const renameMutation = useMutation({
@@ -92,11 +140,18 @@ export default function WorkspaceSettingsPage() {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+      return data as any;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const status = data?.status;
       setInviteEmail("");
       queryClient.invalidateQueries({ queryKey: ["workspace-members", wsId] });
-      toast({ title: "Member invited", description: `${inviteEmail} has been added to the workspace.` });
+      queryClient.invalidateQueries({ queryKey: ["workspace-invitations", wsId] });
+      if (status === "pending") {
+        toast({ title: "Invitation sent", description: `A pending invitation has been created for ${inviteEmail}. They'll see it when they sign up and log in.` });
+      } else {
+        toast({ title: "Member added", description: `${inviteEmail} has been added to the workspace.` });
+      }
     },
     onError: (err: Error) => {
       toast({ title: "Invite failed", description: err.message, variant: "destructive" });
@@ -144,6 +199,26 @@ export default function WorkspaceSettingsPage() {
     },
   });
 
+  // Cancel invitation mutation
+  const cancelInvitationMutation = useMutation({
+    mutationFn: async (invitation_id: string) => {
+      const { data, error } = await callWorkspaceSettings({
+        action: "cancel_invitation",
+        workspace_id: wsId,
+        invitation_id,
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workspace-invitations", wsId] });
+      toast({ title: "Invitation cancelled" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
   const roleIcon = (role: string) => {
     if (role === "owner") return <Crown className="h-3.5 w-3.5" />;
     if (role === "admin") return <Shield className="h-3.5 w-3.5" />;
@@ -163,6 +238,9 @@ export default function WorkspaceSettingsPage() {
       </div>
     );
   }
+
+  const totalCount = (members?.length || 0) + (pendingInvitations?.length || 0);
+  const showPending = roleFilter === "all" || roleFilter === "pending";
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -220,7 +298,9 @@ export default function WorkspaceSettingsPage() {
               <UserPlus className="h-5 w-5 text-primary" />
               Invite Member
             </CardTitle>
-            <CardDescription>Invite users by email. They must have an existing account.</CardDescription>
+            <CardDescription>
+              Invite users by email. Existing users are added immediately; others receive a pending invitation.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -260,10 +340,46 @@ export default function WorkspaceSettingsPage() {
             Members
           </CardTitle>
           <CardDescription>
-            {members?.length || 0} member{(members?.length || 0) !== 1 ? "s" : ""} in this workspace.
+            {members?.length || 0} member{(members?.length || 0) !== 1 ? "s" : ""}
+            {(pendingInvitations?.length || 0) > 0 && (
+              <> · {pendingInvitations?.length} pending</>
+            )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Search & Filter */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="owner">Owner</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {loadingMembers ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -272,7 +388,8 @@ export default function WorkspaceSettingsPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {members?.map((member) => (
+              {/* Active members */}
+              {filteredMembers.map((member) => (
                 <div
                   key={member.id}
                   className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors"
@@ -324,6 +441,51 @@ export default function WorkspaceSettingsPage() {
                   </div>
                 </div>
               ))}
+
+              {/* Pending invitations */}
+              {showPending && filteredInvitations.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between p-3 rounded-lg border border-dashed border-border hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                      <Mail className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{inv.email}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Invited {new Date(inv.created_at).toLocaleDateString()} · Expires {new Date(inv.expires_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className="gap-1 text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      Pending {inv.role}
+                    </Badge>
+                    {isAdminOrOwner && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        onClick={() => cancelInvitationMutation.mutate(inv.id)}
+                        disabled={cancelInvitationMutation.isPending}
+                        title="Cancel invitation"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {filteredMembers.length === 0 && filteredInvitations.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  {searchQuery || roleFilter !== "all" ? "No members match your filters." : "No members yet."}
+                </p>
+              )}
             </div>
           )}
         </CardContent>
@@ -348,6 +510,7 @@ export default function WorkspaceSettingsPage() {
   );
 }
 
+// ... keep existing code (WhitelabelBrandingCard component)
 function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
   const { toast } = useToast();
   const { branding } = useBranding();
