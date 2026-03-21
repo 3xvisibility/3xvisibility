@@ -164,6 +164,7 @@ export default function WebsitesPage() {
     setAppPassword("");
     setJwtToken("");
     setShopifyToken("");
+    setShopDomain("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
