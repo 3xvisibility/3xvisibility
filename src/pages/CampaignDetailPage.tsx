@@ -78,6 +78,7 @@ export default function CampaignDetailPage() {
   const wsId = currentWorkspace?.id;
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [showStartDialog, setShowStartDialog] = useState(false);
   const [resumeIndex, setResumeIndex] = useState(0);
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [overwriteFields, setOverwriteFields] = useState({
