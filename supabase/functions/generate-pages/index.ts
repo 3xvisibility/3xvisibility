@@ -1413,8 +1413,18 @@ Deno.serve(async (req) => {
             pageTitle = values.slice(0, 2).join(" - ") || `Page ${processedCount + 1}`;
           }
 
-          // Build slug with optional directory structure (hierarchical nesting)
-          let slug = slugify(pageTitle) || `page-${processedCount + 1}`;
+          // Build slug — use template slug pattern from schema_config if defined
+          const tplSlugPattern = tplSchemaConfig._slugPattern || "";
+          let slug: string;
+          if (tplSlugPattern) {
+            let resolvedSlug = tplSlugPattern;
+            for (const [key, value] of Object.entries(allVars)) {
+              resolvedSlug = resolvedSlug.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+            }
+            slug = slugify(resolvedSlug) || slugify(pageTitle) || `page-${processedCount + 1}`;
+          } else {
+            slug = slugify(pageTitle) || `page-${processedCount + 1}`;
+          }
           const dirStructure = (campaign as any).directory_structure as { levels?: string[]; separator?: string } | null;
           if (dirStructure?.levels && dirStructure.levels.length > 0) {
             const dirParts: string[] = [];
