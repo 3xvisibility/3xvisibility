@@ -856,9 +856,6 @@ export default function CampaignsPage() {
     );
   }, [variableMapping]);
 
-  // locationHeaders defined above
-  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
-  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
 
   const mappingWarning = !hasTitleMapping && effectiveCsvData.length > 0 && selectedTemplate
     ? "⚠️ No title/name variable is mapped. Pages may have generic titles."
