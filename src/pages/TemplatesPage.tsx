@@ -133,19 +133,20 @@ export default function TemplatesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("id, name, template_id, campaign_type, campaign_types, website_id, status")
+        .select("id, name, template_id, campaign_type, campaign_types, website_id, status, created_at")
         .eq("workspace_id", wsId!)
         .not("template_id", "is", null);
       if (error) throw error;
-      const map: Record<string, { count: number; campaignTypes: Set<string>; websiteIds: Set<string>; activeCount: number }> = {};
+      const map: Record<string, { count: number; campaignTypes: Set<string>; websiteIds: Set<string>; activeCount: number; lastUsedAt: string | null }> = {};
       for (const c of data || []) {
         if (!c.template_id) continue;
-        if (!map[c.template_id]) map[c.template_id] = { count: 0, campaignTypes: new Set(), websiteIds: new Set(), activeCount: 0 };
+        if (!map[c.template_id]) map[c.template_id] = { count: 0, campaignTypes: new Set(), websiteIds: new Set(), activeCount: 0, lastUsedAt: null };
         map[c.template_id].count++;
         if (c.campaign_type) map[c.template_id].campaignTypes.add(c.campaign_type);
         (c.campaign_types || []).forEach((t: string) => map[c.template_id!]!.campaignTypes.add(t));
         if (c.website_id) map[c.template_id].websiteIds.add(c.website_id);
         if (c.status !== "completed" && c.status !== "failed") map[c.template_id].activeCount++;
+        if (!map[c.template_id].lastUsedAt || c.created_at > map[c.template_id].lastUsedAt!) map[c.template_id].lastUsedAt = c.created_at;
       }
       return map;
     },
