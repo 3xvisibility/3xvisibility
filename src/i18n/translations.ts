@@ -824,5 +824,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleSpecial": "Ein Sonderzeichen",
     "auth.rateLimited": "Bitte warten",
     "auth.rateLimitedDesc": "Sie können in {seconds} Sekunden erneut anfordern.",
+    "auth.passwordStrength": "Passwortstärke",
+    "auth.strengthWeak": "Schwach",
+    "auth.strengthMedium": "Mittel",
+    "auth.strengthStrong": "Stark",
   },
 };
