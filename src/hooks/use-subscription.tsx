@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { PLAN_FEATURES, type PlanName, type FeatureKey, type PlanFeatures } from "@/lib/plan-features";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -29,6 +30,7 @@ export function useSubscription(): SubscriptionData {
   const wsId = currentWorkspace?.id;
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const warnedRef = useRef<{ pages: boolean; ai: boolean }>({ pages: false, ai: false });
 
   // Auto-sync with Stripe on mount and every 60 seconds
@@ -116,7 +118,15 @@ export function useSubscription(): SubscriptionData {
         warnedRef.current.pages = true;
         toast({
           title: "Page limit warning",
-          description: `You've used ${pagesUsed} of ${pagesLimit} pages (${Math.round(pagesPercent * 100)}%). Consider upgrading your plan.`,
+          description: `You've used ${pagesUsed} of ${pagesLimit} pages (${Math.round(pagesPercent * 100)}%).`,
+          action: (
+            <button
+              className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              onClick={() => navigate("/billing")}
+            >
+              Upgrade
+            </button>
+          ),
         });
       }
 
@@ -124,7 +134,15 @@ export function useSubscription(): SubscriptionData {
         warnedRef.current.ai = true;
         toast({
           title: "AI generation limit warning",
-          description: `You've used ${aiUsed} of ${aiLimit} AI generations (${Math.round(aiPercent * 100)}%). Consider upgrading your plan.`,
+          description: `You've used ${aiUsed} of ${aiLimit} AI generations (${Math.round(aiPercent * 100)}%).`,
+          action: (
+            <button
+              className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              onClick={() => navigate("/billing")}
+            >
+              Upgrade
+            </button>
+          ),
         });
       }
     };
