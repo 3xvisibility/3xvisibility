@@ -57,9 +57,9 @@ type ScoredPage = PageData & {
 };
 
 function scorePage(p: PageData): ScoredPage {
-  const seo = calculateContentSeoScore(p.content || "");
-  const sea = calculateContentSeaScore(p.content || "");
-  const geo = calculateContentGeoScore(p.content || "");
+  const seo = calculateContentSeoScore(p.title || "", p.content || "", p.seo_title || "", p.seo_description || "");
+  const sea = calculateContentSeaScore(p.title || "", p.content || "", p.seo_title || "", p.seo_description || "");
+  const geo = calculateContentGeoScore(p.title || "", p.content || "", p.seo_title || "", p.seo_description || "");
   const overall = Math.round(seo.score * 0.4 + sea.score * 0.3 + geo.score * 0.3);
   return { ...p, seoScore: seo.score, seaScore: sea.score, geoScore: geo.score, overall };
 }
