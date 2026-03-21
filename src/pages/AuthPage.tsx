@@ -64,7 +64,7 @@ export default function AuthPage() {
   const signupPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const showEmailError = mode === "signup" && email.length > 0 && !isValidEmail;
-  const canSignup = allSignupRulesPassed && signupPasswordsMatch && isValidEmail && termsAccepted && companyName.trim().length > 0;
+  const canSignup = allSignupRulesPassed && signupPasswordsMatch && isValidEmail && termsAccepted;
   const signupStrength: "none" | "weak" | "medium" | "strong" =
     password.length === 0 ? "none" : signupPassedCount <= 2 ? "weak" : signupPassedCount <= 4 ? "medium" : "strong";
   const signupStrengthConfig = {
