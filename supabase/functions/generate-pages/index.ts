@@ -1190,6 +1190,22 @@ Deno.serve(async (req) => {
     let publishQueuedCount = 0;
     let timedOut = false;
 
+    // US24 — Track slugs & titles across batches to enforce uniqueness
+    const seenSlugsGlobal = new Set<string>();
+    const seenTitlesGlobal = new Set<string>();
+    // Pre-load existing slugs from previous runs in this campaign
+    const { data: existingSlugs } = await supabase
+      .from("generated_pages")
+      .select("slug, title")
+      .eq("campaign_id", campaign_id)
+      .neq("status", "failed");
+    if (existingSlugs) {
+      for (const ep of existingSlugs) {
+        seenSlugsGlobal.add(ep.slug.split("?")[0].toLowerCase());
+        seenTitlesGlobal.add((ep.title || "").toLowerCase());
+      }
+    }
+
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
       // Timeout guard — save progress and return partial results
       if (Date.now() - startTime > TIMEOUT_MS) {
@@ -1294,6 +1310,9 @@ Deno.serve(async (req) => {
         `Batch ${batchesCompleted} started (${batchRows.length} pages)`, batchesCompleted, batchRows.length);
 
       const batchPages: any[] = [];
+      // Track slugs and titles within this campaign run for uniqueness
+      const usedSlugs = new Set<string>(seenSlugsGlobal);
+      const usedTitles = new Set<string>(seenTitlesGlobal);
 
       for (const row of batchRows) {
         try {
@@ -1467,6 +1486,21 @@ Deno.serve(async (req) => {
               slug = dirParts.join(sep) + sep + slug;
             }
           }
+
+          // US24 — Deduplicate slugs: append -2, -3, etc. if slug already exists
+          const baseSlugForDedup = slug.toLowerCase();
+          if (usedSlugs.has(baseSlugForDedup)) {
+            let counter = 2;
+            while (usedSlugs.has(`${baseSlugForDedup}-${counter}`)) counter++;
+            slug = `${slug}-${counter}`;
+          }
+          usedSlugs.add(slug.toLowerCase());
+
+          // Track title for uniqueness warning (logged but not blocked)
+          if (usedTitles.has(pageTitle.toLowerCase())) {
+            console.log(`[GENERATE-PAGES] Warning: duplicate title "${pageTitle}" in campaign ${campaign_id}`);
+          }
+          usedTitles.add(pageTitle.toLowerCase());
 
           // Build UTM query string from campaign utm_settings
           const utmSettings = (campaign.utm_settings || {}) as Record<string, string>;
