@@ -25,6 +25,8 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Zap,
+  Target,
 } from "lucide-react";
 import {
   AreaChart,
