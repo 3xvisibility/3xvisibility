@@ -226,7 +226,7 @@ export class WordPressConnector implements CmsConnector {
         try {
           const singleResp = await fetch(
             `${this.baseUrl}/wp-json/wp/v2/pages/${item.id}?context=edit`,
-            { headers: { Authorization: `Basic ${this.authString}` } }
+            { headers: this.headers }
           );
           if (singleResp.ok) {
             const singleData = await singleResp.json();
