@@ -126,7 +126,7 @@ describe("replaceVariables", () => {
     expect(replaceVariables("{City} and {CITY}", { city: "Paris" })).toBe("Paris and Paris");
   });
   it("handles missing variables gracefully", () => {
-    expect(replaceVariables("Hi {name}", {})).toBe("Hi ");
+    expect(replaceVariables("Hi {name}", {})).toBe("Hi {name}");
   });
 });
 
