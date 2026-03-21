@@ -1065,6 +1065,7 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                             <SelectItem value="Service">Service</SelectItem>
                             <SelectItem value="Organization">Organization</SelectItem>
                             <SelectItem value="Event">Event</SelectItem>
+                            <SelectItem value="SoftwareApplication">SoftwareApplication</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
