@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -48,6 +49,12 @@ export default function TemplatesPage() {
   // SEO state
   const [seoTitlePattern, setSeoTitlePattern] = useState("");
   const [seoDescriptionPattern, setSeoDescriptionPattern] = useState("");
+  const [slugPattern, setSlugPattern] = useState("");
+  const [ogTitlePattern, setOgTitlePattern] = useState("");
+  const [ogDescriptionPattern, setOgDescriptionPattern] = useState("");
+  const [ogImagePattern, setOgImagePattern] = useState("");
+  const [twitterCard, setTwitterCard] = useState("summary_large_image");
+  const [canonicalUrlPattern, setCanonicalUrlPattern] = useState("");
   // Schema state
   const [schemaType, setSchemaType] = useState("WebPage");
   const [schemaConfig, setSchemaConfig] = useState<Record<string, string>>({});
@@ -332,7 +339,7 @@ export default function TemplatesPage() {
         seo_title_pattern: seoTitlePattern,
         seo_description_pattern: seoDescriptionPattern,
         schema_type: schemaType,
-        schema_config: schemaConfig,
+        schema_config: buildSchemaConfig(),
       } as any);
       if (error) throw error;
     },
@@ -365,7 +372,7 @@ export default function TemplatesPage() {
         seo_title_pattern: seoTitlePattern,
         seo_description_pattern: seoDescriptionPattern,
         schema_type: schemaType,
-        schema_config: schemaConfig,
+        schema_config: buildSchemaConfig(),
       } as any).eq("id", editingTemplate.id);
       if (error) throw error;
     },
@@ -518,6 +525,38 @@ export default function TemplatesPage() {
     }
   };
 
+  const normalizeSlug = (input: string) =>
+    input
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9{}\-\/]/g, "-")
+      .replace(/-{2,}/g, "-")
+      .replace(/^-|-$/g, "");
+
+  const seoTitleLen = seoTitlePattern.replace(/\{[^}]+\}/g, "xxxxx").length;
+  const seoDescLen = seoDescriptionPattern.replace(/\{[^}]+\}/g, "xxxxx").length;
+  const seoTitleColor = seoTitleLen === 0 ? "text-muted-foreground" : seoTitleLen <= 60 ? "text-emerald-600" : seoTitleLen <= 70 ? "text-amber-600" : "text-destructive";
+  const seoDescColor = seoDescLen === 0 ? "text-muted-foreground" : (seoDescLen >= 120 && seoDescLen <= 160) ? "text-emerald-600" : (seoDescLen >= 100 && seoDescLen <= 180) ? "text-amber-600" : "text-destructive";
+
+  const loadSeoExtras = (config: Record<string, any>) => {
+    setSlugPattern(config?._slugPattern || "");
+    setOgTitlePattern(config?._ogTitle || "");
+    setOgDescriptionPattern(config?._ogDescription || "");
+    setOgImagePattern(config?._ogImage || "");
+    setTwitterCard(config?._twitterCard || "summary_large_image");
+    setCanonicalUrlPattern(config?._canonicalUrl || "");
+  };
+
+  const buildSchemaConfig = () => ({
+    ...schemaConfig,
+    _slugPattern: slugPattern,
+    _ogTitle: ogTitlePattern,
+    _ogDescription: ogDescriptionPattern,
+    _ogImage: ogImagePattern,
+    _twitterCard: twitterCard,
+    _canonicalUrl: canonicalUrlPattern,
+  });
+
   const resetAndClose = () => {
     setAiOpen(false);
     setOpen(false);
@@ -529,6 +568,12 @@ export default function TemplatesPage() {
     setActiveEditorTab("visual");
     setSeoTitlePattern("");
     setSeoDescriptionPattern("");
+    setSlugPattern("");
+    setOgTitlePattern("");
+    setOgDescriptionPattern("");
+    setOgImagePattern("");
+    setTwitterCard("summary_large_image");
+    setCanonicalUrlPattern("");
     setSchemaType("WebPage");
     setSchemaConfig({});
   };
@@ -879,8 +924,9 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                           onChange={(e) => setSeoTitlePattern(e.target.value)}
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Recommended: under 60 characters. Current: {seoTitlePattern.length} chars
+                        <p className={`text-xs ${seoTitleColor}`}>
+                          Recommended: under 60 characters. Estimated: ~{seoTitleLen} chars
+                          {seoTitleLen > 60 && " ⚠ May be truncated in search results"}
                         </p>
                       </div>
                       <div className="space-y-1.5">
@@ -893,10 +939,92 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                           rows={3}
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Recommended: 120-160 characters. Current: {seoDescriptionPattern.length} chars
+                        <p className={`text-xs ${seoDescColor}`}>
+                          Recommended: 120-160 characters. Estimated: ~{seoDescLen} chars
+                          {seoDescLen > 160 && " ⚠ May be truncated"}
+                          {seoDescLen > 0 && seoDescLen < 120 && " ⚠ Too short for best results"}
                         </p>
                       </div>
+
+                      <Separator />
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="slug-pattern">Slug Pattern</Label>
+                        <Input
+                          id="slug-pattern"
+                          placeholder="e.g., {keyword}-{city}"
+                          value={slugPattern}
+                          onChange={(e) => setSlugPattern(normalizeSlug(e.target.value))}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Auto-normalized: lowercase, no accents, hyphens only. Use &#123;variable&#125; placeholders.
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="canonical-url">Canonical URL Pattern</Label>
+                        <Input
+                          id="canonical-url"
+                          placeholder="e.g., https://example.com/{slug}"
+                          value={canonicalUrlPattern}
+                          onChange={(e) => setCanonicalUrlPattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Default canonical URL for generated pages. Use &#123;slug&#125; to insert the page slug.
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Open Graph & Twitter</p>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="og-title">OG Title</Label>
+                        <Input
+                          id="og-title"
+                          placeholder="Defaults to Meta Title if empty"
+                          value={ogTitlePattern}
+                          onChange={(e) => setOgTitlePattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="og-desc">OG Description</Label>
+                        <Input
+                          id="og-desc"
+                          placeholder="Defaults to Meta Description if empty"
+                          value={ogDescriptionPattern}
+                          onChange={(e) => setOgDescriptionPattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="og-image">OG Image URL</Label>
+                        <Input
+                          id="og-image"
+                          placeholder="e.g., https://example.com/images/{slug}.jpg"
+                          value={ogImagePattern}
+                          onChange={(e) => setOgImagePattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Twitter Card Type</Label>
+                        <Select value={twitterCard} onValueChange={setTwitterCard}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="summary">Summary</SelectItem>
+                            <SelectItem value="summary_large_image">Summary Large Image</SelectItem>
+                            <SelectItem value="app">App</SelectItem>
+                            <SelectItem value="player">Player</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       {detectedVars.length > 0 && (
                         <div>
                           <p className="text-xs text-muted-foreground mb-1.5">Available variables from template:</p>
@@ -937,6 +1065,7 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                             <SelectItem value="Service">Service</SelectItem>
                             <SelectItem value="Organization">Organization</SelectItem>
                             <SelectItem value="Event">Event</SelectItem>
+                            <SelectItem value="SoftwareApplication">SoftwareApplication</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1031,7 +1160,32 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                         </div>
                       )}
 
-                      {/* JSON-LD Preview */}
+                      {schemaType === "SoftwareApplication" && (
+                        <div className="space-y-3 rounded-lg border border-border p-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">SoftwareApplication Fields</p>
+                          {[
+                            { key: "name", label: "App Name", placeholder: "{name}" },
+                            { key: "operatingSystem", label: "OS", placeholder: "Windows, macOS, Linux" },
+                            { key: "applicationCategory", label: "Category", placeholder: "BusinessApplication" },
+                            { key: "offers.price", label: "Price", placeholder: "{price}" },
+                            { key: "offers.priceCurrency", label: "Currency", placeholder: "USD" },
+                            { key: "aggregateRating.ratingValue", label: "Rating", placeholder: "{rating}" },
+                            { key: "aggregateRating.ratingCount", label: "Review Count", placeholder: "{review_count}" },
+                          ].map(({ key, label, placeholder }) => (
+                            <div key={key} className="grid grid-cols-3 gap-2 items-center">
+                              <Label className="text-xs">{label}</Label>
+                              <Input
+                                className="col-span-2 text-sm font-mono h-8"
+                                placeholder={placeholder}
+                                value={schemaConfig[key] || ""}
+                                onChange={(e) => setSchemaConfig({ ...schemaConfig, [key]: e.target.value })}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+
                       <div className="space-y-1.5">
                         <Label className="text-xs">JSON-LD Preview</Label>
                         <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto max-h-48 overflow-y-auto">
@@ -1040,7 +1194,7 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                               "@context": "https://schema.org",
                               "@type": schemaType,
                               ...Object.fromEntries(
-                                Object.entries(schemaConfig).filter(([, v]) => v)
+                                Object.entries(schemaConfig).filter(([k, v]) => v && !k.startsWith("_"))
                               ),
                             },
                             null,
@@ -1335,7 +1489,7 @@ RULES:
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-0.5">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); setSchemaConfig((tpl as any).schema_config || {}); }} title="Edit">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); const cfg = (tpl as any).schema_config || {}; setSchemaConfig(cfg); loadSeoExtras(cfg); }} title="Edit">
                               <Pencil className="h-3 w-3" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate"><Copy className="h-3 w-3" /></Button>
@@ -1395,7 +1549,7 @@ RULES:
                     <h3 className="font-semibold truncate">{tpl.name}</h3>
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0 flex-wrap justify-end">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); setSchemaConfig((tpl as any).schema_config || {}); }} title="Edit">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); const cfg = (tpl as any).schema_config || {}; setSchemaConfig(cfg); loadSeoExtras(cfg); }} title="Edit">
                       <Pencil className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate"><Copy className="h-3 w-3" /></Button>
