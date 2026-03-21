@@ -516,6 +516,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.terms": "En continuant, vous acceptez nos Conditions d'utilisation et notre Politique de confidentialité.",
     "auth.loginFailed": "Échec de connexion",
     "auth.signupFailed": "Échec de l'inscription",
+    "auth.passwordTooWeak": "Votre mot de passe ne respecte pas toutes les règles de complexité.",
     "auth.checkEmail": "Vérifiez votre e-mail",
     "auth.confirmationSent": "Nous vous avons envoyé un lien de confirmation.",
     "auth.enterEmail": "Entrez votre e-mail",
