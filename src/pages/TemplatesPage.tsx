@@ -923,8 +923,9 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                           onChange={(e) => setSeoTitlePattern(e.target.value)}
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Recommended: under 60 characters. Current: {seoTitlePattern.length} chars
+                        <p className={`text-xs ${seoTitleColor}`}>
+                          Recommended: under 60 characters. Estimated: ~{seoTitleLen} chars
+                          {seoTitleLen > 60 && " ⚠ May be truncated in search results"}
                         </p>
                       </div>
                       <div className="space-y-1.5">
@@ -937,10 +938,92 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                           rows={3}
                           className="font-mono text-sm"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Recommended: 120-160 characters. Current: {seoDescriptionPattern.length} chars
+                        <p className={`text-xs ${seoDescColor}`}>
+                          Recommended: 120-160 characters. Estimated: ~{seoDescLen} chars
+                          {seoDescLen > 160 && " ⚠ May be truncated"}
+                          {seoDescLen > 0 && seoDescLen < 120 && " ⚠ Too short for best results"}
                         </p>
                       </div>
+
+                      <Separator />
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="slug-pattern">Slug Pattern</Label>
+                        <Input
+                          id="slug-pattern"
+                          placeholder="e.g., {keyword}-{city}"
+                          value={slugPattern}
+                          onChange={(e) => setSlugPattern(normalizeSlug(e.target.value))}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Auto-normalized: lowercase, no accents, hyphens only. Use &#123;variable&#125; placeholders.
+                        </p>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="canonical-url">Canonical URL Pattern</Label>
+                        <Input
+                          id="canonical-url"
+                          placeholder="e.g., https://example.com/{slug}"
+                          value={canonicalUrlPattern}
+                          onChange={(e) => setCanonicalUrlPattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Default canonical URL for generated pages. Use &#123;slug&#125; to insert the page slug.
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Open Graph & Twitter</p>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="og-title">OG Title</Label>
+                        <Input
+                          id="og-title"
+                          placeholder="Defaults to Meta Title if empty"
+                          value={ogTitlePattern}
+                          onChange={(e) => setOgTitlePattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="og-desc">OG Description</Label>
+                        <Input
+                          id="og-desc"
+                          placeholder="Defaults to Meta Description if empty"
+                          value={ogDescriptionPattern}
+                          onChange={(e) => setOgDescriptionPattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="og-image">OG Image URL</Label>
+                        <Input
+                          id="og-image"
+                          placeholder="e.g., https://example.com/images/{slug}.jpg"
+                          value={ogImagePattern}
+                          onChange={(e) => setOgImagePattern(e.target.value)}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Twitter Card Type</Label>
+                        <Select value={twitterCard} onValueChange={setTwitterCard}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="summary">Summary</SelectItem>
+                            <SelectItem value="summary_large_image">Summary Large Image</SelectItem>
+                            <SelectItem value="app">App</SelectItem>
+                            <SelectItem value="player">Player</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       {detectedVars.length > 0 && (
                         <div>
                           <p className="text-xs text-muted-foreground mb-1.5">Available variables from template:</p>
