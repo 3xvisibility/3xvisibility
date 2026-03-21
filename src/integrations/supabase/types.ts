@@ -1001,6 +1001,60 @@ export type Database = {
           },
         ]
       }
+      page_improvements: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          field: string
+          id: string
+          page_id: string
+          score_after: number | null
+          score_before: number | null
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          field: string
+          id?: string
+          page_id: string
+          score_after?: number | null
+          score_before?: number | null
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          field?: string
+          id?: string
+          page_id?: string
+          score_after?: number | null
+          score_before?: number | null
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_improvements_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "generated_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_improvements_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_metrics: {
         Row: {
           avg_time_on_page: number

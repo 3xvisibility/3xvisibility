@@ -25,6 +25,8 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Zap,
+  Target,
 } from "lucide-react";
 import {
   AreaChart,
@@ -245,6 +247,24 @@ export default function DashboardPage() {
         .select("ai_generations_used, ai_generations_limit, plan")
         .maybeSingle();
       return data;
+    },
+  });
+
+  // ── Improvement stats ──────────────────────────
+  const { data: improvementStats } = useQuery({
+    queryKey: ["dashboard-improvements", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      // Count campaigns with improvements
+      const { data: improvements, error } = await supabase
+        .from("page_improvements" as any)
+        .select("details")
+        .eq("workspace_id", wsId!);
+      if (error) return { improved: 0, total: 0 };
+      const improvedCampaignIds = new Set(
+        (improvements || []).map((i: any) => (i.details as any)?.campaign_id).filter(Boolean)
+      );
+      return { improved: improvedCampaignIds.size, total: campaignCount };
     },
   });
 
@@ -565,6 +585,40 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* SEO Improvement Tracker */}
+      {improvementStats && campaignCount > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/0" />
+            <CardContent className="p-5 relative flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-success/10 flex items-center justify-center shrink-0">
+                <Target className="h-6 w-6 text-success" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Campaigns Improved</h3>
+                <p className="text-2xl font-bold tabular-nums text-success">{improvementStats.improved}</p>
+                <p className="text-[10px] text-muted-foreground">of {improvementStats.total} total campaigns</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-warning/0" />
+            <CardContent className="p-5 relative flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-warning/10 flex items-center justify-center shrink-0">
+                <Zap className="h-6 w-6 text-warning" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Needs Optimization</h3>
+                <p className="text-2xl font-bold tabular-nums text-warning">
+                  {Math.max(0, improvementStats.total - improvementStats.improved)}
+                </p>
+                <p className="text-[10px] text-muted-foreground">campaigns not yet optimized</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Latest Jobs Timeline */}
       <Card className="border-0 shadow-surface">

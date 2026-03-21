@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { computeCampaignSeoSummary } from "@/components/SeoAnalysisDialog";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
+import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWorkflow";
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { useParams, useNavigate } from "react-router-dom";
@@ -542,6 +543,16 @@ export default function CampaignDetailPage() {
               </Card>
             );
           })()}
+
+          {/* Generate → Analyze → Improve Workflow */}
+          {pages.length > 0 && campaign?.status === "completed" && wsId && (
+            <SeoImprovementWorkflow
+              pages={pages as any}
+              campaignId={id!}
+              workspaceId={wsId}
+              onPagesUpdated={() => queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] })}
+            />
+          )}
 
           {/* Recent Executions */}
           {executionHistory.length > 0 && (
