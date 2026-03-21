@@ -342,6 +342,24 @@ export default function AuthPage() {
                       </div>
                     )}
 
+                    {mode === "signup" && (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="signup-company" className="text-xs font-medium text-muted-foreground">
+                          {t("auth.companyName")}
+                        </Label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                          <Input
+                            id="signup-company"
+                            placeholder={t("auth.companyPlaceholder")}
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            required
+                            maxLength={100}
+                            className="pl-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
+                          />
+                        </div>
+                      </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="auth-email" className="text-xs font-medium text-muted-foreground">
                         {t("auth.email")}
