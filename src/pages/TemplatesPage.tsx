@@ -172,6 +172,25 @@ export default function TemplatesPage() {
     return m;
   }, [campaignsByTemplate, websiteTypeMap]);
 
+  // Count how many times each template has been duplicated (by matching "Name (Copy)" pattern)
+  const dupCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    const baseNames = new Map<string, string>(); // baseName → original template id
+    for (const t of templates) {
+      // Normalize: strip trailing " (Copy)", " (Copy) (Copy)", etc.
+      const base = t.name.replace(/\s*\(Copy\)\s*/gi, "").trim();
+      if (!baseNames.has(base)) baseNames.set(base, t.id);
+    }
+    for (const t of templates) {
+      const base = t.name.replace(/\s*\(Copy\)\s*/gi, "").trim();
+      const origId = baseNames.get(base);
+      if (origId && origId !== t.id) {
+        m[origId] = (m[origId] || 0) + 1;
+      }
+    }
+    return m;
+  }, [templates]);
+
   // Filtered templates
   const filteredTemplates = useMemo(() => {
     return templates.filter((tpl) => {
