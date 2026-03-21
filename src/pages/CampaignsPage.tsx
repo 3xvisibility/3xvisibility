@@ -93,6 +93,8 @@ export default function CampaignsPage() {
   const [websitePagesSearch, setWebsitePagesSearch] = useState("");
   const [manualMappings, setManualMappings] = useState<Record<string, string>>({});
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const [transforms, setTransforms] = useState<Record<string, string>>({});
+  const [targetFieldMappings, setTargetFieldMappings] = useState<Record<string, string>>({});
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "processing" | "completed" | "failed" | "queued">("all");
   // Generation settings
