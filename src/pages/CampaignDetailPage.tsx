@@ -126,7 +126,7 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description")
+        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description, seo_keywords, content, canonical_url")
         .eq("campaign_id", id!)
         .order("created_at", { ascending: false });
       if (error) throw error;
