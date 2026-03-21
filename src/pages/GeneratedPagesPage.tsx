@@ -365,6 +365,23 @@ export default function GeneratedPagesPage() {
 
   const pendingPages = pages.filter((p) => p.status === "pending");
 
+  // Unique sites and campaigns for filters
+  const uniqueSites = useMemo(() => {
+    const sites = new Map<string, string>();
+    pages.forEach((p) => {
+      if (p.website_id && p.websites?.name) sites.set(p.website_id, p.websites.name);
+    });
+    return Array.from(sites, ([id, name]) => ({ id, name }));
+  }, [pages]);
+
+  const uniqueCampaigns = useMemo(() => {
+    const campaigns = new Map<string, string>();
+    pages.forEach((p) => {
+      if (p.campaign_id && p.campaigns?.name) campaigns.set(p.campaign_id, p.campaigns.name);
+    });
+    return Array.from(campaigns, ([id, name]) => ({ id, name }));
+  }, [pages]);
+
   const filtered = useMemo(() => {
     const base = pages.filter(
       (p) =>
