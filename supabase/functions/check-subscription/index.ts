@@ -44,32 +44,34 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Auth error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
-    logStep("User authenticated", { email: user.email });
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) throw new Error(`Auth error: ${claimsError?.message || "invalid token"}`);
+    
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    if (!userEmail) throw new Error("No email in token");
+    logStep("User authenticated", { email: userEmail });
 
     // Get user's workspace
     const { data: memberData } = await supabaseClient
       .from("workspace_members")
       .select("workspace_id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
     const workspaceId = memberData?.workspace_id ?? null;
     logStep("Workspace", { workspaceId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
 
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
       // Ensure a free subscription row exists
-      await upsertSubscription(supabaseClient, user.id, workspaceId, "free", null, null, null);
+      await upsertSubscription(supabaseClient, userId, workspaceId, "free", null, null, null);
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -116,7 +118,7 @@ serve(async (req) => {
     // Sync to database
     await upsertSubscription(
       supabaseClient,
-      user.id,
+      userId,
       workspaceId,
       planName,
       customerId,
