@@ -23,6 +23,7 @@ import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
+import { MappingStep } from "@/components/campaigns/MappingStep";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
