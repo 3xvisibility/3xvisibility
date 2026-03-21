@@ -556,7 +556,7 @@ export default function AuthPage() {
                 <p className="text-center text-sm text-muted-foreground mt-6">
                   {mode === "login" ? t("auth.noAccount") : t("auth.hasAccount")}{" "}
                   <button
-                    onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                    onClick={() => { setMode(mode === "login" ? "signup" : "login"); setConfirmPassword(""); }}
                     className="text-primary font-semibold hover:text-primary/80 transition-colors"
                   >
                     {mode === "login" ? t("auth.signUp") : t("auth.signIn")}
