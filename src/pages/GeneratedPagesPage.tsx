@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3 } from "lucide-react";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
+import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
