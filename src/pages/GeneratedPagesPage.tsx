@@ -61,6 +61,7 @@ export default function GeneratedPagesPage() {
   const [translateOpen, setTranslateOpen] = useState(false);
   const [translateLang, setTranslateLang] = useState("fr");
   const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
