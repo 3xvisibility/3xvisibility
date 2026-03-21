@@ -141,7 +141,7 @@ function getFeatureList(name: PlanName): string[] {
 }
 
 export default function BillingPage() {
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, isLoading: subLoading } = useSubscription();
+  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, isLoading: subLoading } = useSubscription();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
