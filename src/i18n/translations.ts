@@ -544,6 +544,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleLowercase": "Une lettre minuscule",
     "auth.pwRuleNumber": "Un chiffre",
     "auth.pwRuleSpecial": "Un caractère spécial",
+    "auth.rateLimited": "Veuillez patienter",
+    "auth.rateLimitedDesc": "Vous pourrez demander une nouvelle réinitialisation dans {seconds} secondes.",
   },
   de: {
     // Nav
