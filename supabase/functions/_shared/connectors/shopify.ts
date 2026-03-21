@@ -53,7 +53,7 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.seo_title) pageBody.metafields_global_title_tag = payload.seo_title;
     if (payload.seo_description) pageBody.metafields_global_description_tag = payload.seo_description;
 
-    const res = await fetch(`${this.apiBase}/pages.json`, {
+    const res = await shopifyFetch(`${this.apiBase}/pages.json`, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify({ page: pageBody }),
@@ -89,7 +89,7 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.seo_title) productBody.metafields_global_title_tag = payload.seo_title;
     if (payload.seo_description) productBody.metafields_global_description_tag = payload.seo_description;
 
-    const res = await fetch(`${this.apiBase}/products.json`, {
+    const res = await shopifyFetch(`${this.apiBase}/products.json`, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify({ product: productBody }),
@@ -109,7 +109,7 @@ export class ShopifyConnector implements CmsConnector {
 
   async testConnection(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.apiBase}/shop.json`, { headers: this.headers });
+      const res = await shopifyFetch(`${this.apiBase}/shop.json`, { headers: this.headers });
       return res.ok;
     } catch {
       return false;
@@ -127,7 +127,7 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
     if (payload.seo_description) body.metafields_global_description_tag = payload.seo_description;
 
-    const res = await fetch(`${this.apiBase}/pages/${externalId}.json`, {
+    const res = await shopifyFetch(`${this.apiBase}/pages/${externalId}.json`, {
       method: "PUT",
       headers: this.headers,
       body: JSON.stringify({ page: body }),
@@ -159,7 +159,7 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
     if (payload.seo_description) body.metafields_global_description_tag = payload.seo_description;
 
-    const res = await fetch(`${this.apiBase}/products/${externalId}.json`, {
+    const res = await shopifyFetch(`${this.apiBase}/products/${externalId}.json`, {
       method: "PUT",
       headers: this.headers,
       body: JSON.stringify({ product: body }),
@@ -184,7 +184,7 @@ export class ShopifyConnector implements CmsConnector {
       : `${this.apiBase}/pages.json?limit=250`;
 
     while (url) {
-      const response = await fetch(url, { headers: this.headers });
+      const response = await shopifyFetch(url, { headers: this.headers } as RequestInit);
 
       if (!response.ok) {
         const err = await response.text();
