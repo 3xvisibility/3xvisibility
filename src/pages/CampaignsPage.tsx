@@ -1810,6 +1810,26 @@ export default function CampaignsPage() {
                         )}
                       </div>
 
+                      {/* SEO Title Format */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">SEO Title Format</Label>
+                        <Select value={seoTitleFormat} onValueChange={setSeoTitleFormat}>
+                          <SelectTrigger className="rounded-xl h-9 text-sm w-full sm:w-72">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="{title} | {brand}">{"{title} | {brand}"}</SelectItem>
+                            <SelectItem value="{brand} - {title}">{"{brand} - {title}"}</SelectItem>
+                            <SelectItem value="{title} — {brand}">{"{title} — {brand}"}</SelectItem>
+                            <SelectItem value="{brand} | {title}">{"{brand} | {title}"}</SelectItem>
+                            <SelectItem value="{title}">{"{title}"} (no brand)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-muted-foreground">
+                          Controls how the SEO title is structured. <code className="font-mono bg-muted px-1 rounded">{"{brand}"}</code> = website name, <code className="font-mono bg-muted px-1 rounded">{"{title}"}</code> = page title.
+                        </p>
+                      </div>
+
                       {/* Summary */}
                       <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
                         <h4 className="text-sm font-semibold mb-2">Summary</h4>
