@@ -31,7 +31,7 @@ const AI_LANGUAGE_OPTIONS = [
 
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
