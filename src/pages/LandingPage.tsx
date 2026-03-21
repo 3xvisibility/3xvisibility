@@ -2,6 +2,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { FeatureShowcaseSection } from "@/components/landing/FeatureShowcaseSection";
+import { UseCasesSection } from "@/components/landing/UseCasesSection";
 import { IntegrationsSection } from "@/components/landing/IntegrationsSection";
 import { VideoSection } from "@/components/landing/VideoSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
@@ -19,6 +20,7 @@ export default function LandingPage() {
         <HeroSection />
         <FeaturesSection />
         <FeatureShowcaseSection />
+        <UseCasesSection />
         <IntegrationsSection />
         <VideoSection />
         <HowItWorksSection />
