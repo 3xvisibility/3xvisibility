@@ -70,6 +70,8 @@ export default function TemplatesPage() {
   const [siteTypeFilter, setSiteTypeFilter] = useState("all");
   const [campaignTypeFilter, setCampaignTypeFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
+  const [sortColumn, setSortColumn] = useState<"name" | "date" | "campaigns">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
