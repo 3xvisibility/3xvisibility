@@ -1487,6 +1487,21 @@ Deno.serve(async (req) => {
             }
           }
 
+          // US24 — Deduplicate slugs: append -2, -3, etc. if slug already exists
+          const baseSlugForDedup = slug.toLowerCase();
+          if (usedSlugs.has(baseSlugForDedup)) {
+            let counter = 2;
+            while (usedSlugs.has(`${baseSlugForDedup}-${counter}`)) counter++;
+            slug = `${slug}-${counter}`;
+          }
+          usedSlugs.add(slug.toLowerCase());
+
+          // Track title for uniqueness warning (logged but not blocked)
+          if (usedTitles.has(pageTitle.toLowerCase())) {
+            console.log(`[GENERATE-PAGES] Warning: duplicate title "${pageTitle}" in campaign ${campaign_id}`);
+          }
+          usedTitles.add(pageTitle.toLowerCase());
+
           // Build UTM query string from campaign utm_settings
           const utmSettings = (campaign.utm_settings || {}) as Record<string, string>;
           const utmParams: string[] = [];
