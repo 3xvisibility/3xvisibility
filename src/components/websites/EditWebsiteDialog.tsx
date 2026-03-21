@@ -174,10 +174,10 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               />
             )}
             {site.type === "prestashop" && (
-              <div>
-                <Label htmlFor="edit-ps-key">Webservice API Key</Label>
-                <Input id="edit-ps-key" type="password" placeholder="PrestaShop API key" value={prestashopApiKey} onChange={(e) => setPrestashopApiKey(e.target.value)} />
-              </div>
+              <PrestaShopCredentialFields
+                apiKey={prestashopApiKey}
+                onApiKeyChange={setPrestashopApiKey}
+              />
             )}
             {site.type === "woocommerce" && (
               <>
