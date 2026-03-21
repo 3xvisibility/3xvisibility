@@ -51,6 +51,20 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
+  const signupRuleResults = useMemo(
+    () => SIGNUP_PW_RULES.map((r) => ({ ...r, passed: r.test(password) })),
+    [password]
+  );
+  const signupPassedCount = signupRuleResults.filter((r) => r.passed).length;
+  const signupStrength: "none" | "weak" | "medium" | "strong" =
+    password.length === 0 ? "none" : signupPassedCount <= 2 ? "weak" : signupPassedCount <= 4 ? "medium" : "strong";
+  const signupStrengthConfig = {
+    none: { width: "0%", color: "bg-muted", label: "" },
+    weak: { width: "33%", color: "bg-destructive", label: t("auth.strengthWeak") },
+    medium: { width: "66%", color: "bg-yellow-500", label: t("auth.strengthMedium") },
+    strong: { width: "100%", color: "bg-green-500", label: t("auth.strengthStrong") },
+  };
+
   const toggleDarkMode = () => {
     const next = !isDark;
     setIsDark(next);
