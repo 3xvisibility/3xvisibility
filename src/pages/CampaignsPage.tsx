@@ -727,6 +727,8 @@ export default function CampaignsPage() {
     setOpen(false);
     setStep(1);
     setCampaignName("");
+    setCampaignLanguage("en");
+    setCampaignCountry("US");
     setCampaignTypes(["seo"]);
     setCsvRawText("");
     setCsvFile(null);
