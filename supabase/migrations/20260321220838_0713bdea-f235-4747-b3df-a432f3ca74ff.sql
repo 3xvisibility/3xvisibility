@@ -1,0 +1,3 @@
+ALTER TABLE public.campaigns
+  ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'en',
+  ADD COLUMN IF NOT EXISTS country text NOT NULL DEFAULT 'US';

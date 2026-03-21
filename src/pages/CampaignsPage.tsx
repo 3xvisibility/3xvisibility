@@ -60,6 +60,8 @@ export default function CampaignsPage() {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
+  const [campaignLanguage, setCampaignLanguage] = useState("en");
+  const [campaignCountry, setCampaignCountry] = useState("US");
   const [campaignTypes, setCampaignTypes] = useState<("seo" | "sea" | "geo")[]>(["seo"]);
   const campaignType = campaignTypes[0] || "seo";
   const toggleCampaignType = (val: "seo" | "sea" | "geo") => {
@@ -316,6 +318,8 @@ export default function CampaignsPage() {
       // Store full CSV data inline as fallback; also upload to campaign_csv_files
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
+        language: campaignLanguage,
+        country: campaignCountry,
         campaign_type: campaignType,
         campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
@@ -429,6 +433,8 @@ export default function CampaignsPage() {
 
       const { data: newCampaign, error } = await supabase.from("campaigns").insert({
         name: `${campaign.name} (Copy)`,
+        language: (campaign as any).language || "en",
+        country: (campaign as any).country || "US",
         campaign_type: campaign.campaign_type,
         campaign_types: (campaign as any).campaign_types || [campaign.campaign_type],
         user_id: user.id,
@@ -723,6 +729,8 @@ export default function CampaignsPage() {
     setOpen(false);
     setStep(1);
     setCampaignName("");
+    setCampaignLanguage("en");
+    setCampaignCountry("US");
     setCampaignTypes(["seo"]);
     setCsvRawText("");
     setCsvFile(null);
@@ -945,15 +953,67 @@ export default function CampaignsPage() {
               <div className="px-4 sm:px-6 py-4 min-h-[180px]">
                 <div className="space-y-4 animate-fade-in">
                   {step === 1 && (
-                    <div>
-                      <Label htmlFor="name" className="text-sm font-semibold mb-2.5 block">Campaign Name</Label>
-                      <Input
-                        id="name"
-                        placeholder="e.g., Python Training Cities"
-                        value={campaignName}
-                        onChange={(e) => setCampaignName(e.target.value)}
-                        className="rounded-xl h-11 text-sm"
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name" className="text-sm font-semibold mb-2.5 block">Campaign Name</Label>
+                        <Input
+                          id="name"
+                          placeholder="e.g., Python Training Cities"
+                          value={campaignName}
+                          onChange={(e) => setCampaignName(e.target.value)}
+                          className="rounded-xl h-11 text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-sm font-semibold mb-2.5 block">Language</Label>
+                          <Select value={campaignLanguage} onValueChange={setCampaignLanguage}>
+                            <SelectTrigger className="rounded-xl h-11 text-sm"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {[
+                                { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
+                                { code: "de", label: "German" }, { code: "pt", label: "Portuguese" }, { code: "it", label: "Italian" },
+                                { code: "nl", label: "Dutch" }, { code: "ja", label: "Japanese" }, { code: "zh", label: "Chinese" },
+                                { code: "ko", label: "Korean" }, { code: "ar", label: "Arabic" }, { code: "hi", label: "Hindi" },
+                                { code: "ru", label: "Russian" }, { code: "tr", label: "Turkish" }, { code: "pl", label: "Polish" },
+                                { code: "sv", label: "Swedish" }, { code: "da", label: "Danish" }, { code: "fi", label: "Finnish" },
+                                { code: "no", label: "Norwegian" }, { code: "el", label: "Greek" }, { code: "cs", label: "Czech" },
+                                { code: "ro", label: "Romanian" }, { code: "id", label: "Indonesian" }, { code: "th", label: "Thai" },
+                                { code: "vi", label: "Vietnamese" }, { code: "uk", label: "Ukrainian" }, { code: "hu", label: "Hungarian" },
+                                { code: "ms", label: "Malay" }, { code: "tl", label: "Filipino" }, { code: "bn", label: "Bengali" },
+                              ].map((l) => (
+                                <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-semibold mb-2.5 block">Country</Label>
+                          <Select value={campaignCountry} onValueChange={setCampaignCountry}>
+                            <SelectTrigger className="rounded-xl h-11 text-sm"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {[
+                                { code: "US", label: "United States" }, { code: "GB", label: "United Kingdom" }, { code: "CA", label: "Canada" },
+                                { code: "AU", label: "Australia" }, { code: "FR", label: "France" }, { code: "DE", label: "Germany" },
+                                { code: "ES", label: "Spain" }, { code: "IT", label: "Italy" }, { code: "PT", label: "Portugal" },
+                                { code: "NL", label: "Netherlands" }, { code: "BE", label: "Belgium" }, { code: "CH", label: "Switzerland" },
+                                { code: "AT", label: "Austria" }, { code: "SE", label: "Sweden" }, { code: "NO", label: "Norway" },
+                                { code: "DK", label: "Denmark" }, { code: "FI", label: "Finland" }, { code: "PL", label: "Poland" },
+                                { code: "CZ", label: "Czech Republic" }, { code: "RO", label: "Romania" }, { code: "HU", label: "Hungary" },
+                                { code: "GR", label: "Greece" }, { code: "TR", label: "Turkey" }, { code: "RU", label: "Russia" },
+                                { code: "JP", label: "Japan" }, { code: "CN", label: "China" }, { code: "KR", label: "South Korea" },
+                                { code: "IN", label: "India" }, { code: "BR", label: "Brazil" }, { code: "MX", label: "Mexico" },
+                                { code: "AR", label: "Argentina" }, { code: "CO", label: "Colombia" }, { code: "CL", label: "Chile" },
+                                { code: "ZA", label: "South Africa" }, { code: "AE", label: "UAE" }, { code: "SA", label: "Saudi Arabia" },
+                                { code: "ID", label: "Indonesia" }, { code: "TH", label: "Thailand" }, { code: "VN", label: "Vietnam" },
+                                { code: "PH", label: "Philippines" }, { code: "MY", label: "Malaysia" }, { code: "SG", label: "Singapore" },
+                              ].map((c) => (
+                                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -1839,6 +1899,8 @@ export default function CampaignsPage() {
                         <div className="flex justify-between"><span className="text-muted-foreground">Site</span><span className="font-medium">{websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignTypes.join(" + ")}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Language</span><span className="font-medium">{campaignLanguage.toUpperCase()}</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">Country</span><span className="font-medium">{campaignCountry}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Method</span><span className="font-medium capitalize">{generationMethod}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{scheduleMode === "now" ? "Immediately" : scheduleMode === "recurring" ? `Recurring (${recurringInterval})` : scheduledDate ? format(scheduledDate, "PPP") : "Not set"}</span></div>

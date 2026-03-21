@@ -253,6 +253,7 @@ export type Database = {
           batch_size: number | null
           campaign_type: Database["public"]["Enums"]["campaign_type"]
           campaign_types: string[]
+          country: string
           created_at: string
           csv_data: Json | null
           csv_storage_path: string | null
@@ -266,6 +267,7 @@ export type Database = {
           geo_settings: Json | null
           id: string
           is_paused: boolean | null
+          language: string
           mapping: Json | null
           max_rows: number | null
           name: string
@@ -287,6 +289,7 @@ export type Database = {
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
           campaign_types?: string[]
+          country?: string
           created_at?: string
           csv_data?: Json | null
           csv_storage_path?: string | null
@@ -300,6 +303,7 @@ export type Database = {
           geo_settings?: Json | null
           id?: string
           is_paused?: boolean | null
+          language?: string
           mapping?: Json | null
           max_rows?: number | null
           name: string
@@ -321,6 +325,7 @@ export type Database = {
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
           campaign_types?: string[]
+          country?: string
           created_at?: string
           csv_data?: Json | null
           csv_storage_path?: string | null
@@ -334,6 +339,7 @@ export type Database = {
           geo_settings?: Json | null
           id?: string
           is_paused?: boolean | null
+          language?: string
           mapping?: Json | null
           max_rows?: number | null
           name?: string
