@@ -202,7 +202,7 @@ export default function CampaignsPage() {
     queryKey: ["websites", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("websites").select("id, name").eq("workspace_id", wsId!).order("name");
+      const { data, error } = await supabase.from("websites").select("id, name, type").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
