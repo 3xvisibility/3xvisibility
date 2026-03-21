@@ -121,11 +121,80 @@ export default function TemplatesPage() {
     },
   });
 
+  // US14 – Fetch campaigns linked to templates (for "Used in X campaigns" & site type inference)
+  const { data: campaignsByTemplate = {} } = useQuery({
+    queryKey: ["template-campaigns", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .select("id, name, template_id, campaign_type, campaign_types, website_id, status")
+        .eq("workspace_id", wsId!)
+        .not("template_id", "is", null);
+      if (error) throw error;
+      const map: Record<string, { count: number; campaignTypes: Set<string>; websiteIds: Set<string>; activeCount: number }> = {};
+      for (const c of data || []) {
+        if (!c.template_id) continue;
+        if (!map[c.template_id]) map[c.template_id] = { count: 0, campaignTypes: new Set(), websiteIds: new Set(), activeCount: 0 };
+        map[c.template_id].count++;
+        if (c.campaign_type) map[c.template_id].campaignTypes.add(c.campaign_type);
+        (c.campaign_types || []).forEach((t: string) => map[c.template_id!]!.campaignTypes.add(t));
+        if (c.website_id) map[c.template_id].websiteIds.add(c.website_id);
+        if (c.status !== "completed" && c.status !== "failed") map[c.template_id].activeCount++;
+      }
+      return map;
+    },
+  });
+
+  // Build website type lookup
+  const websiteTypeMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const w of connectedWebsites) m[w.id] = w.type;
+    return m;
+  }, [connectedWebsites]);
+
+  // Derive site types for each template
+  const templateSiteTypes = useMemo(() => {
+    const m: Record<string, Set<string>> = {};
+    for (const [tplId, info] of Object.entries(campaignsByTemplate)) {
+      m[tplId] = new Set();
+      for (const wid of info.websiteIds) {
+        const t = websiteTypeMap[wid];
+        if (t) m[tplId].add(t);
+      }
+    }
+    return m;
+  }, [campaignsByTemplate, websiteTypeMap]);
+
+  // Filtered templates
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((tpl) => {
+      // Search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const nameMatch = tpl.name.toLowerCase().includes(q);
+        const varMatch = (tpl.variables || []).some(v => v.toLowerCase().includes(q));
+        if (!nameMatch && !varMatch) return false;
+      }
+      // Site type filter
+      if (siteTypeFilter !== "all") {
+        const types = templateSiteTypes[tpl.id];
+        if (!types || !types.has(siteTypeFilter)) return false;
+      }
+      // Campaign type filter
+      if (campaignTypeFilter !== "all") {
+        const info = campaignsByTemplate[tpl.id];
+        if (!info || !info.campaignTypes.has(campaignTypeFilter)) return false;
+      }
+      return true;
+    });
+  }, [templates, searchQuery, siteTypeFilter, campaignTypeFilter, templateSiteTypes, campaignsByTemplate]);
+
   const { features } = useSubscription();
   const maxTemplates = features.templates;
 
   const { ordered: orderedTemplates, getDragProps, hasCustomOrder, resetOrder } = useDragReorder(
-    templates,
+    filteredTemplates,
     `tpl-order-${wsId}`
   );
 
