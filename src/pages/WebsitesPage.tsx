@@ -117,6 +117,7 @@ export default function WebsitesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
       toast({ title: "Website connected", description: `Successfully connected to ${siteUrl}.` });
+      if (wsId) logAudit(wsId, "site_created", "website", null, { url: siteUrl, type: siteType });
       resetForm();
     },
     onError: (err: Error) => {
