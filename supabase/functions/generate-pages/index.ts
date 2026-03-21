@@ -1377,10 +1377,25 @@ Deno.serve(async (req) => {
           const tplSeoTitle = campaign.templates.seo_title_pattern as string || "";
           const tplSeoDesc = campaign.templates.seo_description_pattern as string || "";
 
+          // Read SEO title format from campaign mapping
+          const campaignMapping = (campaign as any).mapping || {};
+          const seoTitleFormat = campaignMapping.seo_title_format || "{title} | {brand}";
+
           let seoData = {
             seo_title: pageTitle.slice(0, 60),
             seo_description: pageContent.replace(/<[^>]*>/g, "").slice(0, 160),
             seo_keywords: [] as string[],
+          };
+
+          // Helper to apply the SEO title format pattern
+          const applyTitleFormat = (rawTitle: string): string => {
+            const brand = websiteName || "";
+            return seoTitleFormat
+              .replace(/\{title\}/gi, rawTitle)
+              .replace(/\{brand\}/gi, brand)
+              .trim()
+              .replace(/^[\s|—-]+|[\s|—-]+$/g, "") // trim dangling separators if brand is empty
+              .slice(0, 60);
           };
 
           if (tplSeoTitle || tplSeoDesc) {
@@ -1392,7 +1407,11 @@ Deno.serve(async (req) => {
               }
               return resolved;
             };
-            if (tplSeoTitle) seoData.seo_title = resolvePattern(tplSeoTitle).slice(0, 60);
+            if (tplSeoTitle) {
+              seoData.seo_title = resolvePattern(tplSeoTitle).slice(0, 60);
+            } else {
+              seoData.seo_title = applyTitleFormat(pageTitle);
+            }
             if (tplSeoDesc) seoData.seo_description = resolvePattern(tplSeoDesc).slice(0, 160);
 
             // Still generate keywords via AI for test previews only to keep campaign publishing fast.
@@ -1406,8 +1425,15 @@ Deno.serve(async (req) => {
           } else if (shouldUseAiSeo) {
             try {
               seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
+              // Apply the user's chosen format to the AI-generated title
+              seoData.seo_title = applyTitleFormat(
+                seoData.seo_title.replace(new RegExp(`\\s*[|—-]\\s*${(websiteName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, "i"), "")
+              );
               aiGenerationsUsed++;
             } catch { /* keep fallback */ }
+          } else {
+            // No template pattern and no AI — apply format to raw title
+            seoData.seo_title = applyTitleFormat(pageTitle);
           }
 
           // Build canonical URL using pre-fetched website URL
