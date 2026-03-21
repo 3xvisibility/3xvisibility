@@ -50,13 +50,38 @@ export default function AuthPage() {
     localStorage.setItem("theme", next ? "dark" : "light");
   };
 
+  const mapAuthError = (errorMessage: string): { title: string; description: string } => {
+    const msg = errorMessage.toLowerCase();
+    if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
+    }
+    if (msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorEmailNotVerified") };
+    }
+    if (msg.includes("too many requests") || msg.includes("rate limit")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorTooManyAttempts") };
+    }
+    if (msg.includes("user not found")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
+    }
+    return { title: t("auth.loginFailed"), description: errorMessage };
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    // Persist remember-me preference
+    localStorage.setItem("rememberMe", String(rememberMe));
+    if (rememberMe) {
+      localStorage.setItem("rememberedEmail", email);
+    } else {
+      localStorage.removeItem("rememberedEmail");
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast({ title: t("auth.loginFailed"), description: error.message, variant: "destructive" });
+      const mapped = mapAuthError(error.message);
+      toast({ title: mapped.title, description: mapped.description, variant: "destructive" });
     } else {
       navigate("/dashboard");
     }
