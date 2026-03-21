@@ -288,7 +288,7 @@ export default function AuthPage() {
                   {(["login", "signup"] as const).map((m) => (
                     <button
                       key={m}
-                      onClick={() => setMode(m)}
+                      onClick={() => { setMode(m); setConfirmPassword(""); }}
                       className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                         mode === m
                           ? "bg-background text-foreground shadow-sm"
@@ -556,7 +556,7 @@ export default function AuthPage() {
                 <p className="text-center text-sm text-muted-foreground mt-6">
                   {mode === "login" ? t("auth.noAccount") : t("auth.hasAccount")}{" "}
                   <button
-                    onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                    onClick={() => { setMode(mode === "login" ? "signup" : "login"); setConfirmPassword(""); }}
                     className="text-primary font-semibold hover:text-primary/80 transition-colors"
                   >
                     {mode === "login" ? t("auth.signUp") : t("auth.signIn")}
