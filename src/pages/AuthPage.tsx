@@ -359,6 +359,12 @@ export default function AuthPage() {
                             className="pl-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
                           />
                         </div>
+                        <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/10 p-2.5 mt-1.5">
+                          <Crown className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            {t("auth.agencyPlanInfo")}
+                          </p>
+                        </div>
                       </div>
                     )}
 
