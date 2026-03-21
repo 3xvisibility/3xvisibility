@@ -121,6 +121,9 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               </DropdownMenu>
             </div>
           </header>
+          <div className="border-b border-border bg-card/50 px-3 py-2 sm:px-4 lg:px-6">
+            <WorkspaceBreadcrumb />
+          </div>
           <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-8">
             <div className="max-w-7xl mx-auto animate-fade-in">
               {children}
