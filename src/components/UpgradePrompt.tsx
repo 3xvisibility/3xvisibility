@@ -26,7 +26,7 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
           <span className="font-medium">{featureLabel}</span> is available on the{" "}
           <span className="font-semibold text-primary">{planLabel}</span> plan and above.
         </p>
-        <Button size="sm" onClick={() => navigate("/billing")} className="shrink-0 gap-1.5">
+        <Button size="sm" onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5">
           Upgrade <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -44,7 +44,7 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
           <p className="text-sm text-muted-foreground">
             Upgrade to the <span className="font-semibold text-primary">{planLabel}</span> plan to unlock this feature.
           </p>
-          <Button onClick={() => navigate("/billing")} className="gap-1.5">
+          <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-1.5">
             <Sparkles className="h-4 w-4" /> Upgrade to {planLabel}
           </Button>
         </div>
@@ -65,7 +65,7 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
             This feature requires the <span className="font-semibold text-primary">{planLabel}</span> plan or higher.
           </p>
         </div>
-        <Button size="sm" onClick={() => navigate("/billing")} className="shrink-0 gap-1.5 mt-1">
+        <Button size="sm" onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5 mt-1">
           Upgrade <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </CardContent>
@@ -115,7 +115,7 @@ export function UsageLimitBanner({ type, used, limit, className = "" }: UsageLim
           <>You've used <span className="font-semibold">{used}</span> of <span className="font-semibold">{limit}</span> {label} this month ({percent}%).</>
         )}
       </p>
-      <Button size="sm" variant={isExhausted ? "default" : "outline"} onClick={() => navigate("/billing")} className="shrink-0 gap-1.5">
+      <Button size="sm" variant={isExhausted ? "default" : "outline"} onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5">
         Upgrade <ArrowRight className="h-3.5 w-3.5" />
       </Button>
     </div>
