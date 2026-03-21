@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import heroDashboard from "@/assets/hero-dashboard.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,20 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, Check, X } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const ease = [0.22, 1, 0.36, 1] as const;
+
+const SIGNUP_PW_RULES = [
+  { key: "minLength", test: (p: string) => p.length >= 8, label: "auth.pwRuleMinLength" },
+  { key: "uppercase", test: (p: string) => /[A-Z]/.test(p), label: "auth.pwRuleUppercase" },
+  { key: "lowercase", test: (p: string) => /[a-z]/.test(p), label: "auth.pwRuleLowercase" },
+  { key: "number", test: (p: string) => /[0-9]/.test(p), label: "auth.pwRuleNumber" },
+  { key: "special", test: (p: string) => /[^A-Za-z0-9]/.test(p), label: "auth.pwRuleSpecial" },
+];
 
 const AI_LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
@@ -42,6 +50,20 @@ export default function AuthPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  const signupRuleResults = useMemo(
+    () => SIGNUP_PW_RULES.map((r) => ({ ...r, passed: r.test(password) })),
+    [password]
+  );
+  const signupPassedCount = signupRuleResults.filter((r) => r.passed).length;
+  const signupStrength: "none" | "weak" | "medium" | "strong" =
+    password.length === 0 ? "none" : signupPassedCount <= 2 ? "weak" : signupPassedCount <= 4 ? "medium" : "strong";
+  const signupStrengthConfig = {
+    none: { width: "0%", color: "bg-muted", label: "" },
+    weak: { width: "33%", color: "bg-destructive", label: t("auth.strengthWeak") },
+    medium: { width: "66%", color: "bg-yellow-500", label: t("auth.strengthMedium") },
+    strong: { width: "100%", color: "bg-green-500", label: t("auth.strengthStrong") },
+  };
 
   const toggleDarkMode = () => {
     const next = !isDark;
@@ -341,6 +363,44 @@ export default function AuthPage() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Password strength meter - signup only */}
+                    {mode === "signup" && password.length > 0 && (
+                      <div className="space-y-2.5">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] text-muted-foreground">{t("auth.passwordStrength")}</span>
+                            <span className={`text-[11px] font-medium ${
+                              signupStrength === "weak" ? "text-destructive" :
+                              signupStrength === "medium" ? "text-yellow-500" :
+                              "text-green-500"
+                            }`}>
+                              {signupStrengthConfig[signupStrength].label}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${signupStrengthConfig[signupStrength].color}`}
+                              style={{ width: signupStrengthConfig[signupStrength].width }}
+                            />
+                          </div>
+                        </div>
+                        <ul className="space-y-0.5 text-[11px]">
+                          {signupRuleResults.map((r) => (
+                            <li key={r.key} className="flex items-center gap-1.5">
+                              {r.passed ? (
+                                <Check className="h-3 w-3 text-green-500 shrink-0" />
+                              ) : (
+                                <X className="h-3 w-3 text-destructive shrink-0" />
+                              )}
+                              <span className={r.passed ? "text-muted-foreground" : "text-foreground"}>
+                                {t(r.label)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     {/* AI Content Language preference - signup only */}
                     {mode === "signup" && (
