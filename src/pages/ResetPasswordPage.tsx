@@ -53,6 +53,23 @@ export default function ResetPasswordPage() {
     [password]
   );
 
+  const passedCount = ruleResults.filter((r) => r.passed).length;
+  const strength: "none" | "weak" | "medium" | "strong" =
+    password.length === 0
+      ? "none"
+      : passedCount <= 2
+        ? "weak"
+        : passedCount <= 4
+          ? "medium"
+          : "strong";
+
+  const strengthConfig = {
+    none: { width: "0%", color: "bg-muted", label: "" },
+    weak: { width: "33%", color: "bg-destructive", label: t("auth.strengthWeak") },
+    medium: { width: "66%", color: "bg-yellow-500", label: t("auth.strengthMedium") },
+    strong: { width: "100%", color: "bg-green-500", label: t("auth.strengthStrong") },
+  };
+
   const allPassed = ruleResults.every((r) => r.passed);
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
   const canSubmit = allPassed && passwordsMatch && !loading;
