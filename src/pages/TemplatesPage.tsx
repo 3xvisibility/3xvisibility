@@ -1134,14 +1134,113 @@ RULES:
         </div>
       </div>
 
+      {/* US14 – Filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
+          <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search templates…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
+        </div>
+        <Select value={siteTypeFilter} onValueChange={setSiteTypeFilter}>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="All platforms" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All platforms</SelectItem>
+            <SelectItem value="wordpress">WordPress</SelectItem>
+            <SelectItem value="shopify">Shopify</SelectItem>
+            <SelectItem value="prestashop">PrestaShop</SelectItem>
+            <SelectItem value="woocommerce">WooCommerce</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={campaignTypeFilter} onValueChange={setCampaignTypeFilter}>
+          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="All types" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="seo">SEO</SelectItem>
+            <SelectItem value="sea">SEA</SelectItem>
+            <SelectItem value="geo">GEO</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="ml-auto flex items-center gap-1 border rounded-md p-0.5">
+          <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setViewMode("table")} title="Table view">
+            <List className="h-4 w-4" />
+          </Button>
+          <Button variant={viewMode === "cards" ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setViewMode("cards")} title="Card view">
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <Card key={i}><CardContent className="p-5 space-y-3"><Skeleton className="h-5 w-32" /><Skeleton className="h-4 w-full" /><Skeleton className="h-20 w-full" /></CardContent></Card>
           ))}
         </div>
-      ) : templates.length === 0 ? (
-        <Card><CardContent className="p-10 text-center text-muted-foreground">No templates yet. Create your first template to get started.</CardContent></Card>
+      ) : filteredTemplates.length === 0 ? (
+        <Card><CardContent className="p-10 text-center text-muted-foreground">
+          {templates.length === 0 ? "No templates yet. Create your first template to get started." : "No templates match your filters."}
+        </CardContent></Card>
+      ) : viewMode === "table" ? (
+        <Card>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Template name</TableHead>
+                  <TableHead>Site type</TableHead>
+                  <TableHead>Campaign types</TableHead>
+                  <TableHead>Variables</TableHead>
+                  <TableHead>Used in</TableHead>
+                  <TableHead>Last updated</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orderedTemplates.map((tpl) => {
+                  const info = campaignsByTemplate[tpl.id];
+                  const siteTypes = templateSiteTypes[tpl.id];
+                  const cTypes = info?.campaignTypes;
+                  return (
+                    <TableRow key={tpl.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-primary shrink-0" />
+                          <span className="font-medium">{tpl.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {siteTypes && siteTypes.size > 0 ? (
+                          <div className="flex flex-wrap gap-1">{[...siteTypes].map((t) => <Badge key={t} variant="outline" className="text-[10px] capitalize">{t}</Badge>)}</div>
+                        ) : <span className="text-xs text-muted-foreground">Generic</span>}
+                      </TableCell>
+                      <TableCell>
+                        {cTypes && cTypes.size > 0 ? (
+                          <div className="flex flex-wrap gap-1">{[...cTypes].map((t) => <Badge key={t} variant="secondary" className="text-[10px] uppercase">{t}</Badge>)}</div>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell><span className="text-xs text-muted-foreground">{(tpl.variables || []).length}</span></TableCell>
+                      <TableCell>
+                        <span className="text-sm">{info?.count ?? 0} campaign{(info?.count ?? 0) !== 1 ? "s" : ""}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(tpl.updated_at).toLocaleDateString()}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); setSchemaConfig((tpl as any).schema_config || {}); }} title="Edit">
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate"><Copy className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON"><Download className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)} title="Delete"><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {hasCustomOrder && (
@@ -1153,24 +1252,15 @@ RULES:
           )}
           {orderedTemplates.map((tpl, index) => {
             const dragProps = getDragProps(index);
+            const info = campaignsByTemplate[tpl.id];
             return (
-            <Card
-              key={tpl.id}
-              className={`shadow-surface hover:shadow-surface-hover transition-shadow duration-150 ${dragProps.className}`}
-              draggable={dragProps.draggable}
-              onDragStart={dragProps.onDragStart}
-              onDragOver={dragProps.onDragOver}
-              onDrop={dragProps.onDrop}
-              onDragEnd={dragProps.onDragEnd}
-            >
+            <Card key={tpl.id} className={`shadow-surface hover:shadow-surface-hover transition-shadow duration-150 ${dragProps.className}`} draggable={dragProps.draggable} onDragStart={dragProps.onDragStart} onDragOver={dragProps.onDragOver} onDrop={dragProps.onDrop} onDragEnd={dragProps.onDragEnd}>
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-1 shrink-0">
-                          <GripVertical className="h-4 w-4" />
-                        </button>
+                        <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-1 shrink-0"><GripVertical className="h-4 w-4" /></button>
                       </TooltipTrigger>
                       <TooltipContent side="left" className="text-xs">Drag to reorder</TooltipContent>
                     </Tooltip>
@@ -1178,73 +1268,26 @@ RULES:
                     <h3 className="font-semibold truncate">{tpl.name}</h3>
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0 flex-wrap justify-end">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => {
-                        setEditingTemplate(tpl);
-                        setName(tpl.name);
-                        setContent(tpl.content);
-                        setBlocks(htmlToBlocks(tpl.content));
-                        setActiveEditorTab("visual");
-                        setSeoTitlePattern((tpl as any).seo_title_pattern || "");
-                        setSeoDescriptionPattern((tpl as any).seo_description_pattern || "");
-                        setSchemaType((tpl as any).schema_type || "WebPage");
-                        setSchemaConfig((tpl as any).schema_config || {});
-                      }}
-                      title="Edit"
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); setSchemaConfig((tpl as any).schema_config || {}); }} title="Edit">
                       <Pencil className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate">
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON">
-                      <Download className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                    <TemplateVersionHistory
-                      templateId={tpl.id}
-                      currentContent={tpl.content}
-                      currentName={tpl.name}
-                      onRestore={(version) => {
-                        setEditingTemplate(tpl);
-                        setName(version.name);
-                        setContent(version.content);
-                        setBlocks(htmlToBlocks(version.content));
-                        setActiveEditorTab("visual");
-                        setSeoTitlePattern(version.seo_title_pattern || "");
-                        setSeoDescriptionPattern(version.seo_description_pattern || "");
-                        toast({ title: "Version restored", description: "Review and save to confirm." });
-                      }}
-                    />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate"><Copy className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON"><Download className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)}><Trash2 className="h-3 w-3" /></Button>
+                    <TemplateVersionHistory templateId={tpl.id} currentContent={tpl.content} currentName={tpl.name} onRestore={(version) => { setEditingTemplate(tpl); setName(version.name); setContent(version.content); setBlocks(htmlToBlocks(version.content)); setActiveEditorTab("visual"); setSeoTitlePattern(version.seo_title_pattern || ""); setSeoDescriptionPattern(version.seo_description_pattern || ""); toast({ title: "Version restored", description: "Review and save to confirm." }); }} />
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {(tpl.variables || []).map((v) => (
-                    <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
-                  ))}
+                <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                  {info && info.count > 0 && <Badge variant="secondary" className="text-[10px]">{info.count} campaign{info.count !== 1 ? "s" : ""}</Badge>}
+                  {(tpl.variables || []).map((v) => <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>)}
                 </div>
                 <Tabs defaultValue="visual" className="mt-3">
                   <TabsList className="h-8 w-full grid grid-cols-2">
-                    <TabsTrigger value="visual" className="text-xs gap-1.5">
-                      <Eye className="h-3 w-3" /> Visual
-                    </TabsTrigger>
-                    <TabsTrigger value="code" className="text-xs gap-1.5">
-                      <Code className="h-3 w-3" /> Code
-                    </TabsTrigger>
+                    <TabsTrigger value="visual" className="text-xs gap-1.5"><Eye className="h-3 w-3" /> Visual</TabsTrigger>
+                    <TabsTrigger value="code" className="text-xs gap-1.5"><Code className="h-3 w-3" /> Code</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="visual" className="mt-2">
-                    <TemplatePreview html={tpl.content} />
-                  </TabsContent>
-                  <TabsContent value="code" className="mt-2">
-                    <pre className="p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-40 overflow-y-auto">
-                      {tpl.content}
-                    </pre>
-                  </TabsContent>
+                  <TabsContent value="visual" className="mt-2"><TemplatePreview html={tpl.content} /></TabsContent>
+                  <TabsContent value="code" className="mt-2"><pre className="p-3 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-40 overflow-y-auto">{tpl.content}</pre></TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
