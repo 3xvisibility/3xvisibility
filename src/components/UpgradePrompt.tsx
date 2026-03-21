@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { getMinimumPlanFor, FEATURE_LABELS, PLAN_FEATURES, type FeatureKey } from "@/lib/plan-features";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface UpgradePromptProps {
   feature: FeatureKey;
