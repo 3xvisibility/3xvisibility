@@ -311,6 +311,44 @@ export default function SettingsPage() {
 
       <Separator />
 
+      {/* Security Status */}
+      <Card className="shadow-surface">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Security Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Overview of the platform's security measures protecting your data.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { label: "HTTPS Everywhere", description: "All traffic encrypted via TLS", icon: Lock, active: true },
+              { label: "Encrypted Tokens", description: "CMS credentials encrypted at rest (AES-256-GCM)", icon: Shield, active: true },
+              { label: "Row-Level Security", description: "Workspace-scoped data isolation on all tables", icon: Globe, active: true },
+              { label: "Audit Logging", description: "Publish & admin actions recorded for review", icon: FileText, active: true },
+            ].map((item) => (
+              <div key={item.label} className="flex items-start gap-3 rounded-lg border border-border p-3">
+                <div className="mt-0.5 rounded-md bg-primary/10 p-1.5">
+                  <item.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{item.label}</span>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">Active</Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator />
+
       {/* Webhooks */}
       <WebhookSettings wsId={wsId} />
 
