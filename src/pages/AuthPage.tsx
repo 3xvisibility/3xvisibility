@@ -411,6 +411,46 @@ export default function AuthPage() {
                       </div>
                     )}
 
+                    {/* Confirm password - signup only */}
+                    {mode === "signup" && (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="auth-confirm-pass" className="text-xs font-medium text-muted-foreground">
+                          {t("auth.confirmPassword")}
+                        </Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                          <Input
+                            id="auth-confirm-pass"
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                            className="pl-10 pr-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {confirmPassword.length > 0 && !signupPasswordsMatch && (
+                          <p className="text-[11px] text-destructive flex items-center gap-1">
+                            <X className="h-3 w-3" />
+                            {t("auth.passwordsMismatch")}
+                          </p>
+                        )}
+                        {signupPasswordsMatch && (
+                          <p className="text-[11px] text-green-500 flex items-center gap-1">
+                            <Check className="h-3 w-3" />
+                            {t("auth.passwordsMatch")}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* AI Content Language preference - signup only */}
                     {mode === "signup" && (
                       <div className="space-y-1.5">
