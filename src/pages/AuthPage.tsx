@@ -154,7 +154,6 @@ export default function AuthPage() {
         user_id: data.user.id,
         full_name: fullName,
         ai_language: aiLanguage,
-        company: companyName.trim(),
       }, { onConflict: "user_id" });
     }
     setLoading(false);
