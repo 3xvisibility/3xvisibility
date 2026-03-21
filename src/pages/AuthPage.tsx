@@ -453,7 +453,7 @@ export default function AuthPage() {
 
                     <Button
                       type="submit"
-                      disabled={loading}
+                      disabled={loading || (mode === "signup" && !allSignupRulesPassed)}
                       className="w-full h-11 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold text-sm transition-all duration-200 active:scale-[0.98] shadow-lg shadow-foreground/10"
                     >
                       {loading
