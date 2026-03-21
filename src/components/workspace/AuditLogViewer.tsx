@@ -1,11 +1,18 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
-import { History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2, Filter } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import {
+  History, UserPlus, Shield, Pencil, Trash2, Clock, Loader2, Filter,
+  Globe, Rocket, FileText, CreditCard, Download, CalendarIcon, Search, X,
+} from "lucide-react";
+import { formatDistanceToNow, format, startOfDay, endOfDay } from "date-fns";
 import { useState, useEffect, useRef, useCallback } from "react";
 
 interface AuditLog {
@@ -21,11 +28,30 @@ interface AuditLog {
 const PAGE_SIZE = 20;
 
 const actionConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
-  invite_member: { icon: <UserPlus className="h-3.5 w-3.5" />, label: "Member Invited", color: "bg-green-500/10 text-green-600" },
-  update_role: { icon: <Shield className="h-3.5 w-3.5" />, label: "Role Changed", color: "bg-blue-500/10 text-blue-600" },
-  remove_member: { icon: <Trash2 className="h-3.5 w-3.5" />, label: "Member Removed", color: "bg-destructive/10 text-destructive" },
-  rename_workspace: { icon: <Pencil className="h-3.5 w-3.5" />, label: "Workspace Renamed", color: "bg-amber-500/10 text-amber-600" },
+  // Members
+  invite_member:     { icon: <UserPlus className="h-3.5 w-3.5" />, label: "Member Invited",     color: "bg-success/10 text-success" },
+  update_role:       { icon: <Shield className="h-3.5 w-3.5" />,   label: "Role Changed",       color: "bg-primary/10 text-primary" },
+  remove_member:     { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Member Removed",     color: "bg-destructive/10 text-destructive" },
+  rename_workspace:  { icon: <Pencil className="h-3.5 w-3.5" />,   label: "Workspace Renamed",  color: "bg-warning/10 text-warning" },
+  // Sites
+  site_created:      { icon: <Globe className="h-3.5 w-3.5" />,    label: "Site Created",       color: "bg-success/10 text-success" },
+  site_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Site Deleted",       color: "bg-destructive/10 text-destructive" },
+  site_updated:      { icon: <Pencil className="h-3.5 w-3.5" />,   label: "Site Updated",       color: "bg-primary/10 text-primary" },
+  // Campaigns
+  campaign_started:  { icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Started",   color: "bg-primary/10 text-primary" },
+  campaign_completed:{ icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Completed", color: "bg-success/10 text-success" },
+  campaign_failed:   { icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Failed",    color: "bg-destructive/10 text-destructive" },
+  campaign_deleted:  { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Campaign Deleted",   color: "bg-destructive/10 text-destructive" },
+  // Pages
+  page_published:    { icon: <FileText className="h-3.5 w-3.5" />, label: "Page Published",     color: "bg-success/10 text-success" },
+  page_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Page Deleted",       color: "bg-destructive/10 text-destructive" },
+  pages_bulk_published: { icon: <FileText className="h-3.5 w-3.5" />, label: "Bulk Publish",    color: "bg-success/10 text-success" },
+  // Plan / billing
+  plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Plan Changed",     color: "bg-warning/10 text-warning" },
+  subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Subscription Updated", color: "bg-primary/10 text-primary" },
 };
+
+const ALL_ACTIONS = Object.keys(actionConfig);
 
 function getActionDetails(log: AuditLog): string {
   const d = log.details as Record<string, string> | null;
@@ -38,15 +64,51 @@ function getActionDetails(log: AuditLog): string {
     case "rename_workspace":
       return `→ ${d.new_name || ""}`;
     case "remove_member":
-      return "Removed from workspace";
+      return d.email ? `Removed ${d.email}` : "Removed from workspace";
+    case "site_created":
+    case "site_deleted":
+    case "site_updated":
+      return d.name || d.url || "";
+    case "campaign_started":
+    case "campaign_completed":
+    case "campaign_failed":
+    case "campaign_deleted":
+      return d.name || d.campaign_name || "";
+    case "page_published":
+    case "page_deleted":
+      return d.title || d.slug || "";
+    case "pages_bulk_published":
+      return d.count ? `${d.count} pages` : "";
+    case "plan_changed":
+      return d.from && d.to ? `${d.from} → ${d.to}` : d.plan || "";
+    case "subscription_updated":
+      return d.detail || "";
     default:
-      return JSON.stringify(d);
+      return Object.entries(d).map(([k, v]) => `${k}: ${v}`).join(", ");
   }
+}
+
+function exportAuditCsv(logs: AuditLog[]) {
+  const header = "Timestamp,Action,Entity Type,Entity ID,Details,User ID";
+  const rows = logs.map((l) => {
+    const details = l.details ? JSON.stringify(l.details).replace(/"/g, '""') : "";
+    return `${l.created_at},"${l.action}","${l.entity_type}","${l.entity_id || ""}","${details}","${l.user_id}"`;
+  });
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `audit-log-${format(new Date(), "yyyy-MM-dd")}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function AuditLogViewer({ workspaceId }: { workspaceId: string }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [userSearch, setUserSearch] = useState("");
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
 
   const {
     data,
@@ -55,7 +117,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["audit-logs", workspaceId, actionFilter],
+    queryKey: ["audit-logs", workspaceId, actionFilter, userSearch, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
@@ -65,9 +127,20 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
         .range(from, to);
+
       if (actionFilter !== "all") {
         query = query.eq("action", actionFilter);
       }
+      if (userSearch.trim()) {
+        query = query.eq("user_id", userSearch.trim());
+      }
+      if (dateRange.from) {
+        query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
+      }
+      if (dateRange.to) {
+        query = query.lte("created_at", endOfDay(dateRange.to).toISOString());
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data as AuditLog[];
@@ -97,33 +170,107 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     return () => observer.disconnect();
   }, [handleObserver]);
 
+  const hasFilters = actionFilter !== "all" || userSearch || dateRange.from || dateRange.to;
+
   return (
     <Card className="shadow-surface">
       <CardHeader>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-primary" />
               Audit Log
             </CardTitle>
-            <CardDescription className="mt-1.5">Recent admin actions in this workspace.</CardDescription>
+            <CardDescription className="mt-1.5">
+              Track sensitive actions: publications, deletions, role & plan changes.
+            </CardDescription>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 h-8 text-xs"
+            onClick={() => exportAuditCsv(logs)}
+            disabled={!logs.length}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export CSV
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-2">
           <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="w-[170px] h-9 text-xs">
+            <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
               <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Actions</SelectItem>
-              <SelectItem value="invite_member">Member Invited</SelectItem>
-              <SelectItem value="update_role">Role Changed</SelectItem>
-              <SelectItem value="remove_member">Member Removed</SelectItem>
-              <SelectItem value="rename_workspace">Workspace Renamed</SelectItem>
+              {ALL_ACTIONS.map((a) => (
+                <SelectItem key={a} value={a}>
+                  {actionConfig[a].label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Filter by user ID..."
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              className="pl-9 h-9 text-xs"
+            />
+            {userSearch && (
+              <button onClick={() => setUserSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-1.5 text-xs shrink-0">
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {dateRange.from
+                  ? dateRange.to
+                    ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d")}`
+                    : format(dateRange.from, "MMM d, yyyy")
+                  : "Date range"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="range"
+                selected={dateRange.from ? { from: dateRange.from, to: dateRange.to } : undefined}
+                onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                numberOfMonths={1}
+              />
+              {(dateRange.from || dateRange.to) && (
+                <div className="p-2 border-t">
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setDateRange({})}>
+                    Clear dates
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 text-xs text-muted-foreground"
+              onClick={() => { setActionFilter("all"); setUserSearch(""); setDateRange({}); }}
+            >
+              Clear all
+            </Button>
+          )}
         </div>
-      </CardHeader>
-      <CardContent>
+
+        {/* Log timeline */}
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
@@ -131,14 +278,16 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
             ))}
           </div>
         ) : !logs.length ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No audit events yet.</p>
+          <p className="text-sm text-muted-foreground text-center py-8">
+            {hasFilters ? "No events match your filters." : "No audit events yet."}
+          </p>
         ) : (
-          <div className="max-h-[400px] overflow-y-auto pr-3">
+          <div className="max-h-[500px] overflow-y-auto pr-3">
             <div className="relative pl-6 border-l-2 border-border space-y-4">
               {logs.map((log) => {
                 const cfg = actionConfig[log.action] || {
                   icon: <Clock className="h-3.5 w-3.5" />,
-                  label: log.action,
+                  label: log.action.replace(/_/g, " "),
                   color: "bg-muted text-muted-foreground",
                 };
                 return (
@@ -154,7 +303,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
                       <span className="text-sm text-foreground truncate">
                         {getActionDetails(log)}
                       </span>
-                      <span className="text-xs text-muted-foreground shrink-0 ml-auto">
+                      <span className="text-xs text-muted-foreground shrink-0 ml-auto whitespace-nowrap" title={format(new Date(log.created_at), "PPpp")}>
                         {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
                       </span>
                     </div>
