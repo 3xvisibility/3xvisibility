@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { computeCampaignSeoSummary } from "@/components/SeoAnalysisDialog";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
