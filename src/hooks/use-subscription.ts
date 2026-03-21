@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PLAN_FEATURES, type PlanName, type FeatureKey, type PlanFeatures } from "@/lib/plan-features";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useToast } from "@/hooks/use-toast";
 
 export interface SubscriptionData {
   plan: PlanName;
@@ -27,6 +28,8 @@ export function useSubscription(): SubscriptionData {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const warnedRef = useRef<{ pages: boolean; ai: boolean }>({ pages: false, ai: false });
 
   // Auto-sync with Stripe on mount and every 60 seconds
   useEffect(() => {
@@ -89,6 +92,45 @@ export function useSubscription(): SubscriptionData {
   const aiLimit = data?.ai_generations_limit ?? features.aiLimit;
   const sitesConnected = data?.sitesConnected ?? 0;
   const sitesLimit = features.websites; // -1 means unlimited
+
+  // ── Usage limit warning (90% threshold) ─────────────
+  useEffect(() => {
+    if (isLoading || !data) return;
+
+    const checkAndWarn = async () => {
+      // Load notification preferences
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("notification_preferences")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const prefs = (profile as any)?.notification_preferences ?? { usage_limit: true };
+      if (prefs.usage_limit === false) return;
+
+      const pagesPercent = pagesLimit > 0 ? pagesUsed / pagesLimit : 0;
+      const aiPercent = aiLimit > 0 ? aiUsed / aiLimit : 0;
+
+      if (pagesPercent >= 0.9 && !warnedRef.current.pages) {
+        warnedRef.current.pages = true;
+        toast({
+          title: "Page limit warning",
+          description: `You've used ${pagesUsed} of ${pagesLimit} pages (${Math.round(pagesPercent * 100)}%). Consider upgrading your plan.`,
+        });
+      }
+
+      if (aiPercent >= 0.9 && !warnedRef.current.ai) {
+        warnedRef.current.ai = true;
+        toast({
+          title: "AI generation limit warning",
+          description: `You've used ${aiUsed} of ${aiLimit} AI generations (${Math.round(aiPercent * 100)}%). Consider upgrading your plan.`,
+        });
+      }
+    };
+
+    checkAndWarn();
+  }, [isLoading, pagesUsed, pagesLimit, aiUsed, aiLimit, toast, data]);
 
   return {
     plan,
