@@ -544,6 +544,16 @@ export default function CampaignDetailPage() {
             );
           })()}
 
+          {/* Generate → Analyze → Improve Workflow */}
+          {pages.length > 0 && campaign?.status === "completed" && wsId && (
+            <SeoImprovementWorkflow
+              pages={pages as any}
+              campaignId={id!}
+              workspaceId={wsId}
+              onPagesUpdated={() => queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] })}
+            />
+          )}
+
           {/* Recent Executions */}
           {executionHistory.length > 0 && (
             <Card className="border-0 shadow-surface">
