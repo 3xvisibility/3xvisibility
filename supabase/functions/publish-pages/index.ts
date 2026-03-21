@@ -342,7 +342,7 @@ Deno.serve(async (req) => {
       }
 
       try {
-        const connector = createConnector(page.websites as WebsiteRecord);
+        const connector = await createConnector(page.websites as WebsiteRecord);
         const cleanedContent = stripHeadTagsForCms(page.content);
 
         // Auto-detect Elementor for this website (cached)
