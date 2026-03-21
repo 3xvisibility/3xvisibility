@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { logAudit } from "@/lib/audit";
 import type { Tables, Database } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WebsiteCard } from "@/components/websites/WebsiteCard";
@@ -116,6 +117,7 @@ export default function WebsitesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
       toast({ title: "Website connected", description: `Successfully connected to ${siteUrl}.` });
+      if (wsId) logAudit(wsId, "site_created", "website", null, { url: siteUrl, type: siteType });
       resetForm();
     },
     onError: (err: Error) => {
@@ -148,9 +150,10 @@ export default function WebsitesPage() {
       const { error } = await supabase.from("websites").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
       toast({ title: "Website removed" });
+      if (wsId) logAudit(wsId, "site_deleted", "website", id);
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });

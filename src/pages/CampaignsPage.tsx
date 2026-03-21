@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { friendlyError } from "@/lib/friendly-errors";
+import { logAudit } from "@/lib/audit";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -424,9 +425,10 @@ export default function CampaignsPage() {
       const { error } = await supabase.from("campaigns").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast({ title: "Campaign deleted" });
+      if (wsId) logAudit(wsId, "campaign_deleted", "campaign", id);
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });

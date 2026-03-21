@@ -25,6 +25,7 @@ import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { logAudit } from "@/lib/audit";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
@@ -127,12 +128,13 @@ export default function GeneratedPagesPage() {
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({
         title: "Publishing complete",
         description: `${data.published} published, ${data.failed} failed.`,
       });
+      if (wsId) logAudit(wsId, "page_published", "page", variables.pageIds[0], { count: variables.pageIds.length });
     },
     onError: (err: Error) => {
       toast({ title: "Publishing failed", description: err.message, variant: "destructive" });
@@ -205,13 +207,14 @@ export default function GeneratedPagesPage() {
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, ids) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({
         title: "Bulk publish complete",
         description: `${data.published} published, ${data.failed} failed.`,
       });
+      if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: ids.length, published: data.published });
     },
     onError: (err: Error) => {
       toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" });
