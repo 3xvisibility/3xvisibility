@@ -274,6 +274,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleLowercase": "One lowercase letter",
     "auth.pwRuleNumber": "One number",
     "auth.pwRuleSpecial": "One special character",
+    "auth.rateLimited": "Please wait",
+    "auth.rateLimitedDesc": "You can request another reset in {seconds} seconds.",
   },
   fr: {
     // Nav
@@ -542,6 +544,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleLowercase": "Une lettre minuscule",
     "auth.pwRuleNumber": "Un chiffre",
     "auth.pwRuleSpecial": "Un caractère spécial",
+    "auth.rateLimited": "Veuillez patienter",
+    "auth.rateLimitedDesc": "Vous pourrez demander une nouvelle réinitialisation dans {seconds} secondes.",
   },
   de: {
     // Nav
@@ -810,5 +814,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleLowercase": "Ein Kleinbuchstabe",
     "auth.pwRuleNumber": "Eine Zahl",
     "auth.pwRuleSpecial": "Ein Sonderzeichen",
+    "auth.rateLimited": "Bitte warten",
+    "auth.rateLimitedDesc": "Sie können in {seconds} Sekunden erneut anfordern.",
   },
 };

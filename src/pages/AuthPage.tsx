@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import heroDashboard from "@/assets/hero-dashboard.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,9 +121,25 @@ export default function AuthPage() {
     toast({ title: t("auth.checkEmail"), description: t("auth.confirmationSent") });
   };
 
+  const [resetCooldown, setResetCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const timer = setTimeout(() => setResetCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resetCooldown]);
+
   const handleResetPassword = async () => {
     if (!email) {
       toast({ title: t("auth.enterEmail"), description: t("auth.enterEmailDesc"), variant: "destructive" });
+      return;
+    }
+    if (resetCooldown > 0) {
+      toast({
+        title: t("auth.rateLimited"),
+        description: t("auth.rateLimitedDesc").replace("{seconds}", String(resetCooldown)),
+        variant: "destructive",
+      });
       return;
     }
     setLoading(true);
@@ -134,6 +150,7 @@ export default function AuthPage() {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      setResetCooldown(60);
       toast({ title: t("auth.resetSent"), description: t("auth.resetSentDesc") });
     }
   };
