@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code } from "lucide-react";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,8 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 export default function GeneratedPagesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [siteFilter, setSiteFilter] = useState<string>("all");
+  const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [freshnessFilter, setFreshnessFilter] = useState<string>("all");
   const [pageSize, setPageSize] = useState<number>(25);
@@ -59,6 +61,7 @@ export default function GeneratedPagesPage() {
   const [translateOpen, setTranslateOpen] = useState(false);
   const [translateLang, setTranslateLang] = useState("fr");
   const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -362,10 +365,29 @@ export default function GeneratedPagesPage() {
 
   const pendingPages = pages.filter((p) => p.status === "pending");
 
+  // Unique sites and campaigns for filters
+  const uniqueSites = useMemo(() => {
+    const sites = new Map<string, string>();
+    pages.forEach((p) => {
+      if (p.website_id && p.websites?.name) sites.set(p.website_id, p.websites.name);
+    });
+    return Array.from(sites, ([id, name]) => ({ id, name }));
+  }, [pages]);
+
+  const uniqueCampaigns = useMemo(() => {
+    const campaigns = new Map<string, string>();
+    pages.forEach((p) => {
+      if (p.campaign_id && p.campaigns?.name) campaigns.set(p.campaign_id, p.campaigns.name);
+    });
+    return Array.from(campaigns, ([id, name]) => ({ id, name }));
+  }, [pages]);
+
   const filtered = useMemo(() => {
     const base = pages.filter(
       (p) =>
         (statusFilter === "all" || p.status === statusFilter) &&
+        (siteFilter === "all" || p.website_id === siteFilter) &&
+        (campaignFilter === "all" || (campaignFilter === "direct" ? !p.campaign_id : p.campaign_id === campaignFilter)) &&
         (freshnessFilter === "all" || calculateFreshness(p.created_at, p.status).level === freshnessFilter) &&
         (p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.slug.toLowerCase().includes(search.toLowerCase()) ||
@@ -384,7 +406,7 @@ export default function GeneratedPagesPage() {
     };
     const asc = sortBy.endsWith("_asc");
     return [...base].sort((a, b) => asc ? scoreGetter(a) - scoreGetter(b) : scoreGetter(b) - scoreGetter(a));
-  }, [pages, search, statusFilter, freshnessFilter, sortBy]);
+  }, [pages, search, statusFilter, siteFilter, campaignFilter, freshnessFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
@@ -394,7 +416,7 @@ export default function GeneratedPagesPage() {
   );
 
   // Reset to page 1 when filters or page size change
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, freshnessFilter, pageSize, sortBy]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, siteFilter, campaignFilter, freshnessFilter, pageSize, sortBy]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -502,6 +524,33 @@ export default function GeneratedPagesPage() {
               <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
+          {uniqueSites.length > 0 && (
+            <Select value={siteFilter} onValueChange={setSiteFilter}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="All Sites" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sites</SelectItem>
+                {uniqueSites.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {uniqueCampaigns.length > 0 && (
+            <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="All Campaigns" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Campaigns</SelectItem>
+                <SelectItem value="direct">Direct Publish</SelectItem>
+                {uniqueCampaigns.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={freshnessFilter} onValueChange={setFreshnessFilter}>
             <SelectTrigger className="w-[120px] h-8 text-xs">
               <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
@@ -708,6 +757,7 @@ export default function GeneratedPagesPage() {
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Campaign</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Source</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">CMS ID</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Scores</th>
                   <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Freshness</th>
                   <th className="p-4"></th>
@@ -751,6 +801,9 @@ export default function GeneratedPagesPage() {
                       </td>
                       <td className="p-4">
                         <Badge variant="secondary" className={statusColors[page.status]}>{page.status}</Badge>
+                      </td>
+                      <td className="p-4 hidden lg:table-cell">
+                        <code className="text-[10px] text-muted-foreground font-mono tabular-nums">{page.external_id || "—"}</code>
                       </td>
                       <td className="p-4 hidden lg:table-cell">
                         <div className="flex items-center gap-2">
@@ -815,6 +868,9 @@ export default function GeneratedPagesPage() {
                           )}
                           <Button size="sm" variant="ghost" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setJsonPayloadPage(page)} title="View JSON payload">
+                            <Code className="h-3 w-3" />
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
@@ -1026,6 +1082,56 @@ export default function GeneratedPagesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* JSON Payload Dialog */}
+      <Dialog open={!!jsonPayloadPage} onOpenChange={(open) => !open && setJsonPayloadPage(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5 text-primary" />
+              JSON Payload
+            </DialogTitle>
+          </DialogHeader>
+          {jsonPayloadPage && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Raw data for <span className="font-medium text-foreground">{jsonPayloadPage.title}</span>
+              </p>
+              <div className="relative">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="absolute top-2 right-2 h-7 text-xs z-10"
+                  onClick={() => {
+                    navigator.clipboard.writeText(JSON.stringify(jsonPayloadPage, null, 2));
+                    toast({ title: "Copied to clipboard" });
+                  }}
+                >
+                  <Copy className="h-3 w-3 mr-1" /> Copy
+                </Button>
+                <pre className="bg-muted rounded-lg p-4 text-xs font-mono overflow-x-auto max-h-[50vh] whitespace-pre-wrap break-all">
+                  {JSON.stringify({
+                    id: jsonPayloadPage.id,
+                    title: jsonPayloadPage.title,
+                    slug: jsonPayloadPage.slug,
+                    status: jsonPayloadPage.status,
+                    external_id: jsonPayloadPage.external_id,
+                    external_url: jsonPayloadPage.external_url,
+                    seo_title: (jsonPayloadPage as any).seo_title,
+                    seo_description: (jsonPayloadPage as any).seo_description,
+                    seo_keywords: (jsonPayloadPage as any).seo_keywords,
+                    canonical_url: jsonPayloadPage.canonical_url,
+                    campaign_id: jsonPayloadPage.campaign_id,
+                    website_id: jsonPayloadPage.website_id,
+                    content: jsonPayloadPage.content,
+                    error_message: jsonPayloadPage.error_message,
+                    created_at: jsonPayloadPage.created_at,
+                  }, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Single SEO Edit Dialog */}
       <Dialog open={!!seoEditPage} onOpenChange={(open) => !open && setSeoEditPage(null)}>
