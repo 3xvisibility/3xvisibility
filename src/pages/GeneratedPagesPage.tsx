@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3 } from "lucide-react";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
+import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +63,7 @@ export default function GeneratedPagesPage() {
   const [translateLang, setTranslateLang] = useState("fr");
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
+  const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -872,6 +874,9 @@ export default function GeneratedPagesPage() {
                           <Button size="sm" variant="ghost" onClick={() => setJsonPayloadPage(page)} title="View JSON payload">
                             <Code className="h-3 w-3" />
                           </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setSeoAnalysisPage(page)} title="SEO Analysis">
+                            <BarChart3 className="h-3 w-3" />
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
@@ -1535,6 +1540,14 @@ export default function GeneratedPagesPage() {
         open={duplicateOpen}
         onOpenChange={setDuplicateOpen}
         pages={pages.map((p) => ({ id: p.id, title: p.title, content: p.content }))}
+      />
+
+      <SeoAnalysisDialog
+        open={!!seoAnalysisPage}
+        onOpenChange={(open) => !open && setSeoAnalysisPage(null)}
+        page={seoAnalysisPage}
+        campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
+        campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
       />
 
     </div>
