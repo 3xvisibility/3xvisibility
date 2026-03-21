@@ -15,7 +15,7 @@ import { useBranding, type BrandingConfig } from "@/contexts/BrandingContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Users, Crown, Shield, User, Trash2, UserPlus, Building2, Palette, ImageIcon, Type,
-  Search, Clock, X, Mail,
+  Search, Clock, X, Mail, Eye,
 } from "lucide-react";
 import AuditLogViewer from "@/components/workspace/AuditLogViewer";
 
