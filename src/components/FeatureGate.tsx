@@ -181,7 +181,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
         </table>
       </div>
 
-      <Button onClick={() => navigate("/billing")} size="lg" className="gap-2">
+      <Button onClick={() => navigate(`${basePath}/billing`)} size="lg" className="gap-2">
         Upgrade to {planLabel}
         <ArrowRight className="h-4 w-4" />
       </Button>
