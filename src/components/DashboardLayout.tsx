@@ -110,8 +110,8 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>{t("dashboard.settings")}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/billing")}>{t("dashboard.billing")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`${basePath}/settings`)}>{t("dashboard.settings")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate(`${basePath}/billing`)}>{t("dashboard.billing")}</DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onLogout} className="text-destructive">
                     {t("dashboard.logout")}

@@ -37,25 +37,25 @@ interface CommandPaletteProps {
 }
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard", keywords: "home overview" },
-  { label: "Campaigns", icon: Rocket, path: "/campaigns", keywords: "launch create campaign" },
-  { label: "Generated Pages", icon: Layers, path: "/pages", keywords: "pages content generated" },
-  { label: "Templates", icon: FileText, path: "/templates", keywords: "template html design" },
-  { label: "Data / CSV", icon: Database, path: "/data", keywords: "data csv upload file" },
-  { label: "AI Scanner", icon: ScanSearch, path: "/scanner", keywords: "scan ai analyze" },
-  { label: "Discovery", icon: Compass, path: "/discovery", keywords: "discover explore website" },
-  { label: "Analytics", icon: BarChart3, path: "/analytics", keywords: "analytics stats metrics chart" },
-  { label: "Indexing", icon: SearchIcon, path: "/indexing", keywords: "google index seo submit" },
-  { label: "Store Generator", icon: Store, path: "/store-generator", keywords: "store shop ecommerce product" },
-  { label: "Websites", icon: Globe, path: "/websites", keywords: "website connection wordpress shopify" },
-  { label: "Billing", icon: CreditCard, path: "/billing", keywords: "billing plan subscription payment" },
-  { label: "Settings", icon: Settings, path: "/settings", keywords: "settings profile preferences" },
-  { label: "Workspace Settings", icon: Users, path: "/workspace-settings", keywords: "workspace team members" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "dashboard", keywords: "home overview" },
+  { label: "Campaigns", icon: Rocket, path: "campaigns", keywords: "launch create campaign" },
+  { label: "Generated Pages", icon: Layers, path: "pages", keywords: "pages content generated" },
+  { label: "Templates", icon: FileText, path: "templates", keywords: "template html design" },
+  { label: "Data / CSV", icon: Database, path: "data", keywords: "data csv upload file" },
+  { label: "AI Scanner", icon: ScanSearch, path: "scanner", keywords: "scan ai analyze" },
+  { label: "Discovery", icon: Compass, path: "discovery", keywords: "discover explore website" },
+  { label: "Analytics", icon: BarChart3, path: "analytics", keywords: "analytics stats metrics chart" },
+  { label: "Indexing", icon: SearchIcon, path: "indexing", keywords: "google index seo submit" },
+  { label: "Store Generator", icon: Store, path: "store-generator", keywords: "store shop ecommerce product" },
+  { label: "Websites", icon: Globe, path: "websites", keywords: "website connection wordpress shopify" },
+  { label: "Billing", icon: CreditCard, path: "billing", keywords: "billing plan subscription payment" },
+  { label: "Settings", icon: Settings, path: "settings", keywords: "settings profile preferences" },
+  { label: "Workspace Settings", icon: Users, path: "workspace-settings", keywords: "workspace team members" },
 ];
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
   const { data: campaigns = [] } = useQuery({
@@ -122,7 +122,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <CommandItem
               key={item.path}
               value={`nav-${item.label} ${item.keywords}`}
-              onSelect={() => go(item.path)}
+              onSelect={() => go(`${basePath}/${item.path}`)}
               className="gap-3"
             >
               <item.icon className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -140,7 +140,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 <CommandItem
                   key={c.id}
                   value={`campaign-${c.name}`}
-                  onSelect={() => go(`/campaigns/${c.id}`)}
+                  onSelect={() => go(`${basePath}/campaigns/${c.id}`)}
                   className="gap-3"
                 >
                   <Rocket className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -160,7 +160,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 <CommandItem
                   key={t.id}
                   value={`template-${t.name}`}
-                  onSelect={() => go("/templates")}
+                  onSelect={() => go(`${basePath}/templates`)}
                   className="gap-3"
                 >
                   <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -179,7 +179,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 <CommandItem
                   key={p.id}
                   value={`page-${p.title} ${p.slug}`}
-                  onSelect={() => go("/pages")}
+                  onSelect={() => go(`${basePath}/pages`)}
                   className="gap-3"
                 >
                   <Layers className="h-4 w-4 text-muted-foreground shrink-0" />
