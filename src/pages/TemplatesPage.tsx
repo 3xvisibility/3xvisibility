@@ -461,7 +461,43 @@ export default function TemplatesPage() {
     }
   };
 
-  const resetAndClose = () => {
+  // Bulk actions
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === orderedTemplates.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(orderedTemplates.map(t => t.id)));
+  };
+  const bulkExport = () => {
+    const selected = templates.filter(t => selectedIds.has(t.id));
+    selected.forEach(tpl => exportTemplate(tpl));
+    toast({ title: `Exported ${selected.length} template(s)` });
+  };
+  const bulkDelete = async () => {
+    try {
+      for (const id of selectedIds) {
+        const { error: unlinkErr } = await supabase.from("campaigns").update({ template_id: null }).eq("template_id", id);
+        if (unlinkErr) throw unlinkErr;
+        const { error } = await supabase.from("templates").delete().eq("id", id);
+        if (error) throw error;
+      }
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["template-campaigns"] });
+      toast({ title: `${selectedIds.size} template(s) deleted` });
+      setSelectedIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkDeleteOpen(false);
+    }
+  };
+
     setAiOpen(false);
     setOpen(false);
     setEditingTemplate(null);
