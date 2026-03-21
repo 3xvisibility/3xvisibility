@@ -1517,9 +1517,16 @@ Deno.serve(async (req) => {
             seoData.seo_title = applyTitleFormat(pageTitle);
           }
 
-          // Build canonical URL using pre-fetched website URL
+          // Build canonical URL — use template pattern from schema_config if defined
+          const tplCanonicalPattern = tplSchemaConfig._canonicalUrl || "";
           let canonicalUrl: string | null = null;
-          if (websiteBaseUrl) {
+          if (tplCanonicalPattern) {
+            let resolved = tplCanonicalPattern;
+            for (const [key, value] of Object.entries({ ...allVars, slug })) {
+              resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+            }
+            canonicalUrl = resolved;
+          } else if (websiteBaseUrl) {
             canonicalUrl = `${websiteBaseUrl}/${slug}`;
           }
 
