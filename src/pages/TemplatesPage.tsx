@@ -1160,7 +1160,32 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                         </div>
                       )}
 
-                      {/* JSON-LD Preview */}
+                      {schemaType === "SoftwareApplication" && (
+                        <div className="space-y-3 rounded-lg border border-border p-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">SoftwareApplication Fields</p>
+                          {[
+                            { key: "name", label: "App Name", placeholder: "{name}" },
+                            { key: "operatingSystem", label: "OS", placeholder: "Windows, macOS, Linux" },
+                            { key: "applicationCategory", label: "Category", placeholder: "BusinessApplication" },
+                            { key: "offers.price", label: "Price", placeholder: "{price}" },
+                            { key: "offers.priceCurrency", label: "Currency", placeholder: "USD" },
+                            { key: "aggregateRating.ratingValue", label: "Rating", placeholder: "{rating}" },
+                            { key: "aggregateRating.ratingCount", label: "Review Count", placeholder: "{review_count}" },
+                          ].map(({ key, label, placeholder }) => (
+                            <div key={key} className="grid grid-cols-3 gap-2 items-center">
+                              <Label className="text-xs">{label}</Label>
+                              <Input
+                                className="col-span-2 text-sm font-mono h-8"
+                                placeholder={placeholder}
+                                value={schemaConfig[key] || ""}
+                                onChange={(e) => setSchemaConfig({ ...schemaConfig, [key]: e.target.value })}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+
                       <div className="space-y-1.5">
                         <Label className="text-xs">JSON-LD Preview</Label>
                         <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto max-h-48 overflow-y-auto">
