@@ -533,7 +533,8 @@ export default function AuthPage() {
                           </a>
                         </span>
                       </label>
-                    )
+                    )}
+
                     {mode === "login" && (
                       <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
