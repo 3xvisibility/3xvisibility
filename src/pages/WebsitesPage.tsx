@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Loader2, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { logAudit } from "@/lib/audit";
 import type { Tables, Database } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WebsiteCard } from "@/components/websites/WebsiteCard";
