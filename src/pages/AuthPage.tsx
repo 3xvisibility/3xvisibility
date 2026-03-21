@@ -360,6 +360,8 @@ export default function AuthPage() {
                           />
                         </div>
                       </div>
+                    )}
+
                     <div className="space-y-1.5">
                       <Label htmlFor="auth-email" className="text-xs font-medium text-muted-foreground">
                         {t("auth.email")}
