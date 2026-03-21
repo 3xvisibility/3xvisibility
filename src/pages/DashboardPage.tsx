@@ -315,6 +315,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <PendingInvitationsBanner />
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
       <UsageLimitBanner type="ai" used={subAiUsed} limit={subAiLimit} />
       {/* Welcome Hero */}
