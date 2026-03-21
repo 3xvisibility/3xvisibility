@@ -203,14 +203,31 @@ Deno.serve(async (req) => {
       const workspaceId = website.workspace_id || body.workspace_id || null;
       const campaignId = body.campaign_id || null;
 
+      // Auto-detect Elementor on first direct publish
+      const elementorInfo = await detectElementor(supabase, website_id, website.type, connector);
+      if (elementorInfo.usesElementor) {
+        console.log("[PUBLISH] Detected Elementor on site, will publish with Elementor format");
+      }
+
       for (const dp of directPages) {
         try {
-          const elementorMeta = dp.elementor_data
+          const cleanedContent = stripHeadTagsForCms(dp.content);
+
+          // If page already has Elementor data, use it; otherwise auto-generate if site uses Elementor
+          let elementorMeta = dp.elementor_data
             ? { elementor_data: dp.elementor_data, elementor_edit_mode: dp.elementor_edit_mode, page_template: dp.page_template }
             : undefined;
 
+          if (!elementorMeta && elementorInfo.usesElementor) {
+            elementorMeta = {
+              elementor_data: buildElementorData(cleanedContent),
+              elementor_edit_mode: "builder",
+              page_template: elementorInfo.pageTemplate || "elementor_header_footer",
+            };
+          }
+
           const payload = buildPayload(
-            { title: dp.title, content: stripHeadTagsForCms(dp.content), slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
+            { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
             elementorMeta
           );
