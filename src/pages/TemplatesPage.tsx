@@ -1210,12 +1210,12 @@ RULES:
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Template name</TableHead>
+                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>Template name <SortIcon col="name" /></button></TableHead>
                   <TableHead>Site type</TableHead>
                   <TableHead>Campaign types</TableHead>
                   <TableHead>Variables</TableHead>
-                  <TableHead>Used in</TableHead>
-                  <TableHead>Last updated</TableHead>
+                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
+                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
