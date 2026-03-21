@@ -133,19 +133,20 @@ export default function TemplatesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("id, name, template_id, campaign_type, campaign_types, website_id, status")
+        .select("id, name, template_id, campaign_type, campaign_types, website_id, status, created_at")
         .eq("workspace_id", wsId!)
         .not("template_id", "is", null);
       if (error) throw error;
-      const map: Record<string, { count: number; campaignTypes: Set<string>; websiteIds: Set<string>; activeCount: number }> = {};
+      const map: Record<string, { count: number; campaignTypes: Set<string>; websiteIds: Set<string>; activeCount: number; lastUsedAt: string | null }> = {};
       for (const c of data || []) {
         if (!c.template_id) continue;
-        if (!map[c.template_id]) map[c.template_id] = { count: 0, campaignTypes: new Set(), websiteIds: new Set(), activeCount: 0 };
+        if (!map[c.template_id]) map[c.template_id] = { count: 0, campaignTypes: new Set(), websiteIds: new Set(), activeCount: 0, lastUsedAt: null };
         map[c.template_id].count++;
         if (c.campaign_type) map[c.template_id].campaignTypes.add(c.campaign_type);
         (c.campaign_types || []).forEach((t: string) => map[c.template_id!]!.campaignTypes.add(t));
         if (c.website_id) map[c.template_id].websiteIds.add(c.website_id);
         if (c.status !== "completed" && c.status !== "failed") map[c.template_id].activeCount++;
+        if (!map[c.template_id].lastUsedAt || c.created_at > map[c.template_id].lastUsedAt!) map[c.template_id].lastUsedAt = c.created_at;
       }
       return map;
     },
@@ -170,6 +171,25 @@ export default function TemplatesPage() {
     }
     return m;
   }, [campaignsByTemplate, websiteTypeMap]);
+
+  // Count how many times each template has been duplicated (by matching "Name (Copy)" pattern)
+  const dupCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    const baseNames = new Map<string, string>(); // baseName → original template id
+    for (const t of templates) {
+      // Normalize: strip trailing " (Copy)", " (Copy) (Copy)", etc.
+      const base = t.name.replace(/\s*\(Copy\)\s*/gi, "").trim();
+      if (!baseNames.has(base)) baseNames.set(base, t.id);
+    }
+    for (const t of templates) {
+      const base = t.name.replace(/\s*\(Copy\)\s*/gi, "").trim();
+      const origId = baseNames.get(base);
+      if (origId && origId !== t.id) {
+        m[origId] = (m[origId] || 0) + 1;
+      }
+    }
+    return m;
+  }, [templates]);
 
   // Filtered templates
   const filteredTemplates = useMemo(() => {
@@ -1264,7 +1284,9 @@ RULES:
                     <TableHead>Site type</TableHead>
                     <TableHead>Campaign types</TableHead>
                     <TableHead>Variables</TableHead>
+                    <TableHead>Copies</TableHead>
                     <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
+                    <TableHead>Last used</TableHead>
                     <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -1274,6 +1296,7 @@ RULES:
                     const info = campaignsByTemplate[tpl.id];
                     const siteTypes = templateSiteTypes[tpl.id];
                     const cTypes = info?.campaignTypes;
+                    const copies = dupCounts[tpl.id] ?? 0;
                     return (
                       <TableRow key={tpl.id} data-state={selectedIds.has(tpl.id) ? "selected" : undefined}>
                         <TableCell><Checkbox checked={selectedIds.has(tpl.id)} onCheckedChange={() => toggleSelect(tpl.id)} aria-label={`Select ${tpl.name}`} /></TableCell>
@@ -1295,7 +1318,17 @@ RULES:
                         </TableCell>
                         <TableCell><span className="text-xs text-muted-foreground">{(tpl.variables || []).length}</span></TableCell>
                         <TableCell>
+                          {copies > 0 ? (
+                            <Badge variant="outline" className="text-[10px]"><Copy className="h-3 w-3 mr-1" />{copies}</Badge>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
                           <span className="text-sm">{info?.count ?? 0} campaign{(info?.count ?? 0) !== 1 ? "s" : ""}</span>
+                        </TableCell>
+                        <TableCell>
+                          {info?.lastUsedAt ? (
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(info.lastUsedAt).toLocaleDateString()}</span>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(tpl.updated_at).toLocaleDateString()}</span>
