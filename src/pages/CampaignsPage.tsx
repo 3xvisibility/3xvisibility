@@ -318,6 +318,8 @@ export default function CampaignsPage() {
       // Store full CSV data inline as fallback; also upload to campaign_csv_files
       const { data: campaign, error } = await supabase.from("campaigns").insert({
         name: campaignName,
+        language: campaignLanguage,
+        country: campaignCountry,
         campaign_type: campaignType,
         campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
