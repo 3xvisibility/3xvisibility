@@ -99,7 +99,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchWorkspaces();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event) => {
+      // Reset loading so downstream components wait for fresh data
+      if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'TOKEN_REFRESHED') {
+        setIsLoading(true);
+      }
       fetchWorkspaces();
     });
     return () => subscription.unsubscribe();

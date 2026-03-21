@@ -8,7 +8,8 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 export function WorkspaceRedirect({ path }: { path: string }) {
   const { currentWorkspace, workspaces, isLoading } = useWorkspace();
 
-  if (isLoading) {
+  // Show spinner while workspaces are loading OR if they haven't been fetched yet
+  if (isLoading || (!currentWorkspace && workspaces.length === 0)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
