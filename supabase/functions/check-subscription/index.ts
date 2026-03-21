@@ -118,7 +118,7 @@ serve(async (req) => {
     // Sync to database
     await upsertSubscription(
       supabaseClient,
-      user.id,
+      userId,
       workspaceId,
       planName,
       customerId,
