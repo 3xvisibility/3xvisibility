@@ -28,6 +28,8 @@ export function useSubscription(): SubscriptionData {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const warnedRef = useRef<{ pages: boolean; ai: boolean }>({ pages: false, ai: false });
 
   // Auto-sync with Stripe on mount and every 60 seconds
   useEffect(() => {
