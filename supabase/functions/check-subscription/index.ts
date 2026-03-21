@@ -59,7 +59,7 @@ serve(async (req) => {
     const { data: memberData } = await supabaseClient
       .from("workspace_members")
       .select("workspace_id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
     const workspaceId = memberData?.workspace_id ?? null;
