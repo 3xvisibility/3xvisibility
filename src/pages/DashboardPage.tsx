@@ -367,7 +367,12 @@ export default function DashboardPage() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-primary-foreground/70 mb-1">{greeting} 👋</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-primary-foreground/70">{greeting} 👋</p>
+              <Badge className="bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 text-[10px] uppercase tracking-wider font-bold">
+                {currentPlan} plan
+              </Badge>
+            </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{userName || "..."}</h1>
             <p className="text-sm text-primary-foreground/70 max-w-md">
               Here's what's happening with your projects. You have{" "}
