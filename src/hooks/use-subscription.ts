@@ -118,7 +118,15 @@ export function useSubscription(): SubscriptionData {
         warnedRef.current.pages = true;
         toast({
           title: "Page limit warning",
-          description: `You've used ${pagesUsed} of ${pagesLimit} pages (${Math.round(pagesPercent * 100)}%). Consider upgrading your plan.`,
+          description: `You've used ${pagesUsed} of ${pagesLimit} pages (${Math.round(pagesPercent * 100)}%).`,
+          action: (
+            <button
+              className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              onClick={() => navigate("/billing")}
+            >
+              Upgrade
+            </button>
+          ),
         });
       }
 
@@ -126,7 +134,15 @@ export function useSubscription(): SubscriptionData {
         warnedRef.current.ai = true;
         toast({
           title: "AI generation limit warning",
-          description: `You've used ${aiUsed} of ${aiLimit} AI generations (${Math.round(aiPercent * 100)}%). Consider upgrading your plan.`,
+          description: `You've used ${aiUsed} of ${aiLimit} AI generations (${Math.round(aiPercent * 100)}%).`,
+          action: (
+            <button
+              className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              onClick={() => navigate("/billing")}
+            >
+              Upgrade
+            </button>
+          ),
         });
       }
     };
