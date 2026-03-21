@@ -947,15 +947,67 @@ export default function CampaignsPage() {
               <div className="px-4 sm:px-6 py-4 min-h-[180px]">
                 <div className="space-y-4 animate-fade-in">
                   {step === 1 && (
-                    <div>
-                      <Label htmlFor="name" className="text-sm font-semibold mb-2.5 block">Campaign Name</Label>
-                      <Input
-                        id="name"
-                        placeholder="e.g., Python Training Cities"
-                        value={campaignName}
-                        onChange={(e) => setCampaignName(e.target.value)}
-                        className="rounded-xl h-11 text-sm"
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="name" className="text-sm font-semibold mb-2.5 block">Campaign Name</Label>
+                        <Input
+                          id="name"
+                          placeholder="e.g., Python Training Cities"
+                          value={campaignName}
+                          onChange={(e) => setCampaignName(e.target.value)}
+                          className="rounded-xl h-11 text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-sm font-semibold mb-2.5 block">Language</Label>
+                          <Select value={campaignLanguage} onValueChange={setCampaignLanguage}>
+                            <SelectTrigger className="rounded-xl h-11 text-sm"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {[
+                                { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
+                                { code: "de", label: "German" }, { code: "pt", label: "Portuguese" }, { code: "it", label: "Italian" },
+                                { code: "nl", label: "Dutch" }, { code: "ja", label: "Japanese" }, { code: "zh", label: "Chinese" },
+                                { code: "ko", label: "Korean" }, { code: "ar", label: "Arabic" }, { code: "hi", label: "Hindi" },
+                                { code: "ru", label: "Russian" }, { code: "tr", label: "Turkish" }, { code: "pl", label: "Polish" },
+                                { code: "sv", label: "Swedish" }, { code: "da", label: "Danish" }, { code: "fi", label: "Finnish" },
+                                { code: "no", label: "Norwegian" }, { code: "el", label: "Greek" }, { code: "cs", label: "Czech" },
+                                { code: "ro", label: "Romanian" }, { code: "id", label: "Indonesian" }, { code: "th", label: "Thai" },
+                                { code: "vi", label: "Vietnamese" }, { code: "uk", label: "Ukrainian" }, { code: "hu", label: "Hungarian" },
+                                { code: "ms", label: "Malay" }, { code: "tl", label: "Filipino" }, { code: "bn", label: "Bengali" },
+                              ].map((l) => (
+                                <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-semibold mb-2.5 block">Country</Label>
+                          <Select value={campaignCountry} onValueChange={setCampaignCountry}>
+                            <SelectTrigger className="rounded-xl h-11 text-sm"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {[
+                                { code: "US", label: "United States" }, { code: "GB", label: "United Kingdom" }, { code: "CA", label: "Canada" },
+                                { code: "AU", label: "Australia" }, { code: "FR", label: "France" }, { code: "DE", label: "Germany" },
+                                { code: "ES", label: "Spain" }, { code: "IT", label: "Italy" }, { code: "PT", label: "Portugal" },
+                                { code: "NL", label: "Netherlands" }, { code: "BE", label: "Belgium" }, { code: "CH", label: "Switzerland" },
+                                { code: "AT", label: "Austria" }, { code: "SE", label: "Sweden" }, { code: "NO", label: "Norway" },
+                                { code: "DK", label: "Denmark" }, { code: "FI", label: "Finland" }, { code: "PL", label: "Poland" },
+                                { code: "CZ", label: "Czech Republic" }, { code: "RO", label: "Romania" }, { code: "HU", label: "Hungary" },
+                                { code: "GR", label: "Greece" }, { code: "TR", label: "Turkey" }, { code: "RU", label: "Russia" },
+                                { code: "JP", label: "Japan" }, { code: "CN", label: "China" }, { code: "KR", label: "South Korea" },
+                                { code: "IN", label: "India" }, { code: "BR", label: "Brazil" }, { code: "MX", label: "Mexico" },
+                                { code: "AR", label: "Argentina" }, { code: "CO", label: "Colombia" }, { code: "CL", label: "Chile" },
+                                { code: "ZA", label: "South Africa" }, { code: "AE", label: "UAE" }, { code: "SA", label: "Saudi Arabia" },
+                                { code: "ID", label: "Indonesia" }, { code: "TH", label: "Thailand" }, { code: "VN", label: "Vietnam" },
+                                { code: "PH", label: "Philippines" }, { code: "MY", label: "Malaysia" }, { code: "SG", label: "Singapore" },
+                              ].map((c) => (
+                                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
                   )}
 
