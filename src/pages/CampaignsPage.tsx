@@ -60,6 +60,8 @@ export default function CampaignsPage() {
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
   const [campaignName, setCampaignName] = useState("");
+  const [campaignLanguage, setCampaignLanguage] = useState("en");
+  const [campaignCountry, setCampaignCountry] = useState("US");
   const [campaignTypes, setCampaignTypes] = useState<("seo" | "sea" | "geo")[]>(["seo"]);
   const campaignType = campaignTypes[0] || "seo";
   const toggleCampaignType = (val: "seo" | "sea" | "geo") => {
