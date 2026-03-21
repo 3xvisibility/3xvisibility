@@ -20,8 +20,8 @@ export async function logAudit(
       action,
       entity_type: entityType,
       entity_id: entityId ?? null,
-      details: details ?? {},
-    });
+      details: (details ?? {}) as any,
+    } as any);
   } catch {
     // Audit logging is best-effort
   }
