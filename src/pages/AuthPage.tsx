@@ -41,6 +41,8 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +59,8 @@ export default function AuthPage() {
   );
   const signupPassedCount = signupRuleResults.filter((r) => r.passed).length;
   const allSignupRulesPassed = signupRuleResults.every((r) => r.passed);
+  const signupPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
+  const canSignup = allSignupRulesPassed && signupPasswordsMatch;
   const signupStrength: "none" | "weak" | "medium" | "strong" =
     password.length === 0 ? "none" : signupPassedCount <= 2 ? "weak" : signupPassedCount <= 4 ? "medium" : "strong";
   const signupStrengthConfig = {
@@ -118,8 +122,8 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!allSignupRulesPassed) {
-      toast({ title: t("auth.signupFailed"), description: t("auth.passwordTooWeak"), variant: "destructive" });
+    if (!canSignup) {
+      toast({ title: t("auth.signupFailed"), description: !allSignupRulesPassed ? t("auth.passwordTooWeak") : t("auth.passwordsMismatch"), variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -407,6 +411,46 @@ export default function AuthPage() {
                       </div>
                     )}
 
+                    {/* Confirm password - signup only */}
+                    {mode === "signup" && (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="auth-confirm-pass" className="text-xs font-medium text-muted-foreground">
+                          {t("auth.confirmPassword")}
+                        </Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+                          <Input
+                            id="auth-confirm-pass"
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                            className="pl-10 pr-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {confirmPassword.length > 0 && !signupPasswordsMatch && (
+                          <p className="text-[11px] text-destructive flex items-center gap-1">
+                            <X className="h-3 w-3" />
+                            {t("auth.passwordsMismatch")}
+                          </p>
+                        )}
+                        {signupPasswordsMatch && (
+                          <p className="text-[11px] text-green-500 flex items-center gap-1">
+                            <Check className="h-3 w-3" />
+                            {t("auth.passwordsMatch")}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {/* AI Content Language preference - signup only */}
                     {mode === "signup" && (
                       <div className="space-y-1.5">
@@ -453,7 +497,7 @@ export default function AuthPage() {
 
                     <Button
                       type="submit"
-                      disabled={loading || (mode === "signup" && !allSignupRulesPassed)}
+                      disabled={loading || (mode === "signup" && !canSignup)}
                       className="w-full h-11 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold text-sm transition-all duration-200 active:scale-[0.98] shadow-lg shadow-foreground/10"
                     >
                       {loading
