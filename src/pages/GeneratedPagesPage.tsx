@@ -1555,6 +1555,13 @@ export default function GeneratedPagesPage() {
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
       />
 
+      <AiSeoAssistantDialog
+        open={!!aiAssistantPage}
+        onOpenChange={(open) => !open && setAiAssistantPage(null)}
+        page={aiAssistantPage}
+        onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })}
+      />
+
     </div>
   );
 }
