@@ -37,6 +37,7 @@ import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitationsBanner";
 
 const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
