@@ -1484,7 +1484,12 @@ RULES:
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orderedTemplates.map((tpl) => {
+                  {(() => {
+                    const totalPages = Math.max(1, Math.ceil(orderedTemplates.length / pageSize));
+                    const safePage = Math.min(currentPage, totalPages);
+                    const start = (safePage - 1) * pageSize;
+                    const paginated = orderedTemplates.slice(start, start + pageSize);
+                    return paginated.map((tpl) => {
                     const info = campaignsByTemplate[tpl.id];
                     const siteTypes = templateSiteTypes[tpl.id];
                     const cTypes = info?.campaignTypes;
@@ -1537,7 +1542,8 @@ RULES:
                         </TableCell>
                       </TableRow>
                     );
-                  })}
+                  });
+                  })()}
                 </TableBody>
               </Table>
             </div>
