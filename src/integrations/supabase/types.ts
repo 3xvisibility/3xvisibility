@@ -846,6 +846,53 @@ export type Database = {
         }
         Relationships: []
       }
+      mapping_profiles: {
+        Row: {
+          campaign_type: string
+          created_at: string
+          description: string | null
+          id: string
+          mappings: Json
+          name: string
+          transforms: Json
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          campaign_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mappings?: Json
+          name: string
+          transforms?: Json
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          campaign_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          mappings?: Json
+          name?: string
+          transforms?: Json
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mapping_profiles_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mappings: {
         Row: {
           campaign_id: string
