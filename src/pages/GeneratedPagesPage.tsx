@@ -406,7 +406,7 @@ export default function GeneratedPagesPage() {
     };
     const asc = sortBy.endsWith("_asc");
     return [...base].sort((a, b) => asc ? scoreGetter(a) - scoreGetter(b) : scoreGetter(b) - scoreGetter(a));
-  }, [pages, search, statusFilter, freshnessFilter, sortBy]);
+  }, [pages, search, statusFilter, siteFilter, campaignFilter, freshnessFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
