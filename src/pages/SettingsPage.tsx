@@ -300,6 +300,33 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Notification Preferences */}
+      <Card className="shadow-surface">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-primary" />
+            Notification Preferences
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">Choose which events trigger notifications.</p>
+          <NotificationPrefsEditor />
+        </CardContent>
+      </Card>
+
+      {/* Password Change */}
+      <Card className="shadow-surface">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5 text-primary" />
+            Change Password
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PasswordChangeForm />
+        </CardContent>
+      </Card>
+
       {/* Save button */}
       <Button
         onClick={() => saveMutation.mutate()}
