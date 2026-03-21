@@ -15,6 +15,14 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+const SIGNUP_PW_RULES = [
+  { key: "minLength", test: (p: string) => p.length >= 8, label: "auth.pwRuleMinLength" },
+  { key: "uppercase", test: (p: string) => /[A-Z]/.test(p), label: "auth.pwRuleUppercase" },
+  { key: "lowercase", test: (p: string) => /[a-z]/.test(p), label: "auth.pwRuleLowercase" },
+  { key: "number", test: (p: string) => /[0-9]/.test(p), label: "auth.pwRuleNumber" },
+  { key: "special", test: (p: string) => /[^A-Za-z0-9]/.test(p), label: "auth.pwRuleSpecial" },
+];
+
 const AI_LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
   { value: "es", label: "Español" },
