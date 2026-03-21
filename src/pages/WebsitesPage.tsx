@@ -18,6 +18,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WebsiteCard } from "@/components/websites/WebsiteCard";
 import { SiteTypeFilter } from "@/components/websites/SiteTypeFilter";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
+import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
