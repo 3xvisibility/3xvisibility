@@ -62,9 +62,11 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
       });
 
       await refetch();
-      setCurrentWorkspace({ ...ws, role: "owner" });
+      const created = { ...ws, role: "owner" } as any;
+      setCurrentWorkspace(created);
       setCreateOpen(false);
       setNewName("");
+      navigate(`/w/${ws.slug}/dashboard`);
       toast({ title: "Workspace created", description: `"${newName}" is ready.` });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
