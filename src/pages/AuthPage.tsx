@@ -353,8 +353,6 @@ export default function AuthPage() {
                           {t("auth.invalidEmail")}
                         </p>
                       )}
-                        />
-                      </div>
                     </div>
 
                     <div className="space-y-1.5">
