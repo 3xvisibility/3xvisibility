@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, Check, X, Building2 } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, Check, X, Building2, Wand2, Crown } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -359,6 +359,12 @@ export default function AuthPage() {
                             className="pl-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
                           />
                         </div>
+                        <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/10 p-2.5 mt-1.5">
+                          <Crown className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            {t("auth.agencyPlanInfo")}
+                          </p>
+                        </div>
                       </div>
                     )}
 
@@ -410,6 +416,29 @@ export default function AuthPage() {
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
+                      {mode === "signup" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_+-=";
+                            let generated = "";
+                            const array = new Uint32Array(16);
+                            crypto.getRandomValues(array);
+                            for (let i = 0; i < 16; i++) {
+                              generated += chars[array[i] % chars.length];
+                            }
+                            generated = generated.slice(0, 12) + "A" + "a" + "1" + "!";
+                            setPassword(generated);
+                            setConfirmPassword(generated);
+                            setShowPassword(true);
+                            toast({ title: t("auth.passwordGenerated"), description: t("auth.passwordGeneratedDesc") });
+                          }}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors mt-1"
+                        >
+                          <Wand2 className="h-3 w-3" />
+                          {t("auth.generatePassword")}
+                        </button>
+                      )}
                     </div>
 
                     {/* Password strength meter - signup only */}
