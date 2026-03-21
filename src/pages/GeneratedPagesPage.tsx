@@ -25,6 +25,7 @@ import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { logAudit } from "@/lib/audit";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
