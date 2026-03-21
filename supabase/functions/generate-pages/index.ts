@@ -1027,6 +1027,31 @@ Deno.serve(async (req) => {
       limitedRows = [limitedRows[0]];
     }
 
+    // Retry failed only: filter to rows whose slugs match failed pages
+    if (retry_failed_only && !test_mode) {
+      const { data: failedPages } = await supabase
+        .from("generated_pages")
+        .select("slug, title")
+        .eq("campaign_id", campaign_id)
+        .eq("status", "failed");
+
+      if (failedPages && failedPages.length > 0) {
+        const failedSlugs = new Set(failedPages.map((p: any) => slugify(p.title)));
+        limitedRows = limitedRows.filter((row: Record<string, string>) => {
+          const values = Object.values(row).filter(Boolean);
+          const rowTitle = values.slice(0, 2).join(" - ");
+          return failedSlugs.has(slugify(rowTitle));
+        });
+        // Delete existing failed pages so they can be regenerated
+        await supabase
+          .from("generated_pages")
+          .delete()
+          .eq("campaign_id", campaign_id)
+          .eq("status", "failed");
+        console.log(`[GENERATE-PAGES] Retry failed only: ${limitedRows.length} rows to retry`);
+      }
+    }
+
     const remainingRows = limitedRows.slice(startIndex);
 
     if (remainingRows.length === 0) {
