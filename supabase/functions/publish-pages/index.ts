@@ -259,6 +259,18 @@ Deno.serve(async (req) => {
           }
 
           results.push({ title: dp.title, status: "published", external_url: result.url });
+
+          // Audit log for publish
+          try {
+            await supabase.from("audit_logs").insert({
+              workspace_id: workspaceId,
+              user_id: user.id,
+              action: "publish",
+              entity_type: "page",
+              entity_id: result.external_id || dp.slug,
+              details: { title: dp.title, external_url: result.url, publish_type: pubType },
+            });
+          } catch (_) { /* non-critical */ }
         } catch (err) {
           results.push({ title: dp.title, status: "failed", error: err instanceof Error ? err.message : "Unknown error" });
         }
