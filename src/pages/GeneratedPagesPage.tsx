@@ -65,6 +65,7 @@ export default function GeneratedPagesPage() {
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
+  const [aiAssistantPage, setAiAssistantPage] = useState<GeneratedPage | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
