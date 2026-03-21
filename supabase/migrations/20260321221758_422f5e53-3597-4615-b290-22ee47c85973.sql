@@ -1,0 +1,1 @@
+ALTER TABLE public.campaign_csv_files ALTER COLUMN campaign_id DROP NOT NULL;

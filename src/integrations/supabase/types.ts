@@ -144,7 +144,7 @@ export type Database = {
       }
       campaign_csv_files: {
         Row: {
-          campaign_id: string
+          campaign_id: string | null
           created_at: string
           file_name: string | null
           file_size: number | null
@@ -156,7 +156,7 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
-          campaign_id: string
+          campaign_id?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
@@ -168,7 +168,7 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
-          campaign_id?: string
+          campaign_id?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
