@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
 import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
+import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
 
 type Website = Tables<"websites">;
 
