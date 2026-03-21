@@ -140,7 +140,7 @@ export default function AuthPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, ai_language: aiLanguage, company: companyName.trim() },
+        data: { full_name: fullName, ai_language: aiLanguage },
       },
     });
     if (error) {
