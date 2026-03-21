@@ -1194,7 +1194,7 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                               "@context": "https://schema.org",
                               "@type": schemaType,
                               ...Object.fromEntries(
-                                Object.entries(schemaConfig).filter(([, v]) => v)
+                                Object.entries(schemaConfig).filter(([k, v]) => v && !k.startsWith("_"))
                               ),
                             },
                             null,
