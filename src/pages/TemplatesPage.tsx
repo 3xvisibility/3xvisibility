@@ -48,6 +48,12 @@ export default function TemplatesPage() {
   // SEO state
   const [seoTitlePattern, setSeoTitlePattern] = useState("");
   const [seoDescriptionPattern, setSeoDescriptionPattern] = useState("");
+  const [slugPattern, setSlugPattern] = useState("");
+  const [ogTitlePattern, setOgTitlePattern] = useState("");
+  const [ogDescriptionPattern, setOgDescriptionPattern] = useState("");
+  const [ogImagePattern, setOgImagePattern] = useState("");
+  const [twitterCard, setTwitterCard] = useState("summary_large_image");
+  const [canonicalUrlPattern, setCanonicalUrlPattern] = useState("");
   // Schema state
   const [schemaType, setSchemaType] = useState("WebPage");
   const [schemaConfig, setSchemaConfig] = useState<Record<string, string>>({});
