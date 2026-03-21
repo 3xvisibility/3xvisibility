@@ -59,6 +59,8 @@ export default function AuthPage() {
   );
   const signupPassedCount = signupRuleResults.filter((r) => r.passed).length;
   const allSignupRulesPassed = signupRuleResults.every((r) => r.passed);
+  const signupPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
+  const canSignup = allSignupRulesPassed && signupPasswordsMatch;
   const signupStrength: "none" | "weak" | "medium" | "strong" =
     password.length === 0 ? "none" : signupPassedCount <= 2 ? "weak" : signupPassedCount <= 4 ? "medium" : "strong";
   const signupStrengthConfig = {
