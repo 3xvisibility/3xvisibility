@@ -338,7 +338,7 @@ export default function TemplatesPage() {
         seo_title_pattern: seoTitlePattern,
         seo_description_pattern: seoDescriptionPattern,
         schema_type: schemaType,
-        schema_config: schemaConfig,
+        schema_config: buildSchemaConfig(),
       } as any);
       if (error) throw error;
     },
