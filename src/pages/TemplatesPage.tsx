@@ -924,10 +924,17 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                           onChange={(e) => setSeoTitlePattern(e.target.value)}
                           className="font-mono text-sm"
                         />
-                        <p className={`text-xs ${seoTitleColor}`}>
-                          Recommended: under 60 characters. Estimated: ~{seoTitleLen} chars
-                          {seoTitleLen > 60 && " ⚠ May be truncated in search results"}
-                        </p>
+                        <div className="space-y-1">
+                          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${seoTitleLen <= 50 ? 'bg-emerald-500' : seoTitleLen <= 60 ? 'bg-amber-500' : 'bg-destructive'}`}
+                              style={{ width: `${Math.min((seoTitleLen / 70) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <p className={`text-xs ${seoTitleColor}`}>
+                            ~{seoTitleLen}/60 chars{seoTitleLen > 60 && " ⚠ May be truncated"}
+                          </p>
+                        </div>
                       </div>
                       <div className="space-y-1.5">
                         <Label htmlFor="seo-desc">Meta Description Pattern</Label>
@@ -939,11 +946,17 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                           rows={3}
                           className="font-mono text-sm"
                         />
-                        <p className={`text-xs ${seoDescColor}`}>
-                          Recommended: 120-160 characters. Estimated: ~{seoDescLen} chars
-                          {seoDescLen > 160 && " ⚠ May be truncated"}
-                          {seoDescLen > 0 && seoDescLen < 120 && " ⚠ Too short for best results"}
-                        </p>
+                        <div className="space-y-1">
+                          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${seoDescLen >= 120 && seoDescLen <= 160 ? 'bg-emerald-500' : seoDescLen >= 100 && seoDescLen <= 180 ? 'bg-amber-500' : seoDescLen === 0 ? 'bg-muted' : 'bg-destructive'}`}
+                              style={{ width: `${Math.min((seoDescLen / 180) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <p className={`text-xs ${seoDescColor}`}>
+                            ~{seoDescLen}/160 chars{seoDescLen > 160 && " ⚠ May be truncated"}{seoDescLen > 0 && seoDescLen < 120 && " ⚠ Too short"}
+                          </p>
+                        </div>
                       </div>
                       {/* SERP Preview */}
                       {(seoTitlePattern || seoDescriptionPattern || slugPattern) && (
