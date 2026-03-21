@@ -13,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -82,6 +82,8 @@ export default function TemplatesPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -201,19 +203,16 @@ export default function TemplatesPage() {
   // Filtered templates
   const filteredTemplates = useMemo(() => {
     return templates.filter((tpl) => {
-      // Search
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const nameMatch = tpl.name.toLowerCase().includes(q);
         const varMatch = (tpl.variables || []).some(v => v.toLowerCase().includes(q));
         if (!nameMatch && !varMatch) return false;
       }
-      // Site type filter
       if (siteTypeFilter !== "all") {
         const types = templateSiteTypes[tpl.id];
         if (!types || !types.has(siteTypeFilter)) return false;
       }
-      // Campaign type filter
       if (campaignTypeFilter !== "all") {
         const info = campaignsByTemplate[tpl.id];
         if (!info || !info.campaignTypes.has(campaignTypeFilter)) return false;
@@ -221,6 +220,9 @@ export default function TemplatesPage() {
       return true;
     });
   }, [templates, searchQuery, siteTypeFilter, campaignTypeFilter, templateSiteTypes, campaignsByTemplate]);
+
+  // Reset pagination when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, siteTypeFilter, campaignTypeFilter]);
 
   const { features } = useSubscription();
   const maxTemplates = features.templates;
@@ -1482,7 +1484,12 @@ RULES:
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orderedTemplates.map((tpl) => {
+                  {(() => {
+                    const totalPages = Math.max(1, Math.ceil(orderedTemplates.length / pageSize));
+                    const safePage = Math.min(currentPage, totalPages);
+                    const start = (safePage - 1) * pageSize;
+                    const paginated = orderedTemplates.slice(start, start + pageSize);
+                    return paginated.map((tpl) => {
                     const info = campaignsByTemplate[tpl.id];
                     const siteTypes = templateSiteTypes[tpl.id];
                     const cTypes = info?.campaignTypes;
@@ -1535,10 +1542,48 @@ RULES:
                         </TableCell>
                       </TableRow>
                     );
-                  })}
+                  });
+                  })()}
                 </TableBody>
               </Table>
             </div>
+            {/* Pagination */}
+            {orderedTemplates.length > pageSize && (() => {
+              const totalPages = Math.max(1, Math.ceil(orderedTemplates.length / pageSize));
+              const safePage = Math.min(currentPage, totalPages);
+              const start = (safePage - 1) * pageSize;
+              return (
+                <div className="flex items-center justify-between px-4 py-3 border-t">
+                  <span className="text-sm text-muted-foreground">
+                    Showing {start + 1}–{Math.min(start + pageSize, orderedTemplates.length)} of {orderedTemplates.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                      .reduce<(number | "...")[]>((acc, p, i, arr) => {
+                        if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, i) =>
+                        p === "..." ? (
+                          <span key={`e${i}`} className="px-1 text-muted-foreground text-sm">…</span>
+                        ) : (
+                          <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => setCurrentPage(p as number)}>
+                            {p}
+                          </Button>
+                        )
+                      )}
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
           </Card>
           {/* Bulk delete confirmation */}
           <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
