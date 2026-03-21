@@ -1294,6 +1294,9 @@ Deno.serve(async (req) => {
         `Batch ${batchesCompleted} started (${batchRows.length} pages)`, batchesCompleted, batchRows.length);
 
       const batchPages: any[] = [];
+      // Track slugs and titles within this campaign run for uniqueness
+      const usedSlugs = new Set<string>(seenSlugsGlobal);
+      const usedTitles = new Set<string>(seenTitlesGlobal);
 
       for (const row of batchRows) {
         try {
