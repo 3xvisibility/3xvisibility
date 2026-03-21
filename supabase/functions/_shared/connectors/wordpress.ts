@@ -186,7 +186,7 @@ export class WordPressConnector implements CmsConnector {
 
     while (true) {
       const url = `${this.baseUrl}/wp-json/wp/v2/${contentType === "products" ? "product" : "pages"}?per_page=${perPage}&page=${page}&_embed&context=edit`;
-      const response = await fetch(url, { headers: { Authorization: `Basic ${this.authString}` } });
+      const response = await fetch(url, { headers: this.headers });
 
       if (!response.ok) {
         if (contentType === "products") { await response.text(); return items; }
