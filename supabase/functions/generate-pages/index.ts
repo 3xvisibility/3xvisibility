@@ -757,14 +757,15 @@ function buildOgMetaTags(
   title: string,
   description: string,
   url?: string,
-  imageUrl?: string
+  imageUrl?: string,
+  twitterCardType?: string
 ): string {
   const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   const tags = [
     `<meta property="og:type" content="website">`,
     `<meta property="og:title" content="${escape(title)}">`,
     `<meta property="og:description" content="${escape(description)}">`,
-    `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="twitter:card" content="${escape(twitterCardType || "summary_large_image")}">`,
     `<meta name="twitter:title" content="${escape(title)}">`,
     `<meta name="twitter:description" content="${escape(description)}">`,
   ];
