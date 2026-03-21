@@ -899,7 +899,7 @@ export default function CampaignsPage() {
                 <Plus className="mr-2 h-4 w-4" /> New Campaign
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] md:max-w-[680px] w-[calc(100%-1rem)] max-w-full h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] rounded-none sm:rounded-2xl p-0 gap-0 overflow-hidden fixed inset-0 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
+            <DialogContent className="sm:max-w-[600px] md:max-w-[680px] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] sm:max-w-[600px] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
               <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-0 shrink-0">
                 <DialogHeader className="pb-0">
                   <DialogTitle className="text-base sm:text-lg font-bold">Create Campaign</DialogTitle>
@@ -941,7 +941,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Step Content */}
-              <ScrollArea className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
               <div className="px-4 sm:px-6 py-4 min-h-[180px]">
                 <div className="space-y-4 animate-fade-in">
                   {step === 1 && (
@@ -1847,7 +1847,7 @@ export default function CampaignsPage() {
                   )}
                 </div>
               </div>
-              </ScrollArea>
+              </div>
 
               <div className="flex justify-between px-4 sm:px-6 py-4 border-t border-border bg-muted/30 shrink-0">
                 <Button
