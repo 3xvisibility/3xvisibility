@@ -82,7 +82,7 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return { admin_api_token: shopifyToken };
+    if (siteType === "shopify") return { admin_api_token: shopifyToken, shop_domain: shopDomain };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
