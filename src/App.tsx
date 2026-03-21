@@ -60,7 +60,20 @@ const App = () => {
       setSession(session);
       setLoading(false);
     });
-    return () => subscription.unsubscribe();
+
+    // When "Remember me" was unchecked, clear session on tab/browser close
+    const handleUnload = () => {
+      if (localStorage.getItem("sessionEphemeral") === "true") {
+        supabase.auth.signOut();
+        localStorage.removeItem("sessionEphemeral");
+      }
+    };
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("beforeunload", handleUnload);
+    };
   }, []);
 
   const handleLogout = async () => {
