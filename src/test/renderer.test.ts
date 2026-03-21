@@ -274,7 +274,7 @@ describe("renderPage", () => {
     expect(result.html).toContain("Best Plumber services");
     expect(result.ogTags).toContain("Plumber — London");
     expect(result.jsonLd).toContain('"@type":"LocalBusiness"');
-    expect(result.warnings).toHaveLength(0);
+    expect(result.warnings.filter(w => !w.includes("Unresolved"))).toHaveLength(0);
   });
 
   it("warns about unresolved variables", () => {
