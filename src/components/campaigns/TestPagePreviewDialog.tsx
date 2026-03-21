@@ -1,8 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle, ShieldAlert } from "lucide-react";
 import type { RenderResult } from "@/lib/renderer";
+import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
+import { useMemo } from "react";
 
 interface TestPagePreviewDialogProps {
   open: boolean;
@@ -11,6 +13,22 @@ interface TestPagePreviewDialogProps {
 }
 
 export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePreviewDialogProps) {
+  const seoResults = useMemo(() => {
+    if (!result) return null;
+    const ctx: SeoRuleContext = {
+      title: result.title,
+      slug: result.slug,
+      seoTitle: result.seoTitle,
+      seoDescription: result.seoDescription,
+      canonicalUrl: result.canonicalUrl,
+      content: result.html,
+      jsonLd: result.jsonLd,
+    };
+    return validateSeoRules(ctx);
+  }, [result]);
+
+  const summary = useMemo(() => seoResults ? getSeoRuleSummary(seoResults) : null, [seoResults]);
+
   if (!result) return null;
 
   return (
@@ -32,6 +50,42 @@ export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePr
                 <span>{w}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* US24 — SEO Rules Validation */}
+        {summary && (summary.errors.length > 0 || summary.warnings.length > 0) && (
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center gap-2 mb-1">
+              <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-foreground">
+                SEO Rules — {summary.passed.length}/{summary.total} passed
+              </span>
+            </div>
+            {summary.errors.map((r) => (
+              <div key={r.id} className="flex items-start gap-2 text-xs">
+                <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-destructive" />
+                <div>
+                  <span className="font-medium text-destructive">{r.label}</span>
+                  <span className="text-muted-foreground ml-1">— {r.tip}</span>
+                </div>
+              </div>
+            ))}
+            {summary.warnings.map((r) => (
+              <div key={r.id} className="flex items-start gap-2 text-xs">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                <div>
+                  <span className="font-medium text-foreground">{r.label}</span>
+                  <span className="text-muted-foreground ml-1">— {r.tip}</span>
+                </div>
+              </div>
+            ))}
+            {summary.passed.length > 0 && (
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1 border-t border-border">
+                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                {summary.passed.length} checks passed
+              </div>
+            )}
           </div>
         )}
 
