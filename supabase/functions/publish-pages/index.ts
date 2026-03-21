@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const connector = createConnector(website as WebsiteRecord);
+      const connector = await createConnector(website as WebsiteRecord);
       const results: { title: string; status: string; external_url?: string; error?: string }[] = [];
       const workspaceId = website.workspace_id || body.workspace_id || null;
       const campaignId = body.campaign_id || null;
