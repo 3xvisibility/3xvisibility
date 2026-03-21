@@ -103,6 +103,35 @@ export function exportExecutionHistoryCsv(
   downloadBlob(csv, `${campaignName}-execution-history.csv`, "text/csv;charset=utf-8;");
 }
 
+/**
+ * Export error pages and job errors to CSV for offline fixing.
+ */
+export function exportErrorsCsv(
+  errorPages: { title: string; slug: string; error_message?: string | null }[],
+  jobErrors: any[],
+  campaignName = "campaign"
+) {
+  const escape = (v: string) => {
+    if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+      return `"${v.replace(/"/g, '""')}"`;
+    }
+    return v;
+  };
+
+  const header = "Source,Title/Row,Slug,Error Message";
+  const pageRows = errorPages.map((p) =>
+    [escape("page"), escape(p.title || ""), escape(p.slug || ""), escape(p.error_message || "")].join(",")
+  );
+  const jobRows = jobErrors.map((err) => {
+    const row = typeof err === "object" && err !== null ? err.row : undefined;
+    const msg = typeof err === "object" && err !== null ? (err.message || err.error || JSON.stringify(err)) : String(err);
+    return [escape("job"), row !== undefined ? `Row ${row}` : "", "", escape(msg)].join(",");
+  });
+
+  const csv = [header, ...pageRows, ...jobRows].join("\n");
+  downloadBlob(csv, `${campaignName}-errors.csv`, "text/csv;charset=utf-8;");
+}
+
 function downloadBlob(content: string, filename: string, type: string) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);

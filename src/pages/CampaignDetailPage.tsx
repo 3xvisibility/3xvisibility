@@ -41,7 +41,7 @@ import {
   Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward,
   Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
 } from "lucide-react";
-import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
@@ -998,6 +998,17 @@ export default function CampaignDetailPage() {
 
         {/* ERRORS TAB */}
         <TabsContent value="errors" className="space-y-4">
+          {(errorPages.length > 0 || jobErrors.length > 0) && (
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => exportErrorsCsv(errorPages, jobErrors, campaign?.name || "campaign")}
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" /> Export Errors CSV
+              </Button>
+            </div>
+          )}
           {errorPages.length === 0 && jobErrors.length === 0 ? (
             <Card className="border-0 shadow-surface">
               <CardContent className="py-16 text-center">
