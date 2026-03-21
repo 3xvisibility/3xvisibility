@@ -274,6 +274,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleLowercase": "One lowercase letter",
     "auth.pwRuleNumber": "One number",
     "auth.pwRuleSpecial": "One special character",
+    "auth.rateLimited": "Please wait",
+    "auth.rateLimitedDesc": "You can request another reset in {seconds} seconds.",
   },
   fr: {
     // Nav
