@@ -62,12 +62,23 @@ export class WordPressConnector implements CmsConnector {
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
-    this.authString = btoa(`${config.username}:${config.password}`);
-    this.headers = {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Basic ${this.authString}`,
-    };
+
+    // Support both Application Password (Basic) and JWT auth
+    if (config.access_token) {
+      this.authString = "";
+      this.headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${config.access_token}`,
+      };
+    } else {
+      this.authString = btoa(`${config.username}:${config.password}`);
+      this.headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Basic ${this.authString}`,
+      };
+    }
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
