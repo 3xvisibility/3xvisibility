@@ -276,6 +276,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleSpecial": "One special character",
     "auth.rateLimited": "Please wait",
     "auth.rateLimitedDesc": "You can request another reset in {seconds} seconds.",
+    "auth.passwordStrength": "Password strength",
+    "auth.strengthWeak": "Weak",
+    "auth.strengthMedium": "Medium",
+    "auth.strengthStrong": "Strong",
   },
   fr: {
     // Nav
@@ -546,6 +550,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleSpecial": "Un caractère spécial",
     "auth.rateLimited": "Veuillez patienter",
     "auth.rateLimitedDesc": "Vous pourrez demander une nouvelle réinitialisation dans {seconds} secondes.",
+    "auth.passwordStrength": "Force du mot de passe",
+    "auth.strengthWeak": "Faible",
+    "auth.strengthMedium": "Moyen",
+    "auth.strengthStrong": "Fort",
   },
   de: {
     // Nav
@@ -816,5 +824,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.pwRuleSpecial": "Ein Sonderzeichen",
     "auth.rateLimited": "Bitte warten",
     "auth.rateLimitedDesc": "Sie können in {seconds} Sekunden erneut anfordern.",
+    "auth.passwordStrength": "Passwortstärke",
+    "auth.strengthWeak": "Schwach",
+    "auth.strengthMedium": "Mittel",
+    "auth.strengthStrong": "Stark",
   },
 };

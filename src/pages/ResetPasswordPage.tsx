@@ -53,6 +53,23 @@ export default function ResetPasswordPage() {
     [password]
   );
 
+  const passedCount = ruleResults.filter((r) => r.passed).length;
+  const strength: "none" | "weak" | "medium" | "strong" =
+    password.length === 0
+      ? "none"
+      : passedCount <= 2
+        ? "weak"
+        : passedCount <= 4
+          ? "medium"
+          : "strong";
+
+  const strengthConfig = {
+    none: { width: "0%", color: "bg-muted", label: "" },
+    weak: { width: "33%", color: "bg-destructive", label: t("auth.strengthWeak") },
+    medium: { width: "66%", color: "bg-yellow-500", label: t("auth.strengthMedium") },
+    strong: { width: "100%", color: "bg-green-500", label: t("auth.strengthStrong") },
+  };
+
   const allPassed = ruleResults.every((r) => r.passed);
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
   const canSubmit = allPassed && passwordsMatch && !loading;
@@ -170,22 +187,45 @@ export default function ResetPasswordPage() {
               </div>
             </div>
 
-            {/* Password rules */}
+            {/* Strength meter + rules */}
             {password.length > 0 && (
-              <ul className="space-y-1 text-xs">
-                {ruleResults.map((r) => (
-                  <li key={r.key} className="flex items-center gap-1.5">
-                    {r.passed ? (
-                      <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                    ) : (
-                      <X className="h-3.5 w-3.5 text-destructive shrink-0" />
-                    )}
-                    <span className={r.passed ? "text-muted-foreground" : "text-foreground"}>
-                      {t(r.label)}
+              <div className="space-y-3">
+                {/* Strength bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{t("auth.passwordStrength")}</span>
+                    <span className={`text-xs font-medium ${
+                      strength === "weak" ? "text-destructive" :
+                      strength === "medium" ? "text-yellow-500" :
+                      "text-green-500"
+                    }`}>
+                      {strengthConfig[strength].label}
                     </span>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${strengthConfig[strength].color}`}
+                      style={{ width: strengthConfig[strength].width }}
+                    />
+                  </div>
+                </div>
+
+                {/* Rules checklist */}
+                <ul className="space-y-1 text-xs">
+                  {ruleResults.map((r) => (
+                    <li key={r.key} className="flex items-center gap-1.5">
+                      {r.passed ? (
+                        <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      )}
+                      <span className={r.passed ? "text-muted-foreground" : "text-foreground"}>
+                        {t(r.label)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
 
             {/* Confirm password */}
