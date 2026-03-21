@@ -273,7 +273,7 @@ export default function WebsitesPage() {
                     variant="outline"
                     className="w-full sm:w-auto"
                     onClick={() => testConnectionMutation.mutate()}
-                    disabled={!siteUrl || !siteType || testConnectionMutation.isPending}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || testConnectionMutation.isPending}
                   >
                     {testConnectionMutation.isPending ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
