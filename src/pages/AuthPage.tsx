@@ -131,10 +131,6 @@ export default function AuthPage() {
         toast({ title: t("auth.signupFailed"), description: t("auth.termsRequired"), variant: "destructive" });
         return;
       }
-      if (!companyName.trim()) {
-        toast({ title: t("auth.signupFailed"), description: t("auth.companyRequired"), variant: "destructive" });
-        return;
-      }
       toast({ title: t("auth.signupFailed"), description: !allSignupRulesPassed ? t("auth.passwordTooWeak") : t("auth.passwordsMismatch"), variant: "destructive" });
       return;
     }
