@@ -511,6 +511,27 @@ export default function AuthPage() {
                       </div>
                     )}
 
+                    {/* Terms acceptance - signup only */}
+                    {mode === "signup" && (
+                      <label className="flex items-start gap-2.5 cursor-pointer select-none py-1">
+                        <input
+                          type="checkbox"
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
+                          className="h-4 w-4 mt-0.5 rounded border-border/60 text-primary focus:ring-primary/20 accent-primary shrink-0"
+                        />
+                        <span className="text-xs text-muted-foreground leading-relaxed">
+                          {t("auth.acceptTerms")}{" "}
+                          <a href="/terms" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
+                            {t("auth.termsOfService")}
+                          </a>{" "}
+                          {t("auth.and")}{" "}
+                          <a href="/privacy" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
+                            {t("auth.privacyPolicy")}
+                          </a>
+                        </span>
+                      </label>
+                    )
                     {mode === "login" && (
                       <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
