@@ -98,6 +98,7 @@ export default function CampaignsPage() {
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [recurringInterval, setRecurringInterval] = useState<"daily" | "weekly" | "biweekly" | "monthly">("weekly");
+  const [seoTitleFormat, setSeoTitleFormat] = useState<string>("{title} | {brand}");
   const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
