@@ -103,7 +103,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
           {workspaces.map((ws) => (
             <DropdownMenuItem
               key={ws.id}
-              onClick={() => setCurrentWorkspace(ws)}
+              onClick={() => handleSwitch(ws)}
               className="flex items-center gap-2 py-2"
             >
               <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
