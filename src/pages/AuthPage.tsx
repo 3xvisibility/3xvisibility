@@ -127,6 +127,14 @@ export default function AuthPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSignup) {
+      if (!termsAccepted) {
+        toast({ title: t("auth.signupFailed"), description: t("auth.termsRequired"), variant: "destructive" });
+        return;
+      }
+      if (!companyName.trim()) {
+        toast({ title: t("auth.signupFailed"), description: t("auth.companyRequired"), variant: "destructive" });
+        return;
+      }
       toast({ title: t("auth.signupFailed"), description: !allSignupRulesPassed ? t("auth.passwordTooWeak") : t("auth.passwordsMismatch"), variant: "destructive" });
       return;
     }
@@ -136,7 +144,7 @@ export default function AuthPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, ai_language: aiLanguage },
+        data: { full_name: fullName, ai_language: aiLanguage, company: companyName.trim() },
       },
     });
     if (error) {
@@ -144,12 +152,13 @@ export default function AuthPage() {
       toast({ title: t("auth.signupFailed"), description: error.message, variant: "destructive" });
       return;
     }
-    // Save AI language preference to profile
+    // Save AI language preference and company to profile
     if (data.user) {
       await supabase.from("profiles").upsert({
         user_id: data.user.id,
         full_name: fullName,
         ai_language: aiLanguage,
+        company: companyName.trim(),
       }, { onConflict: "user_id" });
     }
     setLoading(false);
