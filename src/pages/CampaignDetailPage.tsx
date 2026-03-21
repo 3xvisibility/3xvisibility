@@ -1177,6 +1177,18 @@ export default function CampaignDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Start Generation Dialog */}
+      <StartGenerationDialog
+        open={showStartDialog}
+        onOpenChange={setShowStartDialog}
+        totalRows={campaign?.total_rows || 0}
+        failedRowsCount={statusCounts.failed}
+        isPending={executeMutation.isPending}
+        onStart={(options) => {
+          executeMutation.mutate({ generation_options: options });
+        }}
+      />
     </div>
   );
 }
