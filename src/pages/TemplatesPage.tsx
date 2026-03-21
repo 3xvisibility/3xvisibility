@@ -945,6 +945,29 @@ Do NOT output HTML, markdown, or explanations — just two plain text lines.`
                           {seoDescLen > 0 && seoDescLen < 120 && " ⚠ Too short for best results"}
                         </p>
                       </div>
+                      {/* SERP Preview */}
+                      {(seoTitlePattern || seoDescriptionPattern || slugPattern) && (
+                        <div className="rounded-lg border border-border bg-background p-4 space-y-1">
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Google Search Preview</p>
+                          <div className="space-y-0.5">
+                            <p className="text-[#1a0dab] text-lg leading-snug truncate" style={{ fontFamily: 'Arial, sans-serif' }}>
+                              {seoTitlePattern
+                                ? seoTitlePattern.replace(/\{([^}]+)\}/g, (_, v) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' '))
+                                : name || 'Page Title'}
+                            </p>
+                            <p className="text-[#006621] text-sm truncate" style={{ fontFamily: 'Arial, sans-serif' }}>
+                              {canonicalUrlPattern
+                                ? canonicalUrlPattern.replace(/\{([^}]+)\}/g, (_, v) => v.replace(/_/g, '-'))
+                                : `https://example.com/${slugPattern ? slugPattern.replace(/\{([^}]+)\}/g, (_, v) => v.replace(/_/g, '-')) : 'page-slug'}`}
+                            </p>
+                            <p className="text-[#545454] text-sm leading-relaxed line-clamp-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                              {seoDescriptionPattern
+                                ? seoDescriptionPattern.replace(/\{([^}]+)\}/g, (_, v) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' '))
+                                : 'Meta description will appear here...'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       <Separator />
 
