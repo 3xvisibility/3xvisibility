@@ -165,9 +165,12 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               />
             )}
             {site.type === "shopify" && (
-              <div>
-                <Label htmlFor="edit-shopify-token">Admin API Access Token</Label>
-                <Input id="edit-shopify-token" type="password" placeholder="shpat_xxxxx" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} />
+              <ShopifyCredentialFields
+                shopDomain={url.replace(/^https?:\/\//, "").replace(/\/+$/, "")}
+                onShopDomainChange={(v) => setUrl(`https://${v.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
+                accessToken={shopifyToken}
+                onAccessTokenChange={setShopifyToken}
+              />
               </div>
             )}
             {site.type === "prestashop" && (
