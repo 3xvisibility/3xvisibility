@@ -1547,6 +1547,43 @@ RULES:
                 </TableBody>
               </Table>
             </div>
+            {/* Pagination */}
+            {orderedTemplates.length > pageSize && (() => {
+              const totalPages = Math.max(1, Math.ceil(orderedTemplates.length / pageSize));
+              const safePage = Math.min(currentPage, totalPages);
+              const start = (safePage - 1) * pageSize;
+              return (
+                <div className="flex items-center justify-between px-4 py-3 border-t">
+                  <span className="text-sm text-muted-foreground">
+                    Showing {start + 1}–{Math.min(start + pageSize, orderedTemplates.length)} of {orderedTemplates.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                      .reduce<(number | "...")[]>((acc, p, i, arr) => {
+                        if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push("...");
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, i) =>
+                        p === "..." ? (
+                          <span key={`e${i}`} className="px-1 text-muted-foreground text-sm">…</span>
+                        ) : (
+                          <Button key={p} variant={p === safePage ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => setCurrentPage(p as number)}>
+                            {p}
+                          </Button>
+                        )
+                      )}
+                    <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
           </Card>
           {/* Bulk delete confirmation */}
           <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
