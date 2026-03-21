@@ -156,24 +156,31 @@ async function upsertSubscription(
 ) {
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
-  // Check if a subscription row already exists for this user+workspace
-  let query = supabase.from("subscriptions").select("id, pages_used, ai_generations_used").eq("user_id", userId);
-  if (workspaceId) query = query.eq("workspace_id", workspaceId);
-  const { data: existing } = await query.maybeSingle();
+  // First try to find by user_id alone (trigger may have created without workspace_id)
+  const { data: existing } = await supabase
+    .from("subscriptions")
+    .select("id, pages_used, ai_generations_used, workspace_id")
+    .eq("user_id", userId)
+    .maybeSingle();
 
   if (existing) {
-    // Update plan and limits, preserve usage counters
+    // Update plan, limits, and set workspace_id if missing
+    const updateData: any = {
+      plan,
+      pages_limit: limits.pages_limit,
+      ai_generations_limit: limits.ai_generations_limit,
+      stripe_customer_id: stripeCustomerId,
+      current_period_end: periodEnd,
+      current_period_start: periodStart,
+      updated_at: new Date().toISOString(),
+    };
+    // Backfill workspace_id if it was missing
+    if (!existing.workspace_id && workspaceId) {
+      updateData.workspace_id = workspaceId;
+    }
     const { error } = await supabase
       .from("subscriptions")
-      .update({
-        plan,
-        pages_limit: limits.pages_limit,
-        ai_generations_limit: limits.ai_generations_limit,
-        stripe_customer_id: stripeCustomerId,
-        current_period_end: periodEnd,
-        current_period_start: periodStart,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq("id", existing.id);
     if (error) logStep("Failed to update subscription", { error: error.message });
     else logStep("Updated subscription row", { id: existing.id, plan });
