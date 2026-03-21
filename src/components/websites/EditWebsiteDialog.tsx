@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
+import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
 
 type Website = Tables<"websites">;
 
