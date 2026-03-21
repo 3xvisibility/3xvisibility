@@ -343,7 +343,16 @@ export default function AuthPage() {
                     )}
 
                     {mode === "login" && (
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-border/60 text-primary focus:ring-primary/20 accent-primary"
+                          />
+                          <span className="text-xs text-muted-foreground">{t("auth.rememberMe")}</span>
+                        </label>
                         <button
                           type="button"
                           onClick={handleResetPassword}
