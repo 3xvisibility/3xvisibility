@@ -52,11 +52,11 @@ export function useSessionTimeout() {
           title: "Session expiring soon",
           description: `Your session will expire in ~${mins} minute${mins > 1 ? "s" : ""}. Click below to extend it.`,
           duration: 30000,
-          action: ToastAction({
-            altText: "Extend session",
-            onClick: extendSession,
-            children: "Extend session",
-          }),
+          action: (
+            <ToastAction altText="Extend session" onClick={extendSession}>
+              Extend session
+            </ToastAction>
+          ),
         });
       }
     };
