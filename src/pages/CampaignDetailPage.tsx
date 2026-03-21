@@ -269,6 +269,7 @@ export default function CampaignDetailPage() {
       } else {
         toast({ title: data.paused ? "Generation paused" : "Generation complete", description: `${data.generated || 0} pages generated.` });
       }
+      if (wsId) logAudit(wsId, "campaign_started", "campaign", id!, { name: campaign?.name, generated: data?.generated });
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
