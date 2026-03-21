@@ -749,5 +749,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.appleFailed": "Apple-Anmeldung fehlgeschlagen",
     "auth.contentLanguage": "Inhaltssprache",
     "auth.contentLanguageDesc": "KI-generierte Inhalte werden in dieser Sprache sein",
+    "auth.rememberMe": "Angemeldet bleiben",
+    "auth.errorInvalidCredentials": "E-Mail oder Passwort ist falsch. Bitte versuchen Sie es erneut.",
+    "auth.errorEmailNotVerified": "Ihre E-Mail-Adresse wurde noch nicht bestätigt. Prüfen Sie Ihren Posteingang.",
+    "auth.errorTooManyAttempts": "Zu viele Anmeldeversuche. Bitte warten Sie einen Moment.",
   },
 };
