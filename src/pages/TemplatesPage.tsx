@@ -72,6 +72,8 @@ export default function TemplatesPage() {
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
   const [sortColumn, setSortColumn] = useState<"name" | "date" | "campaigns">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
