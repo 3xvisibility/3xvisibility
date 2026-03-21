@@ -416,6 +416,118 @@ export default function SettingsPage() {
   );
 }
 
+// ── Password Change Form ─────────────────────────────
+function PasswordChangeForm() {
+  const { toast } = useToast();
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleChange = async () => {
+    if (newPw.length < 8) {
+      toast({ title: "Password too short", description: "Minimum 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast({ title: "Mismatch", description: "Passwords don't match.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPw });
+      if (error) throw error;
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+      toast({ title: "Password updated", description: "Your password has been changed." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="new-pw">New Password</Label>
+        <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="••••••••" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="confirm-pw">Confirm New Password</Label>
+        <Input id="confirm-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="••••••••" />
+      </div>
+      <Button onClick={handleChange} disabled={saving || !newPw} variant="outline">
+        {saving ? "Updating..." : "Update Password"}
+      </Button>
+    </div>
+  );
+}
+
+// ── Notification Preferences ─────────────────────────
+function NotificationPrefsEditor() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [prefs, setPrefs] = useState({ job_completed: true, job_failed: true, usage_limit: true });
+  const [loaded, setLoaded] = useState(false);
+
+  useQuery({
+    queryKey: ["notification-prefs"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("notification_preferences")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data && !loaded) {
+        const p = (data as any).notification_preferences || {};
+        setPrefs({
+          job_completed: p.job_completed !== false,
+          job_failed: p.job_failed !== false,
+          usage_limit: p.usage_limit !== false,
+        });
+        setLoaded(true);
+      }
+      return data;
+    },
+  });
+
+  const toggle = async (key: keyof typeof prefs) => {
+    const newPrefs = { ...prefs, [key]: !prefs[key] };
+    setPrefs(newPrefs);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase
+      .from("profiles")
+      .update({ notification_preferences: newPrefs as any, updated_at: new Date().toISOString() } as any)
+      .eq("user_id", user.id);
+    toast({ title: "Preference saved" });
+  };
+
+  const items = [
+    { key: "job_completed" as const, label: "Job Completed", desc: "Notify when a generation job finishes successfully." },
+    { key: "job_failed" as const, label: "Job Failed / Errors", desc: "Notify on generation failures or publishing errors." },
+    { key: "usage_limit" as const, label: "Usage Limit Warnings", desc: "Notify when approaching page or AI generation limits." },
+  ];
+
+  return (
+    <div className="space-y-2">
+      {items.map((item) => (
+        <div key={item.key} className="flex items-center justify-between rounded-lg border border-border p-4">
+          <div>
+            <p className="text-sm font-medium">{item.label}</p>
+            <p className="text-xs text-muted-foreground">{item.desc}</p>
+          </div>
+          <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface WebhookEndpoint {
   id: string;
   url: string;

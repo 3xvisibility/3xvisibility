@@ -523,6 +523,170 @@ export default function WorkspaceSettingsPage() {
   );
 }
 
+// ── Tenant Settings Card ─────────────────────────────
+function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
+  const { toast } = useToast();
+  const [locale, setLocale] = useState("en");
+  const [tz, setTz] = useState("UTC");
+  const [canonicalBase, setCanonicalBase] = useState("");
+  const [defaultTitlePattern, setDefaultTitlePattern] = useState("");
+  const [defaultDescPattern, setDefaultDescPattern] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const LOCALE_OPTIONS = [
+    { value: "en", label: "English" },
+    { value: "fr", label: "Français" },
+    { value: "de", label: "Deutsch" },
+    { value: "es", label: "Español" },
+    { value: "pt", label: "Português" },
+    { value: "it", label: "Italiano" },
+    { value: "nl", label: "Nederlands" },
+    { value: "ja", label: "日本語" },
+  ];
+
+  const TZ_OPTIONS = [
+    "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+    "Europe/London", "Europe/Paris", "Europe/Berlin", "Asia/Tokyo", "Asia/Shanghai",
+    "Australia/Sydney", "Pacific/Auckland",
+  ];
+
+  useQuery({
+    queryKey: ["workspace-tenant-settings", workspaceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("workspaces")
+        .select("locale, timezone, seo_defaults")
+        .eq("id", workspaceId)
+        .single();
+      if (error) throw error;
+      if (data && !loaded) {
+        setLocale((data as any).locale || "en");
+        setTz((data as any).timezone || "UTC");
+        const seo = (data as any).seo_defaults || {};
+        setCanonicalBase(seo.canonical_base || "");
+        setDefaultTitlePattern(seo.title_pattern || "");
+        setDefaultDescPattern(seo.description_pattern || "");
+        setLoaded(true);
+      }
+      return data;
+    },
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const seo_defaults = {
+        canonical_base: canonicalBase.trim(),
+        title_pattern: defaultTitlePattern.trim(),
+        description_pattern: defaultDescPattern.trim(),
+      };
+      const { error } = await supabase
+        .from("workspaces")
+        .update({
+          locale,
+          timezone: tz,
+          seo_defaults: seo_defaults as any,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("id", workspaceId);
+      if (error) throw error;
+      onSaved();
+      toast({ title: "Tenant settings saved" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="shadow-surface">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5 text-primary" />
+          Tenant Settings
+        </CardTitle>
+        <CardDescription>
+          Configure locale, timezone, and SEO defaults that apply across all campaigns in this workspace.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Default Locale</Label>
+            <Select value={locale} onValueChange={setLocale}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {LOCALE_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Language for new campaigns by default.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Timezone</Label>
+            <Select value={tz} onValueChange={setTz}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {TZ_OPTIONS.map((t) => (
+                  <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Used for scheduled jobs and activity timestamps.</p>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold">SEO Defaults</h3>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Canonical Base URL</Label>
+            <Input
+              placeholder="https://www.example.com"
+              value={canonicalBase}
+              onChange={(e) => setCanonicalBase(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Base URL prepended to page slugs for canonical tags.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Default Meta Title Pattern</Label>
+            <Input
+              placeholder="{title} | {company} - {service}"
+              value={defaultTitlePattern}
+              onChange={(e) => setDefaultTitlePattern(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Fallback SEO title pattern for new templates. Use {"{ }"} variables.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Default Meta Description Pattern</Label>
+            <Textarea
+              placeholder="{company} offers {service} in {location}. Contact us today!"
+              value={defaultDescPattern}
+              onChange={(e) => setDefaultDescPattern(e.target.value)}
+              rows={2}
+            />
+            <p className="text-xs text-muted-foreground">Fallback meta description for new templates.</p>
+          </div>
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+          {saving ? "Saving..." : "Save Tenant Settings"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ... keep existing code (WhitelabelBrandingCard component)
 function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
   const { toast } = useToast();
