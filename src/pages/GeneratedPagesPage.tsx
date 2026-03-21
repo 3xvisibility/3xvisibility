@@ -524,6 +524,33 @@ export default function GeneratedPagesPage() {
               <SelectItem value="failed">Failed</SelectItem>
             </SelectContent>
           </Select>
+          {uniqueSites.length > 0 && (
+            <Select value={siteFilter} onValueChange={setSiteFilter}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue placeholder="All Sites" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sites</SelectItem>
+                {uniqueSites.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {uniqueCampaigns.length > 0 && (
+            <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue placeholder="All Campaigns" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Campaigns</SelectItem>
+                <SelectItem value="direct">Direct Publish</SelectItem>
+                {uniqueCampaigns.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={freshnessFilter} onValueChange={setFreshnessFilter}>
             <SelectTrigger className="w-[120px] h-8 text-xs">
               <Clock className="h-3.5 w-3.5 mr-1 shrink-0" />
