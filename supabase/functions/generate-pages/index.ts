@@ -1190,6 +1190,22 @@ Deno.serve(async (req) => {
     let publishQueuedCount = 0;
     let timedOut = false;
 
+    // US24 — Track slugs & titles across batches to enforce uniqueness
+    const seenSlugsGlobal = new Set<string>();
+    const seenTitlesGlobal = new Set<string>();
+    // Pre-load existing slugs from previous runs in this campaign
+    const { data: existingSlugs } = await supabase
+      .from("generated_pages")
+      .select("slug, title")
+      .eq("campaign_id", campaign_id)
+      .neq("status", "failed");
+    if (existingSlugs) {
+      for (const ep of existingSlugs) {
+        seenSlugsGlobal.add(ep.slug.split("?")[0].toLowerCase());
+        seenTitlesGlobal.add((ep.title || "").toLowerCase());
+      }
+    }
+
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
       // Timeout guard — save progress and return partial results
       if (Date.now() - startTime > TIMEOUT_MS) {
