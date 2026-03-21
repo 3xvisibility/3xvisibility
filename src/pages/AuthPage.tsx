@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, Check, X } from "lucide-react";
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
