@@ -4,6 +4,7 @@ import { getMinimumPlanFor, PLAN_FEATURES, FEATURE_LABELS, type FeatureKey, type
 import { Lock, ArrowRight, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const FEATURE_DESCRIPTIONS: Record<FeatureKey, string> = {
   wordpress: "Connect your WordPress site to automatically publish generated pages and keep your content in sync.",
