@@ -15,7 +15,7 @@ import { useBranding, type BrandingConfig } from "@/contexts/BrandingContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Users, Crown, Shield, User, Trash2, UserPlus, Building2, Palette, ImageIcon, Type,
-  Search, Clock, X, Mail,
+  Search, Clock, X, Mail, Eye,
 } from "lucide-react";
 import AuditLogViewer from "@/components/workspace/AuditLogViewer";
 
@@ -222,6 +222,7 @@ export default function WorkspaceSettingsPage() {
   const roleIcon = (role: string) => {
     if (role === "owner") return <Crown className="h-3.5 w-3.5" />;
     if (role === "admin") return <Shield className="h-3.5 w-3.5" />;
+    if (role === "readonly") return <Eye className="h-3.5 w-3.5" />;
     return <User className="h-3.5 w-3.5" />;
   };
 
@@ -317,6 +318,7 @@ export default function WorkspaceSettingsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="readonly">Read-only</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -375,6 +377,7 @@ export default function WorkspaceSettingsPage() {
                 <SelectItem value="owner">Owner</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="readonly">Read-only</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
@@ -418,6 +421,7 @@ export default function WorkspaceSettingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="member">Member</SelectItem>
+                          <SelectItem value="readonly">Read-only</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>

@@ -160,7 +160,7 @@ serve(async (req) => {
     if (action === "invite_member") {
       const { email, role } = params;
       if (!email || !role) return jsonRes({ error: "email and role are required" }, 400);
-      if (!["member", "admin"].includes(role)) return jsonRes({ error: "Invalid role" }, 400);
+      if (!["member", "admin", "readonly"].includes(role)) return jsonRes({ error: "Invalid role" }, 400);
 
       // Only owner can add admins
       if (role === "admin" && callerRole !== "owner") {
@@ -265,7 +265,7 @@ serve(async (req) => {
     if (action === "update_role") {
       const { member_id, role } = params;
       if (role === "owner") return jsonRes({ error: "Cannot assign owner role" }, 400);
-      if (!["member", "admin"].includes(role)) return jsonRes({ error: "Invalid role" }, 400);
+      if (!["member", "admin", "readonly"].includes(role)) return jsonRes({ error: "Invalid role" }, 400);
       // Only owner can promote to admin
       if (role === "admin" && callerRole !== "owner") {
         return jsonRes({ error: "Only workspace owner can promote to admin" }, 403);
