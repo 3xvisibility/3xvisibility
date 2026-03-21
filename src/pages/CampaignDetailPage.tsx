@@ -386,7 +386,7 @@ export default function CampaignDetailPage() {
               </Button>
               <Button
                 size="sm"
-                onClick={() => executeMutation.mutate({})}
+                onClick={() => setShowStartDialog(true)}
                 disabled={executeMutation.isPending}
                 className="rounded-xl bg-gradient-primary hover:brightness-110"
               >
