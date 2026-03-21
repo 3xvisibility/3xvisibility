@@ -50,6 +50,7 @@ interface FeatureGateProps {
 export function FeatureGate({ feature, children }: FeatureGateProps) {
   const { canUseFeature } = useSubscription();
   const navigate = useNavigate();
+  const { basePath } = useWorkspace();
   const [isYearly, setIsYearly] = useState(false);
 
   if (canUseFeature(feature)) {
