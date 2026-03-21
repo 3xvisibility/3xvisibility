@@ -122,6 +122,9 @@ export default function CampaignsPage() {
   const [geoLat, setGeoLat] = useState("{latitude}");
   const [geoLng, setGeoLng] = useState("{longitude}");
   const [geoLanguage, setGeoLanguage] = useState("en");
+  const [testPreviewOpen, setTestPreviewOpen] = useState(false);
+  const [testPreviewResult, setTestPreviewResult] = useState<RenderResult | null>(null);
+  const [testGenerating, setTestGenerating] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
