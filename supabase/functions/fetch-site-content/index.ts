@@ -61,15 +61,6 @@ Deno.serve(async (req) => {
 
     const baseUrl = website.url.replace(/\/$/, "");
 
-    // Validate URL is not a placeholder
-    const hostname = new URL(baseUrl).hostname;
-    if (hostname.endsWith("example.com") || hostname.endsWith("example.org") || hostname.endsWith("example.net")) {
-      return new Response(
-        JSON.stringify({ error: `The website URL "${baseUrl}" is a placeholder. Please update the website URL in Settings → Websites to your actual domain.` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const type = content_type || "pages";
 
     try {
