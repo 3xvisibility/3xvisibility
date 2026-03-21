@@ -95,6 +95,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("current_workspace_id", ws.id);
   }, []);
 
+  const basePath = currentWorkspace ? `/w/${currentWorkspace.slug}` : "";
+
   useEffect(() => {
     fetchWorkspaces();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
@@ -111,6 +113,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         setCurrentWorkspace,
         isLoading,
         refetch: fetchWorkspaces,
+        basePath,
       }}
     >
       {children}
