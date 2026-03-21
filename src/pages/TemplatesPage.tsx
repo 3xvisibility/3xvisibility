@@ -195,8 +195,31 @@ export default function TemplatesPage() {
   const { features } = useSubscription();
   const maxTemplates = features.templates;
 
+  // Sort filtered templates
+  const toggleSort = (col: "name" | "date" | "campaigns") => {
+    if (sortColumn === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortColumn(col); setSortDir(col === "name" ? "asc" : "desc"); }
+  };
+
+  const sortedTemplates = useMemo(() => {
+    const arr = [...filteredTemplates];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortColumn === "name") cmp = a.name.localeCompare(b.name);
+      else if (sortColumn === "date") cmp = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      else if (sortColumn === "campaigns") cmp = (campaignsByTemplate[a.id]?.count ?? 0) - (campaignsByTemplate[b.id]?.count ?? 0);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return arr;
+  }, [filteredTemplates, sortColumn, sortDir, campaignsByTemplate]);
+
+  const SortIcon = ({ col }: { col: "name" | "date" | "campaigns" }) => {
+    if (sortColumn !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
   const { ordered: orderedTemplates, getDragProps, hasCustomOrder, resetOrder } = useDragReorder(
-    filteredTemplates,
+    sortedTemplates,
     `tpl-order-${wsId}`
   );
 
