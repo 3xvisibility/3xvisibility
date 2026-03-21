@@ -207,13 +207,14 @@ export default function GeneratedPagesPage() {
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, ids) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({
         title: "Bulk publish complete",
         description: `${data.published} published, ${data.failed} failed.`,
       });
+      if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: ids.length, published: data.published });
     },
     onError: (err: Error) => {
       toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" });
