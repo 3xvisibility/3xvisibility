@@ -382,6 +382,21 @@ Deno.serve(async (req) => {
         }).eq("id", page.id);
 
         results.push({ id: page.id, status: "published", external_url: result.url });
+
+        // Audit log for publish
+        try {
+          const auditWsId = page.workspace_id || body.workspace_id;
+          if (auditWsId) {
+            await supabase.from("audit_logs").insert({
+              workspace_id: auditWsId,
+              user_id: user.id,
+              action: "publish",
+              entity_type: "page",
+              entity_id: page.id,
+              details: { title: page.title, external_url: result.url, publish_type: pubType },
+            });
+          }
+        } catch (_) { /* non-critical */ }
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Unknown publishing error";
         await supabase.from("generated_pages").update({ status: "failed", error_message: errorMsg }).eq("id", page.id);
