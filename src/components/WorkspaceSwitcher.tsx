@@ -19,12 +19,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
-  const { workspaces, currentWorkspace, setCurrentWorkspace, refetch } = useWorkspace();
+  const { workspaces, currentWorkspace, setCurrentWorkspace, refetch, basePath } = useWorkspace();
   const { plan } = useSubscription();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const { toast } = useToast();
+
+  /** Switch workspace and navigate to the same sub-path under the new workspace */
+  const handleSwitch = (ws: typeof currentWorkspace) => {
+    if (!ws) return;
+    setCurrentWorkspace(ws);
+    // Extract the sub-path after the current basePath (e.g. /w/old-slug/campaigns -> campaigns)
+    const currentSub = basePath && location.pathname.startsWith(basePath)
+      ? location.pathname.slice(basePath.length + 1) || "dashboard"
+      : "dashboard";
+    navigate(`/w/${ws.slug}/${currentSub}`);
+  };
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
