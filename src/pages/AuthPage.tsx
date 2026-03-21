@@ -36,6 +36,7 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [aiLanguage, setAiLanguage] = useState("en");
   const { toast } = useToast();
