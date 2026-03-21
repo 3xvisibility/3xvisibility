@@ -1471,137 +1471,22 @@ export default function CampaignsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      {variableMapping && (
-                        <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-4 overflow-hidden">
-                          <div className="flex items-center gap-2 sticky top-0 z-10 bg-muted/20 backdrop-blur-sm -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 -mt-3 sm:-mt-4 border-b border-border/50">
-                            <h4 className="text-sm font-semibold">Variable Mapping</h4>
-                            {variableMapping.matched.every((m) => m.column || m.customValue) ? (
-                              <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
-                                <Check className="h-3 w-3 mr-1" /> All matched
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="bg-destructive/10 text-destructive text-[10px] border-destructive/20 border">
-                                <AlertTriangle className="h-3 w-3 mr-1" /> Unmatched
-                              </Badge>
-                            )}
-                          </div>
-
-                          {/* Help text for unmatched variables */}
-                          {variableMapping.matched.some((m) => !m.column && !m.customValue) && (() => {
-                            const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
-                            const unmatchedVars = variableMapping.matched.filter((m) => !m.column && !m.customValue);
-                            const isAllAiOrSchema = unmatchedVars.every(m => {
-                              const v = m.variable.toLowerCase();
-                              return v.startsWith("ai:") || v.startsWith("ai_image:") || v.includes("@context") || v.includes("@type") || v.includes("schema");
-                            });
-                            return (
-                              <div className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-2 space-y-1 overflow-hidden">
-                                {isAllAiOrSchema ? (
-                                  <p className="text-muted-foreground">
-                                    <span className="font-medium text-foreground">ℹ AI & Schema blocks</span> don't need data columns — they are generated automatically during page creation.
-                                  </p>
-                                ) : (
-                                  <>
-                                    <p className="font-medium text-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" /> How to fix unmatched variables:</p>
-                                    <ul className="text-muted-foreground space-y-0.5 ml-4 list-disc">
-                                      <li>Use the dropdown to <strong>manually map</strong> each variable to a column</li>
-                                      <li>Type a <strong>custom value</strong> to use the same value for all pages</li>
-                                      <li>Or <strong>rename your CSV columns</strong> to match template variables</li>
-                                    </ul>
-                                    {headers.length > 0 && (
-                                      <p className="text-muted-foreground mt-1 break-words">Available columns: <span className="font-mono text-primary text-[10px] break-all">{headers.join(", ")}</span></p>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })()}
-
-                          <div className="space-y-3">
-                            {variableMapping.matched.map(({ variable, column, customValue }) => {
-                              const headers = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
-                              const isAiBlock = variable.toLowerCase().startsWith("ai:") || variable.toLowerCase().startsWith("ai_image:");
-                              const isSchemaBlock = variable.includes("@context") || variable.includes("@type") || variable.includes("schema.org");
-                              const isSpecialBlock = isAiBlock || isSchemaBlock;
-
-                              return (
-                                <div key={variable} className="rounded-lg border border-border/60 bg-background/50 p-3 space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="font-mono shrink-0 rounded-lg max-w-[60vw] truncate text-[11px] py-1 px-2" title={`{${variable}}`}>{`{${variable}}`}</Badge>
-                                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                                    {column && (
-                                      <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[11px] py-1 px-2">
-                                        <Check className="h-3 w-3 mr-1" /> {column}
-                                      </Badge>
-                                    )}
-                                    {isSpecialBlock && !column && !customValue && (
-                                      <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[11px] py-1 px-2">
-                                        <Check className="h-3 w-3 mr-1" /> Auto-generated
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  {customValue ? (
-                                    <div className="space-y-1.5">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-muted-foreground text-[11px] font-medium">Custom value:</span>
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 shrink-0"
-                                          onClick={() => setCustomValues(prev => { const next = { ...prev }; delete next[variable]; return next; })}
-                                        >
-                                          <X className="h-3.5 w-3.5" />
-                                        </Button>
-                                      </div>
-                                      <Input
-                                        className="h-10 w-full text-sm rounded-lg border-primary/30 focus:border-primary"
-                                        placeholder="e.g. Web Design, Plumbing Services…"
-                                        value={customValues[variable] || ""}
-                                        onChange={(e) => {
-                                          setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
-                                          if (e.target.value) setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
-                                        }}
-                                      />
-                                    </div>
-                                  ) : !column && !isSpecialBlock ? (
-                                    <div className="space-y-2">
-                                      <Select
-                                        value={manualMappings[variable] || ""}
-                                        onValueChange={(val) => setManualMappings(prev => ({ ...prev, [variable]: val }))}
-                                      >
-                                        <SelectTrigger className="h-10 w-full text-sm rounded-lg border-destructive/40 bg-destructive/5">
-                                          <SelectValue placeholder="Select column…" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {headers.map((h) => (
-                                            <SelectItem key={h} value={h} className="text-sm font-mono py-2">{h}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      <span className="text-muted-foreground text-[11px] font-medium block">or type a custom value:</span>
-                                      <Input
-                                        className="h-10 w-full text-sm rounded-lg border-primary/30 focus:border-primary"
-                                        placeholder="e.g. Web Design, Plumbing Services…"
-                                        value={customValues[variable] || ""}
-                                        onChange={(e) => {
-                                          setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
-                                          if (e.target.value) setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
-                                        }}
-                                      />
-                                    </div>
-                                  ) : null}
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {mappingWarning && (
-                            <div className="flex items-center gap-2 text-xs text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2">
-                              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                              <span>{mappingWarning}</span>
-                            </div>
-                          )}
-                        </div>
+                      {selectedTemplate && effectiveCsvHeaders.length > 0 && (
+                        <MappingStep
+                          csvHeaders={effectiveCsvHeaders}
+                          templateVars={selectedTemplateVars}
+                          campaignTypes={campaignTypes}
+                          websiteType={websites.find(w => w.id === (selectedWebsite || websiteForPages))?.type}
+                          manualMappings={manualMappings}
+                          setManualMappings={setManualMappings}
+                          customValues={customValues}
+                          setCustomValues={setCustomValues}
+                          transforms={transforms}
+                          setTransforms={setTransforms}
+                          targetFieldMappings={targetFieldMappings}
+                          setTargetFieldMappings={setTargetFieldMappings}
+                          workspaceId={wsId!}
+                        />
                       )}
                     </div>
                   )}
