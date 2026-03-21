@@ -869,6 +869,9 @@ export default function GeneratedPagesPage() {
                           <Button size="sm" variant="ghost" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
                           </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setJsonPayloadPage(page)} title="View JSON payload">
+                            <Code className="h-3 w-3" />
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
