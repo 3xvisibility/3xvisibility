@@ -200,8 +200,9 @@ export default function TemplatesPage() {
     return m;
   }, [templates]);
 
-  // Filtered templates
+  // Filtered templates (reset page on filter change)
   const filteredTemplates = useMemo(() => {
+    setCurrentPage(1);
     return templates.filter((tpl) => {
       // Search
       if (searchQuery) {
