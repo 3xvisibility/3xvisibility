@@ -803,6 +803,8 @@ export default function GeneratedPagesPage() {
                         <Badge variant="secondary" className={statusColors[page.status]}>{page.status}</Badge>
                       </td>
                       <td className="p-4 hidden lg:table-cell">
+                        <code className="text-[10px] text-muted-foreground font-mono tabular-nums">{page.external_id || "—"}</code>
+                      </td>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1">
                             <span className="text-[9px] font-semibold text-muted-foreground">SEO</span>
