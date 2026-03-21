@@ -98,6 +98,7 @@ export default function CampaignsPage() {
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [recurringInterval, setRecurringInterval] = useState<"daily" | "weekly" | "biweekly" | "monthly">("weekly");
+  const [seoTitleFormat, setSeoTitleFormat] = useState<string>("{title} | {brand}");
   const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
   // UTM fields
   const [utmSource, setUtmSource] = useState("");
@@ -322,10 +323,11 @@ export default function CampaignsPage() {
         csv_data: effectiveData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: maxRows ? Math.min(parseInt(maxRows), effectiveRowCount) : effectiveRowCount,
         user_id: user.id,
-        workspace_id: wsId,
+         workspace_id: wsId,
          utm_settings: utmSettings as any,
          geo_settings: geoSettings as any,
          directory_structure: dirStructure as any,
+         mapping: { seo_title_format: seoTitleFormat } as any,
          publish_mode: publishMode,
          generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
@@ -1807,6 +1809,26 @@ export default function CampaignsPage() {
                             )}
                           </div>
                         )}
+                      </div>
+
+                      {/* SEO Title Format */}
+                      <div className="space-y-2">
+                        <Label className="text-xs font-medium">SEO Title Format</Label>
+                        <Select value={seoTitleFormat} onValueChange={setSeoTitleFormat}>
+                          <SelectTrigger className="rounded-xl h-9 text-sm w-full sm:w-72">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="{title} | {brand}">{"{title} | {brand}"}</SelectItem>
+                            <SelectItem value="{brand} - {title}">{"{brand} - {title}"}</SelectItem>
+                            <SelectItem value="{title} — {brand}">{"{title} — {brand}"}</SelectItem>
+                            <SelectItem value="{brand} | {title}">{"{brand} | {title}"}</SelectItem>
+                            <SelectItem value="{title}">{"{title}"} (no brand)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-muted-foreground">
+                          Controls how the SEO title is structured. <code className="font-mono bg-muted px-1 rounded">{"{brand}"}</code> = website name, <code className="font-mono bg-muted px-1 rounded">{"{title}"}</code> = page title.
+                        </p>
                       </div>
 
                       {/* Summary */}
