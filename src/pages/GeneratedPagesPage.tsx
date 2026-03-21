@@ -386,6 +386,8 @@ export default function GeneratedPagesPage() {
     const base = pages.filter(
       (p) =>
         (statusFilter === "all" || p.status === statusFilter) &&
+        (siteFilter === "all" || p.website_id === siteFilter) &&
+        (campaignFilter === "all" || (campaignFilter === "direct" ? !p.campaign_id : p.campaign_id === campaignFilter)) &&
         (freshnessFilter === "all" || calculateFreshness(p.created_at, p.status).level === freshnessFilter) &&
         (p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.slug.toLowerCase().includes(search.toLowerCase()) ||
