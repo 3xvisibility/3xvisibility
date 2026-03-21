@@ -122,8 +122,8 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!allSignupRulesPassed) {
-      toast({ title: t("auth.signupFailed"), description: t("auth.passwordTooWeak"), variant: "destructive" });
+    if (!canSignup) {
+      toast({ title: t("auth.signupFailed"), description: !allSignupRulesPassed ? t("auth.passwordTooWeak") : t("auth.passwordsMismatch"), variant: "destructive" });
       return;
     }
     setLoading(true);
