@@ -495,6 +495,14 @@ export default function WorkspaceSettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Tenant Settings: Locale, Timezone, SEO Defaults */}
+      {isAdminOrOwner && (
+        <>
+          <Separator />
+          <TenantSettingsCard workspaceId={wsId} onSaved={refetchWorkspaces} />
+        </>
+      )}
+
       {/* Whitelabel Branding */}
       {isOwner && (
         <>
