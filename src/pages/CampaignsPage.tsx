@@ -941,7 +941,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Step Content */}
-              <ScrollArea className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
               <div className="px-4 sm:px-6 py-4 min-h-[180px]">
                 <div className="space-y-4 animate-fade-in">
                   {step === 1 && (
