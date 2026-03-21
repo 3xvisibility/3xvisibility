@@ -492,6 +492,57 @@ export default function CampaignDetailPage() {
             </Card>
           )}
 
+          {/* SEO Quality Summary */}
+          {pages.length > 0 && (() => {
+            const seoSummary = computeCampaignSeoSummary(pages.filter(p => p.status !== "failed"));
+            if (!seoSummary) return null;
+            const barColor = (score: number) =>
+              score >= 85 ? "bg-emerald-500" : score >= 60 ? "bg-primary" : score >= 35 ? "bg-amber-500" : "bg-destructive";
+            const scoreColor = (score: number) =>
+              score >= 85 ? "text-emerald-600" : score >= 60 ? "text-primary" : score >= 35 ? "text-amber-600" : "text-destructive";
+            return (
+              <Card className="border-0 shadow-surface">
+                <CardHeader><CardTitle className="text-sm">SEO Quality Summary</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Overall Health</span>
+                    <span className={`text-xl font-bold tabular-nums ${scoreColor(seoSummary.overall)}`}>{seoSummary.overall}/100</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className={`h-full rounded-full ${barColor(seoSummary.overall)}`} style={{ width: `${seoSummary.overall}%` }} />
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { label: "Content SEO", score: seoSummary.avgSeo },
+                      { label: "Metadata", score: seoSummary.avgMeta },
+                      { label: "SEA Quality", score: seoSummary.avgSea },
+                      { label: "GEO Signals", score: seoSummary.avgGeo },
+                    ].map((item) => (
+                      <div key={item.label} className="text-center">
+                        <span className={`text-lg font-bold tabular-nums ${scoreColor(item.score)}`}>{item.score}</span>
+                        <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator />
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    {[
+                      { label: "Excellent", count: seoSummary.distribution.excellent, cls: "text-emerald-600" },
+                      { label: "Good", count: seoSummary.distribution.good, cls: "text-primary" },
+                      { label: "Fair", count: seoSummary.distribution.fair, cls: "text-amber-600" },
+                      { label: "Poor", count: seoSummary.distribution.poor, cls: "text-destructive" },
+                    ].map((d) => (
+                      <div key={d.label}>
+                        <span className={`text-sm font-bold ${d.cls}`}>{d.count}</span>
+                        <p className="text-[10px] text-muted-foreground">{d.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
           {/* Recent Executions */}
           {executionHistory.length > 0 && (
             <Card className="border-0 shadow-surface">
