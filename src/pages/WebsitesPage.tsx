@@ -36,7 +36,8 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
-  // Other platforms
+  // Shopify
+  const [shopDomain, setShopDomain] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
