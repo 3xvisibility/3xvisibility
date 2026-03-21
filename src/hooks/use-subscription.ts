@@ -31,6 +31,8 @@ export function useSubscription(): SubscriptionData {
 
     const syncWithStripe = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || cancelled) return;
         const { error } = await supabase.functions.invoke("check-subscription");
         if (!error && !cancelled) {
           queryClient.invalidateQueries({ queryKey: ["user-subscription", wsId] });
