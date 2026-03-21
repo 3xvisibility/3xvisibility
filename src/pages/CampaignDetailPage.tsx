@@ -307,7 +307,7 @@ export default function CampaignDetailPage() {
     return (
       <div className="text-center py-20">
         <p className="text-muted-foreground">Campaign not found.</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate("/campaigns")}>
+        <Button variant="outline" className="mt-4" onClick={() => navigate(`${basePath}/campaigns`)}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Campaigns
         </Button>
       </div>
@@ -324,7 +324,7 @@ export default function CampaignDetailPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/campaigns")} className="shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => navigate(`${basePath}/campaigns`)} className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
