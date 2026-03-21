@@ -4,6 +4,25 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+/** Retry-aware fetch for Shopify API rate limits (HTTP 429). */
+async function shopifyFetch(
+  url: string,
+  init: RequestInit,
+  maxRetries = 3,
+): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, init);
+    if (res.status === 429) {
+      const retryAfter = parseFloat(res.headers.get("Retry-After") || "2");
+      const delay = Math.min(retryAfter * 1000, 10_000);
+      await new Promise((r) => setTimeout(r, delay));
+      continue;
+    }
+    return res;
+  }
+  throw new Error("Shopify API rate limit exceeded after retries");
+}
+
 export class ShopifyConnector implements CmsConnector {
   readonly type = "shopify";
   private shopDomain: string;
