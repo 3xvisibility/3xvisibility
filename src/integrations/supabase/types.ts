@@ -1683,7 +1683,7 @@ export type Database = {
       page_status: "pending" | "published" | "failed"
       website_status: "connected" | "error" | "disconnected"
       website_type: "wordpress" | "shopify" | "prestashop" | "woocommerce"
-      workspace_role: "owner" | "admin" | "member"
+      workspace_role: "owner" | "admin" | "member" | "readonly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1826,7 +1826,7 @@ export const Constants = {
       page_status: ["pending", "published", "failed"],
       website_status: ["connected", "error", "disconnected"],
       website_type: ["wordpress", "shopify", "prestashop", "woocommerce"],
-      workspace_role: ["owner", "admin", "member"],
+      workspace_role: ["owner", "admin", "member", "readonly"],
     },
   },
 } as const
