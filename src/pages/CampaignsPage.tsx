@@ -763,6 +763,57 @@ export default function CampaignsPage() {
     setCustomValues({});
   };
 
+  const handleTestOnePage = useCallback(async () => {
+    if (!selectedTemplate || effectiveCsvData.length === 0) {
+      toast({ title: "Cannot test", description: "Select a template and add data first.", variant: "destructive" });
+      return;
+    }
+    setTestGenerating(true);
+    try {
+      const tpl = templates.find((t) => t.id === selectedTemplate);
+      if (!tpl) throw new Error("Template not found");
+      const templateConfig: TemplateConfig = {
+        content: tpl.content || "",
+        seo_title_pattern: tpl.seo_title_pattern || "",
+        seo_description_pattern: tpl.seo_description_pattern || "",
+        schema_type: tpl.schema_type || "WebPage",
+        schema_config: (tpl.schema_config as Record<string, string>) || {},
+      };
+      const firstRow = effectiveCsvData[0];
+      // Build row with mapping applied
+      const mappedRow: Record<string, string> = {};
+      if (variableMapping) {
+        for (const m of variableMapping.matched) {
+          if (m.customValue) {
+            mappedRow[m.variable] = m.customValue;
+          } else if (m.column && firstRow[m.column] !== undefined) {
+            mappedRow[m.variable] = firstRow[m.column];
+          }
+        }
+      } else {
+        Object.assign(mappedRow, firstRow);
+      }
+      const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+      const ctx: RenderContext = {
+        row: mappedRow,
+        extraVars: campaignTypes.includes("geo") ? {
+          country: geoCountry, region: geoRegion, city: geoCity,
+          postcode: geoPostcode, lat: geoLat, lng: geoLng,
+        } : undefined,
+        website: ws ? { name: ws.name } : undefined,
+        campaignType: campaignType,
+        rowIndex: 0,
+      };
+      const result = renderPage(templateConfig, ctx);
+      setTestPreviewResult(result);
+      setTestPreviewOpen(true);
+    } catch (err: any) {
+      toast({ title: "Test failed", description: err.message, variant: "destructive" });
+    } finally {
+      setTestGenerating(false);
+    }
+  }, [selectedTemplate, effectiveCsvData, templates, variableMapping, websites, selectedWebsite, websiteForPages, campaignTypes, campaignType, geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, toast]);
+
   const getProgressInfo = (c: Campaign) => {
     const total = (c as any).total_rows || 0;
     const processed = (c as any).processed_rows || 0;
