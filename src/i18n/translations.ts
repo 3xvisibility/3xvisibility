@@ -251,6 +251,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.appleFailed": "Apple sign-in failed",
     "auth.contentLanguage": "Content Language",
     "auth.contentLanguageDesc": "AI-generated content will be in this language",
+    "auth.rememberMe": "Remember me",
+    "auth.errorInvalidCredentials": "The email or password you entered is incorrect. Please try again.",
+    "auth.errorEmailNotVerified": "Your email address has not been verified yet. Please check your inbox for the confirmation link.",
+    "auth.errorTooManyAttempts": "Too many login attempts. Please wait a moment and try again.",
   },
   fr: {
     // Nav
@@ -496,6 +500,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.appleFailed": "Échec de la connexion Apple",
     "auth.contentLanguage": "Langue du contenu",
     "auth.contentLanguageDesc": "Le contenu généré par IA sera dans cette langue",
+    "auth.rememberMe": "Se souvenir de moi",
+    "auth.errorInvalidCredentials": "L'e-mail ou le mot de passe est incorrect. Veuillez réessayer.",
+    "auth.errorEmailNotVerified": "Votre adresse e-mail n'a pas encore été vérifiée. Consultez votre boîte de réception.",
+    "auth.errorTooManyAttempts": "Trop de tentatives. Veuillez patienter un moment.",
   },
   de: {
     // Nav
@@ -741,5 +749,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.appleFailed": "Apple-Anmeldung fehlgeschlagen",
     "auth.contentLanguage": "Inhaltssprache",
     "auth.contentLanguageDesc": "KI-generierte Inhalte werden in dieser Sprache sein",
+    "auth.rememberMe": "Angemeldet bleiben",
+    "auth.errorInvalidCredentials": "E-Mail oder Passwort ist falsch. Bitte versuchen Sie es erneut.",
+    "auth.errorEmailNotVerified": "Ihre E-Mail-Adresse wurde noch nicht bestätigt. Prüfen Sie Ihren Posteingang.",
+    "auth.errorTooManyAttempts": "Zu viele Anmeldeversuche. Bitte warten Sie einen Moment.",
   },
 };

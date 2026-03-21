@@ -31,11 +31,12 @@ const AI_LANGUAGE_OPTIONS = [
 
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [aiLanguage, setAiLanguage] = useState("en");
   const { toast } = useToast();
@@ -49,13 +50,38 @@ export default function AuthPage() {
     localStorage.setItem("theme", next ? "dark" : "light");
   };
 
+  const mapAuthError = (errorMessage: string): { title: string; description: string } => {
+    const msg = errorMessage.toLowerCase();
+    if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
+    }
+    if (msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorEmailNotVerified") };
+    }
+    if (msg.includes("too many requests") || msg.includes("rate limit")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorTooManyAttempts") };
+    }
+    if (msg.includes("user not found")) {
+      return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
+    }
+    return { title: t("auth.loginFailed"), description: errorMessage };
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    // Persist remember-me preference
+    localStorage.setItem("rememberMe", String(rememberMe));
+    if (rememberMe) {
+      localStorage.setItem("rememberedEmail", email);
+    } else {
+      localStorage.removeItem("rememberedEmail");
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast({ title: t("auth.loginFailed"), description: error.message, variant: "destructive" });
+      const mapped = mapAuthError(error.message);
+      toast({ title: mapped.title, description: mapped.description, variant: "destructive" });
     } else {
       navigate("/dashboard");
     }
@@ -317,7 +343,16 @@ export default function AuthPage() {
                     )}
 
                     {mode === "login" && (
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-border/60 text-primary focus:ring-primary/20 accent-primary"
+                          />
+                          <span className="text-xs text-muted-foreground">{t("auth.rememberMe")}</span>
+                        </label>
                         <button
                           type="button"
                           onClick={handleResetPassword}
