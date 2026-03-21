@@ -498,6 +498,7 @@ export default function TemplatesPage() {
     }
   };
 
+  const resetAndClose = () => {
     setAiOpen(false);
     setOpen(false);
     setEditingTemplate(null);
