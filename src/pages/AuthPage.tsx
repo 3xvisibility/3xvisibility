@@ -118,6 +118,10 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!allSignupRulesPassed) {
+      toast({ title: t("auth.signupFailed"), description: t("auth.passwordTooWeak"), variant: "destructive" });
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
