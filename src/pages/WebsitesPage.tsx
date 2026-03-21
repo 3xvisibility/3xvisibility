@@ -124,8 +124,11 @@ export default function WebsitesPage() {
 
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
+      const testUrl = siteType === "shopify" && shopDomain
+        ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+        : siteUrl;
       const { data, error } = await supabase.functions.invoke("test-connection", {
-        body: { url: siteUrl, type: siteType, credentials: buildCredentials() },
+        body: { url: testUrl, type: siteType, credentials: buildCredentials() },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
