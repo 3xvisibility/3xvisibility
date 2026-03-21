@@ -65,6 +65,11 @@ export default function TemplatesPage() {
   const [aiContentType, setAiContentType] = useState<string>("seo");
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
   const [aiAutoFixing, setAiAutoFixing] = useState(false);
+  // US14 – Library management state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [siteTypeFilter, setSiteTypeFilter] = useState("all");
+  const [campaignTypeFilter, setCampaignTypeFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("table");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
