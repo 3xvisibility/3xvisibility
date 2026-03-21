@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,6 +73,8 @@ export default function TemplatesPage() {
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
   const [sortColumn, setSortColumn] = useState<"name" | "date" | "campaigns">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -455,6 +458,43 @@ export default function TemplatesPage() {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setDeleteTarget(null);
+    }
+  };
+
+  // Bulk actions
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === orderedTemplates.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(orderedTemplates.map(t => t.id)));
+  };
+  const bulkExport = () => {
+    const selected = templates.filter(t => selectedIds.has(t.id));
+    selected.forEach(tpl => exportTemplate(tpl));
+    toast({ title: `Exported ${selected.length} template(s)` });
+  };
+  const bulkDelete = async () => {
+    try {
+      for (const id of selectedIds) {
+        const { error: unlinkErr } = await supabase.from("campaigns").update({ template_id: null }).eq("template_id", id);
+        if (unlinkErr) throw unlinkErr;
+        const { error } = await supabase.from("templates").delete().eq("id", id);
+        if (error) throw error;
+      }
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["template-campaigns"] });
+      toast({ title: `${selectedIds.size} template(s) deleted` });
+      setSelectedIds(new Set());
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBulkDeleteOpen(false);
     }
   };
 
@@ -1205,67 +1245,96 @@ RULES:
           {templates.length === 0 ? "No templates yet. Create your first template to get started." : "No templates match your filters."}
         </CardContent></Card>
       ) : viewMode === "table" ? (
-        <Card>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>Template name <SortIcon col="name" /></button></TableHead>
-                  <TableHead>Site type</TableHead>
-                  <TableHead>Campaign types</TableHead>
-                  <TableHead>Variables</TableHead>
-                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
-                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orderedTemplates.map((tpl) => {
-                  const info = campaignsByTemplate[tpl.id];
-                  const siteTypes = templateSiteTypes[tpl.id];
-                  const cTypes = info?.campaignTypes;
-                  return (
-                    <TableRow key={tpl.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-primary shrink-0" />
-                          <span className="font-medium">{tpl.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {siteTypes && siteTypes.size > 0 ? (
-                          <div className="flex flex-wrap gap-1">{[...siteTypes].map((t) => <Badge key={t} variant="outline" className="text-[10px] capitalize">{t}</Badge>)}</div>
-                        ) : <span className="text-xs text-muted-foreground">Generic</span>}
-                      </TableCell>
-                      <TableCell>
-                        {cTypes && cTypes.size > 0 ? (
-                          <div className="flex flex-wrap gap-1">{[...cTypes].map((t) => <Badge key={t} variant="secondary" className="text-[10px] uppercase">{t}</Badge>)}</div>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
-                      </TableCell>
-                      <TableCell><span className="text-xs text-muted-foreground">{(tpl.variables || []).length}</span></TableCell>
-                      <TableCell>
-                        <span className="text-sm">{info?.count ?? 0} campaign{(info?.count ?? 0) !== 1 ? "s" : ""}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(tpl.updated_at).toLocaleDateString()}</span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-0.5">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); setSchemaConfig((tpl as any).schema_config || {}); }} title="Edit">
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate"><Copy className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON"><Download className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)} title="Delete"><Trash2 className="h-3 w-3" /></Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
+        <>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
+              <span className="text-sm font-medium">{selectedIds.size} selected</span>
+              <Button variant="outline" size="sm" onClick={bulkExport}><Download className="h-3.5 w-3.5 mr-1.5" /> Export</Button>
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}><Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Cancel</Button>
+            </div>
+          )}
+          <Card>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10"><Checkbox checked={orderedTemplates.length > 0 && selectedIds.size === orderedTemplates.length} onCheckedChange={toggleSelectAll} aria-label="Select all" /></TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>Template name <SortIcon col="name" /></button></TableHead>
+                    <TableHead>Site type</TableHead>
+                    <TableHead>Campaign types</TableHead>
+                    <TableHead>Variables</TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orderedTemplates.map((tpl) => {
+                    const info = campaignsByTemplate[tpl.id];
+                    const siteTypes = templateSiteTypes[tpl.id];
+                    const cTypes = info?.campaignTypes;
+                    return (
+                      <TableRow key={tpl.id} data-state={selectedIds.has(tpl.id) ? "selected" : undefined}>
+                        <TableCell><Checkbox checked={selectedIds.has(tpl.id)} onCheckedChange={() => toggleSelect(tpl.id)} aria-label={`Select ${tpl.name}`} /></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary shrink-0" />
+                            <span className="font-medium">{tpl.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {siteTypes && siteTypes.size > 0 ? (
+                            <div className="flex flex-wrap gap-1">{[...siteTypes].map((t) => <Badge key={t} variant="outline" className="text-[10px] capitalize">{t}</Badge>)}</div>
+                          ) : <span className="text-xs text-muted-foreground">Generic</span>}
+                        </TableCell>
+                        <TableCell>
+                          {cTypes && cTypes.size > 0 ? (
+                            <div className="flex flex-wrap gap-1">{[...cTypes].map((t) => <Badge key={t} variant="secondary" className="text-[10px] uppercase">{t}</Badge>)}</div>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell><span className="text-xs text-muted-foreground">{(tpl.variables || []).length}</span></TableCell>
+                        <TableCell>
+                          <span className="text-sm">{info?.count ?? 0} campaign{(info?.count ?? 0) !== 1 ? "s" : ""}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(tpl.updated_at).toLocaleDateString()}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); setSchemaConfig((tpl as any).schema_config || {}); }} title="Edit">
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate"><Copy className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON"><Download className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)} title="Delete"><Trash2 className="h-3 w-3" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+          {/* Bulk delete confirmation */}
+          <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete {selectedIds.size} template(s)?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete the selected templates and unlink them from any campaigns. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={bulkDelete}>
+                  Delete {selectedIds.size} template(s)
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {hasCustomOrder && (
