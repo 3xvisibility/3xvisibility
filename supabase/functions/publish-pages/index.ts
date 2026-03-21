@@ -297,6 +297,9 @@ Deno.serve(async (req) => {
 
     const results: { id: string; status: string; external_url?: string; error?: string }[] = [];
 
+    // Cache Elementor detection per website to avoid redundant checks
+    const elementorCache = new Map<string, { usesElementor: boolean; pageTemplate?: string }>();
+
     for (const page of pages) {
       // Resolve website if not directly joined
       if (!page.websites) {
@@ -328,9 +331,30 @@ Deno.serve(async (req) => {
 
       try {
         const connector = createConnector(page.websites as WebsiteRecord);
+        const cleanedContent = stripHeadTagsForCms(page.content);
+
+        // Auto-detect Elementor for this website (cached)
+        const wsKey = page.website_id || "default";
+        if (!elementorCache.has(wsKey)) {
+          const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
+          elementorCache.set(wsKey, detected);
+        }
+        const elementorInfo = elementorCache.get(wsKey)!;
+
+        // Build Elementor meta if the site uses Elementor
+        let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
+        if (elementorInfo.usesElementor) {
+          elementorMeta = {
+            elementor_data: buildElementorData(cleanedContent),
+            elementor_edit_mode: "builder",
+            page_template: elementorInfo.pageTemplate || "elementor_header_footer",
+          };
+        }
+
         const payload = buildPayload(
-          { title: page.title, content: stripHeadTagsForCms(page.content), slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
-          pubType
+          { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
+          pubType,
+          elementorMeta
         );
 
         // If page was previously published (has external_id), update instead of creating
