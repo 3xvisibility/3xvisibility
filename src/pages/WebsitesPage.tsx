@@ -95,10 +95,14 @@ export default function WebsitesPage() {
       }
       if (!siteUrl || !siteType) throw new Error("Missing website info");
 
+      const finalUrl = siteType === "shopify" && shopDomain
+        ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+        : siteUrl;
+
       const { data, error } = await supabase.functions.invoke("save-website", {
         body: {
-          name: siteName || new URL(siteUrl).hostname,
-          url: siteUrl,
+          name: siteName || (siteType === "shopify" ? shopDomain : new URL(finalUrl).hostname),
+          url: finalUrl,
           type: siteType,
           credentials: buildCredentials(),
           workspace_id: wsId,
