@@ -854,11 +854,13 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields }));
-    const { campaign_id, action, test_mode, overwrite_fields } = body;
+    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields, publish_mode: body.publish_mode, retry_failed_only: body.retry_failed_only }));
+    const { campaign_id, action, test_mode, overwrite_fields, publish_mode, retry_failed_only } = body;
     activeCampaignId = campaign_id ?? null;
     // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
     const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
+    // publish_mode: "draft" | "publish" — determines initial page status
+    const effectivePublishMode = publish_mode === "publish" ? "published" : "pending";
 
     if (!campaign_id) {
       return new Response(JSON.stringify({ error: "campaign_id is required" }), {
@@ -1023,6 +1025,31 @@ Deno.serve(async (req) => {
     // Test mode: only generate 1 draft page
     if (test_mode) {
       limitedRows = [limitedRows[0]];
+    }
+
+    // Retry failed only: filter to rows whose slugs match failed pages
+    if (retry_failed_only && !test_mode) {
+      const { data: failedPages } = await supabase
+        .from("generated_pages")
+        .select("slug, title")
+        .eq("campaign_id", campaign_id)
+        .eq("status", "failed");
+
+      if (failedPages && failedPages.length > 0) {
+        const failedSlugs = new Set(failedPages.map((p: any) => slugify(p.title)));
+        limitedRows = limitedRows.filter((row: Record<string, string>) => {
+          const values = Object.values(row).filter(Boolean);
+          const rowTitle = values.slice(0, 2).join(" - ");
+          return failedSlugs.has(slugify(rowTitle));
+        });
+        // Delete existing failed pages so they can be regenerated
+        await supabase
+          .from("generated_pages")
+          .delete()
+          .eq("campaign_id", campaign_id)
+          .eq("status", "failed");
+        console.log(`[GENERATE-PAGES] Retry failed only: ${limitedRows.length} rows to retry`);
+      }
     }
 
     const remainingRows = limitedRows.slice(startIndex);
@@ -1631,7 +1658,7 @@ Deno.serve(async (req) => {
             title: pageTitle,
             slug: slug + utmQueryString,
             content: pageContent,
-            status: "pending" as any,
+            status: effectivePublishMode as any,
             error_message: null,
             seo_title: seoData.seo_title,
             seo_description: seoData.seo_description,

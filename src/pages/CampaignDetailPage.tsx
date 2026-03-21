@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
+import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -77,6 +78,7 @@ export default function CampaignDetailPage() {
   const wsId = currentWorkspace?.id;
   const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [showStartDialog, setShowStartDialog] = useState(false);
   const [resumeIndex, setResumeIndex] = useState(0);
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [overwriteFields, setOverwriteFields] = useState({
@@ -204,15 +206,39 @@ export default function CampaignDetailPage() {
 
   // Execute mutation
   const executeMutation = useMutation({
-    mutationFn: async (params?: { action?: string; overwrite_fields?: typeof overwriteFields }) => {
+    mutationFn: async (params?: { action?: string; overwrite_fields?: typeof overwriteFields; generation_options?: GenerationOptions }) => {
       const action = params?.action;
       const isTest = action === "test";
+      const opts = params?.generation_options;
+
+      // If scheduling for later, update campaign and return early
+      if (opts?.scheduled_at) {
+        const { error: schedErr } = await supabase.from("campaigns").update({
+          scheduled_at: opts.scheduled_at,
+          publish_mode: opts.publish_mode || "draft",
+          max_rows: opts.max_rows || null,
+          status: "queued",
+        } as any).eq("id", id!);
+        if (schedErr) throw new Error(schedErr.message);
+        return { scheduled: true, generated: 0 };
+      }
+
+      // Update publish_mode and max_rows on campaign before running
+      if (opts) {
+        await supabase.from("campaigns").update({
+          publish_mode: opts.publish_mode || "draft",
+          max_rows: opts.max_rows || null,
+        } as any).eq("id", id!);
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-pages", {
         body: {
           campaign_id: id,
           action: isTest ? undefined : action,
           test_mode: isTest,
           overwrite_fields: params?.overwrite_fields || undefined,
+          publish_mode: opts?.publish_mode,
+          retry_failed_only: opts?.retry_failed_only,
         },
       });
       if (error) {
@@ -231,10 +257,15 @@ export default function CampaignDetailPage() {
       return data;
     },
     onSuccess: (data) => {
+      setShowStartDialog(false);
       queryClient.invalidateQueries({ queryKey: ["campaign-detail", id] });
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
       queryClient.invalidateQueries({ queryKey: ["campaign-jobs", id] });
-      toast({ title: data.paused ? "Generation paused" : "Generation complete", description: `${data.generated || 0} pages generated.` });
+      if (data?.scheduled) {
+        toast({ title: "Generation scheduled", description: "The campaign will run at the scheduled time." });
+      } else {
+        toast({ title: data.paused ? "Generation paused" : "Generation complete", description: `${data.generated || 0} pages generated.` });
+      }
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -355,7 +386,7 @@ export default function CampaignDetailPage() {
               </Button>
               <Button
                 size="sm"
-                onClick={() => executeMutation.mutate({})}
+                onClick={() => setShowStartDialog(true)}
                 disabled={executeMutation.isPending}
                 className="rounded-xl bg-gradient-primary hover:brightness-110"
               >
@@ -1146,6 +1177,18 @@ export default function CampaignDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Start Generation Dialog */}
+      <StartGenerationDialog
+        open={showStartDialog}
+        onOpenChange={setShowStartDialog}
+        totalRows={campaign?.total_rows || 0}
+        failedRowsCount={statusCounts.failed}
+        isPending={executeMutation.isPending}
+        onStart={(options) => {
+          executeMutation.mutate({ generation_options: options });
+        }}
+      />
     </div>
   );
 }
