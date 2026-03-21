@@ -94,6 +94,7 @@ interface UsageLimitBannerProps {
 
 export function UsageLimitBanner({ type, used, limit, className = "" }: UsageLimitBannerProps) {
   const navigate = useNavigate();
+  const { basePath } = useWorkspace();
   const percent = limit > 0 ? Math.round((used / limit) * 100) : 0;
 
   if (percent < 80) return null;
