@@ -24,6 +24,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 import { CommandPalette } from "@/components/CommandPalette";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { WorkspaceBreadcrumb } from "@/components/WorkspaceBreadcrumb";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
