@@ -763,6 +763,10 @@ export default function CampaignsPage() {
     setCustomValues({});
   };
 
+  // locationHeaders defined above
+  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
+  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
+
   const handleTestOnePage = useCallback(async () => {
     if (!selectedTemplate || effectiveCsvData.length === 0) {
       toast({ title: "Cannot test", description: "Select a template and add data first.", variant: "destructive" });
