@@ -1010,6 +1010,15 @@ export default function CampaignDetailPage() {
             </div>
           )}
           {errorPages.length === 0 && jobErrors.length === 0 ? (
+            <Card className="border-0 shadow-surface">
+              <CardContent className="py-16 text-center">
+                <Check className="h-10 w-10 mx-auto mb-3 text-success/40" />
+                <p className="text-sm font-medium text-muted-foreground">No errors</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">All pages generated successfully.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
               {/* Page-level errors */}
               {errorPages.length > 0 && (
                 <Card className="border-0 shadow-surface">
