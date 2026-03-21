@@ -171,7 +171,6 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
                 accessToken={shopifyToken}
                 onAccessTokenChange={setShopifyToken}
               />
-              </div>
             )}
             {site.type === "prestashop" && (
               <div>
