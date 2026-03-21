@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useJobNotifications } from "@/hooks/use-job-notifications";
+import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
