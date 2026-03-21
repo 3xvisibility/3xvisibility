@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +70,8 @@ export default function TemplatesPage() {
   const [siteTypeFilter, setSiteTypeFilter] = useState("all");
   const [campaignTypeFilter, setCampaignTypeFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
+  const [sortColumn, setSortColumn] = useState<"name" | "date" | "campaigns">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -193,8 +195,31 @@ export default function TemplatesPage() {
   const { features } = useSubscription();
   const maxTemplates = features.templates;
 
+  // Sort filtered templates
+  const toggleSort = (col: "name" | "date" | "campaigns") => {
+    if (sortColumn === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortColumn(col); setSortDir(col === "name" ? "asc" : "desc"); }
+  };
+
+  const sortedTemplates = useMemo(() => {
+    const arr = [...filteredTemplates];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortColumn === "name") cmp = a.name.localeCompare(b.name);
+      else if (sortColumn === "date") cmp = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      else if (sortColumn === "campaigns") cmp = (campaignsByTemplate[a.id]?.count ?? 0) - (campaignsByTemplate[b.id]?.count ?? 0);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return arr;
+  }, [filteredTemplates, sortColumn, sortDir, campaignsByTemplate]);
+
+  const SortIcon = ({ col }: { col: "name" | "date" | "campaigns" }) => {
+    if (sortColumn !== col) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
   const { ordered: orderedTemplates, getDragProps, hasCustomOrder, resetOrder } = useDragReorder(
-    filteredTemplates,
+    sortedTemplates,
     `tpl-order-${wsId}`
   );
 
@@ -1185,12 +1210,12 @@ RULES:
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Template name</TableHead>
+                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>Template name <SortIcon col="name" /></button></TableHead>
                   <TableHead>Site type</TableHead>
                   <TableHead>Campaign types</TableHead>
                   <TableHead>Variables</TableHead>
-                  <TableHead>Used in</TableHead>
-                  <TableHead>Last updated</TableHead>
+                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
+                  <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
