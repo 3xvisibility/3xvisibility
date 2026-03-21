@@ -281,7 +281,7 @@ export default function WebsitesPage() {
                       <><Zap className="h-4 w-4 mr-1" /> Test</>
                     )}
                   </Button>
-                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
+                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || createMutation.isPending}>
                     {createMutation.isPending ? "Connecting..." : "Connect"}
                   </Button>
                 </div>
