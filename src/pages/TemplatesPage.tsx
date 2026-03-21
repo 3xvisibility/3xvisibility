@@ -524,6 +524,38 @@ export default function TemplatesPage() {
     }
   };
 
+  const normalizeSlug = (input: string) =>
+    input
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9{}\-\/]/g, "-")
+      .replace(/-{2,}/g, "-")
+      .replace(/^-|-$/g, "");
+
+  const seoTitleLen = seoTitlePattern.replace(/\{[^}]+\}/g, "xxxxx").length;
+  const seoDescLen = seoDescriptionPattern.replace(/\{[^}]+\}/g, "xxxxx").length;
+  const seoTitleColor = seoTitleLen === 0 ? "text-muted-foreground" : seoTitleLen <= 60 ? "text-emerald-600" : seoTitleLen <= 70 ? "text-amber-600" : "text-destructive";
+  const seoDescColor = seoDescLen === 0 ? "text-muted-foreground" : (seoDescLen >= 120 && seoDescLen <= 160) ? "text-emerald-600" : (seoDescLen >= 100 && seoDescLen <= 180) ? "text-amber-600" : "text-destructive";
+
+  const loadSeoExtras = (config: Record<string, any>) => {
+    setSlugPattern(config?._slugPattern || "");
+    setOgTitlePattern(config?._ogTitle || "");
+    setOgDescriptionPattern(config?._ogDescription || "");
+    setOgImagePattern(config?._ogImage || "");
+    setTwitterCard(config?._twitterCard || "summary_large_image");
+    setCanonicalUrlPattern(config?._canonicalUrl || "");
+  };
+
+  const buildSchemaConfig = () => ({
+    ...schemaConfig,
+    _slugPattern: slugPattern,
+    _ogTitle: ogTitlePattern,
+    _ogDescription: ogDescriptionPattern,
+    _ogImage: ogImagePattern,
+    _twitterCard: twitterCard,
+    _canonicalUrl: canonicalUrlPattern,
+  });
+
   const resetAndClose = () => {
     setAiOpen(false);
     setOpen(false);
@@ -535,6 +567,12 @@ export default function TemplatesPage() {
     setActiveEditorTab("visual");
     setSeoTitlePattern("");
     setSeoDescriptionPattern("");
+    setSlugPattern("");
+    setOgTitlePattern("");
+    setOgDescriptionPattern("");
+    setOgImagePattern("");
+    setTwitterCard("summary_large_image");
+    setCanonicalUrlPattern("");
     setSchemaType("WebPage");
     setSchemaConfig({});
   };
