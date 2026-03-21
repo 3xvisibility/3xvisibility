@@ -416,6 +416,29 @@ export default function AuthPage() {
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
+                      {mode === "signup" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_+-=";
+                            let generated = "";
+                            const array = new Uint32Array(16);
+                            crypto.getRandomValues(array);
+                            for (let i = 0; i < 16; i++) {
+                              generated += chars[array[i] % chars.length];
+                            }
+                            generated = generated.slice(0, 12) + "A" + "a" + "1" + "!";
+                            setPassword(generated);
+                            setConfirmPassword(generated);
+                            setShowPassword(true);
+                            toast({ title: t("auth.passwordGenerated"), description: t("auth.passwordGeneratedDesc") });
+                          }}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-primary hover:text-primary/80 transition-colors mt-1"
+                        >
+                          <Wand2 className="h-3 w-3" />
+                          {t("auth.generatePassword")}
+                        </button>
+                      )}
                     </div>
 
                     {/* Password strength meter - signup only */}
