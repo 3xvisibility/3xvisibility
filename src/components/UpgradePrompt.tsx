@@ -13,6 +13,7 @@ interface UpgradePromptProps {
 
 export function UpgradePrompt({ feature, variant = "inline", className = "" }: UpgradePromptProps) {
   const navigate = useNavigate();
+  const { basePath } = useWorkspace();
   const minPlan = getMinimumPlanFor(feature);
   const planLabel = PLAN_FEATURES[minPlan].label;
   const featureLabel = FEATURE_LABELS[feature];
