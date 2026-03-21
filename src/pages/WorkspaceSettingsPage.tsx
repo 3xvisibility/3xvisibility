@@ -377,6 +377,7 @@ export default function WorkspaceSettingsPage() {
                 <SelectItem value="owner">Owner</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="readonly">Read-only</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
