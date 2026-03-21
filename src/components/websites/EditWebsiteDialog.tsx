@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
+import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
 
 type Website = Tables<"websites">;
 
@@ -164,10 +165,12 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               />
             )}
             {site.type === "shopify" && (
-              <div>
-                <Label htmlFor="edit-shopify-token">Admin API Access Token</Label>
-                <Input id="edit-shopify-token" type="password" placeholder="shpat_xxxxx" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} />
-              </div>
+              <ShopifyCredentialFields
+                shopDomain={url.replace(/^https?:\/\//, "").replace(/\/+$/, "")}
+                onShopDomainChange={(v) => setUrl(`https://${v.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
+                accessToken={shopifyToken}
+                onAccessTokenChange={setShopifyToken}
+              />
             )}
             {site.type === "prestashop" && (
               <div>

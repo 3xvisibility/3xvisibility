@@ -18,6 +18,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WebsiteCard } from "@/components/websites/WebsiteCard";
 import { SiteTypeFilter } from "@/components/websites/SiteTypeFilter";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
+import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
@@ -35,7 +36,8 @@ export default function WebsitesPage() {
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
-  // Other platforms
+  // Shopify
+  const [shopDomain, setShopDomain] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
@@ -80,7 +82,7 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return { admin_api_token: shopifyToken };
+    if (siteType === "shopify") return { admin_api_token: shopifyToken, shop_domain: shopDomain };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
@@ -93,10 +95,14 @@ export default function WebsitesPage() {
       }
       if (!siteUrl || !siteType) throw new Error("Missing website info");
 
+      const finalUrl = siteType === "shopify" && shopDomain
+        ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+        : siteUrl;
+
       const { data, error } = await supabase.functions.invoke("save-website", {
         body: {
-          name: siteName || new URL(siteUrl).hostname,
-          url: siteUrl,
+          name: siteName || (siteType === "shopify" ? shopDomain : new URL(finalUrl).hostname),
+          url: finalUrl,
           type: siteType,
           credentials: buildCredentials(),
           workspace_id: wsId,
@@ -118,8 +124,11 @@ export default function WebsitesPage() {
 
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
+      const testUrl = siteType === "shopify" && shopDomain
+        ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+        : siteUrl;
       const { data, error } = await supabase.functions.invoke("test-connection", {
-        body: { url: siteUrl, type: siteType, credentials: buildCredentials() },
+        body: { url: testUrl, type: siteType, credentials: buildCredentials() },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -155,6 +164,7 @@ export default function WebsitesPage() {
     setAppPassword("");
     setJwtToken("");
     setShopifyToken("");
+    setShopDomain("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
@@ -209,10 +219,12 @@ export default function WebsitesPage() {
                   <Label htmlFor="site-name">Site Name</Label>
                   <Input id="site-name" placeholder="My Blog" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
                 </div>
-                <div>
-                  <Label htmlFor="site-url">Site URL</Label>
-                  <Input id="site-url" placeholder="https://example.com" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
-                </div>
+                {siteType !== "shopify" && (
+                  <div>
+                    <Label htmlFor="site-url">Site URL</Label>
+                    <Input id="site-url" placeholder="https://example.com" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
+                  </div>
+                )}
 
                 {siteType === "wordpress" && (
                   <WordPressCredentialFields
@@ -227,10 +239,12 @@ export default function WebsitesPage() {
                   />
                 )}
                 {siteType === "shopify" && (
-                  <div>
-                    <Label htmlFor="shopify-token">Admin API Access Token</Label>
-                    <Input id="shopify-token" type="password" placeholder="shpat_xxxxx" value={shopifyToken} onChange={(e) => setShopifyToken(e.target.value)} />
-                  </div>
+                  <ShopifyCredentialFields
+                    shopDomain={shopDomain}
+                    onShopDomainChange={setShopDomain}
+                    accessToken={shopifyToken}
+                    onAccessTokenChange={setShopifyToken}
+                  />
                 )}
                 {siteType === "prestashop" && (
                   <div>
@@ -259,7 +273,7 @@ export default function WebsitesPage() {
                     variant="outline"
                     className="w-full sm:w-auto"
                     onClick={() => testConnectionMutation.mutate()}
-                    disabled={!siteUrl || !siteType || testConnectionMutation.isPending}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || testConnectionMutation.isPending}
                   >
                     {testConnectionMutation.isPending ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
@@ -267,7 +281,7 @@ export default function WebsitesPage() {
                       <><Zap className="h-4 w-4 mr-1" /> Test</>
                     )}
                   </Button>
-                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!siteUrl || !siteType || createMutation.isPending}>
+                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || createMutation.isPending}>
                     {createMutation.isPending ? "Connecting..." : "Connect"}
                   </Button>
                 </div>
