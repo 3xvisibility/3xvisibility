@@ -225,6 +225,7 @@ export default function BillingPage() {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.url) {
+        if (wsId) logAudit(wsId, "subscription_updated", "subscription", null, { detail: "Opened customer portal" });
         window.open(data.url, "_blank");
       }
     } catch (err: any) {
