@@ -504,7 +504,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.pagesGenerated": "pages générées ce mois",
     "sidebar.logout": "Déconnexion",
     "sidebar.dataCsv": "Données / CSV",
-    "sidebar.contentCalendar": "Calendrier",
+    "sidebar.contentCalendar": "Calendrier de contenu",
     "sidebar.seoAudit": "Audit SEO",
 
     // Auth
