@@ -33,6 +33,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOverlay";
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
+import { logAudit } from "@/lib/audit";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const YEARLY_DISCOUNT = 0.2;
 
