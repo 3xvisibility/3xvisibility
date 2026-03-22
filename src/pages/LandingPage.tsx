@@ -31,6 +31,7 @@ export default function LandingPage() {
         <CTASection />
       </main>
       <LandingFooter />
+      <BackToTop />
     </div>
   );
 }
