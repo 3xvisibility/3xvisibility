@@ -209,6 +209,7 @@ export default function BillingPage() {
       });
       if (error) throw error;
       if (data?.url) {
+        if (wsId) logAudit(wsId, "plan_changed", "subscription", null, { from: currentPlan, to: planName, billing: isYearly ? "yearly" : "monthly" });
         window.open(data.url, "_blank");
       }
     } catch (err: any) {
