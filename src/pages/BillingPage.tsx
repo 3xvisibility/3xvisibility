@@ -33,6 +33,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOverlay";
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
+import { logAudit } from "@/lib/audit";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const YEARLY_DISCOUNT = 0.2;
 
@@ -145,6 +147,8 @@ export default function BillingPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
@@ -205,6 +209,7 @@ export default function BillingPage() {
       });
       if (error) throw error;
       if (data?.url) {
+        if (wsId) logAudit(wsId, "plan_changed", "subscription", null, { from: currentPlan, to: planName, billing: isYearly ? "yearly" : "monthly" });
         window.open(data.url, "_blank");
       }
     } catch (err: any) {
@@ -220,6 +225,7 @@ export default function BillingPage() {
       const { data, error } = await supabase.functions.invoke("customer-portal");
       if (error) throw error;
       if (data?.url) {
+        if (wsId) logAudit(wsId, "subscription_updated", "subscription", null, { detail: "Opened customer portal" });
         window.open(data.url, "_blank");
       }
     } catch (err: any) {

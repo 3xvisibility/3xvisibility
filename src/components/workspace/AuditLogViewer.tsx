@@ -107,7 +107,7 @@ function exportAuditCsv(logs: AuditLog[]) {
 export default function AuditLogViewer({ workspaceId }: { workspaceId: string }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [actionFilter, setActionFilter] = useState<string>("all");
-  const [userSearch, setUserSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
 
   const {
@@ -117,7 +117,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["audit-logs", workspaceId, actionFilter, userSearch, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["audit-logs", workspaceId, actionFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
@@ -131,9 +131,6 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
       if (actionFilter !== "all") {
         query = query.eq("action", actionFilter);
       }
-      if (userSearch.trim()) {
-        query = query.eq("user_id", userSearch.trim());
-      }
       if (dateRange.from) {
         query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
       }
@@ -143,7 +140,25 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as AuditLog[];
+      let results = data as AuditLog[];
+
+      // Client-side full-text search across details, action, entity_type, user_id
+      const q = searchQuery.trim().toLowerCase();
+      if (q) {
+        results = results.filter((log) => {
+          const detailsStr = log.details ? JSON.stringify(log.details).toLowerCase() : "";
+          const actionLabel = (actionConfig[log.action]?.label || log.action).toLowerCase();
+          return (
+            actionLabel.includes(q) ||
+            log.user_id.toLowerCase().includes(q) ||
+            (log.entity_id || "").toLowerCase().includes(q) ||
+            log.entity_type.toLowerCase().includes(q) ||
+            detailsStr.includes(q)
+          );
+        });
+      }
+
+      return results;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
@@ -170,7 +185,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     return () => observer.disconnect();
   }, [handleObserver]);
 
-  const hasFilters = actionFilter !== "all" || userSearch || dateRange.from || dateRange.to;
+  const hasFilters = actionFilter !== "all" || searchQuery || dateRange.from || dateRange.to;
 
   return (
     <Card className="shadow-surface">
@@ -218,13 +233,13 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Filter by user ID..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="Search logs (email, name, URL…)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 text-xs"
             />
-            {userSearch && (
-              <button onClick={() => setUserSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X className="h-3 w-3" />
               </button>
             )}
@@ -263,7 +278,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               variant="ghost"
               size="sm"
               className="h-9 text-xs text-muted-foreground"
-              onClick={() => { setActionFilter("all"); setUserSearch(""); setDateRange({}); }}
+              onClick={() => { setActionFilter("all"); setSearchQuery(""); setDateRange({}); }}
             >
               Clear all
             </Button>
