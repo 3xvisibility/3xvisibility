@@ -80,7 +80,6 @@ const toolsNav: NavItem[] = [
 ];
 
 const settingsNav: NavItem[] = [
-  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
   { titleKey: "sidebar.billing", path: "billing", icon: CreditCard },
   { titleKey: "sidebar.settings", path: "settings", icon: Settings },
   { titleKey: "sidebar.workspaceSettings", path: "workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
