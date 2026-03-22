@@ -901,8 +901,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.strengthMedium": "Mittel",
     "auth.strengthStrong": "Stark",
   },
-  es: {}, it: {}, pt: {}, nl: {}, pl: {}, sv: {}, da: {},
-  ja: {}, ko: {}, zh: {}, ar: {}, ru: {}, tr: {}, hi: {},
-  th: {}, vi: {}, id: {}, cs: {}, ro: {}, hu: {}, el: {},
-  fi: {}, no: {}, uk: {}, he: {}, ms: {}, bn: {},
+  es: esLocale, it: itLocale, pt: ptLocale, nl: nlLocale, pl: plLocale, sv: svLocale, da: daLocale,
+  ja: jaLocale, ko: koLocale, zh: zhLocale, ar: arLocale, ru: ruLocale, tr: trLocale, hi: hiLocale,
+  th: thLocale, vi: viLocale, id: idLocale, cs: csLocale, ro: roLocale, hu: huLocale, el: elLocale,
+  fi: fiLocale, no: noLocale, uk: ukLocale, he: heLocale, ms: msLocale, bn: bnLocale,
 };
