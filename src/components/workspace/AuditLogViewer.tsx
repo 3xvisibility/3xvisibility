@@ -185,7 +185,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     return () => observer.disconnect();
   }, [handleObserver]);
 
-  const hasFilters = actionFilter !== "all" || userSearch || dateRange.from || dateRange.to;
+  const hasFilters = actionFilter !== "all" || searchQuery || dateRange.from || dateRange.to;
 
   return (
     <Card className="shadow-surface">
