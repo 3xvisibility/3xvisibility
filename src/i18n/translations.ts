@@ -786,7 +786,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.websites": "Websites",
     "sidebar.billing": "Abrechnung",
     "sidebar.settings": "Einstellungen",
-    "sidebar.workspaceSettings": "Arbeitsbereich",
+    "sidebar.workspaceSettings": "Arbeitsbereich-Einstellungen",
     "sidebar.admin": "Admin",
     "sidebar.usage": "Nutzung",
     "sidebar.pagesGenerated": "Seiten diesen Monat generiert",
