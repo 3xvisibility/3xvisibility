@@ -147,6 +147,8 @@ export default function BillingPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { currentWorkspace } = useWorkspace();
+  const wsId = currentWorkspace?.id;
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
