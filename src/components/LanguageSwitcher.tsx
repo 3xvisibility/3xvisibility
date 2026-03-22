@@ -33,7 +33,7 @@ export function LanguageSwitcher({ variant = "ghost", size = "icon", className }
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[140px]">
+      <DropdownMenuContent align="end" className="min-w-[160px] max-h-[320px] overflow-y-auto">
         {languages.map((lang) => (
           <DropdownMenuItem
             key={lang.code}
