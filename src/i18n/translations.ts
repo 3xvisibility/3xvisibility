@@ -210,13 +210,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.websites": "Websites",
     "sidebar.billing": "Billing",
     "sidebar.settings": "Settings",
-    "sidebar.workspaceSettings": "Workspace",
+    "sidebar.workspaceSettings": "Workspace Settings",
     "sidebar.admin": "Admin",
     "sidebar.usage": "Usage",
     "sidebar.pagesGenerated": "pages generated this month",
     "sidebar.logout": "Log out",
     "sidebar.dataCsv": "Data / CSV",
-    "sidebar.contentCalendar": "Calendar",
+    "sidebar.contentCalendar": "Content Calendar",
     "sidebar.seoAudit": "SEO Audit",
 
     // Auth
@@ -498,13 +498,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.websites": "Sites web",
     "sidebar.billing": "Facturation",
     "sidebar.settings": "Paramètres",
-    "sidebar.workspaceSettings": "Espace de travail",
+    "sidebar.workspaceSettings": "Paramètres de l'espace",
     "sidebar.admin": "Admin",
     "sidebar.usage": "Utilisation",
     "sidebar.pagesGenerated": "pages générées ce mois",
     "sidebar.logout": "Déconnexion",
     "sidebar.dataCsv": "Données / CSV",
-    "sidebar.contentCalendar": "Calendrier",
+    "sidebar.contentCalendar": "Calendrier de contenu",
     "sidebar.seoAudit": "Audit SEO",
 
     // Auth
@@ -786,13 +786,13 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.websites": "Websites",
     "sidebar.billing": "Abrechnung",
     "sidebar.settings": "Einstellungen",
-    "sidebar.workspaceSettings": "Arbeitsbereich",
+    "sidebar.workspaceSettings": "Arbeitsbereich-Einstellungen",
     "sidebar.admin": "Admin",
     "sidebar.usage": "Nutzung",
     "sidebar.pagesGenerated": "Seiten diesen Monat generiert",
     "sidebar.logout": "Abmelden",
     "sidebar.dataCsv": "Daten / CSV",
-    "sidebar.contentCalendar": "Kalender",
+    "sidebar.contentCalendar": "Inhaltskalender",
     "sidebar.seoAudit": "SEO-Audit",
 
     // Auth

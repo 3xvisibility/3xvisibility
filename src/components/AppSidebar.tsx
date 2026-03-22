@@ -59,6 +59,7 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { titleKey: "sidebar.dashboard", path: "dashboard", icon: LayoutDashboard },
+  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
   { titleKey: "sidebar.campaigns", path: "campaigns", icon: Rocket },
   { titleKey: "sidebar.generatedPages", path: "pages", icon: Layers },
   { titleKey: "sidebar.templates", path: "templates", icon: FileText },
@@ -79,7 +80,6 @@ const toolsNav: NavItem[] = [
 ];
 
 const settingsNav: NavItem[] = [
-  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
   { titleKey: "sidebar.billing", path: "billing", icon: CreditCard },
   { titleKey: "sidebar.settings", path: "settings", icon: Settings },
   { titleKey: "sidebar.workspaceSettings", path: "workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
