@@ -133,6 +133,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
           <KeyboardShortcutsDialog />
           <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
           <OnboardingTour />
+          <BackToTop />
         </div>
       </div>
     </SidebarProvider>
