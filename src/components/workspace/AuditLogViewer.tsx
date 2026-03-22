@@ -233,13 +233,13 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Filter by user ID..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="Search logs (email, name, URL…)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 text-xs"
             />
-            {userSearch && (
-              <button onClick={() => setUserSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 <X className="h-3 w-3" />
               </button>
             )}
