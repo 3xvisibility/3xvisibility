@@ -1,3 +1,31 @@
+import esLocale from "./locales/es";
+import itLocale from "./locales/it";
+import ptLocale from "./locales/pt";
+import nlLocale from "./locales/nl";
+import plLocale from "./locales/pl";
+import svLocale from "./locales/sv";
+import daLocale from "./locales/da";
+import jaLocale from "./locales/ja";
+import koLocale from "./locales/ko";
+import zhLocale from "./locales/zh";
+import arLocale from "./locales/ar";
+import ruLocale from "./locales/ru";
+import trLocale from "./locales/tr";
+import hiLocale from "./locales/hi";
+import thLocale from "./locales/th";
+import viLocale from "./locales/vi";
+import idLocale from "./locales/id";
+import csLocale from "./locales/cs";
+import roLocale from "./locales/ro";
+import huLocale from "./locales/hu";
+import elLocale from "./locales/el";
+import fiLocale from "./locales/fi";
+import noLocale from "./locales/no";
+import ukLocale from "./locales/uk";
+import heLocale from "./locales/he";
+import msLocale from "./locales/ms";
+import bnLocale from "./locales/bn";
+
 export type Language =
   | "en" | "fr" | "de" | "es" | "it" | "pt" | "nl" | "pl" | "sv" | "da"
   | "ja" | "ko" | "zh" | "ar" | "ru" | "tr" | "hi" | "th" | "vi" | "id"
@@ -901,8 +929,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.strengthMedium": "Mittel",
     "auth.strengthStrong": "Stark",
   },
-  es: {}, it: {}, pt: {}, nl: {}, pl: {}, sv: {}, da: {},
-  ja: {}, ko: {}, zh: {}, ar: {}, ru: {}, tr: {}, hi: {},
-  th: {}, vi: {}, id: {}, cs: {}, ro: {}, hu: {}, el: {},
-  fi: {}, no: {}, uk: {}, he: {}, ms: {}, bn: {},
+  es: esLocale, it: itLocale, pt: ptLocale, nl: nlLocale, pl: plLocale, sv: svLocale, da: daLocale,
+  ja: jaLocale, ko: koLocale, zh: zhLocale, ar: arLocale, ru: ruLocale, tr: trLocale, hi: hiLocale,
+  th: thLocale, vi: viLocale, id: idLocale, cs: csLocale, ro: roLocale, hu: huLocale, el: elLocale,
+  fi: fiLocale, no: noLocale, uk: ukLocale, he: heLocale, ms: msLocale, bn: bnLocale,
 };
