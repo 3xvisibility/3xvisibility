@@ -278,7 +278,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               variant="ghost"
               size="sm"
               className="h-9 text-xs text-muted-foreground"
-              onClick={() => { setActionFilter("all"); setUserSearch(""); setDateRange({}); }}
+              onClick={() => { setActionFilter("all"); setSearchQuery(""); setDateRange({}); }}
             >
               Clear all
             </Button>
