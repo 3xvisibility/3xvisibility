@@ -8,18 +8,27 @@ export function BackToTop() {
 
   const handleScroll = useCallback(() => {
     const main = document.querySelector("main");
-    if (main) setVisible(main.scrollTop > 300);
+    const mainScroll = main ? main.scrollTop : 0;
+    const windowScroll = window.scrollY || document.documentElement.scrollTop;
+    setVisible(Math.max(mainScroll, windowScroll) > 300);
   }, []);
 
   useEffect(() => {
     const main = document.querySelector("main");
-    if (!main) return;
-    main.addEventListener("scroll", handleScroll, { passive: true });
-    return () => main.removeEventListener("scroll", handleScroll);
+    main?.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      main?.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [handleScroll]);
 
   const scrollToTop = () => {
-    document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+    const main = document.querySelector("main");
+    if (main && main.scrollTop > 0) {
+      main.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
