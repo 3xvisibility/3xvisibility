@@ -25,6 +25,7 @@ import { KeyboardShortcutsDialog } from "@/components/KeyboardShortcutsDialog";
 import { CommandPalette } from "@/components/CommandPalette";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WorkspaceBreadcrumb } from "@/components/WorkspaceBreadcrumb";
+import { BackToTop } from "@/components/BackToTop";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -132,6 +133,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
           <KeyboardShortcutsDialog />
           <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
           <OnboardingTour />
+          <BackToTop />
         </div>
       </div>
     </SidebarProvider>
