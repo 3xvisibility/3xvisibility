@@ -1,9 +1,39 @@
-export type Language = "en" | "fr" | "de";
+export type Language =
+  | "en" | "fr" | "de" | "es" | "it" | "pt" | "nl" | "pl" | "sv" | "da"
+  | "ja" | "ko" | "zh" | "ar" | "ru" | "tr" | "hi" | "th" | "vi" | "id"
+  | "cs" | "ro" | "hu" | "el" | "fi" | "no" | "uk" | "he" | "ms" | "bn";
 
 export const languages: { code: Language; label: string; flag: string }[] = [
   { code: "en", label: "English", flag: "🇬🇧" },
   { code: "fr", label: "Français", flag: "🇫🇷" },
   { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "pt", label: "Português", flag: "🇵🇹" },
+  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "sv", label: "Svenska", flag: "🇸🇪" },
+  { code: "da", label: "Dansk", flag: "🇩🇰" },
+  { code: "no", label: "Norsk", flag: "🇳🇴" },
+  { code: "fi", label: "Suomi", flag: "🇫🇮" },
+  { code: "cs", label: "Čeština", flag: "🇨🇿" },
+  { code: "ro", label: "Română", flag: "🇷🇴" },
+  { code: "hu", label: "Magyar", flag: "🇭🇺" },
+  { code: "el", label: "Ελληνικά", flag: "🇬🇷" },
+  { code: "uk", label: "Українська", flag: "🇺🇦" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+  { code: "ar", label: "العربية", flag: "🇸🇦" },
+  { code: "he", label: "עברית", flag: "🇮🇱" },
+  { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
+  { code: "bn", label: "বাংলা", flag: "🇧🇩" },
+  { code: "th", label: "ไทย", flag: "🇹🇭" },
+  { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
+  { code: "id", label: "Bahasa Indonesia", flag: "🇮🇩" },
+  { code: "ms", label: "Bahasa Melayu", flag: "🇲🇾" },
+  { code: "ja", label: "日本語", flag: "🇯🇵" },
+  { code: "ko", label: "한국어", flag: "🇰🇷" },
+  { code: "zh", label: "中文", flag: "🇨🇳" },
 ];
 
 export const translations: Record<Language, Record<string, string>> = {
@@ -871,4 +901,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.strengthMedium": "Mittel",
     "auth.strengthStrong": "Stark",
   },
+  es: {}, it: {}, pt: {}, nl: {}, pl: {}, sv: {}, da: {},
+  ja: {}, ko: {}, zh: {}, ar: {}, ru: {}, tr: {}, hi: {},
+  th: {}, vi: {}, id: {}, cs: {}, ro: {}, hu: {}, el: {},
+  fi: {}, no: {}, uk: {}, he: {}, ms: {}, bn: {},
 };
