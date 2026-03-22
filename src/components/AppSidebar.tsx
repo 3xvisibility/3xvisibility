@@ -59,6 +59,7 @@ interface NavItem {
 
 const mainNav: NavItem[] = [
   { titleKey: "sidebar.dashboard", path: "dashboard", icon: LayoutDashboard },
+  { titleKey: "sidebar.websites", path: "websites", icon: Globe },
   { titleKey: "sidebar.campaigns", path: "campaigns", icon: Rocket },
   { titleKey: "sidebar.generatedPages", path: "pages", icon: Layers },
   { titleKey: "sidebar.templates", path: "templates", icon: FileText },
