@@ -117,7 +117,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["audit-logs", workspaceId, actionFilter, userSearch, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
+    queryKey: ["audit-logs", workspaceId, actionFilter, searchQuery, dateRange.from?.toISOString(), dateRange.to?.toISOString()],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
@@ -131,9 +131,6 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
       if (actionFilter !== "all") {
         query = query.eq("action", actionFilter);
       }
-      if (userSearch.trim()) {
-        query = query.eq("user_id", userSearch.trim());
-      }
       if (dateRange.from) {
         query = query.gte("created_at", startOfDay(dateRange.from).toISOString());
       }
@@ -143,7 +140,25 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as AuditLog[];
+      let results = data as AuditLog[];
+
+      // Client-side full-text search across details, action, entity_type, user_id
+      const q = searchQuery.trim().toLowerCase();
+      if (q) {
+        results = results.filter((log) => {
+          const detailsStr = log.details ? JSON.stringify(log.details).toLowerCase() : "";
+          const actionLabel = (actionConfig[log.action]?.label || log.action).toLowerCase();
+          return (
+            actionLabel.includes(q) ||
+            log.user_id.toLowerCase().includes(q) ||
+            (log.entity_id || "").toLowerCase().includes(q) ||
+            log.entity_type.toLowerCase().includes(q) ||
+            detailsStr.includes(q)
+          );
+        });
+      }
+
+      return results;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) =>
