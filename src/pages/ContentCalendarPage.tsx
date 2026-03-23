@@ -148,7 +148,7 @@ export default function ContentCalendarPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">{t("contentCalendar.allTypes")}</SelectItem>
                 <SelectItem value="seo">SEO</SelectItem>
                 <SelectItem value="sea">SEA</SelectItem>
                 <SelectItem value="geo">GEO</SelectItem>
