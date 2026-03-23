@@ -189,9 +189,9 @@ export default function SettingsPage() {
           <p className="text-sm text-muted-foreground">{t("settings.appearanceDesc")}</p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { value: "light", label: "Light", icon: Sun },
-              { value: "dark", label: "Dark", icon: Moon },
-              { value: "system", label: "System", icon: Monitor },
+              { value: "light", label: t("settings.light"), icon: Sun },
+              { value: "dark", label: t("settings.dark"), icon: Moon },
+              { value: "system", label: t("settings.system"), icon: Monitor },
             ].map(({ value, label, icon: Icon }) => (
               <Button
                 key={value}
