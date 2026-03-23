@@ -50,39 +50,131 @@ const CATEGORIES = [
   { id: "health", label: "Health", icon: Heart },
 ];
 
+// Shared responsive base styles injected into every template
+const TEMPLATE_BASE_STYLES = `<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#1e293b;line-height:1.7}
+.t-container{max-width:960px;margin:0 auto;padding:0 20px}
+.t-hero{padding:56px 32px;border-radius:16px;text-align:center;position:relative;overflow:hidden}
+.t-hero h1{font-size:clamp(1.6rem,4vw,2.8rem);font-weight:800;line-height:1.15;margin-bottom:12px}
+.t-hero p{font-size:clamp(0.95rem,2vw,1.2rem);opacity:0.92;max-width:640px;margin:0 auto}
+.t-btn{display:inline-block;padding:14px 36px;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;border:none;text-decoration:none;transition:transform .2s,box-shadow .2s}
+.t-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.t-grid{display:grid;gap:24px}
+.t-grid-2{grid-template-columns:repeat(2,1fr)}
+.t-grid-3{grid-template-columns:repeat(3,1fr)}
+.t-grid-4{grid-template-columns:repeat(4,1fr)}
+.t-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:28px;transition:transform .2s,box-shadow .2s}
+.t-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.08)}
+.t-section{padding:48px 0}
+.t-section h2{font-size:clamp(1.3rem,3vw,2rem);font-weight:700;margin-bottom:16px}
+.t-badge{display:inline-block;padding:5px 14px;border-radius:99px;font-size:0.78rem;font-weight:600;letter-spacing:0.03em}
+.t-stat{text-align:center}
+.t-stat .num{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1}
+.t-stat .lbl{font-size:0.85rem;color:#64748b;margin-top:4px}
+.t-testimonial{background:#f8fafc;border-radius:14px;padding:28px;border-left:4px solid #3b82f6}
+.t-stars{color:#f59e0b;font-size:1.1rem;letter-spacing:2px}
+.t-form-group{margin-bottom:16px}
+.t-form-group label{display:block;font-weight:600;font-size:0.85rem;margin-bottom:6px;color:#475569}
+.t-form-group input,.t-form-group textarea,.t-form-group select{width:100%;padding:12px 16px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.95rem;font-family:inherit}
+.t-footer{background:#0f172a;color:#e2e8f0;padding:40px 32px;border-radius:14px;margin-top:32px}
+.t-footer a{color:#93c5fd;text-decoration:none}
+.t-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#f1f5f9;border-radius:99px;font-size:0.82rem;font-weight:500;color:#475569}
+@media(max-width:768px){
+  .t-grid-2,.t-grid-3,.t-grid-4{grid-template-columns:1fr}
+  .t-hero{padding:40px 20px;border-radius:12px}
+  .t-section{padding:32px 0}
+  .t-card{padding:20px}
+}
+@media(min-width:769px) and (max-width:1024px){
+  .t-grid-3{grid-template-columns:repeat(2,1fr)}
+  .t-grid-4{grid-template-columns:repeat(2,1fr)}
+}
+</style>`;
+
 // Built-in community templates
 const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   {
     id: "local-plumber",
     name: "Local Plumber Landing",
     description: "High-converting landing page for local plumbing services with service areas, pricing, and trust signals.",
-    content: `<div class="template">
-<header style="background:linear-gradient(135deg,#1e3a5f,#2d5a8e);color:#fff;padding:48px 32px;border-radius:12px">
-  <h1 style="font-size:2.5em;margin-bottom:8px">{company_name} — {service} in {city}</h1>
-  <p style="font-size:1.2em;opacity:0.9">Trusted {service:lowercase} experts serving {city} and surrounding areas</p>
-  <p style="margin-top:16px;font-size:1.4em;font-weight:700">📞 Call Now: {phone}</p>
-</header>
-<section style="padding:32px 0">
-  <h2>Why Choose {company_name}?</h2>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:16px">
-    <div style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;text-align:center">
-      <p style="font-size:2em">⚡</p><h3>Fast Response</h3><p>Same-day service in {city}</p>
-    </div>
-    <div style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;text-align:center">
-      <p style="font-size:2em">💰</p><h3>Fair Pricing</h3><p>Free estimates, no hidden fees</p>
-    </div>
-    <div style="padding:20px;border:1px solid #e5e7eb;border-radius:8px;text-align:center">
-      <p style="font-size:2em">⭐</p><h3>5-Star Rated</h3><p>Hundreds of happy customers in {state}</p>
+    content: `${TEMPLATE_BASE_STYLES}
+<div class="t-container">
+  <div class="t-hero" style="background:linear-gradient(135deg,#0f4c81,#1a73b5,#2196f3);color:#fff">
+    <div style="position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2280%22 cy=%2220%22 r=%2240%22 fill=%22rgba(255,255,255,0.04)%22/><circle cx=%2220%22 cy=%2280%22 r=%2260%22 fill=%22rgba(255,255,255,0.03)%22/></svg>')"></div>
+    <div style="position:relative;z-index:1">
+      <span class="t-badge" style="background:rgba(255,255,255,0.15);color:#fff;margin-bottom:16px">⭐ Rated 5-Stars in {city}</span>
+      <h1>{company_name} — Professional {service} in {city}</h1>
+      <p>Trusted {service:lowercase} experts serving {city} and the greater {state} area. Fast response, honest pricing, guaranteed satisfaction.</p>
+      <div style="margin-top:28px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px">
+        <a class="t-btn" style="background:#fff;color:#0f4c81">📞 Call {phone}</a>
+        <a class="t-btn" style="background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.3)">Get Free Estimate</a>
+      </div>
     </div>
   </div>
-</section>
-<section style="background:#f8fafc;padding:32px;border-radius:8px;margin-top:24px">
-  <h2>Our {service} Services in {city}, {state}</h2>
-  <p>{service_description}</p>
-  <p style="margin-top:16px"><strong>Service Area:</strong> {city}, {nearby_cities}</p>
-</section>
+
+  <div class="t-section">
+    <h2 style="text-align:center">Why Homeowners in {city} Choose Us</h2>
+    <div class="t-grid t-grid-3" style="margin-top:24px">
+      <div class="t-card" style="text-align:center;border-top:4px solid #2196f3">
+        <div style="font-size:2.4rem;margin-bottom:12px">⚡</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Same-Day Service</h3>
+        <p style="color:#64748b;font-size:0.92rem">Emergency? We arrive within hours, not days. Available 24/7 in {city}.</p>
+      </div>
+      <div class="t-card" style="text-align:center;border-top:4px solid #10b981">
+        <div style="font-size:2.4rem;margin-bottom:12px">💰</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Transparent Pricing</h3>
+        <p style="color:#64748b;font-size:0.92rem">Free estimates upfront. No hidden fees, no surprises on your bill.</p>
+      </div>
+      <div class="t-card" style="text-align:center;border-top:4px solid #f59e0b">
+        <div style="font-size:2.4rem;margin-bottom:12px">🛡️</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Licensed & Insured</h3>
+        <p style="color:#64748b;font-size:0.92rem">Fully certified professionals with {years_experience}+ years of experience in {state}.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-section" style="background:#f0f9ff;padding:40px 32px;border-radius:16px">
+    <h2>Our {service} Services</h2>
+    <p style="color:#475569;line-height:1.8;margin-bottom:20px">{service_description}</p>
+    <div class="t-grid t-grid-4" style="margin-top:20px">
+      <div class="t-chip">🔧 Repairs</div>
+      <div class="t-chip">🏗️ Installation</div>
+      <div class="t-chip">🔍 Inspections</div>
+      <div class="t-chip">🚨 Emergency</div>
+    </div>
+  </div>
+
+  <div class="t-section">
+    <h2 style="text-align:center">What Our Customers Say</h2>
+    <div class="t-grid t-grid-2" style="margin-top:24px">
+      <div class="t-testimonial">
+        <div class="t-stars">★★★★★</div>
+        <p style="margin-top:12px;color:#334155;font-style:italic">"Best {service:lowercase} service in {city}! Fast, professional, and fairly priced. Highly recommend {company_name}."</p>
+        <p style="margin-top:12px;font-weight:600;font-size:0.85rem;color:#64748b">— Verified Customer, {city}</p>
+      </div>
+      <div class="t-testimonial">
+        <div class="t-stars">★★★★★</div>
+        <p style="margin-top:12px;color:#334155;font-style:italic">"They came out the same day and fixed our issue quickly. Will definitely use again for any future {service:lowercase} needs."</p>
+        <p style="margin-top:12px;font-weight:600;font-size:0.85rem;color:#64748b">— Homeowner, {state}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-section" style="background:linear-gradient(135deg,#0f4c81,#1a73b5);padding:48px 32px;border-radius:16px;text-align:center;color:#fff">
+    <h2 style="color:#fff">Need {service} in {city}?</h2>
+    <p style="opacity:0.9;margin-bottom:24px">Serving {city}, {nearby_cities} and all of {state}. Available 24/7.</p>
+    <a class="t-btn" style="background:#fff;color:#0f4c81;font-size:1.1rem">📞 Call {phone} Now</a>
+  </div>
+
+  <div class="t-footer">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px">
+      <div><strong style="font-size:1.1rem;color:#fff">{company_name}</strong><p style="font-size:0.85rem;margin-top:4px">Licensed {service} professionals in {city}, {state}</p></div>
+      <div style="text-align:right"><p style="font-size:0.85rem">📞 {phone}</p><p style="font-size:0.85rem;margin-top:4px">Serving {nearby_cities}</p></div>
+    </div>
+  </div>
 </div>`,
-    variables: ["{company_name}", "{service}", "{city}", "{state}", "{phone}", "{service_description}", "{nearby_cities}"],
+    variables: ["{company_name}", "{service}", "{city}", "{state}", "{phone}", "{service_description}", "{nearby_cities}", "{years_experience}"],
     category: "local-seo",
     tags: ["plumbing", "local", "services", "landing"],
     author: "Community",
@@ -96,29 +188,63 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "product-page",
     name: "E-Commerce Product Page",
     description: "Clean product page with features, pricing, and social proof for online stores.",
-    content: `<div class="template">
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:32px">
-  <div style="background:#f1f5f9;border-radius:12px;padding:48px;display:flex;align-items:center;justify-content:center">
-    <p style="color:#94a3b8;font-size:1.2em">Product Image: {product_name}</p>
+    content: `${TEMPLATE_BASE_STYLES}
+<div class="t-container">
+  <div style="padding:8px 0">
+    <span style="color:#64748b;font-size:0.82rem">Home / {category} / <strong style="color:#1e293b">{product_name}</strong></span>
   </div>
-  <div>
-    <span style="color:#3b82f6;font-size:0.85em;font-weight:600">{category:uppercase}</span>
-    <h1 style="font-size:2em;margin:8px 0">{product_name}</h1>
-    <p style="font-size:1.8em;font-weight:700;color:#16a34a">{price}</p>
-    <p style="margin-top:16px;color:#64748b;line-height:1.7">{description}</p>
-    <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px">
-      <h3>Key Features</h3>
-      <p>{features}</p>
+
+  <div class="t-grid t-grid-2" style="gap:48px;padding:24px 0;align-items:start">
+    <div>
+      <div style="background:linear-gradient(145deg,#f1f5f9,#e2e8f0);border-radius:20px;padding:60px;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1">
+        <p style="color:#94a3b8;font-size:1.1rem;text-align:center">📸 {product_name}</p>
+      </div>
+      <div class="t-grid" style="grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px">
+        <div style="background:#f1f5f9;border-radius:10px;aspect-ratio:1;border:2px solid #3b82f6"></div>
+        <div style="background:#f1f5f9;border-radius:10px;aspect-ratio:1;border:2px solid transparent"></div>
+        <div style="background:#f1f5f9;border-radius:10px;aspect-ratio:1;border:2px solid transparent"></div>
+        <div style="background:#f1f5f9;border-radius:10px;aspect-ratio:1;border:2px solid transparent"></div>
+      </div>
     </div>
-    <button style="margin-top:24px;background:#3b82f6;color:#fff;border:none;padding:14px 32px;border-radius:8px;font-size:1.1em;cursor:pointer;width:100%">Add to Cart</button>
+
+    <div>
+      <span class="t-badge" style="background:#eff6ff;color:#2563eb">{category:uppercase}</span>
+      <h1 style="font-size:clamp(1.5rem,3vw,2.2rem);font-weight:800;margin:12px 0 8px">{product_name}</h1>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+        <span class="t-stars">★★★★★</span>
+        <span style="font-size:0.85rem;color:#64748b">(128 reviews)</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:20px">
+        <span style="font-size:2rem;font-weight:800;color:#0f172a">{price}</span>
+        <span style="font-size:1rem;color:#94a3b8;text-decoration:line-through">{compare_price}</span>
+        <span class="t-badge" style="background:#dcfce7;color:#16a34a">Save {discount}%</span>
+      </div>
+      <p style="color:#475569;line-height:1.8;margin-bottom:24px">{description}</p>
+
+      <div style="background:#f8fafc;padding:20px;border-radius:14px;margin-bottom:24px">
+        <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:12px">✨ Key Features</h3>
+        <p style="color:#475569;font-size:0.92rem;line-height:1.8">{features}</p>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="t-btn" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;flex:1;text-align:center">🛒 Add to Cart</button>
+        <button class="t-btn" style="background:#f1f5f9;color:#1e293b;border:1px solid #e2e8f0">♡ Wishlist</button>
+      </div>
+
+      <div class="t-grid" style="grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px">
+        <div class="t-chip" style="justify-content:center">🚚 Free Shipping</div>
+        <div class="t-chip" style="justify-content:center">↩️ 30-Day Returns</div>
+        <div class="t-chip" style="justify-content:center">🔒 Secure Checkout</div>
+      </div>
+    </div>
   </div>
-</div>
-<section style="padding:32px;border-top:1px solid #e5e7eb;margin-top:24px">
-  <h2>Product Details</h2>
-  <p>{long_description}</p>
-</section>
+
+  <div class="t-section" style="border-top:1px solid #e2e8f0">
+    <h2>Product Details</h2>
+    <p style="color:#475569;line-height:1.9">{long_description}</p>
+  </div>
 </div>`,
-    variables: ["{product_name}", "{category}", "{price}", "{description}", "{features}", "{long_description}"],
+    variables: ["{product_name}", "{category}", "{price}", "{compare_price}", "{discount}", "{description}", "{features}", "{long_description}"],
     category: "ecommerce",
     tags: ["product", "shop", "ecommerce"],
     author: "Community",
@@ -132,25 +258,61 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "saas-landing",
     name: "SaaS Feature Landing",
     description: "Modern landing page for SaaS product features with comparison and CTA sections.",
-    content: `<div class="template">
-<header style="text-align:center;padding:64px 32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-radius:12px">
-  <h1 style="font-size:2.8em;margin-bottom:12px">{headline}</h1>
-  <p style="font-size:1.3em;opacity:0.9;max-width:600px;margin:0 auto">{subheadline}</p>
-  <button style="margin-top:28px;background:#fff;color:#6366f1;border:none;padding:14px 36px;border-radius:8px;font-size:1.1em;font-weight:600;cursor:pointer">{cta_text}</button>
-</header>
-<section style="padding:48px 32px">
-  <h2 style="text-align:center;margin-bottom:32px">Why {product_name}?</h2>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px">
-    <div style="text-align:center;padding:24px"><h3>{feature_1_title}</h3><p style="color:#64748b">{feature_1_desc}</p></div>
-    <div style="text-align:center;padding:24px"><h3>{feature_2_title}</h3><p style="color:#64748b">{feature_2_desc}</p></div>
-    <div style="text-align:center;padding:24px"><h3>{feature_3_title}</h3><p style="color:#64748b">{feature_3_desc}</p></div>
+    content: `${TEMPLATE_BASE_STYLES}
+<div class="t-container">
+  <div class="t-hero" style="background:linear-gradient(135deg,#4f46e5,#7c3aed,#a855f7);color:#fff;padding:72px 32px">
+    <div style="position:absolute;inset:0;opacity:0.1;background:radial-gradient(circle at 30% 50%,#fff 0%,transparent 50%),radial-gradient(circle at 70% 50%,#fff 0%,transparent 50%)"></div>
+    <div style="position:relative;z-index:1">
+      <span class="t-badge" style="background:rgba(255,255,255,0.15);color:#fff;margin-bottom:20px">🚀 Now available for teams</span>
+      <h1 style="font-size:clamp(2rem,5vw,3.2rem)">{headline}</h1>
+      <p style="margin-top:12px">{subheadline}</p>
+      <div style="margin-top:32px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px">
+        <a class="t-btn" style="background:#fff;color:#4f46e5">{cta_text} →</a>
+        <a class="t-btn" style="background:transparent;color:#fff;border:2px solid rgba(255,255,255,0.3)">Watch Demo</a>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:24px;margin-top:28px;font-size:0.88rem;opacity:0.85">
+        <span>✓ Free 14-day trial</span><span>✓ No credit card required</span><span>✓ Cancel anytime</span>
+      </div>
+    </div>
   </div>
-</section>
-<section style="background:#f8fafc;padding:48px 32px;text-align:center;border-radius:12px">
-  <h2>{bottom_cta_headline}</h2>
-  <p style="color:#64748b;margin:12px 0">{bottom_cta_description}</p>
-  <button style="background:#6366f1;color:#fff;border:none;padding:14px 36px;border-radius:8px;font-size:1.1em;cursor:pointer">{cta_text}</button>
-</section>
+
+  <div class="t-section" style="text-align:center">
+    <span class="t-badge" style="background:#ede9fe;color:#6d28d9">Features</span>
+    <h2 style="margin-top:12px">Why {product_name}?</h2>
+    <p style="color:#64748b;max-width:600px;margin:8px auto 0">Everything you need to scale your business, all in one platform.</p>
+    <div class="t-grid t-grid-3" style="margin-top:32px;text-align:left">
+      <div class="t-card" style="border:none;background:linear-gradient(145deg,#faf5ff,#f5f3ff)">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px">⚡</div>
+        <h3 style="font-weight:700;margin-bottom:8px">{feature_1_title}</h3>
+        <p style="color:#64748b;font-size:0.92rem;line-height:1.7">{feature_1_desc}</p>
+      </div>
+      <div class="t-card" style="border:none;background:linear-gradient(145deg,#f0fdf4,#ecfdf5)">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px">📊</div>
+        <h3 style="font-weight:700;margin-bottom:8px">{feature_2_title}</h3>
+        <p style="color:#64748b;font-size:0.92rem;line-height:1.7">{feature_2_desc}</p>
+      </div>
+      <div class="t-card" style="border:none;background:linear-gradient(145deg,#eff6ff,#dbeafe)">
+        <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#60a5fa);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:16px">🔒</div>
+        <h3 style="font-weight:700;margin-bottom:8px">{feature_3_title}</h3>
+        <p style="color:#64748b;font-size:0.92rem;line-height:1.7">{feature_3_desc}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-section">
+    <div class="t-grid t-grid-4">
+      <div class="t-stat"><div class="num" style="color:#4f46e5">10K+</div><div class="lbl">Active Users</div></div>
+      <div class="t-stat"><div class="num" style="color:#4f46e5">99.9%</div><div class="lbl">Uptime</div></div>
+      <div class="t-stat"><div class="num" style="color:#4f46e5">50M+</div><div class="lbl">API Calls/Day</div></div>
+      <div class="t-stat"><div class="num" style="color:#4f46e5">4.9★</div><div class="lbl">User Rating</div></div>
+    </div>
+  </div>
+
+  <div class="t-hero" style="background:linear-gradient(135deg,#4f46e5,#6d28d9);color:#fff;margin-top:8px">
+    <h2 style="color:#fff;font-size:clamp(1.4rem,3vw,2.2rem)">{bottom_cta_headline}</h2>
+    <p style="margin-top:8px">{bottom_cta_description}</p>
+    <a class="t-btn" style="background:#fff;color:#4f46e5;margin-top:24px">{cta_text} →</a>
+  </div>
 </div>`,
     variables: ["{headline}", "{subheadline}", "{product_name}", "{cta_text}", "{feature_1_title}", "{feature_1_desc}", "{feature_2_title}", "{feature_2_desc}", "{feature_3_title}", "{feature_3_desc}", "{bottom_cta_headline}", "{bottom_cta_description}"],
     category: "saas",
@@ -166,26 +328,55 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "blog-post",
     name: "SEO Blog Post",
     description: "Structured blog post template with author bio, table of contents, and rich formatting.",
-    content: `<article class="template" style="max-width:720px;margin:0 auto;padding:32px">
-<header>
-  <span style="color:#3b82f6;font-size:0.85em;font-weight:600">{category:uppercase}</span>
-  <h1 style="font-size:2.4em;margin:8px 0;line-height:1.2">{title}</h1>
-  <div style="display:flex;align-items:center;gap:12px;margin-top:16px;color:#64748b;font-size:0.9em">
-    <span>By {author_name}</span><span>•</span><span>{publish_date}</span><span>•</span><span>{read_time} min read</span>
+    content: `${TEMPLATE_BASE_STYLES}
+<article class="t-container" style="max-width:780px;padding-top:32px;padding-bottom:48px">
+  <header>
+    <span class="t-badge" style="background:#eff6ff;color:#2563eb">{category:uppercase}</span>
+    <h1 style="font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin:16px 0 12px;line-height:1.15">{title}</h1>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid #e2e8f0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.9rem">{author_name:charAt(0)}</div>
+        <div><strong style="font-size:0.9rem">{author_name}</strong><p style="font-size:0.78rem;color:#64748b">{publish_date}</p></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-left:auto">
+        <span class="t-chip">📖 {read_time} min read</span>
+      </div>
+    </div>
+  </header>
+
+  <p style="font-size:1.15rem;color:#334155;line-height:1.9;margin-top:28px;padding-bottom:24px;border-bottom:1px solid #f1f5f9">{intro_paragraph}</p>
+
+  <nav style="background:linear-gradient(145deg,#f8fafc,#f1f5f9);padding:24px 28px;border-radius:14px;margin:28px 0">
+    <strong style="font-size:0.9rem;display:flex;align-items:center;gap:8px">📋 Table of Contents</strong>
+    <ul style="margin-top:12px;padding-left:20px;list-style:none">
+      <li style="padding:6px 0;font-size:0.92rem"><a style="color:#3b82f6;text-decoration:none;font-weight:500">1. {section_1_title}</a></li>
+      <li style="padding:6px 0;font-size:0.92rem"><a style="color:#3b82f6;text-decoration:none;font-weight:500">2. {section_2_title}</a></li>
+      <li style="padding:6px 0;font-size:0.92rem"><a style="color:#3b82f6;text-decoration:none;font-weight:500">3. {section_3_title}</a></li>
+    </ul>
+  </nav>
+
+  <section style="margin-top:32px">
+    <h2 style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:2px solid #3b82f6"><span style="background:#3b82f6;color:#fff;width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700">1</span>{section_1_title}</h2>
+    <p style="line-height:1.9;color:#374151;margin-top:16px">{section_1_content}</p>
+  </section>
+
+  <section style="margin-top:40px">
+    <h2 style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:2px solid #8b5cf6"><span style="background:#8b5cf6;color:#fff;width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700">2</span>{section_2_title}</h2>
+    <p style="line-height:1.9;color:#374151;margin-top:16px">{section_2_content}</p>
+  </section>
+
+  <section style="margin-top:40px">
+    <h2 style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:2px solid #10b981"><span style="background:#10b981;color:#fff;width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700">3</span>{section_3_title}</h2>
+    <p style="line-height:1.9;color:#374151;margin-top:16px">{section_3_content}</p>
+  </section>
+
+  <div style="background:linear-gradient(145deg,#f8fafc,#f1f5f9);padding:28px;border-radius:16px;margin-top:48px;display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">✍️</div>
+    <div style="flex:1;min-width:200px">
+      <strong style="font-size:1rem">{author_name}</strong>
+      <p style="color:#64748b;font-size:0.88rem;margin-top:4px;line-height:1.6">{author_bio}</p>
+    </div>
   </div>
-</header>
-<p style="font-size:1.15em;color:#374151;line-height:1.8;margin-top:24px">{intro_paragraph}</p>
-<nav style="background:#f8fafc;padding:20px;border-radius:8px;margin:24px 0">
-  <strong>Table of Contents</strong>
-  <ul style="margin-top:8px;padding-left:20px"><li>{section_1_title}</li><li>{section_2_title}</li><li>{section_3_title}</li></ul>
-</nav>
-<section><h2>{section_1_title}</h2><p style="line-height:1.8">{section_1_content}</p></section>
-<section style="margin-top:24px"><h2>{section_2_title}</h2><p style="line-height:1.8">{section_2_content}</p></section>
-<section style="margin-top:24px"><h2>{section_3_title}</h2><p style="line-height:1.8">{section_3_content}</p></section>
-<div style="background:#f1f5f9;padding:24px;border-radius:8px;margin-top:32px;display:flex;gap:16px;align-items:center">
-  <div style="width:56px;height:56px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:1.4em">✍️</div>
-  <div><strong>{author_name}</strong><p style="color:#64748b;font-size:0.85em;margin-top:4px">{author_bio}</p></div>
-</div>
 </article>`,
     variables: ["{title}", "{category}", "{author_name}", "{publish_date}", "{read_time}", "{intro_paragraph}", "{section_1_title}", "{section_1_content}", "{section_2_title}", "{section_2_content}", "{section_3_title}", "{section_3_content}", "{author_bio}"],
     category: "marketing",
@@ -201,25 +392,74 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "dental-clinic",
     name: "Dental Clinic Location",
     description: "Professional dental practice page with services, team, and booking CTA for local SEO.",
-    content: `<div class="template">
-<header style="background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;padding:48px 32px;border-radius:12px">
-  <h1 style="font-size:2.4em;margin-bottom:8px">{clinic_name} — Dentist in {city}</h1>
-  <p style="font-size:1.1em;opacity:0.9">Quality dental care for the whole family in {city}, {state}</p>
-  <p style="margin-top:20px;font-size:1.3em">📞 {phone} &nbsp; | &nbsp; 📍 {address}</p>
-</header>
-<section style="padding:32px 0">
-  <h2>Our Dental Services</h2>
-  <p style="color:#64748b">{services_list}</p>
-</section>
-<section style="background:#f0f9ff;padding:32px;border-radius:8px">
-  <h2>Meet Dr. {doctor_name}</h2>
-  <p>{doctor_bio}</p>
-</section>
-<section style="padding:32px 0;text-align:center">
-  <h2>Book Your Appointment Today</h2>
-  <p style="color:#64748b">Serving patients in {city}, {nearby_areas}</p>
-  <p style="margin-top:16px;font-size:1.2em;font-weight:600">Call {phone} or visit us at {address}</p>
-</section>
+    content: `${TEMPLATE_BASE_STYLES}
+<div class="t-container">
+  <div class="t-hero" style="background:linear-gradient(135deg,#0891b2,#06b6d4,#22d3ee);color:#fff">
+    <div style="position:relative;z-index:1">
+      <span class="t-badge" style="background:rgba(255,255,255,0.15);color:#fff;margin-bottom:16px">🦷 Trusted Dental Care</span>
+      <h1>{clinic_name} — Your Dentist in {city}</h1>
+      <p>Comprehensive dental care for the whole family in {city}, {state}. Gentle, modern dentistry you can trust.</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:28px">
+        <a class="t-btn" style="background:#fff;color:#0891b2">📞 Call {phone}</a>
+        <a class="t-btn" style="background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.3)">Book Online</a>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:24px;margin-top:24px;font-size:0.88rem">
+        <span>📍 {address}</span><span>⏰ Mon–Fri 9am–6pm</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-section" style="text-align:center">
+    <span class="t-badge" style="background:#ecfeff;color:#0891b2">Our Services</span>
+    <h2 style="margin-top:12px">Dental Services in {city}</h2>
+    <div class="t-grid t-grid-3" style="margin-top:28px">
+      <div class="t-card" style="text-align:center;border:none;background:#f0fdfa">
+        <div style="font-size:2.2rem;margin-bottom:12px">😁</div>
+        <h3 style="font-weight:700;margin-bottom:8px">General Dentistry</h3>
+        <p style="color:#64748b;font-size:0.88rem">Cleanings, fillings, and preventive care for healthy smiles.</p>
+      </div>
+      <div class="t-card" style="text-align:center;border:none;background:#eff6ff">
+        <div style="font-size:2.2rem;margin-bottom:12px">✨</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Cosmetic Dentistry</h3>
+        <p style="color:#64748b;font-size:0.88rem">Whitening, veneers, and smile makeovers for a confident you.</p>
+      </div>
+      <div class="t-card" style="text-align:center;border:none;background:#fef3c7">
+        <div style="font-size:2.2rem;margin-bottom:12px">🔧</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Restorative</h3>
+        <p style="color:#64748b;font-size:0.88rem">Crowns, bridges, implants to restore your smile's function.</p>
+      </div>
+    </div>
+    <p style="color:#475569;margin-top:24px;line-height:1.8">{services_list}</p>
+  </div>
+
+  <div class="t-section" style="background:linear-gradient(145deg,#f0fdfa,#ecfeff);padding:40px 32px;border-radius:16px">
+    <div class="t-grid t-grid-2" style="align-items:center;gap:40px">
+      <div>
+        <span class="t-badge" style="background:#ccfbf1;color:#0d9488">Meet Your Doctor</span>
+        <h2 style="margin-top:12px">Dr. {doctor_name}</h2>
+        <p style="color:#475569;line-height:1.8;margin-top:12px">{doctor_bio}</p>
+        <div class="t-grid" style="grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px">
+          <div class="t-stat"><div class="num" style="color:#0891b2;font-size:1.6rem">15+</div><div class="lbl">Years Exp.</div></div>
+          <div class="t-stat"><div class="num" style="color:#0891b2;font-size:1.6rem">5K+</div><div class="lbl">Patients</div></div>
+          <div class="t-stat"><div class="num" style="color:#0891b2;font-size:1.6rem">4.9★</div><div class="lbl">Rating</div></div>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:20px;padding:48px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.06)">
+        <div style="font-size:4rem">🩺</div>
+        <p style="color:#94a3b8;margin-top:12px;font-size:0.9rem">Dr. {doctor_name}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-hero" style="background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;margin-top:48px">
+    <h2 style="color:#fff">Ready for a Healthier Smile?</h2>
+    <p>Book your appointment at {clinic_name} in {city} today.</p>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:24px">
+      <a class="t-btn" style="background:#fff;color:#0891b2">📞 Call {phone}</a>
+      <a class="t-btn" style="background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.3)">📍 Get Directions</a>
+    </div>
+    <p style="margin-top:16px;font-size:0.88rem;opacity:0.8">Also serving {nearby_areas}</p>
+  </div>
 </div>`,
     variables: ["{clinic_name}", "{city}", "{state}", "{phone}", "{address}", "{services_list}", "{doctor_name}", "{doctor_bio}", "{nearby_areas}"],
     category: "health",
@@ -235,24 +475,64 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "course-landing",
     name: "Online Course Landing",
     description: "Conversion-focused landing page for online courses with curriculum, instructor, and enrollment CTA.",
-    content: `<div class="template">
-<header style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:56px 32px;text-align:center;border-radius:12px">
-  <span style="background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:20px;font-size:0.85em">{category:uppercase}</span>
-  <h1 style="font-size:2.6em;margin:16px 0">{course_title}</h1>
-  <p style="font-size:1.2em;opacity:0.9;max-width:600px;margin:0 auto">{course_subtitle}</p>
-  <div style="margin-top:24px;display:flex;justify-content:center;gap:24px;font-size:0.95em">
-    <span>🎓 {lessons_count} Lessons</span><span>⏱️ {duration}</span><span>📊 {level}</span>
+    content: `${TEMPLATE_BASE_STYLES}
+<div class="t-container">
+  <div class="t-hero" style="background:linear-gradient(135deg,#d97706,#f59e0b,#fbbf24);color:#fff;padding:72px 32px">
+    <div style="position:relative;z-index:1">
+      <span class="t-badge" style="background:rgba(255,255,255,0.2);color:#fff;margin-bottom:20px">{category:uppercase}</span>
+      <h1 style="font-size:clamp(1.8rem,4.5vw,3rem)">{course_title}</h1>
+      <p style="margin-top:12px">{course_subtitle}</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:20px;margin-top:28px">
+        <span class="t-chip" style="background:rgba(255,255,255,0.2);color:#fff">🎓 {lessons_count} Lessons</span>
+        <span class="t-chip" style="background:rgba(255,255,255,0.2);color:#fff">⏱️ {duration}</span>
+        <span class="t-chip" style="background:rgba(255,255,255,0.2);color:#fff">📊 {level}</span>
+        <span class="t-chip" style="background:rgba(255,255,255,0.2);color:#fff">📜 Certificate</span>
+      </div>
+      <div style="margin-top:32px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px;align-items:center">
+        <a class="t-btn" style="background:#fff;color:#d97706;font-size:1.1rem">Enroll Now — {price}</a>
+        <span style="font-size:0.9rem;opacity:0.85">30-day money-back guarantee</span>
+      </div>
+    </div>
   </div>
-  <button style="margin-top:28px;background:#fff;color:#d97706;border:none;padding:14px 40px;border-radius:8px;font-size:1.1em;font-weight:700;cursor:pointer">Enroll Now — {price}</button>
-</header>
-<section style="padding:40px 32px">
-  <h2>What You'll Learn</h2>
-  <p style="color:#64748b;line-height:1.8">{learning_outcomes}</p>
-</section>
-<section style="background:#fffbeb;padding:32px;border-radius:8px">
-  <h2>Your Instructor: {instructor_name}</h2>
-  <p style="color:#64748b">{instructor_bio}</p>
-</section>
+
+  <div class="t-section" style="text-align:center">
+    <span class="t-badge" style="background:#fef3c7;color:#b45309">Curriculum</span>
+    <h2 style="margin-top:12px">What You'll Learn</h2>
+    <p style="color:#64748b;max-width:600px;margin:8px auto 0">{course_subtitle}</p>
+  </div>
+
+  <div style="background:#fffbeb;padding:32px;border-radius:16px;margin-top:-16px">
+    <p style="color:#475569;line-height:1.9;font-size:0.95rem">{learning_outcomes}</p>
+  </div>
+
+  <div class="t-section">
+    <div class="t-grid t-grid-4">
+      <div class="t-stat"><div class="num" style="color:#d97706">{lessons_count}</div><div class="lbl">Lessons</div></div>
+      <div class="t-stat"><div class="num" style="color:#d97706">{duration}</div><div class="lbl">Total Duration</div></div>
+      <div class="t-stat"><div class="num" style="color:#d97706">4.9★</div><div class="lbl">Average Rating</div></div>
+      <div class="t-stat"><div class="num" style="color:#d97706">2K+</div><div class="lbl">Students</div></div>
+    </div>
+  </div>
+
+  <div class="t-section" style="background:linear-gradient(145deg,#fffbeb,#fef3c7);padding:40px 32px;border-radius:16px">
+    <div class="t-grid t-grid-2" style="align-items:center;gap:40px">
+      <div style="text-align:center">
+        <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:0 8px 32px rgba(245,158,11,0.3)">👨‍🏫</div>
+      </div>
+      <div>
+        <span class="t-badge" style="background:#fde68a;color:#92400e">Your Instructor</span>
+        <h2 style="margin-top:12px">{instructor_name}</h2>
+        <p style="color:#475569;line-height:1.8;margin-top:12px">{instructor_bio}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-hero" style="background:linear-gradient(135deg,#d97706,#b45309);color:#fff;margin-top:48px">
+    <h2 style="color:#fff">Start Learning Today</h2>
+    <p>Join thousands of students already enrolled in {course_title}.</p>
+    <a class="t-btn" style="background:#fff;color:#d97706;margin-top:24px;font-size:1.1rem">Enroll Now — {price}</a>
+    <p style="margin-top:12px;font-size:0.85rem;opacity:0.8">✓ Lifetime access · ✓ Certificate included · ✓ 30-day guarantee</p>
+  </div>
 </div>`,
     variables: ["{course_title}", "{course_subtitle}", "{category}", "{lessons_count}", "{duration}", "{level}", "{price}", "{learning_outcomes}", "{instructor_name}", "{instructor_bio}"],
     category: "education",
@@ -268,24 +548,87 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "law-firm",
     name: "Law Firm Practice Area",
     description: "Professional law firm page for specific practice areas with credentials and consultation CTA.",
-    content: `<div class="template">
-<header style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:48px 32px;border-radius:12px">
-  <h1 style="font-size:2.4em;margin-bottom:8px">{practice_area} Attorney in {city}</h1>
-  <p style="font-size:1.1em;opacity:0.85">{firm_name} — Experienced {practice_area:lowercase} lawyers serving {city}, {state}</p>
-  <button style="margin-top:24px;background:#f59e0b;color:#1e293b;border:none;padding:14px 32px;border-radius:8px;font-size:1.1em;font-weight:700;cursor:pointer">Free Consultation: {phone}</button>
-</header>
-<section style="padding:32px 0">
-  <h2>How We Can Help</h2>
-  <p style="line-height:1.8">{practice_description}</p>
-</section>
-<section style="background:#f8fafc;padding:32px;border-radius:8px">
-  <h2>Why {firm_name}?</h2>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px">
-    <div style="text-align:center"><p style="font-size:2em;font-weight:700">{years_experience}+</p><p style="color:#64748b">Years Experience</p></div>
-    <div style="text-align:center"><p style="font-size:2em;font-weight:700">{cases_won}+</p><p style="color:#64748b">Cases Won</p></div>
-    <div style="text-align:center"><p style="font-size:2em;font-weight:700">5.0</p><p style="color:#64748b">Client Rating</p></div>
+    content: `${TEMPLATE_BASE_STYLES}
+<div class="t-container">
+  <div class="t-hero" style="background:linear-gradient(135deg,#0f172a,#1e293b,#334155);color:#fff;padding:64px 32px">
+    <div style="position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect x=%2250%22 y=%220%22 width=%221%22 height=%22100%22 fill=%22rgba(255,255,255,0.03)%22/><rect x=%220%22 y=%2250%22 width=%22100%22 height=%221%22 fill=%22rgba(255,255,255,0.03)%22/></svg>')"></div>
+    <div style="position:relative;z-index:1">
+      <span class="t-badge" style="background:rgba(245,158,11,0.15);color:#fbbf24;margin-bottom:16px;border:1px solid rgba(245,158,11,0.3)">⚖️ Experienced Legal Counsel</span>
+      <h1>{practice_area} Attorney in {city}</h1>
+      <p>{firm_name} — Experienced {practice_area:lowercase} lawyers protecting your rights in {city}, {state}</p>
+      <a class="t-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;margin-top:28px;font-size:1.05rem">Free Consultation — {phone}</a>
+    </div>
   </div>
-</section>
+
+  <div class="t-section">
+    <div class="t-grid t-grid-3">
+      <div class="t-stat" style="background:#f8fafc;padding:28px;border-radius:14px">
+        <div class="num" style="color:#0f172a">{years_experience}+</div><div class="lbl">Years of Experience</div>
+      </div>
+      <div class="t-stat" style="background:#f8fafc;padding:28px;border-radius:14px">
+        <div class="num" style="color:#0f172a">{cases_won}+</div><div class="lbl">Cases Won</div>
+      </div>
+      <div class="t-stat" style="background:#f8fafc;padding:28px;border-radius:14px">
+        <div class="num" style="color:#0f172a">5.0★</div><div class="lbl">Client Rating</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-section">
+    <span class="t-badge" style="background:#f1f5f9;color:#334155">How We Help</span>
+    <h2 style="margin-top:12px">{practice_area} Legal Services</h2>
+    <p style="color:#475569;line-height:1.9;margin-top:12px">{practice_description}</p>
+  </div>
+
+  <div class="t-section" style="background:linear-gradient(145deg,#f8fafc,#f1f5f9);padding:40px 32px;border-radius:16px">
+    <h2 style="text-align:center">Why Clients Choose {firm_name}</h2>
+    <div class="t-grid t-grid-3" style="margin-top:28px">
+      <div class="t-card" style="text-align:center;border:none;background:#fff">
+        <div style="font-size:2.2rem;margin-bottom:12px">🏛️</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Proven Track Record</h3>
+        <p style="color:#64748b;font-size:0.88rem">{cases_won}+ successful outcomes in {practice_area:lowercase} cases across {state}.</p>
+      </div>
+      <div class="t-card" style="text-align:center;border:none;background:#fff">
+        <div style="font-size:2.2rem;margin-bottom:12px">🤝</div>
+        <h3 style="font-weight:700;margin-bottom:8px">Personal Attention</h3>
+        <p style="color:#64748b;font-size:0.88rem">Direct access to your attorney. No runaround, no junior associates.</p>
+      </div>
+      <div class="t-card" style="text-align:center;border:none;background:#fff">
+        <div style="font-size:2.2rem;margin-bottom:12px">💼</div>
+        <h3 style="font-weight:700;margin-bottom:8px">No Fee Unless We Win</h3>
+        <p style="color:#64748b;font-size:0.88rem">Contingency-based representation. You pay nothing upfront.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-section">
+    <h2 style="text-align:center">Client Testimonials</h2>
+    <div class="t-grid t-grid-2" style="margin-top:24px">
+      <div class="t-testimonial" style="border-left-color:#f59e0b">
+        <div class="t-stars">★★★★★</div>
+        <p style="margin-top:12px;color:#334155;font-style:italic">"Outstanding {practice_area:lowercase} representation. {firm_name} fought hard for my case and delivered results beyond my expectations."</p>
+        <p style="margin-top:12px;font-weight:600;font-size:0.85rem;color:#64748b">— Former Client, {city}</p>
+      </div>
+      <div class="t-testimonial" style="border-left-color:#f59e0b">
+        <div class="t-stars">★★★★★</div>
+        <p style="margin-top:12px;color:#334155;font-style:italic">"Professional, responsive, and truly cared about my situation. Highly recommend to anyone in {state} needing a {practice_area:lowercase} lawyer."</p>
+        <p style="margin-top:12px;font-weight:600;font-size:0.85rem;color:#64748b">— Verified Client</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-hero" style="background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;margin-top:16px">
+    <h2 style="color:#fff">Get Your Free {practice_area} Consultation</h2>
+    <p style="opacity:0.9">Serving {city}, {state} and surrounding communities. Available 24/7 for emergencies.</p>
+    <a class="t-btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;margin-top:24px;font-size:1.05rem">📞 Call {phone} — Free Case Review</a>
+  </div>
+
+  <div class="t-footer">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px">
+      <div><strong style="font-size:1.1rem;color:#fff">⚖️ {firm_name}</strong><p style="font-size:0.85rem;margin-top:4px">{practice_area} Attorneys • {city}, {state}</p></div>
+      <div style="text-align:right"><p style="font-size:0.85rem">📞 {phone}</p><p style="font-size:0.85rem;margin-top:4px">Free consultations available</p></div>
+    </div>
+  </div>
 </div>`,
     variables: ["{practice_area}", "{city}", "{state}", "{firm_name}", "{phone}", "{practice_description}", "{years_experience}", "{cases_won}"],
     category: "professional",
@@ -298,7 +641,6 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "LocalBusiness",
   },
 ];
-
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
