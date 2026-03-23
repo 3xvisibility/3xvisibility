@@ -376,7 +376,7 @@ export default function ABTestingPage() {
                   </div>
                 </TabsContent>
                 <TabsContent value="stats" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <Card>
                       <CardContent className="p-4 space-y-3">
                         <h4 className="font-medium">{viewTest.variant_a_label}</h4>
