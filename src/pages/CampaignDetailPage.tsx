@@ -343,9 +343,9 @@ export default function CampaignDetailPage() {
   if (!campaign) {
     return (
       <div className="text-center py-20">
-        <p className="text-muted-foreground">Campaign not found.</p>
+      <p className="text-muted-foreground">{t("campaignDetail.notFound")}</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate(`${basePath}/campaigns`)}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Campaigns
+          <ArrowLeft className="mr-2 h-4 w-4" /> {t("campaignDetail.backToCampaigns")}
         </Button>
       </div>
     );
