@@ -366,7 +366,7 @@ export default function SettingsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{item.label}</span>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">Active</Badge>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">{t("settings.active")}</Badge>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{item.description}</p>
                 </div>
