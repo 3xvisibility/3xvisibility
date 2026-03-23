@@ -280,14 +280,18 @@ export default function CampaignDetailPage() {
 
   const republishMutation = useMutation({
     mutationFn: async (pageId: string) => {
+      // Don't clear external_id — we need it to update the same CMS page/product
       const { error: resetError } = await supabase
         .from("generated_pages")
         .update({ status: "pending", error_message: null })
         .eq("id", pageId);
       if (resetError) throw resetError;
 
+      // Use the campaign's type to determine publish_type (page vs product)
+      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
+
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: [pageId], publish_type: "page" },
+        body: { page_ids: [pageId], publish_type: pubType },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -295,7 +299,7 @@ export default function CampaignDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
-      toast({ title: "Republish complete" });
+      toast({ title: "Republish complete", description: "Page updated at the same URL." });
     },
   });
 
