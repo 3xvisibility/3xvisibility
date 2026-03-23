@@ -1988,8 +1988,8 @@ export default function CampaignsPage() {
       ) : viewMode === "table" ? (
         /* TABLE VIEW */
         <Card className="border-0 shadow-surface overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden">
+            <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">Campaign</th>
@@ -2007,13 +2007,13 @@ export default function CampaignsPage() {
                   const trDragProps = getCampaignDragProps(index);
                   return (
                     <tr key={c.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors ${index % 2 === 1 ? "bg-muted/10" : ""} ${trDragProps.className}`} draggable={trDragProps.draggable} onDragStart={trDragProps.onDragStart} onDragOver={trDragProps.onDragOver} onDrop={trDragProps.onDrop} onDragEnd={trDragProps.onDragEnd}>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 max-w-0">
                         <div className="flex items-center gap-2">
                           <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors shrink-0">
                             <GripVertical className="h-4 w-4" />
                           </button>
                           <div>
-                          <span className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</span>
+                          <span className="font-medium cursor-pointer hover:text-primary transition-colors truncate block" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</span>
                           <div className="flex gap-2 mt-0.5 text-[11px] text-muted-foreground">
                             {c.templates?.name && <span>{c.templates.name}</span>}
                             {c.websites?.name && <span>• {c.websites.name}</span>}

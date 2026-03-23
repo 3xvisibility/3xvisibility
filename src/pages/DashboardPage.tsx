@@ -694,8 +694,8 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 px-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-hidden">
+              <table className="w-full table-fixed text-sm">
                 <thead>
                   <tr className="border-b border-border">
                      <th className="text-left py-2.5 px-4 sm:px-6 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">{t("common.name")}</th>
@@ -737,7 +737,7 @@ export default function DashboardPage() {
                             key={campaign.id}
                             className={`border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors duration-150 ${index % 2 === 1 ? "bg-muted/10" : ""}`}
                           >
-                            <td className="py-3 px-4 sm:px-6 font-medium text-sm">{campaign.name}</td>
+                            <td className="py-3 px-4 sm:px-6 font-medium text-sm truncate max-w-0">{campaign.name}</td>
                             <td className="py-3 px-4">
                               <Badge variant="secondary" className={`${statusColors[campaign.status]} text-[10px] font-medium border capitalize`}>
                                  {translateStatus(campaign.status)}
