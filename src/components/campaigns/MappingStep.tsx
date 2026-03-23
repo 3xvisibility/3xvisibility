@@ -376,11 +376,11 @@ export function MappingStep({
 
                 {/* Column mapping / Custom value */}
                 <div className="space-y-1.5">
-                  {isSpecial && !column && !customValue ? (
+                  {isSpecial && !column && !(variable in customValues) ? (
                     <Badge variant="secondary" className="bg-primary/10 text-primary font-mono rounded-lg text-[11px] py-1 px-2">
                       <Check className="h-3 w-3 mr-1" /> Auto-generated
                     </Badge>
-                  ) : customValue ? (
+                  ) : variable in customValues ? (
                     <div className="flex items-center gap-1.5">
                       <Input
                         className="h-8 text-xs rounded-lg border-primary/30 focus:border-primary flex-1"
