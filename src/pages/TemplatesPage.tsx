@@ -1474,15 +1474,15 @@ RULES:
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10"><Checkbox checked={orderedTemplates.length > 0 && selectedIds.size === orderedTemplates.length} onCheckedChange={toggleSelectAll} aria-label="Select all" /></TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>Template name <SortIcon col="name" /></button></TableHead>
-                    <TableHead>Site type</TableHead>
-                    <TableHead>Campaign types</TableHead>
-                    <TableHead>Variables</TableHead>
-                    <TableHead>Copies</TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
-                    <TableHead>Last used</TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>{t("templates.templateName")} <SortIcon col="name" /></button></TableHead>
+                    <TableHead>{t("templates.siteType")}</TableHead>
+                    <TableHead>{t("templates.campaignTypes")}</TableHead>
+                    <TableHead>{t("templates.variables")}</TableHead>
+                    <TableHead>{t("templates.copies")}</TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>{t("templates.usedIn")} <SortIcon col="campaigns" /></button></TableHead>
+                    <TableHead>{t("templates.lastUsed")}</TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>{t("templates.lastUpdated")} <SortIcon col="date" /></button></TableHead>
+                    <TableHead className="text-right">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
