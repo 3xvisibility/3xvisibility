@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { auditPage, type AuditResult } from "@/lib/seo-audit";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const categoryIcon = {
   critical: <AlertTriangle className="h-4 w-4 text-destructive" />,
