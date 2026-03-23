@@ -31,6 +31,7 @@ export default function SeoAuditPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading } = useQuery({
