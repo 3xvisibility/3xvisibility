@@ -210,9 +210,9 @@ export default function WebsitesPage() {
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label>Platform</Label>
+                  <Label>{t("websites.platform")}</Label>
                   <Select value={siteType} onValueChange={(v) => setSiteType(v as WebsiteType)}>
-                    <SelectTrigger><SelectValue placeholder="Select platform" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("common.selectPlatform")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="wordpress">WordPress</SelectItem>
                       <SelectItem value="shopify">Shopify</SelectItem>
