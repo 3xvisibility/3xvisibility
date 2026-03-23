@@ -137,13 +137,11 @@ function TemplatePreviewPane({
   variables,
   onChange,
   onAddVariable,
-  onRestartTour,
 }: {
   templateHtml: string;
   variables: VariableEntry[];
   onChange: (html: string) => void;
   onAddVariable?: (name: string, original: string) => void;
-  onRestartTour?: () => void;
 }) {
   const [showCode, setShowCode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
