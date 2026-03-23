@@ -1430,9 +1430,9 @@ RULES:
           </SelectContent>
         </Select>
         <Select value={campaignTypeFilter} onValueChange={setCampaignTypeFilter}>
-          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="All types" /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder={t("common.allTypes")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="all">{t("common.allTypes")}</SelectItem>
             <SelectItem value="seo">SEO</SelectItem>
             <SelectItem value="sea">SEA</SelectItem>
             <SelectItem value="geo">GEO</SelectItem>
