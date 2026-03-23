@@ -414,7 +414,7 @@ export default function CampaignDetailPage() {
           {(campaign.status === "completed" || campaign.status === "failed") && (
             <>
               <Button variant="outline" size="sm" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
-                <RotateCcw className="mr-1.5 h-4 w-4" /> Re-generate
+                <RotateCcw className="mr-1.5 h-4 w-4" /> {t("campaignDetail.regenerate")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => { setResumeIndex(campaign.processed_rows || 0); setShowResumeDialog(true); }} disabled={executeMutation.isPending} className="rounded-xl">
                 <SkipForward className="mr-1.5 h-4 w-4" /> Resume from…
