@@ -281,11 +281,11 @@ export default function IndexingPage() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
-              { label: "Total", value: stats.total, color: "text-foreground" },
-              { label: "Indexed", value: stats.indexed, color: "text-success" },
-              { label: "Submitted", value: stats.submitted, color: "text-primary" },
-              { label: "Pending", value: stats.pending, color: "text-muted-foreground" },
-              { label: "Failed", value: stats.failed, color: "text-destructive" },
+              { label: t("indexing.total"), value: stats.total, color: "text-foreground" },
+              { label: t("indexing.indexed"), value: stats.indexed, color: "text-success" },
+              { label: t("indexing.submitted"), value: stats.submitted, color: "text-primary" },
+              { label: t("indexing.pending"), value: stats.pending, color: "text-muted-foreground" },
+              { label: t("indexing.failed"), value: stats.failed, color: "text-destructive" },
             ].map((s) => (
               <Card key={s.label} className="shadow-surface">
                 <CardContent className="p-4">
