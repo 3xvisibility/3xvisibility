@@ -3,33 +3,8 @@ import itLocale from "./locales/it";
 import ptLocale from "./locales/pt";
 import nlLocale from "./locales/nl";
 import plLocale from "./locales/pl";
-import svLocale from "./locales/sv";
-import daLocale from "./locales/da";
-import jaLocale from "./locales/ja";
-import koLocale from "./locales/ko";
-import zhLocale from "./locales/zh";
-import arLocale from "./locales/ar";
-import ruLocale from "./locales/ru";
-import trLocale from "./locales/tr";
-import hiLocale from "./locales/hi";
-import thLocale from "./locales/th";
-import viLocale from "./locales/vi";
-import idLocale from "./locales/id";
-import csLocale from "./locales/cs";
-import roLocale from "./locales/ro";
-import huLocale from "./locales/hu";
-import elLocale from "./locales/el";
-import fiLocale from "./locales/fi";
-import noLocale from "./locales/no";
-import ukLocale from "./locales/uk";
-import heLocale from "./locales/he";
-import msLocale from "./locales/ms";
-import bnLocale from "./locales/bn";
 
-export type Language =
-  | "en" | "fr" | "de" | "es" | "it" | "pt" | "nl" | "pl" | "sv" | "da"
-  | "ja" | "ko" | "zh" | "ar" | "ru" | "tr" | "hi" | "th" | "vi" | "id"
-  | "cs" | "ro" | "hu" | "el" | "fi" | "no" | "uk" | "he" | "ms" | "bn";
+export type Language = "en" | "fr" | "de" | "es" | "it" | "pt" | "nl" | "pl";
 
 export const languages: { code: Language; label: string; flag: string }[] = [
   { code: "en", label: "English", flag: "🇬🇧" },
@@ -40,28 +15,6 @@ export const languages: { code: Language; label: string; flag: string }[] = [
   { code: "pt", label: "Português", flag: "🇵🇹" },
   { code: "nl", label: "Nederlands", flag: "🇳🇱" },
   { code: "pl", label: "Polski", flag: "🇵🇱" },
-  { code: "sv", label: "Svenska", flag: "🇸🇪" },
-  { code: "da", label: "Dansk", flag: "🇩🇰" },
-  { code: "no", label: "Norsk", flag: "🇳🇴" },
-  { code: "fi", label: "Suomi", flag: "🇫🇮" },
-  { code: "cs", label: "Čeština", flag: "🇨🇿" },
-  { code: "ro", label: "Română", flag: "🇷🇴" },
-  { code: "hu", label: "Magyar", flag: "🇭🇺" },
-  { code: "el", label: "Ελληνικά", flag: "🇬🇷" },
-  { code: "uk", label: "Українська", flag: "🇺🇦" },
-  { code: "ru", label: "Русский", flag: "🇷🇺" },
-  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
-  { code: "ar", label: "العربية", flag: "🇸🇦" },
-  { code: "he", label: "עברית", flag: "🇮🇱" },
-  { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
-  { code: "bn", label: "বাংলা", flag: "🇧🇩" },
-  { code: "th", label: "ไทย", flag: "🇹🇭" },
-  { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
-  { code: "id", label: "Bahasa Indonesia", flag: "🇮🇩" },
-  { code: "ms", label: "Bahasa Melayu", flag: "🇲🇾" },
-  { code: "ja", label: "日本語", flag: "🇯🇵" },
-  { code: "ko", label: "한국어", flag: "🇰🇷" },
-  { code: "zh", label: "中文", flag: "🇨🇳" },
 ];
 
 export const translations: Record<Language, Record<string, string>> = {
@@ -2392,8 +2345,5 @@ export const translations: Record<Language, Record<string, string>> = {
     "auth.strengthMedium": "Mittel",
     "auth.strengthStrong": "Stark",
   },
-  es: esLocale, it: itLocale, pt: ptLocale, nl: nlLocale, pl: plLocale, sv: svLocale, da: daLocale,
-  ja: jaLocale, ko: koLocale, zh: zhLocale, ar: arLocale, ru: ruLocale, tr: trLocale, hi: hiLocale,
-  th: thLocale, vi: viLocale, id: idLocale, cs: csLocale, ro: roLocale, hu: huLocale, el: elLocale,
-  fi: fiLocale, no: noLocale, uk: ukLocale, he: heLocale, ms: msLocale, bn: bnLocale,
+  es: esLocale, it: itLocale, pt: ptLocale, nl: nlLocale, pl: plLocale,
 };
