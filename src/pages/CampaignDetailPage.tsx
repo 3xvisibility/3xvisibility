@@ -288,7 +288,7 @@ export default function CampaignDetailPage() {
       if (resetError) throw resetError;
 
       // Use the campaign's type to determine publish_type (page vs product)
-      const pubType = campaign?.campaign_types?.includes("ecommerce") || campaign?.campaign_type === "ecommerce" ? "product" : "page";
+      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
 
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: { page_ids: [pageId], publish_type: pubType },
