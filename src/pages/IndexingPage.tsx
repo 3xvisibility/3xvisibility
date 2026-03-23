@@ -384,8 +384,8 @@ export default function IndexingPage() {
             <Card>
               <CardContent className="p-10 text-center text-muted-foreground">
                 {indexingRequests.length === 0
-                  ? "No indexing requests yet. Click \"Submit All Pages\" to get started."
-                  : "No URLs match your search."}
+                  ? t("indexing.noRequests")
+                  : t("indexing.noMatch")}
               </CardContent>
             </Card>
           ) : (
