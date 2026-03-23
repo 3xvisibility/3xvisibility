@@ -2007,7 +2007,7 @@ export default function CampaignsPage() {
                   const trDragProps = getCampaignDragProps(index);
                   return (
                     <tr key={c.id} className={`border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors ${index % 2 === 1 ? "bg-muted/10" : ""} ${trDragProps.className}`} draggable={trDragProps.draggable} onDragStart={trDragProps.onDragStart} onDragOver={trDragProps.onDragOver} onDrop={trDragProps.onDrop} onDragEnd={trDragProps.onDragEnd}>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 max-w-0">
                         <div className="flex items-center gap-2">
                           <button className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors shrink-0">
                             <GripVertical className="h-4 w-4" />
