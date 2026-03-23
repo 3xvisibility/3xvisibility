@@ -249,8 +249,8 @@ export default function WorkspaceSettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-display">Workspace Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your workspace name, members, and roles.</p>
+        <h1 className="text-display">{t("workspaceSettings.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("workspaceSettings.description")}</p>
       </div>
 
       {/* Rename Workspace */}
