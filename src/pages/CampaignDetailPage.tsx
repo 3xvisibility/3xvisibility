@@ -388,7 +388,7 @@ export default function CampaignDetailPage() {
                 className="rounded-xl"
               >
                 <Eye className="mr-1.5 h-4 w-4" />
-                Test
+                 {t("campaignDetail.test")}
               </Button>
               <Button
                 size="sm"
