@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { auditPage, type AuditResult } from "@/lib/seo-audit";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const categoryIcon = {
   critical: <AlertTriangle className="h-4 w-4 text-destructive" />,
@@ -30,6 +31,7 @@ export default function SeoAuditPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading } = useQuery({
@@ -85,9 +87,9 @@ export default function SeoAuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-display">SEO Audit</h1>
+        <h1 className="text-display">{t("seoAudit.title")}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Actionable recommendations for every page in your workspace.
+          {t("seoAudit.description")}
         </p>
       </div>
 
@@ -96,25 +98,25 @@ export default function SeoAuditPage() {
         <Card>
           <CardContent className="pt-5 pb-4 text-center">
             <p className={`text-3xl font-bold tabular-nums ${scoreColor(avgScore)}`}>{avgScore}</p>
-            <p className="text-xs text-muted-foreground mt-1">Avg. Score</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.avgScore")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-5 pb-4 text-center">
             <p className="text-3xl font-bold tabular-nums text-destructive">{criticalCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">Critical Issues</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.criticalIssues")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-5 pb-4 text-center">
             <p className="text-3xl font-bold tabular-nums text-amber-500">{warningCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">Warnings</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.warnings")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-5 pb-4 text-center">
             <p className="text-3xl font-bold tabular-nums text-emerald-600">{perfectCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">Score ≥ 90</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.scoreAbove90")}</p>
           </CardContent>
         </Card>
       </div>
@@ -124,7 +126,7 @@ export default function SeoAuditPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search pages..."
+            placeholder={t("seoAudit.searchPages")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -135,10 +137,10 @@ export default function SeoAuditPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Pages</SelectItem>
-            <SelectItem value="critical">Critical Issues</SelectItem>
-            <SelectItem value="warning">Warnings</SelectItem>
-            <SelectItem value="perfect">Score ≥ 90</SelectItem>
+            <SelectItem value="all">{t("seoAudit.allPages")}</SelectItem>
+            <SelectItem value="critical">{t("seoAudit.criticalFilter")}</SelectItem>
+            <SelectItem value="warning">{t("seoAudit.warningFilter")}</SelectItem>
+            <SelectItem value="perfect">{t("seoAudit.perfectFilter")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -154,7 +156,7 @@ export default function SeoAuditPage() {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <ClipboardCheck className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No pages found.</p>
+            <p className="text-sm">{t("seoAudit.noPages")}</p>
           </CardContent>
         </Card>
       ) : (

@@ -331,7 +331,7 @@ export default function DashboardPage() {
 
   const quickActions = [
     {
-      label: "Connect a Site",
+      label: t("dashboard.connectSite"),
       description: t("dashboard.connectSiteDesc"),
       icon: Globe,
       href: "/websites",

@@ -24,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -138,6 +139,7 @@ export default function DataCsvPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   // ─── Queries ──────────────────────────────────────────────────────
@@ -354,19 +356,19 @@ export default function DataCsvPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-display">Data / CSV</h1>
+          <h1 className="text-display">{t("dataCsv.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Upload, manage, and preview data files for your campaigns.
+            {t("dataCsv.description")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {csvFiles.length > 0 && (
             <Button onClick={handleBulkDownload} variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" /> Download All ({csvFiles.length})
+              <Download className="h-4 w-4" /> {t("dataCsv.downloadAll", { count: csvFiles.length })}
             </Button>
           )}
           <Button onClick={() => fileInputRef.current?.click()} size="sm" className="gap-2 bg-gradient-primary hover:brightness-110">
-            <Plus className="h-4 w-4" /> Upload CSV
+            <Plus className="h-4 w-4" /> {t("dataCsv.uploadCsv")}
           </Button>
         </div>
       </div>
@@ -391,10 +393,10 @@ export default function DataCsvPage() {
           </div>
           <div>
             <p className="font-semibold text-sm">
-              {isDragging ? "Drop your CSV file here" : "Drag & drop a CSV file, or click to browse"}
+              {isDragging ? t("dataCsv.dropHere") : t("dataCsv.dragAndDrop")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Supports CSV, TSV, TXT · Auto-detects delimiter & encoding · Max 20 MB
+              {t("dataCsv.supportedFormats")}
             </p>
           </div>
         </CardContent>

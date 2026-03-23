@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface ABTest {
   id: string;
@@ -51,6 +52,7 @@ export default function ABTestingPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: tests = [], isLoading } = useQuery({
@@ -171,13 +173,13 @@ export default function ABTestingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-display">A/B Testing</h1>
+          <h1 className="text-display">{t("abTesting.title")}</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Compare template variants to find what performs best.
+            {t("abTesting.description")}
           </p>
         </div>
         <Button onClick={() => { resetForm(); setCreateOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> New Test
+          <Plus className="h-4 w-4 mr-2" /> {t("abTesting.newTest")}
         </Button>
       </div>
 
@@ -189,7 +191,7 @@ export default function ABTestingPage() {
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
             <FlaskConical className="h-10 w-10 mx-auto mb-3 opacity-50" />
-            <p>No A/B tests yet. Create one to start comparing template variants.</p>
+            <p>{t("abTesting.noTests")}</p>
           </CardContent>
         </Card>
       ) : (

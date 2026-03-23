@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import type { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type Campaign = Tables<"campaigns">;
 
@@ -23,12 +24,13 @@ const statusColors: Record<string, string> = {
   failed: "bg-destructive/15 text-destructive",
 };
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS_KEYS = ["contentCalendar.sun", "contentCalendar.mon", "contentCalendar.tue", "contentCalendar.wed", "contentCalendar.thu", "contentCalendar.fri", "contentCalendar.sat"];
 
 export default function ContentCalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: campaigns = [], isLoading } = useQuery({
@@ -96,18 +98,18 @@ export default function ContentCalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Content Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-1">Visualize your campaign schedule and timelines</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("contentCalendar.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("contentCalendar.description")}</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "This Month", value: thisMonthCampaigns.length, icon: CalendarIcon },
-          { label: "Total Campaigns", value: campaigns.length, icon: Rocket },
-          { label: "Scheduled", value: scheduledCount, icon: Clock },
-          { label: "Recurring", value: recurringCount, icon: RotateCcw },
+          { label: t("contentCalendar.thisMonth"), value: thisMonthCampaigns.length, icon: CalendarIcon },
+          { label: t("contentCalendar.totalCampaigns"), value: campaigns.length, icon: Rocket },
+          { label: t("contentCalendar.scheduled"), value: scheduledCount, icon: Clock },
+          { label: t("contentCalendar.recurring"), value: recurringCount, icon: RotateCcw },
         ].map((s) => (
           <Card key={s.label} className="shadow-surface">
             <CardContent className="p-4 flex items-center gap-3">
@@ -138,7 +140,7 @@ export default function ContentCalendarPage() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="sm" className="text-xs ml-2" onClick={() => setCurrentMonth(new Date())}>
-                Today
+                {t("contentCalendar.today")}
               </Button>
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -146,7 +148,7 @@ export default function ContentCalendarPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">{t("contentCalendar.allTypes")}</SelectItem>
                 <SelectItem value="seo">SEO</SelectItem>
                 <SelectItem value="sea">SEA</SelectItem>
                 <SelectItem value="geo">GEO</SelectItem>
@@ -160,9 +162,9 @@ export default function ContentCalendarPage() {
             <div className="border border-border rounded-lg overflow-hidden">
               {/* Header */}
               <div className="grid grid-cols-7 bg-muted/50">
-                {WEEKDAYS.map((day) => (
-                  <div key={day} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
-                    {day}
+                {WEEKDAYS_KEYS.map((dayKey) => (
+                  <div key={dayKey} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
+                    {t(dayKey)}
                   </div>
                 ))}
               </div>
@@ -258,7 +260,7 @@ export default function ContentCalendarPage() {
         return (
           <Card className="shadow-surface">
             <CardContent className="p-4">
-              <h3 className="text-sm font-semibold mb-3">Upcoming Scheduled Campaigns</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("contentCalendar.upcomingScheduled")}</h3>
               <div className="space-y-2">
                 {upcoming.map((c) => (
                   <div key={c.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">

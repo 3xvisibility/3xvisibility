@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const CHART_TOOLTIP_STYLE = {
   backgroundColor: "hsl(var(--popover))",
@@ -52,6 +53,7 @@ const CHART_TOOLTIP_STYLE = {
 export default function AnalyticsPage() {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   // Fetch all generated pages
@@ -412,10 +414,10 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-display flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
-            Campaign Analytics
+            {t("analytics.title")}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Track generation success, publishing, and SEO quality.
+            {t("analytics.description")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -434,12 +436,12 @@ export default function AnalyticsPage() {
       {/* Top stats — 6 cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Pages", value: stats.total, icon: FileText, color: "text-foreground" },
-          { label: "Published", value: stats.published, icon: Send, color: "text-success" },
-          { label: "Pending", value: stats.pending, icon: Clock, color: "text-primary" },
-          { label: "Failed", value: stats.failed, icon: XCircle, color: "text-destructive" },
-          { label: "Success Rate", value: `${stats.successRate}%`, icon: Percent, color: stats.successRate >= 80 ? "text-success" : stats.successRate >= 50 ? "text-warning" : "text-destructive" },
-          { label: "Avg SEO", value: avgSeoScore, icon: Tag, color: avgSeoScore >= 70 ? "text-success" : avgSeoScore >= 40 ? "text-warning" : "text-destructive" },
+          { label: t("analytics.totalPages"), value: stats.total, icon: FileText, color: "text-foreground" },
+          { label: t("analytics.published"), value: stats.published, icon: Send, color: "text-success" },
+          { label: t("analytics.pending"), value: stats.pending, icon: Clock, color: "text-primary" },
+          { label: t("analytics.failed"), value: stats.failed, icon: XCircle, color: "text-destructive" },
+          { label: t("analytics.successRate"), value: `${stats.successRate}%`, icon: Percent, color: stats.successRate >= 80 ? "text-success" : stats.successRate >= 50 ? "text-warning" : "text-destructive" },
+          { label: t("analytics.avgSeoScore"), value: avgSeoScore, icon: Tag, color: avgSeoScore >= 70 ? "text-success" : avgSeoScore >= 40 ? "text-warning" : "text-destructive" },
         ].map((s) => (
           <Card key={s.label} className="shadow-surface">
             <CardContent className="p-4">

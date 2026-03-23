@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const statusColors: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
@@ -45,6 +46,7 @@ export default function IndexingPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: websites = [] } = useQuery({
@@ -221,8 +223,8 @@ export default function IndexingPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-display">Google Indexing</h1>
-          <p className="text-muted-foreground mt-1">Submit and track URL indexing via Google Indexing API.</p>
+          <h1 className="text-display">{t("indexing.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("indexing.description")}</p>
         </div>
         <UpgradePrompt feature="indexing" />
       </div>
@@ -233,8 +235,8 @@ export default function IndexingPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-display">Google Indexing</h1>
-          <p className="text-muted-foreground mt-1">Submit and track URL indexing via Google Indexing API.</p>
+          <h1 className="text-display">{t("indexing.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("indexing.description")}</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
@@ -263,12 +265,12 @@ export default function IndexingPage() {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-6 text-center space-y-3">
             <AlertTriangle className="h-8 w-8 text-primary mx-auto" />
-            <h3 className="font-semibold">Google Indexing not configured</h3>
+            <h3 className="font-semibold">{t("indexing.notConfigured")}</h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Connect a Google Service Account to enable automatic URL indexing. You'll need a service account with the Indexing API enabled.
+              {t("indexing.notConfiguredDesc")}
             </p>
             <Button onClick={() => setConfigOpen(true)}>
-              <Settings2 className="h-4 w-4 mr-2" /> Configure Service Account
+              <Settings2 className="h-4 w-4 mr-2" /> {t("indexing.configureServiceAccount")}
             </Button>
           </CardContent>
         </Card>
@@ -279,11 +281,11 @@ export default function IndexingPage() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
-              { label: "Total", value: stats.total, color: "text-foreground" },
-              { label: "Indexed", value: stats.indexed, color: "text-success" },
-              { label: "Submitted", value: stats.submitted, color: "text-primary" },
-              { label: "Pending", value: stats.pending, color: "text-muted-foreground" },
-              { label: "Failed", value: stats.failed, color: "text-destructive" },
+              { label: t("indexing.total"), value: stats.total, color: "text-foreground" },
+              { label: t("indexing.indexed"), value: stats.indexed, color: "text-success" },
+              { label: t("indexing.submitted"), value: stats.submitted, color: "text-primary" },
+              { label: t("indexing.pending"), value: stats.pending, color: "text-muted-foreground" },
+              { label: t("indexing.failed"), value: stats.failed, color: "text-destructive" },
             ].map((s) => (
               <Card key={s.label} className="shadow-surface">
                 <CardContent className="p-4">
@@ -299,7 +301,7 @@ export default function IndexingPage() {
             <Card className="shadow-surface">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Indexing Progress</span>
+                  <span className="text-muted-foreground">{t("indexing.progress")}</span>
                   <span className="tabular-nums font-medium">
                     {stats.total > 0 ? Math.round((stats.indexed / stats.total) * 100) : 0}%
                   </span>
@@ -319,9 +321,9 @@ export default function IndexingPage() {
               disabled={autoSubmitMutation.isPending}
             >
               {autoSubmitMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</>
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("indexing.submitting")}</>
               ) : (
-                <><Send className="h-4 w-4 mr-2" /> Submit All Pages</>
+                <><Send className="h-4 w-4 mr-2" /> {t("indexing.submitAll")}</>
               )}
             </Button>
             <Button
@@ -330,9 +332,9 @@ export default function IndexingPage() {
               disabled={checkStatusMutation.isPending}
             >
               {checkStatusMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Checking...</>
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("indexing.checking")}</>
               ) : (
-                <><RefreshCw className="h-4 w-4 mr-2" /> Refresh Status</>
+                <><RefreshCw className="h-4 w-4 mr-2" /> {t("indexing.refreshStatus")}</>
               )}
             </Button>
             {failedRequests.length > 0 && (
@@ -343,9 +345,9 @@ export default function IndexingPage() {
                 disabled={retryMutation.isPending}
               >
                 {retryMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Retrying...</>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("indexing.retrying")}</>
                 ) : (
-                  <><RotateCcw className="h-4 w-4 mr-2" /> Retry All Failed ({failedRequests.length})</>
+                  <><RotateCcw className="h-4 w-4 mr-2" /> {t("indexing.retryAllFailed", { count: failedRequests.length })}</>
                 )}
               </Button>
             )}
@@ -355,7 +357,7 @@ export default function IndexingPage() {
                 onClick={() => retryMutation.mutate([...selectedIds])}
                 disabled={retryMutation.isPending}
               >
-                <RotateCcw className="h-4 w-4 mr-2" /> Retry Selected ({selectedIds.size})
+                <RotateCcw className="h-4 w-4 mr-2" /> {t("indexing.retrySelected", { count: selectedIds.size })}
               </Button>
             )}
           </div>
@@ -364,7 +366,7 @@ export default function IndexingPage() {
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search URLs..."
+              placeholder={t("indexing.searchUrls")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -382,8 +384,8 @@ export default function IndexingPage() {
             <Card>
               <CardContent className="p-10 text-center text-muted-foreground">
                 {indexingRequests.length === 0
-                  ? "No indexing requests yet. Click \"Submit All Pages\" to get started."
-                  : "No URLs match your search."}
+                  ? t("indexing.noRequests")
+                  : t("indexing.noMatch")}
               </CardContent>
             </Card>
           ) : (
@@ -404,11 +406,11 @@ export default function IndexingPage() {
                           }}
                         />
                       </th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">URL</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Submitted</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Retries</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Error</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">{t("indexing.url")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">{t("common.status")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">{t("indexing.submitted")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">{t("indexing.retries")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">{t("indexing.error")}</th>
                       <th className="p-4"></th>
                     </tr>
                   </thead>
