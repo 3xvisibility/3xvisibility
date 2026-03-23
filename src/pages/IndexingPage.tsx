@@ -223,8 +223,8 @@ export default function IndexingPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-display">Google Indexing</h1>
-          <p className="text-muted-foreground mt-1">Submit and track URL indexing via Google Indexing API.</p>
+          <h1 className="text-display">{t("indexing.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("indexing.description")}</p>
         </div>
         <UpgradePrompt feature="indexing" />
       </div>
