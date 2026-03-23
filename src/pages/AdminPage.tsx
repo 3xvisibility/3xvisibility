@@ -242,6 +242,7 @@ function EditSubscriptionDialog({
 }
 
 export default function AdminPage() {
+  const { t } = useLanguage();
   const [userSearch, setUserSearch] = useState("");
   const [campaignSearch, setCampaignSearch] = useState("");
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
