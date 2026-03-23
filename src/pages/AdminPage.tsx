@@ -414,50 +414,76 @@ export default function AdminPage() {
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
           ) : (
-            <div className="rounded-xl border overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead className="text-right">Pages</TableHead>
-                    <TableHead className="text-right">Campaigns</TableHead>
-                    <TableHead className="text-right">Sites</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Last Active</TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
+            <div className="rounded-xl border">
+              {/* Mobile card layout */}
+              <div className="lg:hidden divide-y divide-border">
+                {filteredUsers.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No users found</p>
+                ) : (
+                  filteredUsers.map((u) => (
+                    <div key={u.id} className="p-3 flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{u.full_name || "—"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge variant="outline" className="capitalize text-[10px]">{u.plan}</Badge>
+                          <span className="text-[10px] text-muted-foreground">{u.pages_used}/{u.pages_limit || "∞"} pages</span>
+                          <span className="text-[10px] text-muted-foreground">{u.campaigns_count} campaigns</span>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => openEditFromUser(u)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+              {/* Desktop table */}
+              <div className="hidden lg:block overflow-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users found</TableCell>
+                      <TableHead>User</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead className="text-right">Pages</TableHead>
+                      <TableHead className="text-right hidden xl:table-cell">Campaigns</TableHead>
+                      <TableHead className="text-right hidden xl:table-cell">Sites</TableHead>
+                      <TableHead className="hidden xl:table-cell">Joined</TableHead>
+                      <TableHead className="hidden 2xl:table-cell">Last Active</TableHead>
+                      <TableHead className="w-10" />
                     </TableRow>
-                  ) : (
-                    filteredUsers.map((u) => (
-                      <TableRow key={u.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-sm">{u.full_name || "—"}</p>
-                            <p className="text-xs text-muted-foreground">{u.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell><Badge variant="outline" className="capitalize">{u.plan}</Badge></TableCell>
-                        <TableCell className="text-right tabular-nums text-sm">{u.pages_used} / {u.pages_limit || "∞"}</TableCell>
-                        <TableCell className="text-right tabular-nums text-sm">{u.campaigns_count}</TableCell>
-                        <TableCell className="text-right tabular-nums text-sm">{u.websites_count}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{formatDate(u.created_at)}</TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{formatDate(u.last_sign_in_at)}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromUser(u)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        </TableCell>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users found</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      filteredUsers.map((u) => (
+                        <TableRow key={u.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-sm">{u.full_name || "—"}</p>
+                              <p className="text-xs text-muted-foreground">{u.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell><Badge variant="outline" className="capitalize">{u.plan}</Badge></TableCell>
+                          <TableCell className="text-right tabular-nums text-sm">{u.pages_used} / {u.pages_limit || "∞"}</TableCell>
+                          <TableCell className="text-right tabular-nums text-sm hidden xl:table-cell">{u.campaigns_count}</TableCell>
+                          <TableCell className="text-right tabular-nums text-sm hidden xl:table-cell">{u.websites_count}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{formatDate(u.created_at)}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">{formatDate(u.last_sign_in_at)}</TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromUser(u)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </TabsContent>
