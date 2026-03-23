@@ -160,11 +160,11 @@ export default function SettingsPage() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="full-name">Full Name</Label>
+                  <Label htmlFor="full-name">{t("settings.fullName")}</Label>
                   <Input id="full-name" placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("settings.email")}</Label>
                   <Input id="email" type="email" placeholder="john@example.com" disabled />
                 </div>
               </div>
