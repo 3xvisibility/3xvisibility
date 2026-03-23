@@ -47,11 +47,11 @@ serve(async (req) => {
     if (!authHeader || !authHeader.startsWith("Bearer ")) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) throw new Error(`Auth error: ${claimsError?.message || "invalid token"}`);
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !userData?.user) throw new Error(`Auth error: ${userError?.message || "invalid token"}`);
     
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    const userId = userData.user.id;
+    const userEmail = userData.user.email;
     if (!userEmail) throw new Error("No email in token");
     logStep("User authenticated", { email: userEmail });
 
