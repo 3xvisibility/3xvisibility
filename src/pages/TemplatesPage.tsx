@@ -1595,13 +1595,28 @@ RULES:
                           <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(tpl.updated_at).toLocaleDateString()}</span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center justify-end gap-0.5">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); const cfg = (tpl as any).schema_config || {}; setSchemaConfig(cfg); loadSeoExtras(cfg); }} title="Edit">
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateMutation.mutate(tpl)} title="Duplicate"><Copy className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => exportTemplate(tpl)} title="Export JSON"><Download className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => checkAndDelete(tpl.id)} title="Delete"><Trash2 className="h-3 w-3" /></Button>
+                          <div className="flex justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); const cfg = (tpl as any).schema_config || {}; setSchemaConfig(cfg); loadSeoExtras(cfg); }}>
+                                  <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}>
+                                  <Copy className="h-3.5 w-3.5 mr-2" /> Duplicate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => exportTemplate(tpl)}>
+                                  <Download className="h-3.5 w-3.5 mr-2" /> Export
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => checkAndDelete(tpl.id)}>
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
