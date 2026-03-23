@@ -433,14 +433,25 @@ export function MappingStep({
 
                 {/* Target field */}
                 <Select
-                  value={targetFieldMappings[variable] || ""}
-                  onValueChange={val => setTargetFieldMappings(prev => ({ ...prev, [variable]: val }))}
+                  value={targetFieldMappings[variable] || "__auto__"}
+                  onValueChange={val => {
+                    if (val === "__auto__") {
+                      setTargetFieldMappings(prev => {
+                        const next = { ...prev };
+                        delete next[variable];
+                        return next;
+                      });
+                      return;
+                    }
+
+                    setTargetFieldMappings(prev => ({ ...prev, [variable]: val }));
+                  }}
                 >
                   <SelectTrigger className="h-8 text-xs rounded-lg">
                     <SelectValue placeholder="Target…" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="" className="text-xs italic text-muted-foreground">Auto (template)</SelectItem>
+                    <SelectItem value="__auto__" className="text-xs italic text-muted-foreground">Auto (template)</SelectItem>
                     {Object.entries(CATEGORY_META).filter(([k]) => k !== "custom").map(([catKey, catMeta]) => {
                       const fields = relevantTargets.filter(f => f.category === catKey);
                       if (fields.length === 0) return null;
