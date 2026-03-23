@@ -264,7 +264,7 @@ export default function WorkspaceSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="ws-name">Workspace Name</Label>
+            <Label htmlFor="ws-name">{t("workspaceSettings.workspaceName")}</Label>
             <div className="flex gap-2">
               <Input
                 id="ws-name"
