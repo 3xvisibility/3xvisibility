@@ -13,7 +13,7 @@ export function LandingNav() {
 
   const navLinks = [
     { label: t("nav.features"), href: "#features" },
-    { label: "Use Cases", href: "#use-cases" },
+    { label: t("nav.useCases"), href: "#use-cases" },
     { label: t("nav.howItWorks"), href: "#how-it-works" },
     { label: t("nav.pricing"), href: "#pricing" },
     { label: t("nav.faq"), href: "#faq" },

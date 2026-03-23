@@ -10,14 +10,15 @@ const leftItems = [
   { name: "Shopify", icon: ShoppingCart },
   { name: "WooCommerce", icon: Store },
 ];
-const rightItems = [
-  { name: "PrestaShop", icon: FileText },
-  { name: "Google Index", icon: Search },
-  { name: "Analytics", icon: BarChart3 },
-];
 
 export function IntegrationsSection() {
   const { t } = useLanguage();
+
+  const rightItems = [
+    { name: "PrestaShop", icon: FileText },
+    { name: t("integrations.googleIndex"), icon: Search },
+    { name: t("integrations.analytics"), icon: BarChart3 },
+  ];
 
   return (
     <section className="py-20 md:py-28 relative overflow-hidden">
@@ -33,13 +34,13 @@ export function IntegrationsSection() {
         <ScrollReveal>
           <div className="text-center mb-16 md:mb-20">
             <div className="section-badge mx-auto mb-5">
-              <span>✦</span><span>Integrations</span><span>✦</span>
+              <span>✦</span><span>{t("integrations.badge")}</span><span>✦</span>
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.04em]">
-              Integrates with Your{" "}<span className="text-gradient-primary">Favourite Tools</span>
+              {t("integrations.title1")}{" "}<span className="text-gradient-primary">{t("integrations.title2")}</span>
             </h2>
             <p className="mt-4 text-sm md:text-base text-[hsl(220,15%,50%)] max-w-lg mx-auto leading-relaxed">
-              Seamlessly connects with popular CMS platforms, enabling you to deploy pages and boost SEO without disrupting your workflow.
+              {t("integrations.description")}
             </p>
           </div>
         </ScrollReveal>

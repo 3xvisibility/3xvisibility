@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { getMinimumPlanFor, FEATURE_LABELS, PLAN_FEATURES, type FeatureKey } from "@/lib/plan-features";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface UpgradePromptProps {
   feature: FeatureKey;
@@ -14,6 +15,7 @@ interface UpgradePromptProps {
 export function UpgradePrompt({ feature, variant = "inline", className = "" }: UpgradePromptProps) {
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
+  const { t } = useLanguage();
   const minPlan = getMinimumPlanFor(feature);
   const planLabel = PLAN_FEATURES[minPlan].label;
   const featureLabel = FEATURE_LABELS[feature];
@@ -24,10 +26,10 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
         <Lock className="h-4 w-4 text-primary shrink-0" />
         <p className="text-sm text-foreground flex-1">
           <span className="font-medium">{featureLabel}</span> is available on the{" "}
-          <span className="font-semibold text-primary">{planLabel}</span> plan and above.
+          <span className="font-semibold text-primary">{planLabel}</span> {t("common.plan")}.
         </p>
         <Button size="sm" onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5">
-          Upgrade <ArrowRight className="h-3.5 w-3.5" />
+          {t("common.upgrade")} <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
     );
@@ -42,10 +44,10 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
           </div>
           <h3 className="font-semibold text-lg">{featureLabel}</h3>
           <p className="text-sm text-muted-foreground">
-            Upgrade to the <span className="font-semibold text-primary">{planLabel}</span> plan to unlock this feature.
+            {t("common.upgradeToUnlock", { plan: planLabel })}.
           </p>
           <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-1.5">
-            <Sparkles className="h-4 w-4" /> Upgrade to {planLabel}
+            <Sparkles className="h-4 w-4" /> {t("common.upgrade")} {planLabel}
           </Button>
         </div>
       </div>
@@ -62,11 +64,11 @@ export function UpgradePrompt({ feature, variant = "inline", className = "" }: U
         <div className="flex-1 space-y-1">
           <h4 className="font-semibold">{featureLabel}</h4>
           <p className="text-sm text-muted-foreground">
-            This feature requires the <span className="font-semibold text-primary">{planLabel}</span> plan or higher.
+            {t("common.requiresPlan", { plan: planLabel })}.
           </p>
         </div>
         <Button size="sm" onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5 mt-1">
-          Upgrade <ArrowRight className="h-3.5 w-3.5" />
+          {t("common.upgrade")} <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </CardContent>
     </Card>
@@ -95,6 +97,7 @@ interface UsageLimitBannerProps {
 export function UsageLimitBanner({ type, used, limit, className = "" }: UsageLimitBannerProps) {
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
+  const { t } = useLanguage();
 
   // Unlimited = no banner
   if (limit === -1) return null;
@@ -122,7 +125,7 @@ export function UsageLimitBanner({ type, used, limit, className = "" }: UsageLim
         )}
       </p>
       <Button size="sm" variant={isExhausted ? "default" : "outline"} onClick={() => navigate(`${basePath}/billing`)} className="shrink-0 gap-1.5">
-        Upgrade <ArrowRight className="h-3.5 w-3.5" />
+        {t("common.upgrade")} <ArrowRight className="h-3.5 w-3.5" />
       </Button>
     </div>
   );

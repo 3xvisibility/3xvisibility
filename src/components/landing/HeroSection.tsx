@@ -223,13 +223,13 @@ export function HeroSection() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(217,91%,60%,0.08)]">
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.5 }}>
-                    <h2 className="text-sm font-bold text-foreground">Welcome back, John</h2>
-                    <p className="text-[10px] text-[hsl(220,15%,45%)]">Statistics overview</p>
+                    <h2 className="text-sm font-bold text-foreground">{t("hero.mockWelcomeBack", { name: "John" })}</h2>
+                    <p className="text-[10px] text-[hsl(220,15%,45%)]">{t("hero.mockStatisticsOverview")}</p>
                   </motion.div>
                   <div className="flex items-center gap-3">
                     <div className="hidden sm:flex items-center gap-2 h-7 px-3 rounded-lg bg-[hsl(220,30%,12%)] border border-[hsl(217,91%,60%,0.08)]">
                       <Search className="h-3 w-3 text-[hsl(220,15%,40%)]" />
-                      <span className="text-[10px] text-[hsl(220,15%,40%)]">Search...</span>
+                      <span className="text-[10px] text-[hsl(220,15%,40%)]">{t("hero.mockSearch")}</span>
                     </div>
                     <Bell className="h-4 w-4 text-[hsl(220,15%,40%)]" />
                     <Mail className="h-4 w-4 text-[hsl(220,15%,40%)]" />
@@ -245,18 +245,18 @@ export function HeroSection() {
                       transition={{ delay: 1, duration: 0.4 }}
                       className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-[hsl(220,30%,12%)] border border-[hsl(217,91%,60%,0.1)] text-[10px] font-medium text-[hsl(220,15%,55%)] cursor-pointer"
                     >
-                      This week <ArrowRight className="h-2.5 w-2.5 rotate-90" />
+                      {t("hero.mockThisWeek")} <ArrowRight className="h-2.5 w-2.5 rotate-90" />
                     </motion.div>
-                    <span className="text-[9px] text-[hsl(220,15%,35%)]">Last updated at 10:22 AM</span>
+                    <span className="text-[9px] text-[hsl(220,15%,35%)]">{t("hero.mockLastUpdated")}</span>
                   </div>
 
                   <div className="flex gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
                         {[
-                          { label: "Pages Generated", value: 1324, icon: FileText, change: "+10%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(217,91%,60%,0.1)]" },
-                          { label: "Total Views", value: 12100, icon: Eye, change: "+5%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(210,100%,70%,0.1)]" },
-                          { label: "Indexing Rate", value: 56, icon: TrendingUp, change: "+12%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(38,92%,50%,0.1)]", suffix: "%" },
+                          { label: t("dashboard.pagesGeneratedLabel"), value: 1324, icon: FileText, change: "+10%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(217,91%,60%,0.1)]" },
+                          { label: t("hero.mockTotalViews"), value: 12100, icon: Eye, change: "+5%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(210,100%,70%,0.1)]" },
+                          { label: t("hero.mockIndexingRate"), value: 56, icon: TrendingUp, change: "+12%", changeColor: "text-[hsl(142,76%,50%)]", iconBg: "bg-[hsl(38,92%,50%,0.1)]", suffix: "%" },
                         ].map((stat, i) => (
                           <motion.div
                             key={stat.label}
@@ -290,14 +290,14 @@ export function HeroSection() {
                         className="rounded-xl bg-[hsl(220,35%,10%)] border border-[hsl(217,91%,60%,0.08)] p-4"
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-[11px] font-semibold text-foreground">Daily visitors</span>
+                          <span className="text-[11px] font-semibold text-foreground">{t("hero.mockDailyVisitors")}</span>
                           <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(220,15%,40%)]" />
                         </div>
                         <MiniBarChart />
                         <div className="flex justify-between mt-2 text-[8px] text-[hsl(220,15%,35%)]">
-                          <span>January</span>
-                          <span>February</span>
-                          <span>March</span>
+                          <span>{t("hero.mockJanuary")}</span>
+                          <span>{t("hero.mockFebruary")}</span>
+                          <span>{t("hero.mockMarch")}</span>
                         </div>
                       </motion.div>
                     </div>
@@ -310,7 +310,7 @@ export function HeroSection() {
                     >
                       <div className="rounded-xl bg-[hsl(220,35%,10%)] border border-[hsl(217,91%,60%,0.08)] p-3">
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-[11px] font-semibold text-foreground">Integrations</span>
+                          <span className="text-[11px] font-semibold text-foreground">{t("hero.mockIntegrations")}</span>
                           <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(220,15%,40%)]" />
                         </div>
                         {[
@@ -318,7 +318,7 @@ export function HeroSection() {
                           { name: "Shopify", connected: true },
                           { name: "WooCommerce", connected: false },
                           { name: "PrestaShop", connected: false },
-                          { name: "Google Index", connected: true },
+                          { name: t("integrations.googleIndex"), connected: true },
                         ].map((item, i) => (
                           <motion.div key={item.name} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 + i * 0.08, duration: 0.3, ease }} className="flex items-center justify-between py-1.5">
                             <div className="flex items-center gap-2">
@@ -328,23 +328,23 @@ export function HeroSection() {
                               <span className="text-[10px] text-[hsl(220,15%,60%)]">{item.name}</span>
                             </div>
                             {item.connected ? (
-                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(142,76%,36%,0.15)] text-[hsl(142,76%,50%)] font-medium">Connected</span>
+                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(142,76%,36%,0.15)] text-[hsl(142,76%,50%)] font-medium">{t("common.connected")}</span>
                             ) : (
-                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(217,91%,60%,0.1)] text-[hsl(217,91%,60%)] font-medium cursor-pointer hover:bg-[hsl(217,91%,60%,0.2)] transition-colors">Connect</span>
+                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(217,91%,60%,0.1)] text-[hsl(217,91%,60%)] font-medium cursor-pointer hover:bg-[hsl(217,91%,60%,0.2)] transition-colors">{t("common.connect")}</span>
                             )}
                           </motion.div>
                         ))}
                       </div>
 
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8, duration: 0.5, ease }} className="mt-3 rounded-xl bg-[hsl(220,35%,10%)] border border-[hsl(217,91%,60%,0.08)] p-3">
-                        <span className="text-[11px] font-semibold text-foreground block mb-2">Recent Activity</span>
+                        <span className="text-[11px] font-semibold text-foreground block mb-2">{t("hero.mockRecentActivity")}</span>
                         {[
-                          { text: "Generated 50 pages", status: "Completed" },
-                          { text: "Sitemap updated", status: "Completed" },
-                          { text: "Indexing 12 URLs", status: "In Progress" },
+                          { text: t("hero.mockGeneratedPagesActivity"), status: t("status.completed") },
+                          { text: t("hero.mockSitemapUpdated"), status: t("status.completed") },
+                          { text: t("hero.mockIndexingUrls"), status: t("status.inProgress") },
                         ].map((activity, i) => (
                           <div key={i} className="flex items-center gap-2 py-1">
-                            <CheckCircle2 className={`h-3 w-3 shrink-0 ${activity.status === "Completed" ? "text-[hsl(142,76%,50%)]" : "text-[hsl(38,92%,50%)]"}`} />
+                            <CheckCircle2 className={`h-3 w-3 shrink-0 ${activity.status === t("status.completed") ? "text-[hsl(142,76%,50%)]" : "text-[hsl(38,92%,50%)]"}`} />
                             <span className="text-[9px] text-[hsl(220,15%,55%)] truncate">{activity.text}</span>
                           </div>
                         ))}
@@ -357,9 +357,9 @@ export function HeroSection() {
                   <div className="rounded-lg bg-[hsl(220,40%,10%)] border border-[hsl(217,91%,60%,0.15)] p-2.5 shadow-xl backdrop-blur-sm">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="h-2 w-2 rounded-full bg-[hsl(142,76%,50%)]" />
-                      <span className="text-[8px] text-[hsl(220,15%,45%)]">Published on 5 Mar at 19:00</span>
+                        <span className="text-[8px] text-[hsl(220,15%,45%)]">{t("hero.mockPublishedAt")}</span>
                     </div>
-                    <span className="text-[10px] font-semibold text-foreground">50 SEO Pages Deployed</span>
+                      <span className="text-[10px] font-semibold text-foreground">{t("hero.mockSeoPagesDeployed")}</span>
                     <div className="flex items-center gap-3 mt-1.5">
                       <span className="flex items-center gap-1 text-[8px] text-[hsl(220,15%,40%)]"><Heart className="h-2.5 w-2.5" /> —</span>
                       <span className="flex items-center gap-1 text-[8px] text-[hsl(220,15%,40%)]"><Eye className="h-2.5 w-2.5" /> —</span>

@@ -12,87 +12,71 @@ import {
   Users,
   Layers,
 } from "lucide-react";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const useCases = [
-  {
-    icon: Search,
-    tag: "SEO",
-    title: "Programmatic SEO",
-    description:
-      "Generate thousands of keyword-targeted landing pages from a CSV of services, locations, or product categories. Each page is optimised with meta titles, descriptions, canonical URLs, and structured data.",
-    highlights: [
-      "Keyword-targeted pages",
-      "Auto meta tags & schema",
-      "Internal linking",
-      "Sitemap generation",
-    ],
-    example: "Best {service} in {city} — 500 pages in 10 min",
-    gradient: "from-[hsl(217,91%,60%,0.15)] to-[hsl(210,100%,70%,0.08)]",
-    borderColor: "border-[hsl(217,91%,60%,0.2)]",
-    tagBg: "bg-[hsl(217,91%,60%,0.12)] text-[hsl(217,91%,68%)]",
-  },
-  {
-    icon: Target,
-    tag: "SEA",
-    title: "Search Engine Advertising",
-    description:
-      "Create tailored ad landing pages at scale for PPC campaigns. Dynamically match keywords, ad groups, and UTM parameters to dedicated pages that boost Quality Score and lower CPA.",
-    highlights: [
-      "UTM parameter support",
-      "Ad group mapping",
-      "A/B test variants",
-      "Conversion tracking",
-    ],
-    example: "{keyword} — Professional {service} | Ad Group #{ad_group}",
-    gradient: "from-[hsl(38,92%,50%,0.15)] to-[hsl(28,80%,50%,0.08)]",
-    borderColor: "border-[hsl(38,92%,50%,0.2)]",
-    tagBg: "bg-[hsl(38,92%,50%,0.12)] text-[hsl(38,92%,60%)]",
-  },
-  {
-    icon: MapPin,
-    tag: "GEO",
-    title: "Local & Geo Pages",
-    description:
-      "Spin up geo-targeted pages for every city, state, or ZIP code in your service area. Integrated location database with 40,000+ US cities ready to map into your templates.",
-    highlights: [
-      "40K+ cities database",
-      "State & ZIP support",
-      "Geo-specific content",
-      "Directory structures",
-    ],
-    example: "{service} in {city}, {state} ({zip_code})",
-    gradient: "from-[hsl(142,76%,36%,0.15)] to-[hsl(150,60%,40%,0.08)]",
-    borderColor: "border-[hsl(142,76%,36%,0.2)]",
-    tagBg: "bg-[hsl(142,76%,36%,0.12)] text-[hsl(142,76%,50%)]",
-  },
-];
-
-const audiences = [
-  {
-    icon: Building2,
-    title: "Agencies",
-    description: "Manage client campaigns across isolated workspaces with whitelabel branding.",
-  },
-  {
-    icon: Globe,
-    title: "E-commerce",
-    description: "Product & category pages at scale — push to Shopify, WooCommerce, or PrestaShop.",
-  },
-  {
-    icon: Users,
-    title: "Multi-location businesses",
-    description: "One template, 500 locations — each with unique AI-generated copy.",
-  },
-  {
-    icon: Layers,
-    title: "Content teams",
-    description: "Templatise repeating content patterns and free up writers for high-value work.",
-  },
-];
-
 export function UseCasesSection() {
+  const { t } = useLanguage();
+
+  const useCases = [
+    {
+      icon: Search,
+      tag: "SEO",
+      title: t("useCases.seoTitle"),
+      description: t("useCases.seoDescription"),
+      highlights: [
+        t("useCases.seoHighlight1"),
+        t("useCases.seoHighlight2"),
+        t("useCases.seoHighlight3"),
+        t("useCases.seoHighlight4"),
+      ],
+      example: t("useCases.seoExample"),
+      gradient: "from-[hsl(217,91%,60%,0.15)] to-[hsl(210,100%,70%,0.08)]",
+      borderColor: "border-[hsl(217,91%,60%,0.2)]",
+      tagBg: "bg-[hsl(217,91%,60%,0.12)] text-[hsl(217,91%,68%)]",
+    },
+    {
+      icon: Target,
+      tag: "SEA",
+      title: t("useCases.seaTitle"),
+      description: t("useCases.seaDescription"),
+      highlights: [
+        t("useCases.seaHighlight1"),
+        t("useCases.seaHighlight2"),
+        t("useCases.seaHighlight3"),
+        t("useCases.seaHighlight4"),
+      ],
+      example: t("useCases.seaExample"),
+      gradient: "from-[hsl(38,92%,50%,0.15)] to-[hsl(28,80%,50%,0.08)]",
+      borderColor: "border-[hsl(38,92%,50%,0.2)]",
+      tagBg: "bg-[hsl(38,92%,50%,0.12)] text-[hsl(38,92%,60%)]",
+    },
+    {
+      icon: MapPin,
+      tag: "GEO",
+      title: t("useCases.geoTitle"),
+      description: t("useCases.geoDescription"),
+      highlights: [
+        t("useCases.geoHighlight1"),
+        t("useCases.geoHighlight2"),
+        t("useCases.geoHighlight3"),
+        t("useCases.geoHighlight4"),
+      ],
+      example: t("useCases.geoExample"),
+      gradient: "from-[hsl(142,76%,36%,0.15)] to-[hsl(150,60%,40%,0.08)]",
+      borderColor: "border-[hsl(142,76%,36%,0.2)]",
+      tagBg: "bg-[hsl(142,76%,36%,0.12)] text-[hsl(142,76%,50%)]",
+    },
+  ];
+
+  const audiences = [
+    { icon: Building2, title: t("useCases.agenciesTitle"), description: t("useCases.agenciesDescription") },
+    { icon: Globe, title: t("useCases.ecommerceTitle"), description: t("useCases.ecommerceDescription") },
+    { icon: Users, title: t("useCases.multilocationTitle"), description: t("useCases.multilocationDescription") },
+    { icon: Layers, title: t("useCases.contentTeamsTitle"), description: t("useCases.contentTeamsDescription") },
+  ];
+
   return (
     <section id="use-cases" className="py-20 md:py-28 relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,hsl(217,91%,60%,0.05),transparent)] pointer-events-none" />
@@ -102,14 +86,14 @@ export function UseCasesSection() {
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-14">
           <span className="section-badge mb-6">
             <Target className="h-3 w-3" />
-            Use Cases
+            {t("useCases.badge")}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] leading-tight">
-            One platform,<br />
-            <span className="text-gradient-primary">three growth engines</span>
+            {t("useCases.title1")}<br />
+            <span className="text-gradient-primary">{t("useCases.title2")}</span>
           </h2>
           <p className="mt-4 text-sm text-[hsl(220,15%,50%)] max-w-lg mx-auto leading-relaxed">
-            Whether you're scaling organic traffic, optimising paid campaigns, or dominating local search — PageGen has you covered.
+            {t("useCases.description")}
           </p>
         </ScrollReveal>
 
@@ -178,10 +162,10 @@ export function UseCasesSection() {
         <ScrollReveal>
           <div className="text-center mb-10">
             <h3 className="text-2xl md:text-3xl font-extrabold tracking-[-0.03em]">
-              Built for <span className="text-gradient-primary">teams that scale</span>
+              {t("useCases.audienceTitle1")} <span className="text-gradient-primary">{t("useCases.audienceTitle2")}</span>
             </h3>
             <p className="mt-3 text-sm text-[hsl(220,15%,50%)] max-w-md mx-auto">
-              Multi-tenant workspaces with role-based access, whitelabel branding, and isolated data — perfect for agencies and enterprises.
+              {t("useCases.audienceDescription")}
             </p>
           </div>
         </ScrollReveal>
@@ -222,7 +206,7 @@ export function UseCasesSection() {
             asChild
           >
             <Link to="/auth">
-              Start generating pages <ArrowRight className="ml-2 h-4 w-4" />
+              {t("useCases.cta")} <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </ScrollReveal>

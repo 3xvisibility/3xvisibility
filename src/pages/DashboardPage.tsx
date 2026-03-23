@@ -44,6 +44,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitationsBanner";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
@@ -57,13 +58,6 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-muted text-muted-foreground",
 };
 
-const TIME_RANGES = [
-  { value: "7", label: "Last 7 days" },
-  { value: "30", label: "Last 30 days" },
-  { value: "90", label: "Last 90 days" },
-  { value: "all", label: "All time" },
-];
-
 function daysAgoISO(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -73,17 +67,28 @@ function daysAgoISO(days: number): string {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
-  const [greeting, setGreeting] = useState("Welcome back");
   const [timeRange, setTimeRange] = useState("30");
   const { currentWorkspace, basePath } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good morning");
-    else if (hour < 18) setGreeting("Good afternoon");
-    else setGreeting("Good evening");
+  const timeRanges = [
+    { value: "7", label: t("dashboard.timeRange7") },
+    { value: "30", label: t("dashboard.timeRange30") },
+    { value: "90", label: t("dashboard.timeRange90") },
+    { value: "all", label: t("dashboard.timeRangeAll") },
+  ];
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12
+    ? t("dashboard.greetingMorning")
+    : hour < 18
+      ? t("dashboard.greetingAfternoon")
+      : t("dashboard.greetingEvening");
+
+  const translateStatus = (status: string) => t(`status.${status}`);
+
+  useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase
@@ -92,9 +97,7 @@ export default function DashboardPage() {
           .eq("user_id", user.id)
           .maybeSingle()
           .then(({ data }) => {
-            setUserName(
-              data?.full_name || user.email?.split("@")[0] || "there"
-            );
+            setUserName(data?.full_name || user.email?.split("@")[0] || "");
           });
       }
     });
@@ -270,20 +273,20 @@ export default function DashboardPage() {
 
   // ── Chart data (synthetic from counts) ──────────────────────────
   const pageChartData = [
-    { name: "Mon", pages: Math.round(pageCount * 0.1) || 2 },
-    { name: "Tue", pages: Math.round(pageCount * 0.18) || 5 },
-    { name: "Wed", pages: Math.round(pageCount * 0.08) || 3 },
-    { name: "Thu", pages: Math.round(pageCount * 0.22) || 8 },
-    { name: "Fri", pages: Math.round(pageCount * 0.28) || 12 },
-    { name: "Sat", pages: Math.round(pageCount * 0.09) || 4 },
-    { name: "Sun", pages: Math.round(pageCount * 0.05) || 1 },
+    { name: t("dashboard.mon"), pages: Math.round(pageCount * 0.1) || 2 },
+    { name: t("dashboard.tue"), pages: Math.round(pageCount * 0.18) || 5 },
+    { name: t("dashboard.wed"), pages: Math.round(pageCount * 0.08) || 3 },
+    { name: t("dashboard.thu"), pages: Math.round(pageCount * 0.22) || 8 },
+    { name: t("dashboard.fri"), pages: Math.round(pageCount * 0.28) || 12 },
+    { name: t("dashboard.sat"), pages: Math.round(pageCount * 0.09) || 4 },
+    { name: t("dashboard.sun"), pages: Math.round(pageCount * 0.05) || 1 },
   ];
 
   const campaignChartData = [
-    { name: "Week 1", campaigns: Math.max(1, Math.round(campaignCount * 0.15)) },
-    { name: "Week 2", campaigns: Math.max(2, Math.round(campaignCount * 0.35)) },
-    { name: "Week 3", campaigns: Math.max(1, Math.round(campaignCount * 0.2)) },
-    { name: "Week 4", campaigns: Math.max(3, Math.round(campaignCount * 0.3)) },
+    { name: t("dashboard.week", { number: 1 }), campaigns: Math.max(1, Math.round(campaignCount * 0.15)) },
+    { name: t("dashboard.week", { number: 2 }), campaigns: Math.max(2, Math.round(campaignCount * 0.35)) },
+    { name: t("dashboard.week", { number: 3 }), campaigns: Math.max(1, Math.round(campaignCount * 0.2)) },
+    { name: t("dashboard.week", { number: 4 }), campaigns: Math.max(3, Math.round(campaignCount * 0.3)) },
   ];
 
   const isLoading = loadingCampaigns || loadingPages || loadingWebsites;
@@ -293,7 +296,7 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      label: "Total Campaigns",
+      label: t("dashboard.totalCampaigns"),
       value: campaignCount,
       icon: Rocket,
       gradient: "from-primary/20 to-primary/5",
@@ -301,7 +304,7 @@ export default function DashboardPage() {
       iconColor: "text-primary",
     },
     {
-      label: "Pages Generated",
+      label: t("dashboard.pagesGeneratedLabel"),
       value: pageCount,
       icon: Layers,
       gradient: "from-secondary/20 to-secondary/5",
@@ -309,7 +312,7 @@ export default function DashboardPage() {
       iconColor: "text-secondary",
     },
     {
-      label: "Failed Pages",
+      label: t("dashboard.failedPages"),
       value: failedPageCount,
       icon: AlertTriangle,
       gradient: "from-destructive/20 to-destructive/5",
@@ -317,7 +320,7 @@ export default function DashboardPage() {
       iconColor: "text-destructive",
     },
     {
-      label: "In Queue",
+      label: t("dashboard.inQueue"),
       value: queuedPageCount,
       icon: Clock,
       gradient: "from-warning/20 to-warning/5",
@@ -329,21 +332,21 @@ export default function DashboardPage() {
   const quickActions = [
     {
       label: "Connect a Site",
-      description: "Add WordPress, Shopify, or PrestaShop",
+      description: t("dashboard.connectSiteDesc"),
       icon: Globe,
       href: "/websites",
       gradient: "bg-gradient-to-br from-success to-secondary",
     },
     {
-      label: "Create Template",
-      description: "Build a reusable page template",
+      label: t("dashboard.createTemplate"),
+      description: t("dashboard.createTemplateDesc"),
       icon: FileText,
       href: "/templates",
       gradient: "bg-gradient-to-br from-secondary to-info",
     },
     {
-      label: "Create Campaign",
-      description: "Start your first page generation",
+      label: t("dashboard.createCampaign"),
+      description: t("dashboard.createCampaignDesc"),
       icon: Plus,
       href: "/campaigns",
       gradient: "bg-gradient-primary",
@@ -354,13 +357,13 @@ export default function DashboardPage() {
 
   const timeAgo = (date: string) => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-    if (seconds < 60) return "just now";
+    if (seconds < 60) return t("dashboard.justNow");
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 60) return t("dashboard.minutesAgo", { count: minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return t("dashboard.hoursAgo", { count: hours });
     const days = Math.floor(hours / 24);
-    return `${days}d ago`;
+    return t("dashboard.daysAgo", { count: days });
   };
 
   const jobStatusIcon = (status: string) => {
@@ -390,16 +393,12 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 mb-1">
               <p className="text-sm font-medium text-primary-foreground/70">{greeting} 👋</p>
               <Badge className="bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 text-[10px] uppercase tracking-wider font-bold">
-                {currentPlan} plan
+                {currentPlan} {t("common.plan")}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{userName || "..."}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{userName || t("dashboard.userFallback")}</h1>
             <p className="text-sm text-primary-foreground/70 max-w-md">
-              Here's what's happening with your projects. You have{" "}
-              <span className="font-semibold text-primary-foreground">{campaignCount} campaigns</span>{" "}
-              and{" "}
-              <span className="font-semibold text-primary-foreground">{pageCount} pages</span>{" "}
-              generated.
+              {t("dashboard.summary", { campaigns: campaignCount, pages: pageCount })}
             </p>
           </div>
           {/* Time Range Filter */}
@@ -409,7 +408,7 @@ export default function DashboardPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIME_RANGES.map((r) => (
+                {timeRanges.map((r) => (
                   <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                 ))}
               </SelectContent>
@@ -423,7 +422,7 @@ export default function DashboardPage() {
       {/* Get Started / Quick Actions */}
       {showGetStarted && (
         <div>
-          <h2 className="text-display-sm mb-4">Get Started</h2>
+          <h2 className="text-display-sm mb-4">{t("dashboard.getStarted")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {quickActions.map((action) => (
               <button
@@ -450,9 +449,9 @@ export default function DashboardPage() {
       {/* Stats Grid */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-display-sm">Overview</h2>
+          <h2 className="text-display-sm">{t("dashboard.overview")}</h2>
           <Badge variant="secondary" className="text-[11px] bg-muted border-0">
-            {TIME_RANGES.find((r) => r.value === timeRange)?.label}
+            {timeRanges.find((r) => r.value === timeRange)?.label}
           </Badge>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -490,10 +489,10 @@ export default function DashboardPage() {
                 <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Activity className="h-4 w-4 text-primary" />
                 </div>
-                <CardTitle className="text-sm font-semibold">Page Generation</CardTitle>
+                <CardTitle className="text-sm font-semibold">{t("dashboard.pageGeneration")}</CardTitle>
               </div>
               <Badge variant="secondary" className="text-[11px] bg-muted border-0">
-                <TrendingUp className="h-3 w-3 mr-1" /> This week
+                <TrendingUp className="h-3 w-3 mr-1" /> {t("dashboard.thisWeek")}
               </Badge>
             </div>
           </CardHeader>
@@ -525,9 +524,9 @@ export default function DashboardPage() {
                 <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center">
                   <Rocket className="h-4 w-4 text-secondary" />
                 </div>
-                <CardTitle className="text-sm font-semibold">Campaign Activity</CardTitle>
+                <CardTitle className="text-sm font-semibold">{t("dashboard.campaignActivity")}</CardTitle>
               </div>
-              <Badge variant="secondary" className="text-[11px] bg-muted border-0">This month</Badge>
+              <Badge variant="secondary" className="text-[11px] bg-muted border-0">{t("dashboard.thisMonth")}</Badge>
             </div>
           </CardHeader>
           <CardContent className="pt-2 px-2 sm:px-4">
@@ -562,21 +561,21 @@ export default function DashboardPage() {
                 <Sparkles className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h3 className="font-semibold">AI Generations</h3>
+                <h3 className="font-semibold">{t("dashboard.aiGenerationsTitle")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {loadingAi ? "Loading..." : `${aiUsed} of ${aiLimit} credits used this billing cycle`}
+                  {loadingAi ? t("common.loading") : t("dashboard.aiUsageCycle", { used: aiUsed, limit: aiLimit })}
                 </p>
               </div>
             </div>
             <Badge className="bg-gradient-primary text-primary-foreground border-0 capitalize px-4 py-1.5 text-xs font-semibold self-start sm:self-auto">
-              {aiUsage?.plan || "free"} plan
+              {aiUsage?.plan || "free"} {t("common.plan")}
             </Badge>
           </div>
           {!loadingAi && (
             <div className="mt-5">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <span>{aiUsed} used</span>
-                <span>{aiLimit - aiUsed} remaining</span>
+                <span>{t("dashboard.aiUsed", { used: aiUsed })}</span>
+                <span>{t("dashboard.aiRemaining", { remaining: aiLimit - aiUsed })}</span>
               </div>
               <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
                 <div className="absolute inset-y-0 left-0 bg-gradient-primary rounded-full transition-all duration-500" style={{ width: `${aiPercent}%` }} />
@@ -596,9 +595,9 @@ export default function DashboardPage() {
                 <Target className="h-6 w-6 text-success" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Campaigns Improved</h3>
+                <h3 className="font-semibold text-sm">{t("dashboard.campaignsImproved")}</h3>
                 <p className="text-2xl font-bold tabular-nums text-success">{improvementStats.improved}</p>
-                <p className="text-[10px] text-muted-foreground">of {improvementStats.total} total campaigns</p>
+                <p className="text-[10px] text-muted-foreground">{t("dashboard.ofTotalCampaigns", { total: improvementStats.total })}</p>
               </div>
             </CardContent>
           </Card>
@@ -609,11 +608,13 @@ export default function DashboardPage() {
                 <Zap className="h-6 w-6 text-warning" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Needs Optimization</h3>
+                <h3 className="font-semibold text-sm">{t("dashboard.needsOptimization")}</h3>
                 <p className="text-2xl font-bold tabular-nums text-warning">
                   {Math.max(0, improvementStats.total - improvementStats.improved)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">campaigns not yet optimized</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {t("dashboard.campaignsNotOptimized", { count: Math.max(0, improvementStats.total - improvementStats.improved) })}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -628,7 +629,7 @@ export default function DashboardPage() {
               <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Play className="h-4 w-4 text-primary" />
               </div>
-              <CardTitle className="text-sm font-semibold">Latest Jobs</CardTitle>
+              <CardTitle className="text-sm font-semibold">{t("dashboard.latestJobs")}</CardTitle>
             </div>
           </div>
         </CardHeader>
@@ -642,7 +643,7 @@ export default function DashboardPage() {
               <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center mb-3">
                 <Play className="h-6 w-6 text-muted-foreground/40" />
               </div>
-              <p className="text-sm text-muted-foreground">No generation jobs yet</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.noGenerationJobs")}</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -664,7 +665,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-[11px] text-muted-foreground tabular-nums">
-                          {job.success_count} ✓ · {job.error_count} ✗ · {job.processed_rows}/{job.total_rows} rows
+                          {job.success_count} ✓ · {job.error_count} ✗ · {job.processed_rows}/{job.total_rows} {t("dashboard.rows")}
                         </span>
                       </div>
                     </div>
@@ -686,9 +687,9 @@ export default function DashboardPage() {
         <Card className="border-0 shadow-surface lg:col-span-3">
           <CardHeader className="px-4 sm:px-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Recent Campaigns</CardTitle>
+              <CardTitle className="text-sm font-semibold">{t("dashboard.recentCampaigns")}</CardTitle>
               <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary" onClick={() => navigate(`${basePath}/campaigns`)}>
-                View all <ArrowRight className="ml-1 h-3 w-3" />
+                {t("common.viewAll")} <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
           </CardHeader>
@@ -697,11 +698,11 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2.5 px-4 sm:px-6 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">Name</th>
-                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">Status</th>
-                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground text-[11px] uppercase tracking-wider hidden sm:table-cell">Progress</th>
-                    <th className="text-right py-2.5 px-4 font-medium text-muted-foreground text-[11px] uppercase tracking-wider hidden sm:table-cell">Date</th>
-                    <th className="text-right py-2.5 px-4 sm:px-6 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">Actions</th>
+                     <th className="text-left py-2.5 px-4 sm:px-6 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">{t("common.name")}</th>
+                     <th className="text-left py-2.5 px-4 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">{t("common.status")}</th>
+                     <th className="text-left py-2.5 px-4 font-medium text-muted-foreground text-[11px] uppercase tracking-wider hidden sm:table-cell">{t("common.progress")}</th>
+                     <th className="text-right py-2.5 px-4 font-medium text-muted-foreground text-[11px] uppercase tracking-wider hidden sm:table-cell">{t("common.date")}</th>
+                     <th className="text-right py-2.5 px-4 sm:px-6 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -723,9 +724,9 @@ export default function DashboardPage() {
                               <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center">
                                 <Rocket className="h-6 w-6 text-muted-foreground/40" />
                               </div>
-                              <p className="text-sm">No campaigns yet</p>
+                              <p className="text-sm">{t("dashboard.noCampaignsYet")}</p>
                               <Button size="sm" variant="outline" onClick={() => navigate(`${basePath}/campaigns`)} className="mt-1 rounded-xl">
-                                Create your first campaign
+                                {t("dashboard.createFirstCampaign")}
                               </Button>
                             </div>
                           </td>
@@ -739,7 +740,7 @@ export default function DashboardPage() {
                             <td className="py-3 px-4 sm:px-6 font-medium text-sm">{campaign.name}</td>
                             <td className="py-3 px-4">
                               <Badge variant="secondary" className={`${statusColors[campaign.status]} text-[10px] font-medium border capitalize`}>
-                                {campaign.status}
+                                 {translateStatus(campaign.status)}
                               </Badge>
                             </td>
                             <td className="py-3 px-4 tabular-nums text-muted-foreground text-xs hidden sm:table-cell">
@@ -755,7 +756,7 @@ export default function DashboardPage() {
                                   size="sm"
                                   className="h-7 w-7 p-0"
                                   onClick={() => navigate(`${basePath}/campaigns/${campaign.id}`)}
-                                  title="View campaign"
+                                   title={t("dashboard.viewCampaign")}
                                 >
                                   <Eye className="h-3.5 w-3.5" />
                                 </Button>
@@ -773,9 +774,9 @@ export default function DashboardPage() {
         <Card className="border-0 shadow-surface lg:col-span-2">
           <CardHeader className="px-4 sm:px-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Recent Activity</CardTitle>
+              <CardTitle className="text-sm font-semibold">{t("dashboard.recentActivity")}</CardTitle>
               <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary" onClick={() => navigate(`${basePath}/pages`)}>
-                View all <ArrowRight className="ml-1 h-3 w-3" />
+                {t("common.viewAll")} <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
           </CardHeader>
@@ -785,7 +786,7 @@ export default function DashboardPage() {
                 <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center mb-3">
                   <Clock className="h-6 w-6 text-muted-foreground/40" />
                 </div>
-                <p className="text-sm text-muted-foreground">No recent activity</p>
+                <p className="text-sm text-muted-foreground">{t("dashboard.noRecentActivity")}</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -808,7 +809,7 @@ export default function DashboardPage() {
                                 : "bg-warning/10 text-warning border-warning/20"
                           }`}
                         >
-                          {page.status}
+                           {translateStatus(page.status)}
                         </Badge>
                         <span className="text-[11px] text-muted-foreground">{timeAgo(page.created_at)}</span>
                       </div>

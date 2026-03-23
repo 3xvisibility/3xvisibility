@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -37,30 +38,31 @@ interface CommandPaletteProps {
 }
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "dashboard", keywords: "home overview" },
-  { label: "Websites", icon: Globe, path: "websites", keywords: "website connection wordpress shopify" },
-  { label: "Campaigns", icon: Rocket, path: "campaigns", keywords: "launch create campaign" },
-  { label: "Generated Pages", icon: Layers, path: "pages", keywords: "pages content generated" },
-  { label: "Templates", icon: FileText, path: "templates", keywords: "template html design" },
-  { label: "Marketplace", icon: Store, path: "marketplace", keywords: "marketplace shared community" },
-  { label: "Data / CSV", icon: Database, path: "data", keywords: "data csv upload file" },
-  { label: "Website Content", icon: Layers, path: "website-content", keywords: "content scrape fetch" },
-  { label: "AI Scanner", icon: ScanSearch, path: "scanner", keywords: "scan ai analyze" },
-  { label: "Discovery", icon: Compass, path: "discovery", keywords: "discover explore website" },
-  { label: "Analytics", icon: BarChart3, path: "analytics", keywords: "analytics stats metrics chart" },
-  { label: "Performance", icon: BarChart3, path: "performance", keywords: "performance page speed views" },
-  { label: "A/B Testing", icon: Layers, path: "ab-testing", keywords: "ab test variant split" },
-  { label: "Content Calendar", icon: Layers, path: "content-calendar", keywords: "calendar schedule plan content" },
-  { label: "SEO Audit", icon: ScanSearch, path: "seo-audit", keywords: "seo audit check score" },
-  { label: "Indexing", icon: SearchIcon, path: "indexing", keywords: "google index seo submit" },
-  { label: "Billing", icon: CreditCard, path: "billing", keywords: "billing plan subscription payment" },
-  { label: "Settings", icon: Settings, path: "settings", keywords: "settings profile preferences" },
-  { label: "Workspace Settings", icon: Users, path: "workspace-settings", keywords: "workspace team members" },
+  { titleKey: "sidebar.dashboard", icon: LayoutDashboard, path: "dashboard", keywords: "home overview" },
+  { titleKey: "sidebar.websites", icon: Globe, path: "websites", keywords: "website connection wordpress shopify" },
+  { titleKey: "sidebar.campaigns", icon: Rocket, path: "campaigns", keywords: "launch create campaign" },
+  { titleKey: "sidebar.generatedPages", icon: Layers, path: "pages", keywords: "pages content generated" },
+  { titleKey: "sidebar.templates", icon: FileText, path: "templates", keywords: "template html design" },
+  { titleKey: "sidebar.marketplace", icon: Store, path: "marketplace", keywords: "marketplace shared community" },
+  { titleKey: "sidebar.dataCsv", icon: Database, path: "data", keywords: "data csv upload file" },
+  { titleKey: "sidebar.websiteContent", icon: Layers, path: "website-content", keywords: "content scrape fetch" },
+  { titleKey: "sidebar.aiScanner", icon: ScanSearch, path: "scanner", keywords: "scan ai analyze" },
+  { titleKey: "sidebar.discovery", icon: Compass, path: "discovery", keywords: "discover explore website" },
+  { titleKey: "sidebar.analytics", icon: BarChart3, path: "analytics", keywords: "analytics stats metrics chart" },
+  { titleKey: "sidebar.performance", icon: BarChart3, path: "performance", keywords: "performance page speed views" },
+  { titleKey: "sidebar.abTesting", icon: Layers, path: "ab-testing", keywords: "ab test variant split" },
+  { titleKey: "sidebar.contentCalendar", icon: Layers, path: "content-calendar", keywords: "calendar schedule plan content" },
+  { titleKey: "sidebar.seoAudit", icon: ScanSearch, path: "seo-audit", keywords: "seo audit check score" },
+  { titleKey: "sidebar.indexing", icon: SearchIcon, path: "indexing", keywords: "google index seo submit" },
+  { titleKey: "sidebar.billing", icon: CreditCard, path: "billing", keywords: "billing plan subscription payment" },
+  { titleKey: "sidebar.settings", icon: Settings, path: "settings", keywords: "settings profile preferences" },
+  { titleKey: "sidebar.workspaceSettings", icon: Users, path: "workspace-settings", keywords: "workspace team members" },
 ];
 
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const navigate = useNavigate();
   const { currentWorkspace, basePath } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: campaigns = [] } = useQuery({
@@ -118,20 +120,20 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search pages, campaigns, templates, or navigate..." />
+      <CommandInput placeholder={t("command.searchPlaceholder")} />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandEmpty>{t("common.noResultsFound")}</CommandEmpty>
 
-        <CommandGroup heading="Navigation">
+        <CommandGroup heading={t("common.navigation")}>
           {navItems.map((item) => (
             <CommandItem
               key={item.path}
-              value={`nav-${item.label} ${item.keywords}`}
+               value={`nav-${t(item.titleKey)} ${item.keywords}`}
               onSelect={() => go(`${basePath}/${item.path}`)}
               className="gap-3"
             >
               <item.icon className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span>{item.label}</span>
+               <span>{t(item.titleKey)}</span>
               <ArrowRight className="ml-auto h-3 w-3 text-muted-foreground opacity-0 group-aria-selected:opacity-100 transition-opacity" />
             </CommandItem>
           ))}
@@ -140,7 +142,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         {campaigns.length > 0 && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Campaigns">
+            <CommandGroup heading={t("sidebar.campaigns")}>
               {campaigns.map((c) => (
                 <CommandItem
                   key={c.id}
@@ -160,7 +162,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         {templates.length > 0 && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Templates">
+            <CommandGroup heading={t("sidebar.templates")}>
               {templates.map((t) => (
                 <CommandItem
                   key={t.id}
@@ -179,7 +181,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         {pages.length > 0 && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Generated Pages">
+            <CommandGroup heading={t("sidebar.generatedPages")}>
               {pages.map((p) => (
                 <CommandItem
                   key={p.id}
@@ -196,7 +198,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         )}
 
         <CommandSeparator />
-        <CommandGroup heading="Help">
+        <CommandGroup heading={t("common.help")}>
           <CommandItem
             value="keyboard-shortcuts-help"
             onSelect={() => {
@@ -206,7 +208,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             className="gap-3"
           >
             <Keyboard className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span>Keyboard Shortcuts</span>
+            <span>{t("common.keyboardShortcuts")}</span>
             <kbd className="ml-auto text-[10px] font-mono text-muted-foreground border border-border rounded px-1">?</kbd>
           </CommandItem>
         </CommandGroup>

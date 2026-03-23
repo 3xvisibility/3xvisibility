@@ -147,14 +147,14 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>{content}</TooltipTrigger>
                   <TooltipContent side="right">
-                    Requires {minPlanLabel} plan
+                    {t("common.requiresPlan", { plan: minPlanLabel })}
                   </TooltipContent>
                 </Tooltip>
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>{content}</TooltipTrigger>
                   <TooltipContent side="right">
-                    Upgrade to {minPlanLabel} to unlock
+                    {t("common.upgradeToUnlock", { plan: minPlanLabel })}
                   </TooltipContent>
                 </Tooltip>
               )}
