@@ -169,7 +169,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="company">Company</Label>
+                <Label htmlFor="company">{t("settings.company")}</Label>
                 <Input id="company" placeholder="Acme Inc." value={company} onChange={(e) => setCompany(e.target.value)} />
               </div>
             </>
