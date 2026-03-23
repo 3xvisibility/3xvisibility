@@ -26,7 +26,7 @@ import {
   Tag,
   X,
   MousePointer,
-  HelpCircle,
+  
   ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
