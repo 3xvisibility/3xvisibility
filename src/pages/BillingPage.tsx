@@ -336,7 +336,7 @@ export default function BillingPage() {
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected Sites</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("billing.connectedSites")}</p>
               <span className="text-xs tabular-nums font-medium text-muted-foreground">
                 {sitesConnected} / {sitesLimit === -1 ? "∞" : sitesLimit}
               </span>
