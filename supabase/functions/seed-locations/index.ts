@@ -330,7 +330,7 @@ Deno.serve(async (req) => {
               messages: [
                 {
                   role: "system",
-                  content: `You are a geography data expert. Return ONLY a valid JSON array of the top 30-50 major cities for the given country code. Each object must have these exact keys: city (string), county (string or null), state (string - province/region name), state_code (string - 2-3 letter abbreviation), zip_code (string or null), latitude (number), longitude (number), population (number, approximate), timezone (string - IANA timezone), region (string - geographic region within the country), country (string - full country name), country_code (string - ISO 2-letter). No markdown, no explanation, ONLY the JSON array.`
+                  content: `You are a geography data expert. Return ONLY a valid JSON array of the top 30-50 major cities for the given country code. Each object must have these exact keys: city (string), county (string or null), state (string - province/region name), state_code (string - 2-3 letter abbreviation), zip_code (string or null - use the real, correct postal/zip code for each city's central area in the local format used by that country, e.g. "75001" for Paris France, "110001" for New Delhi India, "EC1A 1BB" for London UK; set to null if the country does not use postal codes), latitude (number), longitude (number), population (number, approximate), timezone (string - IANA timezone), region (string - geographic region within the country), country (string - full country name), country_code (string - ISO 2-letter). No markdown, no explanation, ONLY the JSON array.`
                 },
                 { role: "user", content: `Generate city data for country code: ${code}` }
               ],

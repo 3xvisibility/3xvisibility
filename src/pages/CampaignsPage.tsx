@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { friendlyError } from "@/lib/friendly-errors";
 import { logAudit } from "@/lib/audit";
+import { ALL_COUNTRIES } from "@/lib/countries";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -1065,24 +1066,11 @@ export default function CampaignsPage() {
                           <Select value={campaignCountry} onValueChange={setCampaignCountry}>
                             <SelectTrigger className="rounded-xl h-11 text-sm"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              {[
-                                { code: "US", label: "United States" }, { code: "GB", label: "United Kingdom" }, { code: "CA", label: "Canada" },
-                                { code: "AU", label: "Australia" }, { code: "FR", label: "France" }, { code: "DE", label: "Germany" },
-                                { code: "ES", label: "Spain" }, { code: "IT", label: "Italy" }, { code: "PT", label: "Portugal" },
-                                { code: "NL", label: "Netherlands" }, { code: "BE", label: "Belgium" }, { code: "CH", label: "Switzerland" },
-                                { code: "AT", label: "Austria" }, { code: "SE", label: "Sweden" }, { code: "NO", label: "Norway" },
-                                { code: "DK", label: "Denmark" }, { code: "FI", label: "Finland" }, { code: "PL", label: "Poland" },
-                                { code: "CZ", label: "Czech Republic" }, { code: "RO", label: "Romania" }, { code: "HU", label: "Hungary" },
-                                { code: "GR", label: "Greece" }, { code: "TR", label: "Turkey" }, { code: "RU", label: "Russia" },
-                                { code: "JP", label: "Japan" }, { code: "CN", label: "China" }, { code: "KR", label: "South Korea" },
-                                { code: "IN", label: "India" }, { code: "BR", label: "Brazil" }, { code: "MX", label: "Mexico" },
-                                { code: "AR", label: "Argentina" }, { code: "CO", label: "Colombia" }, { code: "CL", label: "Chile" },
-                                { code: "ZA", label: "South Africa" }, { code: "AE", label: "UAE" }, { code: "SA", label: "Saudi Arabia" },
-                                { code: "ID", label: "Indonesia" }, { code: "TH", label: "Thailand" }, { code: "VN", label: "Vietnam" },
-                                { code: "PH", label: "Philippines" }, { code: "MY", label: "Malaysia" }, { code: "SG", label: "Singapore" },
-                              ].map((c) => (
-                                <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
-                              ))}
+                              <ScrollArea className="h-64">
+                                {ALL_COUNTRIES.map((c) => (
+                                  <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                                ))}
+                              </ScrollArea>
                             </SelectContent>
                           </Select>
                         </div>
