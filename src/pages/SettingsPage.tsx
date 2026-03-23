@@ -219,7 +219,7 @@ export default function SettingsPage() {
           {/* Usage tracking */}
           <div className="rounded-lg border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">AI Generations</p>
+              <p className="text-sm font-medium">{t("settings.aiGenerations")}</p>
               <Badge variant="outline" className="capitalize">{subscription?.plan || "free"} plan</Badge>
             </div>
             {loadingSub ? (
