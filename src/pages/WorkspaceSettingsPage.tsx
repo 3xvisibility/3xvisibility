@@ -43,6 +43,7 @@ function callWorkspaceSettings(body: Record<string, unknown>) {
 }
 
 export default function WorkspaceSettingsPage() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace, refetch: refetchWorkspaces } = useWorkspace();
