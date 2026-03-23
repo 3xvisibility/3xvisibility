@@ -330,7 +330,7 @@ export default function WorkspaceSettingsPage() {
                 disabled={inviteMutation.isPending || !inviteEmail.trim()}
                 className="shrink-0"
               >
-                {inviteMutation.isPending ? "Inviting..." : "Invite"}
+                {inviteMutation.isPending ? t("workspaceSettings.inviting") : t("workspaceSettings.invite")}
               </Button>
             </div>
           </CardContent>
