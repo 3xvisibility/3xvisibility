@@ -360,10 +360,10 @@ export default function AdminPage() {
 
       <Tabs defaultValue="activity">
         <TabsList className="flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="activity" className="text-xs">Activity</TabsTrigger>
-          <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
-          <TabsTrigger value="campaigns" className="text-xs">Campaigns</TabsTrigger>
-          <TabsTrigger value="subscriptions" className="text-xs">Subs</TabsTrigger>
+          <TabsTrigger value="activity" className="text-xs">{t("admin.activity")}</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
+          <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
         </TabsList>
 
         {/* Activity feed tab */}

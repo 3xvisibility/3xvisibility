@@ -342,7 +342,7 @@ export default function WorkspaceSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Members
+            {t("workspaceSettings.members")}
           </CardTitle>
           <CardDescription>
             {members?.length || 0} member{(members?.length || 0) !== 1 ? "s" : ""}
