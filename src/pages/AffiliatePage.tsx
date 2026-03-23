@@ -52,7 +52,7 @@ interface Payout {
 
 export default function AffiliatePage() {
   const { t } = useLanguage();
-  const { workspace } = useWorkspace();
+  const { currentWorkspace } = useWorkspace();
   const [link, setLink] = useState<AffiliateLink | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
