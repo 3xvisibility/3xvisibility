@@ -966,7 +966,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                       return [...prev, { name, original, values: [original] }];
                     });
                   }}
-                  onRestartTour={() => setTourRestartKey((k) => k + 1)}
+                  
                 />
               </TabsContent>
 
