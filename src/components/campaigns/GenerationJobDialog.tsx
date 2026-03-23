@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/i18n/LanguageContext";
 import {
   Play, Pause, RotateCcw, XCircle, Clock, Check, AlertTriangle,
   Layers, Zap, Ban,
@@ -30,13 +31,13 @@ const jobStatusConfig: Record<string, { class: string; icon: typeof Check }> = {
 
 export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChange }: GenerationJobDialogProps) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
-  // Fetch all jobs for this campaign
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["generation-jobs-detail", campaignId],
     enabled: open && !!campaignId,
-    refetchInterval: 3000, // poll every 3s for live progress
+    refetchInterval: 3000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generation_jobs")
@@ -48,7 +49,6 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
     },
   });
 
-  // Fetch campaign logs for batch timeline
   const { data: logs = [] } = useQuery({
     queryKey: ["job-campaign-logs", campaignId],
     enabled: open && !!campaignId,
@@ -64,7 +64,6 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
     },
   });
 
-  // Retry mutation — re-execute the campaign
   const retryMutation = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("generate-pages", {
@@ -76,22 +75,19 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["generation-jobs-detail", campaignId] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast({ title: "Generation restarted" });
+      toast({ title: t("toast.generationRestarted") });
     },
     onError: (err: Error) => {
-      toast({ title: "Retry failed", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.retryFailed"), description: err.message, variant: "destructive" });
     },
   });
 
-  // Cancel mutation — mark job as cancelled
   const cancelMutation = useMutation({
     mutationFn: async (jobId: string) => {
-      // Pause the campaign to stop processing
       const { error: pauseErr } = await supabase.functions.invoke("generate-pages", {
         body: { campaign_id: campaignId, action: "pause" },
       });
       if (pauseErr) throw pauseErr;
-      // Mark the job as cancelled
       const { error } = await supabase
         .from("generation_jobs")
         .update({ status: "cancelled" as any, updated_at: new Date().toISOString() })
@@ -101,10 +97,10 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["generation-jobs-detail", campaignId] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast({ title: "Job cancelled" });
+      toast({ title: t("toast.jobCancelled") });
     },
     onError: (err: Error) => {
-      toast({ title: "Cancel failed", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.cancelFailed"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -119,10 +115,10 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["generation-jobs-detail", campaignId] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast({ title: "Generation resumed" });
+      toast({ title: t("toast.generationResumed") });
     },
     onError: (err: Error) => {
-      toast({ title: "Resume failed", description: err.message, variant: "destructive" });
+      toast({ title: t("toast.resumeFailed"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -142,7 +138,6 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
     return "📝";
   };
 
-  // Extract error log entries from the job
   const errorEntries = latestJob?.error_log
     ? (Array.isArray(latestJob.error_log) ? latestJob.error_log : [])
     : [];
@@ -153,10 +148,10 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Layers className="h-5 w-5 text-primary" />
-            Generation Jobs
+            {t("jobDialog.title")}
           </DialogTitle>
           <DialogDescription>
-            {campaignName} — {jobs.length} job{jobs.length !== 1 ? "s" : ""} total
+            {t("jobDialog.jobsTotal", { name: campaignName, count: jobs.length, plural: jobs.length !== 1 ? "s" : "" })}
           </DialogDescription>
         </DialogHeader>
 
@@ -167,16 +162,15 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
         ) : !latestJob ? (
           <div className="text-center py-12 text-muted-foreground">
             <Layers className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-medium">No generation jobs yet</p>
-            <p className="text-xs mt-1">Execute the campaign to start generating pages.</p>
+            <p className="text-sm font-medium">{t("jobDialog.noJobsYet")}</p>
+            <p className="text-xs mt-1">{t("jobDialog.executeToStart")}</p>
           </div>
         ) : (
           <div className="flex-1 overflow-hidden flex flex-col gap-4">
-            {/* Latest Job Summary */}
             <div className="rounded-xl border border-border p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold">Latest Job</h3>
+                  <h3 className="text-sm font-semibold">{t("jobDialog.latestJob")}</h3>
                   {(() => {
                     const cfg = jobStatusConfig[latestJob.status] || jobStatusConfig.pending;
                     const Icon = cfg.icon;
@@ -190,62 +184,43 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
                 </div>
                 <div className="flex items-center gap-2">
                   {(latestJob.status === "failed" || latestJob.status === "cancelled") && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => retryMutation.mutate()}
-                      disabled={retryMutation.isPending}
-                      className="h-7 text-xs gap-1"
-                    >
+                    <Button size="sm" variant="outline" onClick={() => retryMutation.mutate()} disabled={retryMutation.isPending} className="h-7 text-xs gap-1">
                       <RotateCcw className="h-3 w-3" />
-                      {retryMutation.isPending ? "Retrying..." : "Retry"}
+                      {retryMutation.isPending ? t("jobDialog.retrying") : t("jobDialog.retry")}
                     </Button>
                   )}
                   {latestJob.status === "paused" && (
-                    <Button
-                      size="sm"
-                      onClick={() => resumeMutation.mutate()}
-                      disabled={resumeMutation.isPending}
-                      className="h-7 text-xs gap-1"
-                    >
+                    <Button size="sm" onClick={() => resumeMutation.mutate()} disabled={resumeMutation.isPending} className="h-7 text-xs gap-1">
                       <Play className="h-3 w-3" />
-                      {resumeMutation.isPending ? "Resuming..." : "Resume"}
+                      {resumeMutation.isPending ? t("jobDialog.resuming") : t("jobDialog.resume")}
                     </Button>
                   )}
                   {latestJob.status === "running" && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => cancelMutation.mutate(latestJob.id)}
-                      disabled={cancelMutation.isPending}
-                      className="h-7 text-xs gap-1"
-                    >
+                    <Button size="sm" variant="destructive" onClick={() => cancelMutation.mutate(latestJob.id)} disabled={cancelMutation.isPending} className="h-7 text-xs gap-1">
                       <XCircle className="h-3 w-3" />
-                      {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
+                      {cancelMutation.isPending ? t("jobDialog.cancelling") : t("jobDialog.cancel")}
                     </Button>
                   )}
                 </div>
               </div>
 
-              {/* Progress bar */}
               <div className="space-y-2">
                 <Progress value={jobPercent} className="h-2.5" />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex gap-4">
-                    <span>Processed: <span className="text-foreground font-medium tabular-nums">{latestJob.processed_rows}/{latestJob.total_rows}</span></span>
-                    <span>Success: <span className="text-success font-medium tabular-nums">{latestJob.success_count}</span></span>
+                    <span>{t("jobDialog.processed")}: <span className="text-foreground font-medium tabular-nums">{latestJob.processed_rows}/{latestJob.total_rows}</span></span>
+                    <span>{t("jobDialog.success")}: <span className="text-success font-medium tabular-nums">{latestJob.success_count}</span></span>
                     {latestJob.error_count > 0 && (
-                      <span>Errors: <span className="text-destructive font-medium tabular-nums">{latestJob.error_count}</span></span>
+                      <span>{t("jobDialog.errors")}: <span className="text-destructive font-medium tabular-nums">{latestJob.error_count}</span></span>
                     )}
                   </div>
                   <span className="font-semibold tabular-nums">{jobPercent}%</span>
                 </div>
               </div>
 
-              {/* Batch progress */}
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Batch Progress: {latestJob.current_batch} / {totalBatches} (size: {latestJob.batch_size})
+                  {t("jobDialog.batchProgress", { current: latestJob.current_batch, total: totalBatches, size: latestJob.batch_size })}
                 </p>
                 <div className="flex gap-1 flex-wrap">
                   {Array.from({ length: totalBatches }, (_, i) => {
@@ -271,29 +246,27 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
                 </div>
               </div>
 
-              {/* Timestamps */}
               <div className="flex gap-4 text-[11px] text-muted-foreground">
                 {latestJob.started_at && (
                   <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Started: {new Date(latestJob.started_at).toLocaleString()}
+                    <Clock className="h-3 w-3" /> {t("jobDialog.started")}: {new Date(latestJob.started_at).toLocaleString()}
                   </span>
                 )}
                 {latestJob.completed_at && (
                   <span className="flex items-center gap-1">
-                    <Check className="h-3 w-3" /> Completed: {new Date(latestJob.completed_at).toLocaleString()}
+                    <Check className="h-3 w-3" /> {t("jobDialog.completed")}: {new Date(latestJob.completed_at).toLocaleString()}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Error Log */}
             {(errorEntries.length > 0 || latestJob.error_count > 0) && (
               <>
                 <Separator />
                 <div>
                   <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
                     <AlertTriangle className="h-4 w-4 text-destructive" />
-                    Error Log ({latestJob.error_count} errors)
+                    {t("jobDialog.errorLog", { count: latestJob.error_count })}
                   </h4>
                   {errorEntries.length > 0 ? (
                     <ScrollArea className="h-[120px]">
@@ -307,7 +280,7 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
                     </ScrollArea>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      {latestJob.error_count} page{latestJob.error_count !== 1 ? "s" : ""} failed during generation. Check the campaign logs below for details.
+                      {t("jobDialog.failedDuringGeneration", { count: latestJob.error_count, plural: latestJob.error_count !== 1 ? "s" : "" })}
                     </p>
                   )}
                 </div>
@@ -316,23 +289,19 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
 
             <Separator />
 
-            {/* Batch Timeline from Campaign Logs */}
             <div className="flex-1 min-h-0">
-              <h4 className="text-sm font-semibold mb-3">Batch Timeline</h4>
+              <h4 className="text-sm font-semibold mb-3">{t("jobDialog.batchTimeline")}</h4>
               <ScrollArea className="h-[200px]">
                 {logs.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-6">No logs yet.</p>
+                  <p className="text-xs text-muted-foreground text-center py-6">{t("jobDialog.noLogs")}</p>
                 ) : (
                   <div className="relative pl-6 space-y-0">
                     {logs.map((log: any, index: number) => (
                       <div key={log.id} className="relative pb-4 last:pb-0">
-                        {/* Timeline line */}
                         {index < logs.length - 1 && (
                           <div className="absolute left-[-16px] top-5 bottom-0 w-px bg-border" />
                         )}
-                        {/* Timeline dot */}
                         <div className="absolute left-[-20px] top-1 h-2.5 w-2.5 rounded-full border-2 border-border bg-card" />
-
                         <div className="flex items-start gap-2">
                           <span className="text-sm shrink-0">{logEventIcon(log.event)}</span>
                           <div className="flex-1 min-w-0">
@@ -358,17 +327,15 @@ export function GenerationJobDialog({ campaignId, campaignName, open, onOpenChan
               </ScrollArea>
             </div>
 
-            {/* Previous Jobs */}
             {jobs.length > 1 && (
               <>
                 <Separator />
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">Previous Jobs</h4>
+                  <h4 className="text-sm font-semibold mb-2">{t("jobDialog.previousJobs")}</h4>
                   <div className="space-y-1.5">
                     {jobs.slice(1).map((job: any) => {
                       const cfg = jobStatusConfig[job.status] || jobStatusConfig.pending;
                       const Icon = cfg.icon;
-                      const pct = job.total_rows > 0 ? Math.round((job.processed_rows / job.total_rows) * 100) : 0;
                       return (
                         <div key={job.id} className="flex items-center justify-between p-2.5 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors text-xs">
                           <div className="flex items-center gap-2">
