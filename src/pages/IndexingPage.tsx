@@ -270,7 +270,7 @@ export default function IndexingPage() {
               {t("indexing.notConfiguredDesc")}
             </p>
             <Button onClick={() => setConfigOpen(true)}>
-              <Settings2 className="h-4 w-4 mr-2" /> Configure Service Account
+              <Settings2 className="h-4 w-4 mr-2" /> {t("indexing.configureServiceAccount")}
             </Button>
           </CardContent>
         </Card>
