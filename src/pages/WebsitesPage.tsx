@@ -222,8 +222,8 @@ export default function WebsitesPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="site-name">Site Name</Label>
-                  <Input id="site-name" placeholder="My Blog" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
+                  <Label htmlFor="site-name">{t("websites.siteName")}</Label>
+                  <Input id="site-name" placeholder={t("websites.siteNamePlaceholder")} value={siteName} onChange={(e) => setSiteName(e.target.value)} />
                 </div>
                 {siteType !== "shopify" && (
                   <div>
