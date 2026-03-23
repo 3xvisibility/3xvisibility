@@ -1461,6 +1461,7 @@ Deno.serve(async (req) => {
           }
 
           // Build slug — use template slug pattern from schema_config if defined
+          const tplSchemaConfig = (campaign.templates.schema_config || {}) as Record<string, string>;
           const tplSlugPattern = tplSchemaConfig._slugPattern || "";
           let slug: string;
           if (tplSlugPattern) {
