@@ -474,8 +474,8 @@ export default function GeneratedPagesPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="page"><FileText className="h-3 w-3 mr-1 inline" />As Page</SelectItem>
-              <SelectItem value="product"><FileText className="h-3 w-3 mr-1 inline" />As Product</SelectItem>
+               <SelectItem value="page"><FileText className="h-3 w-3 mr-1 inline" />{t("generatedPages.asPage")}</SelectItem>
+              <SelectItem value="product"><FileText className="h-3 w-3 mr-1 inline" />{t("generatedPages.asProduct")}</SelectItem>
             </SelectContent>
           </Select>
           <Button
