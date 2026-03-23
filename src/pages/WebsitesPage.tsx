@@ -273,7 +273,7 @@ export default function WebsitesPage() {
                 )}
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+                  <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">{t("common.cancel")}</Button>
                   <Button
                     variant="outline"
                     className="w-full sm:w-auto"
@@ -281,13 +281,13 @@ export default function WebsitesPage() {
                     disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || testConnectionMutation.isPending}
                   >
                     {testConnectionMutation.isPending ? (
-                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
+                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
                     ) : (
-                      <><Zap className="h-4 w-4 mr-1" /> Test</>
+                      <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
                     )}
                   </Button>
                   <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || createMutation.isPending}>
-                    {createMutation.isPending ? "Connecting..." : "Connect"}
+                    {createMutation.isPending ? t("common.connecting") : t("common.connect")}
                   </Button>
                 </div>
               </div>
