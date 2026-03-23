@@ -106,10 +106,10 @@ export default function ContentCalendarPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "This Month", value: thisMonthCampaigns.length, icon: CalendarIcon },
-          { label: "Total Campaigns", value: campaigns.length, icon: Rocket },
-          { label: "Scheduled", value: scheduledCount, icon: Clock },
-          { label: "Recurring", value: recurringCount, icon: RotateCcw },
+          { label: t("contentCalendar.thisMonth"), value: thisMonthCampaigns.length, icon: CalendarIcon },
+          { label: t("contentCalendar.totalCampaigns"), value: campaigns.length, icon: Rocket },
+          { label: t("contentCalendar.scheduled"), value: scheduledCount, icon: Clock },
+          { label: t("contentCalendar.recurring"), value: recurringCount, icon: RotateCcw },
         ].map((s) => (
           <Card key={s.label} className="shadow-surface">
             <CardContent className="p-4 flex items-center gap-3">
