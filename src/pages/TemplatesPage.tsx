@@ -675,7 +675,7 @@ export default function TemplatesPage() {
             className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
             onClick={() => setAiContentOpen(true)}
           >
-            <Wand2 className="mr-2 h-4 w-4" /> AI Content
+            <Wand2 className="mr-2 h-4 w-4" /> {t("templates.aiContent")}
           </Button>
           {/* From CSV */}
           <Button
