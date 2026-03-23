@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const statusColors: Record<string, string> = {
   pending: "bg-muted text-muted-foreground",
