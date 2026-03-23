@@ -81,6 +81,7 @@ const toolsNav: NavItem[] = [
 ];
 
 const settingsNav: NavItem[] = [
+  { titleKey: "sidebar.affiliate", path: "affiliate", icon: Gift },
   { titleKey: "sidebar.billing", path: "billing", icon: CreditCard },
   { titleKey: "sidebar.settings", path: "settings", icon: Settings },
   { titleKey: "sidebar.workspaceSettings", path: "workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
