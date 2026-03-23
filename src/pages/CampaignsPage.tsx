@@ -940,8 +940,8 @@ export default function CampaignsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-display">Campaigns</h1>
-          <p className="text-muted-foreground mt-1">Manage your page generation campaigns.</p>
+          <h1 className="text-display">{t("campaigns.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("campaigns.description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center bg-muted rounded-lg p-0.5">
