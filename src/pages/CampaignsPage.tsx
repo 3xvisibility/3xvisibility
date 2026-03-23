@@ -1951,12 +1951,12 @@ export default function CampaignsPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="queued">Queued</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="all">{t("campaigns.allStatuses")}</SelectItem>
+                <SelectItem value="draft">{t("common.draft")}</SelectItem>
+                <SelectItem value="queued">{t("common.queued")}</SelectItem>
+                <SelectItem value="processing">{t("common.processing")}</SelectItem>
+                <SelectItem value="completed">{t("common.completed")}</SelectItem>
+                <SelectItem value="failed">{t("common.failed")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
