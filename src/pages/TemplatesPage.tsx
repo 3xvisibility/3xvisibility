@@ -1531,20 +1531,20 @@ RULES:
             </div>
 
             {/* Desktop: Table layout */}
-            <div className="hidden lg:block w-full">
-              <Table>
+            <div className="hidden lg:block w-full overflow-hidden">
+              <Table className="table-fixed w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10"><Checkbox checked={orderedTemplates.length > 0 && selectedIds.size === orderedTemplates.length} onCheckedChange={toggleSelectAll} aria-label="Select all" /></TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>{t("templates.templateName")} <SortIcon col="name" /></button></TableHead>
-                    <TableHead className="hidden xl:table-cell">{t("templates.siteType")}</TableHead>
-                    <TableHead>{t("templates.campaignTypes")}</TableHead>
-                    <TableHead>{t("templates.variables")}</TableHead>
-                    <TableHead className="hidden xl:table-cell">{t("templates.copies")}</TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>{t("templates.usedIn")} <SortIcon col="campaigns" /></button></TableHead>
-                    <TableHead className="hidden xl:table-cell">{t("templates.lastUsed")}</TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>{t("templates.lastUpdated")} <SortIcon col="date" /></button></TableHead>
-                    <TableHead className="text-right w-28">{t("common.actions")}</TableHead>
+                    <TableHead className="w-[30%]"><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>{t("templates.templateName")} <SortIcon col="name" /></button></TableHead>
+                    <TableHead className="hidden xl:table-cell w-[10%]">{t("templates.siteType")}</TableHead>
+                    <TableHead className="w-[12%]">{t("templates.campaignTypes")}</TableHead>
+                    <TableHead className="w-[6%]">{t("templates.variables")}</TableHead>
+                    <TableHead className="hidden 2xl:table-cell w-[6%]">{t("templates.copies")}</TableHead>
+                    <TableHead className="w-[10%]"><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>{t("templates.usedIn")} <SortIcon col="campaigns" /></button></TableHead>
+                    <TableHead className="hidden 2xl:table-cell w-[8%]">{t("templates.lastUsed")}</TableHead>
+                    <TableHead className="w-[10%]"><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>{t("templates.lastUpdated")} <SortIcon col="date" /></button></TableHead>
+                    <TableHead className="text-right w-10">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
