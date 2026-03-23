@@ -13,7 +13,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1469,20 +1470,81 @@ RULES:
             </div>
           )}
           <Card>
-            <div className="overflow-x-auto">
+            {/* Mobile & Tablet: Card layout */}
+            <div className="lg:hidden divide-y divide-border">
+              {(() => {
+                const totalPages = Math.max(1, Math.ceil(orderedTemplates.length / pageSize));
+                const safePage = Math.min(currentPage, totalPages);
+                const start = (safePage - 1) * pageSize;
+                const paginated = orderedTemplates.slice(start, start + pageSize);
+                return paginated.map((tpl) => {
+                  const info = campaignsByTemplate[tpl.id];
+                  const siteTypes = templateSiteTypes[tpl.id];
+                  const cTypes = info?.campaignTypes;
+                  const copies = dupCounts[tpl.id] ?? 0;
+                  return (
+                    <div key={tpl.id} className={`p-3 flex items-start gap-3 ${selectedIds.has(tpl.id) ? "bg-primary/5" : "hover:bg-muted/50"} transition-colors`}>
+                      <Checkbox checked={selectedIds.has(tpl.id)} onCheckedChange={() => toggleSelect(tpl.id)} className="mt-1 shrink-0" aria-label={`Select ${tpl.name}`} />
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <span className="font-medium text-sm truncate">{tpl.name}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {siteTypes && siteTypes.size > 0 && [...siteTypes].map((st) => (
+                            <Badge key={st} variant="outline" className="text-[10px] capitalize">{st}</Badge>
+                          ))}
+                          {cTypes && cTypes.size > 0 && [...cTypes].map((ct) => (
+                            <Badge key={ct} variant="secondary" className="text-[10px] uppercase">{ct}</Badge>
+                          ))}
+                          <span className="text-[10px] text-muted-foreground">{(tpl.variables || []).length} vars</span>
+                          <span className="text-[10px] text-muted-foreground">{info?.count ?? 0} campaigns</span>
+                          {copies > 0 && <Badge variant="outline" className="text-[10px]"><Copy className="h-2.5 w-2.5 mr-0.5" />{copies}</Badge>}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Updated {new Date(tpl.updated_at).toLocaleDateString()}</p>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => { setEditingTemplate(tpl); setName(tpl.name); setContent(tpl.content); setBlocks(htmlToBlocks(tpl.content)); setActiveEditorTab("visual"); setSeoTitlePattern((tpl as any).seo_title_pattern || ""); setSeoDescriptionPattern((tpl as any).seo_description_pattern || ""); setSchemaType((tpl as any).schema_type || "WebPage"); const cfg = (tpl as any).schema_config || {}; setSchemaConfig(cfg); loadSeoExtras(cfg); }}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}>
+                            <Copy className="h-3.5 w-3.5 mr-2" /> Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportTemplate(tpl)}>
+                            <Download className="h-3.5 w-3.5 mr-2" /> Export
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => checkAndDelete(tpl.id)}>
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Desktop: Table layout */}
+            <div className="hidden lg:block w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10"><Checkbox checked={orderedTemplates.length > 0 && selectedIds.size === orderedTemplates.length} onCheckedChange={toggleSelectAll} aria-label="Select all" /></TableHead>
                     <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>{t("templates.templateName")} <SortIcon col="name" /></button></TableHead>
-                    <TableHead>{t("templates.siteType")}</TableHead>
+                    <TableHead className="hidden xl:table-cell">{t("templates.siteType")}</TableHead>
                     <TableHead>{t("templates.campaignTypes")}</TableHead>
                     <TableHead>{t("templates.variables")}</TableHead>
-                    <TableHead>{t("templates.copies")}</TableHead>
+                    <TableHead className="hidden xl:table-cell">{t("templates.copies")}</TableHead>
                     <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>{t("templates.usedIn")} <SortIcon col="campaigns" /></button></TableHead>
-                    <TableHead>{t("templates.lastUsed")}</TableHead>
+                    <TableHead className="hidden xl:table-cell">{t("templates.lastUsed")}</TableHead>
                     <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>{t("templates.lastUpdated")} <SortIcon col="date" /></button></TableHead>
-                    <TableHead className="text-right">{t("common.actions")}</TableHead>
+                    <TableHead className="text-right w-28">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1500,12 +1562,12 @@ RULES:
                       <TableRow key={tpl.id} data-state={selectedIds.has(tpl.id) ? "selected" : undefined}>
                         <TableCell><Checkbox checked={selectedIds.has(tpl.id)} onCheckedChange={() => toggleSelect(tpl.id)} aria-label={`Select ${tpl.name}`} /></TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
                             <FileText className="h-4 w-4 text-primary shrink-0" />
-                            <span className="font-medium">{tpl.name}</span>
+                            <span className="font-medium truncate">{tpl.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           {siteTypes && siteTypes.size > 0 ? (
                             <div className="flex flex-wrap gap-1">{[...siteTypes].map((t) => <Badge key={t} variant="outline" className="text-[10px] capitalize">{t}</Badge>)}</div>
                           ) : <span className="text-xs text-muted-foreground">Generic</span>}
@@ -1516,7 +1578,7 @@ RULES:
                           ) : <span className="text-xs text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell><span className="text-xs text-muted-foreground">{(tpl.variables || []).length}</span></TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           {copies > 0 ? (
                             <Badge variant="outline" className="text-[10px]"><Copy className="h-3 w-3 mr-1" />{copies}</Badge>
                           ) : <span className="text-xs text-muted-foreground">—</span>}
@@ -1524,7 +1586,7 @@ RULES:
                         <TableCell>
                           <span className="text-sm">{info?.count ?? 0} campaign{(info?.count ?? 0) !== 1 ? "s" : ""}</span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           {info?.lastUsedAt ? (
                             <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(info.lastUsedAt).toLocaleDateString()}</span>
                           ) : <span className="text-xs text-muted-foreground">—</span>}
@@ -1555,7 +1617,7 @@ RULES:
               const safePage = Math.min(currentPage, totalPages);
               const start = (safePage - 1) * pageSize;
               return (
-                <div className="flex items-center justify-between px-4 py-3 border-t">
+                <div className="flex items-center justify-between px-4 py-3 border-t flex-wrap gap-2">
                   <span className="text-sm text-muted-foreground">
                     Showing {start + 1}–{Math.min(start + pageSize, orderedTemplates.length)} of {orderedTemplates.length}
                   </span>
