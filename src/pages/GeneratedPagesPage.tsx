@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3, Bot } from "lucide-react";
+import { Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save, Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight, RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3, Bot, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { AiSeoAssistantDialog } from "@/components/AiSeoAssistantDialog";
