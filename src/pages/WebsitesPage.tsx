@@ -201,7 +201,7 @@ export default function WebsitesPage() {
                   }
                 }}
               >
-                <Plus className="mr-2 h-4 w-4" /> Connect Website
+                <Plus className="mr-2 h-4 w-4" /> {t("websites.connectWebsite")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
