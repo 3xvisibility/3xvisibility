@@ -301,7 +301,7 @@ export default function IndexingPage() {
             <Card className="shadow-surface">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Indexing Progress</span>
+                  <span className="text-muted-foreground">{t("indexing.progress")}</span>
                   <span className="tabular-nums font-medium">
                     {stats.total > 0 ? Math.round((stats.indexed / stats.total) * 100) : 0}%
                   </span>
