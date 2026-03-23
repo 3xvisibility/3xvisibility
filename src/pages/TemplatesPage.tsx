@@ -1417,7 +1417,7 @@ RULES:
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search templates…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
+          <Input placeholder={t("common.searchTemplates")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
         </div>
         <Select value={siteTypeFilter} onValueChange={setSiteTypeFilter}>
           <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="All platforms" /></SelectTrigger>
