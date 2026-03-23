@@ -357,7 +357,7 @@ export default function IndexingPage() {
                 onClick={() => retryMutation.mutate([...selectedIds])}
                 disabled={retryMutation.isPending}
               >
-                <RotateCcw className="h-4 w-4 mr-2" /> Retry Selected ({selectedIds.size})
+                <RotateCcw className="h-4 w-4 mr-2" /> {t("indexing.retrySelected", { count: selectedIds.size })}
               </Button>
             )}
           </div>
