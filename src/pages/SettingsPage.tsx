@@ -350,7 +350,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Overview of the platform's security measures protecting your data.
+            {t("settings.securityStatusDesc")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
