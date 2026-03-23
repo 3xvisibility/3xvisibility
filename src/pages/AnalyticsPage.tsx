@@ -414,10 +414,10 @@ export default function AnalyticsPage() {
         <div>
           <h1 className="text-display flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
-            Campaign Analytics
+            {t("analytics.title")}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Track generation success, publishing, and SEO quality.
+            {t("analytics.description")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
