@@ -258,9 +258,9 @@ export default function WorkspaceSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
-            Workspace Details
+            {t("workspaceSettings.workspaceDetails")}
           </CardTitle>
-          <CardDescription>Update your workspace name. Only workspace owners can rename.</CardDescription>
+          <CardDescription>{t("workspaceSettings.workspaceDetailsDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
