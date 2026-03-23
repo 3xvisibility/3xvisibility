@@ -436,8 +436,8 @@ export default function AnalyticsPage() {
       {/* Top stats — 6 cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Pages", value: stats.total, icon: FileText, color: "text-foreground" },
-          { label: "Published", value: stats.published, icon: Send, color: "text-success" },
+          { label: t("analytics.totalPages"), value: stats.total, icon: FileText, color: "text-foreground" },
+          { label: t("analytics.published"), value: stats.published, icon: Send, color: "text-success" },
           { label: "Pending", value: stats.pending, icon: Clock, color: "text-primary" },
           { label: "Failed", value: stats.failed, icon: XCircle, color: "text-destructive" },
           { label: "Success Rate", value: `${stats.successRate}%`, icon: Percent, color: stats.successRate >= 80 ? "text-success" : stats.successRate >= 50 ? "text-warning" : "text-destructive" },
