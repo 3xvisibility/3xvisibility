@@ -185,8 +185,8 @@ export default function WebsitesPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-display">Websites</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Connect your websites for page publishing.</p>
+          <h1 className="text-display">{t("websites.title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t("websites.description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <SiteTypeFilter value={filterType} onChange={setFilterType} />
