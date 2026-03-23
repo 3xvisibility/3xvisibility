@@ -68,7 +68,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                 onClick={() => setCmdOpen(true)}
               >
                 <Search className="h-4 w-4" />
-                <span className="sr-only">Open search</span>
+                <span className="sr-only">{t("common.openSearch")}</span>
               </Button>
               <button
                 data-onboarding="search"
@@ -90,7 +90,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                <span className="sr-only">Toggle theme</span>
+                <span className="sr-only">{t("common.toggleTheme")}</span>
               </Button>
               <LanguageSwitcher
                 variant="ghost"

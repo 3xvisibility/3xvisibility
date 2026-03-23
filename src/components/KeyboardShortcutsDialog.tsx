@@ -6,21 +6,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Keyboard } from "lucide-react";
-
-const shortcuts = [
-  { keys: ["Ctrl", "B"], description: "Toggle sidebar" },
-  { keys: ["Ctrl", "K"], description: "Open command palette" },
-  { keys: ["Ctrl", "⇧", "D"], description: "Go to Dashboard" },
-  { keys: ["Ctrl", "⇧", "C"], description: "Go to Campaigns" },
-  { keys: ["Ctrl", "⇧", "T"], description: "Go to Templates" },
-  { keys: ["Ctrl", "⇧", "A"], description: "Go to Analytics" },
-  { keys: ["Ctrl", "⇧", "S"], description: "Go to Settings" },
-  { keys: ["Alt", "←/→"], description: "Navigate between pages" },
-  { keys: ["?"], description: "Show this help" },
-];
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export function KeyboardShortcutsDialog() {
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const shortcuts = [
+    { keys: ["Ctrl", "B"], description: t("shortcuts.toggleSidebar") },
+    { keys: ["Ctrl", "K"], description: t("shortcuts.openCommandPalette") },
+    { keys: ["Ctrl", "⇧", "D"], description: t("shortcuts.goDashboard") },
+    { keys: ["Ctrl", "⇧", "C"], description: t("shortcuts.goCampaigns") },
+    { keys: ["Ctrl", "⇧", "T"], description: t("shortcuts.goTemplates") },
+    { keys: ["Ctrl", "⇧", "A"], description: t("shortcuts.goAnalytics") },
+    { keys: ["Ctrl", "⇧", "S"], description: t("shortcuts.goSettings") },
+    { keys: ["Alt", "←/→"], description: t("shortcuts.navigateBetweenPages") },
+    { keys: ["?"], description: t("shortcuts.showThisHelp") },
+  ];
 
   useEffect(() => {
     const handler = () => setOpen(true);
@@ -34,7 +36,7 @@ export function KeyboardShortcutsDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="h-5 w-5 text-primary" />
-            Keyboard Shortcuts
+            {t("common.keyboardShortcuts")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-1 mt-2">
@@ -58,7 +60,7 @@ export function KeyboardShortcutsDialog() {
           ))}
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          On macOS, use ⌘ instead of Ctrl.
+          {t("shortcuts.macHint")}
         </p>
       </DialogContent>
     </Dialog>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Building2, ChevronRight, ChevronsUpDown, Search } from "lucide-react";
+import { useLanguage } from "@/i18n/LanguageContext";
 import {
   Popover,
   PopoverContent,
@@ -35,7 +36,31 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 export function WorkspaceBreadcrumb() {
   const { currentWorkspace, workspaces, setCurrentWorkspace, basePath } = useWorkspace();
+  const { t } = useLanguage();
   const location = useLocation();
+  const segmentLabels: Record<string, string> = {
+    dashboard: t("sidebar.dashboard"),
+    campaigns: t("sidebar.campaigns"),
+    templates: t("sidebar.templates"),
+    pages: t("sidebar.generatedPages"),
+    websites: t("sidebar.websites"),
+    billing: t("sidebar.billing"),
+    settings: t("sidebar.settings"),
+    admin: t("sidebar.admin"),
+    scanner: t("sidebar.aiScanner"),
+    discovery: t("sidebar.discovery"),
+    analytics: t("sidebar.analytics"),
+    marketplace: t("sidebar.marketplace"),
+    indexing: t("sidebar.indexing"),
+    data: t("sidebar.dataCsv"),
+    "website-content": t("sidebar.websiteContent"),
+    "ab-testing": t("sidebar.abTesting"),
+    "content-calendar": t("sidebar.contentCalendar"),
+    performance: t("sidebar.performance"),
+    "seo-audit": t("sidebar.seoAudit"),
+    "workspace-settings": t("sidebar.workspaceSettings"),
+  };
+
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -57,7 +82,7 @@ export function WorkspaceBreadcrumb() {
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
     accPath += `/${seg}`;
-    const label = SEGMENT_LABELS[seg];
+    const label = segmentLabels[seg];
     if (label) {
       const isLast = i === segments.length - 1;
       crumbs.push({ label, href: isLast ? undefined : accPath });
@@ -96,7 +121,7 @@ export function WorkspaceBreadcrumb() {
               <div className="relative mb-2">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="Search workspaces…"
+                  placeholder={t("common.searchWorkspaces")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="h-8 pl-8 text-xs"
@@ -106,7 +131,7 @@ export function WorkspaceBreadcrumb() {
             )}
             <div className="max-h-48 overflow-y-auto space-y-0.5">
               {filtered.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-3">No workspaces found</p>
+                <p className="text-xs text-muted-foreground text-center py-3">{t("common.noWorkspacesFound")}</p>
               )}
               {filtered.map((ws) => (
                 <button

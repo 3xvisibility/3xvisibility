@@ -4,7 +4,7 @@ import { translations, type Language } from "./translations";
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -22,7 +22,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: string) => translations[language]?.[key] ?? translations.en[key] ?? key,
+    (key: string, vars?: Record<string, string | number>) => {
+      const template = translations[language]?.[key] ?? translations.en[key] ?? key;
+
+      if (!vars) return template;
+
+      return Object.entries(vars).reduce(
+        (result, [name, value]) => result.replaceAll(`{${name}}`, String(value)),
+        template
+      );
+    },
     [language]
   );
 
@@ -36,7 +45,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 const fallback: LanguageContextType = {
   language: "en",
   setLanguage: () => {},
-  t: (key: string) => translations.en[key] ?? key,
+  t: (key: string, vars?: Record<string, string | number>) => {
+    const template = translations.en[key] ?? key;
+
+    if (!vars) return template;
+
+    return Object.entries(vars).reduce(
+      (result, [name, value]) => result.replaceAll(`{${name}}`, String(value)),
+      template
+    );
+  },
 };
 
 export function useLanguage() {
