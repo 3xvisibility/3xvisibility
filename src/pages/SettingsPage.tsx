@@ -277,7 +277,7 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">The language AI content will be written in.</p>
+              <p className="text-[11px] text-muted-foreground">{t("settings.languageDesc")}</p>
             </div>
           </div>
 
