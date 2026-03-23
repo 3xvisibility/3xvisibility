@@ -110,7 +110,7 @@ export default function SeoAuditPage() {
         <Card>
           <CardContent className="pt-5 pb-4 text-center">
             <p className="text-3xl font-bold tabular-nums text-amber-500">{warningCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">Warnings</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.warnings")}</p>
           </CardContent>
         </Card>
         <Card>
