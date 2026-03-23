@@ -1147,12 +1147,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "notFound.message": "Oops! Page not found",
     "notFound.returnHome": "Return to Home",
 
-    // Admin
-    "admin.title": "Admin Panel",
+    // Admin extra (primary block is above)
     "admin.overview": "Overview",
-    "admin.users": "Users",
-    "admin.campaigns": "Campaigns",
-    "admin.totalUsers": "Total Users",
     "admin.totalCampaigns": "Total Campaigns",
     "admin.activeCampaigns": "Active Campaigns",
     "admin.totalPages": "Total Pages",
