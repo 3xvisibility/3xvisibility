@@ -364,7 +364,7 @@ export default function BillingPage() {
         </button>
         <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("billing.yearly")}</span>
         {isYearly && (
-          <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">Save 20%</Badge>
+          <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">{t("billing.save20")}</Badge>
         )}
       </div>
 
