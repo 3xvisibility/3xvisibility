@@ -162,9 +162,9 @@ export default function ContentCalendarPage() {
             <div className="border border-border rounded-lg overflow-hidden">
               {/* Header */}
               <div className="grid grid-cols-7 bg-muted/50">
-                {WEEKDAYS.map((day) => (
-                  <div key={day} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
-                    {day}
+                {WEEKDAYS_KEYS.map((dayKey) => (
+                  <div key={dayKey} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
+                    {t(dayKey)}
                   </div>
                 ))}
               </div>
