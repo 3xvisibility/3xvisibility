@@ -647,8 +647,8 @@ export default function TemplatesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-display">Templates</h1>
-          <p className="text-muted-foreground mt-1">Define reusable page layouts with dynamic variables.</p>
+          <h1 className="text-display">{t("templates.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("templates.description")}</p>
         </div>
         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {/* Hidden file input for import */}
