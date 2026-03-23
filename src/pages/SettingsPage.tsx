@@ -186,7 +186,7 @@ export default function SettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">Choose your preferred theme for the application.</p>
+          <p className="text-sm text-muted-foreground">{t("settings.appearanceDesc")}</p>
           <div className="grid grid-cols-3 gap-3">
             {[
               { value: "light", label: "Light", icon: Sun },
