@@ -242,7 +242,7 @@ export default function SettingsPage() {
           {/* AI Settings */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Content Tone</Label>
+              <Label>{t("settings.contentTone")}</Label>
               <Select value={aiTone} onValueChange={setAiTone}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
