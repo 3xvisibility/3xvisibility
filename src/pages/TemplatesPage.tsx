@@ -667,7 +667,7 @@ export default function TemplatesPage() {
             className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
             onClick={() => importFileRef.current?.click()}
           >
-            <Upload className="mr-2 h-4 w-4" /> Import
+            <Upload className="mr-2 h-4 w-4" /> {t("common.import")}
           </Button>
           {/* AI Content Generator */}
           <Button
