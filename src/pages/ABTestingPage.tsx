@@ -52,6 +52,7 @@ export default function ABTestingPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: tests = [], isLoading } = useQuery({
