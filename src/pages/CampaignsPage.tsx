@@ -57,6 +57,14 @@ const statusConfigClasses: Record<string, string> = {
 };
 
 export default function CampaignsPage() {
+  const { t } = useLanguage();
+  const statusConfig: Record<string, { class: string; label: string }> = {
+    completed: { class: statusConfigClasses.completed, label: t("common.completed") },
+    processing: { class: statusConfigClasses.processing, label: t("common.processing") },
+    draft: { class: statusConfigClasses.draft, label: t("common.draft") },
+    failed: { class: statusConfigClasses.failed, label: t("common.failed") },
+    queued: { class: statusConfigClasses.queued, label: t("common.queued") },
+  };
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
