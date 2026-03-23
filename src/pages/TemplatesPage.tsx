@@ -1462,10 +1462,10 @@ RULES:
         <>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
-              <span className="text-sm font-medium">{selectedIds.size} selected</span>
-              <Button variant="outline" size="sm" onClick={bulkExport}><Download className="h-3.5 w-3.5 mr-1.5" /> Export</Button>
-              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}><Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete</Button>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Cancel</Button>
+              <span className="text-sm font-medium">{t("templates.selectedCount", { count: selectedIds.size })}</span>
+              <Button variant="outline" size="sm" onClick={bulkExport}><Download className="h-3.5 w-3.5 mr-1.5" /> {t("common.export")}</Button>
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}><Trash2 className="h-3.5 w-3.5 mr-1.5" /> {t("common.delete")}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>{t("common.cancel")}</Button>
             </div>
           )}
           <Card>
