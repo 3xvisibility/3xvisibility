@@ -611,8 +611,8 @@ export default function CampaignDetailPage() {
             <Card className="border-0 shadow-surface">
               <CardContent className="py-16 text-center">
                 <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-sm font-medium text-muted-foreground">No pages generated yet</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Run the campaign to generate pages.</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("campaignDetail.noPagesYet")}</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">{t("campaignDetail.runToGenerate")}</p>
               </CardContent>
             </Card>
           ) : (
