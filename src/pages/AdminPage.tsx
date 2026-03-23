@@ -351,10 +351,10 @@ export default function AdminPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Users" value={overview?.total_users || 0} icon={Users} />
-          <StatCard title="Campaigns" value={overview?.total_campaigns || 0} icon={Rocket} subtitle={`${overview?.active_campaigns || 0} active`} />
-          <StatCard title="Published Pages" value={overview?.published_pages || 0} icon={CheckCircle2} variant="success" subtitle={`${overview?.total_pages || 0} total`} />
-          <StatCard title="Failed Pages" value={overview?.failed_pages || 0} icon={AlertCircle} variant="destructive" />
+          <StatCard title={t("admin.totalUsers")} value={overview?.total_users || 0} icon={Users} />
+          <StatCard title={t("admin.campaigns")} value={overview?.total_campaigns || 0} icon={Rocket} subtitle={`${overview?.active_campaigns || 0} ${t("admin.active")}`} />
+          <StatCard title={t("admin.publishedPages")} value={overview?.published_pages || 0} icon={CheckCircle2} variant="success" subtitle={`${overview?.total_pages || 0} ${t("admin.total")}`} />
+          <StatCard title={t("admin.failedPages")} value={overview?.failed_pages || 0} icon={AlertCircle} variant="destructive" />
         </div>
       )}
 
