@@ -136,7 +136,7 @@ export default function AffiliatePage() {
     const { error } = await supabase.from("affiliate_payouts").insert({
       affiliate_link_id: link.id,
       user_id: user.id,
-      workspace_id: workspace?.id || null,
+      workspace_id: currentWorkspace?.id || null,
       amount: link.pending_balance,
       type: "credit",
       status: "pending",
