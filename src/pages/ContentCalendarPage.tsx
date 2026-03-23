@@ -173,7 +173,7 @@ export default function ContentCalendarPage() {
               <div className="grid grid-cols-7">
                 {paddedDays.map((day, i) => {
                   if (!day) {
-                    return <div key={`pad-${i}`} className="min-h-[100px] bg-muted/20 border-b border-r border-border" />;
+                    return <div key={`pad-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-muted/20 border-b border-r border-border" />;
                   }
 
                   const dateKey = format(day, "yyyy-MM-dd");
