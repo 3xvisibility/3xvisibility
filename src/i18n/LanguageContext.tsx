@@ -28,7 +28,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (!vars) return template;
 
       return Object.entries(vars).reduce(
-        (result, [name, value]) => result.replaceAll(`{${name}}`, String(value)),
+        (result, [name, value]) => result.split(`{${name}}`).join(String(value)),
         template
       );
     },
@@ -51,7 +51,7 @@ const fallback: LanguageContextType = {
     if (!vars) return template;
 
     return Object.entries(vars).reduce(
-      (result, [name, value]) => result.replaceAll(`{${name}}`, String(value)),
+      (result, [name, value]) => result.split(`{${name}}`).join(String(value)),
       template
     );
   },
