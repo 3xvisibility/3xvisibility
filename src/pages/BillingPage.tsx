@@ -282,7 +282,7 @@ export default function BillingPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current Plan</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("billing.currentPlan")}</p>
             <div className="flex items-center gap-2">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Sparkles className="h-4.5 w-4.5 text-primary" />
