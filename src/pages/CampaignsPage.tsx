@@ -983,8 +983,8 @@ export default function CampaignsPage() {
             <DialogContent className="sm:max-w-[600px] md:max-w-[680px] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] sm:max-w-[600px] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
               <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-0 shrink-0">
                 <DialogHeader className="pb-0">
-                  <DialogTitle className="text-base sm:text-lg font-bold">Create Campaign</DialogTitle>
-                  <DialogDescription className="text-xs sm:text-sm text-muted-foreground">Follow the steps to set up your campaign.</DialogDescription>
+                   <DialogTitle className="text-base sm:text-lg font-bold">{t("campaigns.createCampaign")}</DialogTitle>
+                   <DialogDescription className="text-xs sm:text-sm text-muted-foreground">{t("campaigns.description")}</DialogDescription>
                 </DialogHeader>
               </div>
 
