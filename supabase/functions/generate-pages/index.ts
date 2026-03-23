@@ -1451,7 +1451,65 @@ Deno.serve(async (req) => {
             }
           }
 
-          const h1Match = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
+          // ═══════════════════════════════════════════════════════════
+          // AI Image Fallback — if content has no real images (only
+          // placeholders like picsum.photos or no <img> at all),
+          // auto-generate a relevant hero image based on the page context.
+          // ═══════════════════════════════════════════════════════════
+          if (LOVABLE_API_KEY) {
+            const imgTags = pageContent.match(/<img\b[^>]*src\s*=\s*["']([^"']+)["'][^>]*>/gi) || [];
+            const realImages = imgTags.filter((tag: string) => {
+              const srcMatch = tag.match(/src\s*=\s*["']([^"']+)["']/i);
+              if (!srcMatch) return false;
+              const src = srcMatch[1];
+              // Filter out placeholder/dummy images
+              return !src.includes("picsum.photos") &&
+                     !src.includes("placeholder") &&
+                     !src.includes("via.placeholder") &&
+                     !src.includes("placehold.co") &&
+                     !src.includes("dummyimage") &&
+                     !src.startsWith("data:") &&
+                     !src.includes("{") && // unresolved variables
+                     src.trim().length > 5;
+            });
+
+            if (realImages.length === 0) {
+              // No real images found — generate an AI hero image
+              try {
+                const contextValues = Object.values(allVars).filter(Boolean).slice(0, 5).join(", ");
+                const h1Text = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i)?.[1]?.replace(/<[^>]*>/g, "").trim() || "";
+                const imgPrompt = `Professional, high-quality hero image for: ${h1Text || contextValues}. Clean, modern style, suitable for a business website.`;
+                
+                const fallbackUrl = await generateAiImage(
+                  imgPrompt, LOVABLE_API_KEY, supabase,
+                  campaign_id, processedCount, 999
+                );
+                aiGenerationsUsed++;
+                
+                // Replace first placeholder image if it exists, otherwise insert after h1
+                const placeholderRegex = /<img\b[^>]*src\s*=\s*["'](?:https?:\/\/(?:picsum\.photos|via\.placeholder|placehold\.co|dummyimage)[^"']*|[^"']*placeholder[^"']*)["'][^>]*\/?>/i;
+                if (placeholderRegex.test(pageContent)) {
+                  pageContent = pageContent.replace(placeholderRegex,
+                    `<img src="${fallbackUrl}" alt="${(h1Text || contextValues).replace(/"/g, '&quot;').slice(0, 200)}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">`
+                  );
+                } else {
+                  // Insert hero image after first h1
+                  const heroImgHtml = `\n<div class="ai-generated-image" style="margin:1em 0;">
+  <img src="${fallbackUrl}" alt="${(h1Text || contextValues).replace(/"/g, '&quot;').slice(0, 200)}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
+</div>`;
+                  const h1CloseIdx = pageContent.indexOf("</h1>");
+                  if (h1CloseIdx !== -1) {
+                    const insertAt = h1CloseIdx + 5;
+                    pageContent = pageContent.slice(0, insertAt) + heroImgHtml + pageContent.slice(insertAt);
+                  }
+                }
+              } catch (imgFallbackErr: any) {
+                console.log("[GENERATE] AI image fallback failed:", imgFallbackErr.message);
+                // Non-critical — continue without image
+              }
+            }
+          }
+
           let pageTitle: string;
           if (h1Match) {
             pageTitle = h1Match[1].replace(/<[^>]*>/g, "").trim();
