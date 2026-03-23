@@ -89,6 +89,7 @@ export default function TemplatesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const detectedVars = content.match(/\{[^}]+\}/g) || [];

@@ -49,6 +49,7 @@ export default function WebsitesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: websites = [], isLoading } = useQuery({

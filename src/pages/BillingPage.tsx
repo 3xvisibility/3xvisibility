@@ -35,6 +35,7 @@ import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOver
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const YEARLY_DISCOUNT = 0.2;
 

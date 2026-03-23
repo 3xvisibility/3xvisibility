@@ -55,6 +55,7 @@ const LANGUAGE_OPTIONS = [
 export default function SettingsPage() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
