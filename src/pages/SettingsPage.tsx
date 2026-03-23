@@ -268,7 +268,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Language</Label>
+              <Label>{t("settings.language")}</Label>
               <Select value={aiLanguage} onValueChange={setAiLanguage}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
