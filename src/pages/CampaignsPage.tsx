@@ -1980,8 +1980,8 @@ export default function CampaignsPage() {
               <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
                 <Plus className="h-8 w-8 text-muted-foreground/50" />
               </div>
-              <h3 className="font-semibold">No campaigns yet</h3>
-              <p className="text-muted-foreground text-sm max-w-sm">Create your first campaign to start generating pages at scale.</p>
+              <h3 className="font-semibold">{t("campaigns.noCampaigns")}</h3>
+              <p className="text-muted-foreground text-sm max-w-sm">{t("campaigns.description")}</p>
             </div>
           </CardContent>
         </Card>
