@@ -407,7 +407,7 @@ export default function CampaignDetailPage() {
                 <Pause className="mr-1.5 h-4 w-4" /> {t("campaignDetail.pause")}
               </Button>
               <Button variant="destructive" size="sm" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <XCircle className="mr-1.5 h-4 w-4" /> Abort
+                <XCircle className="mr-1.5 h-4 w-4" /> {t("campaignDetail.abort")}
               </Button>
             </>
           )}
