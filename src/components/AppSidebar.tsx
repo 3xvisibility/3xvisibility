@@ -22,6 +22,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   Activity,
+  Gift,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
