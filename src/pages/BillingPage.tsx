@@ -399,7 +399,7 @@ export default function BillingPage() {
                     <CardTitle className="text-base font-bold">{features.label}</CardTitle>
                   </div>
                   {config.popular && (
-                    <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">Most Popular</Badge>
+                    <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">{t("billing.mostPopular")}</Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">{config.description}</p>
