@@ -267,7 +267,7 @@ export default function ABTestingPage() {
             <DialogTitle>Create A/B Test</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Test Name</Label>
                 <Input placeholder="Homepage template test" value={name} onChange={(e) => setName(e.target.value)} />
