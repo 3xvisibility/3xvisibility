@@ -228,9 +228,9 @@ export default function SettingsPage() {
               <>
                 <Progress value={aiPercent} className="h-2" />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{aiUsed} used</span>
+                  <span>{t("settings.used", { count: aiUsed })}</span>
                   <span className={aiPercent >= 90 ? "text-destructive font-medium" : ""}>
-                    {aiLimit - aiUsed} remaining
+                    {t("settings.remaining", { count: aiLimit - aiUsed })}
                   </span>
                 </div>
               </>
