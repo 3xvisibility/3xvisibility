@@ -451,8 +451,8 @@ export default function GeneratedPagesPage() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-display">Generated Pages</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Browse and manage all pages created by your campaigns.</p>
+            <h1 className="text-display">{t("generatedPages.title")}</h1>
+            <p className="text-muted-foreground mt-1 text-sm">{t("generatedPages.description")}</p>
           </div>
           <div className="flex gap-2 items-center">
             {pendingPages.length > 0 && (
