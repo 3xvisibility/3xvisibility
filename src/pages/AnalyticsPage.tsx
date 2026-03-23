@@ -40,6 +40,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const CHART_TOOLTIP_STYLE = {
   backgroundColor: "hsl(var(--popover))",
