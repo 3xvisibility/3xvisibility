@@ -74,6 +74,7 @@ const chartConfig: ChartConfig = {
 };
 
 export default function CampaignDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
