@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface ABTest {
   id: string;
