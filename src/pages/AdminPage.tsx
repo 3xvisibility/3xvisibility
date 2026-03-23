@@ -341,8 +341,8 @@ export default function AdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Panel</h1>
-        <p className="text-muted-foreground text-sm mt-1">Platform overview and management</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("admin.title")}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t("admin.description")}</p>
       </div>
 
       {isLoading ? (
