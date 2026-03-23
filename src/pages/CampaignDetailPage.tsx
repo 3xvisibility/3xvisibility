@@ -417,7 +417,7 @@ export default function CampaignDetailPage() {
                 <RotateCcw className="mr-1.5 h-4 w-4" /> {t("campaignDetail.regenerate")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => { setResumeIndex(campaign.processed_rows || 0); setShowResumeDialog(true); }} disabled={executeMutation.isPending} className="rounded-xl">
-                <SkipForward className="mr-1.5 h-4 w-4" /> Resume from…
+                <SkipForward className="mr-1.5 h-4 w-4" /> {t("campaignDetail.resumeFrom")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
                 <Play className="mr-1.5 h-4 w-4" /> Re-run
