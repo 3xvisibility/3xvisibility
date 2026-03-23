@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { friendlyError } from "@/lib/friendly-errors";
 import { logAudit } from "@/lib/audit";
 import { useNavigate } from "react-router-dom";
@@ -47,15 +48,23 @@ type Campaign = Tables<"campaigns"> & {
   websites?: { name: string } | null;
 };
 
-const statusConfig: Record<string, { class: string; label: string }> = {
-  completed: { class: "bg-success/10 text-success border-success/20", label: "Completed" },
-  processing: { class: "bg-primary/10 text-primary border-primary/20", label: "Processing" },
-  draft: { class: "bg-muted text-muted-foreground border-border", label: "Draft" },
-  failed: { class: "bg-destructive/10 text-destructive border-destructive/20", label: "Failed" },
-  queued: { class: "bg-warning/10 text-warning border-warning/20", label: "Queued" },
+const statusConfigClasses: Record<string, string> = {
+  completed: "bg-success/10 text-success border-success/20",
+  processing: "bg-primary/10 text-primary border-primary/20",
+  draft: "bg-muted text-muted-foreground border-border",
+  failed: "bg-destructive/10 text-destructive border-destructive/20",
+  queued: "bg-warning/10 text-warning border-warning/20",
 };
 
 export default function CampaignsPage() {
+  const { t } = useLanguage();
+  const statusConfig: Record<string, { class: string; label: string }> = {
+    completed: { class: statusConfigClasses.completed, label: t("common.completed") },
+    processing: { class: statusConfigClasses.processing, label: t("common.processing") },
+    draft: { class: statusConfigClasses.draft, label: t("common.draft") },
+    failed: { class: statusConfigClasses.failed, label: t("common.failed") },
+    queued: { class: statusConfigClasses.queued, label: t("common.queued") },
+  };
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -931,8 +940,8 @@ export default function CampaignsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-display">Campaigns</h1>
-          <p className="text-muted-foreground mt-1">Manage your page generation campaigns.</p>
+          <h1 className="text-display">{t("campaigns.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("campaigns.description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center bg-muted rounded-lg p-0.5">
@@ -968,14 +977,14 @@ export default function CampaignsPage() {
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
             <DialogTrigger asChild>
               <Button className="rounded-xl bg-gradient-primary hover:brightness-110 transition-all duration-150 active:scale-[0.97] shadow-sm">
-                <Plus className="mr-2 h-4 w-4" /> New Campaign
+                <Plus className="mr-2 h-4 w-4" /> {t("campaigns.newCampaign")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] md:max-w-[680px] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] sm:max-w-[600px] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
               <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-0 shrink-0">
                 <DialogHeader className="pb-0">
-                  <DialogTitle className="text-base sm:text-lg font-bold">Create Campaign</DialogTitle>
-                  <DialogDescription className="text-xs sm:text-sm text-muted-foreground">Follow the steps to set up your campaign.</DialogDescription>
+                   <DialogTitle className="text-base sm:text-lg font-bold">{t("campaigns.createCampaign")}</DialogTitle>
+                   <DialogDescription className="text-xs sm:text-sm text-muted-foreground">{t("campaigns.description")}</DialogDescription>
                 </DialogHeader>
               </div>
 
@@ -1916,7 +1925,7 @@ export default function CampaignsPage() {
             <div className="relative flex-1">
               <SearchIconLucide className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search campaigns..."
+                placeholder={t("campaigns.searchCampaigns")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -1942,12 +1951,12 @@ export default function CampaignsPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="queued">Queued</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="all">{t("campaigns.allStatuses")}</SelectItem>
+                <SelectItem value="draft">{t("common.draft")}</SelectItem>
+                <SelectItem value="queued">{t("common.queued")}</SelectItem>
+                <SelectItem value="processing">{t("common.processing")}</SelectItem>
+                <SelectItem value="completed">{t("common.completed")}</SelectItem>
+                <SelectItem value="failed">{t("common.failed")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1959,8 +1968,8 @@ export default function CampaignsPage() {
           <CardContent className="p-12 text-center">
             <div className="flex flex-col items-center gap-3">
               <SearchIconLucide className="h-10 w-10 text-muted-foreground/40" />
-              <h3 className="font-semibold">No matching campaigns</h3>
-              <p className="text-muted-foreground text-sm">Try adjusting your search or filter.</p>
+              <h3 className="font-semibold">{t("campaigns.noCampaignsSearch")}</h3>
+              <p className="text-muted-foreground text-sm">{t("common.tryAdjustingFilters")}</p>
             </div>
           </CardContent>
         </Card>
@@ -1971,8 +1980,8 @@ export default function CampaignsPage() {
               <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
                 <Plus className="h-8 w-8 text-muted-foreground/50" />
               </div>
-              <h3 className="font-semibold">No campaigns yet</h3>
-              <p className="text-muted-foreground text-sm max-w-sm">Create your first campaign to start generating pages at scale.</p>
+              <h3 className="font-semibold">{t("campaigns.noCampaigns")}</h3>
+              <p className="text-muted-foreground text-sm max-w-sm">{t("campaigns.description")}</p>
             </div>
           </CardContent>
         </Card>

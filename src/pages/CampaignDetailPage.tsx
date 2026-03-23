@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { logAudit } from "@/lib/audit";
 import { computeCampaignSeoSummary } from "@/components/SeoAnalysisDialog";
 import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStructureBuilder";
@@ -73,6 +74,7 @@ const chartConfig: ChartConfig = {
 };
 
 export default function CampaignDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -341,9 +343,9 @@ export default function CampaignDetailPage() {
   if (!campaign) {
     return (
       <div className="text-center py-20">
-        <p className="text-muted-foreground">Campaign not found.</p>
+      <p className="text-muted-foreground">{t("campaignDetail.notFound")}</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate(`${basePath}/campaigns`)}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Campaigns
+          <ArrowLeft className="mr-2 h-4 w-4" /> {t("campaignDetail.backToCampaigns")}
         </Button>
       </div>
     );
@@ -386,7 +388,7 @@ export default function CampaignDetailPage() {
                 className="rounded-xl"
               >
                 <Eye className="mr-1.5 h-4 w-4" />
-                Test
+                 {t("campaignDetail.test")}
               </Button>
               <Button
                 size="sm"
@@ -395,30 +397,30 @@ export default function CampaignDetailPage() {
                 className="rounded-xl bg-gradient-primary hover:brightness-110"
               >
                 <Play className="mr-1.5 h-4 w-4" />
-                {executeMutation.isPending ? "Running..." : "Run"}
+                {executeMutation.isPending ? t("campaignDetail.running") : t("campaignDetail.run")}
               </Button>
             </>
           )}
           {campaign.status === "processing" && (
             <>
               <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({ action: "pause" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <Pause className="mr-1.5 h-4 w-4" /> Pause
+                <Pause className="mr-1.5 h-4 w-4" /> {t("campaignDetail.pause")}
               </Button>
               <Button variant="destructive" size="sm" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <XCircle className="mr-1.5 h-4 w-4" /> Abort
+                <XCircle className="mr-1.5 h-4 w-4" /> {t("campaignDetail.abort")}
               </Button>
             </>
           )}
           {(campaign.status === "completed" || campaign.status === "failed") && (
             <>
               <Button variant="outline" size="sm" onClick={() => setShowOverwriteDialog(true)} disabled={executeMutation.isPending} className="rounded-xl">
-                <RotateCcw className="mr-1.5 h-4 w-4" /> Re-generate
+                <RotateCcw className="mr-1.5 h-4 w-4" /> {t("campaignDetail.regenerate")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => { setResumeIndex(campaign.processed_rows || 0); setShowResumeDialog(true); }} disabled={executeMutation.isPending} className="rounded-xl">
-                <SkipForward className="mr-1.5 h-4 w-4" /> Resume from…
+                <SkipForward className="mr-1.5 h-4 w-4" /> {t("campaignDetail.resumeFrom")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
-                <Play className="mr-1.5 h-4 w-4" /> Re-run
+                <Play className="mr-1.5 h-4 w-4" /> {t("campaignDetail.rerun")}
               </Button>
             </>
           )}
@@ -430,7 +432,7 @@ export default function CampaignDetailPage() {
         <Card className="border-primary/20 bg-primary/5 border-0 shadow-surface">
           <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Generation in progress</span>
+              <span className="font-medium">{t("campaignDetail.generationInProgress")}</span>
               <span className="font-semibold tabular-nums">{jobPercent}%</span>
             </div>
             <Progress value={jobPercent} className="h-2" />
@@ -448,11 +450,11 @@ export default function CampaignDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="overview" className="gap-1.5 text-xs"><Layers className="h-3.5 w-3.5" /> Overview</TabsTrigger>
-          <TabsTrigger value="pages" className="gap-1.5 text-xs"><FileText className="h-3.5 w-3.5" /> Pages <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{pages.length}</Badge></TabsTrigger>
-          <TabsTrigger value="settings" className="gap-1.5 text-xs"><Settings className="h-3.5 w-3.5" /> Settings</TabsTrigger>
-          <TabsTrigger value="logs" className="gap-1.5 text-xs"><ScrollText className="h-3.5 w-3.5" /> Logs <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{campaignLogs.length}</Badge></TabsTrigger>
-          <TabsTrigger value="errors" className="gap-1.5 text-xs"><AlertTriangle className="h-3.5 w-3.5" /> Errors <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5 bg-destructive/10 text-destructive">{errorPages.length + jobErrors.length}</Badge></TabsTrigger>
+          <TabsTrigger value="overview" className="gap-1.5 text-xs"><Layers className="h-3.5 w-3.5" /> {t("campaignDetail.overview")}</TabsTrigger>
+          <TabsTrigger value="pages" className="gap-1.5 text-xs"><FileText className="h-3.5 w-3.5" /> {t("campaignDetail.pages")} <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{pages.length}</Badge></TabsTrigger>
+          <TabsTrigger value="settings" className="gap-1.5 text-xs"><Settings className="h-3.5 w-3.5" /> {t("campaigns.settings")}</TabsTrigger>
+          <TabsTrigger value="logs" className="gap-1.5 text-xs"><ScrollText className="h-3.5 w-3.5" /> {t("campaignDetail.logs")} <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5">{campaignLogs.length}</Badge></TabsTrigger>
+          <TabsTrigger value="errors" className="gap-1.5 text-xs"><AlertTriangle className="h-3.5 w-3.5" /> {t("campaignDetail.errors")} <Badge variant="secondary" className="ml-1 text-[10px] h-5 px-1.5 bg-destructive/10 text-destructive">{errorPages.length + jobErrors.length}</Badge></TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
@@ -609,8 +611,8 @@ export default function CampaignDetailPage() {
             <Card className="border-0 shadow-surface">
               <CardContent className="py-16 text-center">
                 <FileText className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-                <p className="text-sm font-medium text-muted-foreground">No pages generated yet</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Run the campaign to generate pages.</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("campaignDetail.noPagesYet")}</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">{t("campaignDetail.runToGenerate")}</p>
               </CardContent>
             </Card>
           ) : (

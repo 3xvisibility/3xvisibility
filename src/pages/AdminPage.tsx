@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -241,6 +242,7 @@ function EditSubscriptionDialog({
 }
 
 export default function AdminPage() {
+  const { t } = useLanguage();
   const [userSearch, setUserSearch] = useState("");
   const [campaignSearch, setCampaignSearch] = useState("");
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
@@ -339,8 +341,8 @@ export default function AdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Panel</h1>
-        <p className="text-muted-foreground text-sm mt-1">Platform overview and management</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("admin.title")}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t("admin.description")}</p>
       </div>
 
       {isLoading ? (
@@ -349,19 +351,19 @@ export default function AdminPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Users" value={overview?.total_users || 0} icon={Users} />
-          <StatCard title="Campaigns" value={overview?.total_campaigns || 0} icon={Rocket} subtitle={`${overview?.active_campaigns || 0} active`} />
-          <StatCard title="Published Pages" value={overview?.published_pages || 0} icon={CheckCircle2} variant="success" subtitle={`${overview?.total_pages || 0} total`} />
-          <StatCard title="Failed Pages" value={overview?.failed_pages || 0} icon={AlertCircle} variant="destructive" />
+          <StatCard title={t("admin.totalUsers")} value={overview?.total_users || 0} icon={Users} />
+          <StatCard title={t("admin.campaigns")} value={overview?.total_campaigns || 0} icon={Rocket} subtitle={`${overview?.active_campaigns || 0} ${t("admin.active")}`} />
+          <StatCard title={t("admin.publishedPages")} value={overview?.published_pages || 0} icon={CheckCircle2} variant="success" subtitle={`${overview?.total_pages || 0} ${t("admin.total")}`} />
+          <StatCard title={t("admin.failedPages")} value={overview?.failed_pages || 0} icon={AlertCircle} variant="destructive" />
         </div>
       )}
 
       <Tabs defaultValue="activity">
         <TabsList className="flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="activity" className="text-xs">Activity</TabsTrigger>
-          <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
-          <TabsTrigger value="campaigns" className="text-xs">Campaigns</TabsTrigger>
-          <TabsTrigger value="subscriptions" className="text-xs">Subs</TabsTrigger>
+          <TabsTrigger value="activity" className="text-xs">{t("admin.activity")}</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
+          <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
+          <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
         </TabsList>
 
         {/* Activity feed tab */}

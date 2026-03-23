@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ function callWorkspaceSettings(body: Record<string, unknown>) {
 }
 
 export default function WorkspaceSettingsPage() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace, refetch: refetchWorkspaces } = useWorkspace();
@@ -247,8 +249,8 @@ export default function WorkspaceSettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-display">Workspace Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your workspace name, members, and roles.</p>
+        <h1 className="text-display">{t("workspaceSettings.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("workspaceSettings.description")}</p>
       </div>
 
       {/* Rename Workspace */}
@@ -256,13 +258,13 @@ export default function WorkspaceSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
-            Workspace Details
+            {t("workspaceSettings.workspaceDetails")}
           </CardTitle>
-          <CardDescription>Update your workspace name. Only workspace owners can rename.</CardDescription>
+          <CardDescription>{t("workspaceSettings.workspaceDetailsDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="ws-name">Workspace Name</Label>
+            <Label htmlFor="ws-name">{t("workspaceSettings.workspaceName")}</Label>
             <div className="flex gap-2">
               <Input
                 id="ws-name"
@@ -276,7 +278,7 @@ export default function WorkspaceSettingsPage() {
                 disabled={!isOwner || renameMutation.isPending || workspaceName.trim() === currentWorkspace?.name}
                 className="shrink-0"
               >
-                {renameMutation.isPending ? "Saving..." : "Save"}
+                {renameMutation.isPending ? t("common.saving") : t("common.save")}
               </Button>
             </div>
             {!isOwner && (
@@ -298,7 +300,7 @@ export default function WorkspaceSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
-              Invite Member
+              {t("workspaceSettings.inviteMember")}
             </CardTitle>
             <CardDescription>
               Invite users by email. Existing users are added immediately; others receive a pending invitation.
@@ -328,7 +330,7 @@ export default function WorkspaceSettingsPage() {
                 disabled={inviteMutation.isPending || !inviteEmail.trim()}
                 className="shrink-0"
               >
-                {inviteMutation.isPending ? "Inviting..." : "Invite"}
+                {inviteMutation.isPending ? t("workspaceSettings.inviting") : t("workspaceSettings.invite")}
               </Button>
             </div>
           </CardContent>
@@ -340,7 +342,7 @@ export default function WorkspaceSettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Members
+            {t("workspaceSettings.members")}
           </CardTitle>
           <CardDescription>
             {members?.length || 0} member{(members?.length || 0) !== 1 ? "s" : ""}
