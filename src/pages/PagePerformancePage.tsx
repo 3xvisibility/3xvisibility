@@ -347,8 +347,8 @@ export default function PagePerformancePage() {
               <p className="text-sm mt-1">Publish pages to start tracking performance metrics.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div>
+              <table className="w-full text-sm table-fixed">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
                     <th className="text-left p-3 font-medium text-muted-foreground">Page</th>

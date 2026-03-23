@@ -533,59 +533,93 @@ export default function AdminPage() {
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
           ) : (
-            <div className="rounded-xl border overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead className="text-right">Usage</TableHead>
-                    <TableHead>Period Start</TableHead>
-                    <TableHead>Period End</TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(data?.subscriptions || []).length === 0 ? (
+            <div className="rounded-xl border">
+              {/* Mobile card layout */}
+              <div className="lg:hidden divide-y divide-border">
+                {(data?.subscriptions || []).length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No subscriptions found</p>
+                ) : (
+                  data!.subscriptions.map((s) => {
+                    const user = data?.users?.find((u) => u.id === s.user_id);
+                    const usagePercent = s.pages_limit > 0 ? Math.round((s.pages_used / s.pages_limit) * 100) : 0;
+                    return (
+                      <div key={s.id} className="p-3 flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">{user?.full_name || "—"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user?.email || s.user_id}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <Badge variant="outline" className="capitalize text-[10px]">{s.plan}</Badge>
+                            <span className="text-[10px] tabular-nums">{s.pages_used}/{s.pages_limit}</span>
+                            <Badge variant="outline" className={`text-[10px] ${
+                              usagePercent >= 90 ? "text-destructive border-destructive/20" :
+                              usagePercent >= 70 ? "text-yellow-600 border-yellow-500/20" :
+                              "text-success border-success/20"
+                            }`}>{usagePercent}%</Badge>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => openEditFromSub(s)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {/* Desktop table */}
+              <div className="hidden lg:block overflow-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No subscriptions found</TableCell>
+                      <TableHead>User</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead className="text-right">Usage</TableHead>
+                      <TableHead className="hidden xl:table-cell">Period Start</TableHead>
+                      <TableHead className="hidden xl:table-cell">Period End</TableHead>
+                      <TableHead className="w-10" />
                     </TableRow>
-                  ) : (
-                    data!.subscriptions.map((s) => {
-                      const user = data?.users?.find((u) => u.id === s.user_id);
-                      const usagePercent = s.pages_limit > 0 ? Math.round((s.pages_used / s.pages_limit) * 100) : 0;
-                      return (
-                        <TableRow key={s.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium text-sm">{user?.full_name || "—"}</p>
-                              <p className="text-xs text-muted-foreground">{user?.email || s.user_id}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell><Badge variant="outline" className="capitalize">{s.plan}</Badge></TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="text-sm tabular-nums">{s.pages_used} / {s.pages_limit}</span>
-                              <Badge variant="outline" className={`text-xs ${
-                                usagePercent >= 90 ? "text-destructive border-destructive/20" :
-                                usagePercent >= 70 ? "text-yellow-600 border-yellow-500/20" :
-                                "text-success border-success/20"
-                              }`}>{usagePercent}%</Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{formatDate(s.current_period_start)}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{formatDate(s.current_period_end)}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromSub(s)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {(data?.subscriptions || []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No subscriptions found</TableCell>
+                      </TableRow>
+                    ) : (
+                      data!.subscriptions.map((s) => {
+                        const user = data?.users?.find((u) => u.id === s.user_id);
+                        const usagePercent = s.pages_limit > 0 ? Math.round((s.pages_used / s.pages_limit) * 100) : 0;
+                        return (
+                          <TableRow key={s.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium text-sm">{user?.full_name || "—"}</p>
+                                <p className="text-xs text-muted-foreground">{user?.email || s.user_id}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell><Badge variant="outline" className="capitalize">{s.plan}</Badge></TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="text-sm tabular-nums">{s.pages_used} / {s.pages_limit}</span>
+                                <Badge variant="outline" className={`text-xs ${
+                                  usagePercent >= 90 ? "text-destructive border-destructive/20" :
+                                  usagePercent >= 70 ? "text-yellow-600 border-yellow-500/20" :
+                                  "text-success border-success/20"
+                                }`}>{usagePercent}%</Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{formatDate(s.current_period_start)}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{formatDate(s.current_period_end)}</TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromSub(s)}>
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </TabsContent>

@@ -493,15 +493,60 @@ export default function DataCsvPage() {
         </Card>
       ) : (
         <Card className="border-0 shadow-surface overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile & Tablet card layout */}
+          <div className="lg:hidden divide-y divide-border">
+            {paginatedFiles.map((file: any) => (
+              <div key={file.id} className="p-3 flex items-start gap-3">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <FileSpreadsheet className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file.file_name || "data.csv"}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <Badge variant="secondary" className="text-[10px] rounded-lg">{(file.row_count || 0).toLocaleString()} rows</Badge>
+                    <span className="text-[10px] text-muted-foreground">{formatSize(file.file_size || 0)}</span>
+                    <span className="text-[10px] text-muted-foreground">{(file.headers as string[] | null)?.length || "—"} cols</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                    {file.campaign_id ? getCampaignName(file.campaign_id) : "Standalone"} · {new Date(file.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={() => handlePreview(file)}>
+                      <Eye className="h-4 w-4 mr-2" /> Preview
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload(file)}>
+                      <Download className="h-4 w-4 mr-2" /> Download
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setReplacingFileId(file.id); document.getElementById("data-csv-replace-input")?.click(); }}>
+                      <Upload className="h-4 w-4 mr-2" /> Replace
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => deleteMutation.mutate(file.id)} className="text-destructive focus:text-destructive">
+                      <Trash2 className="h-4 w-4 mr-2" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="hidden lg:block">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
                   <TableHead className="text-xs uppercase tracking-wider font-medium">File Name</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider font-medium">Size</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider font-medium">Rows</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Columns</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Campaign</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">Columns</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">Campaign</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider font-medium">Uploaded</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider font-medium text-right">Actions</TableHead>
                 </TableRow>
@@ -521,10 +566,10 @@ export default function DataCsvPage() {
                     <TableCell className="tabular-nums">
                       <Badge variant="secondary" className="text-xs rounded-lg">{(file.row_count || 0).toLocaleString()}</Badge>
                     </TableCell>
-                    <TableCell className="tabular-nums text-muted-foreground">
+                    <TableCell className="tabular-nums text-muted-foreground hidden xl:table-cell">
                       {(file.headers as string[] | null)?.length || "—"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden xl:table-cell">
                       <span className="text-sm text-muted-foreground truncate max-w-[180px] block">
                         {file.campaign_id ? getCampaignName(file.campaign_id) : <span className="italic">Standalone</span>}
                       </span>

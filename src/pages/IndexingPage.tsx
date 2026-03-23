@@ -390,8 +390,59 @@ export default function IndexingPage() {
             </Card>
           ) : (
             <Card className="shadow-surface">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              {/* Mobile & Tablet card layout */}
+              <div className="lg:hidden divide-y divide-border">
+                {filtered.map((req: any) => (
+                  <div key={req.id} className={`p-3 flex items-start gap-3 ${selectedIds.has(req.id) ? "bg-primary/5" : ""}`}>
+                    <Checkbox
+                      checked={selectedIds.has(req.id)}
+                      onCheckedChange={() => toggleSelect(req.id)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={req.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-primary hover:underline truncate block"
+                      >
+                        {req.url.replace(/^https?:\/\//, "")}
+                      </a>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Badge variant="secondary" className={`${statusColors[req.status]} gap-1 text-[10px]`}>
+                          {statusIcons[req.status]}
+                          {req.status}
+                        </Badge>
+                        {req.submitted_at && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(req.submitted_at).toLocaleDateString()}
+                          </span>
+                        )}
+                        {req.retry_count > 0 && (
+                          <span className="text-[10px] text-muted-foreground">{req.retry_count} retries</span>
+                        )}
+                      </div>
+                      {req.error_message && (
+                        <p className="text-[10px] text-destructive mt-1 truncate">{req.error_message}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {req.status === "failed" && (
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-primary" disabled={retryMutation.isPending} onClick={() => retryMutation.mutate([req.id])}>
+                          <RotateCcw className="h-3 w-3" />
+                        </Button>
+                      )}
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => window.open(req.url, "_blank")}>
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop table layout */}
+              <div className="hidden lg:block">
+                <table className="w-full text-sm table-fixed">
                   <thead>
                     <tr className="border-b">
                       <th className="p-4 w-10">
@@ -407,11 +458,11 @@ export default function IndexingPage() {
                         />
                       </th>
                       <th className="text-left p-4 font-medium text-muted-foreground">{t("indexing.url")}</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">{t("common.status")}</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">{t("indexing.submitted")}</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">{t("indexing.retries")}</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">{t("indexing.error")}</th>
-                      <th className="p-4"></th>
+                      <th className="text-left p-4 font-medium text-muted-foreground w-[100px]">{t("common.status")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground w-[120px]">{t("indexing.submitted")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden xl:table-cell w-[80px]">{t("indexing.retries")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden xl:table-cell">{t("indexing.error")}</th>
+                      <th className="p-4 w-[60px]"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -429,7 +480,7 @@ export default function IndexingPage() {
                               href={req.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs font-mono text-primary hover:underline truncate max-w-[300px] flex items-center gap-1"
+                              className="text-xs font-mono text-primary hover:underline truncate flex items-center gap-1"
                             >
                               {req.url}
                               <ExternalLink className="h-3 w-3 shrink-0" />
@@ -442,13 +493,13 @@ export default function IndexingPage() {
                             {req.status}
                           </Badge>
                         </td>
-                        <td className="p-4 text-xs text-muted-foreground tabular-nums hidden md:table-cell">
+                        <td className="p-4 text-xs text-muted-foreground tabular-nums">
                           {req.submitted_at ? new Date(req.submitted_at).toLocaleString() : "—"}
                         </td>
-                        <td className="p-4 text-xs tabular-nums hidden lg:table-cell">{req.retry_count}</td>
-                        <td className="p-4 hidden lg:table-cell">
+                        <td className="p-4 text-xs tabular-nums hidden xl:table-cell">{req.retry_count}</td>
+                        <td className="p-4 hidden xl:table-cell">
                           {req.error_message && (
-                            <span className="text-xs text-destructive truncate max-w-[200px] block" title={req.error_message}>
+                            <span className="text-xs text-destructive truncate block" title={req.error_message}>
                               {req.error_message}
                             </span>
                           )}

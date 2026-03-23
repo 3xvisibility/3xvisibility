@@ -184,7 +184,7 @@ export default function ContentCalendarPage() {
                     <div
                       key={dateKey}
                       className={cn(
-                        "min-h-[100px] p-1.5 border-b border-r border-border transition-colors",
+                        "min-h-[60px] sm:min-h-[100px] p-1 sm:p-1.5 border-b border-r border-border transition-colors",
                         today && "bg-primary/5 ring-1 ring-inset ring-primary/20",
                         !isSameMonth(day, currentMonth) && "opacity-40"
                       )}
