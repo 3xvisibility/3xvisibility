@@ -432,7 +432,7 @@ export default function CampaignDetailPage() {
         <Card className="border-primary/20 bg-primary/5 border-0 shadow-surface">
           <CardContent className="p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Generation in progress</span>
+              <span className="font-medium">{t("campaignDetail.generationInProgress")}</span>
               <span className="font-semibold tabular-nums">{jobPercent}%</span>
             </div>
             <Progress value={jobPercent} className="h-2" />
