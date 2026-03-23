@@ -691,7 +691,7 @@ export default function TemplatesPage() {
             className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
             onClick={() => setSiteDialogOpen(true)}
           >
-            <Link2 className="mr-2 h-4 w-4" /> From Site
+            <Link2 className="mr-2 h-4 w-4" /> {t("templates.fromSite")}
           </Button>
           {/* AI Template Builder */}
           <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
