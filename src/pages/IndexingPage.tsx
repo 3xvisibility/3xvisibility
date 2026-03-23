@@ -321,9 +321,9 @@ export default function IndexingPage() {
               disabled={autoSubmitMutation.isPending}
             >
               {autoSubmitMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</>
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("indexing.submitting")}</>
               ) : (
-                <><Send className="h-4 w-4 mr-2" /> Submit All Pages</>
+                <><Send className="h-4 w-4 mr-2" /> {t("indexing.submitAll")}</>
               )}
             </Button>
             <Button
