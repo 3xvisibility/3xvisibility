@@ -364,7 +364,7 @@ export default function DataCsvPage() {
         <div className="flex items-center gap-2">
           {csvFiles.length > 0 && (
             <Button onClick={handleBulkDownload} variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" /> Download All ({csvFiles.length})
+              <Download className="h-4 w-4" /> {t("dataCsv.downloadAll", { count: csvFiles.length })}
             </Button>
           )}
           <Button onClick={() => fileInputRef.current?.click()} size="sm" className="gap-2 bg-gradient-primary hover:brightness-110">
