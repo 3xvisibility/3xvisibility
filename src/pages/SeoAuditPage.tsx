@@ -137,10 +137,10 @@ export default function SeoAuditPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Pages</SelectItem>
-            <SelectItem value="critical">Critical Issues</SelectItem>
-            <SelectItem value="warning">Warnings</SelectItem>
-            <SelectItem value="perfect">Score ≥ 90</SelectItem>
+            <SelectItem value="all">{t("seoAudit.allPages")}</SelectItem>
+            <SelectItem value="critical">{t("seoAudit.criticalFilter")}</SelectItem>
+            <SelectItem value="warning">{t("seoAudit.warningFilter")}</SelectItem>
+            <SelectItem value="perfect">{t("seoAudit.perfectFilter")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
