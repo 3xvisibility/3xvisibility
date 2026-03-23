@@ -463,7 +463,7 @@ export default function GeneratedPagesPage() {
                 onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
               >
                 <Send className="h-3.5 w-3.5 mr-1.5" />
-                {publishMutation.isPending ? "Publishing..." : `Publish (${pendingPages.length})`}
+                {publishMutation.isPending ? t("generatedPages.publishing") : `${t("generatedPages.publish")} (${pendingPages.length})`}
               </Button>
             )}
           </div>
