@@ -285,7 +285,7 @@ export default function SettingsPage() {
 
           {/* Template syntax reference */}
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
-            <p className="text-sm font-medium">AI Template Syntax</p>
+            <p className="text-sm font-medium">{t("settings.aiTemplateSyntax")}</p>
             <p className="text-xs text-muted-foreground">
               Use <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono">{"{{AI:your prompt here}}"}</code> in your templates to generate dynamic AI content.
             </p>
