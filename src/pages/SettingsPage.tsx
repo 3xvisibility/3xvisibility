@@ -255,7 +255,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Content Length</Label>
+              <Label>{t("settings.contentLength")}</Label>
               <Select value={aiLength} onValueChange={setAiLength}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
