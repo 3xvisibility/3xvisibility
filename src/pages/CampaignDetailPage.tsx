@@ -420,7 +420,7 @@ export default function CampaignDetailPage() {
                 <SkipForward className="mr-1.5 h-4 w-4" /> {t("campaignDetail.resumeFrom")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({})} disabled={executeMutation.isPending} className="rounded-xl">
-                <Play className="mr-1.5 h-4 w-4" /> Re-run
+                <Play className="mr-1.5 h-4 w-4" /> {t("campaignDetail.rerun")}
               </Button>
             </>
           )}
