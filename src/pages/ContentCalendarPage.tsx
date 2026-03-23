@@ -260,7 +260,7 @@ export default function ContentCalendarPage() {
         return (
           <Card className="shadow-surface">
             <CardContent className="p-4">
-              <h3 className="text-sm font-semibold mb-3">Upcoming Scheduled Campaigns</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("contentCalendar.upcomingScheduled")}</h3>
               <div className="space-y-2">
                 {upcoming.map((c) => (
                   <div key={c.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
