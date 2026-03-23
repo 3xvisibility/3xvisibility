@@ -395,7 +395,7 @@ export default function SettingsPage() {
           <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
             pgp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
           </div>
-          <Button variant="outline" size="sm">Regenerate Key</Button>
+          <Button variant="outline" size="sm">{t("settings.regenerateKey")}</Button>
         </CardContent>
       </Card>
 
