@@ -1065,12 +1065,10 @@ export default function CampaignsPage() {
                           <Label className="text-sm font-semibold mb-2.5 block">Country</Label>
                           <Select value={campaignCountry} onValueChange={setCampaignCountry}>
                             <SelectTrigger className="rounded-xl h-11 text-sm"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <ScrollArea className="h-64">
-                                {ALL_COUNTRIES.map((c) => (
-                                  <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
-                                ))}
-                              </ScrollArea>
+                            <SelectContent className="max-h-80">
+                              {ALL_COUNTRIES.map((c) => (
+                                <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
