@@ -2013,7 +2013,7 @@ export default function CampaignsPage() {
                             <GripVertical className="h-4 w-4" />
                           </button>
                           <div>
-                          <span className="font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</span>
+                          <span className="font-medium cursor-pointer hover:text-primary transition-colors truncate block" onClick={() => navigate(`/campaigns/${c.id}`)}>{c.name}</span>
                           <div className="flex gap-2 mt-0.5 text-[11px] text-muted-foreground">
                             {c.templates?.name && <span>{c.templates.name}</span>}
                             {c.websites?.name && <span>• {c.websites.name}</span>}
