@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
     }
 
     const baseUrl = website.url.replace(/\/$/, "");
+    const hostname = new URL(baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`).hostname;
 
     const type = content_type || "pages";
 
