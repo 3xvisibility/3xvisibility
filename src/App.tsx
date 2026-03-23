@@ -81,6 +81,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="content-calendar" element={wrap(<ContentCalendarPage />)} />
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
+      <Route path="affiliate" element={wrap(<AffiliatePage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
