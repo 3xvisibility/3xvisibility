@@ -98,8 +98,8 @@ export default function ContentCalendarPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Content Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-1">Visualize your campaign schedule and timelines</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("contentCalendar.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("contentCalendar.description")}</p>
         </div>
       </div>
 
