@@ -140,7 +140,7 @@ export default function ContentCalendarPage() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="sm" className="text-xs ml-2" onClick={() => setCurrentMonth(new Date())}>
-                Today
+                {t("contentCalendar.today")}
               </Button>
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
