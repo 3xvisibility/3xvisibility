@@ -354,10 +354,10 @@ export default function SettingsPage() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { label: "HTTPS Everywhere", description: "All traffic encrypted via TLS", icon: Lock, active: true },
-              { label: "Encrypted Tokens", description: "CMS credentials encrypted at rest (AES-256-GCM)", icon: Shield, active: true },
-              { label: "Row-Level Security", description: "Workspace-scoped data isolation on all tables", icon: Globe, active: true },
-              { label: "Audit Logging", description: "Publish & admin actions recorded for review", icon: FileText, active: true },
+              { label: t("settings.httpsEverywhere"), description: t("settings.httpsDesc"), icon: Lock, active: true },
+              { label: t("settings.encryptedTokens"), description: t("settings.encryptedTokensDesc"), icon: Shield, active: true },
+              { label: t("settings.rowLevelSecurity"), description: t("settings.rowLevelSecurityDesc"), icon: Globe, active: true },
+              { label: t("settings.auditLogging"), description: t("settings.auditLoggingDesc"), icon: FileText, active: true },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-3 rounded-lg border border-border p-3">
                 <div className="mt-0.5 rounded-md bg-primary/10 p-1.5">
