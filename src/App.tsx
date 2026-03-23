@@ -169,6 +169,7 @@ const App = () => {
             <Route path="/content-calendar" element={<ProtectedRoute session={session}><WorkspaceRedirect path="content-calendar" /></ProtectedRoute>} />
             <Route path="/performance" element={<ProtectedRoute session={session}><WorkspaceRedirect path="performance" /></ProtectedRoute>} />
             <Route path="/seo-audit" element={<ProtectedRoute session={session}><WorkspaceRedirect path="seo-audit" /></ProtectedRoute>} />
+            <Route path="/affiliate" element={<ProtectedRoute session={session}><WorkspaceRedirect path="affiliate" /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
