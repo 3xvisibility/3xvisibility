@@ -314,7 +314,7 @@ export default function ABTestingPage() {
 
             {/* Previews */}
             {(variantAContent || variantBContent) && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-medium mb-1 text-muted-foreground">{variantALabel} Preview</p>
                   <div className="border rounded-md overflow-hidden h-40">
