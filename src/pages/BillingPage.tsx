@@ -322,7 +322,7 @@ export default function BillingPage() {
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">AI Generations</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("billing.aiGenerations")}</p>
               <span className="text-xs tabular-nums font-medium text-muted-foreground">{aiUsed} / {aiLimit}</span>
             </div>
             <Progress value={aiPercent} className="h-2" />
