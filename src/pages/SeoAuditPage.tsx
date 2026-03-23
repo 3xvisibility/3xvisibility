@@ -87,9 +87,9 @@ export default function SeoAuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-display">SEO Audit</h1>
+        <h1 className="text-display">{t("seoAudit.title")}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Actionable recommendations for every page in your workspace.
+          {t("seoAudit.description")}
         </p>
       </div>
 
