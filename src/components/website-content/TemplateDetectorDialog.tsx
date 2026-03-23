@@ -955,7 +955,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
 
               {/* Template Preview Tab — Visual by default */}
               <TabsContent value="preview" className="flex-1 overflow-hidden mt-2 flex flex-col">
-                <TemplateEditorTour active={step === "edit"} restartKey={tourRestartKey} />
+                
                 <TemplatePreviewPane
                   templateHtml={templateHtml}
                   variables={variables}
