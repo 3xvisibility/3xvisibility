@@ -345,9 +345,9 @@ export default function IndexingPage() {
                 disabled={retryMutation.isPending}
               >
                 {retryMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Retrying...</>
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("indexing.retrying")}</>
                 ) : (
-                  <><RotateCcw className="h-4 w-4 mr-2" /> Retry All Failed ({failedRequests.length})</>
+                  <><RotateCcw className="h-4 w-4 mr-2" /> {t("indexing.retryAllFailed", { count: failedRequests.length })}</>
                 )}
               </Button>
             )}
