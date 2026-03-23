@@ -360,7 +360,7 @@ export default function ABTestingPage() {
                   <TabsTrigger value="stats">Statistics</TabsTrigger>
                 </TabsList>
                 <TabsContent value="compare" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium mb-2">{viewTest.variant_a_label}</p>
                       <div className="border rounded-md overflow-hidden h-64">
