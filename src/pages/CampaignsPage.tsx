@@ -1968,8 +1968,8 @@ export default function CampaignsPage() {
           <CardContent className="p-12 text-center">
             <div className="flex flex-col items-center gap-3">
               <SearchIconLucide className="h-10 w-10 text-muted-foreground/40" />
-              <h3 className="font-semibold">No matching campaigns</h3>
-              <p className="text-muted-foreground text-sm">Try adjusting your search or filter.</p>
+              <h3 className="font-semibold">{t("campaigns.noCampaignsSearch")}</h3>
+              <p className="text-muted-foreground text-sm">{t("common.tryAdjustingFilters")}</p>
             </div>
           </CardContent>
         </Card>
