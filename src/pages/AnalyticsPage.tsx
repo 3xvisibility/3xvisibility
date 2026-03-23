@@ -53,6 +53,7 @@ const CHART_TOOLTIP_STYLE = {
 export default function AnalyticsPage() {
   const { toast } = useToast();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   // Fetch all generated pages
