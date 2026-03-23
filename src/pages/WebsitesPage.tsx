@@ -227,8 +227,8 @@ export default function WebsitesPage() {
                 </div>
                 {siteType !== "shopify" && (
                   <div>
-                    <Label htmlFor="site-url">Site URL</Label>
-                    <Input id="site-url" placeholder="https://example.com" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
+                  <Label htmlFor="site-url">{t("websites.siteUrl")}</Label>
+                    <Input id="site-url" placeholder={t("websites.siteUrlPlaceholder")} value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
                   </div>
                 )}
 
