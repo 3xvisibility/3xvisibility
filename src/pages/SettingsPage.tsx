@@ -407,10 +407,10 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Permanently delete your account and all associated data.
+            {t("settings.deleteAccountDesc")}
           </p>
           <Button variant="destructive" className="transition-all duration-150 active:scale-[0.97]">
-            Delete Account
+            {t("settings.deleteAccount")}
           </Button>
         </CardContent>
       </Card>

@@ -1396,14 +1396,14 @@ RULES:
                   </div>
                 )}
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
+                  <Button variant="outline" onClick={resetAndClose}>{t("common.cancel")}</Button>
                   {editingTemplate ? (
                     <Button onClick={() => updateMutation.mutate()} disabled={!name || !content || updateMutation.isPending}>
-                      {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                      {updateMutation.isPending ? t("settings.saving") : t("common.saveChanges")}
                     </Button>
                   ) : (
                     <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
-                      {createMutation.isPending ? "Creating..." : "Create Template"}
+                      {createMutation.isPending ? t("common.loading") : t("templates.createTemplate")}
                     </Button>
                   )}
                 </div>

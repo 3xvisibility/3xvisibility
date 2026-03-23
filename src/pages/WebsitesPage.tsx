@@ -306,8 +306,8 @@ export default function WebsitesPage() {
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
             {websites.length === 0
-              ? "No websites connected. Connect your first website to start publishing."
-              : "No websites match the selected filter."}
+              ? t("websites.noWebsitesYet")
+              : t("websites.noWebsitesFiltered")}
           </CardContent>
         </Card>
       ) : (
