@@ -1456,7 +1456,7 @@ RULES:
         </div>
       ) : filteredTemplates.length === 0 ? (
         <Card><CardContent className="p-10 text-center text-muted-foreground">
-          {templates.length === 0 ? "No templates yet. Create your first template to get started." : "No templates match your filters."}
+          {templates.length === 0 ? t("templates.noTemplatesYet") : t("templates.noTemplatesFiltered")}
         </CardContent></Card>
       ) : viewMode === "table" ? (
         <>
