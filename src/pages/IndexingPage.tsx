@@ -265,9 +265,9 @@ export default function IndexingPage() {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-6 text-center space-y-3">
             <AlertTriangle className="h-8 w-8 text-primary mx-auto" />
-            <h3 className="font-semibold">Google Indexing not configured</h3>
+            <h3 className="font-semibold">{t("indexing.notConfigured")}</h3>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Connect a Google Service Account to enable automatic URL indexing. You'll need a service account with the Indexing API enabled.
+              {t("indexing.notConfiguredDesc")}
             </p>
             <Button onClick={() => setConfigOpen(true)}>
               <Settings2 className="h-4 w-4 mr-2" /> Configure Service Account
