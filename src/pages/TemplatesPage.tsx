@@ -1420,9 +1420,9 @@ RULES:
           <Input placeholder={t("common.searchTemplates")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
         </div>
         <Select value={siteTypeFilter} onValueChange={setSiteTypeFilter}>
-          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="All platforms" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder={t("common.allPlatforms")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All platforms</SelectItem>
+            <SelectItem value="all">{t("common.allPlatforms")}</SelectItem>
             <SelectItem value="wordpress">WordPress</SelectItem>
             <SelectItem value="shopify">Shopify</SelectItem>
             <SelectItem value="prestashop">PrestaShop</SelectItem>
