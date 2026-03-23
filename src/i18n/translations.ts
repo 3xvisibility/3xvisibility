@@ -927,6 +927,38 @@ export const translations: Record<Language, Record<string, string>> = {
     "campaignDetail.publishSelected": "Publish Selected",
     "campaignDetail.deleteSelected": "Delete Selected",
     "campaignDetail.setStatus": "Set Status",
+    "campaignDetail.noPagesYet": "No pages generated yet",
+    "campaignDetail.runToGenerate": "Run the campaign to generate pages.",
+
+    // Common status labels
+    "common.completed": "Completed",
+    "common.processing": "Processing",
+    "common.draft": "Draft",
+    "common.failed": "Failed",
+    "common.queued": "Queued",
+    "common.paused": "Paused",
+    "common.saving": "Saving...",
+    "common.save": "Save",
+    "common.tryAdjustingFilters": "Try adjusting your search or filter.",
+
+    // Workspace Settings extra
+    "workspaceSettings.description": "Manage your workspace name, members, and roles.",
+    "workspaceSettings.workspaceDetails": "Workspace Details",
+    "workspaceSettings.workspaceDetailsDesc": "Update your workspace name. Only workspace owners can rename.",
+
+    // Admin
+    "admin.title": "Admin Panel",
+    "admin.description": "Platform overview and management",
+    "admin.totalUsers": "Total Users",
+    "admin.campaigns": "Campaigns",
+    "admin.active": "active",
+    "admin.total": "total",
+    "admin.publishedPages": "Published Pages",
+    "admin.failedPages": "Failed Pages",
+    "admin.activity": "Activity",
+    "admin.users": "Users",
+    "admin.campaignsTab": "Campaigns",
+    "admin.subscriptions": "Subscriptions",
 
     // Content Calendar
     "contentCalendar.title": "Content Calendar",
