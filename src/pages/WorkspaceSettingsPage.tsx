@@ -300,7 +300,7 @@ export default function WorkspaceSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
-              Invite Member
+              {t("workspaceSettings.inviteMember")}
             </CardTitle>
             <CardDescription>
               Invite users by email. Existing users are added immediately; others receive a pending invitation.
