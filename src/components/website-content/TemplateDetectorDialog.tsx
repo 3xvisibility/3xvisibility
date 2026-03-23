@@ -478,7 +478,7 @@ export function TemplateDetectorDialog({
   const [aiGenerating, setAiGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [csvMode, setCsvMode] = useState(false);
-  const [tourRestartKey, setTourRestartKey] = useState(0);
+  
   const [csvText, setCsvText] = useState("");
   const [generatedCount, setGeneratedCount] = useState(0);
   const [publishResults, setPublishResults] = useState<{ title: string; status: string; external_url?: string; error?: string }[]>([]);
