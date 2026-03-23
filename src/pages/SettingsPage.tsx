@@ -390,7 +390,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Use API keys to integrate with external tools and automate page generation.
+            {t("settings.apiKeysDesc")}
           </p>
           <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
             pgp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
