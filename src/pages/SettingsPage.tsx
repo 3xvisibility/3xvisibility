@@ -251,7 +251,7 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">Sets the writing style for AI-generated content in your templates.</p>
+              <p className="text-[11px] text-muted-foreground">{t("settings.contentToneDesc")}</p>
             </div>
 
             <div className="space-y-2">
