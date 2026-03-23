@@ -697,7 +697,7 @@ export default function TemplatesPage() {
           <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
             <DialogTrigger asChild>
               <Button variant="outline" className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
-                <Sparkles className="mr-2 h-4 w-4" /> AI Builder
+                <Sparkles className="mr-2 h-4 w-4" /> {t("templates.aiBuilder")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:w-[min(96vw,72rem)] sm:max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] overflow-y-auto rounded-lg">
