@@ -148,7 +148,7 @@ export default function SettingsPage() {
       {/* Profile */}
       <Card className="shadow-surface">
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle>{t("settings.profile")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {loadingProfile ? (
