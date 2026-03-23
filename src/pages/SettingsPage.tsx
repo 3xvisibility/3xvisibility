@@ -141,8 +141,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-display">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account, preferences, and AI content settings.</p>
+        <h1 className="text-display">{t("settings.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("settings.description")}</p>
       </div>
 
       {/* Profile */}
