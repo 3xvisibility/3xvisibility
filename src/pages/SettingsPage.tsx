@@ -403,7 +403,7 @@ export default function SettingsPage() {
 
       <Card className="shadow-surface border-destructive/20">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardTitle className="text-destructive">{t("settings.dangerZone")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
