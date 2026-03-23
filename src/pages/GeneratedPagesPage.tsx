@@ -751,26 +751,107 @@ export default function GeneratedPagesPage() {
         </Card>
       ) : (
         <Card className="shadow-surface overflow-hidden">
-          <div className="w-full">
+          {/* Mobile & Tablet: Card layout */}
+          <div className="lg:hidden divide-y divide-border">
+            {paginatedPages.map((page) => {
+              const displayTitle = page.title?.trim() || (page as any).seo_title?.trim() || page.slug;
+              const isSelected = selectedIds.has(page.id);
+              return (
+                <div
+                  key={page.id}
+                  className={`p-3 flex items-start gap-3 ${isSelected ? "bg-primary/5" : "hover:bg-muted/50"} transition-colors`}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleSelect(page.id)}
+                    className="mt-1 shrink-0"
+                    aria-label={`Select ${displayTitle}`}
+                  />
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="font-medium text-sm truncate">{displayTitle}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge variant="secondary" className={`text-[10px] ${statusColors[page.status]}`}>{page.status}</Badge>
+                      {page.campaigns?.name && (
+                        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">{page.campaigns.name}</Badge>
+                      )}
+                      <code className="text-[10px] bg-muted px-1 py-0.5 rounded text-muted-foreground truncate max-w-[150px]">{page.slug}</code>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      {page.status === "pending" && (
+                        <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}>
+                          <Send className="h-3.5 w-3.5 mr-2" /> Publish
+                        </DropdownMenuItem>
+                      )}
+                      {page.status === "published" && page.external_id && (
+                        <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}>
+                          <RotateCw className="h-3.5 w-3.5 mr-2" /> Re-publish
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => openSeoEditor(page)}>
+                        <Pencil className="h-3.5 w-3.5 mr-2" /> Edit SEO
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setPreviewPage(page)}>
+                        <Eye className="h-3.5 w-3.5 mr-2" /> Preview
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}>
+                        <BarChart3 className="h-3.5 w-3.5 mr-2" /> SEO Analysis
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setAiAssistantPage(page)}>
+                        <Bot className="h-3.5 w-3.5 mr-2" /> AI Assistant
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}>
+                        <Code className="h-3.5 w-3.5 mr-2" /> View JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}>
+                        <Sparkles className="h-3.5 w-3.5 mr-2" /> AI Rewrite
+                      </DropdownMenuItem>
+                      {page.status === "failed" && (
+                        <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}>
+                          <RefreshCw className="h-3.5 w-3.5 mr-2" /> Retry
+                        </DropdownMenuItem>
+                      )}
+                      {page.external_url && (
+                        <DropdownMenuItem asChild>
+                          <a href={page.external_url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-3.5 w-3.5 mr-2" /> Open live
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => deleteMutation.mutate(page.id)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: Table layout */}
+          <div className="hidden lg:block w-full">
             <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className="border-b">
                   <th className="p-3 w-10">
-                    <Checkbox
-                      checked={allSelected}
-                      onCheckedChange={toggleSelectAll}
-                      aria-label="Select all"
-                    />
+                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} aria-label="Select all" />
                   </th>
-                  <th className="text-left p-3 font-medium text-muted-foreground w-[25%]">Title</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden md:table-cell w-[15%]">Slug</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell w-[10%]">Campaign</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell w-[8%]">Source</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground w-[8%]">Status</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell w-[7%]">CMS ID</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell w-[14%]">Scores</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden 2xl:table-cell w-[7%]">Freshness</th>
-                  <th className="p-3 w-[6%]"></th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">Title</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">Slug</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell">Campaign</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell">CMS ID</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden 2xl:table-cell">Scores</th>
+                  <th className="p-3 w-24">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -781,42 +862,28 @@ export default function GeneratedPagesPage() {
                   const geoResult = calculateContentGeoScore(displayTitle, page.content, page.slug);
                   const isSelected = selectedIds.has(page.id);
                   return (
-                    <tr
-                      key={page.id}
-                      className={`border-b last:border-0 transition-colors duration-150 ${
-                        isSelected ? "bg-primary/5" : "hover:bg-muted/50"
-                      }`}
-                    >
+                    <tr key={page.id} className={`border-b last:border-0 transition-colors ${isSelected ? "bg-primary/5" : "hover:bg-muted/50"}`}>
                       <td className="p-3 w-10">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => toggleSelect(page.id)}
-                          aria-label={`Select ${displayTitle}`}
-                        />
+                        <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(page.id)} aria-label={`Select ${displayTitle}`} />
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                           <span className="font-medium truncate">{displayTitle}</span>
                         </div>
                       </td>
-                      <td className="p-3 text-muted-foreground hidden md:table-cell">
-                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded truncate block max-w-full overflow-hidden">{page.slug}</code>
+                      <td className="p-3">
+                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded truncate block">{page.slug}</code>
                       </td>
-                      <td className="p-3 text-muted-foreground hidden lg:table-cell truncate">{page.campaigns?.name || "—"}</td>
-                      <td className="p-3 hidden lg:table-cell">
-                        <Badge variant="outline" className={`text-[10px] ${page.campaign_id ? "border-primary/30 text-primary" : "border-accent/30 text-accent-foreground"}`}>
-                          {page.campaign_id ? "Campaign" : "Direct"}
-                        </Badge>
-                      </td>
+                      <td className="p-3 text-muted-foreground hidden xl:table-cell truncate">{page.campaigns?.name || "—"}</td>
                       <td className="p-3">
                         <Badge variant="secondary" className={`text-[10px] ${statusColors[page.status]}`}>{page.status}</Badge>
                       </td>
                       <td className="p-3 hidden xl:table-cell">
-                        <code className="text-[10px] text-muted-foreground font-mono tabular-nums truncate block">{page.external_id || "—"}</code>
+                        <code className="text-[10px] text-muted-foreground font-mono truncate block">{page.external_id || "—"}</code>
                       </td>
-                      <td className="p-3 hidden xl:table-cell">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                      <td className="p-3 hidden 2xl:table-cell">
+                        <div className="flex items-center gap-1.5">
                           <div className="flex items-center gap-0.5">
                             <span className="text-[8px] font-semibold text-muted-foreground">SEO</span>
                             <SeoScoreBadge score={seoResult.score} label={seoResult.label} color={seoResult.color} checks={seoResult.checks} size="sm" />
@@ -831,127 +898,60 @@ export default function GeneratedPagesPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="p-3 hidden 2xl:table-cell">
-                        {(() => {
-                          const freshness = calculateFreshness(page.created_at, page.status);
-                          return (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="outline" className={`text-[10px] ${freshness.color}`}>
-                                    {freshness.label} ({freshness.ageDays}d)
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-xs">{freshness.tip}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          );
-                        })()}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-0.5 flex-wrap justify-end">
-                          {page.status === "pending" && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 text-primary"
-                              onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
-                              disabled={publishMutation.isPending}
-                              title="Publish"
-                            >
-                              <Send className="h-3 w-3" />
-                            </Button>
-                          )}
-                          {page.status === "published" && page.external_id && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 text-primary"
-                              onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
-                              disabled={publishMutation.isPending}
-                              title="Re-publish"
-                            >
-                              <RotateCw className="h-3 w-3" />
-                            </Button>
-                          )}
+                      <td className="p-3 w-24">
+                        <div className="flex items-center gap-0.5 justify-end">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
                           </Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setPreviewPage(page)} title="Preview">
                             <Eye className="h-3 w-3" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSeoAnalysisPage(page)} title="SEO Analysis">
-                            <BarChart3 className="h-3 w-3" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAiAssistantPage(page)} title="AI Assistant">
-                            <Bot className="h-3 w-3" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setJsonPayloadPage(page)} title="JSON">
-                            <Code className="h-3 w-3" />
-                          </Button>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-7 w-7 text-primary"
-                                  onClick={() => rewriteMutation.mutate(page.id)}
-                                  disabled={rewriteMutation.isPending}
-                                  title="AI Rewrite"
-                                >
-                                  <Sparkles className="h-3 w-3" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-xs">Refresh content with AI</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          {page.status === "failed" && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 text-warning"
-                              onClick={() => retryFailedMutation.mutate([page.id])}
-                              disabled={retryFailedMutation.isPending}
-                              title="Retry"
-                            >
-                              <RefreshCw className="h-3 w-3" />
-                            </Button>
-                          )}
-                          {page.status === "failed" && page.error_message && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-[9px] text-destructive border-destructive/30 max-w-[80px] truncate cursor-help">
-                                    {page.error_message}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p className="text-xs">{page.error_message}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {page.external_url && (
-                            <Button size="icon" variant="ghost" className="h-7 w-7" asChild title="Open live">
-                              <a href={page.external_url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
-                            </Button>
-                          )}
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 text-destructive"
-                            onClick={() => deleteMutation.mutate(page.id)}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-7 w-7">
+                                <MoreVertical className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              {page.status === "pending" && (
+                                <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}>
+                                  <Send className="h-3.5 w-3.5 mr-2" /> Publish
+                                </DropdownMenuItem>
+                              )}
+                              {page.status === "published" && page.external_id && (
+                                <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}>
+                                  <RotateCw className="h-3.5 w-3.5 mr-2" /> Re-publish
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}>
+                                <BarChart3 className="h-3.5 w-3.5 mr-2" /> SEO Analysis
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setAiAssistantPage(page)}>
+                                <Bot className="h-3.5 w-3.5 mr-2" /> AI Assistant
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}>
+                                <Code className="h-3.5 w-3.5 mr-2" /> View JSON
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}>
+                                <Sparkles className="h-3.5 w-3.5 mr-2" /> AI Rewrite
+                              </DropdownMenuItem>
+                              {page.status === "failed" && (
+                                <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}>
+                                  <RefreshCw className="h-3.5 w-3.5 mr-2" /> Retry
+                                </DropdownMenuItem>
+                              )}
+                              {page.external_url && (
+                                <DropdownMenuItem asChild>
+                                  <a href={page.external_url} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="h-3.5 w-3.5 mr-2" /> Open live
+                                  </a>
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => deleteMutation.mutate(page.id)}>
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
