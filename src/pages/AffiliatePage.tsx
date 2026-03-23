@@ -111,7 +111,7 @@ export default function AffiliatePage() {
       .from("affiliate_links")
       .insert({
         user_id: user.id,
-        workspace_id: workspace?.id || null,
+        workspace_id: currentWorkspace?.id || null,
         code,
         commission_rate: 20,
       } as any)
