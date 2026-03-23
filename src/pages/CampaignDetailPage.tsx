@@ -397,7 +397,7 @@ export default function CampaignDetailPage() {
                 className="rounded-xl bg-gradient-primary hover:brightness-110"
               >
                 <Play className="mr-1.5 h-4 w-4" />
-                {executeMutation.isPending ? "Running..." : "Run"}
+                {executeMutation.isPending ? t("campaignDetail.running") : t("campaignDetail.run")}
               </Button>
             </>
           )}
