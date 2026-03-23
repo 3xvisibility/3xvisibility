@@ -173,13 +173,13 @@ export default function ABTestingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-display">A/B Testing</h1>
+          <h1 className="text-display">{t("abTesting.title")}</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Compare template variants to find what performs best.
+            {t("abTesting.description")}
           </p>
         </div>
         <Button onClick={() => { resetForm(); setCreateOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> New Test
+          <Plus className="h-4 w-4 mr-2" /> {t("abTesting.newTest")}
         </Button>
       </div>
 
