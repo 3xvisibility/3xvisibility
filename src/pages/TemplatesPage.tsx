@@ -1648,6 +1648,7 @@ RULES:
                 </div>
               );
             })()}
+          </Card>
           {/* Bulk delete confirmation */}
           <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
             <AlertDialogContent>
