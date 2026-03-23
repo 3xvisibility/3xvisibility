@@ -1595,7 +1595,7 @@ Deno.serve(async (req) => {
 
           // Build JSON-LD structured data — use template schema config if defined
           const tplSchemaType = campaign.templates.schema_type as string || "";
-          const tplSchemaConfig = (campaign.templates.schema_config || {}) as Record<string, string>;
+          // tplSchemaConfig already declared above for slug pattern
           let jsonLd: string;
 
           if (tplSchemaType && tplSchemaType !== "WebPage") {
