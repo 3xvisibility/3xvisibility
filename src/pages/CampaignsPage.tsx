@@ -48,12 +48,12 @@ type Campaign = Tables<"campaigns"> & {
   websites?: { name: string } | null;
 };
 
-const statusConfig: Record<string, { class: string; label: string }> = {
-  completed: { class: "bg-success/10 text-success border-success/20", label: "Completed" },
-  processing: { class: "bg-primary/10 text-primary border-primary/20", label: "Processing" },
-  draft: { class: "bg-muted text-muted-foreground border-border", label: "Draft" },
-  failed: { class: "bg-destructive/10 text-destructive border-destructive/20", label: "Failed" },
-  queued: { class: "bg-warning/10 text-warning border-warning/20", label: "Queued" },
+const statusConfigClasses: Record<string, string> = {
+  completed: "bg-success/10 text-success border-success/20",
+  processing: "bg-primary/10 text-primary border-primary/20",
+  draft: "bg-muted text-muted-foreground border-border",
+  failed: "bg-destructive/10 text-destructive border-destructive/20",
+  queued: "bg-warning/10 text-warning border-warning/20",
 };
 
 export default function CampaignsPage() {
