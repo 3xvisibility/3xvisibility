@@ -171,7 +171,7 @@ export default function ABTestingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-display">{t("abTesting.title")}</h1>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -267,7 +267,7 @@ export default function ABTestingPage() {
             <DialogTitle>Create A/B Test</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Test Name</Label>
                 <Input placeholder="Homepage template test" value={name} onChange={(e) => setName(e.target.value)} />
@@ -285,7 +285,7 @@ export default function ABTestingPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label>{variantALabel}</Label>
@@ -314,7 +314,7 @@ export default function ABTestingPage() {
 
             {/* Previews */}
             {(variantAContent || variantBContent) && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-medium mb-1 text-muted-foreground">{variantALabel} Preview</p>
                   <div className="border rounded-md overflow-hidden h-40">
@@ -360,7 +360,7 @@ export default function ABTestingPage() {
                   <TabsTrigger value="stats">Statistics</TabsTrigger>
                 </TabsList>
                 <TabsContent value="compare" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium mb-2">{viewTest.variant_a_label}</p>
                       <div className="border rounded-md overflow-hidden h-64">
@@ -376,7 +376,7 @@ export default function ABTestingPage() {
                   </div>
                 </TabsContent>
                 <TabsContent value="stats" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <Card>
                       <CardContent className="p-4 space-y-3">
                         <h4 className="font-medium">{viewTest.variant_a_label}</h4>

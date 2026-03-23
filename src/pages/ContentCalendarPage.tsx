@@ -96,7 +96,7 @@ export default function ContentCalendarPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("contentCalendar.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t("contentCalendar.description")}</p>
@@ -128,18 +128,18 @@ export default function ContentCalendarPage() {
       {/* Calendar Controls */}
       <Card className="shadow-surface">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h2 className="text-lg font-semibold min-w-[180px] text-center">
+              <h2 className="text-base sm:text-lg font-semibold min-w-[150px] sm:min-w-[180px] text-center">
                 {format(currentMonth, "MMMM yyyy")}
               </h2>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" className="text-xs ml-2" onClick={() => setCurrentMonth(new Date())}>
+              <Button variant="ghost" size="sm" className="text-xs ml-2 hidden sm:inline-flex" onClick={() => setCurrentMonth(new Date())}>
                 {t("contentCalendar.today")}
               </Button>
             </div>
@@ -173,7 +173,7 @@ export default function ContentCalendarPage() {
               <div className="grid grid-cols-7">
                 {paddedDays.map((day, i) => {
                   if (!day) {
-                    return <div key={`pad-${i}`} className="min-h-[100px] bg-muted/20 border-b border-r border-border" />;
+                    return <div key={`pad-${i}`} className="min-h-[60px] sm:min-h-[100px] bg-muted/20 border-b border-r border-border" />;
                   }
 
                   const dateKey = format(day, "yyyy-MM-dd");
@@ -184,7 +184,7 @@ export default function ContentCalendarPage() {
                     <div
                       key={dateKey}
                       className={cn(
-                        "min-h-[100px] p-1.5 border-b border-r border-border transition-colors",
+                        "min-h-[60px] sm:min-h-[100px] p-1 sm:p-1.5 border-b border-r border-border transition-colors",
                         today && "bg-primary/5 ring-1 ring-inset ring-primary/20",
                         !isSameMonth(day, currentMonth) && "opacity-40"
                       )}
