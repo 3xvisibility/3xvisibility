@@ -206,7 +206,7 @@ export default function WebsitesPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Connect Website</DialogTitle>
+                <DialogTitle>{t("websites.connectWebsite")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
