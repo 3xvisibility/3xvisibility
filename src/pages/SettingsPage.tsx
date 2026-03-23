@@ -264,7 +264,7 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">Controls how much content is generated for each AI block.</p>
+              <p className="text-[11px] text-muted-foreground">{t("settings.contentLengthDesc")}</p>
             </div>
 
             <div className="space-y-2">
