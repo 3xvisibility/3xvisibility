@@ -31,6 +31,7 @@ import {
 } from "@/components/templates/TemplateVisualEditor";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useDragReorder } from "@/hooks/use-drag-reorder";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TemplateVersionHistory, saveVersion, type TemplateVersion } from "@/components/templates/TemplateVersionHistory";
 
@@ -88,6 +89,7 @@ export default function TemplatesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const detectedVars = content.match(/\{[^}]+\}/g) || [];
@@ -645,8 +647,8 @@ export default function TemplatesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-display">Templates</h1>
-          <p className="text-muted-foreground mt-1">Define reusable page layouts with dynamic variables.</p>
+          <h1 className="text-display">{t("templates.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("templates.description")}</p>
         </div>
         <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {/* Hidden file input for import */}
@@ -665,7 +667,7 @@ export default function TemplatesPage() {
             className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
             onClick={() => importFileRef.current?.click()}
           >
-            <Upload className="mr-2 h-4 w-4" /> Import
+            <Upload className="mr-2 h-4 w-4" /> {t("common.import")}
           </Button>
           {/* AI Content Generator */}
           <Button
@@ -673,7 +675,7 @@ export default function TemplatesPage() {
             className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
             onClick={() => setAiContentOpen(true)}
           >
-            <Wand2 className="mr-2 h-4 w-4" /> AI Content
+            <Wand2 className="mr-2 h-4 w-4" /> {t("templates.aiContent")}
           </Button>
           {/* From CSV */}
           <Button
@@ -681,7 +683,7 @@ export default function TemplatesPage() {
             className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
             onClick={() => setCsvDialogOpen(true)}
           >
-            <FileSpreadsheet className="mr-2 h-4 w-4" /> From CSV
+            <FileSpreadsheet className="mr-2 h-4 w-4" /> {t("templates.fromCsv")}
           </Button>
           {/* From Connected Site */}
           <Button
@@ -689,13 +691,13 @@ export default function TemplatesPage() {
             className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
             onClick={() => setSiteDialogOpen(true)}
           >
-            <Link2 className="mr-2 h-4 w-4" /> From Site
+            <Link2 className="mr-2 h-4 w-4" /> {t("templates.fromSite")}
           </Button>
           {/* AI Template Builder */}
           <Dialog open={aiOpen} onOpenChange={(v) => { if (!v) resetAndClose(); else setAiOpen(true); }}>
             <DialogTrigger asChild>
               <Button variant="outline" className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
-                <Sparkles className="mr-2 h-4 w-4" /> AI Builder
+                <Sparkles className="mr-2 h-4 w-4" /> {t("templates.aiBuilder")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:w-[min(96vw,72rem)] sm:max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] overflow-y-auto rounded-lg">
@@ -818,7 +820,7 @@ export default function TemplatesPage() {
             {!editingTemplate && (
               <DialogTrigger asChild>
                 <Button className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]">
-                  <Plus className="mr-2 h-4 w-4" /> New Template
+                  <Plus className="mr-2 h-4 w-4" /> {t("templates.createTemplate")}
                 </Button>
               </DialogTrigger>
             )}
@@ -1394,14 +1396,14 @@ RULES:
                   </div>
                 )}
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
+                  <Button variant="outline" onClick={resetAndClose}>{t("common.cancel")}</Button>
                   {editingTemplate ? (
                     <Button onClick={() => updateMutation.mutate()} disabled={!name || !content || updateMutation.isPending}>
-                      {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                      {updateMutation.isPending ? t("settings.saving") : t("common.saveChanges")}
                     </Button>
                   ) : (
                     <Button onClick={() => createMutation.mutate()} disabled={!name || !content || createMutation.isPending}>
-                      {createMutation.isPending ? "Creating..." : "Create Template"}
+                      {createMutation.isPending ? t("common.loading") : t("templates.createTemplate")}
                     </Button>
                   )}
                 </div>
@@ -1415,12 +1417,12 @@ RULES:
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search templates…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
+          <Input placeholder={t("common.searchTemplates")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
         </div>
         <Select value={siteTypeFilter} onValueChange={setSiteTypeFilter}>
-          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="All platforms" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder={t("common.allPlatforms")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All platforms</SelectItem>
+            <SelectItem value="all">{t("common.allPlatforms")}</SelectItem>
             <SelectItem value="wordpress">WordPress</SelectItem>
             <SelectItem value="shopify">Shopify</SelectItem>
             <SelectItem value="prestashop">PrestaShop</SelectItem>
@@ -1428,9 +1430,9 @@ RULES:
           </SelectContent>
         </Select>
         <Select value={campaignTypeFilter} onValueChange={setCampaignTypeFilter}>
-          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="All types" /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder={t("common.allTypes")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="all">{t("common.allTypes")}</SelectItem>
             <SelectItem value="seo">SEO</SelectItem>
             <SelectItem value="sea">SEA</SelectItem>
             <SelectItem value="geo">GEO</SelectItem>
@@ -1454,16 +1456,16 @@ RULES:
         </div>
       ) : filteredTemplates.length === 0 ? (
         <Card><CardContent className="p-10 text-center text-muted-foreground">
-          {templates.length === 0 ? "No templates yet. Create your first template to get started." : "No templates match your filters."}
+          {templates.length === 0 ? t("templates.noTemplatesYet") : t("templates.noTemplatesFiltered")}
         </CardContent></Card>
       ) : viewMode === "table" ? (
         <>
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-3 rounded-lg border bg-muted/50 px-4 py-2">
-              <span className="text-sm font-medium">{selectedIds.size} selected</span>
-              <Button variant="outline" size="sm" onClick={bulkExport}><Download className="h-3.5 w-3.5 mr-1.5" /> Export</Button>
-              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}><Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete</Button>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>Cancel</Button>
+              <span className="text-sm font-medium">{t("templates.selectedCount", { count: selectedIds.size })}</span>
+              <Button variant="outline" size="sm" onClick={bulkExport}><Download className="h-3.5 w-3.5 mr-1.5" /> {t("common.export")}</Button>
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}><Trash2 className="h-3.5 w-3.5 mr-1.5" /> {t("common.delete")}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>{t("common.cancel")}</Button>
             </div>
           )}
           <Card>
@@ -1472,15 +1474,15 @@ RULES:
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-10"><Checkbox checked={orderedTemplates.length > 0 && selectedIds.size === orderedTemplates.length} onCheckedChange={toggleSelectAll} aria-label="Select all" /></TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>Template name <SortIcon col="name" /></button></TableHead>
-                    <TableHead>Site type</TableHead>
-                    <TableHead>Campaign types</TableHead>
-                    <TableHead>Variables</TableHead>
-                    <TableHead>Copies</TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>Used in <SortIcon col="campaigns" /></button></TableHead>
-                    <TableHead>Last used</TableHead>
-                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>Last updated <SortIcon col="date" /></button></TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("name")}>{t("templates.templateName")} <SortIcon col="name" /></button></TableHead>
+                    <TableHead>{t("templates.siteType")}</TableHead>
+                    <TableHead>{t("templates.campaignTypes")}</TableHead>
+                    <TableHead>{t("templates.variables")}</TableHead>
+                    <TableHead>{t("templates.copies")}</TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("campaigns")}>{t("templates.usedIn")} <SortIcon col="campaigns" /></button></TableHead>
+                    <TableHead>{t("templates.lastUsed")}</TableHead>
+                    <TableHead><button className="flex items-center hover:text-foreground transition-colors" onClick={() => toggleSort("date")}>{t("templates.lastUpdated")} <SortIcon col="date" /></button></TableHead>
+                    <TableHead className="text-right">{t("common.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -18,6 +18,7 @@ import type { Tables, Database } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { WebsiteCard } from "@/components/websites/WebsiteCard";
 import { SiteTypeFilter } from "@/components/websites/SiteTypeFilter";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
 import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
@@ -48,6 +49,7 @@ export default function WebsitesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: websites = [], isLoading } = useQuery({
@@ -183,8 +185,8 @@ export default function WebsitesPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-display">Websites</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Connect your websites for page publishing.</p>
+          <h1 className="text-display">{t("websites.title")}</h1>
+          <p className="text-muted-foreground mt-1 text-sm">{t("websites.description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <SiteTypeFilter value={filterType} onChange={setFilterType} />
@@ -199,18 +201,18 @@ export default function WebsitesPage() {
                   }
                 }}
               >
-                <Plus className="mr-2 h-4 w-4" /> Connect Website
+                <Plus className="mr-2 h-4 w-4" /> {t("websites.connectWebsite")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Connect Website</DialogTitle>
+                <DialogTitle>{t("websites.connectWebsite")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div>
-                  <Label>Platform</Label>
+                  <Label>{t("websites.platform")}</Label>
                   <Select value={siteType} onValueChange={(v) => setSiteType(v as WebsiteType)}>
-                    <SelectTrigger><SelectValue placeholder="Select platform" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("common.selectPlatform")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="wordpress">WordPress</SelectItem>
                       <SelectItem value="shopify">Shopify</SelectItem>
@@ -220,13 +222,13 @@ export default function WebsitesPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="site-name">Site Name</Label>
-                  <Input id="site-name" placeholder="My Blog" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
+                  <Label htmlFor="site-name">{t("websites.siteName")}</Label>
+                  <Input id="site-name" placeholder={t("websites.siteNamePlaceholder")} value={siteName} onChange={(e) => setSiteName(e.target.value)} />
                 </div>
                 {siteType !== "shopify" && (
                   <div>
-                    <Label htmlFor="site-url">Site URL</Label>
-                    <Input id="site-url" placeholder="https://example.com" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
+                  <Label htmlFor="site-url">{t("websites.siteUrl")}</Label>
+                    <Input id="site-url" placeholder={t("websites.siteUrlPlaceholder")} value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
                   </div>
                 )}
 
@@ -271,7 +273,7 @@ export default function WebsitesPage() {
                 )}
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+                  <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">{t("common.cancel")}</Button>
                   <Button
                     variant="outline"
                     className="w-full sm:w-auto"
@@ -279,13 +281,13 @@ export default function WebsitesPage() {
                     disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || testConnectionMutation.isPending}
                   >
                     {testConnectionMutation.isPending ? (
-                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
+                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
                     ) : (
-                      <><Zap className="h-4 w-4 mr-1" /> Test</>
+                      <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
                     )}
                   </Button>
                   <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || createMutation.isPending}>
-                    {createMutation.isPending ? "Connecting..." : "Connect"}
+                    {createMutation.isPending ? t("common.connecting") : t("common.connect")}
                   </Button>
                 </div>
               </div>
@@ -304,8 +306,8 @@ export default function WebsitesPage() {
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
             {websites.length === 0
-              ? "No websites connected. Connect your first website to start publishing."
-              : "No websites match the selected filter."}
+              ? t("websites.noWebsitesYet")
+              : t("websites.noWebsitesFiltered")}
           </CardContent>
         </Card>
       ) : (

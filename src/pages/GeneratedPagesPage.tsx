@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Progress } from "@/components/ui/progress";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { logAudit } from "@/lib/audit";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
@@ -71,6 +72,7 @@ export default function GeneratedPagesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading } = useQuery({
@@ -449,8 +451,8 @@ export default function GeneratedPagesPage() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-display">Generated Pages</h1>
-            <p className="text-muted-foreground mt-1 text-sm">Browse and manage all pages created by your campaigns.</p>
+            <h1 className="text-display">{t("generatedPages.title")}</h1>
+            <p className="text-muted-foreground mt-1 text-sm">{t("generatedPages.description")}</p>
           </div>
           <div className="flex gap-2 items-center">
             {pendingPages.length > 0 && (
@@ -461,7 +463,7 @@ export default function GeneratedPagesPage() {
                 onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
               >
                 <Send className="h-3.5 w-3.5 mr-1.5" />
-                {publishMutation.isPending ? "Publishing..." : `Publish (${pendingPages.length})`}
+                {publishMutation.isPending ? t("generatedPages.publishing") : `${t("generatedPages.publish")} (${pendingPages.length})`}
               </Button>
             )}
           </div>
@@ -472,8 +474,8 @@ export default function GeneratedPagesPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="page"><FileText className="h-3 w-3 mr-1 inline" />As Page</SelectItem>
-              <SelectItem value="product"><FileText className="h-3 w-3 mr-1 inline" />As Product</SelectItem>
+               <SelectItem value="page"><FileText className="h-3 w-3 mr-1 inline" />{t("generatedPages.asPage")}</SelectItem>
+              <SelectItem value="product"><FileText className="h-3 w-3 mr-1 inline" />{t("generatedPages.asProduct")}</SelectItem>
             </SelectContent>
           </Select>
           <Button

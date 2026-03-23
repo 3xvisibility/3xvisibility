@@ -35,6 +35,7 @@ import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOver
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const YEARLY_DISCOUNT = 0.2;
 
@@ -148,6 +149,7 @@ export default function BillingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
   const [isYearly, setIsYearly] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<PlanName | null>(null);
@@ -272,15 +274,15 @@ export default function BillingPage() {
       )}
       {/* Header */}
       <div>
-        <h1 className="text-display">Billing & Plans</h1>
-        <p className="text-muted-foreground mt-1">Manage your subscription, track usage, and upgrade your plan.</p>
+        <h1 className="text-display">{t("billing.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("billing.description")}</p>
       </div>
 
       {/* Usage overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current Plan</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("billing.currentPlan")}</p>
             <div className="flex items-center gap-2">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Sparkles className="h-4.5 w-4.5 text-primary" />
@@ -306,7 +308,7 @@ export default function BillingPage() {
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Page Generations</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("billing.pageGenerations")}</p>
               <span className="text-xs tabular-nums font-medium text-muted-foreground">{pagesUsed} / {pagesLimit}</span>
             </div>
             <Progress value={pagesPercent} className="h-2" />
@@ -320,7 +322,7 @@ export default function BillingPage() {
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">AI Generations</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("billing.aiGenerations")}</p>
               <span className="text-xs tabular-nums font-medium text-muted-foreground">{aiUsed} / {aiLimit}</span>
             </div>
             <Progress value={aiPercent} className="h-2" />
@@ -334,7 +336,7 @@ export default function BillingPage() {
         <Card className="shadow-surface border-0">
           <CardContent className="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Connected Sites</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("billing.connectedSites")}</p>
               <span className="text-xs tabular-nums font-medium text-muted-foreground">
                 {sitesConnected} / {sitesLimit === -1 ? "∞" : sitesLimit}
               </span>
@@ -353,16 +355,16 @@ export default function BillingPage() {
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-3">
-        <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+        <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("billing.monthly")}</span>
         <button
           onClick={() => setIsYearly(!isYearly)}
           className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-muted"}`}
         >
           <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
         </button>
-        <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>Yearly</span>
+        <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("billing.yearly")}</span>
         {isYearly && (
-          <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">Save 20%</Badge>
+          <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">{t("billing.save20")}</Badge>
         )}
       </div>
 
@@ -397,7 +399,7 @@ export default function BillingPage() {
                     <CardTitle className="text-base font-bold">{features.label}</CardTitle>
                   </div>
                   {config.popular && (
-                    <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">Most Popular</Badge>
+                    <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">{t("billing.mostPopular")}</Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">{config.description}</p>

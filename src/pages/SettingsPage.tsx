@@ -15,6 +15,7 @@ import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const AI_PLAN_LIMITS: Record<string, number> = {
   free: 0,
@@ -54,6 +55,7 @@ const LANGUAGE_OPTIONS = [
 export default function SettingsPage() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
@@ -139,14 +141,14 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-display">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account, preferences, and AI content settings.</p>
+        <h1 className="text-display">{t("settings.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("settings.description")}</p>
       </div>
 
       {/* Profile */}
       <Card className="shadow-surface">
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
+          <CardTitle>{t("settings.profile")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {loadingProfile ? (
@@ -158,16 +160,16 @@ export default function SettingsPage() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="full-name">Full Name</Label>
+                  <Label htmlFor="full-name">{t("settings.fullName")}</Label>
                   <Input id="full-name" placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("settings.email")}</Label>
                   <Input id="email" type="email" placeholder="john@example.com" disabled />
                 </div>
               </div>
               <div>
-                <Label htmlFor="company">Company</Label>
+                <Label htmlFor="company">{t("settings.company")}</Label>
                 <Input id="company" placeholder="Acme Inc." value={company} onChange={(e) => setCompany(e.target.value)} />
               </div>
             </>
@@ -180,16 +182,16 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Moon className="h-5 w-5 text-primary" />
-            Appearance
+            {t("settings.appearance")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">Choose your preferred theme for the application.</p>
+          <p className="text-sm text-muted-foreground">{t("settings.appearanceDesc")}</p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { value: "light", label: "Light", icon: Sun },
-              { value: "dark", label: "Dark", icon: Moon },
-              { value: "system", label: "System", icon: Monitor },
+              { value: "light", label: t("settings.light"), icon: Sun },
+              { value: "dark", label: t("settings.dark"), icon: Moon },
+              { value: "system", label: t("settings.system"), icon: Monitor },
             ].map(({ value, label, icon: Icon }) => (
               <Button
                 key={value}
@@ -210,14 +212,14 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            AI Content Generation
+            {t("settings.aiContentGeneration")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Usage tracking */}
           <div className="rounded-lg border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">AI Generations</p>
+              <p className="text-sm font-medium">{t("settings.aiGenerations")}</p>
               <Badge variant="outline" className="capitalize">{subscription?.plan || "free"} plan</Badge>
             </div>
             {loadingSub ? (
@@ -226,9 +228,9 @@ export default function SettingsPage() {
               <>
                 <Progress value={aiPercent} className="h-2" />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{aiUsed} used</span>
+                  <span>{t("settings.used", { count: aiUsed })}</span>
                   <span className={aiPercent >= 90 ? "text-destructive font-medium" : ""}>
-                    {aiLimit - aiUsed} remaining
+                    {t("settings.remaining", { count: aiLimit - aiUsed })}
                   </span>
                 </div>
               </>
@@ -240,7 +242,7 @@ export default function SettingsPage() {
           {/* AI Settings */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Content Tone</Label>
+              <Label>{t("settings.contentTone")}</Label>
               <Select value={aiTone} onValueChange={setAiTone}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -249,11 +251,11 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">Sets the writing style for AI-generated content in your templates.</p>
+              <p className="text-[11px] text-muted-foreground">{t("settings.contentToneDesc")}</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Content Length</Label>
+              <Label>{t("settings.contentLength")}</Label>
               <Select value={aiLength} onValueChange={setAiLength}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -262,11 +264,11 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">Controls how much content is generated for each AI block.</p>
+              <p className="text-[11px] text-muted-foreground">{t("settings.contentLengthDesc")}</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Language</Label>
+              <Label>{t("settings.language")}</Label>
               <Select value={aiLanguage} onValueChange={setAiLanguage}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -275,7 +277,7 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">The language AI content will be written in.</p>
+              <p className="text-[11px] text-muted-foreground">{t("settings.languageDesc")}</p>
             </div>
           </div>
 
@@ -283,7 +285,7 @@ export default function SettingsPage() {
 
           {/* Template syntax reference */}
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
-            <p className="text-sm font-medium">AI Template Syntax</p>
+            <p className="text-sm font-medium">{t("settings.aiTemplateSyntax")}</p>
             <p className="text-xs text-muted-foreground">
               Use <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono">{"{{AI:your prompt here}}"}</code> in your templates to generate dynamic AI content.
             </p>
@@ -305,11 +307,11 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
-            Notification Preferences
+            {t("settings.notificationPreferences")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">Choose which events trigger notifications.</p>
+          <p className="text-sm text-muted-foreground">{t("settings.notificationPreferencesDesc")}</p>
           <NotificationPrefsEditor />
         </CardContent>
       </Card>
@@ -319,7 +321,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-primary" />
-            Change Password
+            {t("settings.changePassword")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -333,7 +335,7 @@ export default function SettingsPage() {
         disabled={saveMutation.isPending}
         className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
       >
-        {saveMutation.isPending ? "Saving..." : "Save Changes"}
+        {saveMutation.isPending ? t("settings.saving") : t("common.saveChanges")}
       </Button>
 
       <Separator />
@@ -343,19 +345,19 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Security Status
+            {t("settings.securityStatus")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Overview of the platform's security measures protecting your data.
+            {t("settings.securityStatusDesc")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { label: "HTTPS Everywhere", description: "All traffic encrypted via TLS", icon: Lock, active: true },
-              { label: "Encrypted Tokens", description: "CMS credentials encrypted at rest (AES-256-GCM)", icon: Shield, active: true },
-              { label: "Row-Level Security", description: "Workspace-scoped data isolation on all tables", icon: Globe, active: true },
-              { label: "Audit Logging", description: "Publish & admin actions recorded for review", icon: FileText, active: true },
+              { label: t("settings.httpsEverywhere"), description: t("settings.httpsDesc"), icon: Lock, active: true },
+              { label: t("settings.encryptedTokens"), description: t("settings.encryptedTokensDesc"), icon: Shield, active: true },
+              { label: t("settings.rowLevelSecurity"), description: t("settings.rowLevelSecurityDesc"), icon: Globe, active: true },
+              { label: t("settings.auditLogging"), description: t("settings.auditLoggingDesc"), icon: FileText, active: true },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-3 rounded-lg border border-border p-3">
                 <div className="mt-0.5 rounded-md bg-primary/10 p-1.5">
@@ -364,7 +366,7 @@ export default function SettingsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{item.label}</span>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">Active</Badge>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">{t("settings.active")}</Badge>
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{item.description}</p>
                 </div>
@@ -384,16 +386,16 @@ export default function SettingsPage() {
       {/* API Keys */}
       <Card className="shadow-surface">
         <CardHeader>
-          <CardTitle>API Keys</CardTitle>
+          <CardTitle>{t("settings.apiKeys")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Use API keys to integrate with external tools and automate page generation.
+            {t("settings.apiKeysDesc")}
           </p>
           <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
             pgp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
           </div>
-          <Button variant="outline" size="sm">Regenerate Key</Button>
+          <Button variant="outline" size="sm">{t("settings.regenerateKey")}</Button>
         </CardContent>
       </Card>
 
@@ -401,14 +403,14 @@ export default function SettingsPage() {
 
       <Card className="shadow-surface border-destructive/20">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardTitle className="text-destructive">{t("settings.dangerZone")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Permanently delete your account and all associated data.
+            {t("settings.deleteAccountDesc")}
           </p>
           <Button variant="destructive" className="transition-all duration-150 active:scale-[0.97]">
-            Delete Account
+            {t("settings.deleteAccount")}
           </Button>
         </CardContent>
       </Card>
