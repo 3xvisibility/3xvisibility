@@ -104,7 +104,7 @@ export default function SeoAuditPage() {
         <Card>
           <CardContent className="pt-5 pb-4 text-center">
             <p className="text-3xl font-bold tabular-nums text-destructive">{criticalCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">Critical Issues</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.criticalIssues")}</p>
           </CardContent>
         </Card>
         <Card>
