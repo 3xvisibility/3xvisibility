@@ -749,27 +749,27 @@ export default function GeneratedPagesPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-surface">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <Card className="shadow-surface overflow-hidden">
+          <div className="w-full">
+            <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className="border-b">
-                  <th className="p-4 w-10">
+                  <th className="p-3 w-10">
                     <Checkbox
                       checked={allSelected}
                       onCheckedChange={toggleSelectAll}
                       aria-label="Select all"
                     />
                   </th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Title</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Campaign</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Source</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">CMS ID</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Scores</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Freshness</th>
-                  <th className="p-4"></th>
+                  <th className="text-left p-3 font-medium text-muted-foreground w-[25%]">Title</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden md:table-cell w-[15%]">Slug</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell w-[10%]">Campaign</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden lg:table-cell w-[8%]">Source</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground w-[8%]">Status</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell w-[7%]">CMS ID</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell w-[14%]">Scores</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden 2xl:table-cell w-[7%]">Freshness</th>
+                  <th className="p-3 w-[6%]"></th>
                 </tr>
               </thead>
               <tbody>
@@ -786,51 +786,51 @@ export default function GeneratedPagesPage() {
                         isSelected ? "bg-primary/5" : "hover:bg-muted/50"
                       }`}
                     >
-                      <td className="p-4 w-10">
+                      <td className="p-3 w-10">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelect(page.id)}
                           aria-label={`Select ${displayTitle}`}
                         />
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
+                      <td className="p-3">
+                        <div className="flex items-center gap-2 min-w-0">
                           <FileText className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
-                          <span className="font-medium truncate max-w-[200px]">{displayTitle}</span>
+                          <span className="font-medium truncate">{displayTitle}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-muted-foreground hidden sm:table-cell">
-                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{page.slug}</code>
+                      <td className="p-3 text-muted-foreground hidden md:table-cell">
+                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded truncate block max-w-full overflow-hidden">{page.slug}</code>
                       </td>
-                      <td className="p-4 text-muted-foreground hidden md:table-cell">{page.campaigns?.name || "—"}</td>
-                      <td className="p-4 hidden md:table-cell">
-                        <Badge variant="outline" className={page.campaign_id ? "border-primary/30 text-primary" : "border-accent/30 text-accent-foreground"}>
-                          {page.campaign_id ? "Campaign" : "Direct Publish"}
+                      <td className="p-3 text-muted-foreground hidden lg:table-cell truncate">{page.campaigns?.name || "—"}</td>
+                      <td className="p-3 hidden lg:table-cell">
+                        <Badge variant="outline" className={`text-[10px] ${page.campaign_id ? "border-primary/30 text-primary" : "border-accent/30 text-accent-foreground"}`}>
+                          {page.campaign_id ? "Campaign" : "Direct"}
                         </Badge>
                       </td>
-                      <td className="p-4">
-                        <Badge variant="secondary" className={statusColors[page.status]}>{page.status}</Badge>
+                      <td className="p-3">
+                        <Badge variant="secondary" className={`text-[10px] ${statusColors[page.status]}`}>{page.status}</Badge>
                       </td>
-                      <td className="p-4 hidden lg:table-cell">
-                        <code className="text-[10px] text-muted-foreground font-mono tabular-nums">{page.external_id || "—"}</code>
+                      <td className="p-3 hidden xl:table-cell">
+                        <code className="text-[10px] text-muted-foreground font-mono tabular-nums truncate block">{page.external_id || "—"}</code>
                       </td>
-                      <td className="p-4 hidden lg:table-cell">
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <span className="text-[9px] font-semibold text-muted-foreground">SEO</span>
+                      <td className="p-3 hidden xl:table-cell">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <div className="flex items-center gap-0.5">
+                            <span className="text-[8px] font-semibold text-muted-foreground">SEO</span>
                             <SeoScoreBadge score={seoResult.score} label={seoResult.label} color={seoResult.color} checks={seoResult.checks} size="sm" />
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-[9px] font-semibold text-muted-foreground">SEA</span>
+                          <div className="flex items-center gap-0.5">
+                            <span className="text-[8px] font-semibold text-muted-foreground">SEA</span>
                             <SeoScoreBadge score={seaResult.score} label={seaResult.label} color={seaResult.color} checks={seaResult.checks} size="sm" />
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-[9px] font-semibold text-muted-foreground">GEO</span>
+                          <div className="flex items-center gap-0.5">
+                            <span className="text-[8px] font-semibold text-muted-foreground">GEO</span>
                             <SeoScoreBadge score={geoResult.score} label={geoResult.label} color={geoResult.color} checks={geoResult.checks} size="sm" />
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 hidden lg:table-cell">
+                      <td className="p-3 hidden 2xl:table-cell">
                         {(() => {
                           const freshness = calculateFreshness(page.created_at, page.status);
                           return (
@@ -849,13 +849,13 @@ export default function GeneratedPagesPage() {
                           );
                         })()}
                       </td>
-                      <td className="p-4">
-                        <div className="flex gap-1">
+                      <td className="p-3">
+                        <div className="flex gap-0.5 flex-wrap justify-end">
                           {page.status === "pending" && (
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="ghost"
-                              className="text-primary"
+                              className="h-7 w-7 text-primary"
                               onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
                               disabled={publishMutation.isPending}
                               title="Publish"
@@ -865,38 +865,38 @@ export default function GeneratedPagesPage() {
                           )}
                           {page.status === "published" && page.external_id && (
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="ghost"
-                              className="text-primary"
+                              className="h-7 w-7 text-primary"
                               onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}
                               disabled={publishMutation.isPending}
-                              title="Re-publish (update on CMS)"
+                              title="Re-publish"
                             >
                               <RotateCw className="h-3 w-3" />
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" onClick={() => openSeoEditor(page)} title="Edit SEO">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setJsonPayloadPage(page)} title="View JSON payload">
-                            <Code className="h-3 w-3" />
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setPreviewPage(page)} title="Preview">
+                            <Eye className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setSeoAnalysisPage(page)} title="SEO Analysis">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setSeoAnalysisPage(page)} title="SEO Analysis">
                             <BarChart3 className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setAiAssistantPage(page)} title="AI SEO Assistant">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setAiAssistantPage(page)} title="AI Assistant">
                             <Bot className="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setPreviewPage(page)} title="Preview">
-                            <Eye className="h-3 w-3" />
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setJsonPayloadPage(page)} title="JSON">
+                            <Code className="h-3 w-3" />
                           </Button>
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
-                                  size="sm"
+                                  size="icon"
                                   variant="ghost"
-                                  className="text-primary"
+                                  className="h-7 w-7 text-primary"
                                   onClick={() => rewriteMutation.mutate(page.id)}
                                   disabled={rewriteMutation.isPending}
                                   title="AI Rewrite"
@@ -911,12 +911,12 @@ export default function GeneratedPagesPage() {
                           </TooltipProvider>
                           {page.status === "failed" && (
                             <Button
-                              size="sm"
+                              size="icon"
                               variant="ghost"
-                              className="text-warning"
+                              className="h-7 w-7 text-warning"
                               onClick={() => retryFailedMutation.mutate([page.id])}
                               disabled={retryFailedMutation.isPending}
-                              title="Retry publish"
+                              title="Retry"
                             >
                               <RefreshCw className="h-3 w-3" />
                             </Button>
@@ -925,7 +925,7 @@ export default function GeneratedPagesPage() {
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-[9px] text-destructive border-destructive/30 max-w-[120px] truncate cursor-help">
+                                  <Badge variant="outline" className="text-[9px] text-destructive border-destructive/30 max-w-[80px] truncate cursor-help">
                                     {page.error_message}
                                   </Badge>
                                 </TooltipTrigger>
@@ -936,18 +936,16 @@ export default function GeneratedPagesPage() {
                             </TooltipProvider>
                           )}
                           {page.external_url && (
-                            <>
-                              <Button size="sm" variant="ghost" asChild title="Open live page">
-                                <a href={page.external_url} target="_blank" rel="noopener noreferrer">
-                                  <ExternalLink className="h-3 w-3" />
-                                </a>
-                              </Button>
-                            </>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" asChild title="Open live">
+                              <a href={page.external_url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
                           )}
                           <Button
-                            size="sm"
+                            size="icon"
                             variant="ghost"
-                            className="text-destructive"
+                            className="h-7 w-7 text-destructive"
                             onClick={() => deleteMutation.mutate(page.id)}
                             title="Delete"
                           >
