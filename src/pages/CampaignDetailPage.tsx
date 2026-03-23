@@ -404,7 +404,7 @@ export default function CampaignDetailPage() {
           {campaign.status === "processing" && (
             <>
               <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({ action: "pause" })} disabled={executeMutation.isPending} className="rounded-xl">
-                <Pause className="mr-1.5 h-4 w-4" /> Pause
+                <Pause className="mr-1.5 h-4 w-4" /> {t("campaignDetail.pause")}
               </Button>
               <Button variant="destructive" size="sm" onClick={() => executeMutation.mutate({ action: "abort" })} disabled={executeMutation.isPending} className="rounded-xl">
                 <XCircle className="mr-1.5 h-4 w-4" /> Abort
