@@ -694,8 +694,8 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 px-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-hidden">
+              <table className="w-full table-fixed text-sm">
                 <thead>
                   <tr className="border-b border-border">
                      <th className="text-left py-2.5 px-4 sm:px-6 font-medium text-muted-foreground text-[11px] uppercase tracking-wider">{t("common.name")}</th>

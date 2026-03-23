@@ -1988,8 +1988,8 @@ export default function CampaignsPage() {
       ) : viewMode === "table" ? (
         /* TABLE VIEW */
         <Card className="border-0 shadow-surface overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden">
+            <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider">Campaign</th>

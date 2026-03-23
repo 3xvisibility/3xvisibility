@@ -464,8 +464,8 @@ export default function BillingPage() {
           <p className="text-sm text-muted-foreground">See what's included in each plan</p>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden">
+            <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="text-left py-3.5 px-5 font-semibold text-foreground">Feature</th>
