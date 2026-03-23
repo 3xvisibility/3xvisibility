@@ -368,7 +368,7 @@ export default function DataCsvPage() {
             </Button>
           )}
           <Button onClick={() => fileInputRef.current?.click()} size="sm" className="gap-2 bg-gradient-primary hover:brightness-110">
-            <Plus className="h-4 w-4" /> Upload CSV
+            <Plus className="h-4 w-4" /> {t("dataCsv.uploadCsv")}
           </Button>
         </div>
       </div>
