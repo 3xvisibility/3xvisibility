@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { TemplateEditorTour } from "./TemplateEditorTour";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ import {
   Tag,
   X,
   MousePointer,
-  HelpCircle,
+  
   ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -137,13 +137,11 @@ function TemplatePreviewPane({
   variables,
   onChange,
   onAddVariable,
-  onRestartTour,
 }: {
   templateHtml: string;
   variables: VariableEntry[];
   onChange: (html: string) => void;
   onAddVariable?: (name: string, original: string) => void;
-  onRestartTour?: () => void;
 }) {
   const [showCode, setShowCode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
@@ -378,21 +376,6 @@ ${highlightedHtml}
             )}
         </p>
         <div className="flex items-center gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 text-xs gap-1 text-muted-foreground"
-                  onClick={() => onRestartTour?.()}
-                >
-                  <HelpCircle className="h-3 w-3" /> Guide
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent><p className="text-xs">Replay the visual editor tour</p></TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
           <Button
             data-tour="template-code-toggle"
             size="sm"
@@ -478,7 +461,7 @@ export function TemplateDetectorDialog({
   const [aiGenerating, setAiGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [csvMode, setCsvMode] = useState(false);
-  const [tourRestartKey, setTourRestartKey] = useState(0);
+  
   const [csvText, setCsvText] = useState("");
   const [generatedCount, setGeneratedCount] = useState(0);
   const [publishResults, setPublishResults] = useState<{ title: string; status: string; external_url?: string; error?: string }[]>([]);
@@ -955,7 +938,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
 
               {/* Template Preview Tab — Visual by default */}
               <TabsContent value="preview" className="flex-1 overflow-hidden mt-2 flex flex-col">
-                <TemplateEditorTour active={step === "edit"} restartKey={tourRestartKey} />
+                
                 <TemplatePreviewPane
                   templateHtml={templateHtml}
                   variables={variables}
@@ -966,7 +949,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                       return [...prev, { name, original, values: [original] }];
                     });
                   }}
-                  onRestartTour={() => setTourRestartKey((k) => k + 1)}
+                  
                 />
               </TabsContent>
 
