@@ -355,14 +355,14 @@ export default function BillingPage() {
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-3">
-        <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+        <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("billing.monthly")}</span>
         <button
           onClick={() => setIsYearly(!isYearly)}
           className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-muted"}`}
         >
           <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
         </button>
-        <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>Yearly</span>
+        <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("billing.yearly")}</span>
         {isYearly && (
           <Badge className="bg-success/10 text-success border-success/20 text-[10px] font-bold animate-fade-in">Save 20%</Badge>
         )}
