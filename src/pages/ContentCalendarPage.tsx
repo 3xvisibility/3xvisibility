@@ -30,6 +30,7 @@ export default function ContentCalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: campaigns = [], isLoading } = useQuery({
