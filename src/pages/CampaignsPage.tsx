@@ -977,7 +977,7 @@ export default function CampaignsPage() {
           <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
             <DialogTrigger asChild>
               <Button className="rounded-xl bg-gradient-primary hover:brightness-110 transition-all duration-150 active:scale-[0.97] shadow-sm">
-                <Plus className="mr-2 h-4 w-4" /> New Campaign
+                <Plus className="mr-2 h-4 w-4" /> {t("campaigns.newCampaign")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] md:max-w-[680px] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] sm:max-w-[600px] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
