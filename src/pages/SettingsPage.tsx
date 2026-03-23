@@ -386,7 +386,7 @@ export default function SettingsPage() {
       {/* API Keys */}
       <Card className="shadow-surface">
         <CardHeader>
-          <CardTitle>API Keys</CardTitle>
+          <CardTitle>{t("settings.apiKeys")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
