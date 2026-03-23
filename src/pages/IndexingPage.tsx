@@ -332,9 +332,9 @@ export default function IndexingPage() {
               disabled={checkStatusMutation.isPending}
             >
               {checkStatusMutation.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Checking...</>
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("indexing.checking")}</>
               ) : (
-                <><RefreshCw className="h-4 w-4 mr-2" /> Refresh Status</>
+                <><RefreshCw className="h-4 w-4 mr-2" /> {t("indexing.refreshStatus")}</>
               )}
             </Button>
             {failedRequests.length > 0 && (
