@@ -438,10 +438,10 @@ export default function AnalyticsPage() {
         {[
           { label: t("analytics.totalPages"), value: stats.total, icon: FileText, color: "text-foreground" },
           { label: t("analytics.published"), value: stats.published, icon: Send, color: "text-success" },
-          { label: "Pending", value: stats.pending, icon: Clock, color: "text-primary" },
-          { label: "Failed", value: stats.failed, icon: XCircle, color: "text-destructive" },
-          { label: "Success Rate", value: `${stats.successRate}%`, icon: Percent, color: stats.successRate >= 80 ? "text-success" : stats.successRate >= 50 ? "text-warning" : "text-destructive" },
-          { label: "Avg SEO", value: avgSeoScore, icon: Tag, color: avgSeoScore >= 70 ? "text-success" : avgSeoScore >= 40 ? "text-warning" : "text-destructive" },
+          { label: t("analytics.pending"), value: stats.pending, icon: Clock, color: "text-primary" },
+          { label: t("analytics.failed"), value: stats.failed, icon: XCircle, color: "text-destructive" },
+          { label: t("analytics.successRate"), value: `${stats.successRate}%`, icon: Percent, color: stats.successRate >= 80 ? "text-success" : stats.successRate >= 50 ? "text-warning" : "text-destructive" },
+          { label: t("analytics.avgSeoScore"), value: avgSeoScore, icon: Tag, color: avgSeoScore >= 70 ? "text-success" : avgSeoScore >= 40 ? "text-warning" : "text-destructive" },
         ].map((s) => (
           <Card key={s.label} className="shadow-surface">
             <CardContent className="p-4">

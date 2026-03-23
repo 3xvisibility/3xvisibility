@@ -156,7 +156,7 @@ export default function SeoAuditPage() {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <ClipboardCheck className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No pages found.</p>
+            <p className="text-sm">{t("seoAudit.noPages")}</p>
           </CardContent>
         </Card>
       ) : (
