@@ -356,9 +356,9 @@ export default function DataCsvPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-display">Data / CSV</h1>
+          <h1 className="text-display">{t("dataCsv.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Upload, manage, and preview data files for your campaigns.
+            {t("dataCsv.description")}
           </p>
         </div>
         <div className="flex items-center gap-2">
