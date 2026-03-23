@@ -335,7 +335,7 @@ export default function SettingsPage() {
         disabled={saveMutation.isPending}
         className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
       >
-        {saveMutation.isPending ? "Saving..." : "Save Changes"}
+        {saveMutation.isPending ? t("settings.saving") : t("common.saveChanges")}
       </Button>
 
       <Separator />
