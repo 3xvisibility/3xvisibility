@@ -278,7 +278,7 @@ export default function WorkspaceSettingsPage() {
                 disabled={!isOwner || renameMutation.isPending || workspaceName.trim() === currentWorkspace?.name}
                 className="shrink-0"
               >
-                {renameMutation.isPending ? "Saving..." : "Save"}
+                {renameMutation.isPending ? t("common.saving") : t("common.save")}
               </Button>
             </div>
             {!isOwner && (
