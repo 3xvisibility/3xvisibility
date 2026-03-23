@@ -1510,6 +1510,7 @@ Deno.serve(async (req) => {
             }
           }
 
+          const h1Match = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
           let pageTitle: string;
           if (h1Match) {
             pageTitle = h1Match[1].replace(/<[^>]*>/g, "").trim();
