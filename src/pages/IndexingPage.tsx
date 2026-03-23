@@ -235,8 +235,8 @@ export default function IndexingPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-display">Google Indexing</h1>
-          <p className="text-muted-foreground mt-1">Submit and track URL indexing via Google Indexing API.</p>
+          <h1 className="text-display">{t("indexing.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("indexing.description")}</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
