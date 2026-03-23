@@ -274,8 +274,8 @@ export default function BillingPage() {
       )}
       {/* Header */}
       <div>
-        <h1 className="text-display">Billing & Plans</h1>
-        <p className="text-muted-foreground mt-1">Manage your subscription, track usage, and upgrade your plan.</p>
+        <h1 className="text-display">{t("billing.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("billing.description")}</p>
       </div>
 
       {/* Usage overview */}
