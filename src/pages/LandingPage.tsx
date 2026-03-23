@@ -8,6 +8,7 @@ import { VideoSection } from "@/components/landing/VideoSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { ReviewsSection } from "@/components/landing/ReviewsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
+import { AffiliateSection } from "@/components/landing/AffiliateSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -27,6 +28,7 @@ export default function LandingPage() {
         <HowItWorksSection />
         <ReviewsSection />
         <PricingSection />
+        <AffiliateSection />
         <FAQSection />
         <CTASection />
       </main>

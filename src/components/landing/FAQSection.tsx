@@ -12,8 +12,8 @@ export function FAQSection() {
     { q: t("faq.q4"), a: t("faq.a4") },
     { q: t("faq.q5"), a: t("faq.a5") },
     { q: t("faq.q6"), a: t("faq.a6") },
+    { q: t("faq.q7"), a: t("faq.a7") },
   ];
-
   return (
     <section id="faq" className="py-20 md:py-28 relative">
       <div className="container mx-auto px-4 lg:px-8 relative z-10 max-w-3xl">

@@ -16,6 +16,7 @@ export function LandingNav() {
     { label: t("nav.useCases"), href: "#use-cases" },
     { label: t("nav.howItWorks"), href: "#how-it-works" },
     { label: t("nav.pricing"), href: "#pricing" },
+    { label: t("nav.affiliate"), href: "#affiliate" },
     { label: t("nav.faq"), href: "#faq" },
   ];
 

@@ -98,6 +98,199 @@ export type Database = {
           },
         ]
       }
+      affiliate_clicks: {
+        Row: {
+          affiliate_link_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          referrer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          affiliate_link_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          affiliate_link_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clicks_affiliate_link_id_fkey"
+            columns: ["affiliate_link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_links: {
+        Row: {
+          code: string
+          commission_rate: number
+          created_at: string
+          id: string
+          is_active: boolean
+          pending_balance: number
+          total_clicks: number
+          total_conversions: number
+          total_credited: number
+          total_earned: number
+          updated_at: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          code: string
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pending_balance?: number
+          total_clicks?: number
+          total_conversions?: number
+          total_credited?: number
+          total_earned?: number
+          updated_at?: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          code?: string
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pending_balance?: number
+          total_clicks?: number
+          total_conversions?: number
+          total_credited?: number
+          total_earned?: number
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_payouts: {
+        Row: {
+          affiliate_link_id: string
+          amount: number
+          created_at: string
+          id: string
+          processed_at: string | null
+          status: string
+          type: string
+          user_id: string
+          workspace_id: string | null
+        }
+        Insert: {
+          affiliate_link_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          status?: string
+          type?: string
+          user_id: string
+          workspace_id?: string | null
+        }
+        Update: {
+          affiliate_link_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_payouts_affiliate_link_id_fkey"
+            columns: ["affiliate_link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_payouts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_referrals: {
+        Row: {
+          affiliate_link_id: string
+          commission_amount: number
+          converted_at: string | null
+          created_at: string
+          id: string
+          referred_user_id: string | null
+          status: string
+          subscription_plan: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          affiliate_link_id: string
+          commission_amount?: number
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referred_user_id?: string | null
+          status?: string
+          subscription_plan?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          affiliate_link_id?: string
+          commission_amount?: number
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referred_user_id?: string | null
+          status?: string
+          subscription_plan?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_referrals_affiliate_link_id_fkey"
+            columns: ["affiliate_link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_referrals_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string

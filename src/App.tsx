@@ -32,6 +32,7 @@ import ABTestingPage from "./pages/ABTestingPage";
 import ContentCalendarPage from "./pages/ContentCalendarPage";
 import PagePerformancePage from "./pages/PagePerformancePage";
 import SeoAuditPage from "./pages/SeoAuditPage";
+import AffiliatePage from "./pages/AffiliatePage";
 
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
@@ -80,6 +81,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="content-calendar" element={wrap(<ContentCalendarPage />)} />
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
+      <Route path="affiliate" element={wrap(<AffiliatePage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
@@ -167,6 +169,7 @@ const App = () => {
             <Route path="/content-calendar" element={<ProtectedRoute session={session}><WorkspaceRedirect path="content-calendar" /></ProtectedRoute>} />
             <Route path="/performance" element={<ProtectedRoute session={session}><WorkspaceRedirect path="performance" /></ProtectedRoute>} />
             <Route path="/seo-audit" element={<ProtectedRoute session={session}><WorkspaceRedirect path="seo-audit" /></ProtectedRoute>} />
+            <Route path="/affiliate" element={<ProtectedRoute session={session}><WorkspaceRedirect path="affiliate" /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
