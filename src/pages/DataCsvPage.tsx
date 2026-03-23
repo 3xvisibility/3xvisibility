@@ -393,10 +393,10 @@ export default function DataCsvPage() {
           </div>
           <div>
             <p className="font-semibold text-sm">
-              {isDragging ? "Drop your CSV file here" : "Drag & drop a CSV file, or click to browse"}
+              {isDragging ? t("dataCsv.dropHere") : t("dataCsv.dragAndDrop")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Supports CSV, TSV, TXT · Auto-detects delimiter & encoding · Max 20 MB
+              {t("dataCsv.supportedFormats")}
             </p>
           </div>
         </CardContent>

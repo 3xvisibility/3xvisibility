@@ -406,11 +406,11 @@ export default function IndexingPage() {
                           }}
                         />
                       </th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">URL</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Submitted</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Retries</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Error</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">{t("indexing.url")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">{t("common.status")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">{t("indexing.submitted")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">{t("indexing.retries")}</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">{t("indexing.error")}</th>
                       <th className="p-4"></th>
                     </tr>
                   </thead>
