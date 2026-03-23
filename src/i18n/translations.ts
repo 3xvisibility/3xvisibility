@@ -938,7 +938,6 @@ export const translations: Record<Language, Record<string, string>> = {
     "common.queued": "Queued",
     "common.paused": "Paused",
     "common.saving": "Saving...",
-    "common.save": "Save",
     "common.tryAdjustingFilters": "Try adjusting your search or filter.",
 
     // Workspace Settings extra
