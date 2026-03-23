@@ -24,7 +24,7 @@ const statusColors: Record<string, string> = {
   failed: "bg-destructive/15 text-destructive",
 };
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS_KEYS = ["contentCalendar.sun", "contentCalendar.mon", "contentCalendar.tue", "contentCalendar.wed", "contentCalendar.thu", "contentCalendar.fri", "contentCalendar.sat"];
 
 export default function ContentCalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
