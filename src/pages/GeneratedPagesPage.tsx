@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Progress } from "@/components/ui/progress";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { logAudit } from "@/lib/audit";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string } | null;
