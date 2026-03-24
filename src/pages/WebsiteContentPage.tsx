@@ -437,18 +437,26 @@ function ContentList({
                     </Button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs gap-1.5 flex-1 sm:flex-none"
+                    className="h-8 text-xs gap-1.5"
                     onClick={() => onPreview(item)}
                   >
                     <Eye className="h-3.5 w-3.5" /> Preview
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 text-xs gap-1.5 flex-1 sm:flex-none bg-primary text-primary-foreground"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
+                    onClick={() => onOptimizeSeo(item)}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" /> Optimize SEO
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 bg-primary text-primary-foreground"
                     onClick={() => onDetectTemplate(item)}
                   >
                     <Sparkles className="h-3.5 w-3.5" /> Generate Template
