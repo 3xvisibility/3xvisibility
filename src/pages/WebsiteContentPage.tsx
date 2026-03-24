@@ -28,7 +28,6 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplateDetectorDialog } from "@/components/website-content/TemplateDetectorDialog";
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
-import { SeoOptimizeDialog } from "@/components/website-content/SeoOptimizeDialog";
 import { PageEditDialog } from "@/components/website-content/PageEditDialog";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 
@@ -63,7 +62,7 @@ export default function WebsiteContentPage() {
   const [search, setSearch] = useState("");
   const [templatePage, setTemplatePage] = useState<ContentItem | null>(null);
   const [previewPage, setPreviewPage] = useState<ContentItem | null>(null);
-  const [optimizePage, setOptimizePage] = useState<ContentItem | null>(null);
+  
   const [editPage, setEditPage] = useState<ContentItem | null>(null);
 
   // Fetch connected websites
@@ -296,7 +295,6 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
-            onOptimizeSeo={setOptimizePage}
             onEdit={setEditPage}
           />
         </TabsContent>
@@ -307,7 +305,6 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
-            onOptimizeSeo={setOptimizePage}
             onEdit={setEditPage}
           />
         </TabsContent>
@@ -333,20 +330,6 @@ export default function WebsiteContentPage() {
         />
       )}
 
-      {/* SEO Optimize Dialog */}
-      {optimizePage && (
-        <SeoOptimizeDialog
-          open={!!optimizePage}
-          onOpenChange={(o) => !o && setOptimizePage(null)}
-          page={optimizePage}
-          websiteId={effectiveWebsite}
-          workspaceId={wsId}
-          onOptimized={() => {
-            refetchPages();
-            refetchProducts();
-          }}
-        />
-      )}
       {/* Page Edit Dialog */}
       {editPage && currentWebsite && (
         <PageEditDialog
@@ -355,6 +338,7 @@ export default function WebsiteContentPage() {
           page={editPage}
           websiteId={effectiveWebsite}
           websiteType={currentWebsite.type}
+          workspaceId={wsId}
           onUpdated={() => {
             refetchPages();
             refetchProducts();
@@ -373,7 +357,6 @@ function ContentList({
   error,
   onDetectTemplate,
   onPreview,
-  onOptimizeSeo,
   onEdit,
 }: {
   items: ContentItem[];
@@ -381,7 +364,6 @@ function ContentList({
   error: Error | null;
   onDetectTemplate: (item: ContentItem) => void;
   onPreview: (item: ContentItem) => void;
-  onOptimizeSeo: (item: ContentItem) => void;
   onEdit: (item: ContentItem) => void;
 }) {
   if (isLoading) {
@@ -462,10 +444,10 @@ function ContentList({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs gap-1.5"
+                    className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
                     onClick={() => onEdit(item)}
                   >
-                    <Pencil className="h-3.5 w-3.5" /> Edit Page
+                    <Pencil className="h-3.5 w-3.5" /> Edit & Optimize SEO
                   </Button>
                   <Button
                     size="sm"
@@ -474,14 +456,6 @@ function ContentList({
                     onClick={() => onPreview(item)}
                   >
                     <Eye className="h-3.5 w-3.5" /> Preview
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
-                    onClick={() => onOptimizeSeo(item)}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" /> Optimize SEO
                   </Button>
                   <Button
                     size="sm"
