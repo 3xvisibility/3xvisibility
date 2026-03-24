@@ -343,7 +343,17 @@ export default function WebsiteDiscoveryPage() {
       if (!user) throw new Error("Not authenticated");
       if (!convertingPage) throw new Error("No page selected");
 
-      let templateContent = convertingPage.bodyHtml;
+      // Get current content from the editable iframe (includes all edits)
+      const doc = editorIframeRef.current?.contentDocument;
+      let templateContent = doc?.body?.innerHTML || convertingPage.bodyHtml;
+
+      // Replace variable spans back to {variable} placeholders
+      templateContent = templateContent.replace(
+        /<span[^>]*data-var="([^"]+)"[^>]*>\{[^}]+\}<\/span>/gi,
+        (_, varName) => `{${varName}}`
+      );
+
+      // Also replace any remaining mapped values that weren't converted to spans
       for (const mapping of visualMappings) {
         const escaped = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         templateContent = templateContent.replace(new RegExp(escaped, "gi"), `{${mapping.variable}}`);
@@ -354,7 +364,9 @@ export default function WebsiteDiscoveryPage() {
         ? `<!-- STYLES -->\n${convertingPage.headStyles}\n<!-- /STYLES -->\n${templateContent}`
         : templateContent;
 
-      const variables = [...new Set(visualMappings.map((m) => `{${m.variable}}`))];
+      // Detect all variables in the final content
+      const varMatches = fullTemplate.match(/\{([a-z_][a-z0-9_]*)\}/gi) || [];
+      const variables = [...new Set(varMatches)];
 
       const { error } = await supabase.from("templates").insert({
         name: templateName,
