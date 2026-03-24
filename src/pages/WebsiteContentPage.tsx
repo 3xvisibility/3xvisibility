@@ -296,6 +296,7 @@ export default function WebsiteContentPage() {
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
             onOptimizeSeo={setOptimizePage}
+            onEdit={setEditPage}
           />
         </TabsContent>
         <TabsContent value="products" className="mt-3">
@@ -306,6 +307,7 @@ export default function WebsiteContentPage() {
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
             onOptimizeSeo={setOptimizePage}
+            onEdit={setEditPage}
           />
         </TabsContent>
       </Tabs>
