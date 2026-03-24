@@ -437,6 +437,14 @@ Return a JSON array of suggestions.`,
       }
     }
 
+    // Detect if page is built with Elementor
+    const isElementor = rawHtml.includes("elementor") && (
+      rawHtml.includes("data-elementor-type") || 
+      rawHtml.includes("elementor-widget") ||
+      rawHtml.includes("elementor-section") ||
+      rawHtml.includes("data-element_type")
+    );
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -446,6 +454,7 @@ Return a JSON array of suggestions.`,
         blocks,
         suggestions,
         imageUrls,
+        is_elementor: isElementor,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
