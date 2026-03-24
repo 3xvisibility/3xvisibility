@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    const body = await req.json();
     const {
       website_id,
       page_external_id,
@@ -52,10 +53,92 @@ Deno.serve(async (req) => {
       optimize_fields,
       language,
       instruction,
-    } = await req.json();
+      manual_update,
+      manual_title,
+      manual_content,
+      manual_excerpt,
+    } = body;
 
-    if (!website_id || !page_content) {
-      return new Response(JSON.stringify({ error: "website_id and page_content are required" }), {
+    if (!website_id) {
+      return new Response(JSON.stringify({ error: "website_id is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Manual update mode: skip AI, just push edited content to CMS ──
+    if (manual_update) {
+      const { data: website } = await supabase
+        .from("websites")
+        .select("url, type, credentials, workspace_id")
+        .eq("id", website_id)
+        .maybeSingle();
+
+      if (!website) {
+        return new Response(JSON.stringify({ error: "Website not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let pushResult: { external_id?: string; url?: string } | null = null;
+      let pushError: string | null = null;
+
+      try {
+        const connector = await createConnector(website as WebsiteRecord);
+        const updatePayload: Record<string, any> = {
+          title: manual_title || page_title,
+          slug: page_slug,
+          content: manual_content || page_content,
+          status: "publish",
+        };
+        if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
+        pushResult = await connector.updatePage(page_external_id, updatePayload);
+        console.log("[MANUAL] Updated existing page on CMS:", pushResult);
+      } catch (pushErr: any) {
+        pushError = pushErr.message || "CMS update failed";
+        console.error("[MANUAL] CMS push failed:", pushErr);
+      }
+
+      // Track in generated_pages
+      const wsId = workspace_id || website?.workspace_id || null;
+      const { data: existingPage } = await supabase
+        .from("generated_pages")
+        .select("id")
+        .eq("website_id", website_id)
+        .eq("external_id", page_external_id || "")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const pageRecord: Record<string, any> = {
+        title: manual_title || page_title,
+        content: manual_content || page_content,
+        slug: page_slug || "",
+        user_id: user.id,
+        website_id,
+        workspace_id: wsId,
+        status: pushResult ? "published" : "generated",
+        external_id: page_external_id || (pushResult?.external_id || null),
+        external_url: pushResult?.url || page_url || null,
+      };
+
+      if (existingPage) {
+        await supabase.from("generated_pages").update(pageRecord).eq("id", existingPage.id);
+      } else {
+        await supabase.from("generated_pages").insert(pageRecord);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        pushed_to_cms: !!pushResult,
+        push_error: pushError,
+        external_url: pushResult?.url || page_url,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!page_content) {
+      return new Response(JSON.stringify({ error: "page_content is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
