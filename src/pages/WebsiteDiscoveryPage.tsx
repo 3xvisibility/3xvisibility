@@ -378,7 +378,152 @@ export default function WebsiteDiscoveryPage() {
     },
   });
 
-  // Visual editor HTML
+  // Editor mode: visual / html / split
+  const [editorMode, setEditorMode] = useState<"visual" | "html" | "split">("visual");
+  const [htmlSource, setHtmlSource] = useState("");
+  const editorIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Sync HTML source when switching to HTML mode
+  useEffect(() => {
+    if (convertingPage && editorMode !== "visual") {
+      const doc = editorIframeRef.current?.contentDocument;
+      if (doc?.body) setHtmlSource(doc.body.innerHTML);
+    }
+  }, [editorMode, convertingPage]);
+
+  // Initialize editable iframe when convertingPage changes
+  useEffect(() => {
+    if (!convertingPage) return;
+    const iframe = editorIframeRef.current;
+    if (!iframe) return;
+
+    const initEditor = () => {
+      const doc = iframe.contentDocument;
+      if (!doc) return;
+
+      let content = convertingPage.bodyHtml;
+      // Apply existing variable mappings as highlights
+      for (const mapping of visualMappings) {
+        const escaped = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        content = content.replace(
+          new RegExp(escaped, "gi"),
+          `<span data-var="${mapping.variable}" style="background:hsl(221 83% 53% / 0.15);color:hsl(221 83% 53%);padding:1px 4px;border-radius:4px;font-weight:600;border:1px dashed hsl(221 83% 53% / 0.4);" title="{${mapping.variable}}" contenteditable="false">{${mapping.variable}}</span>`
+        );
+      }
+
+      const styles = convertingPage.headStyles || "";
+      doc.open();
+      doc.write(`<!DOCTYPE html><html><head>
+        ${styles}
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 16px; font-size: 14px; line-height: 1.6; color: #1a1a2e; }
+          ::selection { background: hsl(221 83% 53% / 0.3); }
+          * { box-sizing: border-box; }
+          img { max-width: 100%; height: auto; cursor: pointer; transition: outline 0.15s; }
+          img:hover { outline: 2px dashed hsl(221 83% 53% / 0.5); outline-offset: 2px; }
+          [data-var] { cursor: default; }
+          .pgp-insert-marker { display: inline-block; width: 2px; height: 1.2em; background: hsl(221 83% 53%); margin: 0 2px; animation: blink 1s infinite; }
+          @keyframes blink { 50% { opacity: 0; } }
+        </style>
+      </head><body contenteditable="true">${content}</body>
+      <script>
+        // Text selection for variable assignment
+        document.addEventListener('mouseup', function(e) {
+          if (e.target.tagName === 'IMG') {
+            window.parent.postMessage({ type: 'image-clicked', src: e.target.src, alt: e.target.alt || '' }, '*');
+            return;
+          }
+          const sel = window.getSelection();
+          const text = sel ? sel.toString().trim() : '';
+          if (text && text.length > 0 && text.length < 500) {
+            const range = sel.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            window.parent.postMessage({ type: 'text-selected', text, x: rect.left + rect.width / 2, y: rect.bottom + 8 }, '*');
+          }
+        });
+        // Notify parent of content changes
+        document.body.addEventListener('input', function() {
+          window.parent.postMessage({ type: 'content-changed', html: document.body.innerHTML }, '*');
+        });
+        // Handle delete key on selected elements
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Delete' || e.key === 'Backspace') {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) {
+              const range = sel.getRangeAt(0);
+              if (!range.collapsed) {
+                // Let default behavior handle it
+                return;
+              }
+              // Check if cursor is near/on a var span
+              const node = sel.anchorNode?.parentElement;
+              if (node && node.dataset?.var) {
+                e.preventDefault();
+                node.remove();
+                window.parent.postMessage({ type: 'var-deleted', variable: node.dataset.var }, '*');
+                window.parent.postMessage({ type: 'content-changed', html: document.body.innerHTML }, '*');
+              }
+            }
+          }
+        });
+      </script></html>`);
+      doc.close();
+    };
+
+    // Small delay to ensure iframe is mounted
+    const t = setTimeout(initEditor, 100);
+    return () => clearTimeout(t);
+  }, [convertingPage?.url]); // Only re-init when page changes, not on every mapping update
+
+  // Execute formatting commands on the editable iframe
+  const execEditorCmd = useCallback((cmd: string, value?: string) => {
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.execCommand(cmd, false, value);
+    // Focus back
+    doc.body.focus();
+    // Sync
+    setHtmlSource(doc.body.innerHTML);
+  }, []);
+
+  // Apply HTML source back to iframe
+  const applyHtmlToIframe = useCallback(() => {
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.body.innerHTML = htmlSource;
+  }, [htmlSource]);
+
+  // Handle image click/replace
+  const [imageEditPopover, setImageEditPopover] = useState<{ src: string; alt: string } | null>(null);
+  const [newImageSrc, setNewImageSrc] = useState("");
+  const [newImageAlt, setNewImageAlt] = useState("");
+
+  const handleReplaceImage = useCallback(() => {
+    if (!imageEditPopover || !newImageSrc) return;
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    const imgs = doc.querySelectorAll(`img[src="${imageEditPopover.src}"]`);
+    imgs.forEach(img => {
+      img.setAttribute("src", newImageSrc);
+      if (newImageAlt) img.setAttribute("alt", newImageAlt);
+    });
+    setImageEditPopover(null);
+    setNewImageSrc("");
+    setNewImageAlt("");
+    setHtmlSource(doc.body.innerHTML);
+  }, [imageEditPopover, newImageSrc, newImageAlt]);
+
+  const handleDeleteImage = useCallback(() => {
+    if (!imageEditPopover) return;
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    const imgs = doc.querySelectorAll(`img[src="${imageEditPopover.src}"]`);
+    imgs.forEach(img => img.remove());
+    setImageEditPopover(null);
+    setHtmlSource(doc.body.innerHTML);
+  }, [imageEditPopover]);
+
+  // Visual editor HTML (kept for legacy/read-only preview)
   const getVisualEditorHtml = useCallback(() => {
     if (!convertingPage) return "";
     let content = convertingPage.bodyHtml;
