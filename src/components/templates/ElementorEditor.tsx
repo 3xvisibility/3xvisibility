@@ -876,7 +876,7 @@ function addElIds(nodes: ElementorNode[], html: string): string {
 }
 
 // ── Main Editor Component ──────────────────────────────
-export function ElementorEditor({ html, css, onChange, onCssChange, customVars = [], preserveOriginalStyles }: ElementorEditorProps) {
+export function ElementorEditor({ html, css, onChange, onCssChange, customVars = [], preserveOriginalStyles, elementorJson }: ElementorEditorProps) {
   // Extract embedded styles from HTML (<!-- STYLES --> blocks)
   const extractedStyles = useMemo(() => {
     const styleMatch = html.match(/<!-- STYLES -->\n?([\s\S]*?)\n?<!-- \/STYLES -->/);
@@ -887,7 +887,14 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
     return html.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "").trim();
   }, []);
   
-  const [nodes, setNodes] = useState<ElementorNode[]>(() => parseHtmlToNodes(cleanHtml));
+  // Use Elementor JSON if provided, otherwise parse HTML
+  const [nodes, setNodes] = useState<ElementorNode[]>(() => {
+    if (elementorJson) {
+      const parsed = parseElementorJson(elementorJson);
+      if (parsed.length > 0) return parsed;
+    }
+    return parseHtmlToNodes(cleanHtml);
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<"widgets" | "variables" | "navigator" | "dynamic">("widgets");
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "tablet" | "mobile">("desktop");
