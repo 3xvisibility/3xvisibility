@@ -20,6 +20,7 @@ import {
   Eye,
   RefreshCw,
   AlertTriangle,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplateDetectorDialog } from "@/components/website-content/TemplateDetectorDialog";
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
 import { SeoOptimizeDialog } from "@/components/website-content/SeoOptimizeDialog";
+import { PageEditDialog } from "@/components/website-content/PageEditDialog";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 
 type Website = Tables<"websites">;
@@ -62,6 +64,7 @@ export default function WebsiteContentPage() {
   const [templatePage, setTemplatePage] = useState<ContentItem | null>(null);
   const [previewPage, setPreviewPage] = useState<ContentItem | null>(null);
   const [optimizePage, setOptimizePage] = useState<ContentItem | null>(null);
+  const [editPage, setEditPage] = useState<ContentItem | null>(null);
 
   // Fetch connected websites
   const { data: websites = [], isLoading: loadingWebsites } = useQuery({
@@ -294,6 +297,7 @@ export default function WebsiteContentPage() {
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
             onOptimizeSeo={setOptimizePage}
+            onEdit={setEditPage}
           />
         </TabsContent>
         <TabsContent value="products" className="mt-3">
@@ -304,6 +308,7 @@ export default function WebsiteContentPage() {
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
             onOptimizeSeo={setOptimizePage}
+            onEdit={setEditPage}
           />
         </TabsContent>
       </Tabs>
@@ -342,6 +347,20 @@ export default function WebsiteContentPage() {
           }}
         />
       )}
+      {/* Page Edit Dialog */}
+      {editPage && currentWebsite && (
+        <PageEditDialog
+          open={!!editPage}
+          onOpenChange={(o) => !o && setEditPage(null)}
+          page={editPage}
+          websiteId={effectiveWebsite}
+          websiteType={currentWebsite.type}
+          onUpdated={() => {
+            refetchPages();
+            refetchProducts();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -355,6 +374,7 @@ function ContentList({
   onDetectTemplate,
   onPreview,
   onOptimizeSeo,
+  onEdit,
 }: {
   items: ContentItem[];
   isLoading: boolean;
@@ -362,6 +382,7 @@ function ContentList({
   onDetectTemplate: (item: ContentItem) => void;
   onPreview: (item: ContentItem) => void;
   onOptimizeSeo: (item: ContentItem) => void;
+  onEdit: (item: ContentItem) => void;
 }) {
   if (isLoading) {
     return (
@@ -438,6 +459,14 @@ function ContentList({
                   )}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5"
+                    onClick={() => onEdit(item)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit Page
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
