@@ -758,8 +758,12 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
     setNodes(newNodes);
     pushHistory(newNodes);
     const rawHtml = nodesToHtml(newNodes);
-    onChange(rawHtml);
-  }, [onChange, pushHistory]);
+    // Re-wrap with styles block if present
+    const output = customCss
+      ? `<!-- STYLES -->\n${customCss}\n<!-- /STYLES -->\n${rawHtml}`
+      : rawHtml;
+    onChange(output);
+  }, [onChange, pushHistory, customCss]);
   
   // Generate preview HTML with data-el-id attributes
   const previewHtml = useMemo(() => {
