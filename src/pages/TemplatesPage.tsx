@@ -836,9 +836,12 @@ export default function TemplatesPage() {
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <Tabs value={activeEditorTab} onValueChange={handleTabChange} className="w-full">
-                  <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-5">
+                  <TabsList className="grid h-auto w-full grid-cols-3 sm:grid-cols-6">
+                    <TabsTrigger value="elementor" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                      <Columns className="h-3.5 w-3.5" /> Page Builder
+                    </TabsTrigger>
                     <TabsTrigger value="visual" className="flex items-center gap-1.5 text-xs sm:text-sm">
-                      <LayoutPanelTop className="h-3.5 w-3.5" /> Visual
+                      <LayoutPanelTop className="h-3.5 w-3.5" /> Blocks
                     </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Code className="h-3.5 w-3.5" /> Code
@@ -849,10 +852,16 @@ export default function TemplatesPage() {
                     <TabsTrigger value="schema" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Braces className="h-3.5 w-3.5" /> Schema
                     </TabsTrigger>
-                    <TabsTrigger value="preview" className="flex items-center gap-1.5 text-xs sm:text-sm col-span-2 sm:col-span-1">
+                    <TabsTrigger value="preview" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Eye className="h-3.5 w-3.5" /> Preview
                     </TabsTrigger>
                   </TabsList>
+                  <TabsContent value="elementor" className="mt-3">
+                    <ElementorEditor
+                      html={content}
+                      onChange={(newHtml) => setContent(newHtml)}
+                    />
+                  </TabsContent>
                   <TabsContent value="visual" className="mt-3">
                     <TemplateVisualEditor
                       blocks={blocks}
