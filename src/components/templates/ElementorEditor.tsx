@@ -35,6 +35,7 @@ interface ElementorEditorProps {
   onCssChange?: (css: string) => void;
   customVars?: string[];
   preserveOriginalStyles?: boolean;
+  elementorJson?: string; // Native Elementor JSON data (_elementor_data)
 }
 
 let nodeCounter = 0;
