@@ -331,20 +331,6 @@ export default function WebsiteContentPage() {
         />
       )}
 
-      {/* SEO Optimize Dialog */}
-      {optimizePage && (
-        <SeoOptimizeDialog
-          open={!!optimizePage}
-          onOpenChange={(o) => !o && setOptimizePage(null)}
-          page={optimizePage}
-          websiteId={effectiveWebsite}
-          workspaceId={wsId}
-          onOptimized={() => {
-            refetchPages();
-            refetchProducts();
-          }}
-        />
-      )}
       {/* Page Edit Dialog */}
       {editPage && currentWebsite && (
         <PageEditDialog
