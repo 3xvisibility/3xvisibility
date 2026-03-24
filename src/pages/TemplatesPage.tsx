@@ -901,6 +901,7 @@ export default function TemplatesPage() {
                     <ElementorEditor
                       html={content}
                       onChange={(newHtml) => setContent(newHtml)}
+                      elementorJson={elementorJsonData}
                     />
                   </TabsContent>
                   <TabsContent value="visual" className="mt-3">
