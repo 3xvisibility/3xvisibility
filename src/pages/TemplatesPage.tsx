@@ -70,6 +70,7 @@ export default function TemplatesPage() {
   const [siteTemplateWebsite, setSiteTemplateWebsite] = useState("");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
   const [siteLoadingPages, setSiteLoadingPages] = useState(false);
+  const [elementorJsonData, setElementorJsonData] = useState<string | undefined>(undefined);
   // AI Content Generator state
   const [aiContentOpen, setAiContentOpen] = useState(false);
   const [aiKeywords, setAiKeywords] = useState("");
