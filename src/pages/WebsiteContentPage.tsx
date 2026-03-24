@@ -28,7 +28,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplateDetectorDialog } from "@/components/website-content/TemplateDetectorDialog";
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
-import { SeoOptimizeDialog } from "@/components/website-content/SeoOptimizeDialog";
+import { PageEditDialog } from "@/components/website-content/PageEditDialog";
 import { PageEditDialog } from "@/components/website-content/PageEditDialog";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 
