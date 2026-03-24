@@ -45,7 +45,7 @@ export default function TemplatesPage() {
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
-  const [activeEditorTab, setActiveEditorTab] = useState<string>("visual");
+  const [activeEditorTab, setActiveEditorTab] = useState<string>("elementor");
   const [aiPrompt, setAiPrompt] = useState("");
   
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
