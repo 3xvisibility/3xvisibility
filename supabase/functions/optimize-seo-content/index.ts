@@ -58,6 +58,10 @@ Deno.serve(async (req) => {
       manual_content,
       manual_excerpt,
       skip_push,
+      seo_title,
+      seo_description,
+      seo_keywords,
+      update_template,
     } = body;
 
     if (!website_id) {
@@ -93,6 +97,9 @@ Deno.serve(async (req) => {
           status: "publish",
         };
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
+        if (seo_title) updatePayload.seo_title = seo_title;
+        if (seo_description) updatePayload.seo_description = seo_description;
+        if (seo_keywords?.length) updatePayload.seo_keywords = seo_keywords;
         pushResult = await connector.updatePage(page_external_id, updatePayload);
         console.log("[MANUAL] Updated existing page on CMS:", pushResult);
       } catch (pushErr: any) {
@@ -100,11 +107,11 @@ Deno.serve(async (req) => {
         console.error("[MANUAL] CMS push failed:", pushErr);
       }
 
-      // Track in generated_pages
+      // Track in generated_pages — also look up linked campaign/template
       const wsId = workspace_id || website?.workspace_id || null;
       const { data: existingPage } = await supabase
         .from("generated_pages")
-        .select("id")
+        .select("id, campaign_id")
         .eq("website_id", website_id)
         .eq("external_id", page_external_id || "")
         .eq("user_id", user.id)
@@ -114,6 +121,9 @@ Deno.serve(async (req) => {
         title: manual_title || page_title,
         content: manual_content || page_content,
         slug: page_slug || "",
+        seo_title: seo_title || null,
+        seo_description: seo_description || null,
+        seo_keywords: seo_keywords?.length ? seo_keywords : null,
         user_id: user.id,
         website_id,
         workspace_id: wsId,
@@ -128,11 +138,129 @@ Deno.serve(async (req) => {
         await supabase.from("generated_pages").insert(pageRecord);
       }
 
+      // ── Update linked template & campaign if requested ──
+      let templateUpdated = false;
+      let campaignUpdated = false;
+
+      if (update_template && existingPage?.campaign_id) {
+        try {
+          // Get campaign with template
+          const { data: campaign } = await supabase
+            .from("campaigns")
+            .select("id, template_id, csv_data")
+            .eq("id", existingPage.campaign_id)
+            .maybeSingle();
+
+          if (campaign) {
+            // Update template SEO patterns
+            if (campaign.template_id && (seo_title || seo_description)) {
+              const templateUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
+
+              if (seo_title) templateUpdate.seo_title_pattern = seo_title;
+              if (seo_description) templateUpdate.seo_description_pattern = seo_description;
+
+              // Also update template content if content was changed
+              if (manual_content && manual_content !== page_content) {
+                templateUpdate.content = manual_content;
+
+                // Extract new variables from the updated content
+                const varMatches = manual_content.match(/\{([a-z_][a-z0-9_]*)\}/gi) || [];
+                const vars = [...new Set(varMatches.map((v: string) => v.slice(1, -1)))];
+                if (vars.length > 0) {
+                  templateUpdate.variables = vars;
+                }
+              }
+
+              await supabase
+                .from("templates")
+                .update(templateUpdate)
+                .eq("id", campaign.template_id);
+              templateUpdated = true;
+              console.log("[MANUAL] Updated template SEO patterns:", campaign.template_id);
+            }
+
+            // Update the campaign's CSV data row that matches this page's slug
+            if (campaign.csv_data && Array.isArray(campaign.csv_data)) {
+              const csvRows = campaign.csv_data as Record<string, any>[];
+              const slug = page_slug || "";
+              let rowUpdated = false;
+
+              for (let i = 0; i < csvRows.length; i++) {
+                const row = csvRows[i];
+                // Match by slug-related fields
+                const rowSlug = row.slug || row.url_slug || row.page_slug || "";
+                const rowTitle = row.title || row.name || row.page_title || "";
+
+                if (
+                  (rowSlug && slug.includes(rowSlug.toLowerCase())) ||
+                  (rowTitle && (manual_title || page_title || "").toLowerCase().includes(rowTitle.toLowerCase()))
+                ) {
+                  // Update the row with new SEO values
+                  if (seo_title) {
+                    if ("seo_title" in row) row.seo_title = seo_title;
+                    if ("title" in row) row.title = manual_title || seo_title;
+                    if ("name" in row) row.name = manual_title || seo_title;
+                    if ("page_title" in row) row.page_title = manual_title || seo_title;
+                  }
+                  if (seo_description) {
+                    if ("seo_description" in row) row.seo_description = seo_description;
+                    if ("description" in row) row.description = seo_description;
+                    if ("meta_description" in row) row.meta_description = seo_description;
+                    if ("excerpt" in row) row.excerpt = seo_description;
+                  }
+                  if (seo_keywords?.length) {
+                    if ("seo_keywords" in row) row.seo_keywords = seo_keywords.join(", ");
+                    if ("keywords" in row) row.keywords = seo_keywords.join(", ");
+                  }
+
+                  csvRows[i] = row;
+                  rowUpdated = true;
+                  break;
+                }
+              }
+
+              if (rowUpdated) {
+                await supabase
+                  .from("campaigns")
+                  .update({ csv_data: csvRows as any, updated_at: new Date().toISOString() })
+                  .eq("id", campaign.id);
+                campaignUpdated = true;
+                console.log("[MANUAL] Updated campaign CSV row for slug:", slug);
+              }
+            }
+          }
+        } catch (syncErr: any) {
+          console.error("[MANUAL] Template/campaign sync error:", syncErr);
+          // Non-critical — continue
+        }
+      }
+
+      // Audit log
+      try {
+        if (wsId) {
+          await supabase.from("audit_logs").insert({
+            workspace_id: wsId,
+            user_id: user.id,
+            action: "manual_seo_update",
+            entity_type: page_type || "page",
+            entity_id: page_external_id || page_slug,
+            details: {
+              title: manual_title || page_title,
+              pushed_to_cms: !!pushResult,
+              template_updated: templateUpdated,
+              campaign_updated: campaignUpdated,
+            },
+          });
+        }
+      } catch (_) { /* non-critical */ }
+
       return new Response(JSON.stringify({
         success: true,
         pushed_to_cms: !!pushResult,
         push_error: pushError,
         external_url: pushResult?.url || page_url,
+        template_updated: templateUpdated,
+        campaign_updated: campaignUpdated,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -315,7 +443,7 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
     // Check if we already have this page tracked
     const { data: existingPage } = await supabase
       .from("generated_pages")
-      .select("id")
+      .select("id, campaign_id")
       .eq("website_id", website_id)
       .eq("external_id", page_external_id || "")
       .eq("user_id", user.id)

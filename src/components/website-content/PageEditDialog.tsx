@@ -304,6 +304,10 @@ export function PageEditDialog({
           manual_title: editTitle,
           manual_content: editContent,
           manual_excerpt: editExcerpt,
+          seo_title: seoResult?.seo_title || editTitle,
+          seo_description: seoResult?.seo_description || editExcerpt,
+          seo_keywords: seoResult?.seo_keywords || [],
+          update_template: true,
         },
       });
 
