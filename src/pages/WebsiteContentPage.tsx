@@ -27,6 +27,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { TemplateDetectorDialog } from "@/components/website-content/TemplateDetectorDialog";
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
+import { SeoOptimizeDialog } from "@/components/website-content/SeoOptimizeDialog";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 
 type Website = Tables<"websites">;
@@ -60,6 +61,7 @@ export default function WebsiteContentPage() {
   const [search, setSearch] = useState("");
   const [templatePage, setTemplatePage] = useState<ContentItem | null>(null);
   const [previewPage, setPreviewPage] = useState<ContentItem | null>(null);
+  const [optimizePage, setOptimizePage] = useState<ContentItem | null>(null);
 
   // Fetch connected websites
   const { data: websites = [], isLoading: loadingWebsites } = useQuery({
@@ -291,6 +293,7 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
+            onOptimizeSeo={setOptimizePage}
           />
         </TabsContent>
         <TabsContent value="products" className="mt-3">
@@ -300,6 +303,7 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
+            onOptimizeSeo={setOptimizePage}
           />
         </TabsContent>
       </Tabs>
@@ -323,6 +327,21 @@ export default function WebsiteContentPage() {
           page={previewPage}
         />
       )}
+
+      {/* SEO Optimize Dialog */}
+      {optimizePage && (
+        <SeoOptimizeDialog
+          open={!!optimizePage}
+          onOpenChange={(o) => !o && setOptimizePage(null)}
+          page={optimizePage}
+          websiteId={effectiveWebsite}
+          workspaceId={wsId}
+          onOptimized={() => {
+            refetchPages();
+            refetchProducts();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -335,12 +354,14 @@ function ContentList({
   error,
   onDetectTemplate,
   onPreview,
+  onOptimizeSeo,
 }: {
   items: ContentItem[];
   isLoading: boolean;
   error: Error | null;
   onDetectTemplate: (item: ContentItem) => void;
   onPreview: (item: ContentItem) => void;
+  onOptimizeSeo: (item: ContentItem) => void;
 }) {
   if (isLoading) {
     return (
@@ -416,18 +437,26 @@ function ContentList({
                     </Button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs gap-1.5 flex-1 sm:flex-none"
+                    className="h-8 text-xs gap-1.5"
                     onClick={() => onPreview(item)}
                   >
                     <Eye className="h-3.5 w-3.5" /> Preview
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 text-xs gap-1.5 flex-1 sm:flex-none bg-primary text-primary-foreground"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
+                    onClick={() => onOptimizeSeo(item)}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" /> Optimize SEO
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 bg-primary text-primary-foreground"
                     onClick={() => onDetectTemplate(item)}
                   >
                     <Sparkles className="h-3.5 w-3.5" /> Generate Template
