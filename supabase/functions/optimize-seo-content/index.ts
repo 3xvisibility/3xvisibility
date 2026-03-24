@@ -193,10 +193,12 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
       .maybeSingle();
 
     let pushResult: { external_id?: string; url?: string } | null = null;
+    let pushError: string | null = null;
 
     if (website && page_external_id) {
       try {
         const connector = await createConnector(website as WebsiteRecord);
+        // Always UPDATE existing page — never create a new one
         const updatePayload: Record<string, any> = {
           title: result.seo_title || page_title,
           slug: page_slug,
@@ -214,11 +216,13 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
         if (result.seo_keywords) updatePayload.seo_keywords = result.seo_keywords;
 
         pushResult = await connector.updatePage(page_external_id, updatePayload);
-        console.log("[OPTIMIZE] Pushed SEO update to CMS:", pushResult);
-      } catch (pushErr) {
+        console.log("[OPTIMIZE] Updated existing page on CMS:", pushResult);
+      } catch (pushErr: any) {
+        pushError = pushErr.message || "CMS update failed";
         console.error("[OPTIMIZE] CMS push failed:", pushErr);
-        // Don't fail the whole request — still return AI results
       }
+    } else if (!page_external_id) {
+      pushError = "No page ID — cannot update on website";
     }
 
     // Save / update in generated_pages for tracking
