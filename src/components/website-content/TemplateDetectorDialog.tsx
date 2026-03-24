@@ -18,7 +18,6 @@ import {
   Upload,
   Check,
   Wand2,
-  MapPin,
   Globe,
   RefreshCw,
   Eye,
@@ -815,7 +814,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
       <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
+            <Tag className="h-4 w-4 text-primary" />
             {step === "detect" && "Template Page Generator"}
             {step === "edit" && "Configure Variables & Generate"}
             {step === "generate" && "Generating & Publishing..."}
@@ -1006,7 +1005,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                     className="text-xs"
                     onClick={() => setCsvMode(false)}
                   >
-                    <MapPin className="h-3 w-3 mr-1" /> Variable Combinations
+                    <Tag className="h-3 w-3 mr-1" /> Variable Combinations
                   </Button>
                   <Button
                     size="sm"
