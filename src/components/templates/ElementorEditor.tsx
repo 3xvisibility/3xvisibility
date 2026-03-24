@@ -71,6 +71,185 @@ const TRANSFORMS = [
   { name: ":default(text)", ex: "{phone:default(N/A)}" },
 ];
 
+// ── Elementor Native JSON Parser ──────────────────────────
+// Converts native Elementor JSON (from WordPress _elementor_data) to our internal format
+interface ElementorNativeWidget {
+  id?: string;
+  elType: "section" | "column" | "widget" | "container";
+  widgetType?: string;
+  settings?: Record<string, any>;
+  elements?: ElementorNativeWidget[];
+}
+
+function parseElementorJson(jsonStr: string): ElementorNode[] {
+  try {
+    const data: ElementorNativeWidget[] = typeof jsonStr === "string" ? JSON.parse(jsonStr) : jsonStr;
+    if (!Array.isArray(data)) return [];
+    return data.map(convertNativeElement).filter(Boolean) as ElementorNode[];
+  } catch {
+    return [];
+  }
+}
+
+function convertNativeElement(el: ElementorNativeWidget): ElementorNode | null {
+  if (!el || !el.elType) return null;
+  const s = el.settings || {};
+
+  if (el.elType === "section" || (el.elType === "container" && el.elements?.some(c => c.elType === "column" || c.elType === "container"))) {
+    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
+    return {
+      id: genNodeId(),
+      type: "section",
+      settings: {
+        className: s.css_classes || "",
+        style: buildStyleFromElementor(s, "section"),
+        background_color: s.background_color || "",
+      },
+      children: children.length > 0 ? children : [{ id: genNodeId(), type: "column", settings: {}, children: [] }],
+    };
+  }
+
+  if (el.elType === "column") {
+    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
+    return {
+      id: genNodeId(),
+      type: "column",
+      settings: {
+        width: s._column_size ? `${s._column_size}%` : "100%",
+        className: s.css_classes || "",
+        style: buildStyleFromElementor(s, "column"),
+      },
+      children,
+    };
+  }
+
+  // Container without columns = treat as section with single column
+  if (el.elType === "container") {
+    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
+    if (children.some(c => c.type === "widget")) {
+      return {
+        id: genNodeId(),
+        type: "section",
+        settings: { className: s.css_classes || "", style: buildStyleFromElementor(s, "section") },
+        children: [{ id: genNodeId(), type: "column", settings: {}, children }],
+      };
+    }
+    return {
+      id: genNodeId(),
+      type: "section",
+      settings: { className: s.css_classes || "", style: buildStyleFromElementor(s, "section") },
+      children: children.length > 0 ? children : [{ id: genNodeId(), type: "column", settings: {}, children: [] }],
+    };
+  }
+
+  // Widget types
+  if (el.elType === "widget") {
+    return convertNativeWidget(el);
+  }
+
+  return null;
+}
+
+function convertNativeWidget(el: ElementorNativeWidget): ElementorNode {
+  const s = el.settings || {};
+  const id = genNodeId();
+  const wt = el.widgetType || "";
+
+  if (wt === "heading") {
+    const tag = s.header_size || "h2";
+    return {
+      id, type: "widget", widgetType: "heading",
+      settings: { text: s.title || "Heading", tag, level: parseInt(tag.replace("h", "")), className: s.css_classes || "", style: buildStyleFromElementor(s, "text") },
+    };
+  }
+  if (wt === "text-editor") {
+    return {
+      id, type: "widget", widgetType: "text",
+      settings: { text: s.editor || "", tag: "div", className: s.css_classes || "", style: buildStyleFromElementor(s, "text") },
+    };
+  }
+  if (wt === "image") {
+    const src = s.image?.url || "";
+    return {
+      id, type: "widget", widgetType: "image",
+      settings: { src, alt: s.image?.alt || s.caption || "", className: s.css_classes || "", style: buildStyleFromElementor(s, "image") },
+    };
+  }
+  if (wt === "button") {
+    return {
+      id, type: "widget", widgetType: "button",
+      settings: { text: s.text || "Click Here", url: s.link?.url || "#", className: s.css_classes || "", style: buildStyleFromElementor(s, "button") },
+    };
+  }
+  if (wt === "icon-list" || wt === "icon-box") {
+    const items = (s.icon_list || []).map((i: any) => i.text || "");
+    return {
+      id, type: "widget", widgetType: "list",
+      settings: { items: items.length > 0 ? items : ["Item 1"], listType: "ul", className: s.css_classes || "" },
+    };
+  }
+  if (wt === "divider") {
+    return { id, type: "widget", widgetType: "divider", settings: { className: s.css_classes || "" } };
+  }
+  if (wt === "spacer") {
+    const h = parseInt(s.space?.size || "40");
+    return { id, type: "widget", widgetType: "spacer", settings: { height: isNaN(h) ? 40 : h } };
+  }
+  if (wt === "video") {
+    return {
+      id, type: "widget", widgetType: "html",
+      settings: { html: `<div class="elementor-video-wrapper">${s.youtube_url ? `<iframe src="${s.youtube_url}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;"></iframe>` : ""}</div>` },
+    };
+  }
+  if (wt === "google_maps") {
+    return {
+      id, type: "widget", widgetType: "shortcode",
+      settings: { shortcode: `{{MAP:${s.address || "{city}, {state}"}}}` },
+    };
+  }
+  if (wt === "html") {
+    return {
+      id, type: "widget", widgetType: "html",
+      settings: { html: s.html || "" },
+    };
+  }
+  if (wt === "image-gallery" || wt === "image-carousel") {
+    const images = (s.gallery || s.carousel || []).map((img: any) => `<img src="${img.url || ""}" alt="${img.alt || ""}" style="max-width:100%;" />`).join("\n");
+    return {
+      id, type: "widget", widgetType: "html",
+      settings: { html: `<div class="elementor-gallery">${images}</div>` },
+    };
+  }
+
+  // Fallback: render as HTML widget
+  return {
+    id, type: "widget", widgetType: "html",
+    settings: { html: `<!-- Elementor widget: ${wt} --><div class="elementor-widget-${wt}">${s.title || s.text || s.editor || s.html || ""}</div>`, className: s.css_classes || "" },
+  };
+}
+
+function buildStyleFromElementor(s: Record<string, any>, context: string): string {
+  const parts: string[] = [];
+  if (context === "text" || context === "button") {
+    if (s.text_color || s.title_color) parts.push(`color:${s.text_color || s.title_color}`);
+    if (s.typography_font_size?.size) parts.push(`font-size:${s.typography_font_size.size}${s.typography_font_size.unit || "px"}`);
+    if (s.typography_font_weight) parts.push(`font-weight:${s.typography_font_weight}`);
+    if (s.typography_font_family) parts.push(`font-family:${s.typography_font_family}`);
+    if (s.align) parts.push(`text-align:${s.align}`);
+  }
+  if (context === "button") {
+    if (s.background_color || s.button_background_color) parts.push(`background:${s.background_color || s.button_background_color}`);
+    if (s.border_radius?.size) parts.push(`border-radius:${s.border_radius.size}${s.border_radius.unit || "px"}`);
+    parts.push("display:inline-block", "padding:12px 24px", "text-decoration:none");
+  }
+  if (context === "section" || context === "column") {
+    if (s.background_color) parts.push(`background-color:${s.background_color}`);
+    if (s.padding?.top) parts.push(`padding:${s.padding.top}${s.padding.unit || "px"} ${s.padding.right || s.padding.top}${s.padding.unit || "px"} ${s.padding.bottom || s.padding.top}${s.padding.unit || "px"} ${s.padding.left || s.padding.right || s.padding.top}${s.padding.unit || "px"}`);
+    if (s.margin?.top) parts.push(`margin:${s.margin.top}${s.margin.unit || "px"} ${s.margin.right || "0"}${s.margin.unit || "px"} ${s.margin.bottom || s.margin.top}${s.margin.unit || "px"} ${s.margin.left || "0"}${s.margin.unit || "px"}`);
+  }
+  return parts.join(";");
+}
+
 // ── HTML parsing helpers ──────────────────────────────────
 function parseHtmlToNodes(html: string): ElementorNode[] {
   if (!html.trim()) return [];
