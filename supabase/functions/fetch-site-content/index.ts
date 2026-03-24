@@ -60,9 +60,31 @@ Deno.serve(async (req) => {
     }
 
     const baseUrl = website.url.replace(/\/$/, "");
-    const hostname = new URL(baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`).hostname;
+    const fullUrl = baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`;
+    const hostname = new URL(fullUrl).hostname;
 
     const type = content_type || "pages";
+
+    // Return demo data for placeholder / example domains so users can test the UI
+    if (hostname.endsWith("example.com") || hostname.endsWith("example.org") || hostname.endsWith("example.net")) {
+      console.log(`Returning demo ${type} for placeholder domain ${hostname}`);
+      const demoPages = [
+        { id: "demo-1", title: "Home Page", slug: "home", url: `${fullUrl}/home`, type: "page" as const, status: "publish", content: "<h1>Welcome to Our Clinic</h1><p>We provide the best {service} in {city}.</p>", excerpt: "Welcome to our clinic", modified: new Date().toISOString() },
+        { id: "demo-2", title: "About Us", slug: "about", url: `${fullUrl}/about`, type: "page" as const, status: "publish", content: "<h1>About Us</h1><p>Learn more about our {service} team in {city}, {state}.</p>", excerpt: "About our team", modified: new Date().toISOString() },
+        { id: "demo-3", title: "Services", slug: "services", url: `${fullUrl}/services`, type: "page" as const, status: "publish", content: "<h1>Our Services</h1><p>We offer {service} including {specialty} in the {city} area.</p>", excerpt: "Our services", modified: new Date().toISOString() },
+        { id: "demo-4", title: "Contact", slug: "contact", url: `${fullUrl}/contact`, type: "page" as const, status: "publish", content: "<h1>Contact Us</h1><p>Visit us at {address}, {city}, {state} {zip_code}. Call {phone}.</p>", excerpt: "Contact information", modified: new Date().toISOString() },
+        { id: "demo-5", title: "Testimonials", slug: "testimonials", url: `${fullUrl}/testimonials`, type: "page" as const, status: "publish", content: "<h1>Testimonials</h1><p>See what our {city} patients say about our {service}.</p>", excerpt: "Patient testimonials", modified: new Date().toISOString() },
+      ];
+      const demoProducts = [
+        { id: "demo-p1", title: "Basic Package", slug: "basic-package", url: `${fullUrl}/product/basic-package`, type: "product" as const, status: "publish", content: "<h1>Basic {service} Package</h1><p>Starting at {price}. Available in {city}.</p>", excerpt: "Basic service package", modified: new Date().toISOString() },
+        { id: "demo-p2", title: "Premium Package", slug: "premium-package", url: `${fullUrl}/product/premium-package`, type: "product" as const, status: "publish", content: "<h1>Premium {service} Package</h1><p>Our best offering at {price}. SKU: {sku}.</p>", excerpt: "Premium service package", modified: new Date().toISOString() },
+      ];
+      const items = type === "products" ? demoProducts : demoPages;
+      return new Response(
+        JSON.stringify({ success: true, items, total: items.length, demo: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     try {
       const record: WebsiteRecord = {
