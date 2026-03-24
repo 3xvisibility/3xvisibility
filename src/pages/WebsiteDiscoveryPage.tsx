@@ -556,7 +556,8 @@ export default function WebsiteDiscoveryPage() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "text-selected") {
-        const iframe = iframeRef.current;
+        // Use the editable iframe if in convert mode, otherwise legacy
+        const iframe = convertingPage ? editorIframeRef.current : iframeRef.current;
         if (!iframe) return;
         const r = iframe.getBoundingClientRect();
         setSelectionPopover({
@@ -567,10 +568,24 @@ export default function WebsiteDiscoveryPage() {
           },
         });
       }
+      if (e.data?.type === "image-clicked") {
+        setImageEditPopover({ src: e.data.src, alt: e.data.alt });
+        setNewImageSrc(e.data.src);
+        setNewImageAlt(e.data.alt);
+      }
+      if (e.data?.type === "content-changed") {
+        // Content was edited in iframe — update convertingPage bodyHtml
+        if (convertingPage) {
+          setConvertingPage(prev => prev ? { ...prev, bodyHtml: e.data.html } : null);
+        }
+      }
+      if (e.data?.type === "var-deleted") {
+        setVisualMappings(prev => prev.filter(m => m.variable !== e.data.variable));
+      }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, []);
+  }, [convertingPage]);
 
   const handleVisualAssign = useCallback(
     (varName: string) => {
