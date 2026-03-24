@@ -540,16 +540,44 @@ export function MappingStep({
                   <SelectTrigger className="h-8 text-xs rounded-lg">
                     <SelectValue placeholder="Target…" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px]">
                     <SelectItem value="__auto__" className="text-xs italic text-muted-foreground">Auto (template)</SelectItem>
+                    {/* Core categories */}
                     {Object.entries(CATEGORY_META).filter(([k]) => k !== "custom").map(([catKey, catMeta]) => {
                       const fields = relevantTargets.filter(f => f.category === catKey);
                       if (fields.length === 0) return null;
-                      return fields.map(f => (
-                        <SelectItem key={f.key} value={f.key} className="text-xs">
-                          <span className={`${catMeta.color} mr-1`}>●</span> {f.label}
-                        </SelectItem>
-                      ));
+                      return (
+                        <SelectGroup key={catKey}>
+                          <SelectLabel className="text-[10px] uppercase tracking-wider">{catMeta.label}</SelectLabel>
+                          {fields.map(f => (
+                            <SelectItem key={f.key} value={f.key} className="text-xs">
+                              <span className={`${catMeta.color} mr-1`}>●</span> {f.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      );
+                    })}
+                    {/* Platform fields grouped by prefix */}
+                    {[
+                      { prefix: "wp.", label: "WordPress" },
+                      { prefix: "woo.", label: "WooCommerce" },
+                      { prefix: "shopify.", label: "Shopify" },
+                      { prefix: "ps.", label: "PrestaShop" },
+                      { prefix: "media.", label: "Media" },
+                      { prefix: "biz.", label: "Business" },
+                    ].map(({ prefix, label }) => {
+                      const fields = TARGET_FIELDS.filter(f => f.key.startsWith(prefix));
+                      if (fields.length === 0) return null;
+                      return (
+                        <SelectGroup key={prefix}>
+                          <SelectLabel className="text-[10px] uppercase tracking-wider">{label}</SelectLabel>
+                          {fields.map(f => (
+                            <SelectItem key={f.key} value={f.key} className="text-xs">
+                              {f.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      );
                     })}
                   </SelectContent>
                 </Select>
