@@ -304,6 +304,10 @@ export function PageEditDialog({
           manual_title: editTitle,
           manual_content: editContent,
           manual_excerpt: editExcerpt,
+          seo_title: seoResult?.seo_title || editTitle,
+          seo_description: seoResult?.seo_description || editExcerpt,
+          seo_keywords: seoResult?.seo_keywords || [],
+          update_template: true,
         },
       });
 
@@ -312,7 +316,11 @@ export function PageEditDialog({
 
       if (data?.pushed_to_cms) {
         setPublished(true);
-        toast({ title: "Page updated on site!", description: "Same URL — no new page created." });
+        const extras: string[] = [];
+        if (data.template_updated) extras.push("template");
+        if (data.campaign_updated) extras.push("campaign data");
+        const syncMsg = extras.length > 0 ? ` Also updated ${extras.join(" & ")}.` : "";
+        toast({ title: "Page updated on site!", description: `Same URL — no new page created.${syncMsg}` });
         onUpdated?.();
       } else {
         setPushError(data?.push_error || "Failed to update on CMS");
