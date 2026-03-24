@@ -326,11 +326,16 @@ export default function WebsiteDiscoveryPage() {
         templateContent = templateContent.replace(new RegExp(escaped, "gi"), `{${mapping.variable}}`);
       }
 
+      // Wrap with head styles to preserve original design
+      const fullTemplate = convertingPage.headStyles
+        ? `<!-- STYLES -->\n${convertingPage.headStyles}\n<!-- /STYLES -->\n${templateContent}`
+        : templateContent;
+
       const variables = [...new Set(visualMappings.map((m) => `{${m.variable}}`))];
 
       const { error } = await supabase.from("templates").insert({
         name: templateName,
-        content: templateContent,
+        content: fullTemplate,
         variables,
         user_id: user.id,
         workspace_id: wsId,
