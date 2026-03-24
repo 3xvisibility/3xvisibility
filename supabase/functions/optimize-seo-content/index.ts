@@ -291,6 +291,7 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
       success: true,
       result,
       pushed_to_cms: !!pushResult,
+      push_error: pushError,
       external_url: pushResult?.url || page_url,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
