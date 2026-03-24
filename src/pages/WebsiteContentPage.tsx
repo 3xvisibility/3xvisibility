@@ -20,6 +20,7 @@ import {
   Eye,
   RefreshCw,
   AlertTriangle,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
