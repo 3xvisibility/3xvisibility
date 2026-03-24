@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
       workspace_id,
       optimize_fields,
       language,
+      instruction,
     } = await req.json();
 
     if (!website_id || !page_content) {
