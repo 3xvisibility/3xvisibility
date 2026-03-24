@@ -121,6 +121,9 @@ export function PageEditDialog({
   const [published, setPublished] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("edit");
+  const [editMode, setEditMode] = useState<"visual" | "html" | "split">("visual");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeSyncRef = useRef(false);
 
   // SEO optimize state
   const [seoFields, setSeoFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
@@ -149,6 +152,68 @@ export function PageEditDialog({
     () => contentChanges.filter((c) => c.type !== "same").length,
     [contentChanges]
   );
+
+  // Sync content to visual iframe
+  const syncToIframe = useCallback((html: string) => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+    iframeSyncRef.current = true;
+    doc.open();
+    doc.write(`<!DOCTYPE html>
+<html><head>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; margin: 0; font-size: 14px; line-height: 1.6; color: #1a1a1a; }
+  body:focus { outline: none; }
+  img { max-width: 100%; height: auto; }
+  a { color: #2563eb; }
+  h1,h2,h3,h4 { margin-top: 1em; margin-bottom: 0.5em; }
+  p { margin: 0.5em 0; }
+  ul,ol { padding-left: 1.5em; }
+  table { border-collapse: collapse; width: 100%; }
+  td,th { border: 1px solid #e5e7eb; padding: 8px; }
+</style>
+</head><body contenteditable="true">${html}</body></html>`);
+    doc.close();
+
+    // Listen for edits in the iframe
+    doc.body.addEventListener("input", () => {
+      if (iframeSyncRef.current) { iframeSyncRef.current = false; return; }
+      const newHtml = doc.body.innerHTML;
+      setEditContent(newHtml);
+    });
+    iframeSyncRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "edit" && (editMode === "visual" || editMode === "split")) {
+      // Small delay to ensure iframe is mounted
+      const t = setTimeout(() => syncToIframe(editContent), 100);
+      return () => clearTimeout(t);
+    }
+  }, [activeTab, editMode]);
+
+  // Exec command on the visual editor
+  const execCmd = useCallback((cmd: string, value?: string) => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.execCommand(cmd, false, value);
+    // Sync back
+    setTimeout(() => {
+      setEditContent(doc.body.innerHTML);
+    }, 50);
+  }, []);
+
+  const insertLink = useCallback(() => {
+    const url = prompt("Enter URL:");
+    if (url) execCmd("createLink", url);
+  }, [execCmd]);
+
+  const insertImage = useCallback(() => {
+    const url = prompt("Enter image URL:");
+    if (url) execCmd("insertImage", url);
+  }, [execCmd]);
 
   const toggleSeoField = (field: string) => {
     setSeoFields((prev) =>
