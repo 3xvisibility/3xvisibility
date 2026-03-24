@@ -57,19 +57,43 @@ const genId = () => `block-${Date.now()}-${++blockCounter}`;
 const VARIABLE_CATEGORIES: { label: string; vars: string[] }[] = [
   {
     label: "Local SEO",
-    vars: ["city", "state", "country", "region", "county", "zip_code", "postcode", "latitude", "longitude", "area_code", "timezone", "population"],
+    vars: ["city", "state", "country", "region", "county", "zip_code", "postcode", "latitude", "longitude", "area_code", "timezone", "population", "neighborhood", "district", "state_code", "area", "map_embed"],
   },
   {
     label: "Business",
-    vars: ["company", "brand", "phone", "email", "address", "website", "opening_hours", "rating"],
+    vars: ["company", "brand", "phone", "email", "address", "website", "opening_hours", "rating", "reviews_count", "hours", "fax", "owner_name"],
   },
   {
     label: "Content",
-    vars: ["keyword", "title", "name", "description", "service", "category", "price", "url", "slug"],
+    vars: ["keyword", "title", "name", "description", "service", "category", "price", "url", "slug", "excerpt", "summary", "body", "tags", "date", "author"],
+  },
+  {
+    label: "SEO",
+    vars: ["seo_title", "seo_description", "seo_keywords", "canonical_url", "schema_type", "og_title", "og_description", "og_image"],
+  },
+  {
+    label: "Media",
+    vars: ["image_url", "image_alt", "logo_url", "video_url", "gallery", "thumbnail_url", "banner_url", "favicon_url"],
+  },
+  {
+    label: "WordPress",
+    vars: ["post_id", "post_type", "post_status", "post_date", "post_author", "featured_image", "template", "menu_order", "parent_id", "comment_status", "custom_field_1", "custom_field_2"],
+  },
+  {
+    label: "WooCommerce",
+    vars: ["product_name", "product_price", "regular_price", "sale_price", "sku", "stock_status", "stock_quantity", "weight", "dimensions", "product_category", "product_tag", "product_image", "product_gallery", "short_description", "product_type", "tax_class", "shipping_class", "upsell_ids", "cross_sell_ids"],
+  },
+  {
+    label: "Shopify",
+    vars: ["product_title", "product_handle", "product_body_html", "vendor", "product_type_shopify", "shopify_tags", "variant_title", "variant_price", "variant_sku", "variant_inventory", "compare_at_price", "barcode", "collection", "collection_handle", "shopify_image_src", "shopify_image_alt", "metafield_key", "metafield_value"],
+  },
+  {
+    label: "PrestaShop",
+    vars: ["product_reference", "product_ean13", "product_upc", "product_isbn", "wholesale_price", "ps_category", "ps_manufacturer", "ps_supplier", "ps_condition", "ps_visibility", "ps_quantity", "ps_weight", "ps_width", "ps_height", "ps_depth", "ps_delivery_time", "ps_meta_title", "ps_meta_description", "ps_link_rewrite", "ps_cover_image"],
   },
   {
     label: "Custom",
-    vars: ["custom_1", "custom_2", "custom_3"],
+    vars: ["custom_1", "custom_2", "custom_3", "custom_4", "custom_5"],
   },
 ];
 

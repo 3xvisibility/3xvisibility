@@ -68,12 +68,16 @@ interface WpPage {
 
 // Common local SEO terms — like Page Generator Pro
 const LOCAL_SEO_TERMS = [
-  { category: "Location", vars: ["city", "state", "county", "country", "region", "zip_code", "state_code", "area", "neighborhood", "district"] },
-  { category: "Business", vars: ["company", "phone", "address", "email", "website", "hours", "rating", "reviews_count"] },
-  { category: "Content", vars: ["title", "keyword", "service", "category", "description", "name", "brand", "price"] },
-  { category: "SEO", vars: ["slug", "canonical_url", "seo_title", "seo_description", "schema_type"] },
-  { category: "Media", vars: ["image_url", "image_alt", "logo_url", "video_url", "gallery"] },
+  { category: "Location", vars: ["city", "state", "county", "country", "region", "zip_code", "state_code", "area", "neighborhood", "district", "postcode", "area_code"] },
+  { category: "Business", vars: ["company", "brand", "phone", "address", "email", "website", "hours", "rating", "reviews_count", "opening_hours", "fax", "owner_name"] },
+  { category: "Content", vars: ["title", "keyword", "service", "category", "description", "name", "price", "excerpt", "summary", "body", "tags", "date", "author"] },
+  { category: "SEO", vars: ["slug", "canonical_url", "seo_title", "seo_description", "seo_keywords", "schema_type", "og_title", "og_description", "og_image"] },
+  { category: "Media", vars: ["image_url", "image_alt", "logo_url", "video_url", "gallery", "thumbnail_url", "banner_url", "favicon_url"] },
   { category: "Geo", vars: ["latitude", "longitude", "timezone", "population", "map_embed"] },
+  { category: "WordPress", vars: ["post_id", "post_type", "post_status", "post_date", "post_author", "featured_image", "template", "menu_order", "parent_id", "custom_field_1", "custom_field_2"] },
+  { category: "WooCommerce", vars: ["product_name", "product_price", "regular_price", "sale_price", "sku", "stock_status", "stock_quantity", "weight", "dimensions", "product_category", "product_tag", "product_image", "product_gallery", "short_description", "product_type", "tax_class", "shipping_class"] },
+  { category: "Shopify", vars: ["product_title", "product_handle", "product_body_html", "vendor", "product_type_shopify", "shopify_tags", "variant_title", "variant_price", "variant_sku", "variant_inventory", "compare_at_price", "barcode", "collection", "collection_handle", "shopify_image_src", "metafield_key", "metafield_value"] },
+  { category: "PrestaShop", vars: ["product_reference", "product_ean13", "product_upc", "wholesale_price", "ps_category", "ps_manufacturer", "ps_supplier", "ps_condition", "ps_quantity", "ps_weight", "ps_meta_title", "ps_meta_description", "ps_link_rewrite", "ps_cover_image", "ps_delivery_time"] },
 ];
 
 // Popover for assigning variable to selected text
