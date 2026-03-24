@@ -157,7 +157,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { url, action, website_id } = await req.json();
+    const body = await req.json();
+    const { url, action, website_id, page_id } = body;
 
     // Action: list WordPress pages from a connected website
     if ((action === "list-wp-pages" || action === "list-pages") && website_id) {
