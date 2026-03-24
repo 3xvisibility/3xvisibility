@@ -224,6 +224,96 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Action: Fetch Elementor data from a connected WordPress page
+    if (action === "fetch-elementor" && website_id) {
+      const { page_id } = await req.json().catch(() => ({})) || body;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      const { data: website, error: wsError } = await supabase
+        .from("websites")
+        .select("*")
+        .eq("id", website_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (wsError || !website) {
+        return new Response(JSON.stringify({ error: "Website not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const siteUrl = website.url.replace(/\/+$/, "");
+      const creds = website.credentials as { username?: string; app_password?: string; access_token?: string } | null;
+      const headers: Record<string, string> = { Accept: "application/json", "Content-Type": "application/json" };
+      
+      if (creds?.access_token) {
+        headers["Authorization"] = `Bearer ${creds.access_token}`;
+      } else if (creds?.username && creds?.app_password) {
+        headers["Authorization"] = `Basic ${btoa(`${creds.username}:${creds.app_password}`)}`;
+      }
+
+      try {
+        // Fetch the page with context=edit to get meta including _elementor_data
+        const pageResp = await fetch(`${siteUrl}/wp-json/wp/v2/pages/${page_id}?context=edit`, { headers });
+        if (!pageResp.ok) {
+          // Try without context=edit
+          const fallback = await fetch(`${siteUrl}/wp-json/wp/v2/pages/${page_id}`, { headers });
+          if (!fallback.ok) throw new Error(`WP API error: ${fallback.status}`);
+          const fbData = await fallback.json();
+          return new Response(JSON.stringify({
+            success: true,
+            elementor_data: null,
+            content: fbData.content?.rendered || "",
+            title: fbData.title?.rendered || "",
+            is_elementor: false,
+          }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        const pageData = await pageResp.json();
+        const meta = pageData.meta || {};
+        const elementorData = meta._elementor_data || null;
+        const elementorEditMode = meta._elementor_edit_mode || null;
+        const pageTemplate = pageData.template || meta._wp_page_template || null;
+        const isElementor = !!(elementorData && elementorEditMode === "builder");
+
+        // Also fetch the rendered page to get styles
+        let headStyles = "";
+        let renderedHtml = pageData.content?.rendered || "";
+        try {
+          const pageUrl = pageData.link || `${siteUrl}/?p=${page_id}`;
+          const publicResp = await fetch(pageUrl, {
+            headers: { "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)", Accept: "text/html" },
+          });
+          if (publicResp.ok) {
+            const rawHtml = await publicResp.text();
+            headStyles = extractHeadStyles(rawHtml, pageUrl);
+            if (isElementor) {
+              // For Elementor pages, use the full rendered body
+              renderedHtml = extractBodyContent(resolveRelativeUrls(rawHtml, pageUrl));
+            }
+          }
+        } catch { /* continue without styles */ }
+
+        return new Response(JSON.stringify({
+          success: true,
+          elementor_data: elementorData,
+          elementor_edit_mode: elementorEditMode,
+          page_template: pageTemplate,
+          content: renderedHtml,
+          title: pageData.title?.rendered || pageData.title?.raw || "",
+          headStyles,
+          is_elementor: isElementor,
+          raw_content: pageData.content?.raw || "",
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        return new Response(JSON.stringify({ error: `Failed to fetch Elementor data: ${msg}` }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400,
