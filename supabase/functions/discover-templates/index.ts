@@ -13,6 +13,7 @@ interface DiscoveredPage {
   headings: { tag: string; text: string }[];
   textSnippet: string;
   bodyHtml: string;
+  headStyles?: string;
 }
 
 interface UrlGroup {
@@ -20,6 +21,27 @@ interface UrlGroup {
   patternLabel: string;
   pages: string[];
   suggestedVariables: string[];
+}
+
+function extractHeadStyles(html: string): string {
+  const styles: string[] = [];
+  // Extract <style> tags from <head>
+  const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  if (headMatch) {
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    let m;
+    while ((m = styleRegex.exec(headMatch[1])) !== null) {
+      styles.push(`<style>${m[1]}</style>`);
+    }
+    // Extract <link rel="stylesheet"> tags
+    const linkRegex = /<link[^>]*rel=["']stylesheet["'][^>]*>/gi;
+    let lm;
+    while ((lm = linkRegex.exec(headMatch[1])) !== null) {
+      // Convert relative URLs to absolute
+      styles.push(lm[0]);
+    }
+  }
+  return styles.join("\n");
 }
 
 function extractBodyContent(html: string): string {
@@ -85,6 +107,7 @@ async function fetchPage(pageUrl: string): Promise<DiscoveredPage | null> {
 
     const rawHtml = await resp.text();
     const bodyHtml = extractBodyContent(rawHtml);
+    const headStyles = extractHeadStyles(rawHtml);
     const headings = extractHeadings(bodyHtml);
     const textSnippet = extractTextSnippet(bodyHtml);
 
@@ -95,7 +118,7 @@ async function fetchPage(pageUrl: string): Promise<DiscoveredPage | null> {
 
     const type = classifyPage(pageUrl, headings, textSnippet);
 
-    return { url: pageUrl, title, type, headings, textSnippet, bodyHtml };
+    return { url: pageUrl, title, type, headings, textSnippet, bodyHtml, headStyles };
   } catch {
     return null;
   }
