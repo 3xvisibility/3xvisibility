@@ -463,6 +463,14 @@ function ContentList({
                     size="sm"
                     variant="outline"
                     className="h-8 text-xs gap-1.5"
+                    onClick={() => onEdit(item)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit Page
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5"
                     onClick={() => onPreview(item)}
                   >
                     <Eye className="h-3.5 w-3.5" /> Preview
