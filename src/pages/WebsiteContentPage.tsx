@@ -462,10 +462,10 @@ function ContentList({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs gap-1.5"
+                    className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
                     onClick={() => onEdit(item)}
                   >
-                    <Pencil className="h-3.5 w-3.5" /> Edit Page
+                    <Pencil className="h-3.5 w-3.5" /> Edit & Optimize SEO
                   </Button>
                   <Button
                     size="sm"
@@ -474,14 +474,6 @@ function ContentList({
                     onClick={() => onPreview(item)}
                   >
                     <Eye className="h-3.5 w-3.5" /> Preview
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
-                    onClick={() => onOptimizeSeo(item)}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" /> Optimize SEO
                   </Button>
                   <Button
                     size="sm"
