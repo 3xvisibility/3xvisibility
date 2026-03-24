@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Pencil,
   Loader2,
@@ -28,6 +29,22 @@ import {
   FileText,
   Type,
   RefreshCw,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Link,
+  Image,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Undo,
+  Redo,
+  Heading1,
+  Heading2,
+  Heading3,
+  SplitSquareHorizontal,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
