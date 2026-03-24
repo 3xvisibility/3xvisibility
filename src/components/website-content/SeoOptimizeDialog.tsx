@@ -113,14 +113,16 @@ export function SeoOptimizeDialog({
       setResult({
         ...data.result,
         pushed_to_cms: data.pushed_to_cms,
+        push_error: data.push_error || undefined,
         external_url: data.external_url,
       });
 
       toast({
         title: data.pushed_to_cms ? "SEO optimized & updated on site!" : "SEO optimized!",
         description: data.pushed_to_cms
-          ? "Changes have been pushed to your website."
-          : "Review the results below.",
+          ? "Existing page updated — same URL, no new page created."
+          : data.push_error || "Review the results below.",
+        variant: data.push_error ? "destructive" : undefined,
       });
 
       onOptimized?.();
