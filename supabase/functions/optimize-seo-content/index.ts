@@ -109,6 +109,7 @@ ${truncatedText}
 ${fields.includes("content") ? `Full HTML to optimize (preserve structure exactly):
 ${page_content}` : ""}
 
+${instruction ? `\nUser instruction: ${instruction}\n` : ""}
 Generate optimized SEO data for this page. Focus on the main topic/keywords of the existing content.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
