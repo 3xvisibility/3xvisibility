@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -34,6 +34,15 @@ const TARGET_FIELDS: TargetField[] = [
   { key: "slug", label: "URL Slug", category: "content", description: "URL path segment" },
   { key: "content", label: "Body Content", category: "content", description: "Main page content" },
   { key: "excerpt", label: "Excerpt", category: "content", description: "Short summary / teaser" },
+  { key: "name", label: "Name", category: "content", description: "Item / entity name" },
+  { key: "description", label: "Description", category: "content", description: "Full description text" },
+  { key: "keyword", label: "Keyword", category: "content", description: "Primary keyword" },
+  { key: "service", label: "Service", category: "content", description: "Service name" },
+  { key: "category", label: "Category", category: "content", description: "Content category" },
+  { key: "tags", label: "Tags", category: "content", description: "Comma-separated tags" },
+  { key: "author", label: "Author", category: "content", description: "Author name" },
+  { key: "date", label: "Date", category: "content", description: "Publish / event date" },
+  { key: "price", label: "Price", category: "content", description: "Display price" },
   // SEO
   { key: "seo.meta_title", label: "Meta Title", category: "seo", description: "SEO title tag (≤60 chars)" },
   { key: "seo.meta_description", label: "Meta Description", category: "seo", description: "SEO description (≤160 chars)" },
@@ -42,6 +51,7 @@ const TARGET_FIELDS: TargetField[] = [
   { key: "seo.og_title", label: "OG Title", category: "seo", description: "Open Graph title" },
   { key: "seo.og_description", label: "OG Description", category: "seo", description: "Open Graph description" },
   { key: "seo.og_image", label: "OG Image URL", category: "seo", description: "Social sharing image" },
+  { key: "seo.schema_type", label: "Schema Type", category: "seo", description: "Structured data type (WebPage, Product…)" },
   // SEA
   { key: "sea.utm_source", label: "UTM Source", category: "sea", description: "Traffic source (e.g. google)" },
   { key: "sea.utm_medium", label: "UTM Medium", category: "sea", description: "Marketing medium (e.g. cpc)" },
@@ -57,6 +67,86 @@ const TARGET_FIELDS: TargetField[] = [
   { key: "geo.postcode", label: "Postal Code", category: "geo", description: "ZIP / postal code" },
   { key: "geo.latitude", label: "Latitude", category: "geo", description: "GPS latitude" },
   { key: "geo.longitude", label: "Longitude", category: "geo", description: "GPS longitude" },
+  { key: "geo.county", label: "County", category: "geo", description: "County / district" },
+  { key: "geo.neighborhood", label: "Neighborhood", category: "geo", description: "Neighborhood / area" },
+  { key: "geo.timezone", label: "Timezone", category: "geo", description: "Local timezone" },
+  { key: "geo.population", label: "Population", category: "geo", description: "City population" },
+  // WordPress
+  { key: "wp.post_id", label: "Post ID", category: "custom", description: "WordPress post ID" },
+  { key: "wp.post_type", label: "Post Type", category: "custom", description: "page, post, custom post type" },
+  { key: "wp.post_status", label: "Post Status", category: "custom", description: "draft, publish, pending" },
+  { key: "wp.featured_image", label: "Featured Image", category: "custom", description: "Featured image URL" },
+  { key: "wp.template", label: "Page Template", category: "custom", description: "WordPress page template" },
+  { key: "wp.menu_order", label: "Menu Order", category: "custom", description: "Page menu order" },
+  { key: "wp.parent_id", label: "Parent Page", category: "custom", description: "Parent page ID" },
+  { key: "wp.custom_field_1", label: "Custom Field 1", category: "custom", description: "WordPress custom field" },
+  { key: "wp.custom_field_2", label: "Custom Field 2", category: "custom", description: "WordPress custom field" },
+  // WooCommerce
+  { key: "woo.product_name", label: "Product Name", category: "custom", description: "WooCommerce product name" },
+  { key: "woo.regular_price", label: "Regular Price", category: "custom", description: "Regular price" },
+  { key: "woo.sale_price", label: "Sale Price", category: "custom", description: "Discounted sale price" },
+  { key: "woo.sku", label: "SKU", category: "custom", description: "Stock keeping unit" },
+  { key: "woo.stock_status", label: "Stock Status", category: "custom", description: "instock, outofstock, onbackorder" },
+  { key: "woo.stock_quantity", label: "Stock Quantity", category: "custom", description: "Available stock count" },
+  { key: "woo.weight", label: "Weight", category: "custom", description: "Product weight" },
+  { key: "woo.dimensions", label: "Dimensions", category: "custom", description: "L×W×H dimensions" },
+  { key: "woo.product_category", label: "Product Category", category: "custom", description: "WooCommerce category" },
+  { key: "woo.product_tag", label: "Product Tag", category: "custom", description: "WooCommerce tag" },
+  { key: "woo.product_image", label: "Product Image", category: "custom", description: "Main product image URL" },
+  { key: "woo.product_gallery", label: "Product Gallery", category: "custom", description: "Gallery image URLs" },
+  { key: "woo.short_description", label: "Short Description", category: "custom", description: "Product short description" },
+  { key: "woo.product_type", label: "Product Type", category: "custom", description: "simple, variable, grouped" },
+  { key: "woo.tax_class", label: "Tax Class", category: "custom", description: "Tax classification" },
+  { key: "woo.shipping_class", label: "Shipping Class", category: "custom", description: "Shipping classification" },
+  // Shopify
+  { key: "shopify.product_title", label: "Product Title", category: "custom", description: "Shopify product title" },
+  { key: "shopify.product_handle", label: "Product Handle", category: "custom", description: "URL handle / slug" },
+  { key: "shopify.body_html", label: "Body HTML", category: "custom", description: "Product body HTML content" },
+  { key: "shopify.vendor", label: "Vendor", category: "custom", description: "Product vendor / brand" },
+  { key: "shopify.product_type", label: "Product Type", category: "custom", description: "Shopify product type" },
+  { key: "shopify.tags", label: "Tags", category: "custom", description: "Comma-separated Shopify tags" },
+  { key: "shopify.variant_title", label: "Variant Title", category: "custom", description: "Variant display title" },
+  { key: "shopify.variant_price", label: "Variant Price", category: "custom", description: "Variant price" },
+  { key: "shopify.variant_sku", label: "Variant SKU", category: "custom", description: "Variant SKU code" },
+  { key: "shopify.variant_inventory", label: "Variant Inventory", category: "custom", description: "Inventory quantity" },
+  { key: "shopify.compare_at_price", label: "Compare At Price", category: "custom", description: "Original / compare price" },
+  { key: "shopify.barcode", label: "Barcode", category: "custom", description: "Product barcode / UPC" },
+  { key: "shopify.collection", label: "Collection", category: "custom", description: "Shopify collection name" },
+  { key: "shopify.image_src", label: "Image Source", category: "custom", description: "Product image URL" },
+  { key: "shopify.metafield_key", label: "Metafield Key", category: "custom", description: "Custom metafield key" },
+  { key: "shopify.metafield_value", label: "Metafield Value", category: "custom", description: "Custom metafield value" },
+  // PrestaShop
+  { key: "ps.reference", label: "Reference", category: "custom", description: "PrestaShop product reference" },
+  { key: "ps.ean13", label: "EAN13", category: "custom", description: "EAN-13 barcode" },
+  { key: "ps.upc", label: "UPC", category: "custom", description: "UPC barcode" },
+  { key: "ps.wholesale_price", label: "Wholesale Price", category: "custom", description: "Cost / wholesale price" },
+  { key: "ps.category", label: "Category", category: "custom", description: "PrestaShop category" },
+  { key: "ps.manufacturer", label: "Manufacturer", category: "custom", description: "Brand / manufacturer" },
+  { key: "ps.supplier", label: "Supplier", category: "custom", description: "Product supplier" },
+  { key: "ps.condition", label: "Condition", category: "custom", description: "new, used, refurbished" },
+  { key: "ps.quantity", label: "Quantity", category: "custom", description: "Available stock quantity" },
+  { key: "ps.weight", label: "Weight", category: "custom", description: "Product weight" },
+  { key: "ps.meta_title", label: "Meta Title", category: "custom", description: "PrestaShop SEO title" },
+  { key: "ps.meta_description", label: "Meta Description", category: "custom", description: "PrestaShop SEO description" },
+  { key: "ps.link_rewrite", label: "Friendly URL", category: "custom", description: "URL slug / link rewrite" },
+  { key: "ps.cover_image", label: "Cover Image", category: "custom", description: "Main product image" },
+  { key: "ps.delivery_time", label: "Delivery Time", category: "custom", description: "Estimated delivery" },
+  // Media
+  { key: "media.image_url", label: "Image URL", category: "custom", description: "Primary image URL" },
+  { key: "media.image_alt", label: "Image Alt", category: "custom", description: "Image alt text" },
+  { key: "media.logo_url", label: "Logo URL", category: "custom", description: "Logo image URL" },
+  { key: "media.video_url", label: "Video URL", category: "custom", description: "Embedded video URL" },
+  { key: "media.gallery", label: "Gallery", category: "custom", description: "Multiple image URLs" },
+  { key: "media.thumbnail_url", label: "Thumbnail", category: "custom", description: "Thumbnail image URL" },
+  // Business
+  { key: "biz.company", label: "Company", category: "custom", description: "Company / business name" },
+  { key: "biz.phone", label: "Phone", category: "custom", description: "Phone number" },
+  { key: "biz.email", label: "Email", category: "custom", description: "Contact email" },
+  { key: "biz.address", label: "Address", category: "custom", description: "Street address" },
+  { key: "biz.website", label: "Website", category: "custom", description: "Website URL" },
+  { key: "biz.opening_hours", label: "Opening Hours", category: "custom", description: "Business hours" },
+  { key: "biz.rating", label: "Rating", category: "custom", description: "Star rating" },
+  { key: "biz.reviews_count", label: "Reviews Count", category: "custom", description: "Number of reviews" },
 ];
 
 const CATEGORY_META: Record<string, { icon: any; label: string; color: string }> = {
@@ -64,7 +154,7 @@ const CATEGORY_META: Record<string, { icon: any; label: string; color: string }>
   seo: { icon: SearchIcon, label: "SEO", color: "text-success" },
   sea: { icon: Target, label: "SEA", color: "text-warning" },
   geo: { icon: MapPin, label: "GEO", color: "text-secondary" },
-  custom: { icon: Hash, label: "Custom", color: "text-muted-foreground" },
+  custom: { icon: Hash, label: "Platform", color: "text-muted-foreground" },
 };
 
 const TRANSFORMS = [
@@ -450,16 +540,44 @@ export function MappingStep({
                   <SelectTrigger className="h-8 text-xs rounded-lg">
                     <SelectValue placeholder="Target…" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px]">
                     <SelectItem value="__auto__" className="text-xs italic text-muted-foreground">Auto (template)</SelectItem>
+                    {/* Core categories */}
                     {Object.entries(CATEGORY_META).filter(([k]) => k !== "custom").map(([catKey, catMeta]) => {
                       const fields = relevantTargets.filter(f => f.category === catKey);
                       if (fields.length === 0) return null;
-                      return fields.map(f => (
-                        <SelectItem key={f.key} value={f.key} className="text-xs">
-                          <span className={`${catMeta.color} mr-1`}>●</span> {f.label}
-                        </SelectItem>
-                      ));
+                      return (
+                        <SelectGroup key={catKey}>
+                          <SelectLabel className="text-[10px] uppercase tracking-wider">{catMeta.label}</SelectLabel>
+                          {fields.map(f => (
+                            <SelectItem key={f.key} value={f.key} className="text-xs">
+                              <span className={`${catMeta.color} mr-1`}>●</span> {f.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      );
+                    })}
+                    {/* Platform fields grouped by prefix */}
+                    {[
+                      { prefix: "wp.", label: "WordPress" },
+                      { prefix: "woo.", label: "WooCommerce" },
+                      { prefix: "shopify.", label: "Shopify" },
+                      { prefix: "ps.", label: "PrestaShop" },
+                      { prefix: "media.", label: "Media" },
+                      { prefix: "biz.", label: "Business" },
+                    ].map(({ prefix, label }) => {
+                      const fields = TARGET_FIELDS.filter(f => f.key.startsWith(prefix));
+                      if (fields.length === 0) return null;
+                      return (
+                        <SelectGroup key={prefix}>
+                          <SelectLabel className="text-[10px] uppercase tracking-wider">{label}</SelectLabel>
+                          {fields.map(f => (
+                            <SelectItem key={f.key} value={f.key} className="text-xs">
+                              {f.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      );
                     })}
                   </SelectContent>
                 </Select>
