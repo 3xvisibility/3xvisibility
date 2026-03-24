@@ -61,6 +61,7 @@ export default function WebsiteContentPage() {
   const [search, setSearch] = useState("");
   const [templatePage, setTemplatePage] = useState<ContentItem | null>(null);
   const [previewPage, setPreviewPage] = useState<ContentItem | null>(null);
+  const [optimizePage, setOptimizePage] = useState<ContentItem | null>(null);
 
   // Fetch connected websites
   const { data: websites = [], isLoading: loadingWebsites } = useQuery({
