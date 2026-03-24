@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Pencil,
   Loader2,
@@ -28,6 +29,22 @@ import {
   FileText,
   Type,
   RefreshCw,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+  Link,
+  Image,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Undo,
+  Redo,
+  Heading1,
+  Heading2,
+  Heading3,
+  SplitSquareHorizontal,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,6 +121,9 @@ export function PageEditDialog({
   const [published, setPublished] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("edit");
+  const [editMode, setEditMode] = useState<"visual" | "html" | "split">("visual");
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeSyncRef = useRef(false);
 
   // SEO optimize state
   const [seoFields, setSeoFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
@@ -132,6 +152,68 @@ export function PageEditDialog({
     () => contentChanges.filter((c) => c.type !== "same").length,
     [contentChanges]
   );
+
+  // Sync content to visual iframe
+  const syncToIframe = useCallback((html: string) => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+    iframeSyncRef.current = true;
+    doc.open();
+    doc.write(`<!DOCTYPE html>
+<html><head>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; margin: 0; font-size: 14px; line-height: 1.6; color: #1a1a1a; }
+  body:focus { outline: none; }
+  img { max-width: 100%; height: auto; }
+  a { color: #2563eb; }
+  h1,h2,h3,h4 { margin-top: 1em; margin-bottom: 0.5em; }
+  p { margin: 0.5em 0; }
+  ul,ol { padding-left: 1.5em; }
+  table { border-collapse: collapse; width: 100%; }
+  td,th { border: 1px solid #e5e7eb; padding: 8px; }
+</style>
+</head><body contenteditable="true">${html}</body></html>`);
+    doc.close();
+
+    // Listen for edits in the iframe
+    doc.body.addEventListener("input", () => {
+      if (iframeSyncRef.current) { iframeSyncRef.current = false; return; }
+      const newHtml = doc.body.innerHTML;
+      setEditContent(newHtml);
+    });
+    iframeSyncRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "edit" && (editMode === "visual" || editMode === "split")) {
+      // Small delay to ensure iframe is mounted
+      const t = setTimeout(() => syncToIframe(editContent), 100);
+      return () => clearTimeout(t);
+    }
+  }, [activeTab, editMode]);
+
+  // Exec command on the visual editor
+  const execCmd = useCallback((cmd: string, value?: string) => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.execCommand(cmd, false, value);
+    // Sync back
+    setTimeout(() => {
+      setEditContent(doc.body.innerHTML);
+    }, 50);
+  }, []);
+
+  const insertLink = useCallback(() => {
+    const url = prompt("Enter URL:");
+    if (url) execCmd("createLink", url);
+  }, [execCmd]);
+
+  const insertImage = useCallback(() => {
+    const url = prompt("Enter image URL:");
+    if (url) execCmd("insertImage", url);
+  }, [execCmd]);
 
   const toggleSeoField = (field: string) => {
     setSeoFields((prev) =>
@@ -300,13 +382,106 @@ export function PageEditDialog({
                 placeholder="Page excerpt or meta description..."
               />
             </div>
+
+            {/* Content Editor with Visual/HTML/Split modes */}
             <div className="space-y-1.5">
-              <Label className="text-xs">Content (HTML)</Label>
-              <Textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="min-h-[300px] text-xs font-mono"
-              />
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Content</Label>
+                <ToggleGroup type="single" value={editMode} onValueChange={(v) => { if (v) setEditMode(v as any); }} size="sm" className="h-7">
+                  <ToggleGroupItem value="visual" className="text-[10px] h-7 px-2 gap-1">
+                    <Eye className="h-3 w-3" /> Visual
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="html" className="text-[10px] h-7 px-2 gap-1">
+                    <Code className="h-3 w-3" /> HTML
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="split" className="text-[10px] h-7 px-2 gap-1">
+                    <SplitSquareHorizontal className="h-3 w-3" /> Split
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+
+              {/* Visual Toolbar */}
+              {(editMode === "visual" || editMode === "split") && (
+                <div className="flex items-center gap-0.5 flex-wrap border rounded-md p-1 bg-muted/30">
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("bold")} title="Bold">
+                    <Bold className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("italic")} title="Italic">
+                    <Italic className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("underline")} title="Underline">
+                    <Underline className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-0.5" />
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("formatBlock", "<h1>")} title="Heading 1">
+                    <Heading1 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("formatBlock", "<h2>")} title="Heading 2">
+                    <Heading2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("formatBlock", "<h3>")} title="Heading 3">
+                    <Heading3 className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-0.5" />
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("insertUnorderedList")} title="Bullet List">
+                    <List className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("insertOrderedList")} title="Numbered List">
+                    <ListOrdered className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-0.5" />
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("justifyLeft")} title="Align Left">
+                    <AlignLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("justifyCenter")} title="Align Center">
+                    <AlignCenter className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("justifyRight")} title="Align Right">
+                    <AlignRight className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-0.5" />
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={insertLink} title="Insert Link">
+                    <Link className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={insertImage} title="Insert Image">
+                    <Image className="h-3.5 w-3.5" />
+                  </Button>
+                  <div className="w-px h-5 bg-border mx-0.5" />
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("undo")} title="Undo">
+                    <Undo className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => execCmd("redo")} title="Redo">
+                    <Redo className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+
+              {/* Editor Area */}
+              <div className={`${editMode === "split" ? "grid grid-cols-2 gap-2" : ""}`}>
+                {/* Visual Editor */}
+                {(editMode === "visual" || editMode === "split") && (
+                  <div className="rounded-md border overflow-hidden">
+                    <iframe
+                      ref={iframeRef}
+                      className={`w-full border-0 ${editMode === "split" ? "h-[280px]" : "min-h-[300px] h-[350px]"}`}
+                      title="Visual Editor"
+                      sandbox="allow-same-origin allow-scripts"
+                    />
+                  </div>
+                )}
+
+                {/* HTML Editor */}
+                {(editMode === "html" || editMode === "split") && (
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => {
+                      setEditContent(e.target.value);
+                      if (editMode === "split") syncToIframe(e.target.value);
+                    }}
+                    className={`text-xs font-mono ${editMode === "split" ? "h-[280px]" : "min-h-[300px]"}`}
+                  />
+                )}
+              </div>
             </div>
           </TabsContent>
 
