@@ -51,6 +51,7 @@ Deno.serve(async (req) => {
       workspace_id,
       optimize_fields,
       language,
+      instruction,
     } = await req.json();
 
     if (!website_id || !page_content) {
@@ -108,6 +109,7 @@ ${truncatedText}
 ${fields.includes("content") ? `Full HTML to optimize (preserve structure exactly):
 ${page_content}` : ""}
 
+${instruction ? `\nUser instruction: ${instruction}\n` : ""}
 Generate optimized SEO data for this page. Focus on the main topic/keywords of the existing content.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -191,10 +193,12 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
       .maybeSingle();
 
     let pushResult: { external_id?: string; url?: string } | null = null;
+    let pushError: string | null = null;
 
     if (website && page_external_id) {
       try {
         const connector = await createConnector(website as WebsiteRecord);
+        // Always UPDATE existing page — never create a new one
         const updatePayload: Record<string, any> = {
           title: result.seo_title || page_title,
           slug: page_slug,
@@ -212,11 +216,13 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
         if (result.seo_keywords) updatePayload.seo_keywords = result.seo_keywords;
 
         pushResult = await connector.updatePage(page_external_id, updatePayload);
-        console.log("[OPTIMIZE] Pushed SEO update to CMS:", pushResult);
-      } catch (pushErr) {
+        console.log("[OPTIMIZE] Updated existing page on CMS:", pushResult);
+      } catch (pushErr: any) {
+        pushError = pushErr.message || "CMS update failed";
         console.error("[OPTIMIZE] CMS push failed:", pushErr);
-        // Don't fail the whole request — still return AI results
       }
+    } else if (!page_external_id) {
+      pushError = "No page ID — cannot update on website";
     }
 
     // Save / update in generated_pages for tracking
@@ -285,6 +291,7 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
       success: true,
       result,
       pushed_to_cms: !!pushResult,
+      push_error: pushError,
       external_url: pushResult?.url || page_url,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

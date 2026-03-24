@@ -71,6 +71,7 @@ export function SeoOptimizeDialog({
     seo_keywords?: string[];
     content?: string;
     pushed_to_cms?: boolean;
+    push_error?: string;
     external_url?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -112,14 +113,16 @@ export function SeoOptimizeDialog({
       setResult({
         ...data.result,
         pushed_to_cms: data.pushed_to_cms,
+        push_error: data.push_error || undefined,
         external_url: data.external_url,
       });
 
       toast({
         title: data.pushed_to_cms ? "SEO optimized & updated on site!" : "SEO optimized!",
         description: data.pushed_to_cms
-          ? "Changes have been pushed to your website."
-          : "Review the results below.",
+          ? "Existing page updated — same URL, no new page created."
+          : data.push_error || "Review the results below.",
+        variant: data.push_error ? "destructive" : undefined,
       });
 
       onOptimized?.();
@@ -222,7 +225,12 @@ export function SeoOptimizeDialog({
                 <p className="text-sm font-medium">Results</p>
                 {result.pushed_to_cms && (
                   <Badge className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                    <Check className="h-3 w-3 mr-1" /> Updated on site
+                    <Check className="h-3 w-3 mr-1" /> Updated on site (same URL)
+                  </Badge>
+                )}
+                {result.push_error && (
+                  <Badge variant="destructive" className="text-[10px]">
+                    Update failed: {result.push_error}
                   </Badge>
                 )}
               </div>
