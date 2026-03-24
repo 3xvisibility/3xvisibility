@@ -145,7 +145,7 @@ function discoverLinks(html: string, baseUrl: string): string[] {
 
 /**
  * Group pages by URL structure pattern.
- * e.g. /services/plumbing-new-york and /services/plumbing-chicago -> pattern "/services/{slug}"
+ * e.g. /products/widget-a and /products/widget-b -> pattern "/products/{slug}"
  */
 function groupPagesByUrlPattern(pages: DiscoveredPage[]): UrlGroup[] {
   const patternMap = new Map<string, { pages: string[]; segments: string[][] }>();
@@ -252,9 +252,9 @@ Deno.serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `You are analyzing pages from a website to detect patterns suitable for template generation. 
-Look for pages that follow similar structures but with different specific values (city names, service names, product names, etc.).
-Pay special attention to URL patterns like /services/plumbing-new-york and /services/plumbing-chicago.
+              content: `You are analyzing pages from a website to detect patterns suitable for template generation.
+Look for pages that follow similar structures but with different specific values (product names, services, categories, audiences, brands, industries, locations, models, etc.).
+Pay special attention to repeating URL patterns where one or more segments vary between otherwise similar pages.
 Group similar pages and suggest template patterns with variable placeholders.
 Only suggest patterns where at least 2 pages share the same structure with different values.`,
             },
@@ -277,8 +277,8 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
                       items: {
                         type: "object",
                         properties: {
-                          name: { type: "string", description: "Pattern name like 'Service Location Pages'" },
-                          template: { type: "string", description: "Template string like '{service} in {location}'" },
+                          name: { type: "string", description: "Pattern name like 'Product Detail Pages' or 'Industry Landing Pages'" },
+                          template: { type: "string", description: "Template string like '{product_name}' or '{audience} solutions'" },
                           variables: { type: "array", items: { type: "string" }, description: "Variable names" },
                           matchingPages: { type: "array", items: { type: "string" }, description: "Titles of pages matching this pattern" },
                           confidence: { type: "string", enum: ["high", "medium", "low"] },

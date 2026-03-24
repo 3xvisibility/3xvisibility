@@ -18,7 +18,6 @@ import {
   Upload,
   Check,
   Wand2,
-  MapPin,
   Globe,
   RefreshCw,
   Eye,
@@ -63,6 +62,47 @@ interface TemplateDetectorDialogProps {
   websiteType: string;
 }
 
+function normalizeVariableName(value: string, fallback = "variable") {
+  const normalized = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_{2,}/g, "_");
+
+  return normalized || fallback;
+}
+
+function applyVariableValues(source: string | undefined, row: Record<string, string>, variables: VariableEntry[]) {
+  if (!source) return "";
+
+  let result = source;
+  for (const [key, value] of Object.entries(row)) {
+    result = result.split(`{${key}}`).join(value);
+
+    const variable = variables.find((entry) => entry.name === key);
+    if (variable?.original) {
+      result = result.split(variable.original).join(value);
+    }
+  }
+
+  return result;
+}
+
+function buildGeneratedSeoDescription(
+  title: string,
+  sourceText: string | undefined,
+  row: Record<string, string>,
+  variables: VariableEntry[]
+) {
+  const replacedText = applyVariableValues(sourceText, row, variables)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return (replacedText || title).slice(0, 155);
+}
+
 /** Popover for assigning a variable to selected text inside the preview */
 function VisualSelectionPopover({
   position,
@@ -98,18 +138,18 @@ function VisualSelectionPopover({
       </div>
       <p className="text-[10px] bg-muted rounded px-2 py-1 truncate font-mono">"{selectedText}"</p>
       <p className="text-[10px] text-muted-foreground">
-        💡 Name this variable (e.g. "city", "price"). This text will change for each generated page.
+        💡 Name this variable (e.g. "product_name", "price", "audience"). This text will change from one generated page to another.
       </p>
       <div className="flex gap-1.5">
         <Input
           ref={inputRef}
-          placeholder="e.g., city_name"
+          placeholder="e.g., variable_name"
           value={varName}
           onChange={(e) => setVarName(e.target.value)}
           className="h-7 text-xs font-mono flex-1"
           onKeyDown={(e) => {
             if (e.key === "Enter" && varName.trim()) {
-              onAssign(varName.trim().toLowerCase().replace(/\s+/g, "_"));
+              onAssign(normalizeVariableName(varName));
             }
             if (e.key === "Escape") onClose();
           }}
@@ -119,7 +159,7 @@ function VisualSelectionPopover({
           className="h-7 text-xs px-2"
           onClick={() => {
             if (varName.trim()) {
-              onAssign(varName.trim().toLowerCase().replace(/\s+/g, "_"));
+              onAssign(normalizeVariableName(varName));
             }
           }}
           disabled={!varName.trim()}
@@ -484,29 +524,32 @@ export function TemplateDetectorDialog({
           }],
           tone: "professional",
           length: "medium",
-          _custom_prompt: `You are a Local SEO expert. Analyze this web page and identify dynamic variables that can be replaced to create location-specific SEO pages.
+          _custom_prompt: `You are a template conversion expert. Analyze this web page and identify dynamic values that should become reusable variables.
 
 Page title: ${page.title}
 URL: ${page.url}
+Page type: ${page.type}
 Content: ${snippet}
 
-Focus on finding:
-1. City/town names (e.g. "New York", "Mumbai", "London")
-2. State/region/province names
-3. Country names  
-4. Service/business type names (e.g. "plumbing", "web design")
-5. Phone numbers, addresses
-6. Area-specific descriptions
-7. Prices or rates if present
+This page might be about products, services, categories, locations, industries, plans, offers, people, specs, pricing, brands, or audiences.
+
+Focus on finding the best replaceable values such as:
+1. Product, service, category, plan, or offer names
+2. Brand, company, audience, industry, or client segment names
+3. Locations, regions, countries, or delivery/service areas
+4. Prices, SKUs, model names, sizes, colors, materials, or specs
+5. Phone numbers, addresses, emails, CTA labels, or support details
+6. Headline phrases, benefit statements, or other repeated business-specific entities
 
 Return a JSON array of variables:
-[{"name": "city_name", "original": "New York", "suggested_values": ["Los Angeles", "Chicago", "Houston", "Phoenix"]}, {"name": "service_type", "original": "plumbing", "suggested_values": ["electrician", "HVAC repair", "roofing"]}]
+[{"name": "product_name", "original": "Starter Plan", "suggested_values": ["Growth Plan", "Scale Plan", "Enterprise Plan"]}, {"name": "audience", "original": "Dental Clinics", "suggested_values": ["Restaurants", "Law Firms", "Gyms"]}]
 
 Rules:
-- name: use snake_case, descriptive (city_name, state_name, service_type, phone_number, etc.)
+- name: use snake_case and make it semantic (product_name, category_name, offer_name, audience, region, sku, material, phone_number, etc.)
 - original: the exact text found in the content
-- suggested_values: 3-5 alternative values for local SEO generation
-- Find 3-8 key variables
+- suggested_values: 3-5 realistic alternatives that match the same semantic type and page context
+- Prefer business-relevant variables over generic filler words
+- Find 3-10 key variables
 - Only return the JSON array, nothing else.`,
         },
       });
@@ -519,7 +562,7 @@ Rules:
           const parsed = JSON.parse(jsonMatch[0]);
           if (Array.isArray(parsed)) {
             parsedVars = parsed.map((v: any) => ({
-              name: v.name || "variable",
+              name: normalizeVariableName(v.name || v.original || "variable"),
               original: v.original || "",
               values: v.suggested_values?.length ? [v.original || "", ...v.suggested_values] : [v.original || ""],
             }));
@@ -546,7 +589,7 @@ Rules:
       setStep("edit");
 
       if (parsedVars.length > 0) {
-        toast({ title: `${parsedVars.length} variables detected!`, description: "Review and add city/service values to generate pages." });
+        toast({ title: `${parsedVars.length} variables detected!`, description: "Review the detected fields and add the values you want to generate with." });
       }
     } catch (err: any) {
       toast({ title: "Detection failed", description: err.message, variant: "destructive" });
@@ -599,12 +642,18 @@ Rules:
           pages: [{ id: "suggest", title: `SUGGEST_VALUES:${v.name}`, description: v.original, url: "" }],
           tone: "professional",
           length: "medium",
-          _custom_prompt: `You are a Local SEO expert. Given a variable "${v.name}" with original value "${v.original}" and existing values: ${v.values.join(", ")}
+          _custom_prompt: `You are helping build a reusable website template.
 
-Generate 10-15 MORE unique values for this variable to create local SEO pages.
-- If it's a city variable, suggest popular cities in the same country
-- If it's a service, suggest related services
-- If it's a region/state, suggest nearby regions
+Page title: ${page.title}
+Page type: ${page.type}
+Variable name: ${v.name}
+Original value: ${v.original}
+Existing values: ${v.values.join(", ")}
+
+Generate 10-15 MORE unique values for this variable.
+- Match the same semantic type and business context
+- The values may be products, services, categories, audiences, plans, materials, specs, brands, industries, or locations
+- Keep them realistic and useful for page generation
 
 Return ONLY a comma-separated list of values, nothing else. Example: "value1, value2, value3"`,
         },
@@ -687,14 +736,8 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
             if (elData) elData = elData.split(`{${key}}`).join(val);
           }
 
-          // Build title from first variable or use page title with replacement
-          let title = page.title;
-          for (const [key, val] of Object.entries(row)) {
-            const v = variables.find(vr => vr.name === key);
-            if (v?.original) {
-              title = title.split(v.original).join(val);
-            }
-          }
+          // Build title from source page title with replacements
+          let title = applyVariableValues(page.title, row, variables);
           // If title didn't change, prepend first variable value
           if (title === page.title && Object.values(row).length > 0) {
             title = `${Object.values(row)[0]} - ${page.title}`;
@@ -710,7 +753,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
             content: html,
             slug,
             seo_title: title,
-            seo_description: `${title} - Professional services in ${row.city_name || row.location || Object.values(row)[0] || "your area"}`,
+            seo_description: buildGeneratedSeoDescription(title, page.excerpt || page.content, row, variables),
             // Pass Elementor meta for design preservation
             elementor_data: elData || undefined,
             elementor_edit_mode: page.elementor_edit_mode || undefined,
@@ -771,8 +814,8 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
       <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-base flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
-            {step === "detect" && "Local SEO Page Generator"}
+            <Tag className="h-4 w-4 text-primary" />
+            {step === "detect" && "Template Page Generator"}
             {step === "edit" && "Configure Variables & Generate"}
             {step === "generate" && "Generating & Publishing..."}
             {step === "done" && "Generation Complete"}
@@ -790,17 +833,17 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                 <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
                   <Globe className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-sm font-semibold">AI Local SEO Variable Detection</h3>
+                  <h3 className="text-sm font-semibold">AI Variable Detection</h3>
                 <p className="text-xs text-muted-foreground max-w-sm">
-                  AI will scan this page and identify location-based variables (city, state, service, etc.)
-                  that can be replaced to generate multiple SEO-optimized pages with the <strong>same design</strong>.
+                    AI will scan this page and identify dynamic values like products, services, categories, pricing,
+                    industries, locations, specs, or offers that can become reusable variables while keeping the <strong>same design</strong>.
                 </p>
               </div>
 
               <div className="bg-muted/50 rounded-lg p-3 max-w-sm text-xs text-muted-foreground space-y-1">
                 <p className="font-medium text-foreground">How it works:</p>
-                <p>1. AI detects city names, services, regions in your page</p>
-                <p>2. You add multiple cities/services as new values</p>
+                  <p>1. AI detects the best replaceable values in your page</p>
+                  <p>2. You add multiple values for any variable you want to scale</p>
                 <p>3. Pages are generated with same design + new data</p>
                 <p>4. Elementor/page builder design is preserved</p>
               </div>
@@ -865,7 +908,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                               value={v.name}
                               onChange={(e) => updateVariable(i, "name", e.target.value)}
                               className="h-8 text-xs"
-                              placeholder="city_name"
+                              placeholder="product_name"
                             />
                           </div>
                           <div>
@@ -874,7 +917,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                               value={v.original}
                               onChange={(e) => updateVariable(i, "original", e.target.value)}
                               className="h-8 text-xs"
-                              placeholder="New York"
+                              placeholder="Starter Plan"
                             />
                           </div>
                         </div>
@@ -897,7 +940,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                             onChange={(e) => updateVariableValues(i, e.target.value)}
                             rows={2}
                             className="text-xs font-mono"
-                            placeholder="New York, Los Angeles, Chicago, Houston, Phoenix"
+                            placeholder="Growth Plan, Scale Plan, Enterprise Plan"
                           />
                         </div>
                       </div>
@@ -962,7 +1005,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                     className="text-xs"
                     onClick={() => setCsvMode(false)}
                   >
-                    <MapPin className="h-3 w-3 mr-1" /> Variable Combinations
+                    <Tag className="h-3 w-3 mr-1" /> Variable Combinations
                   </Button>
                   <Button
                     size="sm"
@@ -978,7 +1021,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">
                       Pages will be generated for all combinations of your variable values.
-                      For example, if you have 5 cities and 3 services, {5 * 3} = 15 pages will be created.
+                      For example, if one variable has 5 values and another has 3 values, {5 * 3} = 15 pages will be created.
                     </p>
                     <div className="border rounded-lg p-3 space-y-2 bg-card">
                       <p className="text-xs font-medium">Current combinations:</p>

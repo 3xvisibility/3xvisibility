@@ -205,7 +205,7 @@ export function SeoOptimizeDialog({
 
         {/* Optional instruction */}
         <Textarea
-          placeholder="Optional: Add specific instructions (e.g., 'Focus on plumbing services in Paris', 'Target keyword: red button')..."
+          placeholder="Optional: Add specific instructions (e.g., 'Focus on premium product buyers', 'Target keyword: red button')..."
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
           className="h-16 text-sm"
