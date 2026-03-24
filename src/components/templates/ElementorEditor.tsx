@@ -99,7 +99,7 @@ function parseHtmlToNodes(html: string): ElementorNode[] {
         return /^(h[1-6]|p|div|section|ul|ol|img|a|table|form|blockquote|figure)$/.test(t);
       });
       
-      if (blockChildren.length > 0 && (tag === "div" || tag === "section" || tag === "article" || tag === "main" || tag === "header" || tag === "footer" || tag === "nav")) {
+      if (blockChildren.length > 0 && ["div", "section", "article", "main", "header", "footer", "nav"].includes(tag)) {
         const children = Array.from(el.children).map(c => domToNode(c as Element)).filter(Boolean) as ElementorNode[];
         return {
           id: genNodeId(), type: "section",
