@@ -448,15 +448,7 @@ function ContentList({
                     </p>
                   </div>
                   {item.url && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1.5"
-                    onClick={() => onEdit(item)}
-                  >
-                    <Pencil className="h-3.5 w-3.5" /> Edit Page
-                  </Button>
-                  <Button
+                    <Button
                       size="sm"
                       variant="ghost"
                       className="h-7 w-7 p-0 shrink-0"
