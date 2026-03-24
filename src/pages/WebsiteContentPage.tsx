@@ -346,6 +346,20 @@ export default function WebsiteContentPage() {
           }}
         />
       )}
+      {/* Page Edit Dialog */}
+      {editPage && currentWebsite && (
+        <PageEditDialog
+          open={!!editPage}
+          onOpenChange={(o) => !o && setEditPage(null)}
+          page={editPage}
+          websiteId={effectiveWebsite}
+          websiteType={currentWebsite.type}
+          onUpdated={() => {
+            refetchPages();
+            refetchProducts();
+          }}
+        />
+      )}
     </div>
   );
 }
