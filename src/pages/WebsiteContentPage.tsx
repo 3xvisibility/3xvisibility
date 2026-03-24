@@ -296,7 +296,6 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
-            onOptimizeSeo={setOptimizePage}
             onEdit={setEditPage}
           />
         </TabsContent>
@@ -307,7 +306,6 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
-            onOptimizeSeo={setOptimizePage}
             onEdit={setEditPage}
           />
         </TabsContent>
