@@ -279,7 +279,7 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
     let pushResult: { external_id?: string; url?: string } | null = null;
     let pushError: string | null = null;
 
-    if (website && page_external_id) {
+    if (website && page_external_id && !skip_push) {
       try {
         const connector = await createConnector(website as WebsiteRecord);
         // Always UPDATE existing page — never create a new one
