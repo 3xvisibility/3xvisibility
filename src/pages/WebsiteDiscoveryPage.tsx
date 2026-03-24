@@ -148,7 +148,7 @@ function SelectionPopover({
       <div className="flex gap-1.5">
         <Input
           ref={inputRef}
-          placeholder="e.g., city"
+          placeholder="e.g., product_name"
           value={varName}
           onChange={(e) => setVarName(e.target.value)}
           className="h-7 text-xs font-mono flex-1"
