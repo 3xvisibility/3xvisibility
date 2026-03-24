@@ -1934,7 +1934,7 @@ RULES:
                       <button
                         key={page.id}
                         className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent/50 transition-colors text-left"
-                        onClick={() => importSitePage(page.link, page.title)}
+                        onClick={() => importSitePage(page.link, page.title, page.id)}
                       >
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">{page.title}</p>
