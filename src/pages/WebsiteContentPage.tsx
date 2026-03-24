@@ -338,6 +338,7 @@ export default function WebsiteContentPage() {
           page={editPage}
           websiteId={effectiveWebsite}
           websiteType={currentWebsite.type}
+          workspaceId={wsId}
           onUpdated={() => {
             refetchPages();
             refetchProducts();
