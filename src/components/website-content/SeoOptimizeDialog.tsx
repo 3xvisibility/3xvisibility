@@ -71,6 +71,7 @@ export function SeoOptimizeDialog({
     seo_keywords?: string[];
     content?: string;
     pushed_to_cms?: boolean;
+    push_error?: string;
     external_url?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
