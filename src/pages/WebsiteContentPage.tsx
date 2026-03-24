@@ -373,6 +373,7 @@ function ContentList({
   onDetectTemplate,
   onPreview,
   onOptimizeSeo,
+  onEdit,
 }: {
   items: ContentItem[];
   isLoading: boolean;
@@ -380,6 +381,7 @@ function ContentList({
   onDetectTemplate: (item: ContentItem) => void;
   onPreview: (item: ContentItem) => void;
   onOptimizeSeo: (item: ContentItem) => void;
+  onEdit: (item: ContentItem) => void;
 }) {
   if (isLoading) {
     return (
