@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Compass,
   Globe,
@@ -32,6 +35,26 @@ import {
   FolderTree,
   Layers,
   Settings2,
+  Bold,
+  Italic,
+  Underline,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Link2,
+  ImagePlus,
+  Trash2,
+  Type,
+  Plus,
+  Code,
+  Undo2,
+  Redo2,
+  Variable,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -320,7 +343,17 @@ export default function WebsiteDiscoveryPage() {
       if (!user) throw new Error("Not authenticated");
       if (!convertingPage) throw new Error("No page selected");
 
-      let templateContent = convertingPage.bodyHtml;
+      // Get current content from the editable iframe (includes all edits)
+      const doc = editorIframeRef.current?.contentDocument;
+      let templateContent = doc?.body?.innerHTML || convertingPage.bodyHtml;
+
+      // Replace variable spans back to {variable} placeholders
+      templateContent = templateContent.replace(
+        /<span[^>]*data-var="([^"]+)"[^>]*>\{[^}]+\}<\/span>/gi,
+        (_, varName) => `{${varName}}`
+      );
+
+      // Also replace any remaining mapped values that weren't converted to spans
       for (const mapping of visualMappings) {
         const escaped = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         templateContent = templateContent.replace(new RegExp(escaped, "gi"), `{${mapping.variable}}`);
@@ -331,7 +364,9 @@ export default function WebsiteDiscoveryPage() {
         ? `<!-- STYLES -->\n${convertingPage.headStyles}\n<!-- /STYLES -->\n${templateContent}`
         : templateContent;
 
-      const variables = [...new Set(visualMappings.map((m) => `{${m.variable}}`))];
+      // Detect all variables in the final content
+      const varMatches = fullTemplate.match(/\{([a-z_][a-z0-9_]*)\}/gi) || [];
+      const variables = [...new Set(varMatches)];
 
       const { error } = await supabase.from("templates").insert({
         name: templateName,
@@ -355,7 +390,152 @@ export default function WebsiteDiscoveryPage() {
     },
   });
 
-  // Visual editor HTML
+  // Editor mode: visual / html / split
+  const [editorMode, setEditorMode] = useState<"visual" | "html" | "split">("visual");
+  const [htmlSource, setHtmlSource] = useState("");
+  const editorIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Sync HTML source when switching to HTML mode
+  useEffect(() => {
+    if (convertingPage && editorMode !== "visual") {
+      const doc = editorIframeRef.current?.contentDocument;
+      if (doc?.body) setHtmlSource(doc.body.innerHTML);
+    }
+  }, [editorMode, convertingPage]);
+
+  // Initialize editable iframe when convertingPage changes
+  useEffect(() => {
+    if (!convertingPage) return;
+    const iframe = editorIframeRef.current;
+    if (!iframe) return;
+
+    const initEditor = () => {
+      const doc = iframe.contentDocument;
+      if (!doc) return;
+
+      let content = convertingPage.bodyHtml;
+      // Apply existing variable mappings as highlights
+      for (const mapping of visualMappings) {
+        const escaped = mapping.value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        content = content.replace(
+          new RegExp(escaped, "gi"),
+          `<span data-var="${mapping.variable}" style="background:hsl(221 83% 53% / 0.15);color:hsl(221 83% 53%);padding:1px 4px;border-radius:4px;font-weight:600;border:1px dashed hsl(221 83% 53% / 0.4);" title="{${mapping.variable}}" contenteditable="false">{${mapping.variable}}</span>`
+        );
+      }
+
+      const styles = convertingPage.headStyles || "";
+      doc.open();
+      doc.write(`<!DOCTYPE html><html><head>
+        ${styles}
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 16px; font-size: 14px; line-height: 1.6; color: #1a1a2e; }
+          ::selection { background: hsl(221 83% 53% / 0.3); }
+          * { box-sizing: border-box; }
+          img { max-width: 100%; height: auto; cursor: pointer; transition: outline 0.15s; }
+          img:hover { outline: 2px dashed hsl(221 83% 53% / 0.5); outline-offset: 2px; }
+          [data-var] { cursor: default; }
+          .pgp-insert-marker { display: inline-block; width: 2px; height: 1.2em; background: hsl(221 83% 53%); margin: 0 2px; animation: blink 1s infinite; }
+          @keyframes blink { 50% { opacity: 0; } }
+        </style>
+      </head><body contenteditable="true">${content}</body>
+      <script>
+        // Text selection for variable assignment
+        document.addEventListener('mouseup', function(e) {
+          if (e.target.tagName === 'IMG') {
+            window.parent.postMessage({ type: 'image-clicked', src: e.target.src, alt: e.target.alt || '' }, '*');
+            return;
+          }
+          const sel = window.getSelection();
+          const text = sel ? sel.toString().trim() : '';
+          if (text && text.length > 0 && text.length < 500) {
+            const range = sel.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            window.parent.postMessage({ type: 'text-selected', text, x: rect.left + rect.width / 2, y: rect.bottom + 8 }, '*');
+          }
+        });
+        // Notify parent of content changes
+        document.body.addEventListener('input', function() {
+          window.parent.postMessage({ type: 'content-changed', html: document.body.innerHTML }, '*');
+        });
+        // Handle delete key on selected elements
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Delete' || e.key === 'Backspace') {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) {
+              const range = sel.getRangeAt(0);
+              if (!range.collapsed) {
+                // Let default behavior handle it
+                return;
+              }
+              // Check if cursor is near/on a var span
+              const node = sel.anchorNode?.parentElement;
+              if (node && node.dataset?.var) {
+                e.preventDefault();
+                node.remove();
+                window.parent.postMessage({ type: 'var-deleted', variable: node.dataset.var }, '*');
+                window.parent.postMessage({ type: 'content-changed', html: document.body.innerHTML }, '*');
+              }
+            }
+          }
+        });
+      </script></html>`);
+      doc.close();
+    };
+
+    // Small delay to ensure iframe is mounted
+    const t = setTimeout(initEditor, 100);
+    return () => clearTimeout(t);
+  }, [convertingPage?.url]); // Only re-init when page changes, not on every mapping update
+
+  // Execute formatting commands on the editable iframe
+  const execEditorCmd = useCallback((cmd: string, value?: string) => {
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.execCommand(cmd, false, value);
+    // Focus back
+    doc.body.focus();
+    // Sync
+    setHtmlSource(doc.body.innerHTML);
+  }, []);
+
+  // Apply HTML source back to iframe
+  const applyHtmlToIframe = useCallback(() => {
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    doc.body.innerHTML = htmlSource;
+  }, [htmlSource]);
+
+  // Handle image click/replace
+  const [imageEditPopover, setImageEditPopover] = useState<{ src: string; alt: string } | null>(null);
+  const [newImageSrc, setNewImageSrc] = useState("");
+  const [newImageAlt, setNewImageAlt] = useState("");
+
+  const handleReplaceImage = useCallback(() => {
+    if (!imageEditPopover || !newImageSrc) return;
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    const imgs = doc.querySelectorAll(`img[src="${imageEditPopover.src}"]`);
+    imgs.forEach(img => {
+      img.setAttribute("src", newImageSrc);
+      if (newImageAlt) img.setAttribute("alt", newImageAlt);
+    });
+    setImageEditPopover(null);
+    setNewImageSrc("");
+    setNewImageAlt("");
+    setHtmlSource(doc.body.innerHTML);
+  }, [imageEditPopover, newImageSrc, newImageAlt]);
+
+  const handleDeleteImage = useCallback(() => {
+    if (!imageEditPopover) return;
+    const doc = editorIframeRef.current?.contentDocument;
+    if (!doc) return;
+    const imgs = doc.querySelectorAll(`img[src="${imageEditPopover.src}"]`);
+    imgs.forEach(img => img.remove());
+    setImageEditPopover(null);
+    setHtmlSource(doc.body.innerHTML);
+  }, [imageEditPopover]);
+
+  // Visual editor HTML (kept for legacy/read-only preview)
   const getVisualEditorHtml = useCallback(() => {
     if (!convertingPage) return "";
     let content = convertingPage.bodyHtml;
@@ -388,7 +568,8 @@ export default function WebsiteDiscoveryPage() {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type === "text-selected") {
-        const iframe = iframeRef.current;
+        // Use the editable iframe if in convert mode, otherwise legacy
+        const iframe = convertingPage ? editorIframeRef.current : iframeRef.current;
         if (!iframe) return;
         const r = iframe.getBoundingClientRect();
         setSelectionPopover({
@@ -399,10 +580,24 @@ export default function WebsiteDiscoveryPage() {
           },
         });
       }
+      if (e.data?.type === "image-clicked") {
+        setImageEditPopover({ src: e.data.src, alt: e.data.alt });
+        setNewImageSrc(e.data.src);
+        setNewImageAlt(e.data.alt);
+      }
+      if (e.data?.type === "content-changed") {
+        // Content was edited in iframe — update convertingPage bodyHtml
+        if (convertingPage) {
+          setConvertingPage(prev => prev ? { ...prev, bodyHtml: e.data.html } : null);
+        }
+      }
+      if (e.data?.type === "var-deleted") {
+        setVisualMappings(prev => prev.filter(m => m.variable !== e.data.variable));
+      }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, []);
+  }, [convertingPage]);
 
   const handleVisualAssign = useCallback(
     (varName: string) => {
@@ -875,7 +1070,7 @@ export default function WebsiteDiscoveryPage() {
         </>
       )}
 
-      {/* Template Conversion View */}
+      {/* Template Conversion View — Full Visual Editor */}
       {convertingPage && (
         <div className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -884,13 +1079,12 @@ export default function WebsiteDiscoveryPage() {
               <p className="text-xs text-muted-foreground">{convertingPage.title}</p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => { setConvertingPage(null); setVisualMappings([]); }}>
+              <Button variant="outline" size="sm" onClick={() => { setConvertingPage(null); setVisualMappings([]); setEditorMode("visual"); }}>
                 <ArrowRight className="mr-1.5 h-3.5 w-3.5 rotate-180" /> Back
               </Button>
               <Button
                 size="sm"
                 onClick={() => setSaveDialogOpen(true)}
-                disabled={visualMappings.length === 0}
                 className="transition-all duration-150 hover:brightness-110 active:scale-[0.97]"
               >
                 <Save className="mr-1.5 h-3.5 w-3.5" /> Save Template
@@ -898,48 +1092,237 @@ export default function WebsiteDiscoveryPage() {
             </div>
           </div>
 
+          {/* Variables bar */}
           {uniqueVars.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-sm text-muted-foreground">Variables:</span>
               {uniqueVars.map((v) => (
-                <Badge key={v} className="bg-primary/10 text-primary font-mono text-xs">{`{${v}}`}</Badge>
+                <Badge key={v} className="bg-primary/10 text-primary font-mono text-xs border border-primary/20">{`{${v}}`}</Badge>
               ))}
             </div>
           )}
 
-          {/* Visual editor */}
+          {/* Editor card */}
           <Card className="shadow-surface overflow-hidden">
-            <div className="bg-muted/50 border-b border-border px-4 py-2 flex items-center gap-2">
-              <MousePointer className="h-3.5 w-3.5 text-primary" />
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Select text</span> to assign as a variable. Mapped values are highlighted.
-              </p>
+            {/* Toolbar */}
+            <div className="bg-muted/50 border-b border-border px-2 py-1.5 flex items-center gap-1 flex-wrap">
+              {/* Mode toggle */}
+              <ToggleGroup type="single" value={editorMode} onValueChange={(v) => v && setEditorMode(v as any)} className="mr-2">
+                <ToggleGroupItem value="visual" className="h-7 text-xs px-2 gap-1">
+                  <Eye className="h-3 w-3" /> Visual
+                </ToggleGroupItem>
+                <ToggleGroupItem value="html" className="h-7 text-xs px-2 gap-1">
+                  <Code className="h-3 w-3" /> HTML
+                </ToggleGroupItem>
+                <ToggleGroupItem value="split" className="h-7 text-xs px-2 gap-1">
+                  <Layers className="h-3 w-3" /> Split
+                </ToggleGroupItem>
+              </ToggleGroup>
+
+              <div className="w-px h-5 bg-border mx-1" />
+
+              {/* Formatting buttons */}
+              {(editorMode === "visual" || editorMode === "split") && (
+                <>
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("undo")}>
+                      <Undo2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Undo</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("redo")}>
+                      <Redo2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Redo</TooltipContent></Tooltip>
+
+                  <div className="w-px h-5 bg-border mx-1" />
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("bold")}>
+                      <Bold className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Bold</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("italic")}>
+                      <Italic className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Italic</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("underline")}>
+                      <Underline className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Underline</TooltipContent></Tooltip>
+
+                  <div className="w-px h-5 bg-border mx-1" />
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("formatBlock", "h1")}>
+                      <Heading1 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Heading 1</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("formatBlock", "h2")}>
+                      <Heading2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Heading 2</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("formatBlock", "h3")}>
+                      <Heading3 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Heading 3</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("formatBlock", "p")}>
+                      <Type className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Paragraph</TooltipContent></Tooltip>
+
+                  <div className="w-px h-5 bg-border mx-1" />
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("insertUnorderedList")}>
+                      <List className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Bullet List</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("insertOrderedList")}>
+                      <ListOrdered className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Numbered List</TooltipContent></Tooltip>
+
+                  <div className="w-px h-5 bg-border mx-1" />
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("justifyLeft")}>
+                      <AlignLeft className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Align Left</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("justifyCenter")}>
+                      <AlignCenter className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Center</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => execEditorCmd("justifyRight")}>
+                      <AlignRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Align Right</TooltipContent></Tooltip>
+
+                  <div className="w-px h-5 bg-border mx-1" />
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                      const url = prompt("Enter link URL:");
+                      if (url) execEditorCmd("createLink", url);
+                    }}>
+                      <Link2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Insert Link</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                      const src = prompt("Enter image URL:");
+                      if (src) execEditorCmd("insertImage", src);
+                    }}>
+                      <ImagePlus className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Insert Image</TooltipContent></Tooltip>
+
+                  <div className="w-px h-5 bg-border mx-1" />
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                      const doc = editorIframeRef.current?.contentDocument;
+                      if (!doc) return;
+                      const sel = doc.getSelection();
+                      const text = sel?.toString().trim();
+                      if (text) {
+                        const varName = prompt("Variable name (e.g. city, price):");
+                        if (varName) {
+                          const clean = varName.trim().toLowerCase().replace(/\s+/g, "_");
+                          execEditorCmd("insertHTML", `<span data-var="${clean}" style="background:hsl(221 83% 53% / 0.15);color:hsl(221 83% 53%);padding:1px 4px;border-radius:4px;font-weight:600;border:1px dashed hsl(221 83% 53% / 0.4);" title="{${clean}}" contenteditable="false">{${clean}}</span>`);
+                          setVisualMappings(prev => [...prev, { id: `vm-${Date.now()}`, original: text, variable: clean, value: text }]);
+                        }
+                      } else {
+                        toast({ title: "Select text first", description: "Highlight text in the editor, then click this button to assign a variable.", variant: "destructive" });
+                      }
+                    }}>
+                      <Variable className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Make Variable</TooltipContent></Tooltip>
+
+                  <Tooltip><TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => execEditorCmd("delete")}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger><TooltipContent side="bottom" className="text-xs">Delete Selected</TooltipContent></Tooltip>
+                </>
+              )}
             </div>
-            <iframe
-              ref={iframeRef}
-              srcDoc={getVisualEditorHtml()}
-              className="w-full border-0"
-              style={{ height: "500px" }}
-              sandbox="allow-scripts allow-same-origin"
-              title="Visual template editor"
-            />
+
+            {/* Editor area */}
+            <div className={editorMode === "split" ? "grid grid-cols-2 divide-x divide-border" : ""}>
+              {/* Visual iframe */}
+              {(editorMode === "visual" || editorMode === "split") && (
+                <iframe
+                  ref={editorIframeRef}
+                  className="w-full border-0"
+                  style={{ height: "600px" }}
+                  sandbox="allow-scripts allow-same-origin"
+                  title="Visual template editor"
+                />
+              )}
+
+              {/* HTML source */}
+              {(editorMode === "html" || editorMode === "split") && (
+                <div className="flex flex-col" style={{ height: "600px" }}>
+                  <Textarea
+                    value={htmlSource}
+                    onChange={(e) => setHtmlSource(e.target.value)}
+                    className="flex-1 min-h-0 font-mono text-xs border-0 rounded-none resize-none focus-visible:ring-0"
+                    placeholder="HTML source..."
+                  />
+                  {editorMode === "html" && (
+                    <div className="border-t border-border p-2 flex justify-end">
+                      <Button size="sm" variant="outline" className="text-xs" onClick={applyHtmlToIframe}>
+                        Apply Changes
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Tip bar */}
+            <div className="bg-muted/30 border-t border-border px-4 py-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <MousePointer className="h-3 w-3 text-primary shrink-0" />
+              <span><strong>Select text</strong> to assign as variable · <strong>Click images</strong> to edit/replace · <strong>Type directly</strong> to edit content · Press <kbd className="px-1 py-0.5 bg-muted rounded text-[10px] border">Delete</kbd> to remove elements</span>
+            </div>
           </Card>
 
           {/* Mapped variables */}
           {visualMappings.length > 0 && (
             <Card className="shadow-surface">
               <CardContent className="p-4">
-                <h3 className="text-sm font-semibold mb-3">Mapped Variables</h3>
+                <h3 className="text-sm font-semibold mb-3">Mapped Variables ({visualMappings.length})</h3>
                 <div className="space-y-2">
                   {visualMappings.map((m) => (
-                    <div key={m.id} className="flex items-center gap-2 text-xs">
+                    <div key={m.id} className="flex items-center gap-2 text-xs bg-muted/30 rounded-lg px-3 py-2">
                       <Badge variant="outline" className="font-mono border-primary text-primary shrink-0">{`{${m.variable}}`}</Badge>
                       <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                      <span className="text-muted-foreground truncate">"{m.value}"</span>
+                      <span className="text-muted-foreground truncate flex-1">"{m.value}"</span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-destructive shrink-0 ml-auto"
+                        className="h-6 w-6 text-destructive shrink-0"
                         onClick={() => setVisualMappings((prev) => prev.filter((x) => x.id !== m.id))}
                       >
                         <X className="h-3 w-3" />
@@ -972,6 +1355,50 @@ export default function WebsiteDiscoveryPage() {
                   <Button onClick={() => saveMutation.mutate()} disabled={!templateName || saveMutation.isPending}>
                     {saveMutation.isPending ? "Saving..." : "Save Template"}
                   </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Image Edit Dialog */}
+          <Dialog open={!!imageEditPopover} onOpenChange={(open) => !open && setImageEditPopover(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader><DialogTitle>Edit Image</DialogTitle></DialogHeader>
+              <div className="space-y-4 mt-2">
+                {imageEditPopover && (
+                  <div className="rounded-lg border border-border overflow-hidden bg-muted/30">
+                    <img src={imageEditPopover.src} alt={imageEditPopover.alt} className="max-h-40 w-full object-contain" />
+                  </div>
+                )}
+                <div>
+                  <Label className="text-xs">Image URL</Label>
+                  <Input value={newImageSrc} onChange={(e) => setNewImageSrc(e.target.value)} className="mt-1 font-mono text-xs" placeholder="https://..." />
+                </div>
+                <div>
+                  <Label className="text-xs">Alt Text</Label>
+                  <Input value={newImageAlt} onChange={(e) => setNewImageAlt(e.target.value)} className="mt-1 text-xs" placeholder="Descriptive alt text..." />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Or use a variable:</Label>
+                  <Button variant="outline" size="sm" className="mt-1 text-xs w-full justify-start font-mono" onClick={() => {
+                    const varName = prompt("Variable name for this image (e.g. product_image):");
+                    if (varName) {
+                      const clean = varName.trim().toLowerCase().replace(/\s+/g, "_");
+                      setNewImageSrc(`{${clean}}`);
+                      setVisualMappings(prev => [...prev, { id: `vm-img-${Date.now()}`, original: imageEditPopover?.src || "", variable: clean, value: imageEditPopover?.src || "" }]);
+                    }
+                  }}>
+                    <Variable className="h-3 w-3 mr-1.5" /> Assign variable to image
+                  </Button>
+                </div>
+                <div className="flex justify-between gap-2 pt-2">
+                  <Button variant="destructive" size="sm" onClick={handleDeleteImage}>
+                    <Trash2 className="h-3.5 w-3.5 mr-1" /> Remove Image
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setImageEditPopover(null)}>Cancel</Button>
+                    <Button onClick={handleReplaceImage} disabled={!newImageSrc}>Apply</Button>
+                  </div>
                 </div>
               </div>
             </DialogContent>
