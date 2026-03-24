@@ -107,6 +107,7 @@ async function fetchPage(pageUrl: string): Promise<DiscoveredPage | null> {
 
     const rawHtml = await resp.text();
     const bodyHtml = extractBodyContent(rawHtml);
+    const headStyles = extractHeadStyles(rawHtml);
     const headings = extractHeadings(bodyHtml);
     const textSnippet = extractTextSnippet(bodyHtml);
 
@@ -117,7 +118,7 @@ async function fetchPage(pageUrl: string): Promise<DiscoveredPage | null> {
 
     const type = classifyPage(pageUrl, headings, textSnippet);
 
-    return { url: pageUrl, title, type, headings, textSnippet, bodyHtml };
+    return { url: pageUrl, title, type, headings, textSnippet, bodyHtml, headStyles };
   } catch {
     return null;
   }
