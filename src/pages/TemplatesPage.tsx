@@ -70,6 +70,7 @@ export default function TemplatesPage() {
   const [siteTemplateWebsite, setSiteTemplateWebsite] = useState("");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
   const [siteLoadingPages, setSiteLoadingPages] = useState(false);
+  const [elementorJsonData, setElementorJsonData] = useState<string | undefined>(undefined);
   // AI Content Generator state
   const [aiContentOpen, setAiContentOpen] = useState(false);
   const [aiKeywords, setAiKeywords] = useState("");
@@ -303,21 +304,61 @@ export default function TemplatesPage() {
     }
   };
 
-  // Import site page as template
-  const importSitePage = async (pageUrl: string, pageTitle: string) => {
+  // Import site page as template - try Elementor first, then public scan
+  const importSitePage = async (pageUrl: string, pageTitle: string, pageId?: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("scan-template", {
-        body: { url: pageUrl },
-      });
-      if (error) throw error;
-      if (data?.bodyHtml) {
+      let elementorData: string | undefined;
+      let importedHtml = "";
+      let headStyles = "";
+
+      // Try to fetch Elementor data from connected WordPress site
+      if (pageId && siteTemplateWebsite) {
+        try {
+          const { data: elData, error: elError } = await supabase.functions.invoke("scan-template", {
+            body: { action: "fetch-elementor", website_id: siteTemplateWebsite, page_id: pageId },
+          });
+          if (!elError && elData?.success) {
+            if (elData.is_elementor && elData.elementor_data) {
+              elementorData = typeof elData.elementor_data === "string" 
+                ? elData.elementor_data 
+                : JSON.stringify(elData.elementor_data);
+            }
+            importedHtml = elData.content || "";
+            headStyles = elData.headStyles || "";
+          }
+        } catch { /* fall through to public scan */ }
+      }
+
+      // Fallback: scan public URL
+      if (!importedHtml) {
+        const { data, error } = await supabase.functions.invoke("scan-template", {
+          body: { url: pageUrl },
+        });
+        if (error) throw error;
+        importedHtml = data?.bodyHtml || "";
+        headStyles = data?.headStyles || "";
+        if (data?.is_elementor) {
+          toast({ title: "Elementor page detected", description: "For best results, connect your WordPress site to import Elementor data directly." });
+        }
+      }
+
+      if (importedHtml) {
+        const fullContent = headStyles 
+          ? `<!-- STYLES -->\n${headStyles}\n<!-- /STYLES -->\n${importedHtml}`
+          : importedHtml;
+        
         setName(pageTitle || "Site Page Template");
-        setContent(data.bodyHtml);
-        setBlocks(htmlToBlocks(data.bodyHtml));
+        setContent(fullContent);
+        setBlocks(htmlToBlocks(importedHtml));
+        setElementorJsonData(elementorData);
         setSiteDialogOpen(false);
         setSitePages([]);
         setOpen(true);
-        toast({ title: "Page imported as template", description: "Edit variables and save." });
+        setActiveEditorTab("elementor");
+        toast({ 
+          title: elementorData ? "Elementor page imported" : "Page imported as template",
+          description: elementorData ? "Original Elementor design preserved. Edit with the page builder." : "Edit variables and save.",
+        });
       }
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
@@ -860,6 +901,7 @@ export default function TemplatesPage() {
                     <ElementorEditor
                       html={content}
                       onChange={(newHtml) => setContent(newHtml)}
+                      elementorJson={elementorJsonData}
                     />
                   </TabsContent>
                   <TabsContent value="visual" className="mt-3">
@@ -1892,7 +1934,7 @@ RULES:
                       <button
                         key={page.id}
                         className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-accent/50 transition-colors text-left"
-                        onClick={() => importSitePage(page.link, page.title)}
+                        onClick={() => importSitePage(page.link, page.title, page.id)}
                       >
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">{page.title}</p>

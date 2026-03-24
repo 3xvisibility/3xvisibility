@@ -221,6 +221,7 @@ export default function TemplateScannerPage() {
         blocks: ContentBlock[];
         suggestions: VariableSuggestion[];
         imageUrls?: string[];
+        is_elementor?: boolean;
       };
     },
     onSuccess: (data) => {
@@ -233,9 +234,10 @@ export default function TemplateScannerPage() {
         accepted: true,
       }));
       setMappings(initialMappings);
+      const elementorNote = data.is_elementor ? " (Elementor page detected!)" : "";
       toast({
         title: "Page scanned",
-        description: `Found ${data.blocks.length} content blocks and ${data.suggestions.length} variable suggestions.`,
+        description: `Found ${data.blocks.length} content blocks and ${data.suggestions.length} variable suggestions.${elementorNote}`,
       });
     },
     onError: (err: Error) => {
