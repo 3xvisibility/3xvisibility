@@ -697,13 +697,23 @@ function addElIds(nodes: ElementorNode[], html: string): string {
 
 // ── Main Editor Component ──────────────────────────────
 export function ElementorEditor({ html, css, onChange, onCssChange, customVars = [], preserveOriginalStyles }: ElementorEditorProps) {
-  const [nodes, setNodes] = useState<ElementorNode[]>(() => parseHtmlToNodes(html));
+  // Extract embedded styles from HTML (<!-- STYLES --> blocks)
+  const extractedStyles = useMemo(() => {
+    const styleMatch = html.match(/<!-- STYLES -->\n?([\s\S]*?)\n?<!-- \/STYLES -->/);
+    return styleMatch ? styleMatch[1] : "";
+  }, []);
+  
+  const cleanHtml = useMemo(() => {
+    return html.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "").trim();
+  }, []);
+  
+  const [nodes, setNodes] = useState<ElementorNode[]>(() => parseHtmlToNodes(cleanHtml));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<"widgets" | "variables" | "navigator" | "dynamic">("widgets");
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [history, setHistory] = useState<ElementorNode[][]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
-  const [customCss, setCustomCss] = useState(css || "");
+  const [customCss, setCustomCss] = useState(css || extractedStyles);
   
   // Find selected node
   const findNode = useCallback((nodeList: ElementorNode[], id: string): ElementorNode | null => {
