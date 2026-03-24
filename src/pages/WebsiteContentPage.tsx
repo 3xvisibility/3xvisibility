@@ -327,6 +327,21 @@ export default function WebsiteContentPage() {
           page={previewPage}
         />
       )}
+
+      {/* SEO Optimize Dialog */}
+      {optimizePage && (
+        <SeoOptimizeDialog
+          open={!!optimizePage}
+          onOpenChange={(o) => !o && setOptimizePage(null)}
+          page={optimizePage}
+          websiteId={effectiveWebsite}
+          workspaceId={wsId}
+          onOptimized={() => {
+            refetchPages();
+            refetchProducts();
+          }}
+        />
+      )}
     </div>
   );
 }
