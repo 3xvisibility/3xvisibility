@@ -23,6 +23,27 @@ interface UrlGroup {
   suggestedVariables: string[];
 }
 
+function extractHeadStyles(html: string): string {
+  const styles: string[] = [];
+  // Extract <style> tags from <head>
+  const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  if (headMatch) {
+    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+    let m;
+    while ((m = styleRegex.exec(headMatch[1])) !== null) {
+      styles.push(`<style>${m[1]}</style>`);
+    }
+    // Extract <link rel="stylesheet"> tags
+    const linkRegex = /<link[^>]*rel=["']stylesheet["'][^>]*>/gi;
+    let lm;
+    while ((lm = linkRegex.exec(headMatch[1])) !== null) {
+      // Convert relative URLs to absolute
+      styles.push(lm[0]);
+    }
+  }
+  return styles.join("\n");
+}
+
 function extractBodyContent(html: string): string {
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
