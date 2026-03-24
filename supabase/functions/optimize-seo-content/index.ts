@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
       manual_title,
       manual_content,
       manual_excerpt,
+      skip_push,
     } = body;
 
     if (!website_id) {
