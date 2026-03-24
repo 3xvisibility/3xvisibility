@@ -1307,4 +1307,4 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
   );
 }
 
-export { parseHtmlToNodes, nodesToHtml, type ElementorNode };
+export { parseHtmlToNodes, parseElementorJson, nodesToHtml, type ElementorNode };
