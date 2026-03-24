@@ -30,6 +30,7 @@ import {
   htmlToBlocks,
   type TemplateBlock,
 } from "@/components/templates/TemplateVisualEditor";
+import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useDragReorder } from "@/hooks/use-drag-reorder";
 import { useLanguage } from "@/i18n/LanguageContext";
