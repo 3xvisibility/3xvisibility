@@ -48,6 +48,7 @@ interface DiscoveredPage {
   headings: { tag: string; text: string }[];
   textSnippet: string;
   bodyHtml: string;
+  headStyles?: string;
 }
 
 interface DetectedPattern {
