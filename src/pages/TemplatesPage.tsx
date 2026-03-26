@@ -48,6 +48,7 @@ export default function TemplatesPage() {
   const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
   const [activeEditorTab, setActiveEditorTab] = useState<string>("elementor");
   const [aiPrompt, setAiPrompt] = useState("");
+  const [aiIncludeHeaderFooter, setAiIncludeHeaderFooter] = useState(false);
   
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   // SEO state
@@ -451,7 +452,7 @@ export default function TemplatesPage() {
   const aiGenerateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt },
+        body: { prompt, includeHeaderFooter: aiIncludeHeaderFooter },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -839,6 +840,10 @@ export default function TemplatesPage() {
                     onChange={(e) => setAiPrompt(e.target.value)}
                     rows={3}
                   />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={aiIncludeHeaderFooter} onCheckedChange={setAiIncludeHeaderFooter} id="ai-hf" />
+                  <Label htmlFor="ai-hf" className="text-sm cursor-pointer">Include header & footer (uncheck to use your website's)</Label>
                 </div>
                 <Button
                   onClick={() => aiGenerateMutation.mutate(aiPrompt)}

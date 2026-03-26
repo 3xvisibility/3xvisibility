@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
+    const { prompt, includeHeaderFooter } = await req.json();
     if (!prompt || typeof prompt !== "string") {
       return new Response(JSON.stringify({ error: "A prompt is required." }), {
         status: 400,
@@ -23,7 +23,11 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are a professional web designer and template builder for programmatic SEO pages. Given a user description, generate a BEAUTIFUL, responsive HTML template that uses dynamic variables in {variable} syntax (e.g. {service}, {location}, {company}).
+    const headerFooterRule = includeHeaderFooter
+      ? "13. Include a professional header with navigation and a footer with contact info and links."
+      : "13. Do NOT include any <header>, <nav>, or <footer> elements — the user's connected website provides those. Only generate the main page body content.";
+
+    const systemPrompt = `You are a professional web designer and template builder for programmatic SEO pages. Given a user description, generate a BEAUTIFUL, responsive HTML template that uses dynamic variables in {variable} syntax (e.g. {product_name}, {location}, {company_name}).
 
 Rules:
 1. Output ONLY the raw HTML template content. No markdown fences, no explanation.
@@ -37,15 +41,16 @@ Rules:
    - class="badge" or class="tag" for small labels
    - class="pricing" with class="price" for pricing sections
    - class="contact-info" for contact details
-4. Include 3-8 relevant dynamic variables wrapped in curly braces like {variable_name}. Use lowercase_snake_case for variable names.
-5. For sections that should have unique AI-generated content per page, use the syntax {{AI:instruction using {variables}}} — for example: {{AI:Write a paragraph about {service} in {location}}}.
-6. For sections that should have a unique AI-generated image per page, use the syntax {{AI_IMAGE:description using {variables}}} — for example: {{AI_IMAGE:A professional photo of {service} in {location}}}.
+4. Include 3-8 relevant CONTENT variables only. Variables must represent real data fields like {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}. NEVER use CSS or design variables like {--primary}, {--dark}, {--accent}, {--bg}, {--text}, {--shadow}, {--border}, {--font}, {--radius}, {--spacing}. Variable names must be lowercase_snake_case content identifiers only.
+5. For sections that should have unique AI-generated content per page, use the syntax {{AI:instruction using {variables}}} — for example: {{AI:Write a paragraph about {product_name} in {location}}}.
+6. For sections that should have a unique AI-generated image per page, use the syntax {{AI_IMAGE:description using {variables}}} — for example: {{AI_IMAGE:A professional photo of {product_name} in {location}}}.
 7. Include at least one {{AI:...}} block for dynamic content generation.
 8. Optionally include one {{AI_IMAGE:...}} block for a hero or section image.
 9. Use professional stock images from https://picsum.photos/800/400?random=N (increment N for different images) for placeholder images.
 10. Include a hero section, features/services grid with cards, testimonials with ★★★★★ ratings, a CTA section, and a contact form.
 11. Include meta-relevant elements like a main heading (h1), subheadings (h2), and descriptive paragraphs.
-12. The template must look PROFESSIONAL and MODERN when published — like a real business landing page.`;
+12. The template must look PROFESSIONAL and MODERN when published — like a real business landing page. Use inline styles or class-based CSS only — never use CSS custom properties as template variables.
+${headerFooterRule}`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
