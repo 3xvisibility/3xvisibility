@@ -665,6 +665,20 @@ export default function TemplatesPage() {
     setCanonicalUrlPattern("");
     setSchemaType("WebPage");
     setSchemaConfig({});
+    // PGP fields
+    setExcerptPattern("");
+    setFeaturedImageSource("none");
+    setFeaturedImageUrl("");
+    setFeaturedImageAlt("");
+    setFeaturedImageFilename("");
+    setCustomFields([]);
+    setTaxonomyCategories("");
+    setTaxonomyTags("");
+    setPostType("page");
+    setAuthorPattern("");
+    setCommentsEnabled(true);
+    setHeaderCode("");
+    setFooterCode("");
   };
 
   const importFileRef = useRef<HTMLInputElement>(null);
