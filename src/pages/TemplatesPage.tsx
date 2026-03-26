@@ -606,6 +606,20 @@ export default function TemplatesPage() {
     setOgImagePattern(config?._ogImage || "");
     setTwitterCard(config?._twitterCard || "summary_large_image");
     setCanonicalUrlPattern(config?._canonicalUrl || "");
+    // PGP fields
+    setExcerptPattern(config?._excerptPattern || "");
+    setFeaturedImageSource(config?._featuredImageSource || "none");
+    setFeaturedImageUrl(config?._featuredImageUrl || "");
+    setFeaturedImageAlt(config?._featuredImageAlt || "");
+    setFeaturedImageFilename(config?._featuredImageFilename || "");
+    setCustomFields(config?._customFields || []);
+    setTaxonomyCategories(config?._taxonomyCategories || "");
+    setTaxonomyTags(config?._taxonomyTags || "");
+    setPostType(config?._postType || "page");
+    setAuthorPattern(config?._authorPattern || "");
+    setCommentsEnabled(config?._commentsEnabled !== false);
+    setHeaderCode(config?._headerCode || "");
+    setFooterCode(config?._footerCode || "");
   };
 
   const buildSchemaConfig = () => ({
@@ -616,6 +630,20 @@ export default function TemplatesPage() {
     _ogImage: ogImagePattern,
     _twitterCard: twitterCard,
     _canonicalUrl: canonicalUrlPattern,
+    // PGP fields
+    _excerptPattern: excerptPattern,
+    _featuredImageSource: featuredImageSource,
+    _featuredImageUrl: featuredImageUrl,
+    _featuredImageAlt: featuredImageAlt,
+    _featuredImageFilename: featuredImageFilename,
+    _customFields: customFields,
+    _taxonomyCategories: taxonomyCategories,
+    _taxonomyTags: taxonomyTags,
+    _postType: postType,
+    _authorPattern: authorPattern,
+    _commentsEnabled: commentsEnabled,
+    _headerCode: headerCode,
+    _footerCode: footerCode,
   });
 
   const resetAndClose = () => {
