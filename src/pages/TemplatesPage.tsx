@@ -61,6 +61,20 @@ export default function TemplatesPage() {
   // Schema state
   const [schemaType, setSchemaType] = useState("WebPage");
   const [schemaConfig, setSchemaConfig] = useState<Record<string, string>>({});
+  // PGP Fields state
+  const [excerptPattern, setExcerptPattern] = useState("");
+  const [featuredImageSource, setFeaturedImageSource] = useState<string>("none");
+  const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [featuredImageAlt, setFeaturedImageAlt] = useState("");
+  const [featuredImageFilename, setFeaturedImageFilename] = useState("");
+  const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>([]);
+  const [taxonomyCategories, setTaxonomyCategories] = useState("");
+  const [taxonomyTags, setTaxonomyTags] = useState("");
+  const [postType, setPostType] = useState("page");
+  const [authorPattern, setAuthorPattern] = useState("");
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
+  const [headerCode, setHeaderCode] = useState("");
+  const [footerCode, setFooterCode] = useState("");
   // CSV template state
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [csvTemplateText, setCsvTemplateText] = useState("");
