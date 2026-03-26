@@ -933,7 +933,7 @@ export default function TemplatesPage() {
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <Tabs value={activeEditorTab} onValueChange={handleTabChange} className="w-full">
-                  <TabsList className="grid h-auto w-full grid-cols-3 sm:grid-cols-6">
+                  <TabsList className="grid h-auto w-full grid-cols-4 sm:grid-cols-8">
                     <TabsTrigger value="elementor" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Columns className="h-3.5 w-3.5" /> Page Builder
                     </TabsTrigger>
@@ -942,6 +942,9 @@ export default function TemplatesPage() {
                     </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Code className="h-3.5 w-3.5" /> Code
+                    </TabsTrigger>
+                    <TabsTrigger value="fields" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                      <FileText className="h-3.5 w-3.5" /> Fields
                     </TabsTrigger>
                     <TabsTrigger value="seo" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Globe className="h-3.5 w-3.5" /> SEO
