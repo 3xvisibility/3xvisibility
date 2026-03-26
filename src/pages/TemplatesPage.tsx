@@ -841,6 +841,10 @@ export default function TemplatesPage() {
                     rows={3}
                   />
                 </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={aiIncludeHeaderFooter} onCheckedChange={setAiIncludeHeaderFooter} id="ai-hf" />
+                  <Label htmlFor="ai-hf" className="text-sm cursor-pointer">Include header & footer (uncheck to use your website's)</Label>
+                </div>
                 <Button
                   onClick={() => aiGenerateMutation.mutate(aiPrompt)}
                   disabled={!aiPrompt.trim() || aiGenerateMutation.isPending}
