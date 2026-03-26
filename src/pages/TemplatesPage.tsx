@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileText, Copy, Trash2, Sparkles, Loader2, Code, Eye, LayoutPanelTop, Pencil, Search as SearchIcon, Globe, Braces, Download, Upload, GripVertical, RotateCcw, FileSpreadsheet, Link2, History, Wand2, LayoutGrid, List, Filter, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreVertical, Columns } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -61,6 +62,20 @@ export default function TemplatesPage() {
   // Schema state
   const [schemaType, setSchemaType] = useState("WebPage");
   const [schemaConfig, setSchemaConfig] = useState<Record<string, string>>({});
+  // PGP Fields state
+  const [excerptPattern, setExcerptPattern] = useState("");
+  const [featuredImageSource, setFeaturedImageSource] = useState<string>("none");
+  const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [featuredImageAlt, setFeaturedImageAlt] = useState("");
+  const [featuredImageFilename, setFeaturedImageFilename] = useState("");
+  const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>([]);
+  const [taxonomyCategories, setTaxonomyCategories] = useState("");
+  const [taxonomyTags, setTaxonomyTags] = useState("");
+  const [postType, setPostType] = useState("page");
+  const [authorPattern, setAuthorPattern] = useState("");
+  const [commentsEnabled, setCommentsEnabled] = useState(true);
+  const [headerCode, setHeaderCode] = useState("");
+  const [footerCode, setFooterCode] = useState("");
   // CSV template state
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [csvTemplateText, setCsvTemplateText] = useState("");
@@ -592,6 +607,20 @@ export default function TemplatesPage() {
     setOgImagePattern(config?._ogImage || "");
     setTwitterCard(config?._twitterCard || "summary_large_image");
     setCanonicalUrlPattern(config?._canonicalUrl || "");
+    // PGP fields
+    setExcerptPattern(config?._excerptPattern || "");
+    setFeaturedImageSource(config?._featuredImageSource || "none");
+    setFeaturedImageUrl(config?._featuredImageUrl || "");
+    setFeaturedImageAlt(config?._featuredImageAlt || "");
+    setFeaturedImageFilename(config?._featuredImageFilename || "");
+    setCustomFields(config?._customFields || []);
+    setTaxonomyCategories(config?._taxonomyCategories || "");
+    setTaxonomyTags(config?._taxonomyTags || "");
+    setPostType(config?._postType || "page");
+    setAuthorPattern(config?._authorPattern || "");
+    setCommentsEnabled(config?._commentsEnabled !== false);
+    setHeaderCode(config?._headerCode || "");
+    setFooterCode(config?._footerCode || "");
   };
 
   const buildSchemaConfig = () => ({
@@ -602,6 +631,20 @@ export default function TemplatesPage() {
     _ogImage: ogImagePattern,
     _twitterCard: twitterCard,
     _canonicalUrl: canonicalUrlPattern,
+    // PGP fields
+    _excerptPattern: excerptPattern,
+    _featuredImageSource: featuredImageSource,
+    _featuredImageUrl: featuredImageUrl,
+    _featuredImageAlt: featuredImageAlt,
+    _featuredImageFilename: featuredImageFilename,
+    _customFields: customFields,
+    _taxonomyCategories: taxonomyCategories,
+    _taxonomyTags: taxonomyTags,
+    _postType: postType,
+    _authorPattern: authorPattern,
+    _commentsEnabled: commentsEnabled,
+    _headerCode: headerCode,
+    _footerCode: footerCode,
   });
 
   const resetAndClose = () => {
@@ -623,6 +666,20 @@ export default function TemplatesPage() {
     setCanonicalUrlPattern("");
     setSchemaType("WebPage");
     setSchemaConfig({});
+    // PGP fields
+    setExcerptPattern("");
+    setFeaturedImageSource("none");
+    setFeaturedImageUrl("");
+    setFeaturedImageAlt("");
+    setFeaturedImageFilename("");
+    setCustomFields([]);
+    setTaxonomyCategories("");
+    setTaxonomyTags("");
+    setPostType("page");
+    setAuthorPattern("");
+    setCommentsEnabled(true);
+    setHeaderCode("");
+    setFooterCode("");
   };
 
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -877,7 +934,7 @@ export default function TemplatesPage() {
                   <Input id="tpl-name" placeholder="e.g., Course Landing" value={name} onChange={(e) => setName(e.target.value)} />
                 </div>
                 <Tabs value={activeEditorTab} onValueChange={handleTabChange} className="w-full">
-                  <TabsList className="grid h-auto w-full grid-cols-3 sm:grid-cols-6">
+                  <TabsList className="grid h-auto w-full grid-cols-4 sm:grid-cols-8">
                     <TabsTrigger value="elementor" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Columns className="h-3.5 w-3.5" /> Page Builder
                     </TabsTrigger>
@@ -886,6 +943,9 @@ export default function TemplatesPage() {
                     </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Code className="h-3.5 w-3.5" /> Code
+                    </TabsTrigger>
+                    <TabsTrigger value="fields" className="flex items-center gap-1.5 text-xs sm:text-sm">
+                      <FileText className="h-3.5 w-3.5" /> Fields
                     </TabsTrigger>
                     <TabsTrigger value="seo" className="flex items-center gap-1.5 text-xs sm:text-sm">
                       <Globe className="h-3.5 w-3.5" /> SEO
@@ -920,6 +980,266 @@ export default function TemplatesPage() {
                       rows={12}
                       className="font-mono text-xs"
                     />
+                  </TabsContent>
+                  <TabsContent value="fields" className="mt-3">
+                    <div className="space-y-5">
+                      <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-1">
+                        <p className="text-sm font-medium">Content Group Fields</p>
+                        <p className="text-xs text-muted-foreground">
+                          Configure fields matching Page Generator Pro. Use &#123;variable&#125; syntax for dynamic values.
+                        </p>
+                      </div>
+
+                      {/* Post Type */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Post Type</Label>
+                        <Select value={postType} onValueChange={setPostType}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="page">Page</SelectItem>
+                            <SelectItem value="post">Post</SelectItem>
+                            <SelectItem value="product">Product (WooCommerce)</SelectItem>
+                            <SelectItem value="custom">Custom Post Type</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-muted-foreground">The WordPress post type to generate.</p>
+                      </div>
+
+                      <Separator />
+
+                      {/* Excerpt */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Excerpt Pattern</Label>
+                        <Textarea
+                          placeholder="e.g., Professional {service} in {city}. Call today for a free quote!"
+                          value={excerptPattern}
+                          onChange={(e) => setExcerptPattern(e.target.value)}
+                          rows={2}
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          The excerpt/summary for each generated page. Supports &#123;variable&#125; placeholders and spintax.
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      {/* Featured Image */}
+                      <div className="space-y-3">
+                        <Label className="text-xs font-medium">Featured Image</Label>
+                        <Select value={featuredImageSource} onValueChange={setFeaturedImageSource}>
+                          <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="url">Image URL</SelectItem>
+                            <SelectItem value="pexels">Pexels (Search)</SelectItem>
+                            <SelectItem value="pixabay">Pixabay (Search)</SelectItem>
+                            <SelectItem value="ai">AI Generated</SelectItem>
+                            <SelectItem value="media">Media Library</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {featuredImageSource !== "none" && (
+                          <div className="rounded-lg border border-border p-3 space-y-3">
+                            {(featuredImageSource === "url" || featuredImageSource === "media") && (
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">Image URL / Path</Label>
+                                <Input
+                                  placeholder="e.g., https://example.com/images/{slug}.jpg or {featured_image}"
+                                  value={featuredImageUrl}
+                                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                                  className="font-mono text-sm h-9"
+                                />
+                              </div>
+                            )}
+                            {(featuredImageSource === "pexels" || featuredImageSource === "pixabay" || featuredImageSource === "ai") && (
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">Search Query / Prompt</Label>
+                                <Input
+                                  placeholder="e.g., {service} {city} professional"
+                                  value={featuredImageUrl}
+                                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                                  className="font-mono text-sm h-9"
+                                />
+                              </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">Alt Text Pattern</Label>
+                                <Input
+                                  placeholder="{service} in {city}"
+                                  value={featuredImageAlt}
+                                  onChange={(e) => setFeaturedImageAlt(e.target.value)}
+                                  className="font-mono text-sm h-9"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs">Filename Pattern</Label>
+                                <Input
+                                  placeholder="{slug}-featured"
+                                  value={featuredImageFilename}
+                                  onChange={(e) => setFeaturedImageFilename(e.target.value)}
+                                  className="font-mono text-sm h-9"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      {/* Author */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Author</Label>
+                        <Input
+                          placeholder="e.g., {author} or specific username"
+                          value={authorPattern}
+                          onChange={(e) => setAuthorPattern(e.target.value)}
+                          className="font-mono text-sm h-9"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          The author for generated pages. Use a variable for rotation from CSV data.
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      {/* Taxonomies */}
+                      <div className="space-y-3">
+                        <Label className="text-xs font-medium">Taxonomies</Label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Categories</Label>
+                            <Input
+                              placeholder="{category}, Services"
+                              value={taxonomyCategories}
+                              onChange={(e) => setTaxonomyCategories(e.target.value)}
+                              className="font-mono text-sm h-9"
+                            />
+                            <p className="text-[11px] text-muted-foreground">Comma-separated. Supports variables.</p>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Tags</Label>
+                            <Input
+                              placeholder="{keyword}, {city}, local"
+                              value={taxonomyTags}
+                              onChange={(e) => setTaxonomyTags(e.target.value)}
+                              className="font-mono text-sm h-9"
+                            />
+                            <p className="text-[11px] text-muted-foreground">Comma-separated. Supports variables.</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Custom Fields */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-medium">Custom Fields (Post Meta)</Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs rounded-lg"
+                            onClick={() => setCustomFields([...customFields, { key: "", value: "" }])}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Add Field
+                          </Button>
+                        </div>
+                        {customFields.length === 0 ? (
+                          <p className="text-xs text-muted-foreground italic">No custom fields defined. Click &quot;Add Field&quot; to create key/value pairs.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {customFields.map((field, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Input
+                                  placeholder="Meta Key"
+                                  value={field.key}
+                                  onChange={(e) => {
+                                    const updated = [...customFields];
+                                    updated[idx] = { ...updated[idx], key: e.target.value };
+                                    setCustomFields(updated);
+                                  }}
+                                  className="font-mono text-sm h-8 flex-1"
+                                />
+                                <Input
+                                  placeholder="Meta Value (supports {variables})"
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    const updated = [...customFields];
+                                    updated[idx] = { ...updated[idx], value: e.target.value };
+                                    setCustomFields(updated);
+                                  }}
+                                  className="font-mono text-sm h-8 flex-[2]"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                                  onClick={() => setCustomFields(customFields.filter((_, i) => i !== idx))}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <Separator />
+
+                      {/* Discussion */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-xs font-medium">Discussion</Label>
+                          <p className="text-[11px] text-muted-foreground">Allow comments on generated pages</p>
+                        </div>
+                        <Switch checked={commentsEnabled} onCheckedChange={setCommentsEnabled} />
+                      </div>
+
+                      <Separator />
+
+                      {/* Header & Footer Code */}
+                      <div className="space-y-3">
+                        <Label className="text-xs font-medium">Header & Footer Code</Label>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Header Code (injected in &lt;head&gt;)</Label>
+                          <Textarea
+                            placeholder='<link rel="stylesheet" href="...">'
+                            value={headerCode}
+                            onChange={(e) => setHeaderCode(e.target.value)}
+                            rows={2}
+                            className="font-mono text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Footer Code (injected before &lt;/body&gt;)</Label>
+                          <Textarea
+                            placeholder='<script src="..."></script>'
+                            value={footerCode}
+                            onChange={(e) => setFooterCode(e.target.value)}
+                            rows={2}
+                            className="font-mono text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      {detectedVars.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1.5">Available variables from template:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[...new Set(detectedVars)].map((v) => (
+                              <Badge key={v} variant="outline" className="text-xs font-mono cursor-pointer hover:bg-accent"
+                                onClick={() => navigator.clipboard.writeText(v)}>
+                                {v}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </TabsContent>
                   <TabsContent value="seo" className="mt-3">
                     <div className="space-y-4">
