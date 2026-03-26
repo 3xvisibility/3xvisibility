@@ -48,6 +48,7 @@ export default function TemplatesPage() {
   const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
   const [activeEditorTab, setActiveEditorTab] = useState<string>("elementor");
   const [aiPrompt, setAiPrompt] = useState("");
+  const [aiIncludeHeaderFooter, setAiIncludeHeaderFooter] = useState(false);
   
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   // SEO state
