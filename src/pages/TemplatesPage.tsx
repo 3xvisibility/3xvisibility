@@ -452,7 +452,7 @@ export default function TemplatesPage() {
   const aiGenerateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt },
+        body: { prompt, includeHeaderFooter: aiIncludeHeaderFooter },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
