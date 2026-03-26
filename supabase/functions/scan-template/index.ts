@@ -82,7 +82,8 @@ function extractBodyContent(html: string): string {
   // Try to extract just the body
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
-  // Remove script tags but keep styles
+  // Keep <style> tags (page builder inline styles like Elementor, Divi, etc.)
+  // Remove script tags, nav, footer
   return content
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<nav[\s\S]*?<\/nav>/gi, "")

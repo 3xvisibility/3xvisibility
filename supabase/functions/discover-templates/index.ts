@@ -23,22 +23,71 @@ interface UrlGroup {
   suggestedVariables: string[];
 }
 
-function extractHeadStyles(html: string): string {
+function resolveRelativeUrls(html: string, baseUrl: string): string {
+  let origin: string;
+  let basePath: string;
+  try {
+    const u = new URL(baseUrl);
+    origin = u.origin;
+    basePath = baseUrl.replace(/\/[^/]*$/, "/");
+  } catch {
+    return html;
+  }
+  return html.replace(
+    /(src|href|srcset|poster|data-src|data-lazy-src|data-original|action)=["']([^"']+)["']/gi,
+    (full, attr, value) => {
+      if (/^(https?:|data:|mailto:|javascript:|#|\{)/i.test(value)) return full;
+      let resolved: string;
+      if (value.startsWith("//")) {
+        resolved = "https:" + value;
+      } else if (value.startsWith("/")) {
+        resolved = origin + value;
+      } else {
+        resolved = basePath + value;
+      }
+      return `${attr}="${resolved}"`;
+    }
+  );
+}
+
+function extractHeadStyles(html: string, baseUrl?: string): string {
   const styles: string[] = [];
-  // Extract <style> tags from <head>
   const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
   if (headMatch) {
-    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-    let m;
-    while ((m = styleRegex.exec(headMatch[1])) !== null) {
-      styles.push(`<style>${m[1]}</style>`);
-    }
     // Extract <link rel="stylesheet"> tags
     const linkRegex = /<link[^>]*rel=["']stylesheet["'][^>]*>/gi;
     let lm;
     while ((lm = linkRegex.exec(headMatch[1])) !== null) {
-      // Convert relative URLs to absolute
-      styles.push(lm[0]);
+      let tag = lm[0];
+      if (baseUrl) {
+        const hrefMatch = tag.match(/href=["']([^"']+)["']/i);
+        if (hrefMatch) {
+          let href = hrefMatch[1];
+          if (href.startsWith("//")) href = "https:" + href;
+          else if (href.startsWith("/")) {
+            try { href = new URL(baseUrl).origin + href; } catch {}
+          } else if (!href.startsWith("http")) {
+            href = baseUrl.replace(/\/[^/]*$/, "/") + href;
+          }
+          tag = tag.replace(hrefMatch[1], href);
+        }
+      }
+      styles.push(tag);
+    }
+    // Extract inline <style> blocks
+    const styleRegex = /<style[^>]*>[\s\S]*?<\/style>/gi;
+    let m;
+    while ((m = styleRegex.exec(headMatch[1])) !== null) {
+      styles.push(m[0]);
+    }
+  }
+  // Also grab body inline styles (Elementor, Divi, etc. inject styles in body)
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (bodyMatch) {
+    const bodyStyleRegex = /<style[^>]*>[\s\S]*?<\/style>/gi;
+    let bs;
+    while ((bs = bodyStyleRegex.exec(bodyMatch[1])) !== null) {
+      styles.push(bs[0]);
     }
   }
   return styles.join("\n");
@@ -47,9 +96,9 @@ function extractHeadStyles(html: string): string {
 function extractBodyContent(html: string): string {
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const content = bodyMatch ? bodyMatch[1] : html;
+  // Keep <style> tags (page builder inline styles), remove scripts/nav/footer
   return content
     .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<nav[\s\S]*?<\/nav>/gi, "")
     .replace(/<footer[\s\S]*?<\/footer>/gi, "")
     .replace(/<!--[\s\S]*?-->/g, "");
@@ -91,10 +140,11 @@ function classifyPage(url: string, headings: { tag: string; text: string }[], te
   return "page";
 }
 
-async function fetchPage(pageUrl: string): Promise<DiscoveredPage | null> {
+/** Fetch a public page and return full design-preserved content */
+async function fetchRenderedPage(pageUrl: string): Promise<DiscoveredPage | null> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
     const resp = await fetch(pageUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)", Accept: "text/html" },
       redirect: "follow",
@@ -106,8 +156,9 @@ async function fetchPage(pageUrl: string): Promise<DiscoveredPage | null> {
     if (!ct.includes("html")) return null;
 
     const rawHtml = await resp.text();
-    const bodyHtml = extractBodyContent(rawHtml);
-    const headStyles = extractHeadStyles(rawHtml);
+    const resolvedHtml = resolveRelativeUrls(rawHtml, pageUrl);
+    const headStyles = extractHeadStyles(resolvedHtml, pageUrl);
+    const bodyHtml = extractBodyContent(resolvedHtml);
     const headings = extractHeadings(bodyHtml);
     const textSnippet = extractTextSnippet(bodyHtml);
 
@@ -143,10 +194,6 @@ function discoverLinks(html: string, baseUrl: string): string[] {
   return [...links];
 }
 
-/**
- * Group pages by URL structure pattern.
- * e.g. /products/widget-a and /products/widget-b -> pattern "/products/{slug}"
- */
 function groupPagesByUrlPattern(pages: DiscoveredPage[]): UrlGroup[] {
   const patternMap = new Map<string, { pages: string[]; segments: string[][] }>();
 
@@ -155,14 +202,10 @@ function groupPagesByUrlPattern(pages: DiscoveredPage[]): UrlGroup[] {
       const parsed = new URL(page.url);
       const segments = parsed.pathname.split("/").filter(Boolean);
       if (segments.length === 0) continue;
-
-      // Create pattern by replacing the last segment with a placeholder
-      // For deeper paths, replace last segment
       if (segments.length >= 2) {
         const patternSegs = [...segments];
         patternSegs[patternSegs.length - 1] = "{slug}";
         const pattern = "/" + patternSegs.join("/");
-
         if (!patternMap.has(pattern)) {
           patternMap.set(pattern, { pages: [], segments: [] });
         }
@@ -173,14 +216,10 @@ function groupPagesByUrlPattern(pages: DiscoveredPage[]): UrlGroup[] {
     } catch { /* skip */ }
   }
 
-  // Only keep groups with 2+ pages (actual patterns)
   const groups: UrlGroup[] = [];
   for (const [pattern, data] of patternMap) {
     if (data.pages.length >= 2) {
-      // Extract the varying parts as suggested variables
-      const varyingValues = data.segments.map(s => s[s.length - 1]);
       const parentPath = data.segments[0].slice(0, -1).join("/");
-
       groups.push({
         pattern,
         patternLabel: `${parentPath ? parentPath + "/" : ""}{slug} (${data.pages.length} pages)`,
@@ -189,8 +228,6 @@ function groupPagesByUrlPattern(pages: DiscoveredPage[]): UrlGroup[] {
       });
     }
   }
-
-  // Sort by number of pages descending
   groups.sort((a, b) => b.pages.length - a.pages.length);
   return groups;
 }
@@ -277,10 +314,10 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
                       items: {
                         type: "object",
                         properties: {
-                          name: { type: "string", description: "Pattern name like 'Product Detail Pages' or 'Industry Landing Pages'" },
-                          template: { type: "string", description: "Template string like '{product_name}' or '{audience} solutions'" },
-                          variables: { type: "array", items: { type: "string" }, description: "Variable names" },
-                          matchingPages: { type: "array", items: { type: "string" }, description: "Titles of pages matching this pattern" },
+                          name: { type: "string", description: "Pattern name" },
+                          template: { type: "string", description: "Template string" },
+                          variables: { type: "array", items: { type: "string" } },
+                          matchingPages: { type: "array", items: { type: "string" } },
                           confidence: { type: "string", enum: ["high", "medium", "low"] },
                         },
                         required: ["name", "template", "variables", "matchingPages", "confidence"],
@@ -319,7 +356,7 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
       });
     }
 
-    // ACTION: Crawl from connected website
+    // ACTION: Crawl from connected website — fetch rendered public pages for exact design
     if (action === "crawl-connected" && website_id) {
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -337,63 +374,54 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
         });
       }
 
-      const creds = website.credentials as { username?: string; app_password?: string; access_token?: string } | null;
+      const creds = website.credentials as Record<string, string> | null;
       const siteUrl = website.url.replace(/\/+$/, "");
       const pages: DiscoveredPage[] = [];
 
+      // Step 1: Collect page URLs from CMS API
+      const pageUrls: { url: string; title: string; apiBodyHtml?: string }[] = [];
+
       if (website.type === "wordpress") {
         const headers: Record<string, string> = { "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)" };
-        if (creds?.username && creds?.app_password) {
-          headers["Authorization"] = `Basic ${btoa(`${creds.username}:${creds.app_password}`)}`;
+        if (creds?.username && (creds?.app_password || creds?.password)) {
+          headers["Authorization"] = `Basic ${btoa(`${creds.username}:${creds.app_password || creds.password}`)}`;
         }
 
         for (const endpoint of ["pages", "posts"]) {
           try {
-            // Fetch up to 100 items (2 pages of 50)
-            for (let page = 1; page <= 2 && pages.length < 100; page++) {
+            for (let page = 1; page <= 2 && pageUrls.length < 100; page++) {
               const wpResp = await fetch(`${siteUrl}/wp-json/wp/v2/${endpoint}?per_page=50&page=${page}&status=publish`, { headers });
               if (!wpResp.ok) break;
               const items = await wpResp.json();
               if (items.length === 0) break;
               for (const item of items) {
-                if (pages.length >= 100) break;
-                const bodyHtml = item.content?.rendered || "";
-                const headings = extractHeadings(bodyHtml);
-                const textSnippet = extractTextSnippet(bodyHtml);
+                if (pageUrls.length >= 100) break;
                 const title = item.title?.rendered?.replace(/<[^>]*>/g, "") || `${endpoint} ${item.id}`;
-                pages.push({
+                pageUrls.push({
                   url: item.link || `${siteUrl}/${item.slug}`,
                   title,
-                  type: classifyPage(item.link || "", headings, textSnippet),
-                  headings,
-                  textSnippet,
-                  bodyHtml,
+                  apiBodyHtml: item.content?.rendered || "",
                 });
               }
             }
           } catch { /* skip */ }
         }
       } else if (website.type === "shopify") {
-        if (creds?.access_token) {
-          const shopDomain = siteUrl.replace(/^https?:\/\//, "");
+        const shopDomain = siteUrl.replace(/^https?:\/\//, "");
+        const accessToken = creds?.admin_api_token || creds?.access_token || creds?.jwt_token || "";
+
+        if (accessToken) {
           try {
             const pagesResp = await fetch(`https://${shopDomain}/admin/api/2024-01/pages.json?limit=50`, {
-              headers: { "X-Shopify-Access-Token": creds.access_token },
+              headers: { "X-Shopify-Access-Token": accessToken },
             });
             if (pagesResp.ok) {
               const { pages: shopPages } = await pagesResp.json();
               for (const sp of shopPages) {
-                if (pages.length >= 100) break;
-                const bodyHtml = sp.body_html || "";
-                const headings = extractHeadings(bodyHtml);
-                const textSnippet = extractTextSnippet(bodyHtml);
-                pages.push({
+                if (pageUrls.length >= 100) break;
+                pageUrls.push({
                   url: `https://${shopDomain}/pages/${sp.handle}`,
                   title: sp.title,
-                  type: classifyPage(sp.handle, headings, textSnippet),
-                  headings,
-                  textSnippet,
-                  bodyHtml,
                 });
               }
             }
@@ -401,26 +429,110 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
 
           try {
             const prodResp = await fetch(`https://${shopDomain}/admin/api/2024-01/products.json?limit=50`, {
-              headers: { "X-Shopify-Access-Token": creds.access_token },
+              headers: { "X-Shopify-Access-Token": accessToken },
             });
             if (prodResp.ok) {
               const { products } = await prodResp.json();
               for (const p of products) {
-                if (pages.length >= 100) break;
-                const bodyHtml = p.body_html || "";
-                const headings = extractHeadings(bodyHtml);
-                const textSnippet = extractTextSnippet(bodyHtml);
-                pages.push({
+                if (pageUrls.length >= 100) break;
+                pageUrls.push({
                   url: `https://${shopDomain}/products/${p.handle}`,
                   title: p.title,
-                  type: "product",
-                  headings,
-                  textSnippet,
-                  bodyHtml,
                 });
               }
             }
           } catch { /* skip */ }
+        }
+      } else if (website.type === "prestashop") {
+        const apiKey = creds?.api_key || "";
+        if (apiKey) {
+          const auth = btoa(`${apiKey}:`);
+          try {
+            const cmsResp = await fetch(`${siteUrl}/api/cms?output_format=JSON&display=full&limit=50`, {
+              headers: { Authorization: `Basic ${auth}` },
+            });
+            if (cmsResp.ok) {
+              const data = await cmsResp.json();
+              const cmsList = data.cms_pages || data.cms || [];
+              for (const item of cmsList) {
+                if (pageUrls.length >= 100) break;
+                const id = item.id;
+                const linkRewrite = item.link_rewrite?.[0]?.value || item.link_rewrite || `page-${id}`;
+                pageUrls.push({
+                  url: `${siteUrl}/content/${id}-${linkRewrite}`,
+                  title: item.meta_title?.[0]?.value || item.meta_title || `Page ${id}`,
+                });
+              }
+            }
+          } catch { /* skip */ }
+        }
+      } else if (website.type === "woocommerce") {
+        // WooCommerce uses WP REST API + WC endpoints
+        const consumerKey = creds?.consumer_key || "";
+        const consumerSecret = creds?.consumer_secret || "";
+        if (consumerKey && consumerSecret) {
+          try {
+            const prodResp = await fetch(`${siteUrl}/wp-json/wc/v3/products?per_page=50&consumer_key=${consumerKey}&consumer_secret=${consumerSecret}`);
+            if (prodResp.ok) {
+              const products = await prodResp.json();
+              for (const p of products) {
+                if (pageUrls.length >= 100) break;
+                pageUrls.push({
+                  url: p.permalink || `${siteUrl}/product/${p.slug}`,
+                  title: p.name || `Product ${p.id}`,
+                });
+              }
+            }
+          } catch { /* skip */ }
+        }
+        // Also fetch WP pages
+        try {
+          const wpResp = await fetch(`${siteUrl}/wp-json/wp/v2/pages?per_page=50&status=publish`);
+          if (wpResp.ok) {
+            const items = await wpResp.json();
+            for (const item of items) {
+              if (pageUrls.length >= 100) break;
+              pageUrls.push({
+                url: item.link || `${siteUrl}/${item.slug}`,
+                title: item.title?.rendered?.replace(/<[^>]*>/g, "") || `Page ${item.id}`,
+              });
+            }
+          }
+        } catch { /* skip */ }
+      }
+
+      // Step 2: Fetch rendered public pages for exact design (batch of 5)
+      console.log(`Fetching ${pageUrls.length} rendered pages from ${website.name} (${website.type})`);
+      
+      for (let i = 0; i < pageUrls.length; i += 5) {
+        const batch = pageUrls.slice(i, i + 5);
+        const results = await Promise.all(
+          batch.map(async (pu) => {
+            const rendered = await fetchRenderedPage(pu.url);
+            if (rendered) {
+              // Use API title if available (more reliable)
+              rendered.title = pu.title || rendered.title;
+              return rendered;
+            }
+            // Fallback: use API body if rendered page couldn't be fetched
+            if (pu.apiBodyHtml) {
+              const headings = extractHeadings(pu.apiBodyHtml);
+              const textSnippet = extractTextSnippet(pu.apiBodyHtml);
+              return {
+                url: pu.url,
+                title: pu.title,
+                type: classifyPage(pu.url, headings, textSnippet),
+                headings,
+                textSnippet,
+                bodyHtml: pu.apiBodyHtml,
+                headStyles: "",
+              } as DiscoveredPage;
+            }
+            return null;
+          })
+        );
+        for (const r of results) {
+          if (r) pages.push(r);
         }
       }
 
@@ -431,7 +543,7 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
       });
     }
 
-    // DEFAULT: Crawl from public URL with multi-depth BFS (max 100 pages, max depth 3)
+    // DEFAULT: Crawl from public URL with multi-depth BFS
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -450,19 +562,17 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
     const visited = new Set<string>();
     const results: DiscoveredPage[] = [];
 
-    // BFS queue: [url, depth]
     const queue: [string, number][] = [[formattedUrl, 0]];
     visited.add(formattedUrl);
 
     while (queue.length > 0 && results.length < maxPages) {
-      // Process in batches of 5 for concurrency
       const batchSize = Math.min(5, queue.length, maxPages - results.length);
       const batch = queue.splice(0, batchSize);
 
       const promises = batch.map(async ([pageUrl, depth]) => {
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000);
+          const timeout = setTimeout(() => controller.abort(), 15000);
           const resp = await fetch(pageUrl, {
             headers: { "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)", Accept: "text/html" },
             redirect: "follow",
@@ -475,7 +585,9 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
           if (!ct.includes("html")) return { page: null, links: [], depth };
 
           const rawHtml = await resp.text();
-          const bodyHtml = extractBodyContent(rawHtml);
+          const resolvedHtml = resolveRelativeUrls(rawHtml, pageUrl);
+          const headStyles = extractHeadStyles(resolvedHtml, pageUrl);
+          const bodyHtml = extractBodyContent(resolvedHtml);
           const headings = extractHeadings(bodyHtml);
           const textSnippet = extractTextSnippet(bodyHtml);
 
@@ -485,11 +597,9 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
             : headings[0]?.text || pageUrl;
 
           const type = classifyPage(pageUrl, headings, textSnippet);
-          const page: DiscoveredPage = { url: pageUrl, title, type, headings, textSnippet, bodyHtml };
+          const page: DiscoveredPage = { url: pageUrl, title, type, headings, textSnippet, bodyHtml, headStyles };
 
-          // Discover links for next depth level
           const links = depth < maxDepth ? discoverLinks(rawHtml, pageUrl) : [];
-
           return { page, links, depth };
         } catch {
           return { page: null, links: [], depth };
@@ -502,7 +612,6 @@ Only suggest patterns where at least 2 pages share the same structure with diffe
         if (page && results.length < maxPages) {
           results.push(page);
         }
-        // Add new links to queue
         if (depth < maxDepth) {
           for (const link of links) {
             if (!visited.has(link) && visited.size < maxPages * 3) {
