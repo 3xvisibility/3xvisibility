@@ -642,12 +642,12 @@ function buildResponsiveStylesheet(): string {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 .pgp-page{font-family:inherit,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.75;color:inherit;max-width:1100px;margin:0 auto;padding:2rem 1.5rem;word-wrap:break-word;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 .pgp-page *{box-sizing:border-box}
-.pgp-page h1{font-size:clamp(2rem,5vw,3rem);font-weight:900;line-height:1.15;margin:0 0 1em;color:#0f172a;letter-spacing:-.03em}
-.pgp-page h2{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.25;margin:2em 0 .75em;color:#0f172a;letter-spacing:-.02em;position:relative;padding-bottom:.5em}
+.pgp-page h1{font-size:clamp(2rem,5vw,3rem);font-weight:900;line-height:1.15;margin:0 0 1em;color:inherit;letter-spacing:-.03em}
+.pgp-page h2{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.25;margin:2em 0 .75em;color:inherit;letter-spacing:-.02em;position:relative;padding-bottom:.5em}
 .pgp-page h2::after{content:'';position:absolute;bottom:0;left:0;width:60px;height:4px;background:linear-gradient(90deg,#2563eb,#7c3aed);border-radius:2px}
-.pgp-page h3{font-size:clamp(1.15rem,2.5vw,1.6rem);font-weight:600;margin:1.5em 0 .6em;color:#1e293b;letter-spacing:-.01em}
-.pgp-page h4{font-size:clamp(1rem,2vw,1.3rem);font-weight:600;margin:1.25em 0 .5em;color:#334155}
-.pgp-page p{margin:0 0 1.25em;font-size:1.0625rem;color:#475569;line-height:1.8}
+.pgp-page h3{font-size:clamp(1.15rem,2.5vw,1.6rem);font-weight:600;margin:1.5em 0 .6em;color:inherit;letter-spacing:-.01em}
+.pgp-page h4{font-size:clamp(1rem,2vw,1.3rem);font-weight:600;margin:1.25em 0 .5em;color:inherit}
+.pgp-page p{margin:0 0 1.25em;font-size:1.0625rem;color:inherit;opacity:.85;line-height:1.8}
 .pgp-page img{max-width:100%;height:auto;border-radius:16px;margin:1.5em 0;display:block;box-shadow:0 8px 30px rgba(0,0,0,.08);transition:transform .3s ease,box-shadow .3s ease}
 .pgp-page img:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.12)}
 .pgp-page a{color:#2563eb;text-decoration:none;font-weight:500;transition:all .2s ease;border-bottom:1px solid transparent}
