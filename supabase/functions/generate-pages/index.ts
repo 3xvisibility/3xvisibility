@@ -653,12 +653,12 @@ function buildResponsiveStylesheet(): string {
 .pgp-page a{color:#2563eb;text-decoration:none;font-weight:500;transition:all .2s ease;border-bottom:1px solid transparent}
 .pgp-page a:hover{color:#1d4ed8;border-bottom-color:#2563eb}
 .pgp-page ul,.pgp-page ol{margin:0 0 1.5em;padding-left:1.5em}
-.pgp-page li{margin-bottom:.6em;color:#475569;line-height:1.7}
+.pgp-page li{margin-bottom:.6em;color:inherit;opacity:.85;line-height:1.7}
 .pgp-page li::marker{color:#2563eb}
 .pgp-page section{margin:3em 0}
-.pgp-page blockquote{border-left:4px solid #2563eb;margin:2em 0;padding:1.25em 1.75em;background:linear-gradient(135deg,#f8fafc,#eff6ff);border-radius:0 12px 12px 0;color:#334155;font-size:1.1rem;font-style:italic;position:relative}
+.pgp-page blockquote{border-left:4px solid #2563eb;margin:2em 0;padding:1.25em 1.75em;background:linear-gradient(135deg,#f8fafc,#eff6ff);border-radius:0 12px 12px 0;color:inherit;font-size:1.1rem;font-style:italic;position:relative}
 .pgp-page blockquote::before{content:'"';position:absolute;top:-10px;left:16px;font-size:4rem;color:#2563eb;opacity:.15;font-family:Georgia,serif}
-.pgp-page strong{color:#0f172a;font-weight:600}
+.pgp-page strong{color:inherit;font-weight:600}
 .pgp-page hr{border:none;height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);margin:3em 0}
 
 /* Buttons & CTAs */
