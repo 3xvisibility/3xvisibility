@@ -640,7 +640,7 @@ function buildResponsiveStylesheet(): string {
   return `<style>
 /* === PageGen Pro — Professional Responsive Page Styles === */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-.pgp-page{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.75;color:#1e293b;max-width:1100px;margin:0 auto;padding:2rem 1.5rem;word-wrap:break-word;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.pgp-page{font-family:inherit,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.75;color:inherit;max-width:1100px;margin:0 auto;padding:2rem 1.5rem;word-wrap:break-word;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 .pgp-page *{box-sizing:border-box}
 .pgp-page h1{font-size:clamp(2rem,5vw,3rem);font-weight:900;line-height:1.15;margin:0 0 1em;color:#0f172a;letter-spacing:-.03em}
 .pgp-page h2{font-size:clamp(1.5rem,3.5vw,2.25rem);font-weight:700;line-height:1.25;margin:2em 0 .75em;color:#0f172a;letter-spacing:-.02em;position:relative;padding-bottom:.5em}
