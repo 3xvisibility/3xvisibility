@@ -44,7 +44,9 @@ DESIGN REQUIREMENTS — make it look like a premium $5,000 landing page:
 12. Add micro-interactions: hover transforms, subtle color transitions on cards and buttons.
 
 CONTENT VARIABLE RULES:
-13. Include 3-8 content variables using {variable_name} syntax. Variables must be real data fields: {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {service_name}, {tagline}. NEVER use CSS variables as template variables. Variable names must be lowercase_snake_case.
+13. Include 3-8 content variables using {variable_name} syntax. Variables must be real DATA fields only: {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {service_name}, {tagline}. 
+14. ABSOLUTELY NEVER create variables for ANY design/styling properties — no {font_family}, {background_color}, {primary_color}, {text_color}, {font_size}, {border_radius}, {shadow}, {gradient}, {overlay}, {btn_color}, {hero_bg}, etc. All visual styling must be hardcoded in the <style> block using CSS custom properties (--pgp-primary, --pgp-accent, etc.) — NEVER expose them as template {variables}.
+15. Variable names must be lowercase_snake_case. NEVER use CSS variables as template variables.
 14. For AI-generated unique content per page: {{AI:instruction using {variables}}}
 15. For AI-generated images per page: {{AI_IMAGE:description using {variables}}}
 16. Include at least one {{AI:...}} block.
@@ -101,8 +103,27 @@ ${headerFooterRule}`;
     // Strip markdown fences if present
     content = content.replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
-    // Extract variables
-    const vars = [...new Set((content.match(/\{([a-z_]+)\}/gi) || []))];
+    // Extract variables — filter out design/CSS-related ones
+    const DESIGN_VARS = new Set([
+      "font_family","font_size","font_weight","font_color","font_style",
+      "text_color","text_size","text_weight","text_transform","text_align",
+      "background","background_color","background_image","background_gradient",
+      "bg_color","bg_image","bg_gradient",
+      "primary_color","accent_color","secondary_color","color","heading_color",
+      "border_color","border_radius","border_width","border_style",
+      "shadow","box_shadow","text_shadow",
+      "margin","padding","gap","spacing",
+      "width","height","max_width","min_height",
+      "opacity","z_index","display","position",
+      "line_height","letter_spacing","word_spacing",
+      "gradient","overlay","overlay_color","overlay_opacity",
+      "radius","rounded","transition","animation",
+      "icon_color","icon_size","btn_color","btn_bg","button_color","button_bg",
+      "header_bg","footer_bg","section_bg","card_bg","hero_bg",
+      "link_color","hover_color",
+    ]);
+    const vars = [...new Set((content.match(/\{([a-z_]+)\}/gi) || []))]
+      .filter(v => !DESIGN_VARS.has(v.replace(/[{}]/g, "").toLowerCase()));
 
     // Suggest a name from the prompt
     const nameMatch = prompt.match(/for\s+(?:a\s+)?(.+?)(?:\s+company|\s+business|\s+website|\s+page)?\.?$/i);
