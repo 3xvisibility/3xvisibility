@@ -823,50 +823,128 @@ export default function TemplatesPage() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
+                {/* Step 1: Business Type */}
                 <div>
-                  <Label htmlFor="ai-prompt">Describe the template you need</Label>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Try an example or write your own prompt
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
+                  <Label className="text-sm font-medium">What type of template do you need?</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
                     {[
-                      "Landing page for a plumbing service company",
-                      "Local SEO page for a dental clinic",
-                      "Product page for an e-commerce store",
-                      "Course landing page for an online academy",
-                      "Restaurant location page with menu highlights",
-                      "Real estate listing page for property agents",
-                    ].map((example) => (
+                      { value: "service page", label: "Service Page", icon: "🔧" },
+                      { value: "product page", label: "Product Page", icon: "🛍️" },
+                      { value: "local business page", label: "Local Business", icon: "📍" },
+                      { value: "e-commerce store page", label: "E-Commerce", icon: "🛒" },
+                      { value: "portfolio page", label: "Portfolio", icon: "🎨" },
+                      { value: "landing page", label: "Landing Page", icon: "🚀" },
+                      { value: "restaurant page", label: "Restaurant", icon: "🍽️" },
+                      { value: "real estate listing page", label: "Real Estate", icon: "🏠" },
+                      { value: "course landing page", label: "Online Course", icon: "🎓" },
+                      { value: "blog post page", label: "Blog Post", icon: "📝" },
+                      { value: "event page", label: "Event Page", icon: "🎫" },
+                      { value: "booking/appointment page", label: "Booking", icon: "📅" },
+                    ].map((bt) => (
                       <button
-                        key={example}
+                        key={bt.value}
                         type="button"
-                        onClick={() => setAiPrompt(`Create a ${example.toLowerCase()}`)}
-                        className="text-xs px-2.5 py-1 rounded-full border border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+                        onClick={() => setAiBusinessType(bt.value)}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm text-left transition-all ${
+                          aiBusinessType === bt.value
+                            ? "border-primary bg-primary/10 text-primary font-medium ring-1 ring-primary/30"
+                            : "border-border bg-card hover:bg-accent hover:text-accent-foreground"
+                        }`}
                       >
-                        {example}
+                        <span className="text-lg">{bt.icon}</span>
+                        <span>{bt.label}</span>
                       </button>
                     ))}
                   </div>
-                  <Textarea
-                    id="ai-prompt"
-                    placeholder="Create a landing page template for a plumbing service company with service details, pricing, and location-specific content..."
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    rows={3}
+                </div>
+
+                {/* Step 2: Niche / Industry */}
+                <div>
+                  <Label htmlFor="ai-niche">Your business niche or industry</Label>
+                  <p className="text-xs text-muted-foreground mb-1">E.g., "dental clinic", "organic skincare", "car dealership"</p>
+                  <Input
+                    id="ai-niche"
+                    placeholder="e.g., Plumbing services, Pet grooming, Fitness coaching..."
+                    value={aiNiche}
+                    onChange={(e) => setAiNiche(e.target.value)}
                   />
                 </div>
+
+                {/* Step 3: Sections to include */}
+                <div>
+                  <Label className="text-sm font-medium">Sections to include</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {[
+                      { value: "hero", label: "Hero Banner" },
+                      { value: "features", label: "Features / Services" },
+                      { value: "pricing", label: "Pricing" },
+                      { value: "testimonials", label: "Testimonials" },
+                      { value: "faq", label: "FAQ" },
+                      { value: "cta", label: "Call-to-Action" },
+                      { value: "gallery", label: "Gallery / Images" },
+                      { value: "contact", label: "Contact Form" },
+                      { value: "team", label: "Team / About" },
+                      { value: "stats", label: "Stats / Numbers" },
+                      { value: "products", label: "Product Grid" },
+                      { value: "map", label: "Location / Map" },
+                    ].map((sec) => {
+                      const selected = aiSections.includes(sec.value);
+                      return (
+                        <button
+                          key={sec.value}
+                          type="button"
+                          onClick={() =>
+                            setAiSections((prev) =>
+                              selected ? prev.filter((s) => s !== sec.value) : [...prev, sec.value]
+                            )
+                          }
+                          className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
+                            selected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-muted/50 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          }`}
+                        >
+                          {selected ? "✓ " : ""}{sec.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Step 4: Extra details */}
+                <div>
+                  <Label htmlFor="ai-extra">Additional details (optional)</Label>
+                  <Textarea
+                    id="ai-extra"
+                    placeholder="Any specific requirements... e.g., 'dark theme', 'include a comparison table', 'focus on local SEO for multiple cities'"
+                    value={aiExtraDetails}
+                    onChange={(e) => setAiExtraDetails(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+
                 <div className="flex items-center gap-2">
                   <Switch checked={aiIncludeHeaderFooter} onCheckedChange={setAiIncludeHeaderFooter} id="ai-hf" />
                   <Label htmlFor="ai-hf" className="text-sm cursor-pointer">Include header & footer (uncheck to use your website's)</Label>
                 </div>
+
+                {/* Generated prompt preview */}
+                {(aiBusinessType || aiNiche) && (
+                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                    <p className="text-xs text-muted-foreground mb-1 font-medium">AI will generate based on:</p>
+                    <p className="text-sm text-foreground">{buildAiPrompt()}</p>
+                  </div>
+                )}
+
                 <Button
-                  onClick={() => aiGenerateMutation.mutate(aiPrompt)}
-                  disabled={!aiPrompt.trim() || aiGenerateMutation.isPending}
+                  onClick={() => aiGenerateMutation.mutate(buildAiPrompt())}
+                  disabled={(!aiBusinessType && !aiNiche) || aiGenerateMutation.isPending}
                   className="w-full"
+                  size="lg"
                 >
                   {aiGenerateMutation.isPending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating your template...
                     </>
                   ) : (
                     <>
