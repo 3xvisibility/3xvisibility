@@ -453,6 +453,16 @@ export default function TemplatesPage() {
     },
   });
 
+  const buildAiPrompt = () => {
+    const parts: string[] = [];
+    if (aiBusinessType) parts.push(`Create a ${aiBusinessType} template`);
+    else parts.push("Create a landing page template");
+    if (aiNiche) parts.push(`for ${aiNiche}`);
+    if (aiSections.length > 0) parts.push(`with the following sections: ${aiSections.join(", ")}`);
+    if (aiExtraDetails) parts.push(`. Additional details: ${aiExtraDetails}`);
+    return parts.join(" ");
+  };
+
   const aiGenerateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
