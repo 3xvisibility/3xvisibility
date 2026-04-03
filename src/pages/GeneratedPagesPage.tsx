@@ -838,20 +838,20 @@ export default function GeneratedPagesPage() {
           </div>
 
           {/* Desktop: Table layout */}
-          <div className="hidden lg:block w-full">
-            <table className="w-full text-sm table-fixed">
+          <div className="hidden lg:block w-full overflow-x-auto">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="p-3 w-10">
+                  <th className="p-3 w-10 shrink-0">
                     <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} aria-label="Select all" />
                   </th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Title</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Slug</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell">Campaign</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell">CMS ID</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground hidden 2xl:table-cell">Scores</th>
-                  <th className="p-3 w-24">Actions</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground" style={{ width: "18%" }}>Title</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground" style={{ width: "15%" }}>Slug</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell" style={{ width: "12%" }}>Campaign</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground" style={{ width: "8%" }}>Status</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden xl:table-cell" style={{ width: "8%" }}>CMS ID</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground hidden 2xl:table-cell" style={{ width: "22%" }}>Scores</th>
+                  <th className="p-3 text-right" style={{ width: "100px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -898,8 +898,8 @@ export default function GeneratedPagesPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="p-3 w-24">
-                        <div className="flex items-center gap-0.5 justify-end">
+                      <td className="p-3" style={{ width: "100px" }}>
+                        <div className="flex items-center gap-0.5 justify-end flex-nowrap">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
                           </Button>
