@@ -898,8 +898,8 @@ export default function GeneratedPagesPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="p-3 w-24">
-                        <div className="flex items-center gap-0.5 justify-end">
+                      <td className="p-3" style={{ width: "100px" }}>
+                        <div className="flex items-center gap-0.5 justify-end flex-nowrap">
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit SEO">
                             <Pencil className="h-3 w-3" />
                           </Button>
