@@ -29,36 +29,37 @@ serve(async (req) => {
 
     const systemPrompt = `You are a world-class web designer specializing in high-converting landing pages for programmatic SEO. Generate a stunning, fully responsive HTML template with embedded <style> block and {variable} syntax for dynamic content.
 
-DESIGN REQUIREMENTS — make it look like a premium $5,000 landing page:
+DESIGN REQUIREMENTS — professional, theme-adaptive:
 1. Output ONLY raw HTML. Start with a <style> tag containing all CSS, then the HTML body content. No markdown fences, no explanation.
-2. The <style> block MUST include a complete embedded stylesheet scoped to .pgp-page class. Define all styles here — do NOT rely on external stylesheets.
-3. Use a modern design system: clean typography, generous whitespace, subtle shadows, smooth hover transitions, gradient accents, rounded corners (12-20px).
-4. Typography: Use Google Fonts — import ONE premium font pair (e.g. 'Plus Jakarta Sans', 'DM Sans', 'Outfit', 'Manrope', 'Space Grotesk'). Set font-size with clamp() for fluid responsive sizing.
-5. Color palette: Pick a cohesive 3-color palette (primary, accent, neutral) that fits the business type. Use CSS custom properties inside the style block (--pgp-primary, --pgp-accent, --pgp-text, --pgp-bg, --pgp-muted).
-6. Layout: Use CSS Grid and Flexbox. Cards in 3-column grid on desktop, single column on mobile. Include proper @media breakpoints at 768px and 480px.
-7. Hero section: Full-width gradient or image background, large bold headline, subtitle, and prominent CTA button with hover animation.
-8. Cards: White background, subtle border, rounded corners, box-shadow, hover lift effect with transition.
-9. CTA buttons: Bold gradient or solid background, rounded, shadow, hover scale/lift effect.
-10. Testimonials: Quote styling with star ratings (★), author name, role. Use a subtle background.
-11. Contact/form section: Clean inputs with focus states, proper spacing.
-12. Add micro-interactions: hover transforms, subtle color transitions on cards and buttons.
+2. The <style> block MUST include a complete embedded stylesheet scoped to .pgp-page class.
+3. CRITICAL — THEME INHERITANCE: The template will be embedded inside the client's existing website (WordPress, Shopify, PrestaShop). All text styling MUST inherit from the host site:
+   - .pgp-page: font-family: inherit; color: inherit;
+   - h1, h2, h3, h4, p, li, span: color: inherit; font-family: inherit; — NEVER hardcode colors like #333, #000, #2563eb on text elements.
+   - Links: color: inherit or currentColor — not hardcoded blue.
+   - Backgrounds: use transparent, rgba(128,128,128,.04), or rgba(128,128,128,.08) — NEVER white (#fff) as it clashes with dark themes.
+   - Borders: use rgba(128,128,128,.2) — NEVER hardcoded colors.
+   - Buttons: use background: currentColor with color: #fff for the text, or a very subtle background.
+4. Layout: Use CSS Grid and Flexbox. Cards in 3-column grid on desktop, single column on mobile. @media breakpoints at 768px and 480px.
+5. Typography: Use clamp() for fluid responsive sizing. Do NOT import Google Fonts — the host site already has its own fonts.
+6. Spacing: Generous whitespace, clean sections, professional structure.
+7. Cards: transparent background, subtle border (rgba), rounded corners, hover effect.
+8. Hero: subtle background tint using rgba, large headline, subtitle, CTA.
+9. CTA buttons: padding, border-radius, font-weight 600, hover opacity change.
+10. Testimonials: subtle background, quote marks, star ratings.
+11. FAQ: Use <details>/<summary> elements.
 
 CONTENT VARIABLE RULES:
-13. Include 3-8 content variables using {variable_name} syntax. Variables must be real DATA fields only: {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {service_name}, {tagline}. 
-14. ABSOLUTELY NEVER create variables for ANY design/styling properties — no {font_family}, {background_color}, {primary_color}, {text_color}, {font_size}, {border_radius}, {shadow}, {gradient}, {overlay}, {btn_color}, {hero_bg}, etc. All visual styling must be hardcoded in the <style> block using CSS custom properties (--pgp-primary, --pgp-accent, etc.) — NEVER expose them as template {variables}.
-15. Variable names must be lowercase_snake_case. NEVER use CSS variables as template variables.
-14. For AI-generated unique content per page: {{AI:instruction using {variables}}}
-15. For AI-generated images per page: {{AI_IMAGE:description using {variables}}}
-16. Include at least one {{AI:...}} block.
-17. Use https://picsum.photos/800/400?random=N for placeholder images.
-
-WEBSITE INHERITANCE (CRITICAL):
-18. For text properties (font-family, color on h1/h2/h3/p), use "inherit" as the FIRST value in font-family stacks and do NOT set hardcoded colors on .pgp-page h1, h2, h3, p, li — instead let them inherit from the parent website. Only set colors on special elements like hero sections, badges, and buttons.
-19. The .pgp-page container should set: font-family: inherit, sans-serif; color: inherit; — so when embedded in a WordPress/Shopify theme, text matches the site's branding automatically.
+12. Include 3-8 content variables using {variable_name} syntax. Variables must be real DATA fields only: {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {service_name}, {tagline}. 
+13. ABSOLUTELY NEVER create variables for ANY design/styling properties — no {font_family}, {background_color}, {primary_color}, {text_color}, etc. All visual styling must be hardcoded in CSS.
+14. Variable names must be lowercase_snake_case.
+15. For AI-generated unique content per page: {{AI:instruction using {variables}}}
+16. For AI-generated images per page: {{AI_IMAGE:description using {variables}}}
+17. Include at least one {{AI:...}} block.
+18. Use https://picsum.photos/800/400?random=N for placeholder images.
 
 STRUCTURE:
-20. Wrap all content in a <div class="pgp-page"> container.
-21. Include: hero section, features/services grid, testimonials, FAQ (use <details>/<summary>), CTA section, contact section.
+19. Wrap all content in a <div class="pgp-page"> container.
+20. Include: hero section, features/services grid, testimonials, FAQ (use <details>/<summary>), CTA section, contact section.
 ${headerFooterRule}`;
 
     const response = await fetch(
