@@ -52,6 +52,7 @@ export default function TemplatesPage() {
   const [aiBusinessType, setAiBusinessType] = useState("");
   const [aiNiche, setAiNiche] = useState("");
   const [aiSections, setAiSections] = useState<string[]>(["hero", "features", "testimonials", "faq", "cta"]);
+  const [aiSeoNicheInput, setAiSeoNicheInput] = useState("");
   const [aiExtraDetails, setAiExtraDetails] = useState("");
   
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
