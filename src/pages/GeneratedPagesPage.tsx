@@ -838,7 +838,7 @@ export default function GeneratedPagesPage() {
           </div>
 
           {/* Desktop: Table layout */}
-          <div className="hidden lg:block w-full">
+          <div className="hidden lg:block w-full overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
