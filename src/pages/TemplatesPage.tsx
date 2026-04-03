@@ -49,6 +49,10 @@ export default function TemplatesPage() {
   const [activeEditorTab, setActiveEditorTab] = useState<string>("elementor");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiIncludeHeaderFooter, setAiIncludeHeaderFooter] = useState(false);
+  const [aiBusinessType, setAiBusinessType] = useState("");
+  const [aiNiche, setAiNiche] = useState("");
+  const [aiSections, setAiSections] = useState<string[]>(["hero", "features", "testimonials", "faq", "cta"]);
+  const [aiExtraDetails, setAiExtraDetails] = useState("");
   
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   // SEO state
