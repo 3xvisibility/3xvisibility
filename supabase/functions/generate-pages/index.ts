@@ -1662,7 +1662,8 @@ Deno.serve(async (req) => {
               "@type": tplSchemaType,
             };
             for (const [sk, sv] of Object.entries(tplSchemaConfig)) {
-              if (!sv) continue;
+              if (!sv || sk.startsWith("_")) continue;
+              if (typeof sv !== "string") { resolvedSchema[sk] = sv; continue; }
               let resolved = sv;
               for (const [key, value] of Object.entries(allVars)) {
                 resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
