@@ -55,6 +55,7 @@ export default function TemplatesPage() {
   const [aiSections, setAiSections] = useState<string[]>(["hero", "features", "testimonials", "faq", "cta"]);
   const [aiSeoNicheInput, setAiSeoNicheInput] = useState("");
   const [aiExtraDetails, setAiExtraDetails] = useState("");
+  const [aiLanguage, setAiLanguage] = useState("en");
   
   const [editingTemplate, setEditingTemplate] = useState<Tables<"templates"> | null>(null);
   // SEO state
