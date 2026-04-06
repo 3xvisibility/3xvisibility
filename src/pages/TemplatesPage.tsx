@@ -118,7 +118,8 @@ export default function TemplatesPage() {
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
-  const detectedVarsRaw = content.match(/\{[^}]+\}/g) || [];
+  // Only match simple {variable_name} tokens — skip CSS blocks, JSON, and style properties
+  const detectedVarsRaw = (content.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || []);
   const detectedVars = filterDesignVars(detectedVarsRaw);
 
   // Sync blocks → HTML when in visual mode
