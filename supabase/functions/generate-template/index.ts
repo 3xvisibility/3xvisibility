@@ -104,7 +104,7 @@ ${headerFooterRule}`;
     // Strip markdown fences if present
     content = content.replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
-    // Extract variables — filter out design/CSS-related ones
+    // Extract variables — only simple {identifier} tokens, skip CSS blocks
     const DESIGN_VARS = new Set([
       "font_family","font_size","font_weight","font_color","font_style",
       "text_color","text_size","text_weight","text_transform","text_align",
@@ -123,8 +123,17 @@ ${headerFooterRule}`;
       "header_bg","footer_bg","section_bg","card_bg","hero_bg",
       "link_color","hover_color",
     ]);
-    const vars = [...new Set((content.match(/\{([a-z_]+)\}/gi) || []))]
-      .filter(v => !DESIGN_VARS.has(v.replace(/[{}]/g, "").toLowerCase()));
+    const isDesignVar = (v: string) => {
+      const c = v.replace(/[{}]/g, "").toLowerCase().trim();
+      if (DESIGN_VARS.has(c)) return true;
+      if (/[:;]/.test(c)) return true;
+      if (/\b(inherit|auto|none|rgba?\(|hsla?\(|transparent|px|rem|em|%)\b/i.test(c)) return true;
+      if (/\s/.test(c) && c.length > 20) return true;
+      return false;
+    };
+    // Only match simple {word} tokens — not CSS blocks
+    const vars = [...new Set((content.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || []))]
+      .filter(v => !isDesignVar(v));
 
     // Suggest a name from the prompt
     const nameMatch = prompt.match(/for\s+(?:a\s+)?(.+?)(?:\s+company|\s+business|\s+website|\s+page)?\.?$/i);

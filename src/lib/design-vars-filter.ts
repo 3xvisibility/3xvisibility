@@ -25,10 +25,19 @@ const DESIGN_VARS = new Set([
 ]);
 
 /**
- * Returns true if a variable name (without braces) is a design/styling variable.
+ * Returns true if a variable name (without braces) is a design/styling variable
+ * or looks like a CSS property block rather than a content variable.
  */
 export function isDesignVariable(varName: string): boolean {
-  return DESIGN_VARS.has(varName.replace(/[{}]/g, "").toLowerCase().trim());
+  const cleaned = varName.replace(/[{}]/g, "").toLowerCase().trim();
+  // Exact match against known design variable names
+  if (DESIGN_VARS.has(cleaned)) return true;
+  // Contains CSS syntax (colons with values, semicolons, CSS functions like rgba/rgb/hsl)
+  if (/[:;]/.test(cleaned)) return true;
+  if (/\b(inherit|auto|none|rgba?\(|hsla?\(|transparent|px|rem|em|%)\b/i.test(cleaned)) return true;
+  // Contains spaces (real variables are snake_case identifiers, not multi-word CSS)
+  if (/\s/.test(cleaned) && cleaned.length > 20) return true;
+  return false;
 }
 
 /**
