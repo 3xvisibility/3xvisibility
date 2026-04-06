@@ -399,7 +399,7 @@ export default function TemplatesPage() {
         throw new Error(`Your plan allows a maximum of ${maxTemplates} template(s). Please upgrade to add more.`);
       }
 
-      const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
+      const variables = filterDesignVars([...new Set(content.match(/\{[^}]+\}/g) || [])]);
       const { error } = await supabase.from("templates").insert({
         name,
         content,
