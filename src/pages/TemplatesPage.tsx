@@ -879,16 +879,30 @@ export default function TemplatesPage() {
                   </div>
                 </div>
 
-                {/* Step 2: Niche / Industry */}
-                <div>
-                  <Label htmlFor="ai-niche">Your business niche or industry</Label>
-                  <p className="text-xs text-muted-foreground mb-1">E.g., "dental clinic", "organic skincare", "car dealership"</p>
-                  <Input
-                    id="ai-niche"
-                    placeholder="e.g., Plumbing services, Pet grooming, Fitness coaching..."
-                    value={aiNiche}
-                    onChange={(e) => setAiNiche(e.target.value)}
-                  />
+                {/* Step 2: Language & Niche */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="ai-language-select">Template Language</Label>
+                    <p className="text-xs text-muted-foreground mb-1">The language for all generated text content</p>
+                    <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                      <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        {AI_LANGUAGES.map((l) => (
+                          <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="ai-niche">Your business niche or industry</Label>
+                    <p className="text-xs text-muted-foreground mb-1">E.g., "dental clinic", "organic skincare"</p>
+                    <Input
+                      id="ai-niche"
+                      placeholder="e.g., Plumbing services, Pet grooming..."
+                      value={aiNiche}
+                      onChange={(e) => setAiNiche(e.target.value)}
+                    />
+                  </div>
                 </div>
 
                 {/* Step 3: Sections to include */}
