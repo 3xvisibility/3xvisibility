@@ -36,6 +36,7 @@ import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useDragReorder } from "@/hooks/use-drag-reorder";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { isDesignVariable } from "@/lib/design-vars-filter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -204,7 +205,9 @@ export default function CampaignsPage() {
     if (!selectedTemplate) return [];
     const tpl = templates.find((t) => t.id === selectedTemplate);
     if (!tpl?.variables) return [];
-    return (tpl.variables as string[]).map((v) => v.replace(/[{}]/g, ""));
+    return (tpl.variables as string[])
+      .map((v) => v.replace(/[{}]/g, ""))
+      .filter((v) => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
 
   // variableMapping moved below websitePagesAsCsv
