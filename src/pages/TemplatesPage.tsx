@@ -36,6 +36,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useDragReorder } from "@/hooks/use-drag-reorder";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { filterDesignVars, isDesignVariable } from "@/lib/design-vars-filter";
 import { TemplateVersionHistory, saveVersion, type TemplateVersion } from "@/components/templates/TemplateVersionHistory";
 
 type Template = Tables<"templates">;
@@ -116,7 +117,8 @@ export default function TemplatesPage() {
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
-  const detectedVars = content.match(/\{[^}]+\}/g) || [];
+  const detectedVarsRaw = content.match(/\{[^}]+\}/g) || [];
+  const detectedVars = filterDesignVars(detectedVarsRaw);
 
   // Sync blocks → HTML when in visual mode
   const handleBlocksChange = useCallback((newBlocks: TemplateBlock[]) => {
