@@ -457,12 +457,29 @@ export default function TemplatesPage() {
     },
   });
 
+  const AI_LANGUAGES = [
+    { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
+    { code: "de", label: "German" }, { code: "pt", label: "Portuguese" }, { code: "it", label: "Italian" },
+    { code: "nl", label: "Dutch" }, { code: "ja", label: "Japanese" }, { code: "zh", label: "Chinese" },
+    { code: "ko", label: "Korean" }, { code: "ar", label: "Arabic" }, { code: "hi", label: "Hindi" },
+    { code: "ru", label: "Russian" }, { code: "tr", label: "Turkish" }, { code: "pl", label: "Polish" },
+    { code: "sv", label: "Swedish" }, { code: "da", label: "Danish" }, { code: "fi", label: "Finnish" },
+    { code: "no", label: "Norwegian" }, { code: "el", label: "Greek" }, { code: "cs", label: "Czech" },
+    { code: "ro", label: "Romanian" }, { code: "id", label: "Indonesian" }, { code: "th", label: "Thai" },
+    { code: "vi", label: "Vietnamese" }, { code: "uk", label: "Ukrainian" }, { code: "hu", label: "Hungarian" },
+    { code: "ms", label: "Malay" }, { code: "bn", label: "Bengali" },
+  ];
+
   const buildAiPrompt = () => {
     const parts: string[] = [];
     if (aiBusinessType) parts.push(`Create a ${aiBusinessType} template`);
     else parts.push("Create a landing page template");
     if (aiNiche) parts.push(`for ${aiNiche}`);
     if (aiSections.length > 0) parts.push(`with the following sections: ${aiSections.join(", ")}`);
+    if (aiLanguage !== "en") {
+      const langLabel = AI_LANGUAGES.find(l => l.code === aiLanguage)?.label || aiLanguage;
+      parts.push(`. Generate ALL text content in ${langLabel}`);
+    }
     if (aiExtraDetails) parts.push(`. Additional details: ${aiExtraDetails}`);
     return parts.join(" ");
   };
