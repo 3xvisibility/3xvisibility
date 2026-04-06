@@ -434,7 +434,7 @@ export default function TemplatesPage() {
         seo_title_pattern: (editingTemplate as any).seo_title_pattern || "",
         seo_description_pattern: (editingTemplate as any).seo_description_pattern || "",
       });
-      const variables = [...new Set(content.match(/\{[^}]+\}/g) || [])];
+      const variables = filterDesignVars([...new Set(content.match(/\{[^}]+\}/g) || [])]);
       const { error } = await supabase.from("templates").update({
         name,
         content,
