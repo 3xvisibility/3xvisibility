@@ -691,6 +691,7 @@ export default function TemplatesPage() {
     setContent("");
     setBlocks([]);
     setAiPrompt("");
+    setAiLanguage("en");
     setActiveEditorTab("visual");
     setSeoTitlePattern("");
     setSeoDescriptionPattern("");
