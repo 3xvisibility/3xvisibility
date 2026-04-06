@@ -883,13 +883,18 @@ export default function TemplatesPage() {
                 {/* Step 2: Language & Niche */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="ai-language-select">Template Language</Label>
-                    <p className="text-xs text-muted-foreground mb-1">The language for all generated text content</p>
+                    <Label htmlFor="ai-language-select" className="flex items-center gap-2 text-sm font-medium">
+                      <Globe className="h-4 w-4 text-primary" />
+                      Template Language
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-1.5">Choose the language for all generated content</p>
                     <Select value={aiLanguage} onValueChange={setAiLanguage}>
-                      <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10 border-primary/30 bg-primary/5">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
                       <SelectContent className="max-h-64">
                         {AI_LANGUAGES.map((l) => (
-                          <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                          <SelectItem key={l.code} value={l.code}>🌐 {l.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
