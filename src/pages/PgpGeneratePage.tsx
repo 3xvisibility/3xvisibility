@@ -312,7 +312,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
     }
   };
 
-
+  const handleGenerate = async () => {
     if (!selectedGroup || !wsId) return;
     if (missingKeywords.length > 0) {
       toast({ title: "Missing Keywords", description: `Define keywords: ${missingKeywords.map(k => k.name).join(", ")}`, variant: "destructive" });
