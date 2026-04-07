@@ -528,8 +528,14 @@ export default function DataCsvPage() {
                     <DropdownMenuItem onClick={() => handlePreview(file)}>
                       <Eye className="h-4 w-4 mr-2" /> Preview
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDownload(file)}>
-                      <Download className="h-4 w-4 mr-2" /> Download
+                    <DropdownMenuItem onClick={() => handleDownloadAs(file, "csv")}>
+                      <FileText className="h-4 w-4 mr-2" /> Download CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownloadAs(file, "json")}>
+                      <FileJson className="h-4 w-4 mr-2" /> Download JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownloadAs(file, "xlsx")}>
+                      <FileSpreadsheet className="h-4 w-4 mr-2" /> Download Excel
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => { setReplacingFileId(file.id); document.getElementById("data-csv-replace-input")?.click(); }}>
                       <Upload className="h-4 w-4 mr-2" /> Replace
@@ -595,8 +601,14 @@ export default function DataCsvPage() {
                           <DropdownMenuItem onClick={() => handlePreview(file)}>
                             <Eye className="h-4 w-4 mr-2" /> Preview
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDownload(file)}>
-                            <Download className="h-4 w-4 mr-2" /> Download
+                          <DropdownMenuItem onClick={() => handleDownloadAs(file, "csv")}>
+                            <FileText className="h-4 w-4 mr-2" /> Download CSV
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownloadAs(file, "json")}>
+                            <FileJson className="h-4 w-4 mr-2" /> Download JSON
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownloadAs(file, "xlsx")}>
+                            <FileSpreadsheet className="h-4 w-4 mr-2" /> Download Excel
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                             setReplacingFileId(file.id);
