@@ -471,8 +471,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <Card className="shadow-surface">
               <CardContent className="p-5 space-y-5">
                 <Tabs defaultValue="generation" className="space-y-4">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="generation"><Zap className="h-3.5 w-3.5 mr-1.5" /> Generation</TabsTrigger>
+                    <TabsTrigger value="ai"><Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Generate</TabsTrigger>
                     <TabsTrigger value="overwrite"><RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Overwrite</TabsTrigger>
                     <TabsTrigger value="schedule"><Settings2 className="h-3.5 w-3.5 mr-1.5" /> Schedule</TabsTrigger>
                   </TabsList>
