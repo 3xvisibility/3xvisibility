@@ -249,21 +249,23 @@ export default function DataCsvPage() {
   // ─── File processing ─────────────────────────────────────────────
 
   const processFile = async (file: File) => {
-    if (!file.name.match(/\.(csv|tsv|txt)$/i) && file.type !== "text/csv" && !file.type.includes("excel")) {
-      toast({ title: "Invalid file", description: "Please upload a .csv, .tsv, or .txt file.", variant: "destructive" });
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const validExts = ["csv", "tsv", "txt", "json", "xlsx", "xls"];
+    if (!ext || !validExts.includes(ext)) {
+      toast({ title: "Invalid file", description: "Please upload a .csv, .tsv, .json, .xlsx, or .xls file.", variant: "destructive" });
       return;
     }
-    const buffer = await file.arrayBuffer();
-    const encoding = detectEncoding(buffer);
-    setPendingEncoding(encoding);
-    const decoder = new TextDecoder(encoding === "latin1" ? "iso-8859-1" : encoding);
-    const text = decoder.decode(buffer);
-    const parsed = parseCsvText(text);
-    const validation = validateCsv(parsed.headers, parsed.rows, parsed.delimiter);
-    setPendingFile(file);
-    setPendingParsed(parsed);
-    setPendingValidation(validation);
-    setUploadOpen(true);
+    try {
+      const parsed = await parseUploadedFile(file);
+      const validation = validateCsv(parsed.headers, parsed.rows, parsed.delimiter);
+      setPendingFile(file);
+      setPendingParsed(parsed);
+      setPendingValidation(validation);
+      setPendingEncoding("utf-8");
+      setUploadOpen(true);
+    } catch (err: any) {
+      toast({ title: "Parse error", description: err.message || "Failed to parse file", variant: "destructive" });
+    }
   };
 
   const resetUpload = () => {
@@ -297,23 +299,27 @@ export default function DataCsvPage() {
     setPreviewRows(rows);
   };
 
-  const handleDownload = async (file: any) => {
+  const handleDownloadAs = async (file: any, format: "csv" | "json" | "xlsx") => {
     const { data, error } = await (supabase.from("campaign_csv_files" as any) as any)
-      .select("raw_content")
+      .select("raw_content, headers")
       .eq("id", file.id)
       .single();
     if (error || !data?.raw_content) {
       toast({ title: "Error downloading file", variant: "destructive" });
       return;
     }
-    const blob = new Blob([data.raw_content as string], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = file.file_name || "data.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+    const headers = (data.headers as string[]) || [];
+    const lines = (data.raw_content as string).split("\n").filter((l: string) => l.trim());
+    const delimiter = detectDelimiter(lines[0] || "");
+    const rowData = lines.slice(1).map((line: string) => {
+      const values = line.split(delimiter).map(v => v.trim().replace(/^["']|["']$/g, ""));
+      return headers.reduce((acc, h, i) => ({ ...acc, [h]: values[i] || "" }), {} as Record<string, string>);
+    });
+    const baseName = (file.file_name || "data").replace(/\.\w+$/, "");
+    exportDataFile(rowData, format, baseName);
   };
+
+  const handleDownload = async (file: any) => handleDownloadAs(file, "csv");
 
   const handleBulkDownload = async () => {
     if (csvFiles.length === 0) return;
