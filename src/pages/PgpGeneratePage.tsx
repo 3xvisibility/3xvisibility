@@ -121,7 +121,11 @@ export default function PgpGeneratePage() {
         sampleData[gk.name] = `[${gk.name}]`;
       }
     }
-    const rendered = renderTemplate(selectedGroup.content, sampleData);
+    // Simple variable replacement for preview
+    let rendered = selectedGroup.content;
+    for (const [key, val] of Object.entries(sampleData)) {
+      rendered = rendered.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
+    }
     setTestPreview(rendered);
   };
 
