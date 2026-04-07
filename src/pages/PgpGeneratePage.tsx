@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,9 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import {
-  Play, Pause, RotateCcw, Eye, FileText, Key, Layers, Loader2,
-  CheckCircle2, XCircle, AlertTriangle, Zap,
+  Play, Eye, FileText, KeyRound, Layers, Loader2,
+  CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +24,6 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
-import { renderPage } from "@/lib/renderer";
 
 type Template = Tables<"templates">;
 
@@ -38,16 +41,36 @@ export default function PgpGeneratePage() {
   const preselectedGroup = searchParams.get("group") || "";
 
   const [selectedGroupId, setSelectedGroupId] = useState(preselectedGroup);
-  const [method, setMethod] = useState<"all" | "specific">("all");
+  const [method, setMethod] = useState<"all" | "sequential" | "random">("all");
   const [numberOfPages, setNumberOfPages] = useState("");
   const [resumeIndex, setResumeIndex] = useState("0");
-  const [overwrite, setOverwrite] = useState(false);
-  const [spinContent, setSpinContent] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [publishMode, setPublishMode] = useState("draft");
   const [isGenerating, setIsGenerating] = useState(false);
   const [testPreview, setTestPreview] = useState<string | null>(null);
   const [genProgress, setGenProgress] = useState<{ processed: number; total: number; errors: number } | null>(null);
+
+  // Overwrite settings
+  const [overwrite, setOverwrite] = useState(false);
+  const [overwriteFields, setOverwriteFields] = useState({
+    title: true,
+    content: true,
+    excerpt: true,
+    seo: true,
+    featuredImage: true,
+    customFields: true,
+    taxonomies: false,
+    author: false,
+    publishDate: false,
+  });
+
+  // Spin & scheduling
+  const [spinContent, setSpinContent] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<"immediate" | "specific" | "increment" | "random">("immediate");
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [incrementHours, setIncrementHours] = useState("24");
+  const [scheduleDateStart, setScheduleDateStart] = useState("");
+  const [scheduleDateEnd, setScheduleDateEnd] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -104,29 +127,90 @@ export default function PgpGeneratePage() {
     if (groupKeywords.length === 0) return 0;
     const counts = groupKeywords.filter(k => k.keyword).map(k => k.termCount);
     if (counts.length === 0) return 0;
-    // All combinations or sequential based on method
+    if (method === "all") {
+      // All combinations
+      return counts.reduce((a, b) => a * b, 1);
+    }
+    // Sequential/Random: max term count
     return Math.max(...counts);
-  }, [groupKeywords]);
+  }, [groupKeywords, method]);
 
   const missingKeywords = groupKeywords.filter(k => !k.keyword);
 
   const handleTestGenerate = () => {
     if (!selectedGroup) return;
-    // Build sample data from first term of each keyword
     const sampleData: Record<string, string> = {};
     for (const gk of groupKeywords) {
       if (gk.keyword && gk.keyword.terms.length > 0) {
-        sampleData[gk.name] = gk.keyword.terms[0];
+        if (method === "random") {
+          sampleData[gk.name] = gk.keyword.terms[Math.floor(Math.random() * gk.keyword.terms.length)];
+        } else {
+          sampleData[gk.name] = gk.keyword.terms[0];
+        }
       } else {
         sampleData[gk.name] = `[${gk.name}]`;
       }
     }
-    // Simple variable replacement for preview
     let rendered = selectedGroup.content;
     for (const [key, val] of Object.entries(sampleData)) {
       rendered = rendered.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
     }
     setTestPreview(rendered);
+  };
+
+  const buildRows = (): Record<string, string>[] => {
+    const kwData = groupKeywords.filter(k => k.keyword);
+    if (kwData.length === 0) return [];
+
+    const start = parseInt(resumeIndex) || 0;
+
+    if (method === "all") {
+      // Cartesian product
+      const rows: Record<string, string>[] = [];
+      const termArrays = kwData.map(k => k.keyword!.terms);
+      const names = kwData.map(k => k.name);
+
+      const generate = (index: number, current: Record<string, string>) => {
+        if (index === termArrays.length) {
+          rows.push({ ...current });
+          return;
+        }
+        for (const term of termArrays[index]) {
+          current[names[index]] = term;
+          generate(index + 1, current);
+        }
+      };
+      generate(0, {});
+
+      const limit = numberOfPages ? Math.min(parseInt(numberOfPages), rows.length - start) : rows.length - start;
+      return rows.slice(start, start + limit);
+    }
+
+    if (method === "sequential") {
+      const max = Math.max(...kwData.map(k => k.termCount));
+      const limit = numberOfPages ? Math.min(parseInt(numberOfPages), max - start) : max - start;
+      const rows: Record<string, string>[] = [];
+      for (let i = start; i < start + limit && i < max; i++) {
+        const row: Record<string, string> = {};
+        for (const gk of kwData) {
+          row[gk.name] = gk.keyword!.terms[i % gk.keyword!.terms.length] || "";
+        }
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    // Random
+    const count = numberOfPages ? parseInt(numberOfPages) : maxPages;
+    const rows: Record<string, string>[] = [];
+    for (let i = 0; i < count; i++) {
+      const row: Record<string, string> = {};
+      for (const gk of kwData) {
+        row[gk.name] = gk.keyword!.terms[Math.floor(Math.random() * gk.keyword!.terms.length)] || "";
+      }
+      rows.push(row);
+    }
+    return rows;
   };
 
   const handleGenerate = async () => {
@@ -143,25 +227,29 @@ export default function PgpGeneratePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Build CSV data from keywords
-      const maxTerms = Math.max(...groupKeywords.map(k => k.termCount));
-      const limit = numberOfPages ? Math.min(parseInt(numberOfPages), maxTerms) : maxTerms;
-      const start = parseInt(resumeIndex) || 0;
-
-      const rows: Record<string, string>[] = [];
-      for (let i = start; i < Math.min(start + limit, maxTerms); i++) {
-        const row: Record<string, string> = {};
-        for (const gk of groupKeywords) {
-          if (gk.keyword) {
-            row[gk.name] = gk.keyword.terms[i % gk.keyword.terms.length] || "";
-          }
-        }
-        rows.push(row);
+      const rows = buildRows();
+      if (rows.length === 0) {
+        toast({ title: "No rows to generate", variant: "destructive" });
+        setIsGenerating(false);
+        return;
       }
 
       setGenProgress({ processed: 0, total: rows.length, errors: 0 });
 
-      // Create campaign
+      // Build schedule config
+      let scheduledAt: string | null = null;
+      const dripSettings: Record<string, any> = {};
+      if (scheduleMode === "specific" && scheduleDate) {
+        scheduledAt = new Date(scheduleDate).toISOString();
+      } else if (scheduleMode === "increment") {
+        dripSettings.enabled = true;
+        dripSettings.interval_hours = parseInt(incrementHours) || 24;
+      } else if (scheduleMode === "random" && scheduleDateStart && scheduleDateEnd) {
+        dripSettings.enabled = true;
+        dripSettings.random_start = scheduleDateStart;
+        dripSettings.random_end = scheduleDateEnd;
+      }
+
       const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
         name: `PGP: ${selectedGroup.name}`,
         template_id: selectedGroup.id,
@@ -174,15 +262,17 @@ export default function PgpGeneratePage() {
         publish_mode: publishMode,
         generation_method: method,
         campaign_types: ["seo"],
+        scheduled_at: scheduledAt,
+        drip_feed_settings: Object.keys(dripSettings).length > 0 ? dripSettings : null,
       } as any).select("id").single();
 
       if (campErr) throw campErr;
 
-      // Invoke generation
       const { error: genErr } = await supabase.functions.invoke("generate-pages", {
         body: {
           campaign_id: campaign.id,
           overwrite,
+          overwrite_fields: overwrite ? overwriteFields : undefined,
         },
       });
 
@@ -191,7 +281,6 @@ export default function PgpGeneratePage() {
       setGenProgress({ processed: rows.length, total: rows.length, errors: 0 });
       toast({ title: "Generation complete!", description: `${rows.length} pages generated.` });
 
-      // Navigate to campaign detail
       setTimeout(() => {
         navigate(`${basePath}/campaigns/${campaign.id}`);
       }, 1500);
@@ -203,12 +292,18 @@ export default function PgpGeneratePage() {
     }
   };
 
+  const methodIcons = {
+    all: <Shuffle className="h-4 w-4" />,
+    sequential: <ListOrdered className="h-4 w-4" />,
+    random: <ArrowDown className="h-4 w-4" />,
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-display">Generate</h1>
         <p className="text-muted-foreground mt-1">
-          Select a Content Group and generate pages using your Keywords.
+          Select a Content Group, configure generation settings, and generate pages.
         </p>
       </div>
 
@@ -243,7 +338,7 @@ export default function PgpGeneratePage() {
                     {groupKeywords.map(gk => (
                       <div key={gk.name} className="flex items-center justify-between py-1">
                         <div className="flex items-center gap-2">
-                          <Key className="h-3.5 w-3.5 text-muted-foreground" />
+                          <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
                           <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{`{${gk.name}}`}</code>
                         </div>
                         {gk.keyword ? (
@@ -275,78 +370,184 @@ export default function PgpGeneratePage() {
           {/* Generation Settings */}
           {selectedGroup && (
             <Card className="shadow-surface">
-              <CardContent className="p-5 space-y-4">
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-primary" /> Generation Settings
-                </Label>
+              <CardContent className="p-5 space-y-5">
+                <Tabs defaultValue="generation" className="space-y-4">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="generation"><Zap className="h-3.5 w-3.5 mr-1.5" /> Generation</TabsTrigger>
+                    <TabsTrigger value="overwrite"><RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Overwrite</TabsTrigger>
+                    <TabsTrigger value="schedule"><Settings2 className="h-3.5 w-3.5 mr-1.5" /> Schedule</TabsTrigger>
+                  </TabsList>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Number of Pages</Label>
-                    <Input
-                      type="number"
-                      placeholder={`Max: ${maxPages}`}
-                      value={numberOfPages}
-                      onChange={(e) => setNumberOfPages(e.target.value)}
-                      className="h-9"
-                    />
-                    <p className="text-[10px] text-muted-foreground">Leave blank to generate all ({maxPages} pages)</p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Resume Index</Label>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      value={resumeIndex}
-                      onChange={(e) => setResumeIndex(e.target.value)}
-                      className="h-9"
-                    />
-                    <p className="text-[10px] text-muted-foreground">Start from this term index (0-based)</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Publish To</Label>
-                    <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
-                      <SelectTrigger className="h-9"><SelectValue placeholder="None (save locally)" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None (save locally)</SelectItem>
-                        {websites.filter(w => w.status === "connected").map(w => (
-                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                  <TabsContent value="generation" className="space-y-4">
+                    {/* Method Selection */}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Generation Method</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {([
+                          { value: "all", label: "All Combinations", desc: "Every possible combination of keyword terms" },
+                          { value: "sequential", label: "Sequential", desc: "Honors the order of terms in each keyword" },
+                          { value: "random", label: "Random", desc: "Picks a random term from each keyword" },
+                        ] as const).map(m => (
+                          <button
+                            key={m.value}
+                            onClick={() => setMethod(m.value)}
+                            className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all ${
+                              method === m.value ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:bg-accent"
+                            }`}
+                          >
+                            {methodIcons[m.value]}
+                            <span className="text-xs font-medium">{m.label}</span>
+                            <span className="text-[9px] text-muted-foreground leading-tight">{m.desc}</span>
+                          </button>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Publish Mode</Label>
-                    <Select value={publishMode} onValueChange={setPublishMode}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="publish">Publish</SelectItem>
-                        <SelectItem value="private">Private</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Overwrite Existing</p>
-                      <p className="text-[11px] text-muted-foreground">Replace pages with matching slugs</p>
+                    <Separator />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Number of Pages</Label>
+                        <Input
+                          type="number"
+                          placeholder={`Max: ${maxPages.toLocaleString()}`}
+                          value={numberOfPages}
+                          onChange={(e) => setNumberOfPages(e.target.value)}
+                          className="h-9"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Leave blank for all ({maxPages.toLocaleString()} pages)</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Resume Index</Label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={resumeIndex}
+                          onChange={(e) => setResumeIndex(e.target.value)}
+                          className="h-9"
+                        />
+                        <p className="text-[10px] text-muted-foreground">Start from this index (0-based)</p>
+                      </div>
                     </div>
-                    <Switch checked={overwrite} onCheckedChange={setOverwrite} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Spin Content</p>
-                      <p className="text-[11px] text-muted-foreground">Resolve {"{spintax|variations}"} in content</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Publish To</Label>
+                        <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
+                          <SelectTrigger className="h-9"><SelectValue placeholder="None (save locally)" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None (save locally)</SelectItem>
+                            {websites.filter(w => w.status === "connected").map(w => (
+                              <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Publish Mode</Label>
+                        <Select value={publishMode} onValueChange={setPublishMode}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="publish">Publish</SelectItem>
+                            <SelectItem value="private">Private</SelectItem>
+                            <SelectItem value="pending">Pending Review</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <Switch checked={spinContent} onCheckedChange={setSpinContent} />
-                  </div>
-                </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Spin Content</p>
+                        <p className="text-[11px] text-muted-foreground">Resolve {"{spintax|variations}"} in content</p>
+                      </div>
+                      <Switch checked={spinContent} onCheckedChange={setSpinContent} />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="overwrite" className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Enable Overwrite</p>
+                        <p className="text-[11px] text-muted-foreground">Replace pages with matching slugs</p>
+                      </div>
+                      <Switch checked={overwrite} onCheckedChange={setOverwrite} />
+                    </div>
+
+                    {overwrite && (
+                      <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Select sections to overwrite</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {([
+                            { key: "title", label: "Title & Slug" },
+                            { key: "content", label: "Content" },
+                            { key: "excerpt", label: "Excerpt" },
+                            { key: "seo", label: "SEO Metadata" },
+                            { key: "featuredImage", label: "Featured Image" },
+                            { key: "customFields", label: "Custom Fields" },
+                            { key: "taxonomies", label: "Taxonomies" },
+                            { key: "author", label: "Author" },
+                            { key: "publishDate", label: "Publish Date" },
+                          ] as const).map(f => (
+                            <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer p-2 rounded-lg hover:bg-accent transition-colors">
+                              <Checkbox
+                                checked={overwriteFields[f.key]}
+                                onCheckedChange={(v) => setOverwriteFields(prev => ({ ...prev, [f.key]: !!v }))}
+                              />
+                              <span>{f.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Unchecked sections will be preserved from the existing page.</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="schedule" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">Schedule Mode</Label>
+                      <Select value={scheduleMode} onValueChange={(v: any) => setScheduleMode(v)}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="immediate">Immediate</SelectItem>
+                          <SelectItem value="specific">Specific Date</SelectItem>
+                          <SelectItem value="increment">Increment (Drip Feed)</SelectItem>
+                          <SelectItem value="random">Random Date Range</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {scheduleMode === "specific" && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Publish Date</Label>
+                        <Input type="datetime-local" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="h-9" />
+                      </div>
+                    )}
+
+                    {scheduleMode === "increment" && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Hours Between Each Page</Label>
+                        <Input type="number" value={incrementHours} onChange={(e) => setIncrementHours(e.target.value)} className="h-9" min={1} />
+                        <p className="text-[10px] text-muted-foreground">Each page is published X hours after the previous one.</p>
+                      </div>
+                    )}
+
+                    {scheduleMode === "random" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Start Date</Label>
+                          <Input type="datetime-local" value={scheduleDateStart} onChange={(e) => setScheduleDateStart(e.target.value)} className="h-9" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">End Date</Label>
+                          <Input type="datetime-local" value={scheduleDateEnd} onChange={(e) => setScheduleDateEnd(e.target.value)} className="h-9" />
+                        </div>
+                        <p className="col-span-2 text-[10px] text-muted-foreground">Each page gets a random date between start and end.</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           )}
@@ -399,18 +600,35 @@ export default function PgpGeneratePage() {
               {selectedGroup && (
                 <div className="rounded-xl border p-3 space-y-2 text-xs">
                   <div className="flex justify-between text-muted-foreground">
+                    <span>Method</span>
+                    <span className="font-medium text-foreground capitalize">{method}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
                     <span>Keywords</span>
                     <span className="font-medium text-foreground">{groupKeywords.length}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Max Pages</span>
-                    <span className="font-medium text-foreground">{maxPages}</span>
+                    <span className="font-medium text-foreground">{maxPages.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Will Generate</span>
                     <span className="font-medium text-foreground">
-                      {numberOfPages ? Math.min(parseInt(numberOfPages) || 0, maxPages) : maxPages}
+                      {numberOfPages ? Math.min(parseInt(numberOfPages) || 0, maxPages).toLocaleString() : maxPages.toLocaleString()}
                     </span>
+                  </div>
+                  <Separator className="my-1" />
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Overwrite</span>
+                    <span className="font-medium text-foreground">{overwrite ? "Yes" : "No"}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Spintax</span>
+                    <span className="font-medium text-foreground">{spinContent ? "On" : "Off"}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Schedule</span>
+                    <span className="font-medium text-foreground capitalize">{scheduleMode}</span>
                   </div>
                 </div>
               )}
@@ -420,13 +638,15 @@ export default function PgpGeneratePage() {
           {/* Test Preview */}
           {testPreview && (
             <Card className="shadow-surface">
-              <CardContent className="p-0 overflow-hidden rounded-xl">
-                <div className="px-4 py-2 border-b bg-muted/30 flex items-center justify-between">
-                  <span className="text-xs font-semibold">Preview</span>
-                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setTestPreview(null)}>Close</Button>
+              <CardContent className="p-0">
+                <div className="px-4 py-3 border-b flex items-center justify-between">
+                  <p className="text-xs font-semibold">Test Preview</p>
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setTestPreview(null)}>
+                    Close
+                  </Button>
                 </div>
-                <div className="max-h-[400px] overflow-y-auto">
-                  <TemplatePreview html={testPreview} />
+                <div className="p-4 max-h-96 overflow-auto">
+                  <TemplatePreview content={testPreview} />
                 </div>
               </CardContent>
             </Card>
