@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,9 +63,14 @@ interface AiTemplateBuilderDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (name: string, content: string) => void;
   isSaving: boolean;
+  /** Called when AI Content mode generates — opens editor with result */
+  onContentGenerated?: (data: { name: string; content: string; variables: string[]; seoTitle: string; seoDescription: string }) => void;
 }
 
-export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving }: AiTemplateBuilderDialogProps) {
+export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, onContentGenerated }: AiTemplateBuilderDialogProps) {
+  const [mode, setMode] = useState<"builder" | "content">("builder");
+
+  // Builder state
   const [businessType, setBusinessType] = useState("");
   const [niche, setNiche] = useState("");
   const [language, setLanguage] = useState("en");
@@ -74,6 +79,11 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving }
   const [includeHeaderFooter, setIncludeHeaderFooter] = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedName, setGeneratedName] = useState("");
+
+  // Quick Content state
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [aiContentType, setAiContentType] = useState("seo");
+
   const { toast } = useToast();
 
   const buildPrompt = () => {
@@ -109,6 +119,35 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving }
     },
   });
 
+  const aiContentMutation = useMutation({
+    mutationFn: async ({ keywords, contentType }: { keywords: string; contentType: string }) => {
+      const { data, error } = await supabase.functions.invoke("generate-seo-content", {
+        body: { keywords: keywords.split(",").map(k => k.trim()).filter(Boolean), contentType },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { content: string; variables: string[]; suggestedName: string; seoTitle?: string; seoDescription?: string };
+    },
+    onSuccess: (data) => {
+      if (onContentGenerated) {
+        onContentGenerated({
+          name: data.suggestedName,
+          content: data.content,
+          variables: data.variables || [],
+          seoTitle: data.seoTitle || "",
+          seoDescription: data.seoDescription || "",
+        });
+        handleClose();
+      } else {
+        setGeneratedContent(data.content);
+        setGeneratedName(data.suggestedName);
+        setMode("builder");
+      }
+      toast({ title: "AI Content generated!" });
+    },
+    onError: (err: Error) => toast({ title: "Failed", description: err.message, variant: "destructive" }),
+  });
+
   const detectedVars = filterDesignVars(
     (generatedContent.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || [])
   );
@@ -122,6 +161,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving }
     setLanguage("en");
     setSections(["hero", "features", "testimonials", "faq", "cta"]);
     setIncludeHeaderFooter(false);
+    setAiKeywords("");
+    setAiContentType("seo");
+    setMode("builder");
     onOpenChange(false);
   };
 
@@ -135,170 +177,235 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving }
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 mt-4">
-          {/* Step 1: Business Type */}
-          <div>
-            <Label className="text-sm font-semibold mb-2 block">What type of template do you need?</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {BUSINESS_TYPES.map((bt) => (
-                <button
-                  key={bt.value}
-                  type="button"
-                  onClick={() => setBusinessType(bt.value)}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${
-                    businessType === bt.value
-                      ? "border-primary bg-primary/10 text-primary font-medium ring-1 ring-primary/30"
-                      : "border-border bg-card hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                >
-                  <span className="text-lg">{bt.icon}</span>
-                  <span>{bt.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Mode Tabs */}
+        <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="mt-2">
+          <TabsList className="grid w-full grid-cols-2 max-w-sm">
+            <TabsTrigger value="builder" className="flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" /> Full Builder
+            </TabsTrigger>
+            <TabsTrigger value="content" className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5" /> Quick Content
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Step 2: Language & Niche */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-2 text-sm font-semibold">
-                <Globe className="h-4 w-4 text-primary" /> Template Language
-              </Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="h-10 border-primary/30 bg-primary/5">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {AI_LANGUAGES.map((l) => (
-                    <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Business niche / industry</Label>
-              <Input
-                placeholder="e.g., Dental clinic, Organic skincare, Plumbing..."
-                value={niche}
-                onChange={(e) => setNiche(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Step 3: Sections */}
-          <div>
-            <Label className="text-sm font-semibold mb-2 block">Sections to include</Label>
-            <div className="flex flex-wrap gap-2">
-              {SECTIONS.map((sec) => {
-                const selected = sections.includes(sec.value);
-                return (
+          {/* ─── Full Builder Mode ─── */}
+          <TabsContent value="builder" className="space-y-5 mt-4">
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">What type of template do you need?</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {BUSINESS_TYPES.map((bt) => (
                   <button
-                    key={sec.value}
+                    key={bt.value}
                     type="button"
-                    onClick={() => setSections(prev => selected ? prev.filter(s => s !== sec.value) : [...prev, sec.value])}
-                    className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
-                      selected
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-muted/50 text-muted-foreground hover:bg-accent"
+                    onClick={() => setBusinessType(bt.value)}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${
+                      businessType === bt.value
+                        ? "border-primary bg-primary/10 text-primary font-medium ring-1 ring-primary/30"
+                        : "border-border bg-card hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
-                    {selected ? "✓ " : ""}{sec.label}
+                    <span className="text-lg">{bt.icon}</span>
+                    <span>{bt.label}</span>
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Step 4: Extra details */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold">Additional details (optional)</Label>
-            <Textarea
-              placeholder="Any specific requirements... e.g., 'include comparison table', 'focus on local SEO'"
-              value={extraDetails}
-              onChange={(e) => setExtraDetails(e.target.value)}
-              rows={2}
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Switch checked={includeHeaderFooter} onCheckedChange={setIncludeHeaderFooter} id="ai-hf" />
-            <Label htmlFor="ai-hf" className="text-sm cursor-pointer">Include header & footer (uncheck to use your website's)</Label>
-          </div>
-
-          {/* Prompt preview */}
-          {(businessType || niche) && (
-            <div className="p-3 rounded-xl bg-muted/50 border border-border">
-              <p className="text-xs text-muted-foreground mb-1 font-medium">AI will generate based on:</p>
-              <p className="text-sm text-foreground">{buildPrompt()}</p>
-            </div>
-          )}
-
-          <Button
-            onClick={() => generateMutation.mutate(buildPrompt())}
-            disabled={(!businessType && !niche) || generateMutation.isPending}
-            className="w-full"
-            size="lg"
-          >
-            {generateMutation.isPending ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating your template...</>
-            ) : (
-              <><Sparkles className="mr-2 h-4 w-4" /> Generate Template</>
-            )}
-          </Button>
-
-          {/* Generated result */}
-          {generatedContent && (
-            <div className="space-y-4 pt-4 border-t border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Template Name</Label>
-                <Input value={generatedName} onChange={(e) => setGeneratedName(e.target.value)} />
+                <Label className="flex items-center gap-2 text-sm font-semibold">
+                  <Globe className="h-4 w-4 text-primary" /> Template Language
+                </Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="h-10 border-primary/30 bg-primary/5">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    {AI_LANGUAGES.map((l) => (
+                      <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              <Tabs defaultValue="preview" className="w-full">
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="preview" className="flex items-center gap-1.5">
-                    <Eye className="h-3.5 w-3.5" /> Preview
-                  </TabsTrigger>
-                  <TabsTrigger value="code" className="flex items-center gap-1.5">
-                    <Code className="h-3.5 w-3.5" /> Code
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="preview" className="mt-3">
-                  <TemplatePreview html={generatedContent} />
-                </TabsContent>
-                <TabsContent value="code" className="mt-3">
-                  <Textarea
-                    value={generatedContent}
-                    onChange={(e) => setGeneratedContent(e.target.value)}
-                    rows={14}
-                    className="font-mono text-xs"
-                  />
-                </TabsContent>
-              </Tabs>
-
-              {detectedVars.length > 0 && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-xs text-muted-foreground">Content variables:</span>
-                  {[...new Set(detectedVars)].map((v) => (
-                    <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => { setGeneratedContent(""); setGeneratedName(""); }}>
-                  Discard
-                </Button>
-                <Button
-                  onClick={() => onSave(generatedName, generatedContent)}
-                  disabled={!generatedName || !generatedContent || isSaving}
-                >
-                  {isSaving ? "Saving..." : "Save Template"}
-                </Button>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold">Business niche / industry</Label>
+                <Input
+                  placeholder="e.g., Dental clinic, Organic skincare, Plumbing..."
+                  value={niche}
+                  onChange={(e) => setNiche(e.target.value)}
+                />
               </div>
             </div>
-          )}
-        </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Sections to include</Label>
+              <div className="flex flex-wrap gap-2">
+                {SECTIONS.map((sec) => {
+                  const selected = sections.includes(sec.value);
+                  return (
+                    <button
+                      key={sec.value}
+                      type="button"
+                      onClick={() => setSections(prev => selected ? prev.filter(s => s !== sec.value) : [...prev, sec.value])}
+                      className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
+                        selected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-muted/50 text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {selected ? "✓ " : ""}{sec.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Additional details (optional)</Label>
+              <Textarea
+                placeholder="Any specific requirements... e.g., 'include comparison table', 'focus on local SEO'"
+                value={extraDetails}
+                onChange={(e) => setExtraDetails(e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch checked={includeHeaderFooter} onCheckedChange={setIncludeHeaderFooter} id="ai-hf" />
+              <Label htmlFor="ai-hf" className="text-sm cursor-pointer">Include header & footer (uncheck to use your website's)</Label>
+            </div>
+
+            {(businessType || niche) && (
+              <div className="p-3 rounded-xl bg-muted/50 border border-border">
+                <p className="text-xs text-muted-foreground mb-1 font-medium">AI will generate based on:</p>
+                <p className="text-sm text-foreground">{buildPrompt()}</p>
+              </div>
+            )}
+
+            <Button
+              onClick={() => generateMutation.mutate(buildPrompt())}
+              disabled={(!businessType && !niche) || generateMutation.isPending}
+              className="w-full"
+              size="lg"
+            >
+              {generateMutation.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating your template...</>
+              ) : (
+                <><Sparkles className="mr-2 h-4 w-4" /> Generate Template</>
+              )}
+            </Button>
+          </TabsContent>
+
+          {/* ─── Quick Content Mode ─── */}
+          <TabsContent value="content" className="space-y-5 mt-4">
+            <div className="p-4 rounded-xl bg-muted/30 border border-border">
+              <p className="text-sm text-muted-foreground">
+                Quickly generate SEO-optimized content from keywords. The AI will create a complete template with proper structure, meta tags, and dynamic variables.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Keywords (comma-separated)</Label>
+              <Input
+                value={aiKeywords}
+                onChange={(e) => setAiKeywords(e.target.value)}
+                placeholder="plumbing, new york, emergency repair, 24/7 service"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Content Type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "seo", label: "SEO Landing Page", icon: "🔍", desc: "Organic search optimized" },
+                  { value: "sea", label: "SEA Landing Page", icon: "📢", desc: "Paid ads conversion focused" },
+                  { value: "geo", label: "GEO Local Page", icon: "📍", desc: "Location-based targeting" },
+                ].map(ct => (
+                  <button
+                    key={ct.value}
+                    type="button"
+                    onClick={() => setAiContentType(ct.value)}
+                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${
+                      aiContentType === ct.value
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border hover:bg-accent"
+                    }`}
+                  >
+                    <span className="text-xl">{ct.icon}</span>
+                    <span className="text-xs font-medium">{ct.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{ct.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType })}
+              disabled={!aiKeywords.trim() || aiContentMutation.isPending}
+              className="w-full"
+              size="lg"
+            >
+              {aiContentMutation.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating content...</>
+              ) : (
+                <><Zap className="mr-2 h-4 w-4" /> Generate Content</>
+              )}
+            </Button>
+          </TabsContent>
+        </Tabs>
+
+        {/* Generated result (shared by both modes) */}
+        {generatedContent && (
+          <div className="space-y-4 pt-4 border-t border-border">
+            <div className="space-y-1.5">
+              <Label>Template Name</Label>
+              <Input value={generatedName} onChange={(e) => setGeneratedName(e.target.value)} />
+            </div>
+
+            <Tabs defaultValue="preview" className="w-full">
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="preview" className="flex items-center gap-1.5">
+                  <Eye className="h-3.5 w-3.5" /> Preview
+                </TabsTrigger>
+                <TabsTrigger value="code" className="flex items-center gap-1.5">
+                  <Code className="h-3.5 w-3.5" /> Code
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="preview" className="mt-3">
+                <TemplatePreview html={generatedContent} />
+              </TabsContent>
+              <TabsContent value="code" className="mt-3">
+                <Textarea
+                  value={generatedContent}
+                  onChange={(e) => setGeneratedContent(e.target.value)}
+                  rows={14}
+                  className="font-mono text-xs"
+                />
+              </TabsContent>
+            </Tabs>
+
+            {detectedVars.length > 0 && (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs text-muted-foreground">Content variables:</span>
+                {[...new Set(detectedVars)].map((v) => (
+                  <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setGeneratedContent(""); setGeneratedName(""); }}>
+                Discard
+              </Button>
+              <Button
+                onClick={() => onSave(generatedName, generatedContent)}
+                disabled={!generatedName || !generatedContent || isSaving}
+              >
+                {isSaving ? "Saving..." : "Save Template"}
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

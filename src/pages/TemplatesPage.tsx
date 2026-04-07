@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
-  Plus, FileText, Copy, Trash2, Sparkles, Wand2, Upload, Download,
+  Plus, FileText, Copy, Trash2, Sparkles, Upload, Download,
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2,
@@ -58,10 +58,6 @@ export default function TemplatesPage() {
   const [siteWebsite, setSiteWebsite] = useState("");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
   const [siteLoading, setSiteLoading] = useState(false);
-  // AI Content
-  const [aiContentOpen, setAiContentOpen] = useState(false);
-  const [aiKeywords, setAiKeywords] = useState("");
-  const [aiContentType, setAiContentType] = useState("seo");
 
   const importFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -353,22 +349,6 @@ export default function TemplatesPage() {
     }
   };
 
-  // AI Content Generator
-  const aiContentMutation = useMutation({
-    mutationFn: async ({ keywords, contentType }: { keywords: string; contentType: string }) => {
-      const { data, error } = await supabase.functions.invoke("generate-seo-content", { body: { keywords: keywords.split(",").map(k => k.trim()).filter(Boolean), contentType } });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data as { content: string; variables: string[]; seoTitle: string; seoDescription: string; suggestedName: string };
-    },
-    onSuccess: (data) => {
-      setAiContentOpen(false);
-      setEditingTemplate({ id: "", name: data.suggestedName, content: data.content, variables: data.variables || [], user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: data.seoTitle || "", seo_description_pattern: data.seoDescription || "" } as any);
-      setEditorOpen(true);
-      toast({ title: "AI Content generated!" });
-    },
-    onError: (err: Error) => toast({ title: "Failed", description: err.message, variant: "destructive" }),
-  });
 
   const handleEditorSave = (data: { name: string; content: string; seoTitlePattern: string; seoDescriptionPattern: string; schemaType: string; schemaConfig: Record<string, any> }) => {
     if (editingTemplate?.id) {
@@ -400,9 +380,6 @@ export default function TemplatesPage() {
           <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTemplate(f); }} />
           <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()}>
             <Upload className="mr-1.5 h-3.5 w-3.5" /> Import
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setAiContentOpen(true)}>
-            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> AI Content
           </Button>
           <Button variant="outline" size="sm" onClick={() => setCsvDialogOpen(true)}>
             <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" /> From CSV
@@ -645,6 +622,10 @@ export default function TemplatesPage() {
         onOpenChange={setAiOpen}
         onSave={(name, content) => createMutation.mutate({ name, content })}
         isSaving={createMutation.isPending}
+        onContentGenerated={(data) => {
+          setEditingTemplate({ id: "", name: data.name, content: data.content, variables: data.variables || [], user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: data.seoTitle || "", seo_description_pattern: data.seoDescription || "" } as any);
+          setEditorOpen(true);
+        }}
       />
 
       <TemplateEditorDialog
@@ -699,32 +680,6 @@ export default function TemplatesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* AI Content Generator Dialog */}
-      <Dialog open={aiContentOpen} onOpenChange={setAiContentOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> AI Content Generator</DialogTitle></DialogHeader>
-          <div className="space-y-3 mt-2">
-            <div className="space-y-1.5">
-              <Label>Keywords (comma-separated)</Label>
-              <Input value={aiKeywords} onChange={(e) => setAiKeywords(e.target.value)} placeholder="plumbing, new york, emergency" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Content Type</Label>
-              <Select value={aiContentType} onValueChange={setAiContentType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="seo">SEO Landing Page</SelectItem>
-                  <SelectItem value="sea">SEA Landing Page</SelectItem>
-                  <SelectItem value="geo">GEO Local Page</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType })} disabled={!aiKeywords.trim() || aiContentMutation.isPending} className="w-full">
-              {aiContentMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="mr-2 h-4 w-4" /> Generate Content</>}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
