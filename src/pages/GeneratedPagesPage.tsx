@@ -20,7 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { AiSeoAssistantDialog } from "@/components/AiSeoAssistantDialog";
-import { exportPagesCsv, exportPagesJson } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -436,6 +436,7 @@ export default function GeneratedPagesPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => exportPagesCsv(filtered, "generated-pages.csv")}>Export CSV</DropdownMenuItem>
               <DropdownMenuItem onClick={() => exportPagesJson(filtered, "generated-pages.json")}>Export JSON</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportDataFile(filtered.map(p => ({ Title: p.title, Slug: p.slug, Status: p.status, URL: p.external_url || "", Error: p.error_message || "" })), "xlsx", "generated-pages")}>Export Excel</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setDuplicateOpen(true)} disabled={pages.length < 2}>
                 <Copy className="h-3.5 w-3.5 mr-2" /> Find Duplicates
