@@ -1314,6 +1314,59 @@ export type Database = {
           },
         ]
       }
+      pgp_keywords: {
+        Row: {
+          columns: string[] | null
+          created_at: string
+          delimiter: string | null
+          id: string
+          name: string
+          source: string
+          source_config: Json | null
+          term_count: number
+          terms: string[]
+          updated_at: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          columns?: string[] | null
+          created_at?: string
+          delimiter?: string | null
+          id?: string
+          name: string
+          source?: string
+          source_config?: Json | null
+          term_count?: number
+          terms?: string[]
+          updated_at?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          columns?: string[] | null
+          created_at?: string
+          delimiter?: string | null
+          id?: string
+          name?: string
+          source?: string
+          source_config?: Json | null
+          term_count?: number
+          terms?: string[]
+          updated_at?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pgp_keywords_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           ai_content_length: string

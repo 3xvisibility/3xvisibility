@@ -68,6 +68,12 @@ const mainNav: NavItem[] = [
   { titleKey: "sidebar.dataCsv", path: "data", icon: Database },
 ];
 
+const pgpNav: NavItem[] = [
+  { titleKey: "Keywords", path: "pgp-keywords", icon: Key },
+  { titleKey: "Content Groups", path: "pgp-content", icon: Layers },
+  { titleKey: "Generate", path: "pgp-generate", icon: Zap },
+];
+
 const toolsNav: NavItem[] = [
   { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers },
   { titleKey: "sidebar.aiScanner", path: "scanner", icon: ScanSearch },
