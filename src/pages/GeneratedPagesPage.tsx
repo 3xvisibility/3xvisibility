@@ -27,7 +27,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { calculateFreshness } from "@/lib/content-freshness";
-import { SeoScoreBadge } from "@/components/SeoScoreBadge";
+import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { logAudit } from "@/lib/audit";
@@ -627,13 +627,7 @@ export default function GeneratedPagesPage() {
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
                     </div>
-                    <TooltipProvider>
-                      <div className="flex gap-1">
-                        <SeoScoreBadge type="seo" score={calculateContentSeoScore(page.title, page.content, page.slug).score} size="sm" />
-                        <SeoScoreBadge type="sea" score={calculateContentSeaScore(page.title, page.content, page.slug).score} size="sm" />
-                        <SeoScoreBadge type="geo" score={calculateContentGeoScore(page.title, page.content, page.slug).score} size="sm" />
-                      </div>
-                    </TooltipProvider>
+                    <ScoresBadgeGroup title={page.title} content={page.content} slug={page.slug} size="sm" />
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -721,13 +715,7 @@ export default function GeneratedPagesPage() {
                         <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate block max-w-[120px]">{page.slug}</code>
                       </td>
                       <td className="p-3">
-                        <TooltipProvider>
-                          <div className="flex gap-1 justify-center">
-                            <SeoScoreBadge type="seo" score={calculateContentSeoScore(page.title, page.content, page.slug).score} size="sm" />
-                            <SeoScoreBadge type="sea" score={calculateContentSeaScore(page.title, page.content, page.slug).score} size="sm" />
-                            <SeoScoreBadge type="geo" score={calculateContentGeoScore(page.title, page.content, page.slug).score} size="sm" />
-                          </div>
-                        </TooltipProvider>
+                        <ScoresBadgeGroup title={page.title} content={page.content} slug={page.slug} size="sm" />
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-0.5 justify-end">
