@@ -23,6 +23,7 @@ import {
   ClipboardCheck,
   Activity,
   Gift,
+  KeyRound,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -69,7 +70,7 @@ const mainNav: NavItem[] = [
 ];
 
 const pgpNav: NavItem[] = [
-  { titleKey: "Keywords", path: "pgp-keywords", icon: Key },
+  { titleKey: "Keywords", path: "pgp-keywords", icon: KeyRound },
   { titleKey: "Content Groups", path: "pgp-content", icon: Layers },
   { titleKey: "Generate", path: "pgp-generate", icon: Zap },
 ];
