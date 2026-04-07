@@ -73,6 +73,7 @@ const pgpNav: NavItem[] = [
   { titleKey: "Keywords", path: "pgp-keywords", icon: KeyRound },
   { titleKey: "Content Groups", path: "pgp-content", icon: Layers },
   { titleKey: "Generate", path: "pgp-generate", icon: Zap },
+  { titleKey: "Terms", path: "pgp-terms", icon: Database },
 ];
 
 const toolsNav: NavItem[] = [
