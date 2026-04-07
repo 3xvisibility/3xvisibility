@@ -680,32 +680,6 @@ export default function TemplatesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* AI Content Generator Dialog */}
-      <Dialog open={aiContentOpen} onOpenChange={setAiContentOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> AI Content Generator</DialogTitle></DialogHeader>
-          <div className="space-y-3 mt-2">
-            <div className="space-y-1.5">
-              <Label>Keywords (comma-separated)</Label>
-              <Input value={aiKeywords} onChange={(e) => setAiKeywords(e.target.value)} placeholder="plumbing, new york, emergency" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Content Type</Label>
-              <Select value={aiContentType} onValueChange={setAiContentType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="seo">SEO Landing Page</SelectItem>
-                  <SelectItem value="sea">SEA Landing Page</SelectItem>
-                  <SelectItem value="geo">GEO Local Page</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType })} disabled={!aiKeywords.trim() || aiContentMutation.isPending} className="w-full">
-              {aiContentMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="mr-2 h-4 w-4" /> Generate Content</>}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
