@@ -464,8 +464,8 @@ export default function CampaignsPage() {
       <CreateCampaignWizard open={wizardOpen} onOpenChange={setWizardOpen} onCreated={handleCampaignCreated} />
 
       {/* Dialogs */}
-      {linkDialogCampaign && <InternalLinkDialog open={!!linkDialogCampaign} onOpenChange={() => setLinkDialogCampaign(null)} campaignId={linkDialogCampaign.id} />}
-      {jobDialogCampaign && <GenerationJobDialog open={!!jobDialogCampaign} onOpenChange={() => setJobDialogCampaign(null)} campaignId={jobDialogCampaign.id} />}
+      {linkDialogCampaign && <InternalLinkDialog open={!!linkDialogCampaign} onOpenChange={() => setLinkDialogCampaign(null)} campaignId={linkDialogCampaign.id} campaignName={linkDialogCampaign.name} templateVariables={(linkDialogCampaign as any).templates?.variables || []} />}
+      {jobDialogCampaign && <GenerationJobDialog open={!!jobDialogCampaign} onOpenChange={() => setJobDialogCampaign(null)} campaignId={jobDialogCampaign.id} campaignName={jobDialogCampaign.name} />}
     </div>
   );
 }
