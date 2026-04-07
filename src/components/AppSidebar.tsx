@@ -228,6 +228,21 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
+              Page Generator Pro
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-0.5">
+              {renderNavItems(pgpNav)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {!collapsed && <Separator className="my-3 mx-3" />}
+
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
               {t("sidebar.tools")}
             </SidebarGroupLabel>
           )}
