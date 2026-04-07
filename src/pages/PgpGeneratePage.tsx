@@ -466,6 +466,119 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             </CardContent>
           </Card>
 
+          {/* AI Generate (always available) */}
+          {!selectedGroup && (
+            <Card className="shadow-surface">
+              <CardContent className="p-5 space-y-4">
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-semibold">AI-Powered Page Generation</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    No Content Group needed — describe your business and AI generates unique, SEO-optimized pages.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Business / Store Description *</Label>
+                  <Textarea
+                    placeholder="e.g. Plumbing services company in Texas, specializing in emergency repairs..."
+                    value={aiBusinessDesc}
+                    onChange={(e) => setAiBusinessDesc(e.target.value)}
+                    rows={3}
+                    className="resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Target Keywords</Label>
+                  <Textarea
+                    placeholder="e.g. plumber near me, emergency plumbing, water heater repair..."
+                    value={aiKeywords}
+                    onChange={(e) => setAiKeywords(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank to auto-detect.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Target Locations</Label>
+                  <Textarea
+                    placeholder="e.g. Houston TX, Dallas TX, Austin TX..."
+                    value={aiLocations}
+                    onChange={(e) => setAiLocations(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank for general pages.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Number of Pages</Label>
+                    <Input type="number" min={1} max={50} value={aiPageCount} onChange={(e) => setAiPageCount(e.target.value)} className="h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Language</Label>
+                    <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
+                        <SelectItem value="de">German</SelectItem>
+                        <SelectItem value="pt">Portuguese</SelectItem>
+                        <SelectItem value="ar">Arabic</SelectItem>
+                        <SelectItem value="hi">Hindi</SelectItem>
+                        <SelectItem value="ja">Japanese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Publish To</Label>
+                    <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="None (save locally)" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (save locally)</SelectItem>
+                        {websites.filter(w => w.status === "connected").map(w => (
+                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Publish Mode</Label>
+                    <Select value={publishMode} onValueChange={setPublishMode}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="publish">Publish</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  disabled={!aiBusinessDesc.trim() || aiGenerating}
+                  onClick={handleAiGenerate}
+                >
+                  {aiGenerating ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> AI Generating...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" /> Generate with AI</>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Generation Settings */}
           {selectedGroup && (
             <Card className="shadow-surface">
