@@ -566,7 +566,100 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="overwrite" className="space-y-4">
+                  <TabsContent value="ai" className="space-y-4">
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-semibold">AI-Powered Page Generation</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Describe your business and AI will generate unique, SEO-optimized pages automatically.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Business / Store Description *</Label>
+                      <Textarea
+                        placeholder="e.g. Plumbing services company in Texas, specializing in emergency repairs, water heater installation, and drain cleaning..."
+                        value={aiBusinessDesc}
+                        onChange={(e) => setAiBusinessDesc(e.target.value)}
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Target Keywords</Label>
+                      <Textarea
+                        placeholder="e.g. plumber near me, emergency plumbing, water heater repair, drain cleaning service..."
+                        value={aiKeywords}
+                        onChange={(e) => setAiKeywords(e.target.value)}
+                        rows={2}
+                        className="resize-none"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank to auto-detect.</p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Target Locations</Label>
+                      <Textarea
+                        placeholder="e.g. Houston TX, Dallas TX, Austin TX, San Antonio TX..."
+                        value={aiLocations}
+                        onChange={(e) => setAiLocations(e.target.value)}
+                        rows={2}
+                        className="resize-none"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Comma-separated cities/areas. Leave blank for general pages.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Number of Pages</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={50}
+                          value={aiPageCount}
+                          onChange={(e) => setAiPageCount(e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Language</Label>
+                        <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="fr">French</SelectItem>
+                            <SelectItem value="es">Spanish</SelectItem>
+                            <SelectItem value="de">German</SelectItem>
+                            <SelectItem value="it">Italian</SelectItem>
+                            <SelectItem value="pt">Portuguese</SelectItem>
+                            <SelectItem value="nl">Dutch</SelectItem>
+                            <SelectItem value="ar">Arabic</SelectItem>
+                            <SelectItem value="hi">Hindi</SelectItem>
+                            <SelectItem value="ja">Japanese</SelectItem>
+                            <SelectItem value="zh">Chinese</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      disabled={!aiBusinessDesc.trim() || aiGenerating}
+                      onClick={handleAiGenerate}
+                    >
+                      {aiGenerating ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> AI Generating...</>
+                      ) : (
+                        <><Sparkles className="h-4 w-4 mr-2" /> Generate with AI</>
+                      )}
+                    </Button>
+                  </TabsContent>
+
+
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Enable Overwrite</p>
