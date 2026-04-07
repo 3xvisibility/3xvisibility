@@ -101,14 +101,29 @@ export function TemplateEditorDialog({
 
   const { toast } = useToast();
 
+  const resetAllFields = useCallback(() => {
+    setName(""); setContent(""); setShowPreview(false);
+    setSeoTitlePattern(""); setSeoDescriptionPattern("");
+    setSlugPattern(""); setCanonicalUrlPattern("");
+    setOgTitlePattern(""); setOgDescriptionPattern("");
+    setOgImagePattern(""); setTwitterCard("summary_large_image");
+    setSchemaType("WebPage"); setPostType("page");
+    setExcerptPattern(""); setFeaturedImageSource("none");
+    setFeaturedImageUrl(""); setTaxonomyCategories("");
+    setTaxonomyTags(""); setCommentsEnabled(true);
+    setCustomFields([]); setHeaderCode(""); setFooterCode("");
+    setAiSeoNiche("");
+  }, []);
+
   useEffect(() => {
+    if (!open) return;
     if (editingTemplate) {
       setName(editingTemplate.name);
       setContent(editingTemplate.content);
-      setSeoTitlePattern((editingTemplate as any).seo_title_pattern || "");
-      setSeoDescriptionPattern((editingTemplate as any).seo_description_pattern || "");
-      setSchemaType((editingTemplate as any).schema_type || "WebPage");
-      const cfg = (editingTemplate as any).schema_config || {};
+      setSeoTitlePattern(editingTemplate.seo_title_pattern || "");
+      setSeoDescriptionPattern(editingTemplate.seo_description_pattern || "");
+      setSchemaType(editingTemplate.schema_type || "WebPage");
+      const cfg = (editingTemplate.schema_config as Record<string, any>) || {};
       setSlugPattern(cfg._slugPattern || "");
       setCanonicalUrlPattern(cfg._canonicalUrl || "");
       setOgTitlePattern(cfg._ogTitle || "");
@@ -125,8 +140,12 @@ export function TemplateEditorDialog({
       setCustomFields(cfg._customFields || []);
       setHeaderCode(cfg._headerCode || "");
       setFooterCode(cfg._footerCode || "");
+      setShowPreview(false);
+      setAiSeoNiche("");
+    } else {
+      resetAllFields();
     }
-  }, [editingTemplate]);
+  }, [editingTemplate, open, resetAllFields]);
 
   const detectedVars = filterDesignVars(
     (content.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || [])
@@ -156,12 +175,7 @@ export function TemplateEditorDialog({
   };
 
   const handleClose = () => {
-    setName(""); setContent(""); setShowPreview(false);
-    setSeoTitlePattern(""); setSeoDescriptionPattern("");
-    setSlugPattern(""); setCanonicalUrlPattern("");
-    setSchemaType("WebPage"); setPostType("page");
-    setExcerptPattern(""); setCustomFields([]);
-    setHeaderCode(""); setFooterCode("");
+    resetAllFields();
     onOpenChange(false);
   };
 
