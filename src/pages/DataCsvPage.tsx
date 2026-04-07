@@ -18,8 +18,9 @@ import {
 import {
   Database, Search, MoreHorizontal, Eye, Upload, Trash2, FileSpreadsheet,
   HardDrive, Layers, AlertTriangle, Download, Plus, CheckCircle2, XCircle,
-  CloudUpload, Sheet, Rss, ChevronLeft, ChevronRight,
+  CloudUpload, Sheet, Rss, ChevronLeft, ChevronRight, FileJson, FileText,
 } from "lucide-react";
+import { exportDataFile, parseUploadedFile } from "@/lib/export-csv";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
