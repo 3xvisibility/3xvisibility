@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { AiSeoAssistantDialog } from "@/components/AiSeoAssistantDialog";
+import { AiEnrichDialog } from "@/components/AiEnrichDialog";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +72,7 @@ export default function GeneratedPagesPage() {
   const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
   const [aiAssistantPage, setAiAssistantPage] = useState<GeneratedPage | null>(null);
+  const [aiEnrichPage, setAiEnrichPage] = useState<GeneratedPage | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -642,6 +644,7 @@ export default function GeneratedPagesPage() {
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
                       {page.status === "failed" && <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
@@ -737,6 +740,7 @@ export default function GeneratedPagesPage() {
                               <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
                               {page.status === "failed" && <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               <DropdownMenuSeparator />
@@ -1052,6 +1056,8 @@ export default function GeneratedPagesPage() {
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined} />
       <AiSeoAssistantDialog open={!!aiAssistantPage} onOpenChange={(open) => !open && setAiAssistantPage(null)} page={aiAssistantPage}
+        onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
+      <AiEnrichDialog open={!!aiEnrichPage} onOpenChange={(open) => !open && setAiEnrichPage(null)} page={aiEnrichPage}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
     </div>
   );
