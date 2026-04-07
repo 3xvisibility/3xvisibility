@@ -13,6 +13,7 @@ import {
   Sparkles, Loader2, Trash2, Plus, FileText, Link, Image, MessageSquare, Tags, Settings2,
 } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { DynamicElementsInserter } from "@/components/templates/DynamicElementsInserter";
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { filterDesignVars } from "@/lib/design-vars-filter";
@@ -280,6 +281,7 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
                     <Eye className="h-3 w-3 inline mr-1" /> Preview
                   </button>
                 </div>
+                <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
                 {uniqueVars.length > 0 && (
                   <div className="hidden md:flex items-center gap-1.5 overflow-x-auto max-w-[50%]">
                     <span className="text-[10px] text-muted-foreground shrink-0">Vars:</span>
