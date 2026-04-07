@@ -73,6 +73,14 @@ export default function PgpGeneratePage() {
   const [scheduleDateStart, setScheduleDateStart] = useState("");
   const [scheduleDateEnd, setScheduleDateEnd] = useState("");
 
+  // AI generation
+  const [aiBusinessDesc, setAiBusinessDesc] = useState("");
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [aiLocations, setAiLocations] = useState("");
+  const [aiPageCount, setAiPageCount] = useState("10");
+  const [aiLanguage, setAiLanguage] = useState("en");
+  const [aiGenerating, setAiGenerating] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
