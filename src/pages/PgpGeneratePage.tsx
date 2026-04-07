@@ -646,7 +646,7 @@ export default function PgpGeneratePage() {
                   </Button>
                 </div>
                 <div className="p-4 max-h-96 overflow-auto">
-                  <TemplatePreview content={testPreview} />
+                  <TemplatePreview html={testPreview} />
                 </div>
               </CardContent>
             </Card>
