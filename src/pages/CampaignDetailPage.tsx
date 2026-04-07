@@ -34,6 +34,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -45,7 +48,7 @@ import {
   Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward,
   Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
 } from "lucide-react";
-import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv } from "@/lib/export-csv";
+import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv, exportDataFile } from "@/lib/export-csv";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
@@ -567,9 +570,18 @@ export default function CampaignDetailPage() {
             <Card className="border-0 shadow-surface">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-sm">Execution History</CardTitle>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => exportExecutionHistoryCsv(jobs as any, campaign?.name || "campaign")}>
-                  <Download className="h-3 w-3 mr-1" /> Export
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs">
+                      <Download className="h-3 w-3 mr-1" /> Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => exportExecutionHistoryCsv(jobs as any, campaign?.name || "campaign")}>CSV</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportDataFile(jobs.map(j => ({ "Job ID": j.id, Status: j.status, "Started": j.started_at || "", "Completed": j.completed_at || "", "Total Rows": j.total_rows, Processed: j.processed_rows, Success: j.success_count, Errors: j.error_count })), "json", `${campaign?.name || "campaign"}-execution-history`)}>JSON</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportDataFile(jobs.map(j => ({ "Job ID": j.id, Status: j.status, "Started": j.started_at || "", "Completed": j.completed_at || "", "Total Rows": j.total_rows, Processed: j.processed_rows, Success: j.success_count, Errors: j.error_count })), "xlsx", `${campaign?.name || "campaign"}-execution-history`)}>Excel</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-hidden">
@@ -676,6 +688,9 @@ export default function CampaignDetailPage() {
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => exportPagesJson(pages, `${campaign?.name || "pages"}-export.json`)}>
                     <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => exportDataFile(pages.map(p => ({ Title: p.title, Slug: p.slug, Status: p.status, URL: p.external_url || "", Error: p.error_message || "" })), "xlsx", `${campaign?.name || "pages"}-export`)}>
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> Excel
                   </Button>
                 </div>
               </div>
@@ -1017,7 +1032,13 @@ export default function CampaignDetailPage() {
         <TabsContent value="logs" className="space-y-4">
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="outline" onClick={() => exportLogsCsv(campaignLogs, campaign?.name || "campaign")} disabled={campaignLogs.length === 0}>
-              <Download className="h-3.5 w-3.5 mr-1.5" /> Export Logs CSV
+              <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => exportDataFile(campaignLogs.map(l => ({ Timestamp: new Date(l.created_at).toISOString(), Event: l.event, Message: l.message || "", "Batch #": l.batch_number ?? "", "Pages": l.pages_in_batch ?? "" })), "json", `${campaign?.name || "campaign"}-logs`)} disabled={campaignLogs.length === 0}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => exportDataFile(campaignLogs.map(l => ({ Timestamp: new Date(l.created_at).toISOString(), Event: l.event, Message: l.message || "", "Batch #": l.batch_number ?? "", "Pages": l.pages_in_batch ?? "" })), "xlsx", `${campaign?.name || "campaign"}-logs`)} disabled={campaignLogs.length === 0}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> Excel
             </Button>
           </div>
           {campaignLogs.length === 0 ? (
@@ -1071,12 +1092,26 @@ export default function CampaignDetailPage() {
         <TabsContent value="errors" className="space-y-4">
           {(errorPages.length > 0 || jobErrors.length > 0) && (
             <div className="flex justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => exportErrorsCsv(errorPages, jobErrors, campaign?.name || "campaign")}
-              >
-                <Download className="h-3.5 w-3.5 mr-1.5" /> Export Errors CSV
+              <Button size="sm" variant="outline" onClick={() => exportErrorsCsv(errorPages, jobErrors, campaign?.name || "campaign")}>
+                <Download className="h-3.5 w-3.5 mr-1.5" /> CSV
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => {
+                const rows = [
+                  ...errorPages.map(p => ({ Source: "page", "Title/Row": p.title, Slug: p.slug, Error: p.error_message || "" })),
+                  ...jobErrors.map((e: any) => ({ Source: "job", "Title/Row": e?.row !== undefined ? `Row ${e.row}` : "", Slug: "", Error: e?.message || e?.error || JSON.stringify(e) })),
+                ];
+                exportDataFile(rows, "json", `${campaign?.name || "campaign"}-errors`);
+              }}>
+                <Download className="h-3.5 w-3.5 mr-1.5" /> JSON
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => {
+                const rows = [
+                  ...errorPages.map(p => ({ Source: "page", "Title/Row": p.title, Slug: p.slug, Error: p.error_message || "" })),
+                  ...jobErrors.map((e: any) => ({ Source: "job", "Title/Row": e?.row !== undefined ? `Row ${e.row}` : "", Slug: "", Error: e?.message || e?.error || JSON.stringify(e) })),
+                ];
+                exportDataFile(rows, "xlsx", `${campaign?.name || "campaign"}-errors`);
+              }}>
+                <Download className="h-3.5 w-3.5 mr-1.5" /> Excel
               </Button>
             </div>
           )}
