@@ -670,7 +670,7 @@ export default function DataCsvPage() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".csv,.tsv,.txt,text/csv,application/vnd.ms-excel"
+        accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         className="hidden"
         onChange={e => {
           const file = e.target.files?.[0];
@@ -680,7 +680,7 @@ export default function DataCsvPage() {
       />
       <input
         type="file"
-        accept=".csv,.tsv,.txt,text/csv,application/vnd.ms-excel"
+        accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         className="hidden"
         id="data-csv-replace-input"
         onChange={e => {
