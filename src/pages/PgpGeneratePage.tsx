@@ -15,8 +15,9 @@ import { Separator } from "@/components/ui/separator";
 import {
   Play, Eye, FileText, KeyRound, Layers, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Zap, Settings2,
-  RotateCcw, Shuffle, ArrowDown, ListOrdered,
+  RotateCcw, Shuffle, ArrowDown, ListOrdered, Sparkles,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -71,6 +72,14 @@ export default function PgpGeneratePage() {
   const [incrementHours, setIncrementHours] = useState("24");
   const [scheduleDateStart, setScheduleDateStart] = useState("");
   const [scheduleDateEnd, setScheduleDateEnd] = useState("");
+
+  // AI generation
+  const [aiBusinessDesc, setAiBusinessDesc] = useState("");
+  const [aiKeywords, setAiKeywords] = useState("");
+  const [aiLocations, setAiLocations] = useState("");
+  const [aiPageCount, setAiPageCount] = useState("10");
+  const [aiLanguage, setAiLanguage] = useState("en");
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -211,6 +220,96 @@ export default function PgpGeneratePage() {
       rows.push(row);
     }
     return rows;
+  };
+
+  const handleAiGenerate = async () => {
+    if (!wsId || !aiBusinessDesc.trim()) {
+      toast({ title: "Describe your business first", variant: "destructive" });
+      return;
+    }
+    setAiGenerating(true);
+    setGenProgress({ processed: 0, total: 0, errors: 0 });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const count = parseInt(aiPageCount) || 10;
+      setGenProgress({ processed: 0, total: count, errors: 0 });
+
+      const { data: aiResult, error: aiErr } = await supabase.functions.invoke("generate-seo-content", {
+        body: {
+          prompt: `You are a professional SEO content generator. Generate exactly ${count} unique landing pages for the following business.
+
+Business: ${aiBusinessDesc}
+Keywords: ${aiKeywords || "auto-detect relevant keywords"}
+Locations: ${aiLocations || "general/nationwide"}
+Language: ${aiLanguage}
+
+For EACH page, return a JSON object with these fields:
+- title: SEO-optimized page title
+- slug: URL-friendly slug (lowercase, hyphens)
+- seo_title: meta title (under 60 chars)
+- seo_description: meta description (under 160 chars)
+- content: full HTML content (professional, structured with h2/h3/p/ul tags, minimum 500 words, include local references if locations provided)
+
+Return a JSON array of these objects. Only return valid JSON, no markdown.`,
+          type: "batch_pages",
+        },
+      });
+
+      if (aiErr) throw aiErr;
+
+      let pages: any[] = [];
+      try {
+        const raw = typeof aiResult === "string" ? aiResult : (aiResult?.content || aiResult?.result || JSON.stringify(aiResult));
+        const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        pages = JSON.parse(cleaned);
+        if (!Array.isArray(pages)) pages = [pages];
+      } catch {
+        throw new Error("AI returned invalid format. Please try again.");
+      }
+
+      // Create campaign
+      const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
+        name: `AI: ${aiBusinessDesc.slice(0, 50)}`,
+        csv_data: pages.map((p: any) => ({ title: p.title, slug: p.slug, content: p.content, seo_title: p.seo_title, seo_description: p.seo_description })),
+        total_rows: pages.length,
+        status: "completed" as any,
+        user_id: user.id,
+        workspace_id: wsId,
+        publish_mode: publishMode,
+        generation_method: "ai",
+        campaign_types: ["seo"],
+      } as any).select("id").single();
+
+      if (campErr) throw campErr;
+
+      // Insert generated pages
+      const pageInserts = pages.map((p: any) => ({
+        campaign_id: campaign.id,
+        title: p.title || "Untitled",
+        slug: p.slug || p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "page",
+        content: p.content || "",
+        seo_title: p.seo_title || p.title || "",
+        seo_description: p.seo_description || "",
+        status: "pending" as const,
+        user_id: user.id,
+        workspace_id: wsId,
+        website_id: selectedWebsite || null,
+      }));
+
+      const { error: pagesErr } = await supabase.from("generated_pages").insert(pageInserts);
+      if (pagesErr) throw pagesErr;
+
+      setGenProgress({ processed: pages.length, total: pages.length, errors: 0 });
+      toast({ title: "AI Generation complete!", description: `${pages.length} pages created.` });
+
+      setTimeout(() => navigate(`${basePath}/campaigns/${campaign.id}`), 1500);
+    } catch (err: any) {
+      toast({ title: "AI generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -367,13 +466,127 @@ export default function PgpGeneratePage() {
             </CardContent>
           </Card>
 
+          {/* AI Generate (always available) */}
+          {!selectedGroup && (
+            <Card className="shadow-surface">
+              <CardContent className="p-5 space-y-4">
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-semibold">AI-Powered Page Generation</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    No Content Group needed — describe your business and AI generates unique, SEO-optimized pages.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Business / Store Description *</Label>
+                  <Textarea
+                    placeholder="e.g. Plumbing services company in Texas, specializing in emergency repairs..."
+                    value={aiBusinessDesc}
+                    onChange={(e) => setAiBusinessDesc(e.target.value)}
+                    rows={3}
+                    className="resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Target Keywords</Label>
+                  <Textarea
+                    placeholder="e.g. plumber near me, emergency plumbing, water heater repair..."
+                    value={aiKeywords}
+                    onChange={(e) => setAiKeywords(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank to auto-detect.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Target Locations</Label>
+                  <Textarea
+                    placeholder="e.g. Houston TX, Dallas TX, Austin TX..."
+                    value={aiLocations}
+                    onChange={(e) => setAiLocations(e.target.value)}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank for general pages.</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Number of Pages</Label>
+                    <Input type="number" min={1} max={50} value={aiPageCount} onChange={(e) => setAiPageCount(e.target.value)} className="h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Language</Label>
+                    <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
+                        <SelectItem value="de">German</SelectItem>
+                        <SelectItem value="pt">Portuguese</SelectItem>
+                        <SelectItem value="ar">Arabic</SelectItem>
+                        <SelectItem value="hi">Hindi</SelectItem>
+                        <SelectItem value="ja">Japanese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Publish To</Label>
+                    <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="None (save locally)" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (save locally)</SelectItem>
+                        {websites.filter(w => w.status === "connected").map(w => (
+                          <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Publish Mode</Label>
+                    <Select value={publishMode} onValueChange={setPublishMode}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="publish">Publish</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  disabled={!aiBusinessDesc.trim() || aiGenerating}
+                  onClick={handleAiGenerate}
+                >
+                  {aiGenerating ? (
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> AI Generating...</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4 mr-2" /> Generate with AI</>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Generation Settings */}
           {selectedGroup && (
             <Card className="shadow-surface">
               <CardContent className="p-5 space-y-5">
                 <Tabs defaultValue="generation" className="space-y-4">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="generation"><Zap className="h-3.5 w-3.5 mr-1.5" /> Generation</TabsTrigger>
+                    <TabsTrigger value="ai"><Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Generate</TabsTrigger>
                     <TabsTrigger value="overwrite"><RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Overwrite</TabsTrigger>
                     <TabsTrigger value="schedule"><Settings2 className="h-3.5 w-3.5 mr-1.5" /> Schedule</TabsTrigger>
                   </TabsList>
@@ -464,6 +677,99 @@ export default function PgpGeneratePage() {
                       </div>
                       <Switch checked={spinContent} onCheckedChange={setSpinContent} />
                     </div>
+                  </TabsContent>
+
+                  <TabsContent value="ai" className="space-y-4">
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <p className="text-sm font-semibold">AI-Powered Page Generation</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Describe your business and AI will generate unique, SEO-optimized pages automatically.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Business / Store Description *</Label>
+                      <Textarea
+                        placeholder="e.g. Plumbing services company in Texas, specializing in emergency repairs, water heater installation, and drain cleaning..."
+                        value={aiBusinessDesc}
+                        onChange={(e) => setAiBusinessDesc(e.target.value)}
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Target Keywords</Label>
+                      <Textarea
+                        placeholder="e.g. plumber near me, emergency plumbing, water heater repair, drain cleaning service..."
+                        value={aiKeywords}
+                        onChange={(e) => setAiKeywords(e.target.value)}
+                        rows={2}
+                        className="resize-none"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank to auto-detect.</p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Target Locations</Label>
+                      <Textarea
+                        placeholder="e.g. Houston TX, Dallas TX, Austin TX, San Antonio TX..."
+                        value={aiLocations}
+                        onChange={(e) => setAiLocations(e.target.value)}
+                        rows={2}
+                        className="resize-none"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Comma-separated cities/areas. Leave blank for general pages.</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Number of Pages</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={50}
+                          value={aiPageCount}
+                          onChange={(e) => setAiPageCount(e.target.value)}
+                          className="h-9"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Language</Label>
+                        <Select value={aiLanguage} onValueChange={setAiLanguage}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="fr">French</SelectItem>
+                            <SelectItem value="es">Spanish</SelectItem>
+                            <SelectItem value="de">German</SelectItem>
+                            <SelectItem value="it">Italian</SelectItem>
+                            <SelectItem value="pt">Portuguese</SelectItem>
+                            <SelectItem value="nl">Dutch</SelectItem>
+                            <SelectItem value="ar">Arabic</SelectItem>
+                            <SelectItem value="hi">Hindi</SelectItem>
+                            <SelectItem value="ja">Japanese</SelectItem>
+                            <SelectItem value="zh">Chinese</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      disabled={!aiBusinessDesc.trim() || aiGenerating}
+                      onClick={handleAiGenerate}
+                    >
+                      {aiGenerating ? (
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> AI Generating...</>
+                      ) : (
+                        <><Sparkles className="h-4 w-4 mr-2" /> Generate with AI</>
+                      )}
+                    </Button>
                   </TabsContent>
 
                   <TabsContent value="overwrite" className="space-y-4">
