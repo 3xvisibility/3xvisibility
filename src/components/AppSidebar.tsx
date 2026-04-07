@@ -23,6 +23,7 @@ import {
   ClipboardCheck,
   Activity,
   Gift,
+  KeyRound,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
