@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,10 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Code, Eye, Globe, Braces, ChevronDown, ChevronRight,
-  Sparkles, Loader2, Trash2, Plus, FileText, Link, Image, MessageSquare, Tags,
+  Code, Eye, Globe, Braces, X,
+  Sparkles, Loader2, Trash2, Plus, FileText, Link, Image, MessageSquare, Tags, Settings2,
 } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
@@ -37,38 +37,13 @@ interface TemplateEditorDialogProps {
   isSaving: boolean;
 }
 
-/* ─── Collapsible Section ──────────────────────────────────────────── */
-function Section({ title, icon: Icon, defaultOpen = false, children, badge }: {
-  title: string;
-  icon: React.ElementType;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-  badge?: string;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 rounded-xl border bg-card hover:bg-accent/50 transition-colors group">
-        <div className="flex items-center gap-2.5">
-          <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-          <span className="text-sm font-medium">{title}</span>
-          {badge && <Badge variant="secondary" className="text-[10px] rounded-md">{badge}</Badge>}
-        </div>
-        {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-      </CollapsibleTrigger>
-      <CollapsibleContent className="px-4 pt-3 pb-1">
-        {children}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
 export function TemplateEditorDialog({
   open, onOpenChange, editingTemplate, onSave, isSaving,
 }: TemplateEditorDialogProps) {
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [activeTab, setActiveTab] = useState("content");
 
   // SEO
   const [seoTitlePattern, setSeoTitlePattern] = useState("");
@@ -102,7 +77,7 @@ export function TemplateEditorDialog({
   const { toast } = useToast();
 
   const resetAllFields = useCallback(() => {
-    setName(""); setContent(""); setShowPreview(false);
+    setName(""); setContent(""); setShowPreview(false); setActiveTab("content");
     setSeoTitlePattern(""); setSeoDescriptionPattern("");
     setSlugPattern(""); setCanonicalUrlPattern("");
     setOgTitlePattern(""); setOgDescriptionPattern("");
@@ -141,6 +116,7 @@ export function TemplateEditorDialog({
       setHeaderCode(cfg._headerCode || "");
       setFooterCode(cfg._footerCode || "");
       setShowPreview(false);
+      setActiveTab("content");
       setAiSeoNiche("");
     } else {
       resetAllFields();
@@ -214,152 +190,185 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
-      <DialogContent className="sm:w-[min(96vw,64rem)] sm:max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] flex flex-col overflow-hidden p-0">
-        <DialogHeader className="px-6 pt-6 pb-0">
-          <DialogTitle className="text-lg">{editingTemplate ? "Edit Template" : "Create Template"}</DialogTitle>
-        </DialogHeader>
-
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6 space-y-4 mt-4">
-          {/* ── Title ── */}
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold">Title</Label>
-            <Input
-              placeholder="e.g., {service_name} in {city} – Professional Services"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="text-base h-11"
-            />
-            <p className="text-[11px] text-muted-foreground">Use &#123;variable&#125; syntax. This becomes the page title during generation.</p>
+      <DialogContent className="sm:w-[min(96vw,72rem)] sm:max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] flex flex-col overflow-hidden p-0 gap-0">
+        
+        {/* ── Top Bar ── */}
+        <div className="flex items-center justify-between px-5 py-3 border-b bg-card shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <FileText className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold leading-tight">
+                {editingTemplate?.id ? "Edit Template" : "New Template"}
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                {uniqueVars.length > 0 ? `${uniqueVars.length} variable(s) detected` : "Use {variable} syntax in content"}
+              </p>
+            </div>
           </div>
-
-          {/* ── Content ── */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">Content</Label>
-              <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${!showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  <Code className="h-3 w-3 inline mr-1" /> Code
-                </button>
-                <button
-                  onClick={() => setShowPreview(true)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  <Eye className="h-3 w-3 inline mr-1" /> Preview
-                </button>
-              </div>
-            </div>
-
-            {showPreview ? (
-              <div className="border rounded-xl overflow-hidden min-h-[300px]">
-                <TemplatePreview html={content} />
-              </div>
-            ) : (
-              <Textarea
-                placeholder={"<h1>{service_name} in {city}</h1>\n<p>Looking for the best {service_name} in {city}? We offer professional services...</p>\n<h2>Why Choose Us?</h2>\n<p>With over {years_experience} years of experience...</p>"}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={16}
-                className="font-mono text-xs leading-relaxed"
-              />
-            )}
-
-            {/* Detected variables */}
-            {uniqueVars.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[11px] text-muted-foreground font-medium">Variables:</span>
-                {uniqueVars.map((v) => (
-                  <Badge
-                    key={v}
-                    variant="outline"
-                    className="text-[10px] font-mono cursor-pointer hover:bg-primary/10 transition-colors"
-                    onClick={() => { navigator.clipboard.writeText(`{${v.replace(/[{}]/g, "")}}`); toast({ title: "Copied!" }); }}
-                  >
-                    {v}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ── Permalink ── */}
-          <Section title="Permalink" icon={Link}>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Slug Pattern</Label>
-                <Input placeholder="{service_name}-{city}" value={slugPattern} onChange={(e) => setSlugPattern(normalizeSlug(e.target.value))} className="font-mono text-sm h-9" />
-                <p className="text-[11px] text-muted-foreground">The URL-friendly slug for each generated page.</p>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Canonical URL</Label>
-                <Input placeholder="https://example.com/{slug}" value={canonicalUrlPattern} onChange={(e) => setCanonicalUrlPattern(e.target.value)} className="font-mono text-sm h-9" />
-              </div>
-            </div>
-          </Section>
-
-          {/* ── Excerpt ── */}
-          <Section title="Excerpt" icon={FileText}>
-            <div className="space-y-1.5">
-              <Input value={excerptPattern} onChange={(e) => setExcerptPattern(e.target.value)} placeholder="Professional {service_name} in {city}. Contact us for a free quote." className="text-sm h-9" />
-              <p className="text-[11px] text-muted-foreground">Short summary used in search results and social shares.</p>
-            </div>
-          </Section>
-
-          {/* ── Featured Image ── */}
-          <Section title="Featured Image" icon={Image}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Image Source</Label>
-                <Select value={featuredImageSource} onValueChange={setFeaturedImageSource}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="url">Image URL</SelectItem>
-                    <SelectItem value="pexels">Pexels</SelectItem>
-                    <SelectItem value="pixabay">Pixabay</SelectItem>
-                    <SelectItem value="ai">AI Generated</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {featuredImageSource !== "none" && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{featuredImageSource === "url" ? "Image URL" : "Search Term"}</Label>
-                  <Input value={featuredImageUrl} onChange={(e) => setFeaturedImageUrl(e.target.value)} placeholder={featuredImageSource === "url" ? "https://..." : "{service_name} {city}"} className="text-sm h-9" />
+          <div className="flex items-center gap-2">
+            {/* Quality scores inline */}
+            {content && (() => {
+              const seo = calculateContentSeoScore("Sample", content, "slug");
+              const sea = calculateContentSeaScore("Sample", content, "slug");
+              const geo = calculateContentGeoScore("Sample", content, "slug");
+              return (
+                <div className="hidden md:flex items-center gap-1.5 mr-2">
+                  <SeoScoreBadge score={seo.score} label={seo.label} color={seo.color} checks={seo.checks} size="sm" scoreType="SEO" />
+                  <SeoScoreBadge score={sea.score} label={sea.label} color={sea.color} checks={sea.checks} size="sm" scoreType="SEA" />
+                  <SeoScoreBadge score={geo.score} label={geo.label} color={geo.color} checks={geo.checks} size="sm" scoreType="GEO" />
                 </div>
-              )}
-            </div>
-          </Section>
+              );
+            })()}
+            <Button variant="outline" size="sm" onClick={handleClose}>Cancel</Button>
+            <Button size="sm" onClick={handleSave} disabled={!name || !content || isSaving}>
+              {isSaving ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Saving...</> : editingTemplate?.id ? "Save Changes" : "Create Template"}
+            </Button>
+          </div>
+        </div>
 
-          {/* ── SEO / Meta ── */}
-          <Section title="SEO & Meta Tags" icon={Globe} badge={seoTitlePattern ? "✓" : undefined}>
-            <div className="space-y-4">
-              {/* AI SEO Generator */}
-              <div className="flex gap-2">
-                <Input placeholder="Business niche for AI (e.g., Plumbing services)" value={aiSeoNiche} onChange={(e) => setAiSeoNiche(e.target.value)} className="text-sm h-9 flex-1" />
-                <Button variant="outline" size="sm" className="h-9 shrink-0" disabled={aiSeoGenerating || !aiSeoNiche.trim()} onClick={generateAiSeo}>
-                  {aiSeoGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Sparkles className="h-3.5 w-3.5 mr-1" /> AI Generate</>}
-                </Button>
+        {/* ── Title Bar (always visible, like WP post title) ── */}
+        <div className="px-5 py-3 border-b bg-background shrink-0">
+          <Input
+            placeholder="Enter template title — e.g. {service_name} in {city}"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="text-base font-medium h-11 border-dashed"
+          />
+        </div>
+
+        {/* ── Tab Navigation ── */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+          <div className="border-b bg-muted/30 px-5 shrink-0 overflow-x-auto">
+            <TabsList className="h-auto bg-transparent p-0 gap-0 w-auto inline-flex">
+              {[
+                { value: "content", label: "Content", icon: Code },
+                { value: "seo", label: "SEO", icon: Globe },
+                { value: "permalink", label: "Permalink", icon: Link },
+                { value: "image", label: "Image", icon: Image },
+                { value: "fields", label: "Fields", icon: Braces },
+                { value: "publish", label: "Publish", icon: Settings2 },
+              ].map(tab => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 text-xs font-medium gap-1.5"
+                >
+                  <tab.icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {/* ── Content Tab ── */}
+            <TabsContent value="content" className="m-0 h-full flex flex-col">
+              <div className="flex items-center justify-between px-5 py-2 border-b bg-muted/20 shrink-0">
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                  <button
+                    onClick={() => setShowPreview(false)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${!showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <Code className="h-3 w-3 inline mr-1" /> Code
+                  </button>
+                  <button
+                    onClick={() => setShowPreview(true)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <Eye className="h-3 w-3 inline mr-1" /> Preview
+                  </button>
+                </div>
+                {uniqueVars.length > 0 && (
+                  <div className="hidden md:flex items-center gap-1.5 overflow-x-auto max-w-[50%]">
+                    <span className="text-[10px] text-muted-foreground shrink-0">Vars:</span>
+                    {uniqueVars.slice(0, 6).map((v) => (
+                      <Badge
+                        key={v}
+                        variant="outline"
+                        className="text-[10px] font-mono cursor-pointer hover:bg-primary/10 shrink-0"
+                        onClick={() => { navigator.clipboard.writeText(`{${v.replace(/[{}]/g, "")}}`); toast({ title: "Copied!" }); }}
+                      >
+                        {v}
+                      </Badge>
+                    ))}
+                    {uniqueVars.length > 6 && <span className="text-[10px] text-muted-foreground">+{uniqueVars.length - 6}</span>}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-h-0">
+                {showPreview ? (
+                  <div className="h-full">
+                    <TemplatePreview html={content} />
+                  </div>
+                ) : (
+                  <Textarea
+                    placeholder={"<h1>{service_name} in {city}</h1>\n<p>Looking for the best {service_name} in {city}?</p>\n<h2>Why Choose Us?</h2>\n<p>With over {years_experience} years of experience...</p>"}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="font-mono text-xs leading-relaxed h-full min-h-[400px] rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                  />
+                )}
+              </div>
+            </TabsContent>
+
+            {/* ── SEO Tab ── */}
+            <TabsContent value="seo" className="m-0 p-5 space-y-5">
+              {/* AI Generator */}
+              <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                <p className="text-xs font-semibold flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" /> AI SEO Generator
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Business niche (e.g., Plumbing services in NYC)"
+                    value={aiSeoNiche}
+                    onChange={(e) => setAiSeoNiche(e.target.value)}
+                    className="text-sm h-9 flex-1"
+                  />
+                  <Button variant="outline" size="sm" className="h-9 shrink-0" disabled={aiSeoGenerating || !aiSeoNiche.trim()} onClick={generateAiSeo}>
+                    {aiSeoGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Sparkles className="h-3.5 w-3.5 mr-1" /> Generate</>}
+                  </Button>
+                </div>
               </div>
 
+              {/* Meta Title */}
               <div className="space-y-1.5">
-                <Label className="text-xs">Meta Title</Label>
-                <Input placeholder="{service_name} in {city} | Your Brand" value={seoTitlePattern} onChange={(e) => setSeoTitlePattern(e.target.value)} className="font-mono text-sm h-9" />
+                <Label className="text-xs font-semibold">Meta Title</Label>
+                <Input
+                  placeholder="{service_name} in {city} | Your Brand"
+                  value={seoTitlePattern}
+                  onChange={(e) => setSeoTitlePattern(e.target.value)}
+                  className="font-mono text-sm h-9"
+                />
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${seoTitleLen <= 50 ? 'bg-emerald-500' : seoTitleLen <= 60 ? 'bg-amber-500' : 'bg-destructive'}`} style={{ width: `${Math.min((seoTitleLen / 70) * 100, 100)}%` }} />
+                    <div
+                      className={`h-full rounded-full transition-all ${seoTitleLen <= 50 ? 'bg-emerald-500' : seoTitleLen <= 60 ? 'bg-amber-500' : 'bg-destructive'}`}
+                      style={{ width: `${Math.min((seoTitleLen / 70) * 100, 100)}%` }}
+                    />
                   </div>
                   <span className="text-[10px] text-muted-foreground tabular-nums w-12 text-right">{seoTitleLen}/60</span>
                 </div>
               </div>
 
+              {/* Meta Description */}
               <div className="space-y-1.5">
-                <Label className="text-xs">Meta Description</Label>
-                <Textarea placeholder="Find the best {service_name} in {city}. Professional, affordable, and reliable." value={seoDescriptionPattern} onChange={(e) => setSeoDescriptionPattern(e.target.value)} rows={2} className="font-mono text-sm" />
+                <Label className="text-xs font-semibold">Meta Description</Label>
+                <Textarea
+                  placeholder="Find the best {service_name} in {city}. Professional, affordable, and reliable."
+                  value={seoDescriptionPattern}
+                  onChange={(e) => setSeoDescriptionPattern(e.target.value)}
+                  rows={2}
+                  className="font-mono text-sm"
+                />
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${seoDescLen >= 120 && seoDescLen <= 160 ? 'bg-emerald-500' : seoDescLen >= 100 ? 'bg-amber-500' : 'bg-muted-foreground/20'}`} style={{ width: `${Math.min((seoDescLen / 180) * 100, 100)}%` }} />
+                    <div
+                      className={`h-full rounded-full transition-all ${seoDescLen >= 120 && seoDescLen <= 160 ? 'bg-emerald-500' : seoDescLen >= 100 ? 'bg-amber-500' : 'bg-muted-foreground/20'}`}
+                      style={{ width: `${Math.min((seoDescLen / 180) * 100, 100)}%` }}
+                    />
                   </div>
                   <span className="text-[10px] text-muted-foreground tabular-nums w-12 text-right">{seoDescLen}/160</span>
                 </div>
@@ -367,8 +376,8 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
 
               {/* SERP Preview */}
               {(seoTitlePattern || seoDescriptionPattern) && (
-                <div className="rounded-lg border p-3 bg-background space-y-0.5">
-                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Search Preview</p>
+                <div className="rounded-xl border p-4 bg-background space-y-1">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Google Search Preview</p>
                   <p className="text-[#1a0dab] text-base leading-snug truncate" style={{ fontFamily: 'Arial, sans-serif' }}>
                     {seoTitlePattern ? seoTitlePattern.replace(/\{([^}]+)\}/g, (_, v) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')) : name || 'Page Title'}
                   </p>
@@ -382,152 +391,211 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
               )}
 
               {/* Open Graph */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Open Graph & Social</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">OG Title</Label>
+                    <Input placeholder="Defaults to Meta Title" value={ogTitlePattern} onChange={(e) => setOgTitlePattern(e.target.value)} className="font-mono text-xs h-8" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">OG Description</Label>
+                    <Input placeholder="Defaults to Meta Description" value={ogDescriptionPattern} onChange={(e) => setOgDescriptionPattern(e.target.value)} className="font-mono text-xs h-8" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">OG Image URL</Label>
+                    <Input placeholder="https://..." value={ogImagePattern} onChange={(e) => setOgImagePattern(e.target.value)} className="font-mono text-xs h-8" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Twitter Card</Label>
+                    <Select value={twitterCard} onValueChange={setTwitterCard}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="summary">Summary</SelectItem>
+                        <SelectItem value="summary_large_image">Summary Large Image</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Permalink Tab ── */}
+            <TabsContent value="permalink" className="m-0 p-5 space-y-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Slug Pattern</Label>
+                <Input
+                  placeholder="{service_name}-{city}"
+                  value={slugPattern}
+                  onChange={(e) => setSlugPattern(normalizeSlug(e.target.value))}
+                  className="font-mono text-sm h-10"
+                />
+                <p className="text-[11px] text-muted-foreground">URL-friendly slug for each generated page. Use {"{variables}"} for dynamic slugs.</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Canonical URL</Label>
+                <Input
+                  placeholder="https://example.com/{slug}"
+                  value={canonicalUrlPattern}
+                  onChange={(e) => setCanonicalUrlPattern(e.target.value)}
+                  className="font-mono text-sm h-10"
+                />
+                <p className="text-[11px] text-muted-foreground">Set the canonical URL to avoid duplicate content issues.</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Excerpt</Label>
+                <Textarea
+                  value={excerptPattern}
+                  onChange={(e) => setExcerptPattern(e.target.value)}
+                  placeholder="Professional {service_name} in {city}. Contact us for a free quote."
+                  rows={2}
+                  className="text-sm"
+                />
+                <p className="text-[11px] text-muted-foreground">Short summary used for search results and page listings.</p>
+              </div>
+            </TabsContent>
+
+            {/* ── Image Tab ── */}
+            <TabsContent value="image" className="m-0 p-5 space-y-5">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Featured Image Source</Label>
+                <Select value={featuredImageSource} onValueChange={setFeaturedImageSource}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="url">Image URL</SelectItem>
+                    <SelectItem value="pexels">Pexels (auto search)</SelectItem>
+                    <SelectItem value="pixabay">Pixabay (auto search)</SelectItem>
+                    <SelectItem value="ai">AI Generated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {featuredImageSource !== "none" && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">OG Title (optional)</Label>
-                  <Input placeholder="Defaults to Meta Title" value={ogTitlePattern} onChange={(e) => setOgTitlePattern(e.target.value)} className="font-mono text-xs h-8" />
+                  <Label className="text-xs font-semibold">{featuredImageSource === "url" ? "Image URL Pattern" : "Search Term Pattern"}</Label>
+                  <Input
+                    value={featuredImageUrl}
+                    onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                    placeholder={featuredImageSource === "url" ? "https://example.com/images/{slug}.jpg" : "{service_name} {city}"}
+                    className="text-sm h-10"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    {featuredImageSource === "url"
+                      ? "Direct URL to the image. Variables will be replaced."
+                      : featuredImageSource === "ai"
+                      ? "AI will generate an image based on this prompt."
+                      : "Search term to find a relevant stock photo."}
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* ── Fields Tab (Taxonomies, Custom Fields, Discussion) ── */}
+            <TabsContent value="fields" className="m-0 p-5 space-y-6">
+              {/* Taxonomies */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Tags className="h-3.5 w-3.5" /> Taxonomies
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Categories</Label>
+                    <Input value={taxonomyCategories} onChange={(e) => setTaxonomyCategories(e.target.value)} placeholder="{category}, Services" className="text-sm h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Tags</Label>
+                    <Input value={taxonomyTags} onChange={(e) => setTaxonomyTags(e.target.value)} placeholder="{keyword}, {city}" className="text-sm h-9" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Fields */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Braces className="h-3.5 w-3.5" /> Custom Fields (Post Meta)
+                  </p>
+                  {customFields.length > 0 && <Badge variant="secondary" className="text-[10px]">{customFields.length}</Badge>}
+                </div>
+                <div className="space-y-2">
+                  {customFields.map((field, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input placeholder="Meta Key" value={field.key} onChange={(e) => { const u = [...customFields]; u[idx] = { ...u[idx], key: e.target.value }; setCustomFields(u); }} className="font-mono text-xs h-8 flex-1" />
+                      <Input placeholder="Value {variable}" value={field.value} onChange={(e) => { const u = [...customFields]; u[idx] = { ...u[idx], value: e.target.value }; setCustomFields(u); }} className="font-mono text-xs h-8 flex-[2]" />
+                      <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0" onClick={() => setCustomFields(customFields.filter((_, i) => i !== idx))}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" size="sm" onClick={() => setCustomFields([...customFields, { key: "", value: "" }])}>
+                    <Plus className="h-3 w-3 mr-1" /> Add Field
+                  </Button>
+                </div>
+              </div>
+
+              {/* Discussion */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5" /> Discussion
+                </p>
+                <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">Allow Comments</p>
+                    <p className="text-[11px] text-muted-foreground">Enable comments on generated pages</p>
+                  </div>
+                  <Switch checked={commentsEnabled} onCheckedChange={setCommentsEnabled} />
+                </div>
+              </div>
+
+              {/* Header/Footer Code */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Code className="h-3.5 w-3.5" /> Header & Footer Code
+                </p>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Header Code</Label>
+                  <Textarea placeholder='<link rel="stylesheet" href="...">' value={headerCode} onChange={(e) => setHeaderCode(e.target.value)} rows={2} className="font-mono text-xs" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">OG Description</Label>
-                  <Input placeholder="Defaults to Meta Description" value={ogDescriptionPattern} onChange={(e) => setOgDescriptionPattern(e.target.value)} className="font-mono text-xs h-8" />
+                  <Label className="text-xs">Footer Code</Label>
+                  <Textarea placeholder='<script src="..."></script>' value={footerCode} onChange={(e) => setFooterCode(e.target.value)} rows={2} className="font-mono text-xs" />
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Publish Tab ── */}
+            <TabsContent value="publish" className="m-0 p-5 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">OG Image</Label>
-                  <Input placeholder="https://..." value={ogImagePattern} onChange={(e) => setOgImagePattern(e.target.value)} className="font-mono text-xs h-8" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Twitter Card</Label>
-                  <Select value={twitterCard} onValueChange={setTwitterCard}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <Label className="text-xs font-semibold">Post Type</Label>
+                  <Select value={postType} onValueChange={setPostType}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="summary">Summary</SelectItem>
-                      <SelectItem value="summary_large_image">Summary Large Image</SelectItem>
+                      <SelectItem value="page">Page</SelectItem>
+                      <SelectItem value="post">Post</SelectItem>
+                      <SelectItem value="product">Product</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-[11px] text-muted-foreground">WordPress post type for generated content.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Schema Type</Label>
+                  <Select value={schemaType} onValueChange={setSchemaType}>
+                    <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["WebPage", "LocalBusiness", "Product", "Service", "Article", "FAQPage", "Course", "Event", "Restaurant", "RealEstateAgent", "Organization"].map(t => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">JSON-LD structured data type for search engines.</p>
                 </div>
               </div>
-            </div>
-          </Section>
-
-          {/* ── Taxonomies ── */}
-          <Section title="Taxonomies" icon={Tags}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Categories</Label>
-                <Input value={taxonomyCategories} onChange={(e) => setTaxonomyCategories(e.target.value)} placeholder="{category}, Services" className="text-sm h-9" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Tags</Label>
-                <Input value={taxonomyTags} onChange={(e) => setTaxonomyTags(e.target.value)} placeholder="{keyword}, {city}" className="text-sm h-9" />
-              </div>
-            </div>
-          </Section>
-
-          {/* ── Custom Fields ── */}
-          <Section title="Custom Fields" icon={Braces} badge={customFields.length > 0 ? `${customFields.length}` : undefined}>
-            <div className="space-y-2">
-              {customFields.map((field, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
-                  <Input placeholder="Meta Key" value={field.key} onChange={(e) => { const u = [...customFields]; u[idx] = { ...u[idx], key: e.target.value }; setCustomFields(u); }} className="font-mono text-xs h-8 flex-1" />
-                  <Input placeholder="Value {variable}" value={field.value} onChange={(e) => { const u = [...customFields]; u[idx] = { ...u[idx], value: e.target.value }; setCustomFields(u); }} className="font-mono text-xs h-8 flex-[2]" />
-                  <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0" onClick={() => setCustomFields(customFields.filter((_, i) => i !== idx))}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => setCustomFields([...customFields, { key: "", value: "" }])}>
-                <Plus className="h-3 w-3 mr-1" /> Add Custom Field
-              </Button>
-            </div>
-          </Section>
-
-          {/* ── Discussion ── */}
-          <Section title="Discussion" icon={MessageSquare}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm">Allow Comments</p>
-                <p className="text-[11px] text-muted-foreground">Enable comments on generated pages</p>
-              </div>
-              <Switch checked={commentsEnabled} onCheckedChange={setCommentsEnabled} />
-            </div>
-          </Section>
-
-          {/* ── Publish Settings ── */}
-          <Section title="Publish Settings" icon={FileText}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Post Type</Label>
-                <Select value={postType} onValueChange={setPostType}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="page">Page</SelectItem>
-                    <SelectItem value="post">Post</SelectItem>
-                    <SelectItem value="product">Product</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Schema Type</Label>
-                <Select value={schemaType} onValueChange={setSchemaType}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["WebPage", "LocalBusiness", "Product", "Service", "Article", "FAQPage", "Course", "Event", "Restaurant", "RealEstateAgent", "Organization"].map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </Section>
-
-          {/* ── Header & Footer Code ── */}
-          <Section title="Header & Footer Code" icon={Code}>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Header Code</Label>
-                <Textarea placeholder='<link rel="stylesheet" href="...">' value={headerCode} onChange={(e) => setHeaderCode(e.target.value)} rows={2} className="font-mono text-xs" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Footer Code</Label>
-                <Textarea placeholder='<script src="..."></script>' value={footerCode} onChange={(e) => setFooterCode(e.target.value)} rows={2} className="font-mono text-xs" />
-              </div>
-            </div>
-          </Section>
-
-          {/* ── Quality Scores (when content exists) ── */}
-          {content && (() => {
-            const seo = calculateContentSeoScore("Sample Title", content, "sample-slug");
-            const sea = calculateContentSeaScore("Sample Title", content, "sample-slug");
-            const geo = calculateContentGeoScore("Sample Title", content, "sample-slug");
-            return (
-              <div className="grid grid-cols-3 gap-3">
-                <div className="flex flex-col items-center gap-1.5 rounded-xl border p-3">
-                  <span className="text-[10px] font-medium text-muted-foreground">SEO</span>
-                  <SeoScoreBadge score={seo.score} label={seo.label} color={seo.color} checks={seo.checks} size="md" scoreType="SEO" />
-                </div>
-                <div className="flex flex-col items-center gap-1.5 rounded-xl border p-3">
-                  <span className="text-[10px] font-medium text-muted-foreground">SEA</span>
-                  <SeoScoreBadge score={sea.score} label={sea.label} color={sea.color} checks={sea.checks} size="md" scoreType="SEA" />
-                </div>
-                <div className="flex flex-col items-center gap-1.5 rounded-xl border p-3">
-                  <span className="text-[10px] font-medium text-muted-foreground">GEO</span>
-                  <SeoScoreBadge score={geo.score} label={geo.label} color={geo.color} checks={geo.checks} size="md" scoreType="GEO" />
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* ── Sticky Footer ── */}
-        <div className="flex items-center justify-between gap-3 px-6 py-3 border-t bg-card">
-          <p className="text-[11px] text-muted-foreground hidden sm:block">
-            {uniqueVars.length > 0 ? `${uniqueVars.length} variable(s) detected` : "Add {variables} in your content"}
-          </p>
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" onClick={handleClose}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!name || !content || isSaving}>
-              {isSaving ? "Saving..." : editingTemplate ? "Save Changes" : "Create Template"}
-            </Button>
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
