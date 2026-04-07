@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { friendlyError } from "@/lib/friendly-errors";
+import { parseUploadedFile } from "@/lib/export-csv";
 import { ALL_COUNTRIES } from "@/lib/countries";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -259,38 +260,30 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   };
 
   // --- CSV Processing ---
-  const processCsvFile = (file: File) => {
+  const processCsvFile = async (file: File) => {
     setCsvFile(file);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      setCsvRawText(text);
-      const lines = text.split("\n").filter(l => l.trim());
-      if (lines.length === 0) return;
-      const firstLine = lines[0];
-      let delimiter = ",";
-      if (firstLine.includes("\t")) delimiter = "\t";
-      else if (firstLine.split(";").length > firstLine.split(",").length) delimiter = ";";
-      else if (firstLine.split("|").length > firstLine.split(",").length) delimiter = "|";
-      const headers = firstLine.split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ""));
-      setCsvHeaders(headers);
-      const rows = lines.slice(1).map(line => {
-        const values = line.split(delimiter).map(v => v.trim().replace(/^["']|["']$/g, ""));
-        return headers.reduce((acc, h, i) => ({ ...acc, [h]: values[i] || "" }), {} as Record<string, string>);
-      });
-      setCsvData(rows);
-    };
-    reader.readAsText(file, "utf-8");
+    try {
+      const parsed = await parseUploadedFile(file);
+      const rawText = parsed.rowData.map(r => parsed.headers.map(h => r[h]).join(",")).join("\n");
+      setCsvRawText(parsed.headers.join(",") + "\n" + rawText);
+      setCsvHeaders(parsed.headers);
+      setCsvData(parsed.rowData);
+    } catch (err: any) {
+      toast({ title: "Parse error", description: err.message || "Failed to parse file", variant: "destructive" });
+    }
   };
 
   const handleCsvDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDraggingCsv(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && (file.name.endsWith(".csv") || file.type === "text/csv")) {
-      processCsvFile(file);
-    } else {
-      toast({ title: "Invalid file", description: "Please drop a .csv file.", variant: "destructive" });
+    if (file) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (["csv", "tsv", "txt", "json", "xlsx", "xls"].includes(ext || "")) {
+        processCsvFile(file);
+      } else {
+        toast({ title: "Invalid file", description: "Please drop a .csv, .json, .xlsx, or .xls file.", variant: "destructive" });
+      }
     }
   };
 
@@ -576,11 +569,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           </div>
                         ) : (
                           <div>
-                            <p className="text-sm font-medium">Drop CSV file here</p>
-                            <p className="text-xs text-muted-foreground">or click to browse</p>
+                            <p className="text-sm font-medium">Drop CSV, JSON, or Excel file here</p>
+                            <p className="text-xs text-muted-foreground">Supports .csv, .json, .xlsx, .xls — or click to browse</p>
                           </div>
                         )}
-                        <input type="file" accept=".csv,text/csv" className="absolute inset-0 opacity-0 cursor-pointer"
+                        <input type="file" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="absolute inset-0 opacity-0 cursor-pointer"
                           onChange={(e) => { const f = e.target.files?.[0]; if (f) processCsvFile(f); }} />
                       </div>
                       {csvData.length > 0 && (
