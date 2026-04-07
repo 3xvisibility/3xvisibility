@@ -222,7 +222,97 @@ export default function PgpGeneratePage() {
     return rows;
   };
 
-  const handleGenerate = async () => {
+  const handleAiGenerate = async () => {
+    if (!wsId || !aiBusinessDesc.trim()) {
+      toast({ title: "Describe your business first", variant: "destructive" });
+      return;
+    }
+    setAiGenerating(true);
+    setGenProgress({ processed: 0, total: 0, errors: 0 });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const count = parseInt(aiPageCount) || 10;
+      setGenProgress({ processed: 0, total: count, errors: 0 });
+
+      const { data: aiResult, error: aiErr } = await supabase.functions.invoke("generate-seo-content", {
+        body: {
+          prompt: `You are a professional SEO content generator. Generate exactly ${count} unique landing pages for the following business.
+
+Business: ${aiBusinessDesc}
+Keywords: ${aiKeywords || "auto-detect relevant keywords"}
+Locations: ${aiLocations || "general/nationwide"}
+Language: ${aiLanguage}
+
+For EACH page, return a JSON object with these fields:
+- title: SEO-optimized page title
+- slug: URL-friendly slug (lowercase, hyphens)
+- seo_title: meta title (under 60 chars)
+- seo_description: meta description (under 160 chars)
+- content: full HTML content (professional, structured with h2/h3/p/ul tags, minimum 500 words, include local references if locations provided)
+
+Return a JSON array of these objects. Only return valid JSON, no markdown.`,
+          type: "batch_pages",
+        },
+      });
+
+      if (aiErr) throw aiErr;
+
+      let pages: any[] = [];
+      try {
+        const raw = typeof aiResult === "string" ? aiResult : (aiResult?.content || aiResult?.result || JSON.stringify(aiResult));
+        const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        pages = JSON.parse(cleaned);
+        if (!Array.isArray(pages)) pages = [pages];
+      } catch {
+        throw new Error("AI returned invalid format. Please try again.");
+      }
+
+      // Create campaign
+      const { data: campaign, error: campErr } = await supabase.from("campaigns").insert({
+        name: `AI: ${aiBusinessDesc.slice(0, 50)}`,
+        csv_data: pages.map((p: any) => ({ title: p.title, slug: p.slug, content: p.content, seo_title: p.seo_title, seo_description: p.seo_description })),
+        total_rows: pages.length,
+        status: "completed" as any,
+        user_id: user.id,
+        workspace_id: wsId,
+        publish_mode: publishMode,
+        generation_method: "ai",
+        campaign_types: ["seo"],
+      } as any).select("id").single();
+
+      if (campErr) throw campErr;
+
+      // Insert generated pages
+      const pageInserts = pages.map((p: any) => ({
+        campaign_id: campaign.id,
+        title: p.title || "Untitled",
+        slug: p.slug || p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "page",
+        content: p.content || "",
+        seo_title: p.seo_title || p.title || "",
+        seo_description: p.seo_description || "",
+        status: "pending" as const,
+        user_id: user.id,
+        workspace_id: wsId,
+        website_id: selectedWebsite || null,
+      }));
+
+      const { error: pagesErr } = await supabase.from("generated_pages").insert(pageInserts);
+      if (pagesErr) throw pagesErr;
+
+      setGenProgress({ processed: pages.length, total: pages.length, errors: 0 });
+      toast({ title: "AI Generation complete!", description: `${pages.length} pages created.` });
+
+      setTimeout(() => navigate(`${basePath}/campaigns/${campaign.id}`), 1500);
+    } catch (err: any) {
+      toast({ title: "AI generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
+
     if (!selectedGroup || !wsId) return;
     if (missingKeywords.length > 0) {
       toast({ title: "Missing Keywords", description: `Define keywords: ${missingKeywords.map(k => k.name).join(", ")}`, variant: "destructive" });
