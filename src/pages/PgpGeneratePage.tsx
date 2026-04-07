@@ -659,7 +659,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     </Button>
                   </TabsContent>
 
-
+                  <TabsContent value="overwrite" className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">Enable Overwrite</p>
