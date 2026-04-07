@@ -403,7 +403,7 @@ export default function DataCsvPage() {
               {isDragging ? t("dataCsv.dropHere") : t("dataCsv.dragAndDrop")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {t("dataCsv.supportedFormats")}
+              Supports CSV, TSV, JSON, Excel (.xlsx, .xls) files
             </p>
           </div>
         </CardContent>
