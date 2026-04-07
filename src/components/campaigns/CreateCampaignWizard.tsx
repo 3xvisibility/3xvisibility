@@ -569,8 +569,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           </div>
                         ) : (
                           <div>
-                            <p className="text-sm font-medium">Drop CSV file here</p>
-                            <p className="text-xs text-muted-foreground">or click to browse</p>
+                            <p className="text-sm font-medium">Drop CSV, JSON, or Excel file here</p>
+                            <p className="text-xs text-muted-foreground">Supports .csv, .json, .xlsx, .xls — or click to browse</p>
                           </div>
                         )}
                         <input type="file" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="absolute inset-0 opacity-0 cursor-pointer"
