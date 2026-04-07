@@ -37,6 +37,9 @@ import AffiliatePage from "./pages/AffiliatePage";
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
 import WebsiteContentPage from "./pages/WebsiteContentPage";
+import PgpKeywordsPage from "./pages/PgpKeywordsPage";
+import PgpContentGroupsPage from "./pages/PgpContentGroupsPage";
+import PgpGeneratePage from "./pages/PgpGeneratePage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
@@ -82,6 +85,9 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
+      <Route path="pgp-keywords" element={wrap(<PgpKeywordsPage />)} />
+      <Route path="pgp-content" element={wrap(<PgpContentGroupsPage />)} />
+      <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
