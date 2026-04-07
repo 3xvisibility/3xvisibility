@@ -20,7 +20,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
-import { renderTemplate } from "@/lib/renderer";
+import { renderPage } from "@/lib/renderer";
 
 type Template = Tables<"templates">;
 
