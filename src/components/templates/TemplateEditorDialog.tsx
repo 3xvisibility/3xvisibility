@@ -265,7 +265,7 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
 
           <div className="flex-1 min-h-0 overflow-y-auto">
             {/* ── Content Tab ── */}
-            <TabsContent value="content" className="m-0 h-full flex flex-col">
+            <TabsContent value="content" className="m-0 flex flex-col" forceMount={activeTab === "content" ? true : undefined} hidden={activeTab !== "content"}>
               <div className="flex items-center justify-between px-5 py-2 border-b bg-muted/20 shrink-0">
                 <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
                   <button
