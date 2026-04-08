@@ -70,6 +70,8 @@ export function TemplateEditorDialog({
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>([]);
   const [headerCode, setHeaderCode] = useState("");
   const [footerCode, setFooterCode] = useState("");
+  const [showInSearch, setShowInSearch] = useState(true);
+  const [showSeoSettings, setShowSeoSettings] = useState(true);
 
   // AI SEO
   const [aiSeoNiche, setAiSeoNiche] = useState("");
