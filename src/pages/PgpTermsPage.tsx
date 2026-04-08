@@ -216,20 +216,20 @@ export default function PgpTermsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-display">Generate Terms</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-display">Generate Terms</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
             Mass-generate categories, tags, and custom taxonomies from keywords.
           </p>
         </div>
-        <Button size="sm" onClick={() => openEditor()}>
+        <Button size="sm" className="w-fit shrink-0" onClick={() => openEditor()}>
           <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Term Group
         </Button>
       </div>
 
-      <div className="relative max-w-xs">
+      <div className="relative w-full sm:max-w-xs">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search term groups..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
       </div>
