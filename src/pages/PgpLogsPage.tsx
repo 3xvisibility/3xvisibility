@@ -55,11 +55,11 @@ export default function PgpLogsPage() {
   }, [logs, search, statusFilter]);
 
   const stats = useMemo(() => {
-    if (!logs) return { total: 0, published: 0, draft: 0, failed: 0 };
+    if (!logs) return { total: 0, published: 0, pending: 0, failed: 0 };
     return {
       total: logs.length,
       published: logs.filter((l) => l.status === "published").length,
-      draft: logs.filter((l) => l.status === "draft").length,
+      pending: logs.filter((l) => l.status === "pending").length,
       failed: logs.filter((l) => l.status === "failed").length,
     };
   }, [logs]);
