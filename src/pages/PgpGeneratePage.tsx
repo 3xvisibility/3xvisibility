@@ -520,12 +520,62 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     ))}
                   </div>
                   {missingKeywords.length > 0 && (
-                    <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-500/10 rounded-lg px-3 py-2">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                      <span>Define missing keywords before generating.</span>
-                      <Button variant="link" size="sm" className="text-amber-600 h-auto p-0 ml-auto" onClick={() => navigate(`${basePath}/pgp-keywords`)}>
-                        Go to Keywords →
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-500/10 rounded-lg px-3 py-2">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                        <span>Define missing keywords before generating.</span>
+                        <Button variant="link" size="sm" className="text-amber-600 h-auto p-0 ml-auto" onClick={() => navigate(`${basePath}/pgp-keywords`)}>
+                          Keywords →
+                        </Button>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-primary/30 text-primary hover:bg-primary/5"
+                        onClick={() => setShowAiKeywordFill(!showAiKeywordFill)}
+                      >
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        {showAiKeywordFill ? "Hide AI Fill" : "AI Auto-Fill All Keywords"}
                       </Button>
+                      {showAiKeywordFill && (
+                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold">Business / Service *</Label>
+                            <Textarea
+                              placeholder="e.g. E-commerce store selling electronics, smartphones, laptops..."
+                              value={aiKwBusiness}
+                              onChange={(e) => setAiKwBusiness(e.target.value)}
+                              rows={2}
+                              className="resize-none text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold">Custom Data <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                            <Textarea
+                              placeholder="e.g. Brand names: Samsung, Apple. Price range: $100-$2000. Free shipping over $50..."
+                              value={aiKwCustomData}
+                              onChange={(e) => setAiKwCustomData(e.target.value)}
+                              rows={2}
+                              className="resize-none text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Terms per keyword</Label>
+                            <Input type="number" min={3} max={50} value={aiKwCount} onChange={(e) => setAiKwCount(e.target.value)} className="h-8 text-xs" />
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            AI will generate terms for: {missingKeywords.map(k => `{${k.name}}`).join(", ")}
+                          </p>
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={!aiKwBusiness.trim() || aiKwFilling}
+                            onClick={handleAiKeywordFill}
+                          >
+                            {aiKwFilling ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Generating...</> : <><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Generate All Keywords</>}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
