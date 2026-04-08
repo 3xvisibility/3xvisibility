@@ -136,7 +136,7 @@ export default function PgpLogsPage() {
           <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="published">Published</SelectItem>
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>

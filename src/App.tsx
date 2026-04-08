@@ -41,6 +41,7 @@ import PgpKeywordsPage from "./pages/PgpKeywordsPage";
 import PgpContentGroupsPage from "./pages/PgpContentGroupsPage";
 import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
+import PgpLogsPage from "./pages/PgpLogsPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
