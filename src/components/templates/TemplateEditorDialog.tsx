@@ -118,6 +118,8 @@ export function TemplateEditorDialog({
       setCustomFields(cfg._customFields || []);
       setHeaderCode(cfg._headerCode || "");
       setFooterCode(cfg._footerCode || "");
+      setShowInSearch(cfg._showInSearch !== false);
+      setShowSeoSettings(cfg._showSeoSettings !== false);
       setShowPreview(false);
       setActiveTab("content");
       setAiSeoNiche("");
@@ -144,6 +146,7 @@ export function TemplateEditorDialog({
     _taxonomyCategories: taxonomyCategories, _taxonomyTags: taxonomyTags,
     _commentsEnabled: commentsEnabled, _customFields: customFields,
     _headerCode: headerCode, _footerCode: footerCode,
+    _showInSearch: showInSearch, _showSeoSettings: showSeoSettings,
   });
 
   const handleSave = () => {
