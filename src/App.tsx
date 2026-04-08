@@ -41,6 +41,7 @@ import PgpKeywordsPage from "./pages/PgpKeywordsPage";
 import PgpContentGroupsPage from "./pages/PgpContentGroupsPage";
 import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
+import PgpLogsPage from "./pages/PgpLogsPage";
 import NotFound from "./pages/NotFound";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
@@ -90,6 +91,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="pgp-content" element={wrap(<PgpContentGroupsPage />)} />
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
       <Route path="pgp-terms" element={wrap(<PgpTermsPage />)} />
+      <Route path="pgp-logs" element={wrap(<PgpLogsPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );

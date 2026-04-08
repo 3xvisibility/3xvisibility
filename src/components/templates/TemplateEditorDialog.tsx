@@ -73,6 +73,19 @@ export function TemplateEditorDialog({
   const [showInSearch, setShowInSearch] = useState(true);
   const [showSeoSettings, setShowSeoSettings] = useState(true);
 
+  // Comment Generation
+  const [generateComments, setGenerateComments] = useState(false);
+  const [commentCount, setCommentCount] = useState("3");
+  const [commentAuthors, setCommentAuthors] = useState("");
+  const [commentTemplate, setCommentTemplate] = useState("");
+
+  // Author & Attributes
+  const [authorMode, setAuthorMode] = useState("default");
+  const [authorList, setAuthorList] = useState("");
+  const [parentPage, setParentPage] = useState("");
+  const [menuAssignment, setMenuAssignment] = useState("");
+  const [pageTemplate, setPageTemplate] = useState("default");
+
   // AI SEO
   const [aiSeoNiche, setAiSeoNiche] = useState("");
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
@@ -91,6 +104,8 @@ export function TemplateEditorDialog({
     setTaxonomyTags(""); setCommentsEnabled(true);
     setCustomFields([]); setHeaderCode(""); setFooterCode("");
     setAiSeoNiche(""); setShowInSearch(true); setShowSeoSettings(true);
+    setGenerateComments(false); setCommentCount("3"); setCommentAuthors(""); setCommentTemplate("");
+    setAuthorMode("default"); setAuthorList(""); setParentPage(""); setMenuAssignment(""); setPageTemplate("default");
   }, []);
 
   useEffect(() => {
@@ -120,6 +135,15 @@ export function TemplateEditorDialog({
       setFooterCode(cfg._footerCode || "");
       setShowInSearch(cfg._showInSearch !== false);
       setShowSeoSettings(cfg._showSeoSettings !== false);
+      setGenerateComments(cfg._generateComments || false);
+      setCommentCount(cfg._commentCount || "3");
+      setCommentAuthors(cfg._commentAuthors || "");
+      setCommentTemplate(cfg._commentTemplate || "");
+      setAuthorMode(cfg._authorMode || "default");
+      setAuthorList(cfg._authorList || "");
+      setParentPage(cfg._parentPage || "");
+      setMenuAssignment(cfg._menuAssignment || "");
+      setPageTemplate(cfg._pageTemplate || "default");
       setShowPreview(false);
       setActiveTab("content");
       setAiSeoNiche("");
@@ -147,6 +171,11 @@ export function TemplateEditorDialog({
     _commentsEnabled: commentsEnabled, _customFields: customFields,
     _headerCode: headerCode, _footerCode: footerCode,
     _showInSearch: showInSearch, _showSeoSettings: showSeoSettings,
+    _generateComments: generateComments, _commentCount: commentCount,
+    _commentAuthors: commentAuthors, _commentTemplate: commentTemplate,
+    _authorMode: authorMode, _authorList: authorList,
+    _parentPage: parentPage, _menuAssignment: menuAssignment,
+    _pageTemplate: pageTemplate,
   });
 
   const handleSave = () => {
@@ -556,7 +585,93 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
                 </div>
               </div>
 
-              {/* Header/Footer Code */}
+              {/* Comment Generation */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5" /> Generate Comments
+                </p>
+                <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">Auto-generate comments</p>
+                    <p className="text-[11px] text-muted-foreground">Create realistic comments for each generated post</p>
+                  </div>
+                  <Switch checked={generateComments} onCheckedChange={setGenerateComments} />
+                </div>
+                {generateComments && (
+                  <div className="space-y-3 pl-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Number of Comments</Label>
+                        <Input type="number" min="1" max="20" value={commentCount} onChange={(e) => setCommentCount(e.target.value)} className="text-sm h-9" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Comment Authors</Label>
+                        <Input value={commentAuthors} onChange={(e) => setCommentAuthors(e.target.value)} placeholder="John, Jane, {name}" className="text-sm h-9" />
+                        <p className="text-[10px] text-muted-foreground">Comma-separated. Supports spintax & variables.</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Comment Template</Label>
+                      <Textarea value={commentTemplate} onChange={(e) => setCommentTemplate(e.target.value)} placeholder="Great {service} in {city}! {Highly recommended|Would use again}." rows={2} className="text-sm" />
+                      <p className="text-[10px] text-muted-foreground">Use spintax and keywords for unique comments.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Author & Attributes */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Settings2 className="h-3.5 w-3.5" /> Author & Attributes
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Author Assignment</Label>
+                    <Select value={authorMode} onValueChange={setAuthorMode}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Author</SelectItem>
+                        <SelectItem value="specific">Specific Author</SelectItem>
+                        <SelectItem value="random">Random from List</SelectItem>
+                        <SelectItem value="rotate">Rotate through List</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {authorMode !== "default" && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Author List</Label>
+                      <Input value={authorList} onChange={(e) => setAuthorList(e.target.value)} placeholder="Author1, Author2, Author3" className="text-sm h-9" />
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Parent Page</Label>
+                    <Input value={parentPage} onChange={(e) => setParentPage(e.target.value)} placeholder="Enter parent page slug or ID" className="text-sm h-9" />
+                    <p className="text-[10px] text-muted-foreground">Assign generated pages under a parent page.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Page Template</Label>
+                    <Select value={pageTemplate} onValueChange={setPageTemplate}>
+                      <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Template</SelectItem>
+                        <SelectItem value="full-width">Full Width</SelectItem>
+                        <SelectItem value="sidebar-left">Sidebar Left</SelectItem>
+                        <SelectItem value="sidebar-right">Sidebar Right</SelectItem>
+                        <SelectItem value="blank">Blank (No Header/Footer)</SelectItem>
+                        <SelectItem value="elementor_canvas">Elementor Canvas</SelectItem>
+                        <SelectItem value="elementor_header_footer">Elementor Full Width</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Menu Assignment</Label>
+                  <Input value={menuAssignment} onChange={(e) => setMenuAssignment(e.target.value)} placeholder="Main Menu, Footer Menu" className="text-sm h-9" />
+                  <p className="text-[10px] text-muted-foreground">Assign generated pages to WordPress menus. Comma-separated menu names.</p>
+                </div>
+              </div>
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                   <Code className="h-3.5 w-3.5" /> Header & Footer Code
