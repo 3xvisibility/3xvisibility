@@ -148,20 +148,20 @@ export default function PgpContentGroupsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-display">Content Groups</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-display">Content Groups</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
             Define content templates that use Keywords to mass generate pages.
           </p>
         </div>
-        <Button size="sm" onClick={() => openEditor()}>
+        <Button size="sm" className="w-fit shrink-0" onClick={() => openEditor()}>
           <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Content Group
         </Button>
       </div>
 
-      <div className="relative max-w-xs">
+      <div className="relative w-full sm:max-w-xs">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search content groups..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
       </div>
@@ -187,69 +187,72 @@ export default function PgpContentGroupsPage() {
         </Card>
       ) : (
         <Card className="shadow-surface overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[35%]">Name</TableHead>
-                <TableHead className="w-[20%]">Keywords</TableHead>
-                <TableHead className="w-[15%]">Post Type</TableHead>
-                <TableHead className="w-[15%]">Updated</TableHead>
-                <TableHead className="text-right w-[15%]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginated.map(tpl => {
-                const kwStatus = getKeywordStatus(tpl);
-                const cfg = (tpl.schema_config as Record<string, any>) || {};
-                return (
-                  <TableRow key={tpl.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-primary shrink-0" />
-                        <span className="font-medium text-sm cursor-pointer hover:text-primary truncate" onClick={() => openEditor(tpl)}>
-                          {tpl.name}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm tabular-nums">{kwStatus.total}</span>
-                        {kwStatus.missing.length > 0 && (
-                          <Badge variant="destructive" className="text-[9px]">{kwStatus.missing.length} missing</Badge>
-                        )}
-                        {kwStatus.missing.length === 0 && kwStatus.total > 0 && (
-                          <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-300">✓ All matched</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-[10px] capitalize">{cfg._postType || "page"}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs text-muted-foreground">{new Date(tpl.updated_at).toLocaleDateString()}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => navigate(`${basePath}/pgp-generate?group=${tpl.id}`)}>
-                          <Play className="h-3 w-3 mr-1" /> Generate
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(tpl.id)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[140px]">Name</TableHead>
+                  <TableHead className="min-w-[100px]">Keywords</TableHead>
+                  <TableHead className="hidden sm:table-cell min-w-[80px]">Post Type</TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[90px]">Updated</TableHead>
+                  <TableHead className="text-right min-w-[100px]">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginated.map(tpl => {
+                  const kwStatus = getKeywordStatus(tpl);
+                  const cfg = (tpl.schema_config as Record<string, any>) || {};
+                  return (
+                    <TableRow key={tpl.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-primary shrink-0" />
+                          <span className="font-medium text-xs sm:text-sm cursor-pointer hover:text-primary truncate max-w-[100px] sm:max-w-none" onClick={() => openEditor(tpl)}>
+                            {tpl.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm tabular-nums">{kwStatus.total}</span>
+                          {kwStatus.missing.length > 0 && (
+                            <Badge variant="destructive" className="text-[9px]">{kwStatus.missing.length} missing</Badge>
+                          )}
+                          {kwStatus.missing.length === 0 && kwStatus.total > 0 && (
+                            <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-300">✓</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <Badge variant="secondary" className="text-[10px] capitalize">{cfg._postType || "page"}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="text-xs text-muted-foreground">{new Date(tpl.updated_at).toLocaleDateString()}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="outline" size="sm" className="h-7 text-[11px] hidden sm:inline-flex" onClick={() => navigate(`${basePath}/pgp-generate?group=${tpl.id}`)}>
+                            <Play className="h-3 w-3 mr-1" /> Generate
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem className="sm:hidden" onClick={() => navigate(`${basePath}/pgp-generate?group=${tpl.id}`)}><Play className="h-3.5 w-3.5 mr-2" /> Generate</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(tpl.id)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t px-4 py-3">
+            <div className="flex items-center justify-between border-t px-3 sm:px-4 py-3">
               <p className="text-xs text-muted-foreground">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}</p>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}><ChevronLeft className="h-4 w-4" /></Button>

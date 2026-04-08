@@ -398,17 +398,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-display">Generate</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-lg sm:text-display">Generate</h1>
+        <p className="text-muted-foreground text-xs sm:text-sm mt-1">
           Select a Content Group, configure generation settings, and generate pages.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left: Configuration */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-5">
           {/* Content Group Selection */}
           <Card className="shadow-surface">
             <CardContent className="p-5 space-y-4">
@@ -584,18 +584,18 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <Card className="shadow-surface">
               <CardContent className="p-5 space-y-5">
                 <Tabs defaultValue="generation" className="space-y-4">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="generation"><Zap className="h-3.5 w-3.5 mr-1.5" /> Generation</TabsTrigger>
-                    <TabsTrigger value="ai"><Sparkles className="h-3.5 w-3.5 mr-1.5" /> AI Generate</TabsTrigger>
-                    <TabsTrigger value="overwrite"><RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Overwrite</TabsTrigger>
-                    <TabsTrigger value="schedule"><Settings2 className="h-3.5 w-3.5 mr-1.5" /> Schedule</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+                    <TabsTrigger value="generation" className="text-xs sm:text-sm"><Zap className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Generation</span><span className="sm:hidden">Gen</span></TabsTrigger>
+                    <TabsTrigger value="ai" className="text-xs sm:text-sm"><Sparkles className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> AI</TabsTrigger>
+                    <TabsTrigger value="overwrite" className="text-xs sm:text-sm"><RotateCcw className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Overwrite</span><span className="sm:hidden">Overw.</span></TabsTrigger>
+                    <TabsTrigger value="schedule" className="text-xs sm:text-sm"><Settings2 className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Schedule</span><span className="sm:hidden">Sched.</span></TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="generation" className="space-y-4">
                     {/* Method Selection */}
                     <div className="space-y-2">
                       <Label className="text-xs font-semibold">Generation Method</Label>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {([
                           { value: "all", label: "All Combinations", desc: "Every possible combination of keyword terms" },
                           { value: "sequential", label: "Sequential", desc: "Honors the order of terms in each keyword" },

@@ -483,15 +483,15 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-display">Keywords</h1>
-          <p className="text-muted-foreground mt-1">Define reusable keyword groups with terms that cycle during page generation.</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-display">Keywords</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Define reusable keyword groups with terms that cycle during page generation.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Button size="sm" variant="outline" onClick={() => setAutoWizardOpen(true)}>
-            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> Auto-Generate
+            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Auto-</span>Generate
           </Button>
           <Button size="sm" onClick={() => openEditor()}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Keyword
@@ -499,7 +499,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
         </div>
       </div>
 
-      <div className="relative max-w-xs">
+      <div className="relative w-full sm:max-w-xs">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search keywords..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
       </div>
@@ -530,47 +530,49 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
         </Card>
       ) : (
         <Card className="shadow-surface overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[30%]">Keyword</TableHead>
-                <TableHead className="w-[15%]">Source</TableHead>
-                <TableHead className="w-[15%]">Terms</TableHead>
-                <TableHead className="w-[10%]">Columns</TableHead>
-                <TableHead className="w-[15%]">Updated</TableHead>
-                <TableHead className="text-right w-10">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginated.map(kw => (
-                <TableRow key={kw.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <KeyRound className="h-4 w-4 text-primary shrink-0" />
-                      <span className="font-medium font-mono text-sm cursor-pointer hover:text-primary" onClick={() => openEditor(kw)}>{`{${kw.name}}`}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell><Badge variant="outline" className="text-[10px] capitalize">{sourceLabels[kw.source] || kw.source}</Badge></TableCell>
-                  <TableCell><span className="text-sm tabular-nums">{kw.term_count}</span></TableCell>
-                  <TableCell><span className="text-sm tabular-nums">{(kw.columns || []).length || "—"}</span></TableCell>
-                  <TableCell><span className="text-xs text-muted-foreground">{new Date(kw.updated_at).toLocaleDateString()}</span></TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => openEditor(kw)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => duplicateKeyword(kw)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => exportKeyword(kw)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(kw)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[140px]">Keyword</TableHead>
+                  <TableHead className="min-w-[80px]">Source</TableHead>
+                  <TableHead className="min-w-[60px]">Terms</TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[60px]">Columns</TableHead>
+                  <TableHead className="hidden sm:table-cell min-w-[90px]">Updated</TableHead>
+                  <TableHead className="text-right w-10">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginated.map(kw => (
+                  <TableRow key={kw.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <KeyRound className="h-4 w-4 text-primary shrink-0" />
+                        <span className="font-medium font-mono text-xs sm:text-sm cursor-pointer hover:text-primary truncate max-w-[120px] sm:max-w-none" onClick={() => openEditor(kw)}>{`{${kw.name}}`}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell><Badge variant="outline" className="text-[10px] capitalize">{sourceLabels[kw.source] || kw.source}</Badge></TableCell>
+                    <TableCell><span className="text-sm tabular-nums">{kw.term_count}</span></TableCell>
+                    <TableCell className="hidden md:table-cell"><span className="text-sm tabular-nums">{(kw.columns || []).length || "—"}</span></TableCell>
+                    <TableCell className="hidden sm:table-cell"><span className="text-xs text-muted-foreground">{new Date(kw.updated_at).toLocaleDateString()}</span></TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => openEditor(kw)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateKeyword(kw)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportKeyword(kw)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(kw)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t px-4 py-3">
+            <div className="flex items-center justify-between border-t px-3 sm:px-4 py-3">
               <p className="text-xs text-muted-foreground">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}</p>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}><ChevronLeft className="h-4 w-4" /></Button>
