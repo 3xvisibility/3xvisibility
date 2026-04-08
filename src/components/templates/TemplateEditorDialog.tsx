@@ -90,7 +90,7 @@ export function TemplateEditorDialog({
     setFeaturedImageUrl(""); setTaxonomyCategories("");
     setTaxonomyTags(""); setCommentsEnabled(true);
     setCustomFields([]); setHeaderCode(""); setFooterCode("");
-    setAiSeoNiche("");
+    setAiSeoNiche(""); setShowInSearch(true); setShowSeoSettings(true);
   }, []);
 
   useEffect(() => {
