@@ -1,40 +1,28 @@
-## Full Rebuild Plan — Templates → Campaigns → Generated Pages
+## PGP Feature Parity Plan
 
-### Phase 1: Templates (Priority)
-**UI Rebuild:**
-- Clean template list with grid/table toggle, search, filters
-- AI Builder: structured form (business type, niche, language, sections) — NO style variables ever
-- Template editor with live preview, variable panel (content-only), SEO patterns
-- Responsive: card layout on mobile, table on desktop
+### Phase 1: Database — Add demographics columns to locations table
+- Add columns: `population_male`, `population_female`, `median_age`, `median_household_income`, `ethnicity_data` (jsonb)
+- These will be populated by the AI seeding process
 
-**Backend Fix:**
-- Update `generate-template` edge function: stricter prompt, better variable filtering
-- Ensure all variable detection uses `design-vars-filter.ts` everywhere
+### Phase 2: Radius + Area Location Modes
+- Update the Location Database dialog to support two modes:
+  - **Radius**: Enter an address/city + radius (miles/km), fetch locations within that distance using lat/lng math
+  - **Area**: Select specific Regions/States and Counties (current behavior, enhanced with multi-select)
+- Add county filtering to the location keyword generator
 
-### Phase 2: Campaigns  
-**UI Rebuild:**
-- Step-by-step wizard: Basics → Data Source → Template → Mapping → Settings → Review
-- Mapping step: only content variables, auto-match CSV columns, custom values
-- Generation dialog: draft/publish, row limits, schedule, retry failed
-- Responsive wizard with progress indicator
+### Phase 3: Text File Import for Keywords
+- Add `.txt` file support to the PGP Keywords import flow
+- Parse one term per line into a single keyword group
 
-**Backend Fix:**
-- Update `generate-pages` edge function: reliable batch processing, proper error handling
-- Fix slug generation, deduplication, template rendering
+### Phase 4: Airtable & Notion as Keyword Sources
+- Add "Airtable" and "Notion" source types to the keyword creation dialog
+- User provides API key + table/database ID
+- Edge function fetches data and populates keyword terms
 
-### Phase 3: Generated Pages
-**UI Rebuild:**
-- Pages list with filters (status, campaign, website), bulk actions
-- Page preview dialog with rendered HTML
-- Inline SEO editor, status management, retry mechanism
-- Responsive table with progressive column hiding
+### Phase 5: AI Auto-Generate Keywords + Content Groups
+- Add a wizard: user enters service/product + location preferences
+- AI generates matching keyword groups AND a content group template automatically
+- One-click setup for entire PGP workflow
 
-**Backend Fix:**
-- Fix `publish-pages` edge function: proper CMS publishing per platform
-- Better error messages and retry logic
-
-### Design Principles:
-- Modern glassmorphism matching existing dark theme
-- No style/design variables anywhere in UI
-- Mobile-first responsive
-- Professional typography and spacing
+### Phase 6: Update AI Seeding to Include Demographics
+- Enhance the `seed-locations` edge function to include demographic data when generating location datasets
