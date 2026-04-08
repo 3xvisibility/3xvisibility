@@ -59,9 +59,22 @@ export function slugify(text: string): string {
 
 // ─── Spintax ─────────────────────────────────────────────────────────
 
+export function processBlockSpinning(text: string, deterministic = false): string {
+  let counter = 0;
+  // Block spinning: [spin]block1||block2||block3[/spin]
+  return text.replace(/\[spin\]([\s\S]*?)\[\/spin\]/gi, (_m, inner: string) => {
+    const blocks = inner.split("||").map(b => b.trim());
+    if (blocks.length <= 1) return blocks[0] || "";
+    const idx = deterministic ? counter++ % blocks.length : Math.floor(Math.random() * blocks.length);
+    return blocks[idx];
+  });
+}
+
 export function processSpintax(text: string, deterministic = false): string {
+  // First process block-level spinning
+  let result = processBlockSpinning(text, deterministic);
+
   const MAX_DEPTH = 10;
-  let result = text;
   let counter = 0;
   for (let depth = 0; depth < MAX_DEPTH; depth++) {
     const regex = /\{([^{}]*?\|[^{}]*?)\}/g;

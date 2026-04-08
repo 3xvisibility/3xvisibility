@@ -8,10 +8,41 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Shuffle, Copy, Hash, Eye, ChevronDown, ChevronUp } from "lucide-react";
 
 /**
+ * Pre-process block spinning: [spin]block1||block2[/spin]
+ * Expands into all block-level variations.
+ */
+function expandBlockSpinning(text: string): string[] {
+  const regex = /\[spin\]([\s\S]*?)\[\/spin\]/i;
+  const match = text.match(regex);
+  if (!match) return [text];
+
+  const before = text.slice(0, match.index!);
+  const after = text.slice(match.index! + match[0].length);
+  const blocks = match[1].split("||").map(b => b.trim());
+
+  const results: string[] = [];
+  for (const block of blocks) {
+    const expanded = expandBlockSpinning(before + block + after);
+    results.push(...expanded);
+  }
+  return results;
+}
+
+/**
  * Recursively resolve all spintax variations from a string like:
  * "Hello {world|earth}, {good|great} day"
  */
 function expandSpintax(text: string): string[] {
+  // First expand block spinning
+  const blockVariants = expandBlockSpinning(text);
+  const results: string[] = [];
+  for (const variant of blockVariants) {
+    results.push(...expandInlineSpintax(variant));
+  }
+  return results;
+}
+
+function expandInlineSpintax(text: string): string[] {
   const regex = /\{([^{}]+)\}/;
   const match = text.match(regex);
   if (!match) return [text];
@@ -22,7 +53,7 @@ function expandSpintax(text: string): string[] {
 
   const results: string[] = [];
   for (const option of options) {
-    const expanded = expandSpintax(before + option + after);
+    const expanded = expandInlineSpintax(before + option + after);
     results.push(...expanded);
   }
   return results;
