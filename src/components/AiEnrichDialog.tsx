@@ -104,7 +104,7 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!loading) { onOpenChange(v); setDone(false); setCustomInstruction(""); } }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
