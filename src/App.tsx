@@ -91,6 +91,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="pgp-content" element={wrap(<PgpContentGroupsPage />)} />
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
       <Route path="pgp-terms" element={wrap(<PgpTermsPage />)} />
+      <Route path="pgp-logs" element={wrap(<PgpLogsPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
