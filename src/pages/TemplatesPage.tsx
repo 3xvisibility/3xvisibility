@@ -337,13 +337,25 @@ export default function TemplatesPage() {
     try {
       const { data, error } = await supabase.functions.invoke("scan-template", { body: { url: pageUrl } });
       if (error) throw error;
-      const html = data?.bodyHtml || "";
+      let html = data?.bodyHtml || "";
       const styles = data?.headStyles || "";
+      const suggestions: { blockId: string; original: string; variable: string; value: string }[] = data?.suggestions || [];
+
+      // Auto-apply AI variable suggestions to the content
+      const detectedVars: string[] = [];
+      for (const s of suggestions) {
+        if (s.original && s.variable && html.includes(s.original)) {
+          html = html.replace(s.original, `{${s.variable}}`);
+          if (!detectedVars.includes(s.variable)) detectedVars.push(s.variable);
+        }
+      }
+
       const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
       setSiteDialogOpen(false); setSitePages([]);
-      setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: [], user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
+      setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: detectedVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
       setEditorOpen(true);
-      toast({ title: "Page imported as template" });
+      const varMsg = detectedVars.length > 0 ? ` — ${detectedVars.length} keywords detected: {${detectedVars.join("}, {")}}` : "";
+      toast({ title: `Page imported as template${varMsg}` });
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
     }
