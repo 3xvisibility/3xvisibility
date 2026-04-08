@@ -114,7 +114,7 @@ export default function PgpLogsPage() {
         {[
           { label: "Total", value: stats.total, color: "text-foreground" },
           { label: "Published", value: stats.published, color: "text-emerald-600" },
-          { label: "Draft", value: stats.draft, color: "text-amber-600" },
+          { label: "Pending", value: stats.pending, color: "text-amber-600" },
           { label: "Failed", value: stats.failed, color: "text-destructive" },
         ].map((s) => (
           <Card key={s.label}>
