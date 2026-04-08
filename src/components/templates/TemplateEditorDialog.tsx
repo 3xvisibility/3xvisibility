@@ -104,6 +104,8 @@ export function TemplateEditorDialog({
     setTaxonomyTags(""); setCommentsEnabled(true);
     setCustomFields([]); setHeaderCode(""); setFooterCode("");
     setAiSeoNiche(""); setShowInSearch(true); setShowSeoSettings(true);
+    setGenerateComments(false); setCommentCount("3"); setCommentAuthors(""); setCommentTemplate("");
+    setAuthorMode("default"); setAuthorList(""); setParentPage(""); setMenuAssignment(""); setPageTemplate("default");
   }, []);
 
   useEffect(() => {
