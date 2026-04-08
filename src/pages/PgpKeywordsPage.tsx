@@ -703,7 +703,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Regions / States</Label>
-                      <Select value={locState} onValueChange={(v) => { setLocState(v); setLocCounty(""); }}>
+                      <Select value={locState || "__all__"} onValueChange={(v) => { setLocState(v === "__all__" ? "" : v); setLocCounty(""); }}>
                         <SelectTrigger className="h-9"><SelectValue placeholder="All states" /></SelectTrigger>
                         <SelectContent className="max-h-60">
                           <SelectItem value="__all__">All States</SelectItem>
@@ -713,10 +713,10 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Counties</Label>
-                      <Select value={locCounty} onValueChange={setLocCounty}>
+                      <Select value={locCounty || "__all__"} onValueChange={(v) => setLocCounty(v === "__all__" ? "" : v)}>
                         <SelectTrigger className="h-9"><SelectValue placeholder="All counties" /></SelectTrigger>
                         <SelectContent className="max-h-60">
-                          <SelectItem value="">All Counties</SelectItem>
+                          <SelectItem value="__all__">All Counties</SelectItem>
                           {locCounties.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                         </SelectContent>
                       </Select>
