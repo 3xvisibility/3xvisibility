@@ -93,18 +93,18 @@ export default function PgpLogsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Generation Logs</h1>
-          <p className="text-sm text-muted-foreground">Full report of all generated pages, posts, and taxonomy terms</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-2xl font-bold">Generation Logs</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Full report of all generated pages, posts, and taxonomy terms</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1" /> Refresh
+            <RefreshCw className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Refresh</span>
           </Button>
           <Button variant="outline" size="sm" onClick={exportCsv} disabled={!filtered.length}>
-            <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
+            <Download className="h-3.5 w-3.5 sm:mr-1" /> <span className="hidden sm:inline">Export CSV</span>
           </Button>
         </div>
       </div>

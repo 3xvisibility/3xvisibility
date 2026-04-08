@@ -255,57 +255,59 @@ export default function PgpTermsPage() {
         </Card>
       ) : (
         <Card className="shadow-surface overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[30%]">Name</TableHead>
-                <TableHead className="w-[15%]">Taxonomy</TableHead>
-                <TableHead className="w-[15%]">Terms</TableHead>
-                <TableHead className="w-[15%]">Auto-Generate</TableHead>
-                <TableHead className="w-[15%]">Updated</TableHead>
-                <TableHead className="text-right w-10">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginated.map(tg => (
-                <TableRow key={tg.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Tags className="h-4 w-4 text-primary shrink-0" />
-                      <span className="font-medium text-sm cursor-pointer hover:text-primary" onClick={() => openEditor(tg)}>{tg.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-[10px] capitalize">{taxonomyLabels[tg.taxonomy] || tg.taxonomy}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm tabular-nums">{tg.term_count}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={tg.auto_generate ? "default" : "outline"} className="text-[10px]">
-                      {tg.auto_generate ? "Yes" : "No"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-xs text-muted-foreground">{new Date(tg.updated_at).toLocaleDateString()}</span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={() => openEditor(tg)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(tg)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[130px]">Name</TableHead>
+                  <TableHead className="min-w-[80px]">Taxonomy</TableHead>
+                  <TableHead className="min-w-[60px]">Terms</TableHead>
+                  <TableHead className="hidden sm:table-cell min-w-[90px]">Auto-Generate</TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[90px]">Updated</TableHead>
+                  <TableHead className="text-right w-10">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginated.map(tg => (
+                  <TableRow key={tg.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Tags className="h-4 w-4 text-primary shrink-0" />
+                        <span className="font-medium text-xs sm:text-sm cursor-pointer hover:text-primary truncate max-w-[100px] sm:max-w-none" onClick={() => openEditor(tg)}>{tg.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-[10px] capitalize">{taxonomyLabels[tg.taxonomy] || tg.taxonomy}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm tabular-nums">{tg.term_count}</span>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <Badge variant={tg.auto_generate ? "default" : "outline"} className="text-[10px]">
+                        {tg.auto_generate ? "Yes" : "No"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-xs text-muted-foreground">{new Date(tg.updated_at).toLocaleDateString()}</span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => openEditor(tg)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(tg)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t px-4 py-3">
+            <div className="flex items-center justify-between border-t px-3 sm:px-4 py-3">
               <p className="text-xs text-muted-foreground">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}</p>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}><ChevronLeft className="h-4 w-4" /></Button>
