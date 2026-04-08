@@ -73,6 +73,19 @@ export function TemplateEditorDialog({
   const [showInSearch, setShowInSearch] = useState(true);
   const [showSeoSettings, setShowSeoSettings] = useState(true);
 
+  // Comment Generation
+  const [generateComments, setGenerateComments] = useState(false);
+  const [commentCount, setCommentCount] = useState("3");
+  const [commentAuthors, setCommentAuthors] = useState("");
+  const [commentTemplate, setCommentTemplate] = useState("");
+
+  // Author & Attributes
+  const [authorMode, setAuthorMode] = useState("default");
+  const [authorList, setAuthorList] = useState("");
+  const [parentPage, setParentPage] = useState("");
+  const [menuAssignment, setMenuAssignment] = useState("");
+  const [pageTemplate, setPageTemplate] = useState("default");
+
   // AI SEO
   const [aiSeoNiche, setAiSeoNiche] = useState("");
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
