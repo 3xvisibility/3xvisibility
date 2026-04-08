@@ -135,6 +135,15 @@ export function TemplateEditorDialog({
       setFooterCode(cfg._footerCode || "");
       setShowInSearch(cfg._showInSearch !== false);
       setShowSeoSettings(cfg._showSeoSettings !== false);
+      setGenerateComments(cfg._generateComments || false);
+      setCommentCount(cfg._commentCount || "3");
+      setCommentAuthors(cfg._commentAuthors || "");
+      setCommentTemplate(cfg._commentTemplate || "");
+      setAuthorMode(cfg._authorMode || "default");
+      setAuthorList(cfg._authorList || "");
+      setParentPage(cfg._parentPage || "");
+      setMenuAssignment(cfg._menuAssignment || "");
+      setPageTemplate(cfg._pageTemplate || "default");
       setShowPreview(false);
       setActiveTab("content");
       setAiSeoNiche("");
@@ -162,6 +171,11 @@ export function TemplateEditorDialog({
     _commentsEnabled: commentsEnabled, _customFields: customFields,
     _headerCode: headerCode, _footerCode: footerCode,
     _showInSearch: showInSearch, _showSeoSettings: showSeoSettings,
+    _generateComments: generateComments, _commentCount: commentCount,
+    _commentAuthors: commentAuthors, _commentTemplate: commentTemplate,
+    _authorMode: authorMode, _authorList: authorList,
+    _parentPage: parentPage, _menuAssignment: menuAssignment,
+    _pageTemplate: pageTemplate,
   });
 
   const handleSave = () => {
