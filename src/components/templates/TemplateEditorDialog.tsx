@@ -299,9 +299,9 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
                   </div>
                 )}
               </div>
-              <div className="flex-1 min-h-0">
+              <div className="min-h-[50vh]">
                 {showPreview ? (
-                  <div className="h-full">
+                  <div className="min-h-[50vh]">
                     <TemplatePreview html={content} />
                   </div>
                 ) : (
@@ -309,7 +309,7 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
                     placeholder={"<h1>{service_name} in {city}</h1>\n<p>Looking for the best {service_name} in {city}?</p>\n<h2>Why Choose Us?</h2>\n<p>With over {years_experience} years of experience...</p>"}
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    className="font-mono text-xs leading-relaxed h-full min-h-[400px] rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
+                    className="font-mono text-xs leading-relaxed min-h-[50vh] rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
                   />
                 )}
               </div>
