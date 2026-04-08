@@ -574,6 +574,27 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
 
             {/* ── Publish Tab ── */}
             <TabsContent value="publish" className="m-0 p-5 space-y-5">
+              {/* Content Group Settings */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Settings2 className="h-3.5 w-3.5" /> Content Group Settings
+                </p>
+                <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">Show in search results?</p>
+                    <p className="text-[11px] text-muted-foreground">Allow generated pages to be indexed by search engines</p>
+                  </div>
+                  <Switch checked={showInSearch} onCheckedChange={setShowInSearch} />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">Show SEO settings?</p>
+                    <p className="text-[11px] text-muted-foreground">Display SEO meta fields when editing generated pages</p>
+                  </div>
+                  <Switch checked={showSeoSettings} onCheckedChange={setShowSeoSettings} />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Post Type</Label>
