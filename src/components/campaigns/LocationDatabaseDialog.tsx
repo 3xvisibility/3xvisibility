@@ -142,6 +142,13 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
       population: String(l.population || ""),
       timezone: l.timezone || "",
       region: l.region || "",
+      area_code: l.area_code || "",
+      phone_country_code: l.phone_country_code || "",
+      population_male: String(l.population_male || ""),
+      population_female: String(l.population_female || ""),
+      median_age: String(l.median_age || ""),
+      median_household_income: String(l.median_household_income || ""),
+      wikipedia_url: l.wikipedia_url || "",
     }));
     onSelect(rows);
     onOpenChange(false);
@@ -342,7 +349,7 @@ export function LocationDatabaseDialog({ open, onOpenChange, onSelect }: Locatio
 
             <div className="flex flex-wrap gap-1.5">
               <span className="text-xs text-muted-foreground">Columns:</span>
-              {["city", "county", "state", "state_code", "zip_code", "country", "country_code", "latitude", "longitude", "population", "timezone", "region"].map((h) => (
+              {["city", "county", "state", "state_code", "zip_code", "country", "country_code", "latitude", "longitude", "population", "timezone", "region", "area_code", "median_age", "median_household_income"].map((h) => (
                 <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>
               ))}
             </div>

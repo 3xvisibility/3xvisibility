@@ -990,51 +990,75 @@ export type Database = {
       }
       locations: {
         Row: {
+          area_code: string | null
           city: string
           country: string
           country_code: string
           county: string | null
           created_at: string
+          ethnicity_data: Json | null
           id: string
           latitude: number | null
           longitude: number | null
+          median_age: number | null
+          median_household_income: number | null
+          phone_country_code: string | null
           population: number | null
+          population_female: number | null
+          population_male: number | null
           region: string | null
           state: string
           state_code: string | null
           timezone: string | null
+          wikipedia_url: string | null
           zip_code: string | null
         }
         Insert: {
+          area_code?: string | null
           city: string
           country?: string
           country_code?: string
           county?: string | null
           created_at?: string
+          ethnicity_data?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
+          median_age?: number | null
+          median_household_income?: number | null
+          phone_country_code?: string | null
           population?: number | null
+          population_female?: number | null
+          population_male?: number | null
           region?: string | null
           state: string
           state_code?: string | null
           timezone?: string | null
+          wikipedia_url?: string | null
           zip_code?: string | null
         }
         Update: {
+          area_code?: string | null
           city?: string
           country?: string
           country_code?: string
           county?: string | null
           created_at?: string
+          ethnicity_data?: Json | null
           id?: string
           latitude?: number | null
           longitude?: number | null
+          median_age?: number | null
+          median_household_income?: number | null
+          phone_country_code?: string | null
           population?: number | null
+          population_female?: number | null
+          population_male?: number | null
           region?: string | null
           state?: string
           state_code?: string | null
           timezone?: string | null
+          wikipedia_url?: string | null
           zip_code?: string | null
         }
         Relationships: []
