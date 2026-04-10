@@ -161,6 +161,35 @@ export default function PgpContentGroupsPage() {
         </Button>
       </div>
 
+      {/* Step indicator */}
+      {!isLoading && templates.length === 0 && (
+        <div className="rounded-xl border border-secondary/20 bg-gradient-to-r from-secondary/5 via-transparent to-transparent p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-1">
+              <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${keywords.length > 0 ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'}`}>
+                {keywords.length > 0 ? '✓' : '1'}
+              </div>
+              <span className={`text-[11px] ${keywords.length > 0 ? 'text-success font-semibold' : 'text-muted-foreground'}`}>Keywords</span>
+            </div>
+            <div className="h-px flex-1 bg-border" />
+            <div className="flex items-center gap-1">
+              <div className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">2</div>
+              <span className="text-[11px] text-primary font-semibold">Content Groups</span>
+            </div>
+            <div className="h-px flex-1 bg-border" />
+            <div className="flex items-center gap-1">
+              <div className="h-5 w-5 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold">3</div>
+              <span className="text-[11px] text-muted-foreground">Generate</span>
+            </div>
+          </div>
+          {keywords.length === 0 && (
+            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 dark:bg-amber-500/10">
+              ⚠️ You haven't created any keywords yet. <button className="underline font-semibold" onClick={() => navigate(`${basePath}/pgp-keywords`)}>Create keywords first →</button>
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="relative w-full sm:max-w-xs">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search content groups..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
@@ -170,18 +199,28 @@ export default function PgpContentGroupsPage() {
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
       ) : filtered.length === 0 ? (
         <Card className="shadow-surface">
-          <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <Layers className="h-8 w-8 text-muted-foreground/50" />
+          <CardContent className="p-8 sm:p-12 text-center">
+            <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Layers className="h-8 w-8 text-primary/60" />
             </div>
-            <h3 className="font-semibold mb-1">{templates.length === 0 ? "No content groups yet" : "No matches"}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {templates.length === 0 ? "A Content Group defines a reusable template with Keywords for mass page generation." : "Adjust your search."}
+            <h3 className="font-semibold text-base mb-1">{templates.length === 0 ? "Create Your First Content Group" : "No matches"}</h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+              {templates.length === 0
+                ? "A Content Group is an HTML template that uses your {keyword} variables. Each keyword combination generates a unique page."
+                : "Adjust your search."}
             </p>
             {templates.length === 0 && (
-              <Button onClick={() => openEditor()}>
-                <Plus className="mr-2 h-4 w-4" /> Create Content Group
-              </Button>
+              <>
+                <Button onClick={() => openEditor()} className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" /> Create Content Group
+                </Button>
+                <div className="text-left max-w-sm mx-auto space-y-1.5 mt-5">
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">💡 How it works</p>
+                  <p className="text-xs text-muted-foreground">• Use <code className="bg-muted px-1 rounded text-[11px]">{'{city}'}</code> or <code className="bg-muted px-1 rounded text-[11px]">{'{service}'}</code> in your HTML to reference keywords</p>
+                  <p className="text-xs text-muted-foreground">• Each keyword group's terms create unique page variations</p>
+                  <p className="text-xs text-muted-foreground">• Include SEO metadata patterns for automatic title/description generation</p>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
