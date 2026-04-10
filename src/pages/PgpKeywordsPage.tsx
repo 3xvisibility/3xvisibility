@@ -75,11 +75,9 @@ export default function PgpKeywordsPage() {
   const [dynUrl, setDynUrl] = useState("");
   const [dynLoading, setDynLoading] = useState(false);
 
-  // Airtable/Notion state
-  const [extApiKey, setExtApiKey] = useState("");
-  const [extTableId, setExtTableId] = useState("");
-  const [extDatabaseId, setExtDatabaseId] = useState("");
-  const [extLoading, setExtLoading] = useState(false);
+  // Website source state
+  const [webSiteId, setWebSiteId] = useState("");
+  const [webLoading, setWebLoading] = useState(false);
 
   // Auto wizard state
   const [wizService, setWizService] = useState("");
@@ -99,6 +97,16 @@ export default function PgpKeywordsPage() {
       const { data, error } = await supabase.from("pgp_keywords").select("*").eq("workspace_id", wsId!).order("created_at", { ascending: false });
       if (error) throw error;
       return data as PgpKeyword[];
+    },
+  });
+
+  const { data: websites = [] } = useQuery({
+    queryKey: ["websites-for-keywords", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("websites").select("id, name, url").eq("workspace_id", wsId!).order("name");
+      if (error) throw error;
+      return data as { id: string; name: string; url: string }[];
     },
   });
 
