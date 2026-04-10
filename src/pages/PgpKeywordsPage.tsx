@@ -649,8 +649,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                   { value: "csv_url", label: "CSV URL", icon: Link2, desc: "Remote" },
                   { value: "google_sheet", label: "Sheet", icon: Globe, desc: "Google" },
                   { value: "rss_feed", label: "RSS", icon: Rss, desc: "Feed" },
-                  { value: "airtable", label: "Airtable", icon: LayoutGrid, desc: "Table" },
-                  { value: "notion", label: "Notion", icon: FileText, desc: "Database" },
+                  { value: "website", label: "Website", icon: Globe, desc: "From Site" },
                   { value: "text", label: "Text", icon: FileText, desc: ".txt file" },
                 ].map(s => (
                   <button key={s.value} onClick={() => setKwSource(s.value)}
