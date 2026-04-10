@@ -284,7 +284,7 @@ Only return valid JSON. No markdown fences.`;
         }
         rows.push(row);
       }
-      return rows;
+      return resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
     }
 
     // Random
