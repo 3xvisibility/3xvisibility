@@ -336,6 +336,8 @@ export default function DashboardPage() {
       icon: Globe,
       href: "/websites",
       gradient: "bg-gradient-to-br from-success to-secondary",
+      completed: websiteCount > 0,
+      step: 1,
     },
     {
       label: t("dashboard.createTemplate"),
@@ -343,6 +345,8 @@ export default function DashboardPage() {
       icon: FileText,
       href: "/templates",
       gradient: "bg-gradient-to-br from-secondary to-info",
+      completed: templateCount > 0,
+      step: 2,
     },
     {
       label: t("dashboard.createCampaign"),
@@ -350,6 +354,8 @@ export default function DashboardPage() {
       icon: Plus,
       href: "/campaigns",
       gradient: "bg-gradient-primary",
+      completed: campaignCount > 0,
+      step: 3,
     },
   ];
 
