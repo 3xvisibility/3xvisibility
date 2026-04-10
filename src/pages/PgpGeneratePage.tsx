@@ -238,6 +238,12 @@ Only return valid JSON. No markdown fences.`;
     setTestPreview(rendered);
   };
 
+  const resolvedBrandName = useMemo(() => {
+    if (brandSource === "custom") return customBrandName.trim();
+    const site = websites.find(w => w.id === selectedWebsite);
+    return site?.name || "";
+  }, [brandSource, customBrandName, selectedWebsite, websites]);
+
   const buildRows = (): Record<string, string>[] => {
     const kwData = groupKeywords.filter(k => k.keyword);
     if (kwData.length === 0) return [];
