@@ -80,6 +80,10 @@ export default function PgpGeneratePage() {
   const [aiKwCount, setAiKwCount] = useState("10");
   const [aiKwFilling, setAiKwFilling] = useState(false);
 
+  // Brand name
+  const [brandSource, setBrandSource] = useState<"website" | "custom">("website");
+  const [customBrandName, setCustomBrandName] = useState("");
+
   // AI generation
   const [aiBusinessDesc, setAiBusinessDesc] = useState("");
   const [aiKeywords, setAiKeywords] = useState("");
@@ -234,6 +238,12 @@ Only return valid JSON. No markdown fences.`;
     setTestPreview(rendered);
   };
 
+  const resolvedBrandName = useMemo(() => {
+    if (brandSource === "custom") return customBrandName.trim();
+    const site = websites.find(w => w.id === selectedWebsite);
+    return site?.name || "";
+  }, [brandSource, customBrandName, selectedWebsite, websites]);
+
   const buildRows = (): Record<string, string>[] => {
     const kwData = groupKeywords.filter(k => k.keyword);
     if (kwData.length === 0) return [];
@@ -259,7 +269,8 @@ Only return valid JSON. No markdown fences.`;
       generate(0, {});
 
       const limit = numberOfPages ? Math.min(parseInt(numberOfPages), rows.length - start) : rows.length - start;
-      return rows.slice(start, start + limit);
+      const sliced = rows.slice(start, start + limit);
+      return resolvedBrandName ? sliced.map(r => ({ ...r, brand_name: resolvedBrandName })) : sliced;
     }
 
     if (method === "sequential") {
@@ -273,7 +284,7 @@ Only return valid JSON. No markdown fences.`;
         }
         rows.push(row);
       }
-      return rows;
+      return resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
     }
 
     // Random
@@ -286,8 +297,12 @@ Only return valid JSON. No markdown fences.`;
       }
       rows.push(row);
     }
-    return rows;
+    return rows.map(r => resolvedBrandName ? { ...r, brand_name: resolvedBrandName } : r);
   };
+
+  // Also wrap the other returns above — handled inline via final map
+  const injectBrand = (rows: Record<string, string>[]) =>
+    resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
 
   const handleAiGenerate = async () => {
     if (!wsId || !aiBusinessDesc.trim()) {
@@ -679,6 +694,25 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   </div>
                 </div>
 
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Brand Name</Label>
+                  <div className="flex gap-2">
+                    <Select value={brandSource} onValueChange={(v) => setBrandSource(v as "website" | "custom")}>
+                      <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="website">From Website</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {brandSource === "custom" ? (
+                      <Input className="h-9 flex-1" placeholder="Your Brand Name" value={customBrandName} onChange={e => setCustomBrandName(e.target.value)} />
+                    ) : (
+                      <p className="text-xs text-muted-foreground self-center flex-1 truncate">{resolvedBrandName || "Select a website below"}</p>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Used as {"{brand_name}"} in templates</p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Publish To</Label>
@@ -782,6 +816,25 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         />
                         <p className="text-[10px] text-muted-foreground">Start from this index (0-based)</p>
                       </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Brand Name</Label>
+                      <div className="flex gap-2">
+                        <Select value={brandSource} onValueChange={(v) => setBrandSource(v as "website" | "custom")}>
+                          <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="website">From Website</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {brandSource === "custom" ? (
+                          <Input className="h-9 flex-1" placeholder="Your Brand Name" value={customBrandName} onChange={e => setCustomBrandName(e.target.value)} />
+                        ) : (
+                          <p className="text-xs text-muted-foreground self-center flex-1 truncate">{resolvedBrandName || "Select a website below"}</p>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Used as {"{brand_name}"} in templates</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
