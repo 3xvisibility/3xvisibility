@@ -428,24 +428,45 @@ export default function DashboardPage() {
       {/* Get Started / Quick Actions */}
       {showGetStarted && (
         <div>
-          <h2 className="text-display-sm mb-4">{t("dashboard.getStarted")}</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-display-sm">{t("dashboard.getStarted")}</h2>
+            <Badge variant="secondary" className="text-[10px]">
+              {quickActions.filter(a => a.completed).length}/{quickActions.length} done
+            </Badge>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {quickActions.map((action) => (
               <button
                 key={action.label}
                 onClick={() => navigate(`${basePath}${action.href}`)}
-                className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 text-left transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 hover:border-primary/20"
+                className={`group relative overflow-hidden rounded-xl border bg-card p-4 text-left transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 ${
+                  action.completed
+                    ? "border-success/30 bg-success/5"
+                    : "border-border hover:border-primary/20"
+                }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`h-10 w-10 rounded-xl ${action.gradient} flex items-center justify-center shrink-0`}>
-                    <action.icon className="h-5 w-5 text-primary-foreground" />
+                  <div className="relative shrink-0">
+                    {action.completed ? (
+                      <div className="h-10 w-10 rounded-xl bg-success/20 flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5 text-success" />
+                      </div>
+                    ) : (
+                      <div className={`h-10 w-10 rounded-xl ${action.gradient} flex items-center justify-center`}>
+                        <span className="text-sm font-bold text-primary-foreground">{action.step}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{action.label}</h3>
+                    <h3 className={`font-semibold text-sm transition-colors ${
+                      action.completed ? "text-success line-through" : "group-hover:text-primary"
+                    }`}>{action.label}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{action.description}</p>
                   </div>
                 </div>
-                <ArrowRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground transition-all duration-200 group-hover:translate-x-0 -translate-x-2" />
+                {!action.completed && (
+                  <ArrowRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground transition-all duration-200 group-hover:translate-x-0 -translate-x-2" />
+                )}
               </button>
             ))}
           </div>
