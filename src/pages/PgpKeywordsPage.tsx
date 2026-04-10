@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Plus, KeyRound, Trash2, Upload, Download, Copy, Search as SearchIcon,
   Pencil, MoreVertical, Loader2, Sparkles, FileText, Database, ChevronLeft, ChevronRight,
-  MapPin, Globe, Link2, Rss, Wand2, LayoutGrid,
+  MapPin, Globe, Link2, Rss, Wand2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
