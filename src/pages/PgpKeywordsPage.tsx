@@ -814,29 +814,27 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
               </div>
             )}
 
-            {/* Airtable Source */}
-            {kwSource === "airtable" && (
+            {/* Website Source */}
+            {kwSource === "website" && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-primary" /> Fetch from Airtable</p>
-                <Input placeholder="Airtable API Key (pat...)" value={extApiKey} onChange={(e) => setExtApiKey(e.target.value)} className="h-9 text-xs" type="password" />
-                <Input placeholder="Base ID / Table ID (app.../tbl...)" value={extTableId} onChange={(e) => setExtTableId(e.target.value)} className="h-9 font-mono text-xs" />
-                <p className="text-[10px] text-muted-foreground">Get your API key from airtable.com/account. The Table ID is in the URL of your table.</p>
-                <Button size="sm" onClick={fetchAirtableData} disabled={extLoading || !extApiKey || !extTableId}>
-                  {extLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Fetching...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Fetch from Airtable</>}
-                </Button>
-              </div>
-            )}
-
-            {/* Notion Source */}
-            {kwSource === "notion" && (
-              <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-primary" /> Fetch from Notion</p>
-                <Input placeholder="Notion Integration Token (secret_...)" value={extApiKey} onChange={(e) => setExtApiKey(e.target.value)} className="h-9 text-xs" type="password" />
-                <Input placeholder="Database ID (32-char hex)" value={extDatabaseId} onChange={(e) => setExtDatabaseId(e.target.value)} className="h-9 font-mono text-xs" />
-                <p className="text-[10px] text-muted-foreground">Create an integration at notion.so/my-integrations. Share your database with the integration, then copy the Database ID from the URL.</p>
-                <Button size="sm" onClick={fetchNotionData} disabled={extLoading || !extApiKey || !extDatabaseId}>
-                  {extLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Fetching...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Fetch from Notion</>}
-                </Button>
+                <p className="text-xs font-semibold flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> Extract Keywords from Website</p>
+                {websites.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No connected websites found. Add a website first in the Sites section.</p>
+                ) : (
+                  <>
+                    <Select value={webSiteId || "__none__"} onValueChange={(v) => setWebSiteId(v === "__none__" ? "" : v)}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Select a website" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Select a website...</SelectItem>
+                        {websites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.url})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground">Scans your website pages and extracts titles, headings, and meta keywords as terms.</p>
+                    <Button size="sm" onClick={fetchWebsiteKeywords} disabled={webLoading || !webSiteId}>
+                      {webLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Scanning...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Extract Keywords</>}
+                    </Button>
+                  </>
+                )}
               </div>
             )}
 
