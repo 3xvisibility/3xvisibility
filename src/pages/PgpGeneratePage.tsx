@@ -296,8 +296,12 @@ Only return valid JSON. No markdown fences.`;
       }
       rows.push(row);
     }
-    return rows;
+    return rows.map(r => resolvedBrandName ? { ...r, brand_name: resolvedBrandName } : r);
   };
+
+  // Also wrap the other returns above — handled inline via final map
+  const injectBrand = (rows: Record<string, string>[]) =>
+    resolvedBrandName ? rows.map(r => ({ ...r, brand_name: resolvedBrandName })) : rows;
 
   const handleAiGenerate = async () => {
     if (!wsId || !aiBusinessDesc.trim()) {
