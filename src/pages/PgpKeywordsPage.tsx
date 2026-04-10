@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Plus, KeyRound, Trash2, Upload, Download, Copy, Search as SearchIcon,
   Pencil, MoreVertical, Loader2, Sparkles, FileText, Database, ChevronLeft, ChevronRight,
-  MapPin, Globe, Link2, Rss, Wand2, LayoutGrid,
+  MapPin, Globe, Link2, Rss, Wand2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,11 +75,9 @@ export default function PgpKeywordsPage() {
   const [dynUrl, setDynUrl] = useState("");
   const [dynLoading, setDynLoading] = useState(false);
 
-  // Airtable/Notion state
-  const [extApiKey, setExtApiKey] = useState("");
-  const [extTableId, setExtTableId] = useState("");
-  const [extDatabaseId, setExtDatabaseId] = useState("");
-  const [extLoading, setExtLoading] = useState(false);
+  // Website source state
+  const [webSiteId, setWebSiteId] = useState("");
+  const [webLoading, setWebLoading] = useState(false);
 
   // Auto wizard state
   const [wizService, setWizService] = useState("");
@@ -99,6 +97,16 @@ export default function PgpKeywordsPage() {
       const { data, error } = await supabase.from("pgp_keywords").select("*").eq("workspace_id", wsId!).order("created_at", { ascending: false });
       if (error) throw error;
       return data as PgpKeyword[];
+    },
+  });
+
+  const { data: websites = [] } = useQuery({
+    queryKey: ["websites-for-keywords", wsId],
+    enabled: !!wsId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("websites").select("id, name, url").eq("workspace_id", wsId!).order("name");
+      if (error) throw error;
+      return data as { id: string; name: string; url: string }[];
     },
   });
 
@@ -139,7 +147,7 @@ export default function PgpKeywordsPage() {
     setAiTopic(""); setAiCount("20"); setLocCountry("US"); setLocState(""); setLocCounty("");
     setLocMode("area"); setLocRadius("50"); setLocRadiusUnit("miles"); setLocCenterCity("");
     setLocInclude({ city: true, state: true, zip: false, county: false, region: false, area_code: false, population: false, demographics: false });
-    setLocFormat("{city}, {state}"); setDynUrl(""); setExtApiKey(""); setExtTableId(""); setExtDatabaseId("");
+    setLocFormat("{city}, {state}"); setDynUrl(""); setWebSiteId("");
     setEditing(null);
   };
 
@@ -176,10 +184,8 @@ export default function PgpKeywordsPage() {
         if (locCounty) sourceConfig.county = locCounty;
       } else if (["csv_url", "google_sheet", "rss_feed"].includes(kwSource)) {
         sourceConfig.url = dynUrl;
-      } else if (kwSource === "airtable") {
-        sourceConfig.tableId = extTableId;
-      } else if (kwSource === "notion") {
-        sourceConfig.databaseId = extDatabaseId;
+      } else if (kwSource === "website") {
+        sourceConfig.websiteId = webSiteId;
       }
       const payload = { name: cleanName, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
       if (editing?.id) {
@@ -379,46 +385,38 @@ export default function PgpKeywordsPage() {
     finally { setDynLoading(false); }
   };
 
-  const fetchAirtableData = async () => {
-    if (!extApiKey || !extTableId) { toast({ title: "Please provide API key and Table ID", variant: "destructive" }); return; }
-    setExtLoading(true);
+  const fetchWebsiteKeywords = async () => {
+    if (!webSiteId) { toast({ title: "Please select a website", variant: "destructive" }); return; }
+    setWebLoading(true);
     try {
-      const resp = await fetch(`https://api.airtable.com/v0/${extTableId}`, { headers: { Authorization: `Bearer ${extApiKey}` } });
-      if (!resp.ok) throw new Error(`Airtable returned ${resp.status}`);
-      const json = await resp.json();
-      const records = json.records || [];
-      const lines = records.map((r: any) => {
-        const fields = r.fields || {};
-        const firstVal = Object.values(fields)[0];
-        return typeof firstVal === "string" ? firstVal : JSON.stringify(firstVal);
-      }).filter(Boolean);
+      const site = websites.find(w => w.id === webSiteId);
+      if (!site) throw new Error("Website not found");
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", { body: { url: site.url, websiteId: site.id } });
+      if (error) throw error;
+      const pages = data?.pages || [];
+      if (pages.length === 0) throw new Error("No pages found on this website");
+      // Extract keywords from page titles, headings, and meta
+      const allTerms = new Set<string>();
+      for (const page of pages) {
+        const title = page.title || "";
+        if (title) allTerms.add(title.trim());
+        // Extract from headings if available
+        const headings = page.headings || [];
+        for (const h of headings) {
+          if (h && typeof h === "string") allTerms.add(h.trim());
+        }
+        // Extract meta keywords
+        const metaKw = page.meta_keywords || page.keywords || "";
+        if (metaKw) {
+          metaKw.split(",").map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
+        }
+      }
+      const lines = [...allTerms].filter(Boolean);
+      if (lines.length === 0) throw new Error("Could not extract keywords from website pages");
       setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-      toast({ title: `${lines.length} terms fetched from Airtable` });
-    } catch (err: any) { toast({ title: "Airtable fetch failed", description: err.message, variant: "destructive" }); }
-    finally { setExtLoading(false); }
-  };
-
-  const fetchNotionData = async () => {
-    if (!extApiKey || !extDatabaseId) { toast({ title: "Please provide API key and Database ID", variant: "destructive" }); return; }
-    setExtLoading(true);
-    try {
-      const resp = await fetch(`https://api.notion.com/v1/databases/${extDatabaseId}/query`, {
-        method: "POST", headers: { Authorization: `Bearer ${extApiKey}`, "Notion-Version": "2022-06-28", "Content-Type": "application/json" }, body: "{}",
-      });
-      if (!resp.ok) throw new Error(`Notion returned ${resp.status}`);
-      const json = await resp.json();
-      const results = json.results || [];
-      const lines = results.map((r: any) => {
-        const props = r.properties || {};
-        const firstProp = Object.values(props)[0] as any;
-        if (firstProp?.title) return firstProp.title.map((t: any) => t.plain_text).join("");
-        if (firstProp?.rich_text) return firstProp.rich_text.map((t: any) => t.plain_text).join("");
-        return "";
-      }).filter(Boolean);
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-      toast({ title: `${lines.length} terms fetched from Notion` });
-    } catch (err: any) { toast({ title: "Notion fetch failed", description: err.message, variant: "destructive" }); }
-    finally { setExtLoading(false); }
+      toast({ title: `${lines.length} keywords extracted from ${pages.length} pages` });
+    } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
+    finally { setWebLoading(false); }
   };
 
   const runAutoWizard = async () => {
@@ -479,7 +477,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
   const sourceLabels: Record<string, string> = {
     local: "Local", csv: "CSV", ai: "AI", location: "Location",
     csv_url: "CSV URL", google_sheet: "Sheet", rss_feed: "RSS",
-    airtable: "Airtable", notion: "Notion", text: "Text File",
+    website: "Website", text: "Text File",
   };
 
   return (
@@ -651,8 +649,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                   { value: "csv_url", label: "CSV URL", icon: Link2, desc: "Remote" },
                   { value: "google_sheet", label: "Sheet", icon: Globe, desc: "Google" },
                   { value: "rss_feed", label: "RSS", icon: Rss, desc: "Feed" },
-                  { value: "airtable", label: "Airtable", icon: LayoutGrid, desc: "Table" },
-                  { value: "notion", label: "Notion", icon: FileText, desc: "Database" },
+                  { value: "website", label: "Website", icon: Globe, desc: "From Site" },
                   { value: "text", label: "Text", icon: FileText, desc: ".txt file" },
                 ].map(s => (
                   <button key={s.value} onClick={() => setKwSource(s.value)}
@@ -817,29 +814,27 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
               </div>
             )}
 
-            {/* Airtable Source */}
-            {kwSource === "airtable" && (
+            {/* Website Source */}
+            {kwSource === "website" && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><LayoutGrid className="h-3.5 w-3.5 text-primary" /> Fetch from Airtable</p>
-                <Input placeholder="Airtable API Key (pat...)" value={extApiKey} onChange={(e) => setExtApiKey(e.target.value)} className="h-9 text-xs" type="password" />
-                <Input placeholder="Base ID / Table ID (app.../tbl...)" value={extTableId} onChange={(e) => setExtTableId(e.target.value)} className="h-9 font-mono text-xs" />
-                <p className="text-[10px] text-muted-foreground">Get your API key from airtable.com/account. The Table ID is in the URL of your table.</p>
-                <Button size="sm" onClick={fetchAirtableData} disabled={extLoading || !extApiKey || !extTableId}>
-                  {extLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Fetching...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Fetch from Airtable</>}
-                </Button>
-              </div>
-            )}
-
-            {/* Notion Source */}
-            {kwSource === "notion" && (
-              <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-primary" /> Fetch from Notion</p>
-                <Input placeholder="Notion Integration Token (secret_...)" value={extApiKey} onChange={(e) => setExtApiKey(e.target.value)} className="h-9 text-xs" type="password" />
-                <Input placeholder="Database ID (32-char hex)" value={extDatabaseId} onChange={(e) => setExtDatabaseId(e.target.value)} className="h-9 font-mono text-xs" />
-                <p className="text-[10px] text-muted-foreground">Create an integration at notion.so/my-integrations. Share your database with the integration, then copy the Database ID from the URL.</p>
-                <Button size="sm" onClick={fetchNotionData} disabled={extLoading || !extApiKey || !extDatabaseId}>
-                  {extLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Fetching...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Fetch from Notion</>}
-                </Button>
+                <p className="text-xs font-semibold flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> Extract Keywords from Website</p>
+                {websites.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No connected websites found. Add a website first in the Sites section.</p>
+                ) : (
+                  <>
+                    <Select value={webSiteId || "__none__"} onValueChange={(v) => setWebSiteId(v === "__none__" ? "" : v)}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Select a website" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Select a website...</SelectItem>
+                        {websites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.url})</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground">Scans your website pages and extracts titles, headings, and meta keywords as terms.</p>
+                    <Button size="sm" onClick={fetchWebsiteKeywords} disabled={webLoading || !webSiteId}>
+                      {webLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Scanning...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Extract Keywords</>}
+                    </Button>
+                  </>
+                )}
               </div>
             )}
 
