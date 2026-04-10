@@ -80,6 +80,10 @@ export default function PgpGeneratePage() {
   const [aiKwCount, setAiKwCount] = useState("10");
   const [aiKwFilling, setAiKwFilling] = useState(false);
 
+  // Brand name
+  const [brandSource, setBrandSource] = useState<"website" | "custom">("website");
+  const [customBrandName, setCustomBrandName] = useState("");
+
   // AI generation
   const [aiBusinessDesc, setAiBusinessDesc] = useState("");
   const [aiKeywords, setAiKeywords] = useState("");
