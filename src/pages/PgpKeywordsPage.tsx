@@ -184,10 +184,8 @@ export default function PgpKeywordsPage() {
         if (locCounty) sourceConfig.county = locCounty;
       } else if (["csv_url", "google_sheet", "rss_feed"].includes(kwSource)) {
         sourceConfig.url = dynUrl;
-      } else if (kwSource === "airtable") {
-        sourceConfig.tableId = extTableId;
-      } else if (kwSource === "notion") {
-        sourceConfig.databaseId = extDatabaseId;
+      } else if (kwSource === "website") {
+        sourceConfig.websiteId = webSiteId;
       }
       const payload = { name: cleanName, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
       if (editing?.id) {
@@ -387,46 +385,38 @@ export default function PgpKeywordsPage() {
     finally { setDynLoading(false); }
   };
 
-  const fetchAirtableData = async () => {
-    if (!extApiKey || !extTableId) { toast({ title: "Please provide API key and Table ID", variant: "destructive" }); return; }
-    setExtLoading(true);
+  const fetchWebsiteKeywords = async () => {
+    if (!webSiteId) { toast({ title: "Please select a website", variant: "destructive" }); return; }
+    setWebLoading(true);
     try {
-      const resp = await fetch(`https://api.airtable.com/v0/${extTableId}`, { headers: { Authorization: `Bearer ${extApiKey}` } });
-      if (!resp.ok) throw new Error(`Airtable returned ${resp.status}`);
-      const json = await resp.json();
-      const records = json.records || [];
-      const lines = records.map((r: any) => {
-        const fields = r.fields || {};
-        const firstVal = Object.values(fields)[0];
-        return typeof firstVal === "string" ? firstVal : JSON.stringify(firstVal);
-      }).filter(Boolean);
+      const site = websites.find(w => w.id === webSiteId);
+      if (!site) throw new Error("Website not found");
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", { body: { url: site.url, websiteId: site.id } });
+      if (error) throw error;
+      const pages = data?.pages || [];
+      if (pages.length === 0) throw new Error("No pages found on this website");
+      // Extract keywords from page titles, headings, and meta
+      const allTerms = new Set<string>();
+      for (const page of pages) {
+        const title = page.title || "";
+        if (title) allTerms.add(title.trim());
+        // Extract from headings if available
+        const headings = page.headings || [];
+        for (const h of headings) {
+          if (h && typeof h === "string") allTerms.add(h.trim());
+        }
+        // Extract meta keywords
+        const metaKw = page.meta_keywords || page.keywords || "";
+        if (metaKw) {
+          metaKw.split(",").map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
+        }
+      }
+      const lines = [...allTerms].filter(Boolean);
+      if (lines.length === 0) throw new Error("Could not extract keywords from website pages");
       setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-      toast({ title: `${lines.length} terms fetched from Airtable` });
-    } catch (err: any) { toast({ title: "Airtable fetch failed", description: err.message, variant: "destructive" }); }
-    finally { setExtLoading(false); }
-  };
-
-  const fetchNotionData = async () => {
-    if (!extApiKey || !extDatabaseId) { toast({ title: "Please provide API key and Database ID", variant: "destructive" }); return; }
-    setExtLoading(true);
-    try {
-      const resp = await fetch(`https://api.notion.com/v1/databases/${extDatabaseId}/query`, {
-        method: "POST", headers: { Authorization: `Bearer ${extApiKey}`, "Notion-Version": "2022-06-28", "Content-Type": "application/json" }, body: "{}",
-      });
-      if (!resp.ok) throw new Error(`Notion returned ${resp.status}`);
-      const json = await resp.json();
-      const results = json.results || [];
-      const lines = results.map((r: any) => {
-        const props = r.properties || {};
-        const firstProp = Object.values(props)[0] as any;
-        if (firstProp?.title) return firstProp.title.map((t: any) => t.plain_text).join("");
-        if (firstProp?.rich_text) return firstProp.rich_text.map((t: any) => t.plain_text).join("");
-        return "";
-      }).filter(Boolean);
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-      toast({ title: `${lines.length} terms fetched from Notion` });
-    } catch (err: any) { toast({ title: "Notion fetch failed", description: err.message, variant: "destructive" }); }
-    finally { setExtLoading(false); }
+      toast({ title: `${lines.length} keywords extracted from ${pages.length} pages` });
+    } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
+    finally { setWebLoading(false); }
   };
 
   const runAutoWizard = async () => {
@@ -487,7 +477,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
   const sourceLabels: Record<string, string> = {
     local: "Local", csv: "CSV", ai: "AI", location: "Location",
     csv_url: "CSV URL", google_sheet: "Sheet", rss_feed: "RSS",
-    airtable: "Airtable", notion: "Notion", text: "Text File",
+    website: "Website", text: "Text File",
   };
 
   return (
