@@ -818,6 +818,25 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       </div>
                     </div>
 
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Brand Name</Label>
+                      <div className="flex gap-2">
+                        <Select value={brandSource} onValueChange={(v) => setBrandSource(v as "website" | "custom")}>
+                          <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="website">From Website</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {brandSource === "custom" ? (
+                          <Input className="h-9 flex-1" placeholder="Your Brand Name" value={customBrandName} onChange={e => setCustomBrandName(e.target.value)} />
+                        ) : (
+                          <p className="text-xs text-muted-foreground self-center flex-1 truncate">{resolvedBrandName || "Select a website below"}</p>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Used as {"{brand_name}"} in templates</p>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label className="text-xs">Publish To</Label>
