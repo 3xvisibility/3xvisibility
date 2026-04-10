@@ -499,6 +499,37 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
         </div>
       </div>
 
+      {/* PGP Workflow Guide - show when no keywords */}
+      {!isLoading && keywords.length === 0 && (
+        <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 sm:p-5">
+          <h3 className="font-semibold text-sm mb-1">🚀 How Page Generator Pro Works</h3>
+          <p className="text-xs text-muted-foreground mb-3">Follow these 3 steps to mass-generate SEO pages:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3">
+              <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[11px] font-bold shrink-0">1</div>
+              <div>
+                <p className="text-xs font-semibold text-primary">Keywords</p>
+                <p className="text-[11px] text-muted-foreground">Create keyword groups with terms like cities, services, etc.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+              <div className="h-6 w-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[11px] font-bold shrink-0">2</div>
+              <div>
+                <p className="text-xs font-semibold">Content Groups</p>
+                <p className="text-[11px] text-muted-foreground">Create templates using your keyword variables.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+              <div className="h-6 w-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[11px] font-bold shrink-0">3</div>
+              <div>
+                <p className="text-xs font-semibold">Generate</p>
+                <p className="text-[11px] text-muted-foreground">Combine keywords + templates to generate pages.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="relative w-full sm:max-w-xs">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search keywords..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
@@ -508,23 +539,31 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
       ) : filtered.length === 0 ? (
         <Card className="shadow-surface">
-          <CardContent className="p-12 text-center">
-            <div className="h-16 w-16 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-4">
-              <KeyRound className="h-8 w-8 text-muted-foreground/50" />
+          <CardContent className="p-8 sm:p-12 text-center">
+            <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <KeyRound className="h-8 w-8 text-primary/60" />
             </div>
-            <h3 className="font-semibold mb-1">{keywords.length === 0 ? "No keywords yet" : "No matching keywords"}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {keywords.length === 0 ? "Keywords are template tags with lists of terms that cycle during generation." : "Try adjusting your search."}
+            <h3 className="font-semibold text-base mb-1">{keywords.length === 0 ? "Create Your First Keyword" : "No matching keywords"}</h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+              {keywords.length === 0 ? "Keywords are template variables (like {city} or {service}) with lists of terms. Each page uses a different combination." : "Try adjusting your search."}
             </p>
             {keywords.length === 0 && (
-              <div className="flex items-center gap-2 justify-center">
-                <Button variant="outline" onClick={() => setAutoWizardOpen(true)}>
-                  <Wand2 className="mr-2 h-4 w-4" /> Auto-Generate
-                </Button>
-                <Button onClick={() => openEditor()}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Keyword
-                </Button>
-              </div>
+              <>
+                <div className="flex flex-col sm:flex-row items-center gap-2 justify-center mb-4">
+                  <Button onClick={() => setAutoWizardOpen(true)} className="w-full sm:w-auto">
+                    <Wand2 className="mr-2 h-4 w-4" /> Auto-Generate (Easiest)
+                  </Button>
+                  <Button variant="outline" onClick={() => openEditor()} className="w-full sm:w-auto">
+                    <Plus className="mr-2 h-4 w-4" /> Add Manually
+                  </Button>
+                </div>
+                <div className="text-left max-w-sm mx-auto space-y-1.5 mt-4">
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">💡 Quick tips</p>
+                  <p className="text-xs text-muted-foreground">• <strong>Auto-Generate</strong> creates keywords + a content template from your business description</p>
+                  <p className="text-xs text-muted-foreground">• <strong>Location source</strong> pulls city/state data from our US locations database</p>
+                  <p className="text-xs text-muted-foreground">• <strong>Import</strong> terms from CSV, Excel, text files, or Google Sheets</p>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

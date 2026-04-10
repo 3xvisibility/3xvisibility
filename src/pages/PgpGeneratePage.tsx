@@ -473,6 +473,30 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         </p>
       </div>
 
+      {/* Readiness check */}
+      {!loadingGroups && (contentGroups.length === 0 || keywords.length === 0) && (
+        <div className="rounded-xl border border-amber-300/50 bg-amber-50/50 dark:bg-amber-500/10 p-4 sm:p-5 space-y-3">
+          <h3 className="font-semibold text-sm text-amber-800 dark:text-amber-300">⚙️ Setup Required Before Generating</h3>
+          <div className="space-y-2">
+            {keywords.length === 0 && (
+              <div className="flex items-center gap-2 text-xs">
+                <div className="h-5 w-5 rounded-full bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200 flex items-center justify-center text-[10px] font-bold">!</div>
+                <span className="text-amber-700 dark:text-amber-300">No keywords found.</span>
+                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/pgp-keywords`)}>Create keywords →</button>
+              </div>
+            )}
+            {contentGroups.length === 0 && (
+              <div className="flex items-center gap-2 text-xs">
+                <div className="h-5 w-5 rounded-full bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200 flex items-center justify-center text-[10px] font-bold">!</div>
+                <span className="text-amber-700 dark:text-amber-300">No content groups found.</span>
+                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/pgp-content`)}>Create content group →</button>
+              </div>
+            )}
+          </div>
+          <p className="text-[11px] text-amber-600 dark:text-amber-400">Complete the steps above to start generating pages. Or use the <strong>AI Generate</strong> tab to skip setup entirely.</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Left: Configuration */}
         <div className="lg:col-span-2 space-y-4 sm:space-y-5">
