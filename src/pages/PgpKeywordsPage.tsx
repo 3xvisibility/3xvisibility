@@ -147,7 +147,7 @@ export default function PgpKeywordsPage() {
     setAiTopic(""); setAiCount("20"); setLocCountry("US"); setLocState(""); setLocCounty("");
     setLocMode("area"); setLocRadius("50"); setLocRadiusUnit("miles"); setLocCenterCity("");
     setLocInclude({ city: true, state: true, zip: false, county: false, region: false, area_code: false, population: false, demographics: false });
-    setLocFormat("{city}, {state}"); setDynUrl(""); setExtApiKey(""); setExtTableId(""); setExtDatabaseId("");
+    setLocFormat("{city}, {state}"); setDynUrl(""); setWebSiteId("");
     setEditing(null);
   };
 
