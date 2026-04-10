@@ -269,7 +269,8 @@ Only return valid JSON. No markdown fences.`;
       generate(0, {});
 
       const limit = numberOfPages ? Math.min(parseInt(numberOfPages), rows.length - start) : rows.length - start;
-      return rows.slice(start, start + limit);
+      const sliced = rows.slice(start, start + limit);
+      return resolvedBrandName ? sliced.map(r => ({ ...r, brand_name: resolvedBrandName })) : sliced;
     }
 
     if (method === "sequential") {
