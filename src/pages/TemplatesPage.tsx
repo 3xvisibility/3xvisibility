@@ -30,6 +30,7 @@ import { friendlyError } from "@/lib/friendly-errors";
 import { htmlToBlocks } from "@/components/templates/TemplateVisualEditor";
 import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
+import { TemplateCreationPicker, type CreationMethod } from "@/components/templates/TemplateCreationPicker";
 
 type Template = Tables<"templates">;
 const PAGE_SIZE = 10;
@@ -38,6 +39,8 @@ export default function TemplatesPage() {
   const [aiOpen, setAiOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pendingKeywords, setPendingKeywords] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [siteTypeFilter, setSiteTypeFilter] = useState("all");
   const [campaignTypeFilter, setCampaignTypeFilter] = useState("all");
@@ -379,6 +382,31 @@ export default function TemplatesPage() {
     setEditorOpen(true);
   };
 
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any }) => {
+    setPendingKeywords(config.selectedKeywords);
+    setPickerOpen(false);
+
+    if (method === "ai") {
+      setAiOpen(true);
+    } else if (method === "url" && config.targetUrl) {
+      // Import from URL via scan-template
+      importSitePage(config.targetUrl, "Imported Template");
+    } else if (method === "website" && config.selectedWebsite) {
+      // Load pages from connected site
+      setSiteWebsite(config.selectedWebsite.id);
+      loadSitePages(config.selectedWebsite.id);
+      setSiteDialogOpen(true);
+    } else {
+      // Design your own — open blank editor
+      const keywordVars = config.selectedKeywords.map(k => `<p>{${k}}</p>`).join("\n");
+      const scaffold = keywordVars
+        ? `<div class="template">\n  <h1>{title}</h1>\n${keywordVars}\n</div>`
+        : "";
+      setEditingTemplate(scaffold ? { id: "", name: "New Template", content: scaffold, variables: config.selectedKeywords, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any : null);
+      setEditorOpen(true);
+    }
+  };
+
   // ──── Render ────
   return (
     <div className="space-y-6">
@@ -391,18 +419,9 @@ export default function TemplatesPage() {
         <div className="flex flex-wrap gap-2">
           <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTemplate(f); }} />
           <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()}>
-            <Upload className="mr-1.5 h-3.5 w-3.5" /> Import
+            <Upload className="mr-1.5 h-3.5 w-3.5" /> Import JSON
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setCsvDialogOpen(true)}>
-            <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" /> From CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setSiteDialogOpen(true)}>
-            <Link2 className="mr-1.5 h-3.5 w-3.5" /> From Site
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setAiOpen(true)}>
-            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> AI Builder
-          </Button>
-          <Button size="sm" onClick={() => openEditor()}>
+          <Button size="sm" onClick={() => setPickerOpen(true)}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Template
           </Button>
         </div>
@@ -468,8 +487,7 @@ export default function TemplatesPage() {
             <p className="text-sm text-muted-foreground mb-4">{templates.length === 0 ? "Create your first template to start generating pages." : "Try adjusting your filters."}</p>
             {templates.length === 0 && (
               <div className="flex justify-center gap-2">
-                <Button onClick={() => setAiOpen(true)}><Sparkles className="mr-2 h-4 w-4" /> AI Builder</Button>
-                <Button variant="outline" onClick={() => openEditor()}><Plus className="mr-2 h-4 w-4" /> Manual</Button>
+                <Button onClick={() => setPickerOpen(true)}><Plus className="mr-2 h-4 w-4" /> Create Template</Button>
               </div>
             )}
           </CardContent>
@@ -728,6 +746,13 @@ export default function TemplatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Creation Picker */}
+      <TemplateCreationPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={handlePickerSelect}
+      />
     </div>
   );
 }
