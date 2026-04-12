@@ -358,7 +358,19 @@ ${content}`
                     <Eye className="h-3 w-3 inline mr-1" /> Preview
                   </button>
                 </div>
-                <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                    disabled={aiImproving || !content.trim()}
+                    onClick={aiImproveContent}
+                  >
+                    {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    {aiImproving ? "Improving…" : "AI Improve"}
+                  </Button>
+                  <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
+                </div>
                 {uniqueVars.length > 0 && (
                   <div className="hidden md:flex items-center gap-1.5 overflow-x-auto max-w-[50%]">
                     <span className="text-[10px] text-muted-foreground shrink-0">Vars:</span>
