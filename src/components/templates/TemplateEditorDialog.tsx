@@ -343,36 +343,33 @@ ${content}`
           <div className="flex-1 min-h-0 overflow-y-auto">
             {/* ── Content Tab ── */}
             <TabsContent value="content" className="m-0 flex flex-col" forceMount={activeTab === "content" ? true : undefined} hidden={activeTab !== "content"}>
-              <div className="flex items-center justify-between px-5 py-2 border-b bg-muted/20 shrink-0">
-                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+              <div className="flex items-center gap-2 px-3 sm:px-5 py-2 border-b bg-muted/20 shrink-0 overflow-x-auto">
+                <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0">
                   <button
                     onClick={() => setShowPreview(false)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${!showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${!showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     <Code className="h-3 w-3 inline mr-1" /> Code
                   </button>
                   <button
                     onClick={() => setShowPreview(true)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     <Eye className="h-3 w-3 inline mr-1" /> Preview
                   </button>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-[11px] gap-1 border-primary/30 text-primary hover:bg-primary/10"
-                    disabled={aiImproving || !content.trim()}
-                    onClick={aiImproveContent}
-                  >
-                    {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                    {aiImproving ? "Improving…" : "AI Improve"}
-                  </Button>
-                  <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
-                </div>
+                <div className="h-4 w-px bg-border shrink-0" />
+                <button
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium text-primary bg-primary/5 hover:bg-primary/10 transition-colors disabled:opacity-50 shrink-0"
+                  disabled={aiImproving || !content.trim()}
+                  onClick={aiImproveContent}
+                >
+                  {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  {aiImproving ? "Improving…" : "AI Improve"}
+                </button>
+                <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
                 {uniqueVars.length > 0 && (
-                  <div className="hidden md:flex items-center gap-1.5 overflow-x-auto max-w-[50%]">
+                  <div className="hidden md:flex items-center gap-1.5 overflow-x-auto ml-auto">
                     <span className="text-[10px] text-muted-foreground shrink-0">Vars:</span>
                     {uniqueVars.slice(0, 6).map((v) => (
                       <Badge
@@ -387,41 +384,6 @@ ${content}`
                     {uniqueVars.length > 6 && <span className="text-[10px] text-muted-foreground">+{uniqueVars.length - 6}</span>}
                   </div>
                 )}
-              </div>
-              <div className="min-h-[50vh]">
-                {showPreview ? (
-                  <div className="min-h-[50vh]">
-                    <TemplatePreview html={content} />
-                  </div>
-                ) : (
-                  <Textarea
-                    placeholder={"<h1>{service_name} in {city}</h1>\n<p>Looking for the best {service_name} in {city}?</p>\n<h2>Why Choose Us?</h2>\n<p>With over {years_experience} years of experience...</p>"}
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    className="font-mono text-xs leading-relaxed min-h-[50vh] rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none"
-                  />
-                )}
-              </div>
-            </TabsContent>
-
-            {/* ── SEO Tab ── */}
-            <TabsContent value="seo" className="m-0 p-5 space-y-5">
-              {/* AI Generator */}
-              <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" /> AI SEO Generator
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Business niche (e.g., Plumbing services in NYC)"
-                    value={aiSeoNiche}
-                    onChange={(e) => setAiSeoNiche(e.target.value)}
-                    className="text-sm h-9 flex-1"
-                  />
-                  <Button variant="outline" size="sm" className="h-9 shrink-0" disabled={aiSeoGenerating || !aiSeoNiche.trim()} onClick={generateAiSeo}>
-                    {aiSeoGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><Sparkles className="h-3.5 w-3.5 mr-1" /> Generate</>}
-                  </Button>
-                </div>
               </div>
 
               {/* Meta Title */}
