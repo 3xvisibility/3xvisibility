@@ -217,8 +217,8 @@ Only return valid JSON. No markdown fences.`;
     }
   };
 
-  const handleTestGenerate = () => {
-    if (!selectedGroup) return;
+  const handleTestGenerate = async () => {
+    if (!selectedGroup || !wsId) return;
     const sampleData: Record<string, string> = {};
     for (const gk of groupKeywords) {
       if (gk.keyword && gk.keyword.terms.length > 0) {
@@ -231,11 +231,78 @@ Only return valid JSON. No markdown fences.`;
         sampleData[gk.name] = `[${gk.name}]`;
       }
     }
+    if (resolvedBrandName) sampleData.brand_name = resolvedBrandName;
+
+    // Use the renderer for a realistic preview
     let rendered = selectedGroup.content;
+    // Process conditionals
+    rendered = rendered.replace(
+      /\{\{#if\s+(\w+)\}\}([\s\S]*?)(?:\{\{#else\}\}([\s\S]*?))?\{\{\/if\}\}/gi,
+      (_m: string, varName: string, ifBlock: string, elseBlock?: string) => {
+        const value = sampleData[varName] || sampleData[varName.toLowerCase()];
+        return value && value.trim() && !value.startsWith("[") ? ifBlock : (elseBlock || "");
+      }
+    );
+    // Process loops
+    rendered = rendered.replace(
+      /\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/gi,
+      (_m: string, varName: string, loopBlock: string) => {
+        const value = sampleData[varName] || sampleData[varName.toLowerCase()];
+        if (!value || value.startsWith("[")) return "";
+        const items = value.split(",").map(s => s.trim()).filter(Boolean);
+        return items.map((item, index) =>
+          loopBlock.replace(/\{\{this\}\}/gi, item).replace(/\{\{@index\}\}/gi, String(index)).replace(/\{\{@number\}\}/gi, String(index + 1))
+        ).join("\n");
+      }
+    );
+    // Variable transforms
+    rendered = rendered.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m: string, varName: string, transform: string) => {
+      const rawVal = sampleData[varName] || sampleData[varName.toLowerCase()] || "";
+      const t = transform.toLowerCase();
+      if (t === "uppercase") return rawVal.toUpperCase();
+      if (t === "lowercase") return rawVal.toLowerCase();
+      if (t === "capitalize") return rawVal.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+      if (t === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      return rawVal;
+    });
+    // Plain variable replacement
     for (const [key, val] of Object.entries(sampleData)) {
       rendered = rendered.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
     }
-    setTestPreview(rendered);
+    // Process spintax if enabled
+    if (spinContent) {
+      // Block spinning
+      rendered = rendered.replace(/\[spin\]([\s\S]*?)\[\/spin\]/gi, (_m: string, inner: string) => {
+        const blocks = inner.split("||").map(b => b.trim());
+        return blocks[Math.floor(Math.random() * blocks.length)] || "";
+      });
+      // Inline spintax
+      for (let i = 0; i < 10; i++) {
+        const regex = /\{([^{}]*?\|[^{}]*?)\}/g;
+        if (!regex.test(rendered)) break;
+        rendered = rendered.replace(regex, (_m: string, group: string) => {
+          const options = group.split("|");
+          return options[Math.floor(Math.random() * options.length)];
+        });
+      }
+    }
+    // Build SEO title preview
+    const seoTitlePattern = selectedGroup.seo_title_pattern || "";
+    const seoDescPattern = selectedGroup.seo_description_pattern || "";
+    let seoTitle = seoTitlePattern;
+    let seoDesc = seoDescPattern;
+    for (const [key, val] of Object.entries(sampleData)) {
+      if (seoTitle) seoTitle = seoTitle.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
+      if (seoDesc) seoDesc = seoDesc.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
+    }
+    // Wrap with preview header showing SEO info
+    const seoPreviewHeader = (seoTitle || seoDesc) ? `
+      <div style="background:#f0f4f8;border:1px solid #d0d7de;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-family:Arial,sans-serif;">
+        <p style="margin:0 0 4px;font-size:18px;color:#1a0dab;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${seoTitle || "Page Title"}</p>
+        <p style="margin:0;font-size:13px;color:#4d5156;line-height:1.4;">${seoDesc || "Meta description preview..."}</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#006621;">example.com › page-slug</p>
+      </div>` : "";
+    setTestPreview(seoPreviewHeader + rendered);
   };
 
   const resolvedBrandName = useMemo(() => {
@@ -449,6 +516,29 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
       if (campErr) throw campErr;
 
+      // Start polling for progress
+      const pollInterval = setInterval(async () => {
+        try {
+          const { data: job } = await supabase
+            .from("generation_jobs")
+            .select("processed_rows, success_count, error_count, total_rows, status")
+            .eq("campaign_id", campaign.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (job) {
+            setGenProgress({
+              processed: job.processed_rows || 0,
+              total: job.total_rows || rows.length,
+              errors: job.error_count || 0,
+            });
+            if (job.status === "completed" || job.status === "failed") {
+              clearInterval(pollInterval);
+            }
+          }
+        } catch { /* ignore polling errors */ }
+      }, 2000);
+
       const { error: genErr } = await supabase.functions.invoke("generate-pages", {
         body: {
           campaign_id: campaign.id,
@@ -457,10 +547,28 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         },
       });
 
+      clearInterval(pollInterval);
+
       if (genErr) throw genErr;
 
-      setGenProgress({ processed: rows.length, total: rows.length, errors: 0 });
-      toast({ title: "Generation complete!", description: `${rows.length} pages generated.` });
+      // Final status check
+      const { data: finalJob } = await supabase
+        .from("generation_jobs")
+        .select("success_count, error_count, total_rows")
+        .eq("campaign_id", campaign.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const finalSuccess = finalJob?.success_count || rows.length;
+      const finalErrors = finalJob?.error_count || 0;
+
+      setGenProgress({ processed: finalSuccess + finalErrors, total: finalJob?.total_rows || rows.length, errors: finalErrors });
+      toast({
+        title: finalErrors > 0 ? "Generation completed with errors" : "Generation complete!",
+        description: `${finalSuccess} pages generated${finalErrors > 0 ? `, ${finalErrors} failed` : ""}.`,
+        variant: finalErrors > 0 ? "destructive" : "default",
+      });
 
       setTimeout(() => {
         navigate(`${basePath}/campaigns/${campaign.id}`);

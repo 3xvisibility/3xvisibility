@@ -20,9 +20,19 @@ function slugify(text: string): string {
 // Syntax: {option1|option2|option3} — randomly picks one
 // Supports nested spintax: {outer {inner1|inner2}|other}
 // ═══════════════════════════════════════════════════════════
+function processBlockSpinning(text: string): string {
+  return text.replace(/\[spin\]([\s\S]*?)\[\/spin\]/gi, (_m, inner: string) => {
+    const blocks = inner.split("||").map(b => b.trim());
+    if (blocks.length <= 1) return blocks[0] || "";
+    return blocks[Math.floor(Math.random() * blocks.length)];
+  });
+}
+
 function processSpintax(text: string): string {
+  // First process block-level spinning [spin]...[/spin]
+  let result = processBlockSpinning(text);
+
   const MAX_DEPTH = 10;
-  let result = text;
   for (let depth = 0; depth < MAX_DEPTH; depth++) {
     // Match innermost {a|b|c} blocks (no nested braces inside)
     const spintaxRegex = /\{([^{}]*?\|[^{}]*?)\}/g;
@@ -1396,6 +1406,9 @@ Deno.serve(async (req) => {
             pageContent = pageContent.replace(regex, value || "");
           }
 
+
+          // Process spintax {option1|option2|option3}
+          pageContent = processSpintax(pageContent);
 
           // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
           pageContent = processDynamicElements(pageContent, allVars);
