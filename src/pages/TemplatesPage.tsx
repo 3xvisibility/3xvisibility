@@ -350,42 +350,115 @@ export default function TemplatesPage() {
     } finally { setSiteLoading(false); }
   };
 
+  const fetchPageViaIframe = (pageUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1280px;height:800px;opacity:0;pointer-events:none;";
+      iframe.sandbox.add("allow-scripts", "allow-same-origin");
+      
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error("Timeout loading page"));
+      }, 15000);
+
+      const cleanup = () => {
+        clearTimeout(timeout);
+        try { document.body.removeChild(iframe); } catch {}
+      };
+
+      iframe.onload = () => {
+        setTimeout(() => {
+          try {
+            const doc = iframe.contentDocument;
+            if (!doc) { cleanup(); reject(new Error("Cannot access page content")); return; }
+            resolve(doc.documentElement.outerHTML);
+          } catch {
+            cleanup();
+            reject(new Error("Cross-origin page"));
+          } finally {
+            cleanup();
+          }
+        }, 3000);
+      };
+
+      iframe.onerror = () => { cleanup(); reject(new Error("Failed to load")); };
+      document.body.appendChild(iframe);
+      iframe.src = pageUrl;
+    });
+  };
+
   const importSitePage = async (pageUrl: string, pageTitle: string) => {
     try {
+      // First attempt: server-side fetch
       const { data, error } = await supabase.functions.invoke("scan-template", { body: { url: pageUrl } });
       if (error) throw error;
-      let html = data?.bodyHtml || "";
-      const styles = data?.headStyles || "";
-      const suggestions: { blockId: string; original: string; variable: string; value: string }[] = data?.suggestions || [];
 
-      // Strip common header/footer/nav elements from imported content
-      html = html.replace(/<header[\s\S]*?<\/header>/gi, "");
-      html = html.replace(/<footer[\s\S]*?<\/footer>/gi, "");
-      html = html.replace(/<nav[\s\S]*?<\/nav>/gi, "");
-      html = html.replace(/<!--\s*header\s*-->[\s\S]*?<!--\s*\/header\s*-->/gi, "");
-      html = html.replace(/<!--\s*footer\s*-->[\s\S]*?<!--\s*\/footer\s*-->/gi, "");
+      // If SPA detected, try client-side capture and retry
+      if (data?.spa_detected) {
+        toast({ title: "JavaScript page detected", description: "Attempting browser-based capture..." });
+        
+        let clientHtml: string | null = null;
+        try {
+          clientHtml = await fetchPageViaIframe(pageUrl);
+        } catch {
+          // Cross-origin expected for most sites
+        }
 
-      // Auto-apply AI variable suggestions to the content
-      const detectedVars: string[] = [];
-      for (const s of suggestions) {
-        if (s.original && s.variable && html.includes(s.original)) {
-          html = html.replace(s.original, `{${s.variable}}`);
-          if (!detectedVars.includes(s.variable)) detectedVars.push(s.variable);
+        if (clientHtml && clientHtml.length > 200) {
+          const { data: retryData, error: retryError } = await supabase.functions.invoke("scan-template", {
+            body: { url: pageUrl, client_html: clientHtml },
+          });
+          if (retryError) throw retryError;
+          if (retryData?.bodyHtml) {
+            return processImportResult(retryData, pageTitle);
+          }
+        }
+
+        // If capture failed, still use whatever we got but warn user
+        if (!data?.bodyHtml || data.bodyHtml.replace(/<[^>]*>/g, "").trim().length < 50) {
+          toast({ 
+            title: "Limited import", 
+            description: "This site uses JavaScript rendering. Try pasting the page source in 'Design Your Own' instead.",
+            variant: "destructive" 
+          });
+          return;
         }
       }
 
-      // Also merge pending keywords
-      const allVars = [...new Set([...detectedVars, ...pendingKeywords])];
-
-      const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
-      setSiteDialogOpen(false); setSitePages([]);
-      setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
-      setEditorOpen(true);
-      const varMsg = allVars.length > 0 ? ` — ${allVars.length} keywords detected: {${allVars.join("}, {")}}` : "";
-      toast({ title: `Page imported as template${varMsg}` });
+      processImportResult(data, pageTitle);
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
     }
+  };
+
+  const processImportResult = (data: any, pageTitle: string) => {
+    let html = data?.bodyHtml || "";
+    const styles = data?.headStyles || "";
+    const suggestions: { blockId: string; original: string; variable: string; value: string }[] = data?.suggestions || [];
+
+    // Strip common header/footer/nav elements
+    html = html.replace(/<header[\s\S]*?<\/header>/gi, "");
+    html = html.replace(/<footer[\s\S]*?<\/footer>/gi, "");
+    html = html.replace(/<nav[\s\S]*?<\/nav>/gi, "");
+    html = html.replace(/<!--\s*header\s*-->[\s\S]*?<!--\s*\/header\s*-->/gi, "");
+    html = html.replace(/<!--\s*footer\s*-->[\s\S]*?<!--\s*\/footer\s*-->/gi, "");
+
+    // Auto-apply AI variable suggestions
+    const detectedVars: string[] = [];
+    for (const s of suggestions) {
+      if (s.original && s.variable && html.includes(s.original)) {
+        html = html.replace(s.original, `{${s.variable}}`);
+        if (!detectedVars.includes(s.variable)) detectedVars.push(s.variable);
+      }
+    }
+
+    const allVars = [...new Set([...detectedVars, ...pendingKeywords])];
+    const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
+    setSiteDialogOpen(false); setSitePages([]);
+    setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
+    setEditorOpen(true);
+    const varMsg = allVars.length > 0 ? ` — ${allVars.length} keywords detected: {${allVars.join("}, {")}}` : "";
+    toast({ title: `Page imported as template${varMsg}` });
   };
 
 
