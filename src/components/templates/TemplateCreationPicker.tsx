@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
-  ArrowRight, CheckCircle2, Target, Search, Plus, X, Loader2,
+  ArrowRight, CheckCircle2, Target, Plus, X, Loader2,
   FileText, ShoppingBag, Briefcase,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Website = Tables<"websites">;
@@ -36,28 +37,28 @@ const METHODS = [
     id: "design" as const,
     icon: Paintbrush,
     title: "Design Your Own",
-    desc: "Build a custom template from scratch using the HTML editor with full creative control.",
+    desc: "HTML editor with live preview & drag-and-drop blocks.",
     color: "bg-primary/10 text-primary",
   },
   {
     id: "ai" as const,
     icon: Sparkles,
     title: "Generate with AI",
-    desc: "Describe your business and let AI create a high-scoring template optimized for SEO, SEA & GEO.",
+    desc: "AI creates a professional template optimized for SEO.",
     color: "bg-violet-500/10 text-violet-600",
   },
   {
     id: "url" as const,
     icon: Globe,
     title: "Import from URL",
-    desc: "Scan any public webpage to extract its design and convert it into a reusable template.",
+    desc: "Scan any page and convert it into a reusable template.",
     color: "bg-emerald-500/10 text-emerald-600",
   },
   {
     id: "website" as const,
     icon: MonitorSmartphone,
     title: "From Connected Site",
-    desc: "Import an existing page, product, or service from your connected CMS site.",
+    desc: "Import pages or products from your connected CMS.",
     color: "bg-amber-500/10 text-amber-600",
   },
 ];
@@ -68,9 +69,9 @@ const CONTENT_TYPES: { id: ContentType; icon: typeof FileText; label: string; de
   { id: "services", icon: Briefcase, label: "Services", desc: "Service offerings & descriptions" },
 ];
 
-const SUGGESTED_KEYWORDS = [
-  "city", "state", "country", "service", "product", "category",
-  "brand_name", "price", "phone", "address", "zip_code", "neighborhood",
+const FALLBACK_KEYWORDS = [
+  "city", "state", "service", "product", "brand_name",
+  "price", "phone", "address", "category", "neighborhood",
 ];
 
 export function TemplateCreationPicker({ open, onOpenChange, onSelect }: TemplateCreationPickerProps) {
@@ -81,7 +82,13 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
   const [contentType, setContentType] = useState<ContentType>("pages");
 
+  // AI keyword suggestion
+  const [businessNiche, setBusinessNiche] = useState("");
+  const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+
   const { currentWorkspace } = useWorkspace();
+  const { toast } = useToast();
   const wsId = currentWorkspace?.id;
 
   const { data: existingKeywords = [] } = useQuery({
@@ -128,6 +135,37 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     setSelectedKeywords(prev => prev.filter(k => k !== name));
   };
 
+  const suggestKeywords = async () => {
+    if (!businessNiche.trim()) return;
+    setAiSuggesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-template", {
+        body: {
+          prompt: `You are a SEO expert. Given the business niche "${businessNiche}", suggest 8-12 dynamic template variables that would be most useful for generating pages at scale.
+
+Rules:
+- Return ONLY a comma-separated list of lowercase_snake_case variable names
+- Focus on variables specific to this business type (e.g. for plumber: service_type, emergency_service, license_number)
+- Always include: city, state, brand_name
+- Add industry-specific variables that would make content unique
+- No explanations, no numbering, just comma-separated names
+
+Example for "dentist": city, state, brand_name, dental_service, insurance_accepted, office_hours, dentist_name, procedure_name, patient_testimonial, emergency_dental`
+        },
+      });
+      if (error) throw error;
+      const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
+      const suggestions = raw.split(",").map((s: string) => s.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/^_|_$/g, "")).filter(Boolean);
+      setAiSuggestions(suggestions);
+      toast({ title: `${suggestions.length} keywords suggested!` });
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+      setAiSuggestions(FALLBACK_KEYWORDS);
+    } finally {
+      setAiSuggesting(false);
+    }
+  };
+
   const handleContinue = () => {
     if (!selected) return;
     const website = websites.find(w => w.id === selectedWebsiteId);
@@ -144,6 +182,8 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     setTargetUrl("");
     setSelectedWebsiteId("");
     setContentType("pages");
+    setBusinessNiche("");
+    setAiSuggestions([]);
   };
 
   const canContinue = () => {
@@ -153,7 +193,8 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     return true;
   };
 
-  const availableSuggestions = SUGGESTED_KEYWORDS.filter(k => !selectedKeywords.includes(k));
+  const displaySuggestions = aiSuggestions.length > 0 ? aiSuggestions : FALLBACK_KEYWORDS;
+  const availableSuggestions = displaySuggestions.filter(k => !selectedKeywords.includes(k));
   const availableExisting = existingKeywords.filter(kw => !selectedKeywords.includes(kw.name));
 
   return (
@@ -163,7 +204,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
         <div className="px-6 pt-6 pb-4 border-b">
           <h2 className="text-lg font-bold">Create Template</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Choose your creation method and add keywords that match your business needs.
+            Choose how to create, then define your dynamic keywords.
           </p>
         </div>
 
@@ -202,15 +243,12 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
           {selected === "url" && (
             <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
               <Label className="text-xs font-semibold">Page URL to scan</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="https://example.com/page"
-                  value={targetUrl}
-                  onChange={e => setTargetUrl(e.target.value)}
-                  className="flex-1"
-                />
-                <Search className="h-4 w-4 text-muted-foreground mt-3" />
-              </div>
+              <Input
+                placeholder="https://example.com/page"
+                value={targetUrl}
+                onChange={e => setTargetUrl(e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">The exact page design will be imported as your template.</p>
             </div>
           )}
 
@@ -235,7 +273,6 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 )}
               </div>
 
-              {/* Content type selector */}
               {selectedWebsiteId && (
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold">What do you want to import?</Label>
@@ -261,30 +298,36 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
             </div>
           )}
 
-          {/* Step 2: Keywords */}
+          {/* Step 2: AI Keyword Suggestions */}
           {selected && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">2</div>
-                <span className="text-sm font-semibold">Add Keywords (Variables)</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-3">
-                Keywords become dynamic variables in your template. Add your own or pick from suggestions.
-              </p>
-
-              <div className="flex gap-2 mb-3">
-                <Input
-                  placeholder="Type a keyword e.g. service, neighborhood..."
-                  value={customKeyword}
-                  onChange={e => setCustomKeyword(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomKeyword(); } }}
-                  className="flex-1 h-9"
-                />
-                <Button size="sm" variant="outline" onClick={addCustomKeyword} disabled={!customKeyword.trim()}>
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
+                <span className="text-sm font-semibold">Smart Keywords (Variables)</span>
               </div>
 
+              {/* AI Suggest */}
+              <div className="rounded-xl border bg-gradient-to-r from-violet-500/5 via-transparent to-transparent p-4 mb-4 space-y-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="h-4 w-4 text-violet-600" />
+                  <span className="text-xs font-semibold">AI Keyword Suggestion</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Describe your business and AI will suggest the best keywords for your template.</p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="e.g. plumber, dentist, restaurant, real estate..."
+                    value={businessNiche}
+                    onChange={e => setBusinessNiche(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); suggestKeywords(); } }}
+                    className="flex-1 h-9"
+                  />
+                  <Button size="sm" variant="outline" onClick={suggestKeywords} disabled={aiSuggesting || !businessNiche.trim()}>
+                    {aiSuggesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Selected keywords */}
               {selectedKeywords.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {selectedKeywords.map(kw => (
@@ -301,9 +344,26 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 </div>
               )}
 
+              {/* Custom input */}
+              <div className="flex gap-2 mb-3">
+                <Input
+                  placeholder="Type a custom keyword..."
+                  value={customKeyword}
+                  onChange={e => setCustomKeyword(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomKeyword(); } }}
+                  className="flex-1 h-9"
+                />
+                <Button size="sm" variant="outline" onClick={addCustomKeyword} disabled={!customKeyword.trim()}>
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {/* Suggested keywords */}
               {availableSuggestions.length > 0 && (
                 <div className="space-y-1.5">
-                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Suggested</span>
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {aiSuggestions.length > 0 ? "AI Suggested" : "Common Keywords"}
+                  </span>
                   <div className="flex flex-wrap gap-1.5">
                     {availableSuggestions.map(kw => (
                       <button
@@ -319,6 +379,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 </div>
               )}
 
+              {/* Existing PGP keywords */}
               {availableExisting.length > 0 && (
                 <div className="space-y-1.5 mt-3">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">From your keyword groups</span>
@@ -340,7 +401,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
             </div>
           )}
 
-          {/* Step 3: Score Target */}
+          {/* Quality Target */}
           {selected && (
             <div className="rounded-xl border bg-gradient-to-r from-emerald-500/5 via-transparent to-transparent p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -348,11 +409,11 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 <span className="text-sm font-semibold">Quality Target: 90+ Score</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                All templates will be optimized to achieve <strong>90%+ scores</strong> across SEO, SEA, and GEO metrics.
-                {selected === "ai" && " AI will automatically generate content that meets this threshold."}
-                {selected === "design" && " The editor will show live scoring and suggestions to help you reach this target."}
-                {selected === "url" && " After scanning, AI will suggest improvements to boost scores above 90%."}
-                {selected === "website" && " Imported content will be cleaned (no headers/footers) and AI will suggest optimizations."}
+                Templates are optimized for <strong>90%+ scores</strong> across SEO, SEA, and GEO.
+                {selected === "ai" && " AI will generate content that meets this threshold."}
+                {selected === "design" && " The editor shows live scoring to help you reach this target."}
+                {selected === "url" && " AI will suggest improvements after scanning."}
+                {selected === "website" && " Imported content is cleaned and ready for variable assignment."}
               </p>
               <div className="flex items-center gap-3 mt-3">
                 <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-[10px]">SEO 90+</Badge>
