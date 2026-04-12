@@ -145,6 +145,39 @@ export default function PgpContentGroupsPage() {
     setEditorOpen(true);
   };
 
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string }) => {
+    setPendingKeywords(config.selectedKeywords);
+    setPickerOpen(false);
+
+    if (method === "ai") {
+      setAiBuilderOpen(true);
+    } else if (method === "url") {
+      // Open editor with a pre-filled scaffold for URL scan
+      const kwVars = config.selectedKeywords.map(k => `{${k}}`).join(", ");
+      const scaffold = `<!-- Scanned from: ${config.targetUrl || "URL"} -->\n<!-- Keywords: ${kwVars || "none"} -->\n<h1>Your Template</h1>\n<p>Edit this content after scanning.</p>`;
+      setEditingTemplate(null);
+      setEditorOpen(true);
+    } else if (method === "website") {
+      setEditingTemplate(null);
+      setEditorOpen(true);
+    } else {
+      // design own
+      setEditingTemplate(null);
+      setEditorOpen(true);
+    }
+  };
+
+  const handleAiContentGenerated = (data: { name: string; content: string; variables: string[]; seoTitle: string; seoDescription: string }) => {
+    setAiBuilderOpen(false);
+    // Save directly via create mutation
+    createMutation.mutate({
+      name: data.name,
+      content: data.content,
+      seoTitlePattern: data.seoTitle,
+      seoDescriptionPattern: data.seoDescription,
+    });
+  };
+
   const getKeywordStatus = (tpl: Template) => {
     const vars = filterDesignVars(tpl.variables || []).map(v => v.replace(/[{}]/g, ""));
     const matched = vars.filter(v => v in keywordMap);
@@ -161,7 +194,7 @@ export default function PgpContentGroupsPage() {
             Define content templates that use Keywords to mass generate pages.
           </p>
         </div>
-        <Button size="sm" className="w-fit shrink-0" onClick={() => openEditor()}>
+        <Button size="sm" className="w-fit shrink-0" onClick={() => setPickerOpen(true)}>
           <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Content Group
         </Button>
       </div>
