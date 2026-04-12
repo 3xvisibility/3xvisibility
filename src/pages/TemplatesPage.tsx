@@ -324,15 +324,28 @@ export default function TemplatesPage() {
     toast({ title: `Template created with ${headers.length} variables` });
   };
 
-  const loadSitePages = async (websiteId: string) => {
+  const loadSitePages = async (websiteId: string, type: ContentType = "pages") => {
     setSiteLoading(true); setSitePages([]);
     try {
-      const { data, error } = await supabase.functions.invoke("scan-template", { body: { action: "list-pages", website_id: websiteId } });
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteId, content_type: type === "services" ? "pages" : type },
+      });
       if (error) throw error;
-      if (data?.pages) setSitePages(data.pages);
-      else if (data?.error) throw new Error(friendlyError(data.error));
+      if (data?.error) throw new Error(data.error);
+      const items = (data?.items || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        slug: item.slug,
+        link: item.url,
+        type: item.type || type,
+        status: item.status,
+      }));
+      setSitePages(items);
+      if (items.length === 0) {
+        toast({ title: `No ${type} found`, description: "Try a different content type or check your website connection.", variant: "destructive" });
+      }
     } catch (err: any) {
-      toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
+      toast({ title: `Failed to load ${type}`, description: err.message, variant: "destructive" });
     } finally { setSiteLoading(false); }
   };
 
@@ -344,6 +357,13 @@ export default function TemplatesPage() {
       const styles = data?.headStyles || "";
       const suggestions: { blockId: string; original: string; variable: string; value: string }[] = data?.suggestions || [];
 
+      // Strip common header/footer/nav elements from imported content
+      html = html.replace(/<header[\s\S]*?<\/header>/gi, "");
+      html = html.replace(/<footer[\s\S]*?<\/footer>/gi, "");
+      html = html.replace(/<nav[\s\S]*?<\/nav>/gi, "");
+      html = html.replace(/<!--\s*header\s*-->[\s\S]*?<!--\s*\/header\s*-->/gi, "");
+      html = html.replace(/<!--\s*footer\s*-->[\s\S]*?<!--\s*\/footer\s*-->/gi, "");
+
       // Auto-apply AI variable suggestions to the content
       const detectedVars: string[] = [];
       for (const s of suggestions) {
@@ -353,11 +373,14 @@ export default function TemplatesPage() {
         }
       }
 
+      // Also merge pending keywords
+      const allVars = [...new Set([...detectedVars, ...pendingKeywords])];
+
       const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
       setSiteDialogOpen(false); setSitePages([]);
-      setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: detectedVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
+      setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
       setEditorOpen(true);
-      const varMsg = detectedVars.length > 0 ? ` — ${detectedVars.length} keywords detected: {${detectedVars.join("}, {")}}` : "";
+      const varMsg = allVars.length > 0 ? ` — ${allVars.length} keywords detected: {${allVars.join("}, {")}}` : "";
       toast({ title: `Page imported as template${varMsg}` });
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
