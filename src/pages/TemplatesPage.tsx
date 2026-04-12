@@ -382,6 +382,31 @@ export default function TemplatesPage() {
     setEditorOpen(true);
   };
 
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any }) => {
+    setPendingKeywords(config.selectedKeywords);
+    setPickerOpen(false);
+
+    if (method === "ai") {
+      setAiOpen(true);
+    } else if (method === "url" && config.targetUrl) {
+      // Import from URL via scan-template
+      importSitePage(config.targetUrl, "Imported Template");
+    } else if (method === "website" && config.selectedWebsite) {
+      // Load pages from connected site
+      setSiteWebsite(config.selectedWebsite.id);
+      loadSitePages(config.selectedWebsite.id);
+      setSiteDialogOpen(true);
+    } else {
+      // Design your own — open blank editor
+      const keywordVars = config.selectedKeywords.map(k => `<p>{${k}}</p>`).join("\n");
+      const scaffold = keywordVars
+        ? `<div class="template">\n  <h1>{title}</h1>\n${keywordVars}\n</div>`
+        : "";
+      setEditingTemplate(scaffold ? { id: "", name: "New Template", content: scaffold, variables: config.selectedKeywords, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any : null);
+      setEditorOpen(true);
+    }
+  };
+
   // ──── Render ────
   return (
     <div className="space-y-6">
@@ -394,18 +419,9 @@ export default function TemplatesPage() {
         <div className="flex flex-wrap gap-2">
           <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTemplate(f); }} />
           <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()}>
-            <Upload className="mr-1.5 h-3.5 w-3.5" /> Import
+            <Upload className="mr-1.5 h-3.5 w-3.5" /> Import JSON
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setCsvDialogOpen(true)}>
-            <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" /> From CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setSiteDialogOpen(true)}>
-            <Link2 className="mr-1.5 h-3.5 w-3.5" /> From Site
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setAiOpen(true)}>
-            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> AI Builder
-          </Button>
-          <Button size="sm" onClick={() => openEditor()}>
+          <Button size="sm" onClick={() => setPickerOpen(true)}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Template
           </Button>
         </div>
