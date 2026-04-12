@@ -516,6 +516,29 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
       if (campErr) throw campErr;
 
+      // Start polling for progress
+      const pollInterval = setInterval(async () => {
+        try {
+          const { data: job } = await supabase
+            .from("generation_jobs")
+            .select("processed_rows, success_count, error_count, total_rows, status")
+            .eq("campaign_id", campaign.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (job) {
+            setGenProgress({
+              processed: job.processed_rows || 0,
+              total: job.total_rows || rows.length,
+              errors: job.error_count || 0,
+            });
+            if (job.status === "completed" || job.status === "failed") {
+              clearInterval(pollInterval);
+            }
+          }
+        } catch { /* ignore polling errors */ }
+      }, 2000);
+
       const { error: genErr } = await supabase.functions.invoke("generate-pages", {
         body: {
           campaign_id: campaign.id,
@@ -524,10 +547,28 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         },
       });
 
+      clearInterval(pollInterval);
+
       if (genErr) throw genErr;
 
-      setGenProgress({ processed: rows.length, total: rows.length, errors: 0 });
-      toast({ title: "Generation complete!", description: `${rows.length} pages generated.` });
+      // Final status check
+      const { data: finalJob } = await supabase
+        .from("generation_jobs")
+        .select("success_count, error_count, total_rows")
+        .eq("campaign_id", campaign.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const finalSuccess = finalJob?.success_count || rows.length;
+      const finalErrors = finalJob?.error_count || 0;
+
+      setGenProgress({ processed: finalSuccess + finalErrors, total: finalJob?.total_rows || rows.length, errors: finalErrors });
+      toast({
+        title: finalErrors > 0 ? "Generation completed with errors" : "Generation complete!",
+        description: `${finalSuccess} pages generated${finalErrors > 0 ? `, ${finalErrors} failed` : ""}.`,
+        variant: finalErrors > 0 ? "destructive" : "default",
+      });
 
       setTimeout(() => {
         navigate(`${basePath}/campaigns/${campaign.id}`);
