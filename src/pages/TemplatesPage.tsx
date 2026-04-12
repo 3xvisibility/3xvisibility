@@ -747,6 +747,13 @@ export default function TemplatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Creation Picker */}
+      <TemplateCreationPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={handlePickerSelect}
+      />
     </div>
   );
 }
