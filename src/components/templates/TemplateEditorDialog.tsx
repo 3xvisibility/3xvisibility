@@ -224,6 +224,48 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
     }
   };
 
+  const aiImproveContent = async () => {
+    if (!content.trim()) return;
+    setAiImproving(true);
+    try {
+      const vars = [...new Set(content.match(/\{([a-z_]+)\}/gi) || [])];
+      const varNames = vars.map(v => v.replace(/[{}]/g, "")).join(", ");
+      const { data, error } = await supabase.functions.invoke("generate-template", {
+        body: {
+          prompt: `You are a senior SEO and web design expert. Improve the following HTML template to make it more professional, modern, and SEO-friendly while achieving 90+ scores on SEO, SEA, and GEO metrics.
+
+CRITICAL RULES:
+- Keep ALL existing {variable_name} placeholders intact: ${varNames || "none detected"}
+- Keep the same topic and purpose
+- Improve HTML structure with semantic tags (header, section, article, aside)
+- Add or improve h1, h2, h3 headings with keywords
+- Ensure 300+ words of quality content
+- Add CTAs with class="btn cta"
+- Add trust signals, testimonials, or FAQ sections if missing
+- Use professional CSS classes: hero-section, card, feature-card, grid, features-grid, testimonial, stars, badge
+- Add alt text to images
+- Include local SEO elements: {city}, {state} references, "near me" phrases
+- Add structured data hints (itemscope, itemprop)
+- Return ONLY the improved HTML, no explanations or markdown fences
+
+CURRENT HTML:
+${content}`
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      let improved = (data.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+      if (improved) {
+        setContent(improved);
+        toast({ title: "✨ Content improved!", description: "Template has been enhanced for better SEO, SEA & GEO scores." });
+      }
+    } catch (err: any) {
+      toast({ title: "AI improvement failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiImproving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="sm:w-[min(96vw,72rem)] sm:max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] flex flex-col overflow-hidden p-0 gap-0">
