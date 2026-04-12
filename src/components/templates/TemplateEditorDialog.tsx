@@ -89,6 +89,7 @@ export function TemplateEditorDialog({
   // AI SEO
   const [aiSeoNiche, setAiSeoNiche] = useState("");
   const [aiSeoGenerating, setAiSeoGenerating] = useState(false);
+  const [aiImproving, setAiImproving] = useState(false);
 
   const { toast } = useToast();
 
