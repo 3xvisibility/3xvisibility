@@ -18,6 +18,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
+import { TemplateCreationPicker, type CreationMethod } from "@/components/templates/TemplateCreationPicker";
+import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { useNavigate } from "react-router-dom";
 
 type Template = Tables<"templates">;
@@ -26,6 +28,9 @@ const PAGE_SIZE = 10;
 export default function PgpContentGroupsPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [aiBuilderOpen, setAiBuilderOpen] = useState(false);
+  const [pendingKeywords, setPendingKeywords] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
