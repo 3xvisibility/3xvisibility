@@ -62,6 +62,8 @@ export default function TemplatesPage() {
   const [siteContentType, setSiteContentType] = useState<ContentType>("pages");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string; type?: string; status?: string }[]>([]);
   const [siteLoading, setSiteLoading] = useState(false);
+  // URL import loading
+  const [urlImporting, setUrlImporting] = useState(false);
 
   const importFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
