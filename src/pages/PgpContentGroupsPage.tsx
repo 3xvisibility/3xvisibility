@@ -360,6 +360,23 @@ export default function PgpContentGroupsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <TemplateCreationPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={handlePickerSelect}
+      />
+
+      <AiTemplateBuilderDialog
+        open={aiBuilderOpen}
+        onOpenChange={setAiBuilderOpen}
+        onSave={(name, content) => {
+          setAiBuilderOpen(false);
+          createMutation.mutate({ name, content });
+        }}
+        isSaving={createMutation.isPending}
+        onContentGenerated={handleAiContentGenerated}
+      />
     </div>
   );
 }
