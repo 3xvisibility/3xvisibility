@@ -711,25 +711,87 @@ export default function TemplatesPage() {
       {/* Site Import Dialog */}
       <Dialog open={siteDialogOpen} onOpenChange={setSiteDialogOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>Import from Connected Site</DialogTitle></DialogHeader>
-          <div className="space-y-3 mt-2">
-            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); loadSitePages(v); }}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MonitorSmartphone className="h-5 w-5" />
+              Import from Connected Site
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Website selector */}
+            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); loadSitePages(v, siteContentType); }}>
               <SelectTrigger><SelectValue placeholder="Select website" /></SelectTrigger>
               <SelectContent>
                 {connectedWebsites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.type})</SelectItem>)}
               </SelectContent>
             </Select>
-            {siteLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading pages...</div>}
-            {sitePages.length > 0 && (
-              <div className="max-h-60 overflow-y-auto space-y-1">
-                {sitePages.map(p => (
-                  <button key={p.link} onClick={() => importSitePage(p.link, p.title)} className="w-full text-left p-2 rounded-lg hover:bg-accent text-sm">
-                    <span className="font-medium">{p.title}</span>
-                    <span className="text-xs text-muted-foreground ml-2">/{p.slug}</span>
+
+            {/* Content type tabs */}
+            {siteWebsite && (
+              <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                {(["pages", "products", "services"] as ContentType[]).map(ct => (
+                  <button
+                    key={ct}
+                    onClick={() => { setSiteContentType(ct); loadSitePages(siteWebsite, ct); }}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                      siteContentType === ct
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {ct === "pages" && <FileText className="h-3.5 w-3.5" />}
+                    {ct === "products" && <ShoppingBag className="h-3.5 w-3.5" />}
+                    {ct === "services" && <Briefcase className="h-3.5 w-3.5" />}
+                    {ct.charAt(0).toUpperCase() + ct.slice(1)}
                   </button>
                 ))}
               </div>
             )}
+
+            {/* Loading */}
+            {siteLoading && (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading {siteContentType}...</p>
+              </div>
+            )}
+
+            {/* Results */}
+            {!siteLoading && sitePages.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click to import as template</p>
+                <div className="max-h-60 overflow-y-auto space-y-1 border rounded-lg p-1">
+                  {sitePages.map(p => (
+                    <button key={p.id || p.link} onClick={() => importSitePage(p.link, p.title)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-medium text-sm block truncate">{p.title}</span>
+                          <span className="text-xs text-muted-foreground block truncate">/{p.slug}</span>
+                        </div>
+                        {p.status && (
+                          <Badge variant="outline" className="text-[10px] ml-2 shrink-0">
+                            {p.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!siteLoading && sitePages.length === 0 && siteWebsite && (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No {siteContentType} found</p>
+                <p className="text-xs mt-1">Try a different content type or check your site connection.</p>
+              </div>
+            )}
+
+            <p className="text-[11px] text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+              💡 Headers, footers, and navigation are automatically removed. Only the main content is imported to keep your template clean.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
