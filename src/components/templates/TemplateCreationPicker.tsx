@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
-  ArrowRight, CheckCircle2, Target, Search,
+  ArrowRight, CheckCircle2, Target, Search, Plus, X, Loader2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,16 +59,23 @@ const METHODS = [
   },
 ];
 
+const SUGGESTED_KEYWORDS = [
+  "city", "state", "country", "service", "product", "category",
+  "brand_name", "price", "phone", "address", "zip_code", "neighborhood",
+];
+
 export function TemplateCreationPicker({ open, onOpenChange, onSelect }: TemplateCreationPickerProps) {
   const [selected, setSelected] = useState<CreationMethod | null>(null);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
+  const [customKeyword, setCustomKeyword] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
 
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
-  const { data: keywords = [] } = useQuery({
+  // Existing keywords (optional — shown if available)
+  const { data: existingKeywords = [] } = useQuery({
     queryKey: ["pgp-keywords-picker", wsId],
     enabled: !!wsId,
     queryFn: async () => {
@@ -100,6 +107,18 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     );
   };
 
+  const addCustomKeyword = () => {
+    const kw = customKeyword.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/^_|_$/g, "");
+    if (kw && !selectedKeywords.includes(kw)) {
+      setSelectedKeywords(prev => [...prev, kw]);
+    }
+    setCustomKeyword("");
+  };
+
+  const removeKeyword = (name: string) => {
+    setSelectedKeywords(prev => prev.filter(k => k !== name));
+  };
+
   const handleContinue = () => {
     if (!selected) return;
     const website = websites.find(w => w.id === selectedWebsiteId);
@@ -111,6 +130,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     // Reset
     setSelected(null);
     setSelectedKeywords([]);
+    setCustomKeyword("");
     setTargetUrl("");
     setSelectedWebsiteId("");
   };
@@ -122,14 +142,18 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     return true;
   };
 
+  // Merge suggested + existing into one pool, avoid duplicates with selected
+  const availableSuggestions = SUGGESTED_KEYWORDS.filter(k => !selectedKeywords.includes(k));
+  const availableExisting = existingKeywords.filter(kw => !selectedKeywords.includes(kw.name));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto p-0 gap-0">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b">
-          <h2 className="text-lg font-bold">Create Content Group</h2>
+          <h2 className="text-lg font-bold">Create Template</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Choose how you want to create your template, then select keywords for variable mapping.
+            Choose your creation method and add keywords that match your business needs.
           </p>
         </div>
 
@@ -201,34 +225,84 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
             </div>
           )}
 
-          {/* Step 2: Keywords */}
+          {/* Step 2: Keywords — Smart Input */}
           {selected && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">2</div>
-                <span className="text-sm font-semibold">Select Keywords (Variables)</span>
+                <span className="text-sm font-semibold">Add Keywords (Variables)</span>
               </div>
-              {keywords.length === 0 ? (
-                <p className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-500/10 rounded-lg px-3 py-2">
-                  ⚠️ No keywords created yet. You can still create a template and add keywords later.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {keywords.map(kw => (
-                    <button
-                      key={kw.id}
-                      onClick={() => toggleKeyword(kw.name)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                        selectedKeywords.includes(kw.name)
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background border-border hover:border-primary/50"
-                      }`}
+              <p className="text-xs text-muted-foreground mb-3">
+                Keywords become dynamic variables in your template. AI will suggest the best ones based on your business — or add your own.
+              </p>
+
+              {/* Custom keyword input */}
+              <div className="flex gap-2 mb-3">
+                <Input
+                  placeholder="Type a keyword e.g. service, neighborhood..."
+                  value={customKeyword}
+                  onChange={e => setCustomKeyword(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomKeyword(); } }}
+                  className="flex-1 h-9"
+                />
+                <Button size="sm" variant="outline" onClick={addCustomKeyword} disabled={!customKeyword.trim()}>
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {/* Selected keywords */}
+              {selectedKeywords.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {selectedKeywords.map(kw => (
+                    <span
+                      key={kw}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground"
                     >
-                      {selectedKeywords.includes(kw.name) && <CheckCircle2 className="h-3 w-3" />}
-                      {`{${kw.name}}`}
-                      <span className="text-[10px] opacity-70">{kw.term_count} terms</span>
-                    </button>
+                      {`{${kw}}`}
+                      <button onClick={() => removeKeyword(kw)} className="hover:opacity-70">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
                   ))}
+                </div>
+              )}
+
+              {/* Suggested keywords */}
+              {availableSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Suggested</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableSuggestions.map(kw => (
+                      <button
+                        key={kw}
+                        onClick={() => toggleKeyword(kw)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-primary/40 text-primary hover:bg-primary/5 transition-colors"
+                      >
+                        <Plus className="h-2.5 w-2.5" />
+                        {kw}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Existing PGP keywords */}
+              {availableExisting.length > 0 && (
+                <div className="space-y-1.5 mt-3">
+                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">From your keyword groups</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableExisting.map(kw => (
+                      <button
+                        key={kw.id}
+                        onClick={() => toggleKeyword(kw.name)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-border bg-background hover:border-primary/50 transition-colors"
+                      >
+                        <Plus className="h-2.5 w-2.5" />
+                        {`{${kw.name}}`}
+                        <span className="text-[10px] opacity-60">{kw.term_count} terms</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
