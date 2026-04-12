@@ -17,7 +17,7 @@ import {
   Plus, FileText, Copy, Trash2, Sparkles, Upload, Download,
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
-  ChevronLeft, ChevronRight, Loader2,
+  ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +30,7 @@ import { friendlyError } from "@/lib/friendly-errors";
 import { htmlToBlocks } from "@/components/templates/TemplateVisualEditor";
 import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
-import { TemplateCreationPicker, type CreationMethod } from "@/components/templates/TemplateCreationPicker";
+import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
 
 type Template = Tables<"templates">;
 const PAGE_SIZE = 10;
@@ -59,7 +59,8 @@ export default function TemplatesPage() {
   // Site template state
   const [siteDialogOpen, setSiteDialogOpen] = useState(false);
   const [siteWebsite, setSiteWebsite] = useState("");
-  const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
+  const [siteContentType, setSiteContentType] = useState<ContentType>("pages");
+  const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string; type?: string; status?: string }[]>([]);
   const [siteLoading, setSiteLoading] = useState(false);
 
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -324,15 +325,28 @@ export default function TemplatesPage() {
     toast({ title: `Template created with ${headers.length} variables` });
   };
 
-  const loadSitePages = async (websiteId: string) => {
+  const loadSitePages = async (websiteId: string, type: ContentType = "pages") => {
     setSiteLoading(true); setSitePages([]);
     try {
-      const { data, error } = await supabase.functions.invoke("scan-template", { body: { action: "list-pages", website_id: websiteId } });
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", {
+        body: { website_id: websiteId, content_type: type === "services" ? "pages" : type },
+      });
       if (error) throw error;
-      if (data?.pages) setSitePages(data.pages);
-      else if (data?.error) throw new Error(friendlyError(data.error));
+      if (data?.error) throw new Error(data.error);
+      const items = (data?.items || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        slug: item.slug,
+        link: item.url,
+        type: item.type || type,
+        status: item.status,
+      }));
+      setSitePages(items);
+      if (items.length === 0) {
+        toast({ title: `No ${type} found`, description: "Try a different content type or check your website connection.", variant: "destructive" });
+      }
     } catch (err: any) {
-      toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
+      toast({ title: `Failed to load ${type}`, description: err.message, variant: "destructive" });
     } finally { setSiteLoading(false); }
   };
 
@@ -344,6 +358,13 @@ export default function TemplatesPage() {
       const styles = data?.headStyles || "";
       const suggestions: { blockId: string; original: string; variable: string; value: string }[] = data?.suggestions || [];
 
+      // Strip common header/footer/nav elements from imported content
+      html = html.replace(/<header[\s\S]*?<\/header>/gi, "");
+      html = html.replace(/<footer[\s\S]*?<\/footer>/gi, "");
+      html = html.replace(/<nav[\s\S]*?<\/nav>/gi, "");
+      html = html.replace(/<!--\s*header\s*-->[\s\S]*?<!--\s*\/header\s*-->/gi, "");
+      html = html.replace(/<!--\s*footer\s*-->[\s\S]*?<!--\s*\/footer\s*-->/gi, "");
+
       // Auto-apply AI variable suggestions to the content
       const detectedVars: string[] = [];
       for (const s of suggestions) {
@@ -353,11 +374,14 @@ export default function TemplatesPage() {
         }
       }
 
+      // Also merge pending keywords
+      const allVars = [...new Set([...detectedVars, ...pendingKeywords])];
+
       const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
       setSiteDialogOpen(false); setSitePages([]);
-      setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: detectedVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
+      setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
       setEditorOpen(true);
-      const varMsg = detectedVars.length > 0 ? ` — ${detectedVars.length} keywords detected: {${detectedVars.join("}, {")}}` : "";
+      const varMsg = allVars.length > 0 ? ` — ${allVars.length} keywords detected: {${allVars.join("}, {")}}` : "";
       toast({ title: `Page imported as template${varMsg}` });
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
@@ -382,22 +406,22 @@ export default function TemplatesPage() {
     setEditorOpen(true);
   };
 
-  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any }) => {
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType }) => {
     setPendingKeywords(config.selectedKeywords);
     setPickerOpen(false);
 
     if (method === "ai") {
       setAiOpen(true);
     } else if (method === "url" && config.targetUrl) {
-      // Import from URL via scan-template
       importSitePage(config.targetUrl, "Imported Template");
     } else if (method === "website" && config.selectedWebsite) {
-      // Load pages from connected site
+      const ct = config.contentType || "pages";
       setSiteWebsite(config.selectedWebsite.id);
-      loadSitePages(config.selectedWebsite.id);
+      setSiteContentType(ct);
+      loadSitePages(config.selectedWebsite.id, ct);
       setSiteDialogOpen(true);
     } else {
-      // Design your own — open blank editor
+      // Design your own
       const keywordVars = config.selectedKeywords.map(k => `<p>{${k}}</p>`).join("\n");
       const scaffold = keywordVars
         ? `<div class="template">\n  <h1>{title}</h1>\n${keywordVars}\n</div>`
@@ -687,25 +711,87 @@ export default function TemplatesPage() {
       {/* Site Import Dialog */}
       <Dialog open={siteDialogOpen} onOpenChange={setSiteDialogOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>Import from Connected Site</DialogTitle></DialogHeader>
-          <div className="space-y-3 mt-2">
-            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); loadSitePages(v); }}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MonitorSmartphone className="h-5 w-5" />
+              Import from Connected Site
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Website selector */}
+            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); loadSitePages(v, siteContentType); }}>
               <SelectTrigger><SelectValue placeholder="Select website" /></SelectTrigger>
               <SelectContent>
                 {connectedWebsites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.type})</SelectItem>)}
               </SelectContent>
             </Select>
-            {siteLoading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading pages...</div>}
-            {sitePages.length > 0 && (
-              <div className="max-h-60 overflow-y-auto space-y-1">
-                {sitePages.map(p => (
-                  <button key={p.link} onClick={() => importSitePage(p.link, p.title)} className="w-full text-left p-2 rounded-lg hover:bg-accent text-sm">
-                    <span className="font-medium">{p.title}</span>
-                    <span className="text-xs text-muted-foreground ml-2">/{p.slug}</span>
+
+            {/* Content type tabs */}
+            {siteWebsite && (
+              <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                {(["pages", "products", "services"] as ContentType[]).map(ct => (
+                  <button
+                    key={ct}
+                    onClick={() => { setSiteContentType(ct); loadSitePages(siteWebsite, ct); }}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                      siteContentType === ct
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {ct === "pages" && <FileText className="h-3.5 w-3.5" />}
+                    {ct === "products" && <ShoppingBag className="h-3.5 w-3.5" />}
+                    {ct === "services" && <Briefcase className="h-3.5 w-3.5" />}
+                    {ct.charAt(0).toUpperCase() + ct.slice(1)}
                   </button>
                 ))}
               </div>
             )}
+
+            {/* Loading */}
+            {siteLoading && (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading {siteContentType}...</p>
+              </div>
+            )}
+
+            {/* Results */}
+            {!siteLoading && sitePages.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click to import as template</p>
+                <div className="max-h-60 overflow-y-auto space-y-1 border rounded-lg p-1">
+                  {sitePages.map(p => (
+                    <button key={p.id || p.link} onClick={() => importSitePage(p.link, p.title)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-medium text-sm block truncate">{p.title}</span>
+                          <span className="text-xs text-muted-foreground block truncate">/{p.slug}</span>
+                        </div>
+                        {p.status && (
+                          <Badge variant="outline" className="text-[10px] ml-2 shrink-0">
+                            {p.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!siteLoading && sitePages.length === 0 && siteWebsite && (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No {siteContentType} found</p>
+                <p className="text-xs mt-1">Try a different content type or check your site connection.</p>
+              </div>
+            )}
+
+            <p className="text-[11px] text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+              💡 Headers, footers, and navigation are automatically removed. Only the main content is imported to keep your template clean.
+            </p>
           </div>
         </DialogContent>
       </Dialog>

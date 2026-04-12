@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
   ArrowRight, CheckCircle2, Target, Search, Plus, X, Loader2,
+  FileText, ShoppingBag, Briefcase,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ import type { Tables } from "@/integrations/supabase/types";
 type Website = Tables<"websites">;
 
 export type CreationMethod = "design" | "ai" | "url" | "website";
+export type ContentType = "pages" | "products" | "services";
 
 interface TemplateCreationPickerProps {
   open: boolean;
@@ -25,6 +27,7 @@ interface TemplateCreationPickerProps {
     selectedKeywords: string[];
     targetUrl?: string;
     selectedWebsite?: Website;
+    contentType?: ContentType;
   }) => void;
 }
 
@@ -54,9 +57,15 @@ const METHODS = [
     id: "website" as const,
     icon: MonitorSmartphone,
     title: "From Connected Site",
-    desc: "Import an existing page from your connected WordPress, Shopify, or PrestaShop site.",
+    desc: "Import an existing page, product, or service from your connected CMS site.",
     color: "bg-amber-500/10 text-amber-600",
   },
+];
+
+const CONTENT_TYPES: { id: ContentType; icon: typeof FileText; label: string; desc: string }[] = [
+  { id: "pages", icon: FileText, label: "Pages", desc: "Landing pages, about, contact" },
+  { id: "products", icon: ShoppingBag, label: "Products", desc: "Product listings & catalogs" },
+  { id: "services", icon: Briefcase, label: "Services", desc: "Service offerings & descriptions" },
 ];
 
 const SUGGESTED_KEYWORDS = [
@@ -70,11 +79,11 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [customKeyword, setCustomKeyword] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
+  const [contentType, setContentType] = useState<ContentType>("pages");
 
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
-  // Existing keywords (optional — shown if available)
   const { data: existingKeywords = [] } = useQuery({
     queryKey: ["pgp-keywords-picker", wsId],
     enabled: !!wsId,
@@ -126,6 +135,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
       selectedKeywords,
       targetUrl: selected === "url" ? targetUrl : undefined,
       selectedWebsite: selected === "website" ? website : undefined,
+      contentType: selected === "website" ? contentType : undefined,
     });
     // Reset
     setSelected(null);
@@ -133,6 +143,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     setCustomKeyword("");
     setTargetUrl("");
     setSelectedWebsiteId("");
+    setContentType("pages");
   };
 
   const canContinue = () => {
@@ -142,7 +153,6 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     return true;
   };
 
-  // Merge suggested + existing into one pool, avoid duplicates with selected
   const availableSuggestions = SUGGESTED_KEYWORDS.filter(k => !selectedKeywords.includes(k));
   const availableExisting = existingKeywords.filter(kw => !selectedKeywords.includes(kw.name));
 
@@ -204,28 +214,54 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
             </div>
           )}
 
-          {/* Conditional: Website select */}
+          {/* Conditional: Website select + content type */}
           {selected === "website" && (
-            <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
-              <Label className="text-xs font-semibold">Select connected website</Label>
-              {websites.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No websites connected yet. Connect a site first.</p>
-              ) : (
-                <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
-                  <SelectTrigger><SelectValue placeholder="Choose a website..." /></SelectTrigger>
-                  <SelectContent>
-                    {websites.map(w => (
-                      <SelectItem key={w.id} value={w.id}>
-                        {w.name} — {w.url}
-                      </SelectItem>
+            <div className="rounded-xl border bg-muted/30 p-4 space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Select connected website</Label>
+                {websites.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No websites connected yet. Connect a site first.</p>
+                ) : (
+                  <Select value={selectedWebsiteId} onValueChange={setSelectedWebsiteId}>
+                    <SelectTrigger><SelectValue placeholder="Choose a website..." /></SelectTrigger>
+                    <SelectContent>
+                      {websites.map(w => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.name} — {w.url}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              {/* Content type selector */}
+              {selectedWebsiteId && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">What do you want to import?</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CONTENT_TYPES.map(ct => (
+                      <button
+                        key={ct.id}
+                        onClick={() => setContentType(ct.id)}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all text-center ${
+                          contentType === ct.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/40"
+                        }`}
+                      >
+                        <ct.icon className={`h-5 w-5 ${contentType === ct.id ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="text-xs font-semibold">{ct.label}</span>
+                        <span className="text-[10px] text-muted-foreground leading-tight">{ct.desc}</span>
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </div>
+                </div>
               )}
             </div>
           )}
 
-          {/* Step 2: Keywords — Smart Input */}
+          {/* Step 2: Keywords */}
           {selected && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -233,10 +269,9 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 <span className="text-sm font-semibold">Add Keywords (Variables)</span>
               </div>
               <p className="text-xs text-muted-foreground mb-3">
-                Keywords become dynamic variables in your template. AI will suggest the best ones based on your business — or add your own.
+                Keywords become dynamic variables in your template. Add your own or pick from suggestions.
               </p>
 
-              {/* Custom keyword input */}
               <div className="flex gap-2 mb-3">
                 <Input
                   placeholder="Type a keyword e.g. service, neighborhood..."
@@ -250,7 +285,6 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 </Button>
               </div>
 
-              {/* Selected keywords */}
               {selectedKeywords.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {selectedKeywords.map(kw => (
@@ -267,7 +301,6 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 </div>
               )}
 
-              {/* Suggested keywords */}
               {availableSuggestions.length > 0 && (
                 <div className="space-y-1.5">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Suggested</span>
@@ -286,7 +319,6 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 </div>
               )}
 
-              {/* Existing PGP keywords */}
               {availableExisting.length > 0 && (
                 <div className="space-y-1.5 mt-3">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">From your keyword groups</span>
@@ -316,11 +348,11 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
                 <span className="text-sm font-semibold">Quality Target: 90+ Score</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                All templates will be optimized to achieve <strong>90%+ scores</strong> across SEO, SEA, and GEO metrics. 
+                All templates will be optimized to achieve <strong>90%+ scores</strong> across SEO, SEA, and GEO metrics.
                 {selected === "ai" && " AI will automatically generate content that meets this threshold."}
                 {selected === "design" && " The editor will show live scoring and suggestions to help you reach this target."}
                 {selected === "url" && " After scanning, AI will suggest improvements to boost scores above 90%."}
-                {selected === "website" && " Imported content will be analyzed and AI will suggest optimizations."}
+                {selected === "website" && " Imported content will be cleaned (no headers/footers) and AI will suggest optimizations."}
               </p>
               <div className="flex items-center gap-3 mt-3">
                 <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-[10px]">SEO 90+</Badge>
