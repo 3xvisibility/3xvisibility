@@ -59,7 +59,8 @@ export default function TemplatesPage() {
   // Site template state
   const [siteDialogOpen, setSiteDialogOpen] = useState(false);
   const [siteWebsite, setSiteWebsite] = useState("");
-  const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string }[]>([]);
+  const [siteContentType, setSiteContentType] = useState<ContentType>("pages");
+  const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string; type?: string; status?: string }[]>([]);
   const [siteLoading, setSiteLoading] = useState(false);
 
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -405,22 +406,22 @@ export default function TemplatesPage() {
     setEditorOpen(true);
   };
 
-  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any }) => {
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType }) => {
     setPendingKeywords(config.selectedKeywords);
     setPickerOpen(false);
 
     if (method === "ai") {
       setAiOpen(true);
     } else if (method === "url" && config.targetUrl) {
-      // Import from URL via scan-template
       importSitePage(config.targetUrl, "Imported Template");
     } else if (method === "website" && config.selectedWebsite) {
-      // Load pages from connected site
+      const ct = config.contentType || "pages";
       setSiteWebsite(config.selectedWebsite.id);
-      loadSitePages(config.selectedWebsite.id);
+      setSiteContentType(ct);
+      loadSitePages(config.selectedWebsite.id, ct);
       setSiteDialogOpen(true);
     } else {
-      // Design your own — open blank editor
+      // Design your own
       const keywordVars = config.selectedKeywords.map(k => `<p>{${k}}</p>`).join("\n");
       const scaffold = keywordVars
         ? `<div class="template">\n  <h1>{title}</h1>\n${keywordVars}\n</div>`
