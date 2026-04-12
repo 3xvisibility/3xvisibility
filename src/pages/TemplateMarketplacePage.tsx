@@ -48,6 +48,9 @@ const CATEGORIES = [
   { id: "professional", label: "Professional", icon: Briefcase },
   { id: "education", label: "Education", icon: GraduationCap },
   { id: "health", label: "Health", icon: Heart },
+  { id: "wordpress", label: "WordPress", icon: FileText },
+  { id: "shopify", label: "Shopify", icon: ShoppingBag },
+  { id: "prestashop", label: "PrestaShop", icon: Tag },
 ];
 
 // Shared responsive base styles injected into every template
