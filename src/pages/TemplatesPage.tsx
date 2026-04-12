@@ -487,8 +487,7 @@ export default function TemplatesPage() {
             <p className="text-sm text-muted-foreground mb-4">{templates.length === 0 ? "Create your first template to start generating pages." : "Try adjusting your filters."}</p>
             {templates.length === 0 && (
               <div className="flex justify-center gap-2">
-                <Button onClick={() => setAiOpen(true)}><Sparkles className="mr-2 h-4 w-4" /> AI Builder</Button>
-                <Button variant="outline" onClick={() => openEditor()}><Plus className="mr-2 h-4 w-4" /> Manual</Button>
+                <Button onClick={() => setPickerOpen(true)}><Plus className="mr-2 h-4 w-4" /> Create Template</Button>
               </div>
             )}
           </CardContent>
