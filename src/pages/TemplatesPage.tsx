@@ -911,6 +911,19 @@ export default function TemplatesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* URL Import Loading Overlay */}
+      <Dialog open={urlImporting} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-sm text-center" onPointerDownOutside={(e) => e.preventDefault()}>
+          <div className="flex flex-col items-center gap-4 py-6">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div>
+              <h3 className="font-semibold text-lg">Importing Page...</h3>
+              <p className="text-sm text-muted-foreground mt-1">Scanning design, styles & content. This may take a few seconds.</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Creation Picker */}
       <TemplateCreationPicker
         open={pickerOpen}
