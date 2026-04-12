@@ -1397,6 +1397,9 @@ Deno.serve(async (req) => {
           }
 
 
+          // Process spintax {option1|option2|option3}
+          pageContent = processSpintax(pageContent);
+
           // Process dynamic elements {{MAP:}}, {{YOUTUBE:}}, {{IMAGE:}}, {{WEATHER:}}
           pageContent = processDynamicElements(pageContent, allVars);
 
