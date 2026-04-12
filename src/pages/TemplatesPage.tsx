@@ -41,7 +41,6 @@ export default function TemplatesPage() {
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingKeywords, setPendingKeywords] = useState<string[]>([]);
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [siteTypeFilter, setSiteTypeFilter] = useState("all");
   const [campaignTypeFilter, setCampaignTypeFilter] = useState("all");
