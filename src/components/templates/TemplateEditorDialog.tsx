@@ -342,7 +342,8 @@ ${content}`
 
           <div className="flex-1 min-h-0 overflow-y-auto">
             {/* ── Content Tab ── */}
-            <TabsContent value="content" className="m-0 flex flex-col" forceMount={activeTab === "content" ? true : undefined} hidden={activeTab !== "content"}>
+            {/* ── Content Tab ── */}
+            <TabsContent value="content" className="m-0 flex flex-col flex-1 min-h-0" forceMount={activeTab === "content" ? true : undefined} hidden={activeTab !== "content"}>
               <div className="flex items-center gap-2 px-3 sm:px-5 py-2 border-b bg-muted/20 shrink-0 overflow-x-auto">
                 <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0">
                   <button
@@ -384,6 +385,46 @@ ${content}`
                     {uniqueVars.length > 6 && <span className="text-[10px] text-muted-foreground">+{uniqueVars.length - 6}</span>}
                   </div>
                 )}
+              </div>
+
+              {/* Editor / Preview area */}
+              <div className="flex-1 min-h-[50vh]">
+                {showPreview ? (
+                  <div className="h-full">
+                    <TemplatePreview html={content} />
+                  </div>
+                ) : (
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder={`<!-- Write your template HTML here -->\n<div class="pgp-page">\n  <section class="hero-section">\n    <h1>{service_name} in {city}</h1>\n    <p>Professional {service_name} services in {city}, {state}.</p>\n    <a href="#contact" class="btn cta">Get a Free Quote</a>\n  </section>\n\n  <section class="features-grid">\n    <div class="feature-card">\n      <h3>Why Choose Us</h3>\n      <p>Trusted by thousands in {city}.</p>\n    </div>\n  </section>\n</div>`}
+                    className="w-full h-full min-h-[50vh] p-4 font-mono text-sm bg-background resize-none border-0 focus:outline-none focus:ring-0"
+                    spellCheck={false}
+                  />
+                )}
+              </div>
+            </TabsContent>
+
+            {/* ── SEO Tab ── */}
+            <TabsContent value="seo" className="m-0 p-5 space-y-5">
+              {/* AI SEO Generator */}
+              <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">AI SEO Generator</span>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter your business niche — e.g. plumber, dentist, restaurant"
+                    value={aiSeoNiche}
+                    onChange={(e) => setAiSeoNiche(e.target.value)}
+                    className="flex-1 h-9 text-sm"
+                  />
+                  <Button size="sm" onClick={generateAiSeo} disabled={aiSeoGenerating || !aiSeoNiche.trim()}>
+                    {aiSeoGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                    Generate
+                  </Button>
+                </div>
               </div>
 
               {/* Meta Title */}
@@ -432,18 +473,18 @@ ${content}`
                 <div className="rounded-xl border p-4 bg-background space-y-1">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Google Search Preview</p>
                   <p className="text-[#1a0dab] text-base leading-snug truncate" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    {seoTitlePattern ? seoTitlePattern.replace(/\{([^}]+)\}/g, (_, v) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')) : name || 'Page Title'}
+                    {seoTitlePattern ? seoTitlePattern.replace(/\{([^}]+)\}/g, (_, v: string) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')) : name || 'Page Title'}
                   </p>
                   <p className="text-[#006621] text-xs truncate" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    example.com/{slugPattern ? slugPattern.replace(/\{([^}]+)\}/g, (_, v) => v.replace(/_/g, '-')) : 'page-slug'}
+                    example.com/{slugPattern ? slugPattern.replace(/\{([^}]+)\}/g, (_, v: string) => v.replace(/_/g, '-')) : 'page-slug'}
                   </p>
                   <p className="text-[#545454] text-xs leading-relaxed line-clamp-2" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    {seoDescriptionPattern ? seoDescriptionPattern.replace(/\{([^}]+)\}/g, (_, v) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')) : 'Meta description...'}
+                    {seoDescriptionPattern ? seoDescriptionPattern.replace(/\{([^}]+)\}/g, (_, v: string) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')) : 'Meta description...'}
                   </p>
                 </div>
               )}
 
-              {/* Open Graph */}
+              {/* Open Graph & Social */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Open Graph & Social</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
