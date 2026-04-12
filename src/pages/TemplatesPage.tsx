@@ -390,6 +390,7 @@ export default function TemplatesPage() {
   };
 
   const importSitePage = async (pageUrl: string, pageTitle: string) => {
+    setUrlImporting(true);
     try {
       // First attempt: server-side fetch
       const { data, error } = await supabase.functions.invoke("scan-template", { body: { url: pageUrl } });
@@ -430,6 +431,8 @@ export default function TemplatesPage() {
       processImportResult(data, pageTitle);
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUrlImporting(false);
     }
   };
 
