@@ -964,7 +964,7 @@ const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "Product",
   },
 ];
-
+export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
