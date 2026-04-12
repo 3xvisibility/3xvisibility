@@ -217,8 +217,8 @@ Only return valid JSON. No markdown fences.`;
     }
   };
 
-  const handleTestGenerate = () => {
-    if (!selectedGroup) return;
+  const handleTestGenerate = async () => {
+    if (!selectedGroup || !wsId) return;
     const sampleData: Record<string, string> = {};
     for (const gk of groupKeywords) {
       if (gk.keyword && gk.keyword.terms.length > 0) {
@@ -231,11 +231,78 @@ Only return valid JSON. No markdown fences.`;
         sampleData[gk.name] = `[${gk.name}]`;
       }
     }
+    if (resolvedBrandName) sampleData.brand_name = resolvedBrandName;
+
+    // Use the renderer for a realistic preview
     let rendered = selectedGroup.content;
+    // Process conditionals
+    rendered = rendered.replace(
+      /\{\{#if\s+(\w+)\}\}([\s\S]*?)(?:\{\{#else\}\}([\s\S]*?))?\{\{\/if\}\}/gi,
+      (_m: string, varName: string, ifBlock: string, elseBlock?: string) => {
+        const value = sampleData[varName] || sampleData[varName.toLowerCase()];
+        return value && value.trim() && !value.startsWith("[") ? ifBlock : (elseBlock || "");
+      }
+    );
+    // Process loops
+    rendered = rendered.replace(
+      /\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/gi,
+      (_m: string, varName: string, loopBlock: string) => {
+        const value = sampleData[varName] || sampleData[varName.toLowerCase()];
+        if (!value || value.startsWith("[")) return "";
+        const items = value.split(",").map(s => s.trim()).filter(Boolean);
+        return items.map((item, index) =>
+          loopBlock.replace(/\{\{this\}\}/gi, item).replace(/\{\{@index\}\}/gi, String(index)).replace(/\{\{@number\}\}/gi, String(index + 1))
+        ).join("\n");
+      }
+    );
+    // Variable transforms
+    rendered = rendered.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m: string, varName: string, transform: string) => {
+      const rawVal = sampleData[varName] || sampleData[varName.toLowerCase()] || "";
+      const t = transform.toLowerCase();
+      if (t === "uppercase") return rawVal.toUpperCase();
+      if (t === "lowercase") return rawVal.toLowerCase();
+      if (t === "capitalize") return rawVal.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+      if (t === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      return rawVal;
+    });
+    // Plain variable replacement
     for (const [key, val] of Object.entries(sampleData)) {
       rendered = rendered.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
     }
-    setTestPreview(rendered);
+    // Process spintax if enabled
+    if (spinContent) {
+      // Block spinning
+      rendered = rendered.replace(/\[spin\]([\s\S]*?)\[\/spin\]/gi, (_m: string, inner: string) => {
+        const blocks = inner.split("||").map(b => b.trim());
+        return blocks[Math.floor(Math.random() * blocks.length)] || "";
+      });
+      // Inline spintax
+      for (let i = 0; i < 10; i++) {
+        const regex = /\{([^{}]*?\|[^{}]*?)\}/g;
+        if (!regex.test(rendered)) break;
+        rendered = rendered.replace(regex, (_m: string, group: string) => {
+          const options = group.split("|");
+          return options[Math.floor(Math.random() * options.length)];
+        });
+      }
+    }
+    // Build SEO title preview
+    const seoTitlePattern = selectedGroup.seo_title_pattern || "";
+    const seoDescPattern = selectedGroup.seo_description_pattern || "";
+    let seoTitle = seoTitlePattern;
+    let seoDesc = seoDescPattern;
+    for (const [key, val] of Object.entries(sampleData)) {
+      if (seoTitle) seoTitle = seoTitle.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
+      if (seoDesc) seoDesc = seoDesc.replace(new RegExp(`\\{${key}\\}`, "gi"), val);
+    }
+    // Wrap with preview header showing SEO info
+    const seoPreviewHeader = (seoTitle || seoDesc) ? `
+      <div style="background:#f0f4f8;border:1px solid #d0d7de;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-family:Arial,sans-serif;">
+        <p style="margin:0 0 4px;font-size:18px;color:#1a0dab;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${seoTitle || "Page Title"}</p>
+        <p style="margin:0;font-size:13px;color:#4d5156;line-height:1.4;">${seoDesc || "Meta description preview..."}</p>
+        <p style="margin:4px 0 0;font-size:12px;color:#006621;">example.com › page-slug</p>
+      </div>` : "";
+    setTestPreview(seoPreviewHeader + rendered);
   };
 
   const resolvedBrandName = useMemo(() => {
