@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { url, action, website_id, page_id } = body;
+    const { url, action, website_id, page_id, client_html } = body;
 
     // Action: list WordPress pages from a connected website
     if ((action === "list-wp-pages" || action === "list-pages") && website_id) {
@@ -323,27 +323,66 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch the webpage
     let formattedUrl = url.trim();
     if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    const pageResponse = await fetch(formattedUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; PageGenBot/1.0)",
-        Accept: "text/html",
-      },
-    });
+    let rawHtml: string;
+    let usedClientHtml = false;
 
-    if (!pageResponse.ok) {
+    // If client sent pre-rendered HTML (for JS-heavy sites), use that
+    if (client_html && typeof client_html === "string" && client_html.length > 200) {
+      rawHtml = client_html;
+      usedClientHtml = true;
+      console.log("Using client-provided HTML for", formattedUrl);
+    } else {
+      // Server-side fetch with multiple strategies
+      const fetchHeaders = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "identity",
+      };
+
+      const pageResponse = await fetch(formattedUrl, {
+        headers: fetchHeaders,
+        redirect: "follow",
+      });
+
+      if (!pageResponse.ok) {
+        return new Response(
+          JSON.stringify({ error: `Failed to fetch page: ${pageResponse.status}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      rawHtml = await pageResponse.text();
+    }
+
+    // Detect if page is SPA with no real content
+    const bodyMatch = rawHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const bodyText = bodyMatch ? bodyMatch[1].replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]*>/g, "").trim() : "";
+    const isSpa = bodyText.length < 50 && (
+      rawHtml.includes('<div id="root"') ||
+      rawHtml.includes('<div id="app"') ||
+      rawHtml.includes('<div id="__next"') ||
+      rawHtml.includes('<div id="__nuxt"')
+    );
+
+    if (isSpa && !usedClientHtml) {
+      // Return a signal telling the client to retry with browser-fetched HTML
       return new Response(
-        JSON.stringify({ error: `Failed to fetch page: ${pageResponse.status}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          success: false,
+          spa_detected: true,
+          message: "This page uses JavaScript rendering. Retrying with browser-based capture...",
+          url: formattedUrl,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const rawHtml = await pageResponse.text();
     // Resolve all relative URLs to absolute before any processing
     const resolvedHtml = resolveRelativeUrls(rawHtml, formattedUrl);
     const bodyContent = extractBodyContent(resolvedHtml);
