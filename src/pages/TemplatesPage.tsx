@@ -30,6 +30,7 @@ import { friendlyError } from "@/lib/friendly-errors";
 import { htmlToBlocks } from "@/components/templates/TemplateVisualEditor";
 import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
+import { TemplateCreationPicker, type CreationMethod } from "@/components/templates/TemplateCreationPicker";
 
 type Template = Tables<"templates">;
 const PAGE_SIZE = 10;
