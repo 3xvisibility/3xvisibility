@@ -62,6 +62,8 @@ export default function TemplatesPage() {
   const [siteContentType, setSiteContentType] = useState<ContentType>("pages");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string; type?: string; status?: string }[]>([]);
   const [siteLoading, setSiteLoading] = useState(false);
+  // URL import loading
+  const [urlImporting, setUrlImporting] = useState(false);
 
   const importFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -388,6 +390,7 @@ export default function TemplatesPage() {
   };
 
   const importSitePage = async (pageUrl: string, pageTitle: string) => {
+    setUrlImporting(true);
     try {
       // First attempt: server-side fetch
       const { data, error } = await supabase.functions.invoke("scan-template", { body: { url: pageUrl } });
@@ -428,6 +431,8 @@ export default function TemplatesPage() {
       processImportResult(data, pageTitle);
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUrlImporting(false);
     }
   };
 
@@ -905,6 +910,19 @@ export default function TemplatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* URL Import Loading Overlay */}
+      <Dialog open={urlImporting} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-sm text-center" onPointerDownOutside={(e) => e.preventDefault()}>
+          <div className="flex flex-col items-center gap-4 py-6">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <div>
+              <h3 className="font-semibold text-lg">Importing Page...</h3>
+              <p className="text-sm text-muted-foreground mt-1">Scanning design, styles & content. This may take a few seconds.</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Creation Picker */}
       <TemplateCreationPicker
