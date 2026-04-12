@@ -249,7 +249,7 @@ export default function PgpContentGroupsPage() {
             </p>
             {templates.length === 0 && (
               <>
-                <Button onClick={() => openEditor()} className="w-full sm:w-auto">
+                <Button onClick={() => setPickerOpen(true)} className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" /> Create Content Group
                 </Button>
                 <div className="text-left max-w-sm mx-auto space-y-1.5 mt-5">
