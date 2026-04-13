@@ -1,9 +1,8 @@
 /**
- * Content-based SEO / SEA / GEO scores aligned with popular WordPress SEO plugins
- * (Yoast SEO, RankMath, All in One SEO).
+ * Content-based SEO / SEA / GEO scores for editable CMS content.
  *
- * Scoring criteria mirror the checks these plugins perform so that a 90+ score
- * here translates to a green / good score in those plugins.
+ * The rules below intentionally prioritize signals that can be improved by
+ * rewriting page text while preserving layout and structure.
  */
 
 export interface ContentScoreResult {
@@ -22,19 +21,71 @@ function toLabel(score: number): { label: ContentScoreResult["label"]; color: st
   return { label: "Poor", color: "text-destructive" };
 }
 
-/** Strip HTML to plain text */
+/** Strip HTML to plain text while keeping rough paragraph boundaries */
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|section|article|li|ul|ol|blockquote|h[1-6])>/gi, "\n")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\r/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/ *\n */g, "\n")
+    .trim();
 }
 
-/** Extract a rough focus keyword from the title (first meaningful phrase) */
-function extractFocusKeyword(title: string): string {
-  if (!title) return "";
-  // Remove common stop words to find the core keyword
-  const stops = new Set(["the", "a", "an", "in", "on", "at", "to", "for", "of", "and", "or", "is", "are", "was", "were", "be", "been", "being", "with", "by", "from", "as", "this", "that", "it", "its"]);
-  const words = title.toLowerCase().replace(/[^a-z0-9\s]/gi, "").split(/\s+/).filter(w => w.length > 2 && !stops.has(w));
-  // Return up to 3 words as focus keyword
+function normalizeWords(value: string): string[] {
+  return value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+    .replace(/[-_/]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function extractParagraphs(html: string): string[] {
+  const withBreaks = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|section|article|li|blockquote)>/gi, "$&\n\n");
+
+  return withBreaks
+    .split(/\n{2,}/)
+    .map((chunk) => stripHtml(chunk))
+    .filter(Boolean);
+}
+
+function extractHeadings(html: string): string[] {
+  return Array.from(html.matchAll(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi)).map(([, , text]) => stripHtml(text));
+}
+
+function extractFocusKeyword(title: string, slug = ""): string {
+  const stops = new Set([
+    "the", "a", "an", "in", "on", "at", "to", "for", "of", "and", "or", "is", "are", "was", "were", "be", "been", "being",
+    "with", "by", "from", "as", "this", "that", "it", "its", "your", "our", "their", "you",
+  ]);
+
+  const words = normalizeWords(`${title} ${slug}`).filter((word) => word.length > 2 && !stops.has(word));
   return words.slice(0, 3).join(" ");
+}
+
+function countMatches(text: string, regex: RegExp): number {
+  return text.match(regex)?.length ?? 0;
+}
+
+function getSlugCandidate(slug: string, url?: string): string {
+  if (url) {
+    try {
+      const parsed = new URL(url);
+      return parsed.pathname || slug;
+    } catch {
+      return slug;
+    }
+  }
+
+  return slug;
 }
 
 // ─── SEO Score (aligned with Yoast / RankMath) ──────────────
@@ -47,41 +98,39 @@ export function calculateContentSeoScore(
 ): ContentScoreResult {
   const plainText = stripHtml(content);
   const lowerText = plainText.toLowerCase();
-  const lowerContent = content.toLowerCase();
-  const focusKw = extractFocusKeyword(title);
+  const focusKw = extractFocusKeyword(title, slug);
+  const paragraphs = extractParagraphs(content);
+  const headings = extractHeadings(content);
+  const introText = (paragraphs[0] || plainText.slice(0, 400)).toLowerCase();
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
-  const maxPoints = 14;
+  const maxPoints = 12;
+  const transitionWords = /(however|therefore|additionally|moreover|furthermore|also|because|for example|in addition|as a result|first|next|finally|meanwhile|instead)/gi;
+  const passiveVoiceMatches = countMatches(lowerText, /\b(am|is|are|was|were|be|been|being)\s+\w+(ed|en)\b/gi);
+  const sentenceCount = Math.max(1, plainText.split(/[.!?]+/).filter((sentence) => sentence.trim().length > 0).length);
 
-  // 1. Has title (Yoast: SEO title)
   const hasTitle = (title || "").trim().length > 0;
   checks.push({ label: "Page has title", passed: hasTitle, tip: "Add a page title" });
   if (hasTitle) points++;
 
-  // 2. Title length 30-60 chars (Yoast green zone)
   const titleLen = (title || "").length;
   const titleOk = titleLen >= 30 && titleLen <= 60;
   checks.push({ label: "Title 30-60 chars", passed: titleOk, tip: titleLen < 30 ? "Title too short — aim for 30-60 chars" : titleLen > 60 ? "Title too long — keep under 60 chars" : "" });
   if (titleOk) points++;
 
-  // 3. Focus keyword in title (RankMath / Yoast primary check)
   const kwInTitle = focusKw ? (title || "").toLowerCase().includes(focusKw) : hasTitle;
   checks.push({ label: "Focus keyword in title", passed: kwInTitle, tip: "Include your main keyword in the page title" });
   if (kwInTitle) points++;
 
-  // 4. Content length 300+ words (Yoast minimum, RankMath wants 600+)
   const enoughWords = wordCount >= 300;
   checks.push({ label: "300+ words of content", passed: enoughWords, tip: `Only ${wordCount} words — add more content for SEO` });
   if (enoughWords) points++;
 
-  // 5. Focus keyword in first 10% of content (Yoast / RankMath)
-  const first10pct = lowerText.slice(0, Math.max(100, Math.floor(lowerText.length * 0.1)));
-  const kwInIntro = focusKw ? first10pct.includes(focusKw) : false;
+  const kwInIntro = focusKw ? introText.includes(focusKw) : false;
   checks.push({ label: "Keyword in introduction", passed: kwInIntro, tip: "Mention your focus keyword in the first paragraph" });
   if (kwInIntro) points++;
 
-  // 6. Keyword density 0.5-2.5% (RankMath)
   let kwDensityOk = false;
   if (focusKw && wordCount > 0) {
     const kwRegex = new RegExp(focusKw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
@@ -94,56 +143,31 @@ export function calculateContentSeoScore(
   }
   if (kwDensityOk) points++;
 
-  // 7. Has H1 heading (Yoast)
   const hasH1 = /<h1[^>]*>/i.test(content);
   checks.push({ label: "Has H1 heading", passed: hasH1, tip: "Add exactly one H1 heading" });
   if (hasH1) points++;
 
-  // 8. Has subheadings H2/H3 (Yoast readability / RankMath)
   const h2h3Count = (content.match(/<h[23][^>]*>/gi) || []).length;
   const hasSubheadings = h2h3Count >= 1;
   checks.push({ label: "Has H2/H3 subheadings", passed: hasSubheadings, tip: "Add subheadings to structure your content" });
   if (hasSubheadings) points++;
 
-  // 9. Focus keyword in subheading (RankMath)
-  let kwInSubheading = false;
-  if (focusKw) {
-    const headingMatches = content.match(/<h[2-6][^>]*>.*?<\/h[2-6]>/gi) || [];
-    kwInSubheading = headingMatches.some(h => h.toLowerCase().includes(focusKw));
-  }
+  const kwInSubheading = focusKw ? headings.some((heading) => heading.toLowerCase().includes(focusKw)) : false;
   checks.push({ label: "Keyword in subheading", passed: kwInSubheading, tip: "Include focus keyword in at least one H2/H3" });
   if (kwInSubheading) points++;
 
-  // 10. Images with alt text (Yoast / RankMath)
-  const imgMatch = content.match(/<img[^>]*>/gi) || [];
-  const hasImages = imgMatch.length > 0;
-  const hasAlt = imgMatch.some(tag => /alt="[^"]+"/i.test(tag));
-  checks.push({ label: "Images with alt text", passed: hasImages && hasAlt, tip: "Add images with descriptive alt attributes" });
-  if (hasImages && hasAlt) points++;
-
-  // 11. Internal/external links (Yoast / RankMath)
-  const hasLinks = /<a[^>]*href/i.test(content);
-  checks.push({ label: "Contains links", passed: hasLinks, tip: "Add internal or external links" });
-  if (hasLinks) points++;
-
-  // 12. Descriptive URL slug with keyword (RankMath / Yoast)
-  const slugClean = (slug || "").replace(/^\/+|\/+$/g, "").toLowerCase();
-  const slugOk = slugClean.length > 3 && !/^\d+$/.test(slugClean);
-  const kwInSlug = focusKw ? slugClean.includes(focusKw.split(" ")[0]) : slugOk;
-  checks.push({ label: "Keyword in URL slug", passed: kwInSlug, tip: "Include focus keyword in the URL" });
-  if (kwInSlug) points++;
-
-  // 13. Short paragraphs / readability (Yoast readability)
-  const paragraphs = plainText.split(/\n{2,}|<\/p>/i).filter(p => p.trim().length > 0);
-  const longParas = paragraphs.filter(p => p.split(/\s+/).length > 150).length;
+  const longParas = paragraphs.filter((paragraph) => paragraph.split(/\s+/).length > 150).length;
   const readableParas = longParas === 0;
   checks.push({ label: "Short readable paragraphs", passed: readableParas, tip: "Break long paragraphs into smaller ones (< 150 words each)" });
   if (readableParas) points++;
 
-  // 14. Meta description or excerpt presence (inferred from content quality)
-  const hasMetaContent = plainText.length > 50;
-  checks.push({ label: "Sufficient content for meta", passed: hasMetaContent, tip: "Add enough content for search engines to generate a snippet" });
-  if (hasMetaContent) points++;
+  const enoughTransitions = countMatches(lowerText, transitionWords) >= 2;
+  checks.push({ label: "Uses transition words", passed: enoughTransitions, tip: "Add natural transition words like however, additionally, therefore" });
+  if (enoughTransitions) points++;
+
+  const activeVoiceOk = passiveVoiceMatches <= Math.max(1, Math.floor(sentenceCount * 0.2));
+  checks.push({ label: "Mostly active voice", passed: activeVoiceOk, tip: "Prefer direct, active sentences over passive phrasing" });
+  if (activeVoiceOk) points++;
 
   const score = Math.round((points / maxPoints) * 100);
   return { score, ...toLabel(score), checks };
@@ -158,56 +182,55 @@ export function calculateContentSeaScore(
   url?: string
 ): ContentScoreResult {
   const plainText = stripHtml(content);
-  const lowerContent = content.toLowerCase();
   const lowerText = plainText.toLowerCase();
+  const headings = extractHeadings(content);
+  const paragraphs = extractParagraphs(content);
+  const introText = (paragraphs[0] || plainText.slice(0, 300)).toLowerCase();
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
   const maxPoints = 8;
+  const ctaWords = /(buy|get|shop|order|start|book|reserve|request|contact|call|discover|learn more|try|schedule|checkout|add to cart|message us|quote|subscribe|sign up)/i;
+  const benefitWords = /(save|fast|easy|simple|reliable|premium|quality|effective|powerful|best|trusted|durable|affordable|results?|boost|improve|grow|increase|protect|comfort|support)/i;
+  const trustWords = /(testimonial|review|trusted|guarantee|warranty|secure|certified|proven|since\s+\d{4}|rated|award|recommended|satisfaction|verified)/i;
+  const offerWords = /(free|discount|offer|deal|plan|package|price|pricing|quote|estimate|starting at|from only|trial|bundle|save)/i;
+  const intentWords = /(call|contact|message|book|reserve|request|checkout|order|buy|subscribe|sign up|speak to)/i;
 
-  // 1. Has a clear CTA (button or action link)
-  const ctaPatterns = /(<button|<a[^>]*class[^>]*(btn|button|cta)|type="submit"|<input[^>]*type="submit")/i;
-  const hasCta = ctaPatterns.test(content);
-  checks.push({ label: "Has CTA button/link", passed: hasCta, tip: "Add a clear call-to-action button" });
+  const hasCta = ctaWords.test(lowerText) || /<button/i.test(content) || /<a[^>]*>([\s\S]*?)<\/a>/i.test(content);
+  checks.push({ label: "Has CTA language", passed: hasCta, tip: "Use clear action phrases like book, buy, request, contact" });
   if (hasCta) points++;
 
-  // 2. Has form elements (lead capture)
-  const hasForm = /<form/i.test(content) || /<input[^>]*type="(email|tel|text)"/i.test(content);
-  checks.push({ label: "Has form / lead capture", passed: hasForm, tip: "Add a form to capture leads" });
-  if (hasForm) points++;
-
-  // 3. Has action words in title
-  const actionWords = /(buy|get|order|sign up|subscribe|download|free|save|discount|offer|deal|try|start|book|reserve|request|claim)/i;
-  const hasActionTitle = actionWords.test(title || "");
+  const hasActionTitle = ctaWords.test(title || "") || offerWords.test(title || "");
   checks.push({ label: "Action words in title", passed: hasActionTitle, tip: "Use action-oriented words in title (buy, get, free...)" });
   if (hasActionTitle) points++;
 
-  // 4. Has trust signals (reviews, testimonials, badges)
-  const trustPatterns = /(testimonial|review|rating|stars?|trust|guarantee|certified|secure|ssl|badge|award|★|⭐)/i;
-  const hasTrust = trustPatterns.test(lowerText) || trustPatterns.test(lowerContent);
+  const hasBenefitIntro = benefitWords.test(introText);
+  checks.push({ label: "Benefit-led introduction", passed: hasBenefitIntro, tip: "Open with value, benefits, or outcome-driven copy" });
+  if (hasBenefitIntro) points++;
+
+  const hasTrust = trustWords.test(lowerText);
   checks.push({ label: "Trust signals present", passed: hasTrust, tip: "Add testimonials, reviews, or trust badges" });
   if (hasTrust) points++;
 
-  // 5. Has pricing or offer information
-  const hasPricing = /(price|pricing|\$|€|£|¥|cost|plan|package|offer|discount|%\s*off)/i.test(lowerText);
-  checks.push({ label: "Pricing / offer info", passed: hasPricing, tip: "Include pricing or special offer details" });
-  if (hasPricing) points++;
+  const hasOfferLanguage = offerWords.test(lowerText) || benefitWords.test(lowerText);
+  checks.push({ label: "Offer or value language", passed: hasOfferLanguage, tip: "Mention value, pricing, offer, savings, or outcome" });
+  if (hasOfferLanguage) points++;
 
-  // 6. Focused content (not too long — ideal landing: 100-1500 words)
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const focused = wordCount >= 100 && wordCount <= 1500;
   checks.push({ label: "Focused content (100-1500 words)", passed: focused, tip: wordCount < 100 ? "Content is too thin" : "Landing page is too long — keep it focused" });
   if (focused) points++;
 
-  // 7. Has images or media
-  const hasMedia = /<img/i.test(content) || /<video/i.test(content) || /iframe/i.test(content);
-  checks.push({ label: "Has images / media", passed: hasMedia, tip: "Add visuals to improve engagement" });
-  if (hasMedia) points++;
+  const scannable = headings.length >= 2 || /<(ul|ol|table)\b/i.test(content);
+  checks.push({ label: "Scannable structure", passed: scannable, tip: "Use multiple headings, lists, or tables to make the page easy to scan" });
+  if (scannable) points++;
 
-  // 8. UTM-friendly slug
-  const slugClean = (slug || "").replace(/^\/+|\/+$/g, "");
-  const utmFriendly = slugClean.length > 2 && /^[a-z0-9-]+$/i.test(slugClean);
-  checks.push({ label: "UTM-friendly clean URL", passed: utmFriendly, tip: "Use a clean, descriptive URL slug" });
-  if (utmFriendly) points++;
+  const hasNextStep = intentWords.test(lowerText);
+  checks.push({ label: "Clear next step", passed: hasNextStep, tip: "Tell visitors exactly what to do next" });
+  if (hasNextStep) points++;
+
+  const hasUrgencyOrProof = /(today|now|instant|quick|fast|limited|same-day|immediate|\d+\+|\d{1,3}%|top-rated|best-selling)/i.test(lowerText);
+  checks.push({ label: "Urgency or proof cues", passed: hasUrgencyOrProof, tip: "Add urgency, social proof, or measurable claims when true" });
+  if (hasUrgencyOrProof) points++;
 
   const score = Math.round((points / maxPoints) * 100);
   return { score, ...toLabel(score), checks };
@@ -223,47 +246,46 @@ export function calculateContentGeoScore(
 ): ContentScoreResult {
   const plainText = stripHtml(content);
   const lowerText = plainText.toLowerCase();
-  const lowerContent = content.toLowerCase();
+  const headings = extractHeadings(content);
+  const paragraphs = extractParagraphs(content);
+  const introText = (paragraphs[0] || plainText.slice(0, 300)).toLowerCase();
+  const slugSource = getSlugCandidate(slug, url).replace(/^\/+|\/+$/g, "").toLowerCase();
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
-  const maxPoints = 8;
+  const maxPoints = 7;
+  const geoWords = /(local|nearby|near you|near me|in your area|serving|service area|coverage area|delivery area|regional|community|neighborhood|area|district|county|region|town|city)/i;
+  const serviceAreaWords = /(serving|available in|delivery in|coverage across|service area|throughout|across the area|nearby|near you|local service|regional support)/i;
+  const communityWords = /(community|neighborhood|locals|local experts|nearby|around you|close by|in the area)/i;
+  const availabilityWords = /(open|available|today|same-day|response time|hours|coverage|dispatch|delivery window|visit|call us|contact us)/i;
+  const credibilityWords = /(trusted locally|local team|regional team|community trusted|serving customers|area specialists|nearby support)/i;
 
-  const geoTitleWords = /(city|town|region|area|county|district|near|local|in\s+[A-Z])/;
-  const hasGeoTitle = geoTitleWords.test(title || "") || /[A-Z][a-z]+\s*(,\s*[A-Z]{2})?/.test(title || "");
-  checks.push({ label: "Location in title", passed: hasGeoTitle, tip: "Include city/region name in the title" });
+  const hasGeoTitle = geoWords.test((title || "").toLowerCase()) || geoWords.test(introText);
+  checks.push({ label: "Local cue in title or intro", passed: hasGeoTitle, tip: "Use phrases like local, nearby, in your area, or serving the area" });
   if (hasGeoTitle) points++;
 
-  const addressPattern = /(\d+\s+[A-Za-z]+\s+(st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|ln|lane|way|ct|court|pl|place))/i;
-  const hasAddress = addressPattern.test(plainText);
-  checks.push({ label: "Has street address", passed: hasAddress, tip: "Add a physical address" });
-  if (hasAddress) points++;
+  const hasServiceArea = serviceAreaWords.test(lowerText);
+  checks.push({ label: "Service area language", passed: hasServiceArea, tip: "Mention coverage, service area, delivery area, or nearby availability" });
+  if (hasServiceArea) points++;
 
-  const phonePattern = /(\+?[\d\s\-().]{7,15})/;
-  const hasPhone = phonePattern.test(plainText) && /(phone|tel|call|contact)/i.test(lowerText);
-  checks.push({ label: "Has phone number", passed: hasPhone, tip: "Add a contact phone number" });
-  if (hasPhone) points++;
+  const hasGeoHeading = headings.some((heading) => geoWords.test(heading.toLowerCase()));
+  checks.push({ label: "Localized heading present", passed: hasGeoHeading, tip: "Add at least one heading with local or area-specific intent" });
+  if (hasGeoHeading) points++;
 
-  const hasMap = /google\.com\/maps|maps\.google|<iframe[^>]*map/i.test(lowerContent) || /(map|direction|navigate|locate)/i.test(lowerText);
-  checks.push({ label: "Map / directions reference", passed: hasMap, tip: "Embed a map or add directions" });
-  if (hasMap) points++;
+  const hasCommunityLanguage = communityWords.test(lowerText);
+  checks.push({ label: "Community / proximity language", passed: hasCommunityLanguage, tip: "Use phrases like nearby, neighborhood, local team, or community" });
+  if (hasCommunityLanguage) points++;
 
-  const hasLocalSchema = /(LocalBusiness|PostalAddress|GeoCoordinates|latitude|longitude|addressLocality|addressRegion)/i.test(content);
-  checks.push({ label: "Local schema markup", passed: hasLocalSchema, tip: "Add LocalBusiness or GeoCoordinates structured data" });
-  if (hasLocalSchema) points++;
+  const hasAvailability = availabilityWords.test(lowerText);
+  checks.push({ label: "Availability / coverage cue", passed: hasAvailability, tip: "Mention availability, service hours, response time, or area coverage" });
+  if (hasAvailability) points++;
 
-  const hasHours = /(hour|schedule|open|close|mon|tue|wed|thu|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|am|pm)/i.test(lowerText) && /(open|hour|schedule)/i.test(lowerText);
-  checks.push({ label: "Opening hours mentioned", passed: hasHours, tip: "Add business opening hours" });
-  if (hasHours) points++;
-
-  const slugClean = (slug || "").replace(/^\/+|\/+$/g, "").toLowerCase();
-  const geoSlug = slugClean.length > 3 && !/^\d+$/.test(slugClean);
-  checks.push({ label: "Descriptive geo URL", passed: geoSlug, tip: "Include location in the URL (e.g. /plumber-paris)" });
+  const geoSlug = slugSource.length > 3 && !/^\d+$/.test(slugSource) && /^[a-z0-9-\/]+$/i.test(slugSource);
+  checks.push({ label: "Clean descriptive URL", passed: geoSlug, tip: "Use a readable URL slug with words instead of IDs" });
   if (geoSlug) points++;
 
-  const geoKeywords = /(near me|nearby|in the area|serving|service area|located|neighborhood|community|zip\s*code|postal)/i;
-  const hasGeoKeywords = geoKeywords.test(lowerText);
-  checks.push({ label: "Geo-specific keywords", passed: hasGeoKeywords, tip: 'Add phrases like "near me", "serving [area]", etc.' });
-  if (hasGeoKeywords) points++;
+  const hasLocalCredibility = credibilityWords.test(lowerText) || /(area specialists|local support|serving customers near you)/i.test(lowerText);
+  checks.push({ label: "Local credibility wording", passed: hasLocalCredibility, tip: "Add truthful local credibility phrases like local team or area specialists" });
+  if (hasLocalCredibility) points++;
 
   const score = Math.round((points / maxPoints) * 100);
   return { score, ...toLabel(score), checks };
