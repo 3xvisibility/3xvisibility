@@ -881,6 +881,23 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
               </div>
             )}
 
+            {/* URL Scan Source */}
+            {kwSource === "url_scan" && (
+              <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                <p className="text-xs font-semibold flex items-center gap-1.5"><ExternalLink className="h-3.5 w-3.5 text-primary" /> Auto-Detect Keywords from Any URL</p>
+                <p className="text-[11px] text-muted-foreground">Paste any website URL and AI will analyze the page to extract product names, services, categories, and key phrases.</p>
+                <Input
+                  placeholder="https://example.com or https://shop.com/products"
+                  value={scanUrl}
+                  onChange={(e) => setScanUrl(e.target.value)}
+                  className="h-9 font-mono text-xs"
+                />
+                <Button size="sm" onClick={fetchUrlKeywords} disabled={scanLoading || !scanUrl.trim()}>
+                  {scanLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Scanning...</> : <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Detect Keywords</>}
+                </Button>
+              </div>
+            )}
+
             {/* File Import (CSV, Excel, TXT, JSON) */}
             {(kwSource === "csv" || kwSource === "text") && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
