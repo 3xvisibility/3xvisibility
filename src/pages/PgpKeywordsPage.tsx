@@ -190,6 +190,8 @@ export default function PgpKeywordsPage() {
         sourceConfig.url = dynUrl;
       } else if (kwSource === "website") {
         sourceConfig.websiteId = webSiteId;
+      } else if (kwSource === "url_scan") {
+        sourceConfig.url = scanUrl;
       }
       const payload = { name: cleanName, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
       if (editing?.id) {
