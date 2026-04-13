@@ -81,43 +81,41 @@ export class WooCommerceConnector implements CmsConnector {
   }
 
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
+    if (payload.product_data) return this.updateProduct(externalId, payload);
+
+    const auth = btoa(`${this.consumerKey}:${this.consumerSecret}`);
     const body: Record<string, unknown> = {};
-    if (payload.title) body.name = payload.title;
-    if (payload.content) body.description = payload.content;
+
+    if (payload.title || payload.seo_title) body.title = payload.title || payload.seo_title;
+    if (payload.content) body.content = payload.content;
     if (payload.slug) body.slug = slugify(payload.slug);
-    if (payload.product_data?.price) body.regular_price = String(payload.product_data.price);
-    if (payload.product_data?.images?.length) {
-      body.images = payload.product_data.images
-        .filter((img) => img.src && !img.src.startsWith("data:"))
-        .map((img) => ({ src: img.src, alt: img.alt }));
-    }
+    if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
+    if (payload.excerpt) body.excerpt = payload.excerpt;
 
-    const metaData: { key: string; value: string }[] = [];
-    if (payload.seo_title) metaData.push({ key: "_yoast_wpseo_title", value: payload.seo_title });
-    if (payload.seo_description) {
-      body.short_description = payload.seo_description;
-      metaData.push({ key: "_yoast_wpseo_metadesc", value: payload.seo_description });
-    }
-    if (metaData.length > 0) body.meta_data = metaData;
+    const meta: Record<string, unknown> = {};
+    if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
+    if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
+    if (payload.seo_keywords?.length) meta._yoast_wpseo_focuskw = payload.seo_keywords[0];
+    if (Object.keys(meta).length > 0) body.meta = meta;
 
-    const res = await fetch(
-      `${this.baseUrl}/wp-json/wc/v3/products/${externalId}?${this.authQuery}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }
-    );
+    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages/${externalId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`WooCommerce update error [${res.status}]: ${err}`);
+      throw new Error(`WooCommerce page update error [${res.status}]: ${err}`);
     }
 
     const data = await res.json();
     return {
       external_id: String(data.id),
-      url: data.permalink || `${this.baseUrl}/product/${data.slug}`,
+      url: data.link || `${this.baseUrl}/${data.slug}`,
     };
   }
 

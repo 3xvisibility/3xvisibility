@@ -90,12 +90,14 @@ Deno.serve(async (req) => {
 
       try {
         const connector = await createConnector(website as WebsiteRecord);
+        const isProductContent = page_type === "product";
         const updatePayload: Record<string, any> = {
           title: manual_title || page_title,
           slug: page_slug,
           content: manual_content || page_content,
           status: "publish",
         };
+        if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
         if (seo_title) updatePayload.seo_title = seo_title;
         if (seo_description) updatePayload.seo_description = seo_description;
@@ -424,6 +426,7 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
     if (website && page_external_id && !skip_push) {
       try {
         const connector = await createConnector(website as WebsiteRecord);
+        const isProductContent = page_type === "product";
         // Always UPDATE existing page — never create a new one
         const updatePayload: Record<string, any> = {
           title: result.seo_title || page_title,
@@ -431,6 +434,7 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
           status: "publish",
         };
 
+        if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
         if (result.content && fields.includes("content")) {
           updatePayload.content = result.content;
         }
