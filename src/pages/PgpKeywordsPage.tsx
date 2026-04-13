@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Plus, KeyRound, Trash2, Upload, Download, Copy, Search as SearchIcon,
   Pencil, MoreVertical, Loader2, Sparkles, FileText, Database, ChevronLeft, ChevronRight,
-  MapPin, Globe, Link2, Rss, Wand2,
+  MapPin, Globe, Link2, Rss, Wand2, ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +78,10 @@ export default function PgpKeywordsPage() {
   // Website source state
   const [webSiteId, setWebSiteId] = useState("");
   const [webLoading, setWebLoading] = useState(false);
+
+  // URL scan source state
+  const [scanUrl, setScanUrl] = useState("");
+  const [scanLoading, setScanLoading] = useState(false);
 
   // Auto wizard state
   const [wizService, setWizService] = useState("");
