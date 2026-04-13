@@ -49,6 +49,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
+import {
+  readPageEditorDraft,
+  writePageEditorDraft,
+  type PageEditorMode,
+  type PageEditorSeoResult,
+  type PageEditorTab,
+} from "@/lib/website-content-persistence";
 
 interface ContentItem {
   id: string;
@@ -114,26 +121,23 @@ export function PageEditDialog({
   onUpdated,
 }: PageEditDialogProps) {
   const { toast } = useToast();
-  const [editTitle, setEditTitle] = useState(decodeHtmlEntities(page.title));
-  const [editContent, setEditContent] = useState(page.content);
-  const [editExcerpt, setEditExcerpt] = useState(page.excerpt || "");
+  const initialDraft = useMemo(() => readPageEditorDraft(websiteId, page.id), [websiteId, page.id]);
+  const [editTitle, setEditTitle] = useState(() => initialDraft?.editTitle ?? decodeHtmlEntities(page.title));
+  const [editContent, setEditContent] = useState(() => initialDraft?.editContent ?? page.content);
+  const [editExcerpt, setEditExcerpt] = useState(() => (initialDraft?.editExcerpt ?? page.excerpt) || "");
   const [publishing, setPublishing] = useState(false);
-  const [published, setPublished] = useState(false);
-  const [pushError, setPushError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("edit");
-  const [editMode, setEditMode] = useState<"visual" | "html" | "split">("visual");
+  const [published, setPublished] = useState(() => initialDraft?.published ?? false);
+  const [pushError, setPushError] = useState<string | null>(() => initialDraft?.pushError ?? null);
+  const [activeTab, setActiveTab] = useState<PageEditorTab>(() => initialDraft?.activeTab ?? "edit");
+  const [editMode, setEditMode] = useState<PageEditorMode>(() => initialDraft?.editMode ?? "visual");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeSyncRef = useRef(false);
 
   // SEO optimize state
-  const [seoFields, setSeoFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
-  const [seoInstruction, setSeoInstruction] = useState("");
+  const [seoFields, setSeoFields] = useState<string[]>(() => initialDraft?.seoFields?.length ? initialDraft.seoFields : ["seo_title", "seo_description", "seo_keywords"]);
+  const [seoInstruction, setSeoInstruction] = useState(() => initialDraft?.seoInstruction ?? "");
   const [optimizing, setOptimizing] = useState(false);
-  const [seoResult, setSeoResult] = useState<{
-    seo_title?: string;
-    seo_description?: string;
-    seo_keywords?: string[];
-  } | null>(null);
+  const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(() => initialDraft?.seoResult ?? null);
 
   const originalTitle = decodeHtmlEntities(page.title);
   const originalContent = page.content;
@@ -152,6 +156,67 @@ export function PageEditDialog({
     () => contentChanges.filter((c) => c.type !== "same").length,
     [contentChanges]
   );
+
+  const persistDraft = useCallback(() => {
+    if (!open) return;
+
+    writePageEditorDraft({
+      pageId: page.id,
+      websiteId,
+      editTitle,
+      editContent,
+      editExcerpt,
+      activeTab,
+      editMode,
+      seoFields,
+      seoInstruction,
+      seoResult,
+      published,
+      pushError,
+    });
+  }, [
+    activeTab,
+    editContent,
+    editExcerpt,
+    editMode,
+    editTitle,
+    open,
+    page.id,
+    published,
+    pushError,
+    seoFields,
+    seoInstruction,
+    seoResult,
+    websiteId,
+  ]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const timeoutId = window.setTimeout(() => {
+      persistDraft();
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [open, persistDraft]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        persistDraft();
+      }
+    };
+
+    window.addEventListener("pagehide", persistDraft);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("pagehide", persistDraft);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [open, persistDraft]);
 
   // Sync content to visual iframe
   const syncToIframe = useCallback((html: string) => {
@@ -348,7 +413,7 @@ export function PageEditDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setPublished(false); setPushError(null); setSeoResult(null); } }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100%-1rem)] sm:max-w-4xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] flex flex-col p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-sm sm:text-base">
@@ -361,7 +426,7 @@ export function PageEditDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PageEditorTab)} className="flex-1 flex flex-col min-h-0">
           <TabsList className="shrink-0 flex-wrap h-auto gap-0.5 p-1">
             <TabsTrigger value="edit" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-3">
               <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Edit
