@@ -316,7 +316,8 @@ Deno.serve(async (req) => {
     for (const page of pages) {
       // Resolve website if not directly joined
       if (!page.websites) {
-        let resolvedWebsiteId: string | null = page.website_id || null;
+        const originalWebsiteId = page.website_id || null;
+        let resolvedWebsiteId: string | null = originalWebsiteId;
 
         // Try resolving from campaign
         if (!resolvedWebsiteId && page.campaign_id) {
@@ -344,7 +345,7 @@ Deno.serve(async (req) => {
             page.websites = website;
             page.website_id = resolvedWebsiteId;
 
-            if (page.website_id !== resolvedWebsiteId) {
+            if (originalWebsiteId !== resolvedWebsiteId) {
               await supabase.from("generated_pages").update({ website_id: resolvedWebsiteId }).eq("id", page.id);
             }
           }
