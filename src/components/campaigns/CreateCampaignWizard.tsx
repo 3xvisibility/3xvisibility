@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
@@ -29,7 +30,8 @@ import { isDesignVariable } from "@/lib/design-vars-filter";
 import {
   Plus, Upload, ArrowRight, Check, AlertTriangle, Play, Loader2, Eye,
   MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon,
-  Settings2, Globe, Database as DatabaseIcon,
+  Settings2, Globe, Database as DatabaseIcon, Sparkles, Wand2, Info,
+  CheckCircle2, XCircle, Lightbulb, ArrowLeft,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -121,6 +123,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [testPreviewOpen, setTestPreviewOpen] = useState(false);
   const [testPreviewResult, setTestPreviewResult] = useState<RenderResult | null>(null);
   const [testGenerating, setTestGenerating] = useState(false);
+
+  // AI states
+  const [aiSuggestingName, setAiSuggestingName] = useState(false);
+  const [aiNameSuggestions, setAiNameSuggestions] = useState<string[]>([]);
+  const [aiReadinessCheck, setAiReadinessCheck] = useState<any>(null);
+  const [aiCheckingReadiness, setAiCheckingReadiness] = useState(false);
 
   const toggleCampaignType = (val: "seo" | "sea" | "geo") => {
     setCampaignTypes(prev => {
@@ -235,16 +243,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   // --- Wizard steps ---
   const getWizardSteps = () => {
     const steps = [
-      { num: 1, label: "Basics" },
-      { num: 2, label: "Type" },
-      { num: 3, label: "Data" },
-      { num: 4, label: "Template" },
+      { num: 1, label: "Basics", icon: Layers },
+      { num: 2, label: "Data", icon: Upload },
+      { num: 3, label: "Template", icon: Layers },
     ];
-    let nextNum = 5;
-    if (campaignTypes.includes("sea")) steps.push({ num: nextNum++, label: "UTM" });
-    if (campaignTypes.includes("geo")) steps.push({ num: nextNum++, label: "GEO" });
-    steps.push({ num: nextNum++, label: "Website" });
-    steps.push({ num: nextNum++, label: "Settings" });
+    let nextNum = 4;
+    if (campaignTypes.includes("sea")) steps.push({ num: nextNum++, label: "UTM", icon: Target });
+    if (campaignTypes.includes("geo")) steps.push({ num: nextNum++, label: "GEO", icon: MapPin });
+    steps.push({ num: nextNum++, label: "Review", icon: CheckCircle2 });
     return steps;
   };
 
@@ -253,10 +259,75 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
   const canProceed = () => {
     if (step === 1) return !!campaignName;
-    if (step === 2) return true;
-    if (step === 3) return dataSource === "csv" ? csvData.length > 0 : dataSource === "locations" ? locationData.length > 0 : selectedPageIds.size > 0;
-    if (step === 4) return !!selectedTemplate;
+    if (step === 2) return dataSource === "csv" ? csvData.length > 0 : dataSource === "locations" ? locationData.length > 0 : selectedPageIds.size > 0;
+    if (step === 3) return !!selectedTemplate;
     return true;
+  };
+
+  // --- AI Helpers ---
+  const suggestCampaignName = async () => {
+    setAiSuggestingName(true);
+    try {
+      const tpl = templates.find(t => t.id === selectedTemplate);
+      const { data, error } = await supabase.functions.invoke("ai-campaign-assistant", {
+        body: {
+          action: "suggest_name",
+          context: {
+            template_name: tpl?.name || "",
+            csv_headers: effectiveCsvHeaders,
+            campaign_type: campaignTypes.join("+"),
+            language: campaignLanguage,
+            sample_row: effectiveCsvData[0] || {},
+          },
+        },
+      });
+      if (error) throw error;
+      const parsed = JSON.parse(data.result);
+      setAiNameSuggestions(Array.isArray(parsed) ? parsed : []);
+    } catch (err: any) {
+      toast({ title: "AI suggestion failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiSuggestingName(false);
+    }
+  };
+
+  const runReadinessCheck = async () => {
+    setAiCheckingReadiness(true);
+    try {
+      const tpl = templates.find(t => t.id === selectedTemplate);
+      const unmappedVars = variableMapping?.matched.filter(m => !m.column && !m.customValue).map(m => m.variable) || [];
+      const mappedVars: Record<string, string> = {};
+      variableMapping?.matched.forEach(m => {
+        if (m.column) mappedVars[m.variable] = m.column;
+        else if (m.customValue) mappedVars[m.variable] = `custom: ${m.customValue}`;
+      });
+      const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+      const { data, error } = await supabase.functions.invoke("ai-campaign-assistant", {
+        body: {
+          action: "readiness_check",
+          context: {
+            name: campaignName,
+            template_name: tpl?.name || "",
+            row_count: effectiveCsvData.length,
+            csv_headers: effectiveCsvHeaders,
+            mapped_vars: mappedVars,
+            unmapped_vars: unmappedVars,
+            campaign_types: campaignTypes,
+            website_name: ws?.name || "",
+            publish_mode: publishMode,
+            seo_title_pattern: tpl?.seo_title_pattern || "",
+            seo_description_pattern: tpl?.seo_description_pattern || "",
+          },
+        },
+      });
+      if (error) throw error;
+      const parsed = JSON.parse(data.result);
+      setAiReadinessCheck(parsed);
+    } catch (err: any) {
+      toast({ title: "Readiness check failed", description: err.message, variant: "destructive" });
+    } finally {
+      setAiCheckingReadiness(false);
+    }
   };
 
   // --- CSV Processing ---
@@ -439,41 +510,66 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setDataSource("csv"); setLocationData([]); setWebsiteForPages(""); setWebsiteContentType("all");
     setSelectedPageIds(new Set()); setWebsitePagesSearch("");
     setManualMappings({}); setCustomValues({}); setTransforms({}); setTargetFieldMappings({});
+    setAiNameSuggestions([]); setAiReadinessCheck(null);
   };
+
+  // Readiness stats for review step
+  const readinessItems = useMemo(() => {
+    const items: { label: string; status: "ok" | "warn" | "error"; detail: string }[] = [];
+    items.push({ label: "Campaign Name", status: campaignName ? "ok" : "error", detail: campaignName || "Not set" });
+    items.push({ label: "Data Source", status: effectiveCsvData.length > 0 ? "ok" : "error", detail: `${effectiveCsvData.length} rows from ${dataSource}` });
+    items.push({ label: "Template", status: selectedTemplate ? "ok" : "error", detail: templates.find(t => t.id === selectedTemplate)?.name || "Not selected" });
+    
+    const unmapped = variableMapping?.matched.filter(m => !m.column && !m.customValue) || [];
+    items.push({ label: "Variable Mapping", status: unmapped.length === 0 ? "ok" : unmapped.length <= 2 ? "warn" : "error", detail: unmapped.length === 0 ? "All mapped" : `${unmapped.length} unmapped` });
+    
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    items.push({ label: "SEO Title Pattern", status: tpl?.seo_title_pattern ? "ok" : "warn", detail: tpl?.seo_title_pattern || "Using default" });
+    items.push({ label: "Website", status: (selectedWebsite || websiteForPages) ? "ok" : "warn", detail: websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "Not assigned" });
+    
+    return items;
+  }, [campaignName, effectiveCsvData, dataSource, selectedTemplate, templates, variableMapping, selectedWebsite, websiteForPages, websites]);
 
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); else onOpenChange(v); }}>
-        <DialogContent className="sm:max-w-[640px] w-[calc(100%-1rem)] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
+        <DialogContent className="sm:max-w-[680px] w-[calc(100%-1rem)] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
           {/* Header */}
           <div className="px-5 pt-5 pb-0 shrink-0">
             <DialogHeader className="pb-0">
-              <DialogTitle className="text-base sm:text-lg font-bold">{t("campaigns.createCampaign")}</DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">{t("campaigns.description")}</DialogDescription>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                  <Sparkles className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base sm:text-lg font-bold">{t("campaigns.createCampaign")}</DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground">Step {step} of {totalSteps} — {wizardSteps[step - 1]?.label}</DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
           </div>
 
-          {/* Steps indicator */}
-          <div className="px-5 pt-4 pb-2 overflow-x-auto shrink-0">
-            <div className="flex items-start justify-between min-w-0">
+          {/* Steps indicator - compact pills */}
+          <div className="px-5 pt-3 pb-2 shrink-0">
+            <div className="flex items-center gap-1">
               {wizardSteps.map((s, i) => (
                 <div key={s.num} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center min-w-[32px]">
-                    <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ring-2 ring-offset-2 ring-offset-background ${
-                      step > s.num ? "bg-primary text-primary-foreground ring-primary" :
-                      step === s.num ? "bg-primary text-primary-foreground ring-primary shadow-sm" :
-                      "bg-muted text-muted-foreground ring-border"
-                    }`}>
-                      {step > s.num ? <Check className="h-3 w-3" /> : s.num}
-                    </div>
-                    <span className={`text-[9px] mt-1 font-medium truncate max-w-[40px] text-center ${step >= s.num ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</span>
-                  </div>
-                  {i < wizardSteps.length - 1 && (
-                    <div className="flex-1 px-0.5 -mt-3">
-                      <div className={`h-[2px] w-full rounded-full transition-colors ${step > s.num ? "bg-primary" : "bg-border"}`} />
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => { if (s.num < step) setStep(s.num); }}
+                    className={cn(
+                      "h-2 flex-1 rounded-full transition-all",
+                      step > s.num ? "bg-primary cursor-pointer" :
+                      step === s.num ? "bg-primary" :
+                      "bg-border"
+                    )}
+                  />
                 </div>
+              ))}
+            </div>
+            <div className="flex justify-between mt-1.5">
+              {wizardSteps.map(s => (
+                <span key={s.num} className={cn("text-[9px] font-medium", step >= s.num ? "text-foreground" : "text-muted-foreground/50")}>{s.label}</span>
               ))}
             </div>
           </div>
@@ -481,72 +577,104 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           {/* Step Content */}
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="px-5 py-4 min-h-[180px] space-y-4 animate-fade-in">
-              {/* Step 1: Basics */}
+              {/* Step 1: Basics + Type (combined) */}
               {step === 1 && (
                 <>
-                  <div>
-                    <Label className="text-sm font-semibold mb-2 block">Campaign Name</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Campaign Name</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs gap-1.5 text-primary"
+                        onClick={suggestCampaignName}
+                        disabled={aiSuggestingName}
+                      >
+                        {aiSuggestingName ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                        AI Suggest
+                      </Button>
+                    </div>
                     <Input placeholder="e.g., Python Training Cities" value={campaignName} onChange={(e) => setCampaignName(e.target.value)} className="rounded-xl h-11" />
+                    {aiNameSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {aiNameSuggestions.map((name, i) => (
+                          <button key={i} type="button" onClick={() => { setCampaignName(name); setAiNameSuggestions([]); }}
+                            className="px-3 py-1.5 rounded-lg border border-primary/20 bg-primary/5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors">
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Campaign Type inline */}
+                  <div>
+                    <Label className="text-sm font-semibold mb-2 block">Campaign Type</Label>
+                    <div className="flex gap-2">
+                      {([
+                        { value: "seo" as const, label: "SEO", icon: SearchIconLucide, color: "text-emerald-600" },
+                        { value: "sea" as const, label: "SEA", icon: Target, color: "text-blue-600" },
+                        { value: "geo" as const, label: "GEO", icon: MapPin, color: "text-orange-600" },
+                      ]).map(t => {
+                        const isSelected = campaignTypes.includes(t.value);
+                        return (
+                          <button key={t.value} type="button" onClick={() => toggleCampaignType(t.value)}
+                            className={cn(
+                              "flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all relative",
+                              isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30"
+                            )}>
+                            {isSelected && <div className="absolute top-1 right-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center"><Check className="h-2.5 w-2.5 text-primary-foreground" /></div>}
+                            <t.icon className={cn("h-4 w-4", isSelected ? "text-primary" : "text-muted-foreground")} />
+                            <span className={cn("text-sm font-semibold", isSelected ? "text-primary" : "text-foreground")}>{t.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-sm font-semibold mb-2 block">Language</Label>
+                      <Label className="text-xs font-medium mb-1.5 block">Language</Label>
                       <Select value={campaignLanguage} onValueChange={setCampaignLanguage}>
-                        <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="rounded-xl h-10"><SelectValue /></SelectTrigger>
                         <SelectContent>{LANGUAGES.map(l => <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-sm font-semibold mb-2 block">Country</Label>
+                      <Label className="text-xs font-medium mb-1.5 block">Country</Label>
                       <Select value={campaignCountry} onValueChange={setCampaignCountry}>
-                        <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="rounded-xl h-10"><SelectValue /></SelectTrigger>
                         <SelectContent className="max-h-80">{ALL_COUNTRIES.map(c => <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                   </div>
-                </>
-              )}
 
-              {/* Step 2: Type */}
-              {step === 2 && (
-                <>
-                  <Label className="text-sm font-semibold mb-2 block">Campaign Type <span className="text-muted-foreground font-normal">(select one or more)</span></Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {([
-                      { value: "seo" as const, label: "SEO", icon: SearchIconLucide, desc: "Organic search pages" },
-                      { value: "sea" as const, label: "SEA", icon: Target, desc: "Paid landing pages" },
-                      { value: "geo" as const, label: "GEO", icon: MapPin, desc: "Local / geo pages" },
-                    ]).map(t => {
-                      const isSelected = campaignTypes.includes(t.value);
-                      return (
-                        <button key={t.value} type="button" onClick={() => toggleCampaignType(t.value)}
-                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all relative ${
-                            isSelected ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30 hover:bg-muted/50"
-                          }`}>
-                          {isSelected && <div className="absolute top-1.5 right-1.5 h-4 w-4 rounded-full bg-primary flex items-center justify-center"><Check className="h-2.5 w-2.5 text-primary-foreground" /></div>}
-                          <t.icon className={`h-6 w-6 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                          <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>{t.label}</span>
-                          <span className="text-[10px] text-muted-foreground text-center">{t.desc}</span>
-                        </button>
-                      );
-                    })}
+                  {/* Website selection inline */}
+                  <div>
+                    <Label className="text-xs font-medium mb-1.5 block">Publish to Website <span className="text-muted-foreground">(optional)</span></Label>
+                    <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
+                      <SelectTrigger className="rounded-xl h-10"><SelectValue placeholder="Select website" /></SelectTrigger>
+                      <SelectContent>{websites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.type})</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
                 </>
               )}
 
-              {/* Step 3: Data Source */}
-              {step === 3 && (
+              {/* Step 2: Data Source */}
+              {step === 2 && (
                 <>
                   <div className="flex items-center gap-1 p-1 bg-muted rounded-xl">
                     {([
-                      { key: "csv" as const, icon: Upload, label: "CSV" },
+                      { key: "csv" as const, icon: Upload, label: "CSV / Excel" },
                       { key: "website" as const, icon: Globe, label: "Website" },
-                      { key: "locations" as const, icon: MapPin, label: "Locations" },
+                      { key: "locations" as const, icon: MapPin, label: "Locations DB" },
                     ]).map(ds => (
                       <button key={ds.key} type="button" onClick={() => setDataSource(ds.key)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[11px] font-medium transition-all ${
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg text-xs font-medium transition-all",
                           dataSource === ds.key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                        }`}>
+                        )}>
                         <ds.icon className="h-3.5 w-3.5" /> {ds.label}
                       </button>
                     ))}
@@ -558,28 +686,35 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         onDragOver={(e) => { e.preventDefault(); setIsDraggingCsv(true); }}
                         onDragLeave={() => setIsDraggingCsv(false)}
                         onDrop={handleCsvDrop}
-                        className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+                        className={cn(
+                          "relative border-2 border-dashed rounded-xl p-8 text-center transition-all",
                           isDraggingCsv ? "border-primary bg-primary/5" : csvFile ? "border-success/30 bg-success/5" : "border-border hover:border-primary/40"
-                        }`}>
-                        <Upload className={`h-8 w-8 mx-auto mb-2 ${csvFile ? "text-success" : "text-muted-foreground/40"}`} />
+                        )}>
                         {csvFile ? (
-                          <div>
+                          <div className="space-y-1">
+                            <CheckCircle2 className="h-8 w-8 mx-auto text-success" />
                             <p className="text-sm font-medium">{csvFile.name}</p>
                             <p className="text-xs text-muted-foreground">{csvHeaders.length} columns · {csvData.length} rows</p>
+                            <Button type="button" variant="ghost" size="sm" className="mt-2 text-xs text-muted-foreground" onClick={() => { setCsvFile(null); setCsvHeaders([]); setCsvData([]); setCsvRawText(""); }}>
+                              Remove & re-upload
+                            </Button>
                           </div>
                         ) : (
-                          <div>
-                            <p className="text-sm font-medium">Drop CSV, JSON, or Excel file here</p>
-                            <p className="text-xs text-muted-foreground">Supports .csv, .json, .xlsx, .xls — or click to browse</p>
+                          <div className="space-y-2">
+                            <Upload className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                            <p className="text-sm font-medium">Drop your file here</p>
+                            <p className="text-[11px] text-muted-foreground">Supports CSV, JSON, Excel (.xlsx, .xls)</p>
                           </div>
                         )}
                         <input type="file" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="absolute inset-0 opacity-0 cursor-pointer"
                           onChange={(e) => { const f = e.target.files?.[0]; if (f) processCsvFile(f); }} />
                       </div>
                       {csvData.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          <span className="text-xs text-muted-foreground">Columns:</span>
-                          {csvHeaders.map(h => <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>)}
+                        <div className="rounded-xl border border-border bg-muted/30 p-3">
+                          <p className="text-xs font-medium mb-2">Detected Columns</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {csvHeaders.map(h => <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>)}
+                          </div>
                         </div>
                       )}
                     </>
@@ -596,7 +731,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           <div className="flex items-center gap-1 p-0.5 bg-muted rounded-lg">
                             {(["all", "pages", "products"] as const).map(opt => (
                               <button key={opt} type="button" onClick={() => { setWebsiteContentType(opt); setSelectedPageIds(new Set()); }}
-                                className={`flex-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${websiteContentType === opt ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}>
+                                className={cn("flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all", websiteContentType === opt ? "bg-card shadow-sm text-foreground" : "text-muted-foreground")}>
                                 {opt.charAt(0).toUpperCase() + opt.slice(1)}
                               </button>
                             ))}
@@ -661,15 +796,23 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                 </>
               )}
 
-              {/* Step 4: Template + Mapping */}
-              {step === 4 && (
+              {/* Step 3: Template + Mapping */}
+              {step === 3 && (
                 <>
                   <div>
                     <Label className="text-sm font-semibold mb-2 block">Template</Label>
-                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                      <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select template" /></SelectTrigger>
-                      <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
-                    </Select>
+                    {templates.length === 0 ? (
+                      <div className="rounded-xl border-2 border-dashed border-border p-6 text-center">
+                        <Layers className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground">No templates yet</p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">Create a template first from the Templates page</p>
+                      </div>
+                    ) : (
+                      <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                        <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select template" /></SelectTrigger>
+                        <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )}
                   </div>
                   {selectedTemplate && effectiveCsvHeaders.length > 0 && (
                     <MappingStep
@@ -733,60 +876,105 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                 </div>
               )}
 
-              {/* Website step */}
-              {wizardSteps[step - 1]?.label === "Website" && (
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">Website (optional)</Label>
-                  <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
-                    <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select website" /></SelectTrigger>
-                    <SelectContent>{websites.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-2">Optional — assign later.</p>
-                </div>
-              )}
-
-              {/* Settings step */}
-              {wizardSteps[step - 1]?.label === "Settings" && (
+              {/* Review Step (combined settings + readiness) */}
+              {wizardSteps[step - 1]?.label === "Review" && (
                 <div className="space-y-5">
-                  <div className="flex items-center gap-2"><Settings2 className="h-4 w-4 text-primary" /><Label className="text-sm font-semibold">Generation Settings</Label></div>
-
-                  {/* Publish Mode */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Publish Mode</Label>
-                    <RadioGroup value={publishMode} onValueChange={v => setPublishMode(v as any)} className="flex gap-4">
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="draft" id="w-draft" /><Label htmlFor="w-draft" className="text-sm cursor-pointer">Draft</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="published" id="w-pub" /><Label htmlFor="w-pub" className="text-sm cursor-pointer">Published</Label></div>
-                    </RadioGroup>
+                  {/* Readiness Checklist */}
+                  <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary" /> Readiness Check
+                      </h4>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 text-xs gap-1.5 text-primary" onClick={runReadinessCheck} disabled={aiCheckingReadiness}>
+                        {aiCheckingReadiness ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                        AI Check
+                      </Button>
+                    </div>
+                    <div className="space-y-1.5">
+                      {readinessItems.map(item => (
+                        <div key={item.label} className="flex items-center gap-2 text-xs">
+                          {item.status === "ok" ? <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" /> :
+                           item.status === "warn" ? <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0" /> :
+                           <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />}
+                          <span className="font-medium">{item.label}</span>
+                          <span className="text-muted-foreground ml-auto truncate max-w-[200px]">{item.detail}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Max Rows */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium">Max Rows</Label>
-                    <Input type="number" min="1" value={maxRows} onChange={e => setMaxRows(e.target.value)} placeholder={`All (${effectiveCsvData.length})`} className="rounded-xl h-9 text-sm w-48" />
+                  {/* AI Readiness Result */}
+                  {aiReadinessCheck && (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-primary" /> AI Analysis
+                        </span>
+                        <Badge variant={aiReadinessCheck.ready ? "default" : "destructive"} className="text-xs">
+                          Score: {aiReadinessCheck.score}/100
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {(aiReadinessCheck.issues || []).map((issue: any, i: number) => (
+                          <div key={i} className="flex items-start gap-2 text-xs">
+                            {issue.type === "error" ? <XCircle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" /> :
+                             issue.type === "warning" ? <AlertTriangle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" /> :
+                             <Lightbulb className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />}
+                            <div>
+                              <span className="font-medium">{issue.message}</span>
+                              {issue.fix && <p className="text-muted-foreground mt-0.5">{issue.fix}</p>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Settings */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Publish Mode</Label>
+                      <RadioGroup value={publishMode} onValueChange={v => setPublishMode(v as any)} className="flex gap-3">
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="draft" id="w-draft" /><Label htmlFor="w-draft" className="text-xs cursor-pointer">Draft</Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="published" id="w-pub" /><Label htmlFor="w-pub" className="text-xs cursor-pointer">Published</Label></div>
+                      </RadioGroup>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Max Rows</Label>
+                      <Input type="number" min="1" value={maxRows} onChange={e => setMaxRows(e.target.value)} placeholder={`All (${effectiveCsvData.length})`} className="rounded-xl h-9 text-sm" />
+                    </div>
                   </div>
 
-                  {/* Method */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Method</Label>
-                    <RadioGroup value={generationMethod} onValueChange={v => setGenerationMethod(v as any)} className="flex flex-col gap-1.5">
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="all" id="m-all" /><Label htmlFor="m-all" className="text-sm cursor-pointer">All Combinations</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="sequential" id="m-seq" /><Label htmlFor="m-seq" className="text-sm cursor-pointer">Sequential</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="random" id="m-rnd" /><Label htmlFor="m-rnd" className="text-sm cursor-pointer">Random</Label></div>
-                    </RadioGroup>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Method</Label>
+                      <Select value={generationMethod} onValueChange={v => setGenerationMethod(v as any)}>
+                        <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Combinations</SelectItem>
+                          <SelectItem value="sequential">Sequential</SelectItem>
+                          <SelectItem value="random">Random</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Schedule</Label>
+                      <Select value={scheduleMode} onValueChange={v => setScheduleMode(v as any)}>
+                        <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="now">Run Now</SelectItem>
+                          <SelectItem value="later">Schedule Later</SelectItem>
+                          <SelectItem value="recurring">Recurring</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  {/* Schedule */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Schedule</Label>
-                    <RadioGroup value={scheduleMode} onValueChange={v => setScheduleMode(v as any)} className="flex flex-wrap gap-4">
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="now" id="s-now" /><Label htmlFor="s-now" className="text-sm cursor-pointer">Run now</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="later" id="s-later" /><Label htmlFor="s-later" className="text-sm cursor-pointer">Schedule</Label></div>
-                      <div className="flex items-center space-x-2"><RadioGroupItem value="recurring" id="s-rec" /><Label htmlFor="s-rec" className="text-sm cursor-pointer">Recurring</Label></div>
-                    </RadioGroup>
-                    {(scheduleMode === "later" || scheduleMode === "recurring") && (
+                  {(scheduleMode === "later" || scheduleMode === "recurring") && (
+                    <div className="flex gap-3">
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("w-60 justify-start text-left font-normal rounded-xl h-9 text-sm", !scheduledDate && "text-muted-foreground")}>
+                          <Button variant="outline" className={cn("justify-start text-left font-normal rounded-xl h-9 text-sm flex-1", !scheduledDate && "text-muted-foreground")}>
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {scheduledDate ? format(scheduledDate, "PPP") : "Pick a date"}
                           </Button>
@@ -795,41 +983,31 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           <Calendar mode="single" selected={scheduledDate} onSelect={setScheduledDate} disabled={d => d < new Date()} initialFocus className="p-3 pointer-events-auto" />
                         </PopoverContent>
                       </Popover>
-                    )}
-                    {scheduleMode === "recurring" && (
-                      <Select value={recurringInterval} onValueChange={v => setRecurringInterval(v as any)}>
-                        <SelectTrigger className="w-48 h-9 text-sm rounded-xl"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
+                      {scheduleMode === "recurring" && (
+                        <Select value={recurringInterval} onValueChange={v => setRecurringInterval(v as any)}>
+                          <SelectTrigger className="w-36 h-9 text-sm rounded-xl"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  )}
 
-                  {/* SEO Title Format */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">SEO Title Format</Label>
-                    <Select value={seoTitleFormat} onValueChange={setSeoTitleFormat}>
-                      <SelectTrigger className="rounded-xl h-9 text-sm w-full sm:w-72"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="{title} | {brand}">{"{title} | {brand}"}</SelectItem>
-                        <SelectItem value="{brand} - {title}">{"{brand} - {title}"}</SelectItem>
-                        <SelectItem value="{title}">{"{title}"} (no brand)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Summary */}
-                  <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1.5 text-xs">
-                    <h4 className="text-sm font-semibold mb-2">Summary</h4>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Data</span><span className="font-medium capitalize">{dataSource}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Rows</span><span className="font-medium">{maxRows ? `${maxRows} / ${effectiveCsvData.length}` : effectiveCsvData.length}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium">{templates.find(t => t.id === selectedTemplate)?.name || "None"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignTypes.join(" + ")}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Publish</span><span className="font-medium capitalize">{publishMode}</span></div>
+                  {/* Summary Card */}
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Summary</h4>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                      <div className="flex justify-between"><span className="text-muted-foreground">Name</span><span className="font-medium truncate ml-2 max-w-[150px]">{campaignName}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium uppercase">{campaignTypes.join("+")}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Data</span><span className="font-medium">{effectiveCsvData.length} rows</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Template</span><span className="font-medium truncate ml-2 max-w-[150px]">{templates.find(t => t.id === selectedTemplate)?.name || "—"}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Mode</span><span className="font-medium capitalize">{publishMode}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium capitalize">{scheduleMode}</span></div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -837,24 +1015,30 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           </div>
 
           {/* Footer */}
-          <div className="flex justify-between px-5 py-4 border-t border-border bg-muted/30 shrink-0">
-            <Button variant="outline" onClick={() => step === 1 ? resetForm() : setStep(step - 1)} className="rounded-xl h-10 px-5">
+          <div className="flex justify-between items-center px-5 py-3 border-t border-border bg-muted/30 shrink-0">
+            <Button variant="ghost" onClick={() => step === 1 ? resetForm() : setStep(step - 1)} className="rounded-xl h-9 px-4 text-sm">
+              <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
               {step === 1 ? "Cancel" : "Back"}
             </Button>
-            {step < totalSteps ? (
-              <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110">
-                Continue <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleTestOnePage} disabled={!selectedTemplate || effectiveCsvData.length === 0 || testGenerating} className="rounded-xl h-10 px-4">
-                  {testGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</> : <><Eye className="mr-2 h-4 w-4" /> Test</>}
+            <div className="flex items-center gap-2">
+              {step === totalSteps && (
+                <Button variant="outline" onClick={handleTestOnePage} disabled={!selectedTemplate || effectiveCsvData.length === 0 || testGenerating} className="rounded-xl h-9 px-3 text-sm">
+                  {testGenerating ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Eye className="mr-1.5 h-3.5 w-3.5" />}
+                  Preview
                 </Button>
-                <Button onClick={() => createMutation.mutate()} disabled={!campaignName || createMutation.isPending} className="rounded-xl h-10 px-5 bg-gradient-primary hover:brightness-110">
-                  {createMutation.isPending ? "Creating..." : scheduleMode !== "now" ? "Schedule" : publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
+              )}
+              {step < totalSteps ? (
+                <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110">
+                  Continue <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
-              </div>
-            )}
+              ) : (
+                <Button onClick={() => createMutation.mutate()} disabled={!campaignName || createMutation.isPending} className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110">
+                  {createMutation.isPending ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Creating...</> :
+                   scheduleMode !== "now" ? "Schedule Campaign" :
+                   publishMode === "published" ? "Generate & Publish" : "Create Campaign"}
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
