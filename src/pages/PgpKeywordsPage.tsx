@@ -425,6 +425,42 @@ export default function PgpKeywordsPage() {
     finally { setWebLoading(false); }
   };
 
+  const fetchUrlKeywords = async () => {
+    if (!scanUrl.trim()) return;
+    setScanLoading(true);
+    try {
+      let formattedUrl = scanUrl.trim();
+      if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+        formattedUrl = `https://${formattedUrl}`;
+      }
+
+      // Use AI to extract keywords from the URL content
+      const { data, error } = await supabase.functions.invoke("generate-template", {
+        body: {
+          prompt: `Analyze this website URL and extract relevant keywords, product names, service names, and key phrases from the page content.
+
+URL: ${formattedUrl}
+
+Instructions:
+- Visit or analyze the URL content
+- Extract product names, service names, categories, brand names, and key business terms
+- Focus on terms that would be useful for SEO page generation
+- Output ONLY the keywords/terms, one per line
+- No numbering, no explanations, no markdown
+- Minimum 10 terms, maximum 50 terms
+- Include variations and related terms`
+        },
+      });
+      if (error) throw error;
+      const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
+      const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, "").trim()).filter(Boolean);
+      if (lines.length === 0) throw new Error("Could not extract keywords from this URL");
+      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      toast({ title: `${lines.length} keywords detected from URL` });
+    } catch (err: any) { toast({ title: "Failed to scan URL", description: err.message, variant: "destructive" }); }
+    finally { setScanLoading(false); }
+  };
+
   const runAutoWizard = async () => {
     if (!wizService.trim()) return;
     setWizGenerating(true);
