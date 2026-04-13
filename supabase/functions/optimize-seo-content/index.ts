@@ -294,6 +294,20 @@ Deno.serve(async (req) => {
     const plainText = page_content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     const truncatedText = plainText.slice(0, 3000);
 
+    // For content rewriting, strip <style> blocks and limit HTML size to avoid timeouts
+    let truncatedHtml = "";
+    if (fields.includes("content")) {
+      // Remove <style> blocks and <!-- STYLES --> sections to reduce size
+      truncatedHtml = page_content
+        .replace(/<!--\s*STYLES\s*-->[\s\S]*?<!--\s*\/STYLES\s*-->/gi, "<!-- STYLES PRESERVED -->")
+        .replace(/<style[\s\S]*?<\/style>/gi, "/* styles preserved */")
+        .replace(/<script[\s\S]*?<\/script>/gi, "");
+      // Cap at 8000 chars to stay within token limits
+      if (truncatedHtml.length > 8000) {
+        truncatedHtml = truncatedHtml.slice(0, 8000) + "\n<!-- TRUNCATED -->";
+      }
+    }
+
     const systemPrompt = `You are an expert SEO optimizer. You analyze existing web page content and generate optimized SEO metadata and improved content text.
 
 CRITICAL RULES:
@@ -318,8 +332,8 @@ Page type: ${page_type || "page"}
 Current content (plain text summary):
 ${truncatedText}
 
-${fields.includes("content") ? `Full HTML to optimize (preserve structure exactly):
-${page_content}` : ""}
+${fields.includes("content") ? `HTML structure to optimize (preserve structure exactly, only change text):
+${truncatedHtml}` : ""}
 
 ${instruction ? `\nUser instruction: ${instruction}\n` : ""}
 Generate optimized SEO data for this page. Focus on the main topic/keywords of the existing content.`;
