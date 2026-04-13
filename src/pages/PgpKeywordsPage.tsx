@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Plus, KeyRound, Trash2, Upload, Download, Copy, Search as SearchIcon,
   Pencil, MoreVertical, Loader2, Sparkles, FileText, Database, ChevronLeft, ChevronRight,
-  MapPin, Globe, Link2, Rss, Wand2,
+  MapPin, Globe, Link2, Rss, Wand2, ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +78,10 @@ export default function PgpKeywordsPage() {
   // Website source state
   const [webSiteId, setWebSiteId] = useState("");
   const [webLoading, setWebLoading] = useState(false);
+
+  // URL scan source state
+  const [scanUrl, setScanUrl] = useState("");
+  const [scanLoading, setScanLoading] = useState(false);
 
   // Auto wizard state
   const [wizService, setWizService] = useState("");
@@ -147,7 +151,7 @@ export default function PgpKeywordsPage() {
     setAiTopic(""); setAiCount("20"); setLocCountry("US"); setLocState(""); setLocCounty("");
     setLocMode("area"); setLocRadius("50"); setLocRadiusUnit("miles"); setLocCenterCity("");
     setLocInclude({ city: true, state: true, zip: false, county: false, region: false, area_code: false, population: false, demographics: false });
-    setLocFormat("{city}, {state}"); setDynUrl(""); setWebSiteId("");
+    setLocFormat("{city}, {state}"); setDynUrl(""); setWebSiteId(""); setScanUrl("");
     setEditing(null);
   };
 
@@ -186,6 +190,8 @@ export default function PgpKeywordsPage() {
         sourceConfig.url = dynUrl;
       } else if (kwSource === "website") {
         sourceConfig.websiteId = webSiteId;
+      } else if (kwSource === "url_scan") {
+        sourceConfig.url = scanUrl;
       }
       const payload = { name: cleanName, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
       if (editing?.id) {
@@ -419,6 +425,42 @@ export default function PgpKeywordsPage() {
     finally { setWebLoading(false); }
   };
 
+  const fetchUrlKeywords = async () => {
+    if (!scanUrl.trim()) return;
+    setScanLoading(true);
+    try {
+      let formattedUrl = scanUrl.trim();
+      if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+        formattedUrl = `https://${formattedUrl}`;
+      }
+
+      // Use AI to extract keywords from the URL content
+      const { data, error } = await supabase.functions.invoke("generate-template", {
+        body: {
+          prompt: `Analyze this website URL and extract relevant keywords, product names, service names, and key phrases from the page content.
+
+URL: ${formattedUrl}
+
+Instructions:
+- Visit or analyze the URL content
+- Extract product names, service names, categories, brand names, and key business terms
+- Focus on terms that would be useful for SEO page generation
+- Output ONLY the keywords/terms, one per line
+- No numbering, no explanations, no markdown
+- Minimum 10 terms, maximum 50 terms
+- Include variations and related terms`
+        },
+      });
+      if (error) throw error;
+      const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
+      const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, "").trim()).filter(Boolean);
+      if (lines.length === 0) throw new Error("Could not extract keywords from this URL");
+      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      toast({ title: `${lines.length} keywords detected from URL` });
+    } catch (err: any) { toast({ title: "Failed to scan URL", description: err.message, variant: "destructive" }); }
+    finally { setScanLoading(false); }
+  };
+
   const runAutoWizard = async () => {
     if (!wizService.trim()) return;
     setWizGenerating(true);
@@ -650,6 +692,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                   { value: "google_sheet", label: "Sheet", icon: Globe, desc: "Google" },
                   { value: "rss_feed", label: "RSS", icon: Rss, desc: "Feed" },
                   { value: "website", label: "Website", icon: Globe, desc: "From Site" },
+                  { value: "url_scan", label: "URL Scan", icon: ExternalLink, desc: "Any URL" },
                   { value: "text", label: "Text", icon: FileText, desc: ".txt file" },
                 ].map(s => (
                   <button key={s.value} onClick={() => setKwSource(s.value)}
@@ -835,6 +878,23 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                     </Button>
                   </>
                 )}
+              </div>
+            )}
+
+            {/* URL Scan Source */}
+            {kwSource === "url_scan" && (
+              <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                <p className="text-xs font-semibold flex items-center gap-1.5"><ExternalLink className="h-3.5 w-3.5 text-primary" /> Auto-Detect Keywords from Any URL</p>
+                <p className="text-[11px] text-muted-foreground">Paste any website URL and AI will analyze the page to extract product names, services, categories, and key phrases.</p>
+                <Input
+                  placeholder="https://example.com or https://shop.com/products"
+                  value={scanUrl}
+                  onChange={(e) => setScanUrl(e.target.value)}
+                  className="h-9 font-mono text-xs"
+                />
+                <Button size="sm" onClick={fetchUrlKeywords} disabled={scanLoading || !scanUrl.trim()}>
+                  {scanLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Scanning...</> : <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Detect Keywords</>}
+                </Button>
               </div>
             )}
 
