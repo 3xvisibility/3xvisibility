@@ -124,7 +124,7 @@ export function PageEditDialog({
   const initialDraft = useMemo(() => readPageEditorDraft(websiteId, page.id), [websiteId, page.id]);
   const [editTitle, setEditTitle] = useState(() => initialDraft?.editTitle ?? decodeHtmlEntities(page.title));
   const [editContent, setEditContent] = useState(() => initialDraft?.editContent ?? page.content);
-  const [editExcerpt, setEditExcerpt] = useState(() => initialDraft?.editExcerpt ?? page.excerpt || "");
+  const [editExcerpt, setEditExcerpt] = useState(() => (initialDraft?.editExcerpt ?? page.excerpt) || "");
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(() => initialDraft?.published ?? false);
   const [pushError, setPushError] = useState<string | null>(() => initialDraft?.pushError ?? null);
@@ -426,7 +426,7 @@ export function PageEditDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PageEditorTab)} className="flex-1 flex flex-col min-h-0">
           <TabsList className="shrink-0 flex-wrap h-auto gap-0.5 p-1">
             <TabsTrigger value="edit" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-3">
               <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Edit
