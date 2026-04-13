@@ -21,6 +21,7 @@ import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { AiSeoAssistantDialog } from "@/components/AiSeoAssistantDialog";
 import { AiEnrichDialog } from "@/components/AiEnrichDialog";
+import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +74,9 @@ export default function GeneratedPagesPage() {
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
   const [aiAssistantPage, setAiAssistantPage] = useState<GeneratedPage | null>(null);
   const [aiEnrichPage, setAiEnrichPage] = useState<GeneratedPage | null>(null);
+  const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
+  const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
+  const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -125,9 +129,9 @@ export default function GeneratedPagesPage() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: async ({ pageIds, type }: { pageIds: string[]; type: "page" | "product" }) => {
+    mutationFn: async ({ pageIds, type, websiteId }: { pageIds: string[]; type: "page" | "product"; websiteId?: string }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: pageIds, publish_type: type },
+        body: { page_ids: pageIds, publish_type: type, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -137,6 +141,8 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({ title: "Publishing complete", description: `${data.published} published, ${data.failed} failed.` });
       if (wsId) logAudit(wsId, "page_published", "page", variables.pageIds[0], { count: variables.pageIds.length });
+      setShowWebsiteSelector(false);
+      setPendingPublishIds([]);
     },
     onError: (err: Error) => toast({ title: "Publishing failed", description: err.message, variant: "destructive" }),
   });
@@ -184,19 +190,21 @@ export default function GeneratedPagesPage() {
   });
 
   const bulkPublishMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
+    mutationFn: async ({ ids, websiteId }: { ids: string[]; websiteId?: string }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: publishType },
+        body: { page_ids: ids, publish_type: publishType, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data, ids) => {
+    onSuccess: (data, { ids }) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Bulk publish complete", description: `${data.published} published, ${data.failed} failed.` });
       if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: ids.length, published: data.published });
+      setShowWebsiteSelector(false);
+      setPendingPublishIds([]);
     },
     onError: (err: Error) => toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" }),
   });
@@ -216,12 +224,12 @@ export default function GeneratedPagesPage() {
   });
 
   const retryFailedMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
+    mutationFn: async ({ ids, websiteId }: { ids: string[]; websiteId?: string }) => {
       const { error: resetErr } = await supabase.from("generated_pages")
         .update({ status: "pending" as any, error_message: null }).in("id", ids);
       if (resetErr) throw resetErr;
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: publishType },
+        body: { page_ids: ids, publish_type: publishType, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -231,12 +239,37 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Retry complete", description: `${data.published} published, ${data.failed} failed.` });
+      setShowWebsiteSelector(false);
+      setPendingPublishIds([]);
     },
     onError: (err: Error) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({ title: "Retry failed", description: err.message, variant: "destructive" });
     },
   });
+
+  // Helper: check if pages have website_id, if not show selector
+  const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
+    const pagesWithoutSite = ids.filter((pid) => {
+      const p = pages.find((pg) => pg.id === pid);
+      return !p?.website_id;
+    });
+    if (pagesWithoutSite.length > 0) {
+      setPendingPublishIds(ids);
+      setPendingPublishAction(action);
+      setShowWebsiteSelector(true);
+    } else {
+      if (action === "retry") retryFailedMutation.mutate({ ids });
+      else if (action === "bulk") bulkPublishMutation.mutate({ ids });
+      else publishMutation.mutate({ pageIds: ids, type: publishType });
+    }
+  };
+
+  const handleWebsiteSelected = (websiteId: string) => {
+    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId });
+    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId });
+    else publishMutation.mutate({ pageIds: pendingPublishIds, type: publishType, websiteId });
+  };
 
   const rewriteMutation = useMutation({
     mutationFn: async (pageId: string) => {
@@ -425,7 +458,7 @@ export default function GeneratedPagesPage() {
               size="sm"
               className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
               disabled={publishMutation.isPending}
-              onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
+              onClick={() => handlePublish(pendingPages.map((p) => p.id), "publish")}
             >
               <Send className="h-3.5 w-3.5 mr-1.5" />
               {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
@@ -560,7 +593,7 @@ export default function GeneratedPagesPage() {
                 onClick={() => {
                   const publishable = [...selectedIds].filter((id) => { const p = pages.find((pg) => pg.id === id); return p?.status === "pending" || p?.status === "failed"; });
                   if (!publishable.length) { toast({ title: "No publishable pages", variant: "destructive" }); return; }
-                  bulkPublishMutation.mutate(publishable);
+                  handlePublish(publishable, "bulk");
                 }}>
                 <Send className="h-3 w-3 mr-1" />{bulkPublishMutation.isPending ? "..." : "Publish"}
               </Button>
@@ -568,7 +601,7 @@ export default function GeneratedPagesPage() {
                 onClick={() => {
                   const failed = [...selectedIds].filter((id) => pages.find((p) => p.id === id)?.status === "failed");
                   if (!failed.length) { toast({ title: "No failed pages to retry", variant: "destructive" }); return; }
-                  retryFailedMutation.mutate(failed);
+                  handlePublish(failed, "retry");
                 }}>
                 <RefreshCw className="h-3 w-3 mr-1" />Retry
               </Button>
@@ -639,14 +672,14 @@ export default function GeneratedPagesPage() {
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={() => setPreviewPage(page)}><Eye className="h-3.5 w-3.5 mr-2" />Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openSeoEditor(page)}><Pencil className="h-3.5 w-3.5 mr-2" />Edit SEO</DropdownMenuItem>
-                      {page.status === "pending" && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
-                      {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
+                      {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
+                      {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
-                      {page.status === "failed" && <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
+                      {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
@@ -734,14 +767,14 @@ export default function GeneratedPagesPage() {
                               <Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-3.5 w-3.5" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
-                              {page.status === "pending" && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
-                              {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
+                              {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
+                              {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
-                              {page.status === "failed" && <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
+                              {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
@@ -1059,6 +1092,16 @@ export default function GeneratedPagesPage() {
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
       <AiEnrichDialog open={!!aiEnrichPage} onOpenChange={(open) => !open && setAiEnrichPage(null)} page={aiEnrichPage}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
+      <PublishWebsiteSelector
+        open={showWebsiteSelector}
+        onOpenChange={(open) => {
+          setShowWebsiteSelector(open);
+          if (!open) setPendingPublishIds([]);
+        }}
+        isPending={publishMutation.isPending || bulkPublishMutation.isPending || retryFailedMutation.isPending}
+        pageCount={pendingPublishIds.length}
+        onConfirm={handleWebsiteSelected}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStruc
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
 import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWorkflow";
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
+import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -89,6 +90,8 @@ export default function CampaignDetailPage() {
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [resumeIndex, setResumeIndex] = useState(0);
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
+  const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
+  const [pendingPublishPageId, setPendingPublishPageId] = useState<string | null>(null);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
     content: true,
@@ -133,7 +136,7 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description, seo_keywords, content, canonical_url")
+        .select("id, title, slug, status, external_url, external_id, error_message, created_at, seo_title, seo_description, seo_keywords, content, canonical_url, website_id")
         .eq("campaign_id", id!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -282,19 +285,17 @@ export default function CampaignDetailPage() {
   });
 
   const republishMutation = useMutation({
-    mutationFn: async (pageId: string) => {
-      // Don't clear external_id — we need it to update the same CMS page/product
+    mutationFn: async ({ pageId, websiteId }: { pageId: string; websiteId?: string }) => {
       const { error: resetError } = await supabase
         .from("generated_pages")
         .update({ status: "pending", error_message: null })
         .eq("id", pageId);
       if (resetError) throw resetError;
 
-      // Use the campaign's type to determine publish_type (page vs product)
       const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
 
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: [pageId], publish_type: pubType },
+        body: { page_ids: [pageId], publish_type: pubType, website_id: websiteId || campaign?.website_id },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -303,8 +304,21 @@ export default function CampaignDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
       toast({ title: "Republish complete", description: "Page updated at the same URL." });
+      setShowWebsiteSelector(false);
+      setPendingPublishPageId(null);
     },
   });
+
+  const handlePublishPage = (pageId: string) => {
+    // Check if campaign or page has a website
+    const page = pages?.find((p: any) => p.id === pageId);
+    if (!campaign?.website_id && !page?.website_id) {
+      setPendingPublishPageId(pageId);
+      setShowWebsiteSelector(true);
+    } else {
+      republishMutation.mutate({ pageId });
+    }
+  };
 
   const bulkStatusMutation = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
@@ -764,7 +778,7 @@ export default function CampaignDetailPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7"
-                                    onClick={() => republishMutation.mutate(page.id)}
+                                    onClick={() => handlePublishPage(page.id)}
                                   >
                                     <RefreshCw className="h-3.5 w-3.5" />
                                   </Button>
@@ -1153,7 +1167,7 @@ export default function CampaignDetailPage() {
                                 variant="outline"
                                 size="sm"
                                 className="h-7 text-xs shrink-0"
-                                onClick={() => republishMutation.mutate(page.id)}
+                                onClick={() => handlePublishPage(page.id)}
                               >
                                 <RefreshCw className="h-3 w-3 mr-1" /> Retry
                               </Button>
@@ -1304,6 +1318,20 @@ export default function CampaignDetailPage() {
         isPending={executeMutation.isPending}
         onStart={(options) => {
           executeMutation.mutate({ generation_options: options });
+        }}
+      />
+
+      <PublishWebsiteSelector
+        open={showWebsiteSelector}
+        onOpenChange={(open) => {
+          setShowWebsiteSelector(open);
+          if (!open) setPendingPublishPageId(null);
+        }}
+        isPending={republishMutation.isPending}
+        onConfirm={(websiteId) => {
+          if (pendingPublishPageId) {
+            republishMutation.mutate({ pageId: pendingPublishPageId, websiteId });
+          }
         }}
       />
     </div>
