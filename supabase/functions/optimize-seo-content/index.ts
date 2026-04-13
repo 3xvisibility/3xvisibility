@@ -371,7 +371,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const systemPrompt = `You are an expert SEO optimizer whose output MUST score 90+ on Yoast SEO, RankMath, and All in One SEO plugins.
+    const systemPrompt = `You are an expert SEO/SEA/GEO content optimizer. Your output MUST score 90+ on ALL THREE scoring dimensions: SEO, SEA (Search Engine Advertising / Landing Page Quality), and GEO (Local/Geographic relevance).
 
 ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
 - NEVER change ANY HTML tag, attribute, class, id, style, data-* attribute, or structure.
@@ -382,27 +382,48 @@ ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
 - Keep EXACT same number of sections, divs, headings, paragraphs, lists.
 - Preserve ALL product data: prices, SKUs, variants, add-to-cart buttons, reviews, ratings.
 
-SEO OPTIMIZATION TARGETS (Yoast/RankMath compatible - aim for 90+ score):
-1. Focus keyword MUST appear in: title, first paragraph, at least one H2/H3, and URL slug
-2. Focus keyword density: 0.5-2.5% (not too few, not stuffing)
-3. Title: 30-60 characters with primary keyword at or near the beginning
-4. Meta description: 120-156 characters with keyword + call-to-action
-5. Use H1 for main title, H2/H3 for subsections (proper heading hierarchy)
-6. Include keyword in at least one subheading
-7. Short paragraphs (under 150 words each) for readability
-8. Add transition words (however, therefore, additionally, moreover, furthermore)
-9. Use active voice predominantly (minimize passive voice)
-10. Content should be 300+ words minimum
-11. Include internal/external link anchor text where natural
-12. Image alt text should contain focus keyword where relevant
+═══ SEO SCORE REQUIREMENTS (12 checks, need 11+ for 90+) ═══
+1. Focus keyword MUST appear in: title, first paragraph, at least one H2/H3, and throughout content
+2. Focus keyword density: 0.5-2.5%
+3. Title: 30-60 characters with primary keyword
+4. Content: 300+ words minimum
+5. Has H1 heading
+6. Has H2/H3 subheadings with keyword in at least one
+7. Short paragraphs (under 150 words each)
+8. Use transition words: however, therefore, additionally, moreover, furthermore, also, because, for example, in addition, as a result, first, next, finally, meanwhile, instead (need 2+ occurrences)
+9. Use active voice predominantly (minimize "is/was/were + verb-ed" passive constructions)
+
+═══ SEA SCORE REQUIREMENTS (9 checks, need 8+ for 90+) ═══
+YOU MUST naturally weave these signal words into the text content:
+1. CTA language — use words like: buy, get, shop, order, start, book, reserve, request, contact, call, discover, learn more, try, schedule, checkout, add to cart, subscribe, sign up
+2. Action words in title — include at least one CTA or offer word in the title
+3. Benefit-led introduction — first paragraph must use words like: save, fast, easy, simple, reliable, premium, quality, effective, powerful, best, trusted, affordable, results, boost, improve, grow, protect
+4. Trust signals — include words like: trusted, guarantee, warranty, certified, proven, rated, recommended, satisfaction, verified, review, testimonial
+5. Offer/value language — use words like: free, discount, offer, deal, plan, package, price, pricing, trial, bundle, save, starting at
+6. Focused content (100-1500 words for landing pages)
+7. Scannable structure — multiple headings or lists
+8. Clear next step — use intent words like: call, contact, book, reserve, request, order, subscribe, sign up
+9. Urgency or proof — use phrases like: today, now, instant, quick, fast, limited, same-day, immediate, top-rated, best-selling, or include numbers/percentages
+
+═══ GEO SCORE REQUIREMENTS (7 checks, need 6+ for 90+) ═══
+YOU MUST naturally include geographic/local relevance signals:
+1. Local cue in title or intro — use phrases like: local, nearby, near you, in your area, serving, regional, community, neighborhood
+2. Service area language — use: serving, available in, delivery in, coverage across, service area, throughout, nearby, local service
+3. Localized heading — at least one H2/H3 should contain a local/area-specific word
+4. Community/proximity language — use: community, neighborhood, locals, local experts, nearby, around you, close by, in the area
+5. Availability cues — use: open, available, today, same-day, response time, hours, coverage, delivery window, visit, call us, contact us
+6. Clean descriptive URL (handled by slug)
+7. Local credibility — use: trusted locally, local team, area specialists, nearby support, serving customers
+
+CRITICAL INTEGRATION RULE: Do NOT just dump these words randomly. Weave them naturally into engaging, human-readable copy that makes sense for the page topic. Every sentence should read naturally while hitting multiple scoring signals simultaneously.
 
 Language: ${lang}
 
 Return these fields (only what's requested):
-${fields.includes("seo_title") ? '- "seo_title": SEO title 30-60 chars, keyword near start, matches Yoast/RankMath green zone' : ""}
-${fields.includes("seo_description") ? '- "seo_description": Meta description 120-156 chars with keyword + CTA, matches Yoast green zone' : ""}
+${fields.includes("seo_title") ? '- "seo_title": SEO title 30-60 chars, keyword near start, include an action/offer word (e.g., "Get", "Best", "Free", "Top")' : ""}
+${fields.includes("seo_description") ? '- "seo_description": Meta description 120-156 chars with keyword + CTA + benefit word + local cue' : ""}
 ${fields.includes("seo_keywords") ? '- "seo_keywords": Array of 5-8 LSI/related keywords (primary keyword first)' : ""}
-${fields.includes("content") ? '- "content": Full HTML with IDENTICAL structure but SEO-optimized text. Every tag/class/attribute MUST be preserved byte-for-byte. Only text nodes change.' : ""}
+${fields.includes("content") ? '- "content": Full HTML with IDENTICAL structure but text optimized to score 90+ on ALL THREE dimensions (SEO + SEA + GEO). Every tag/class/attribute MUST be preserved byte-for-byte. Only text nodes change.' : ""}
 
 Return ONLY valid JSON, no markdown fences.`;
 
@@ -417,7 +438,12 @@ ${fields.includes("content") ? `HTML to optimize (PRESERVE ALL TAGS/CLASSES/ATTR
 ${truncatedHtml}` : ""}
 
 ${instruction ? `\nUser instruction: ${instruction}\n` : ""}
-Generate SEO-optimized content that will score 90+ on Yoast SEO / RankMath. Focus keyword should be derived from the page's main topic. Ensure keyword appears in title, intro, subheadings, and throughout at 0.5-2.5% density.`;
+IMPORTANT: Generate content that scores 90+ on ALL THREE metrics:
+- SEO: Focus keyword in title, intro, subheadings; density 0.5-2.5%; transition words; active voice; 300+ words
+- SEA: Include CTA words (buy/get/shop/order/contact), benefit words (save/fast/easy/reliable/premium), trust signals (trusted/guarantee/certified/proven), offer language (free/discount/deal), urgency cues (today/now/limited)
+- GEO: Include local signals (local/nearby/community/service area/serving), availability cues (available/today/same-day/contact us), local credibility (trusted locally/local team/area specialists)
+
+Weave all signals naturally — the text must read like professional marketing copy, not keyword spam.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
