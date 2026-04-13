@@ -14,6 +14,14 @@ export interface ContentScoreResult {
 
 export type ContentSeoResult = ContentScoreResult;
 
+export interface ContentSeoScoreOptions {
+  url?: string;
+  description?: string;
+  seoTitle?: string;
+  seoKeywords?: string[];
+  focusKeyword?: string;
+}
+
 function clampScore(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -31,6 +39,26 @@ function buildScoreResult(points: number, checks: ContentScoreResult["checks"]):
   const score = clampScore((earnedPoints / totalWeight) * 100);
 
   return { score, ...toLabel(score), checks };
+}
+
+function resolveSeoScoreOptions(
+  urlOrOptions?: string | ContentSeoScoreOptions,
+  description = ""
+): ContentSeoScoreOptions {
+  if (typeof urlOrOptions === "string" || typeof urlOrOptions === "undefined") {
+    return { url: urlOrOptions, description };
+  }
+
+  return {
+    ...urlOrOptions,
+    description: urlOrOptions.description ?? description,
+  };
+}
+
+function getLeadingText(value: string, wordCount: number): string {
+  const words = value.split(/\s+/).filter(Boolean);
+  const windowSize = Math.min(100, Math.max(40, Math.floor(wordCount * 0.12)));
+  return words.slice(0, windowSize).join(" ");
 }
 
 /** Strip HTML to plain text while keeping rough paragraph boundaries */
@@ -52,6 +80,8 @@ function stripHtml(html: string): string {
 function normalizeWords(value: string): string[] {
   return value
     .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^\p{L}\p{N}\s-]/gu, " ")
     .replace(/[-_/]+/g, " ")
     .split(/\s+/)
@@ -148,12 +178,12 @@ function scoreFocusKeywordCandidate(
   return score;
 }
 
-function extractFocusKeyword(title: string, slug = "", content = "", description = ""): string {
+function extractFocusKeyword(title: string, slug = "", content = "", description = "", url?: string): string {
   const normalizedTitle = normalizePhrase(title);
   const normalizedContent = normalizePhrase(content);
   const normalizedDescription = normalizePhrase(description);
   const normalizedHeadings = normalizePhrase(extractHeadings(content).join(" "));
-  const normalizedSlug = normalizePhrase(getSlugCandidate(slug));
+  const normalizedSlug = normalizePhrase(getSlugCandidate(slug, url));
   const sources = [normalizedTitle, normalizedSlug].filter(Boolean);
   const candidateScores = new Map<string, number>();
 
@@ -222,34 +252,39 @@ export function calculateContentSeoScore(
   title: string,
   content: string,
   slug: string,
-  url?: string,
+  urlOrOptions?: string | ContentSeoScoreOptions,
   description = ""
 ): ContentScoreResult {
+  const options = resolveSeoScoreOptions(urlOrOptions, description);
+  const seoTitle = options.seoTitle?.trim() || title;
   const plainText = stripHtml(content);
   const lowerText = plainText.toLowerCase();
-  const metaDescription = stripHtml(description);
+  const metaDescription = stripHtml(options.description || "");
   const lowerDescription = metaDescription.toLowerCase();
-  const focusKw = extractFocusKeyword(title, slug, content, description);
+  const focusKw = options.focusKeyword?.trim()
+    || options.seoKeywords?.find((keyword) => normalizePhrase(keyword).length > 0)?.trim()
+    || extractFocusKeyword(seoTitle, slug, content, metaDescription, options.url);
   const paragraphs = extractParagraphs(content);
   const headings = extractHeadings(content);
-  const introText = (paragraphs[0] || plainText.slice(0, 400)).toLowerCase();
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+  const introText = getLeadingText(plainText, wordCount).toLowerCase();
+  const slugCandidate = getSlugCandidate(slug, options.url);
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
   const transitionWords = /(however|therefore|additionally|moreover|furthermore|also|because|for example|in addition|as a result|first|next|finally|meanwhile|instead)/gi;
   const passiveVoiceMatches = countMatches(lowerText, /\b(am|is|are|was|were|be|been|being)\s+\w+(ed|en)\b/gi);
   const sentenceCount = Math.max(1, plainText.split(/[.!?]+/).filter((sentence) => sentence.trim().length > 0).length);
 
-  const hasTitle = (title || "").trim().length > 0;
-  checks.push({ label: "Page has title", passed: hasTitle, tip: "Add a page title" });
+  const hasTitle = seoTitle.trim().length > 0;
+  checks.push({ label: "Page has title", passed: hasTitle, tip: "Add an SEO title" });
   if (hasTitle) points++;
 
-  const titleLen = (title || "").length;
+  const titleLen = seoTitle.length;
   const titleOk = titleLen >= 30 && titleLen <= 60;
   checks.push({ label: "Title 30-60 chars", passed: titleOk, tip: titleLen < 30 ? "Title too short — aim for 30-60 chars" : titleLen > 60 ? "Title too long — keep under 60 chars" : "" });
   if (titleOk) points++;
 
-  const kwInTitle = focusKw ? containsPhrase(title || "", focusKw) : hasTitle;
+  const kwInTitle = focusKw ? containsPhrase(seoTitle, focusKw) : hasTitle;
   checks.push({ label: "Focus keyword in title", passed: kwInTitle, tip: "Include your main keyword in the page title" });
   if (kwInTitle) points++;
 
@@ -270,13 +305,17 @@ export function calculateContentSeoScore(
   checks.push({ label: "Keyword in meta description", passed: kwInDescription, tip: "Mention your focus keyword in the meta description" });
   if (kwInDescription) points++;
 
-  const enoughWords = wordCount >= 300;
-  checks.push({ label: "300+ words of content", passed: enoughWords, tip: `Only ${wordCount} words — add more content for SEO` });
+  const enoughWords = wordCount >= 600;
+  checks.push({ label: "600+ words of content", passed: enoughWords, tip: `Only ${wordCount} words — add more content for SEO` });
   if (enoughWords) points++;
 
   const kwInIntro = focusKw ? containsPhrase(introText, focusKw) : false;
-  checks.push({ label: "Keyword in introduction", passed: kwInIntro, tip: "Mention your focus keyword in the first paragraph" });
+  checks.push({ label: "Keyword in introduction", passed: kwInIntro, tip: "Mention your focus keyword in the opening lines of the content" });
   if (kwInIntro) points++;
+
+  const kwInUrl = focusKw ? containsPhrase(slugCandidate, focusKw) : false;
+  checks.push({ label: "Keyword in URL", passed: kwInUrl, tip: "Use the focus keyword in the URL slug" });
+  if (kwInUrl) points++;
 
   let kwDensityOk = false;
   if (focusKw && wordCount > 0) {

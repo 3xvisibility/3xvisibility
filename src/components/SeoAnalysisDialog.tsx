@@ -47,7 +47,12 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
     const summary = getSeoRuleSummary(ruleResults);
 
     // Content scores
-    const seo = calculateContentSeoScore(page.title, page.content, page.slug, page.external_url || undefined);
+    const seo = calculateContentSeoScore(page.title, page.content, page.slug, {
+      url: page.external_url || undefined,
+      description: page.seo_description || "",
+      seoTitle: page.seo_title || undefined,
+      seoKeywords: page.seo_keywords || undefined,
+    });
     const sea = calculateContentSeaScore(page.title, page.content, page.slug, page.external_url || undefined);
     const geo = calculateContentGeoScore(page.title, page.content, page.slug, page.external_url || undefined);
 
@@ -248,7 +253,12 @@ export function computeCampaignSeoSummary(pages: {
   const distribution = { excellent: 0, good: 0, fair: 0, poor: 0 };
 
   for (const p of pages) {
-    const seo = calculateContentSeoScore(p.title, p.content, p.slug, p.external_url || undefined);
+    const seo = calculateContentSeoScore(p.title, p.content, p.slug, {
+      url: p.external_url || undefined,
+      description: p.seo_description || "",
+      seoTitle: p.seo_title || undefined,
+      seoKeywords: p.seo_keywords || undefined,
+    });
     const sea = calculateContentSeaScore(p.title, p.content, p.slug, p.external_url || undefined);
     const geo = calculateContentGeoScore(p.title, p.content, p.slug, p.external_url || undefined);
     const meta = calculateSeoScore(p.seo_title, p.seo_description, p.seo_keywords, p.title);

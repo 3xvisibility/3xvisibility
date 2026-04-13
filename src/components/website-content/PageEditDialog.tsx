@@ -67,6 +67,10 @@ interface ContentItem {
   content: string;
   excerpt: string;
   modified: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_keywords?: string[] | null;
+  canonical_url?: string | null;
 }
 
 interface PageEditDialogProps {
@@ -122,9 +126,14 @@ export function PageEditDialog({
 }: PageEditDialogProps) {
   const { toast } = useToast();
   const initialDraft = useMemo(() => readPageEditorDraft(websiteId, page.id), [websiteId, page.id]);
+  const initialSeoResult = useMemo<PageEditorSeoResult | null>(() => initialDraft?.seoResult ?? {
+    seo_title: page.seo_title ?? undefined,
+    seo_description: page.seo_description ?? page.excerpt ?? undefined,
+    seo_keywords: page.seo_keywords ?? undefined,
+  }, [initialDraft?.seoResult, page.excerpt, page.seo_description, page.seo_keywords, page.seo_title]);
   const [editTitle, setEditTitle] = useState(() => initialDraft?.editTitle ?? decodeHtmlEntities(page.title));
   const [editContent, setEditContent] = useState(() => initialDraft?.editContent ?? page.content);
-  const [editExcerpt, setEditExcerpt] = useState(() => (initialDraft?.editExcerpt ?? page.excerpt) || "");
+  const [editExcerpt, setEditExcerpt] = useState(() => (initialDraft?.editExcerpt ?? page.seo_description ?? page.excerpt) || "");
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(() => initialDraft?.published ?? false);
   const [pushError, setPushError] = useState<string | null>(() => initialDraft?.pushError ?? null);
@@ -134,10 +143,10 @@ export function PageEditDialog({
   const iframeSyncRef = useRef(false);
 
   // SEO optimize state
-  const [seoFields, setSeoFields] = useState<string[]>(() => initialDraft?.seoFields?.length ? initialDraft.seoFields : ["seo_title", "seo_description", "seo_keywords"]);
+  const [seoFields, setSeoFields] = useState<string[]>(() => initialDraft?.seoFields?.length ? initialDraft.seoFields : ["seo_title", "seo_description", "seo_keywords", "content"]);
   const [seoInstruction, setSeoInstruction] = useState(() => initialDraft?.seoInstruction ?? "");
   const [optimizing, setOptimizing] = useState(false);
-  const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(() => initialDraft?.seoResult ?? null);
+  const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(initialSeoResult);
 
   const originalTitle = decodeHtmlEntities(page.title);
   const originalContent = page.content;
@@ -310,6 +319,9 @@ export function PageEditDialog({
           page_type: page.type,
           workspace_id: workspaceId,
           optimize_fields: seoFields,
+          page_seo_title: seoResult?.seo_title || page.seo_title,
+          page_seo_description: seoResult?.seo_description || page.seo_description || editExcerpt,
+          page_seo_keywords: seoResult?.seo_keywords || page.seo_keywords || [],
           instruction: seoInstruction || undefined,
           skip_push: !shouldAutoPublish,
         },
@@ -351,11 +363,11 @@ export function PageEditDialog({
         setEditContent(result.content);
       }
 
-      setSeoResult({
-        seo_title: result.seo_title,
-        seo_description: result.seo_description,
-        seo_keywords: result.seo_keywords,
-      });
+      setSeoResult((prev) => ({
+        seo_title: result.seo_title ?? prev?.seo_title ?? page.seo_title ?? undefined,
+        seo_description: result.seo_description ?? prev?.seo_description ?? page.seo_description ?? editExcerpt,
+        seo_keywords: result.seo_keywords ?? prev?.seo_keywords ?? page.seo_keywords ?? undefined,
+      }));
 
       setPublished(Boolean(data?.pushed_to_cms));
       setPushError(data?.push_error || null);
@@ -402,9 +414,9 @@ export function PageEditDialog({
           manual_title: editTitle,
           manual_content: editContent,
           manual_excerpt: editExcerpt,
-          seo_title: seoResult?.seo_title || editTitle,
-          seo_description: seoResult?.seo_description || editExcerpt,
-          seo_keywords: seoResult?.seo_keywords || [],
+          seo_title: seoResult?.seo_title || page.seo_title || editTitle,
+          seo_description: seoResult?.seo_description || page.seo_description || editExcerpt,
+          seo_keywords: seoResult?.seo_keywords || page.seo_keywords || [],
           update_template: true,
         },
       });
@@ -462,7 +474,9 @@ export function PageEditDialog({
               content={editContent}
               slug={page.slug}
               url={page.url}
-              description={editExcerpt}
+              description={seoResult?.seo_description || page.seo_description || editExcerpt}
+              seoTitle={seoResult?.seo_title || page.seo_title || editTitle}
+              seoKeywords={seoResult?.seo_keywords || page.seo_keywords}
               size="sm"
               showLabels
             />

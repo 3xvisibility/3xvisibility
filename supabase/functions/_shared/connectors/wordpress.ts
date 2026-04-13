@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
+import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -91,11 +92,7 @@ export class WordPressConnector implements CmsConnector {
 
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
-    const meta: Record<string, unknown> = {};
-    if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
-    if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
-    if (payload.seo_keywords?.length) meta._yoast_wpseo_focuskw = payload.seo_keywords[0];
-    if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
+    const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
 
     if (payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
@@ -142,11 +139,7 @@ export class WordPressConnector implements CmsConnector {
     if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
-    const meta: Record<string, unknown> = {};
-    if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
-    if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
-    if (payload.seo_keywords?.length) meta._yoast_wpseo_focuskw = payload.seo_keywords[0];
-    if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
+    const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
     if (payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
       meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
@@ -202,6 +195,7 @@ export class WordPressConnector implements CmsConnector {
 
       for (const item of data) {
         const meta = item.meta || {};
+        const seoFields = extractSeoFieldsFromMeta(meta);
         items.push({
           id: String(item.id),
           title: item.title?.rendered || item.title?.raw || item.name || "",
@@ -212,6 +206,10 @@ export class WordPressConnector implements CmsConnector {
           content: item.content?.rendered || item.content?.raw || item.description || "",
           excerpt: item.excerpt?.rendered || item.excerpt?.raw || item.short_description || "",
           modified: item.modified || item.date_modified || "",
+          seo_title: seoFields.seo_title,
+          seo_description: seoFields.seo_description,
+          seo_keywords: seoFields.seo_keywords,
+          canonical_url: seoFields.canonical_url,
           elementor_data: meta._elementor_data || undefined,
           elementor_edit_mode: meta._elementor_edit_mode || undefined,
           page_template: item.template || meta._wp_page_template || undefined,
@@ -234,14 +232,22 @@ export class WordPressConnector implements CmsConnector {
           if (singleResp.ok) {
             const singleData = await singleResp.json();
             const meta = singleData.meta || {};
+            const mergedMeta = { ...item.raw_meta, ...meta };
             if (meta._elementor_data) {
               item.elementor_data = meta._elementor_data;
               item.elementor_edit_mode = meta._elementor_edit_mode || "builder";
             }
             if (singleData.template) item.page_template = singleData.template;
             if (singleData.content?.raw) {
-              item.raw_meta = { ...item.raw_meta, _raw_content: singleData.content.raw };
+              mergedMeta._raw_content = singleData.content.raw;
             }
+            item.raw_meta = mergedMeta;
+
+            const seoFields = extractSeoFieldsFromMeta(mergedMeta);
+            item.seo_title = seoFields.seo_title;
+            item.seo_description = seoFields.seo_description;
+            item.seo_keywords = seoFields.seo_keywords;
+            item.canonical_url = seoFields.canonical_url;
           } else {
             await singleResp.text();
           }

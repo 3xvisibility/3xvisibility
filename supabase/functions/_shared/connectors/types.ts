@@ -44,6 +44,10 @@ export interface ContentItem {
   content: string;
   excerpt: string;
   modified: string;
+  seo_title?: string;
+  seo_description?: string;
+  seo_keywords?: string[];
+  canonical_url?: string;
   elementor_data?: string;
   elementor_edit_mode?: string;
   page_template?: string;

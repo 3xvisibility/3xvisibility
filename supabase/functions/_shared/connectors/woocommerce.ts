@@ -1,4 +1,10 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
+import {
+  buildSeoMetaDataEntries,
+  buildSeoMetaRecord,
+  extractSeoFieldsFromMeta,
+  metaArrayToRecord,
+} from "./seo-meta.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -40,11 +46,9 @@ export class WooCommerceConnector implements CmsConnector {
         .map((img) => ({ src: img.src, alt: img.alt }));
     }
 
-    const metaData: { key: string; value: string }[] = [];
-    if (payload.seo_title) metaData.push({ key: "_yoast_wpseo_title", value: payload.seo_title });
+    const metaData = buildSeoMetaDataEntries(payload);
     if (payload.seo_description) {
       body.short_description = payload.seo_description;
-      metaData.push({ key: "_yoast_wpseo_metadesc", value: payload.seo_description });
     }
     if (metaData.length > 0) body.meta_data = metaData;
 
@@ -92,11 +96,7 @@ export class WooCommerceConnector implements CmsConnector {
     if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
-    const meta: Record<string, unknown> = {};
-    if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
-    if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
-    if (payload.seo_keywords?.length) meta._yoast_wpseo_focuskw = payload.seo_keywords[0];
-    if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
+    const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
     if (payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
       meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
@@ -145,10 +145,7 @@ export class WooCommerceConnector implements CmsConnector {
         .map((img) => ({ src: img.src, alt: img.alt }));
     }
 
-    const metaData: { key: string; value: string }[] = [];
-    if (payload.seo_title) metaData.push({ key: "_yoast_wpseo_title", value: payload.seo_title });
-    if (payload.seo_description) metaData.push({ key: "_yoast_wpseo_metadesc", value: payload.seo_description });
-    if (payload.seo_keywords?.length) metaData.push({ key: "_yoast_wpseo_focuskw", value: payload.seo_keywords[0] });
+    const metaData = buildSeoMetaDataEntries(payload);
     if (metaData.length > 0) body.meta_data = metaData;
 
     const res = await fetch(`${this.baseUrl}/wp-json/wc/v3/products/${externalId}?${this.authQuery}`, {
@@ -177,7 +174,7 @@ export class WooCommerceConnector implements CmsConnector {
       let page = 1;
 
       while (true) {
-        const url = `${this.baseUrl}/wp-json/wp/v2/pages?per_page=100&page=${page}&_embed`;
+        const url = `${this.baseUrl}/wp-json/wp/v2/pages?per_page=100&page=${page}&_embed&context=edit`;
         let response: Response;
         try {
           response = await fetch(url, { headers: { Authorization: `Basic ${auth}` } });
@@ -191,16 +188,23 @@ export class WooCommerceConnector implements CmsConnector {
         if (!Array.isArray(data) || data.length === 0) break;
 
         for (const item of data) {
+          const meta = item.meta || {};
+          const seoFields = extractSeoFieldsFromMeta(meta);
           items.push({
             id: String(item.id),
-            title: item.title?.rendered || "",
+            title: item.title?.rendered || item.title?.raw || "",
             slug: item.slug || "",
             url: item.link || `${this.baseUrl}/${item.slug}`,
             type: "page",
             status: item.status || "publish",
-            content: item.content?.rendered || "",
-            excerpt: item.excerpt?.rendered || "",
+            content: item.content?.rendered || item.content?.raw || "",
+            excerpt: item.excerpt?.rendered || item.excerpt?.raw || "",
             modified: item.modified || "",
+            seo_title: seoFields.seo_title,
+            seo_description: seoFields.seo_description,
+            seo_keywords: seoFields.seo_keywords,
+            canonical_url: seoFields.canonical_url,
+            raw_meta: meta,
           });
         }
 
@@ -229,6 +233,8 @@ export class WooCommerceConnector implements CmsConnector {
       if (!Array.isArray(data) || data.length === 0) break;
 
       for (const item of data) {
+        const meta = metaArrayToRecord(Array.isArray(item.meta_data) ? item.meta_data : []);
+        const seoFields = extractSeoFieldsFromMeta(meta);
         items.push({
           id: String(item.id),
           title: item.name || "",
@@ -239,6 +245,11 @@ export class WooCommerceConnector implements CmsConnector {
           content: item.description || "",
           excerpt: item.short_description || "",
           modified: item.date_modified || "",
+          seo_title: seoFields.seo_title,
+          seo_description: seoFields.seo_description,
+          seo_keywords: seoFields.seo_keywords,
+          canonical_url: seoFields.canonical_url,
+          raw_meta: meta,
         });
       }
 
