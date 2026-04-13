@@ -189,19 +189,21 @@ export default function GeneratedPagesPage() {
   });
 
   const bulkPublishMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
+    mutationFn: async ({ ids, websiteId }: { ids: string[]; websiteId?: string }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: publishType },
+        body: { page_ids: ids, publish_type: publishType, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: (data, ids) => {
+    onSuccess: (data, { ids }) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       setSelectedIds(new Set());
       toast({ title: "Bulk publish complete", description: `${data.published} published, ${data.failed} failed.` });
       if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: ids.length, published: data.published });
+      setShowWebsiteSelector(false);
+      setPendingPublishIds([]);
     },
     onError: (err: Error) => toast({ title: "Bulk publish failed", description: err.message, variant: "destructive" }),
   });
