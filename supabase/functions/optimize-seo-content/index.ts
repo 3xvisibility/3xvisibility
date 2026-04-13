@@ -486,8 +486,10 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
 
     if (website && page_external_id && !skip_push) {
       try {
-        const connector = await createConnector(website as WebsiteRecord);
         const isProductContent = page_type === "product";
+        const connector = isProductContent
+          ? await createProductConnector(website as WebsiteRecord)
+          : await createConnector(website as WebsiteRecord);
         const rewrittenContent = result.content && fields.includes("content") ? result.content : null;
         // Always UPDATE existing page — never create a new one
         const updatePayload: Record<string, any> = {
@@ -514,7 +516,7 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
         if (result.seo_keywords) updatePayload.seo_keywords = result.seo_keywords;
 
         pushResult = await connector.updatePage(page_external_id, updatePayload);
-        console.log("[OPTIMIZE] Updated existing page on CMS:", pushResult);
+        console.log(`[OPTIMIZE] Updated existing ${isProductContent ? 'product' : 'page'} on CMS:`, pushResult);
       } catch (pushErr: any) {
         pushError = pushErr.message || "CMS update failed";
         console.error("[OPTIMIZE] CMS push failed:", pushErr);
