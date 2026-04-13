@@ -83,6 +83,8 @@ Deno.serve(async (req) => {
 
     const contentSnippet = (page.content || "").slice(0, 3000);
 
+    const designPreservationRule = `\nCRITICAL: You MUST preserve ALL CSS classes, IDs, data attributes, inline styles, <style> blocks, and <!-- STYLES --> sections EXACTLY as they are. Do NOT add, remove, or rename any CSS classes or HTML attributes. Only change the TEXT CONTENT inside elements. Keep all structural wrappers (div, section, article) and their class names unchanged. Preserve classes like "pgp-page", "elementor-*", "wp-*", "shopify-*" exactly.`;
+
     const prompts: Record<Action, { system: string; user: string }> = {
       titles: {
         system: `You are an expert SEO copywriter. Generate 5 optimized title variations for a web page. Each title must be 20-70 characters. Include the primary keyword naturally. Return ONLY a JSON array of strings.`,
@@ -93,11 +95,11 @@ Deno.serve(async (req) => {
         user: `Title: "${page.seo_title || page.title}"\nCurrent meta: "${page.seo_description || ""}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}`,
       },
       headings: {
-        system: `You are an SEO content editor. Rewrite the headings (h1, h2, h3) in the HTML to be more keyword-rich, engaging, and SEO-optimized. Return ONLY the updated HTML content with improved headings. Keep the rest of the content unchanged.`,
+        system: `You are an SEO content editor. Rewrite ONLY the headings (h1, h2, h3) text to be more keyword-rich, engaging, and SEO-optimized. Return the FULL HTML with improved heading text. Keep ALL other content, classes, styles, and structure unchanged.${designPreservationRule}`,
         user: `Keywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nHTML:\n${contentSnippet}`,
       },
       body: {
-        system: `You are an expert content writer. Rewrite the body content to be more engaging, SEO-optimized, and comprehensive. Maintain the HTML structure and tags. Add relevant details, improve readability, and naturally incorporate keywords. Return ONLY the updated HTML.`,
+        system: `You are an expert content writer. Rewrite the body TEXT content to be more engaging, SEO-optimized, and comprehensive. Add relevant details, improve readability, and naturally incorporate keywords. Return the FULL updated HTML.${designPreservationRule}`,
         user: `Title: "${page.title}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nHTML:\n${contentSnippet}`,
       },
       faq: {
@@ -109,7 +111,7 @@ Deno.serve(async (req) => {
         user: `Title: "${page.title}"\nCurrent keywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nContent:\n${contentSnippet.slice(0, 2000)}`,
       },
       full_rewrite: {
-        system: `You are an expert SEO content editor. Fully rewrite the page content to be fresher, more engaging, better structured, and more SEO-optimized. Maintain the same HTML structure and topic. Return ONLY the rewritten HTML.`,
+        system: `You are an expert SEO content editor. Fully rewrite the page TEXT content to be fresher, more engaging, better structured, and more SEO-optimized. Maintain the same topic. Return the FULL rewritten HTML.${designPreservationRule}`,
         user: `Title: "${page.title}"\nKeywords: ${kw}\n${campaignCtx}${userNote}\nLanguage: ${lang}\n\nHTML:\n${contentSnippet}`,
       },
     };

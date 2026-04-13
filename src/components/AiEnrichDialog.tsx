@@ -58,6 +58,8 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
         ? `${MODE_INSTRUCTIONS[mode]} Additional user instruction: ${customInstruction.trim()}`
         : MODE_INSTRUCTIONS[mode];
 
+      let newContent: string | null = null;
+
       if (action === "faq") {
         // FAQ appends to existing content
         const { data, error } = await supabase.functions.invoke("ai-seo-assistant", {
@@ -67,9 +69,10 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
         if (data?.error) throw new Error(data.error);
         // Append FAQ to existing content
         const faqHtml = data.result;
+        newContent = page.content + "\n" + faqHtml;
         const { error: updateErr } = await supabase
           .from("generated_pages")
-          .update({ content: page.content + "\n" + faqHtml })
+          .update({ content: newContent })
           .eq("id", page.id);
         if (updateErr) throw updateErr;
       } else {
@@ -79,17 +82,38 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
+        newContent = data.result;
         // Update the page content
         const { error: updateErr } = await supabase
           .from("generated_pages")
-          .update({ content: data.result })
+          .update({ content: newContent })
           .eq("id", page.id);
         if (updateErr) throw updateErr;
       }
 
+      // Auto-republish if page was already published
+      let republished = false;
+      const { data: pageData } = await supabase
+        .from("generated_pages")
+        .select("status, external_id, website_id")
+        .eq("id", page.id)
+        .maybeSingle();
+
+      if (pageData?.status === "published" && pageData?.external_id && pageData?.website_id) {
+        try {
+          const { data: pubData } = await supabase.functions.invoke("publish-pages", {
+            body: { page_ids: [page.id], publish_type: "page", website_id: pageData.website_id },
+          });
+          republished = pubData?.published > 0;
+        } catch (_) { /* non-critical */ }
+      }
+
       setDone(true);
       onUpdated();
-      toast({ title: "Content enriched", description: `${ENRICH_MODES.find(m => m.value === mode)?.label} applied successfully.` });
+      const desc = republished
+        ? `${ENRICH_MODES.find(m => m.value === mode)?.label} applied & republished to CMS.`
+        : `${ENRICH_MODES.find(m => m.value === mode)?.label} applied successfully.`;
+      toast({ title: "Content enriched", description: desc });
       setTimeout(() => {
         onOpenChange(false);
         setDone(false);

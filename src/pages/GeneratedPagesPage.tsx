@@ -287,14 +287,15 @@ export default function GeneratedPagesPage() {
 
   const rewriteMutation = useMutation({
     mutationFn: async (pageId: string) => {
-      const { data, error } = await supabase.functions.invoke("rewrite-content", { body: { page_id: pageId } });
+      const { data, error } = await supabase.functions.invoke("rewrite-content", { body: { page_id: pageId, auto_republish: true } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
-      toast({ title: "Content rewritten" });
+      const msg = data?.republished ? "Content rewritten & republished to CMS" : "Content rewritten";
+      toast({ title: msg });
     },
     onError: (err: Error) => toast({ title: "Rewrite failed", description: err.message, variant: "destructive" }),
   });
