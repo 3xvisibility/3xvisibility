@@ -6,6 +6,7 @@ import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStruc
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
 import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWorkflow";
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
+import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -1317,6 +1318,20 @@ export default function CampaignDetailPage() {
         isPending={executeMutation.isPending}
         onStart={(options) => {
           executeMutation.mutate({ generation_options: options });
+        }}
+      />
+
+      <PublishWebsiteSelector
+        open={showWebsiteSelector}
+        onOpenChange={(open) => {
+          setShowWebsiteSelector(open);
+          if (!open) setPendingPublishPageId(null);
+        }}
+        isPending={republishMutation.isPending}
+        onConfirm={(websiteId) => {
+          if (pendingPublishPageId) {
+            republishMutation.mutate({ pageId: pendingPublishPageId, websiteId });
+          }
         }}
       />
     </div>
