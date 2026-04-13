@@ -179,6 +179,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { page_ids, publish_type, website_id, pages: directPages } = body;
     const pubType = publish_type || "page";
+    const fallbackWebsiteId = website_id || null;
 
     // ═══════════════════════════════════════════════════════════
     // Direct publish mode (from TemplateDetectorDialog)
