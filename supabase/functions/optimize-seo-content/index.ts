@@ -436,14 +436,14 @@ Generate SEO-optimized content that will score 90+ on Yoast SEO / RankMath. Focu
             type: "function",
             function: {
               name: "seo_optimization_result",
-              description: "Return the SEO optimization results",
+              description: "Return SEO optimization results compatible with Yoast/RankMath 90+ scoring",
               parameters: {
                 type: "object",
                 properties: {
-                  seo_title: { type: "string", description: "Optimized SEO title (30-60 chars)" },
-                  seo_description: { type: "string", description: "Optimized meta description (120-160 chars)" },
-                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 relevant keywords" },
-                  content: { type: "string", description: "HTML content with improved text but same structure" },
+                  seo_title: { type: "string", description: "SEO title 30-60 chars, keyword near start (Yoast green)" },
+                  seo_description: { type: "string", description: "Meta description 120-156 chars with keyword + CTA (Yoast green)" },
+                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords, primary keyword first" },
+                  content: { type: "string", description: "HTML with identical structure, only text optimized for SEO 90+" },
                 },
               },
             },
