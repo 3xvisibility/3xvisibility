@@ -600,7 +600,7 @@ export default function GeneratedPagesPage() {
                 onClick={() => {
                   const failed = [...selectedIds].filter((id) => pages.find((p) => p.id === id)?.status === "failed");
                   if (!failed.length) { toast({ title: "No failed pages to retry", variant: "destructive" }); return; }
-                  retryFailedMutation.mutate(failed);
+                  handlePublish(failed, "retry");
                 }}>
                 <RefreshCw className="h-3 w-3 mr-1" />Retry
               </Button>
@@ -678,7 +678,7 @@ export default function GeneratedPagesPage() {
                       <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
-                      {page.status === "failed" && <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
+                      {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
@@ -773,7 +773,7 @@ export default function GeneratedPagesPage() {
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
-                              {page.status === "failed" && <DropdownMenuItem onClick={() => retryFailedMutation.mutate([page.id])}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
+                              {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
