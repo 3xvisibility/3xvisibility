@@ -80,6 +80,8 @@ function stripHtml(html: string): string {
 function normalizeWords(value: string): string[] {
   return value
     .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^\p{L}\p{N}\s-]/gu, " ")
     .replace(/[-_/]+/g, " ")
     .split(/\s+/)
