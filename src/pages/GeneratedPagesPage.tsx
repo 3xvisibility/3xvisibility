@@ -21,6 +21,7 @@ import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
 import { AiSeoAssistantDialog } from "@/components/AiSeoAssistantDialog";
 import { AiEnrichDialog } from "@/components/AiEnrichDialog";
+import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -1091,6 +1092,16 @@ export default function GeneratedPagesPage() {
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
       <AiEnrichDialog open={!!aiEnrichPage} onOpenChange={(open) => !open && setAiEnrichPage(null)} page={aiEnrichPage}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
+      <PublishWebsiteSelector
+        open={showWebsiteSelector}
+        onOpenChange={(open) => {
+          setShowWebsiteSelector(open);
+          if (!open) setPendingPublishIds([]);
+        }}
+        isPending={publishMutation.isPending || bulkPublishMutation.isPending || retryFailedMutation.isPending}
+        pageCount={pendingPublishIds.length}
+        onConfirm={handleWebsiteSelected}
+      />
     </div>
   );
 }
