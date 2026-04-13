@@ -11,13 +11,22 @@ interface ScoresBadgeGroupProps {
   content: string;
   slug: string;
   url?: string;
+  description?: string;
   size?: "sm" | "md";
   /** Show labels like "SEO", "SEA", "GEO" next to badges */
   showLabels?: boolean;
 }
 
-export function ScoresBadgeGroup({ title, content, slug, url, size = "sm", showLabels = false }: ScoresBadgeGroupProps) {
-  const seo = calculateContentSeoScore(title, content, slug, url);
+export function ScoresBadgeGroup({
+  title,
+  content,
+  slug,
+  url,
+  description,
+  size = "sm",
+  showLabels = false,
+}: ScoresBadgeGroupProps) {
+  const seo = calculateContentSeoScore(title, content, slug, url, description);
   const sea = calculateContentSeaScore(title, content, slug, url);
   const geo = calculateContentGeoScore(title, content, slug, url);
 

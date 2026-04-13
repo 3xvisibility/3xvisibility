@@ -194,6 +194,7 @@ export function SeoOptimizeDialog({
             content={page.content}
             slug={page.slug}
             url={page.url}
+            description={page.excerpt}
             size="sm"
             showLabels
           />
