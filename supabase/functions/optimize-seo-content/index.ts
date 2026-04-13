@@ -371,20 +371,38 @@ Deno.serve(async (req) => {
       }
     }
 
-    const systemPrompt = `You are an expert SEO optimizer. You analyze existing web page content and generate optimized SEO metadata and improved content text.
+    const systemPrompt = `You are an expert SEO optimizer whose output MUST score 90+ on Yoast SEO, RankMath, and All in One SEO plugins.
 
-CRITICAL RULES:
-- When rewriting content, you MUST preserve ALL existing HTML structure, classes, IDs, and design elements exactly as they are.
-- Only change the TEXT inside HTML elements, never change tags, attributes, classes, styles, or structure.
-- Keep the same number of sections, headings, and elements.
-- Improve text for SEO keywords, readability, and engagement.
-- Language: ${lang}
+ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
+- NEVER change ANY HTML tag, attribute, class, id, style, data-* attribute, or structure.
+- NEVER remove or modify: URLs, href links, src attributes, prices, cart elements, forms, buttons, iframes, scripts, images.
+- NEVER change: elementor-*, wp-*, shopify-*, woocommerce-*, product-*, cart-*, price-* classes.
+- NEVER alter: <style> blocks, inline styles, CSS classes, media queries.
+- ONLY change the visible TEXT CONTENT inside HTML elements.
+- Keep EXACT same number of sections, divs, headings, paragraphs, lists.
+- Preserve ALL product data: prices, SKUs, variants, add-to-cart buttons, reviews, ratings.
 
-You must return a JSON object with these fields (only include what's requested):
-${fields.includes("seo_title") ? '- "seo_title": An SEO-optimized title (30-60 chars, with primary keyword)' : ""}
-${fields.includes("seo_description") ? '- "seo_description": A compelling meta description (120-160 chars, with call-to-action)' : ""}
-${fields.includes("seo_keywords") ? '- "seo_keywords": An array of 5-8 relevant SEO keywords' : ""}
-${fields.includes("content") ? '- "content": The full rewritten HTML with IDENTICAL structure but improved text for SEO. Preserve every HTML tag, class, id, style attribute. Only change text content.' : ""}
+SEO OPTIMIZATION TARGETS (Yoast/RankMath compatible - aim for 90+ score):
+1. Focus keyword MUST appear in: title, first paragraph, at least one H2/H3, and URL slug
+2. Focus keyword density: 0.5-2.5% (not too few, not stuffing)
+3. Title: 30-60 characters with primary keyword at or near the beginning
+4. Meta description: 120-156 characters with keyword + call-to-action
+5. Use H1 for main title, H2/H3 for subsections (proper heading hierarchy)
+6. Include keyword in at least one subheading
+7. Short paragraphs (under 150 words each) for readability
+8. Add transition words (however, therefore, additionally, moreover, furthermore)
+9. Use active voice predominantly (minimize passive voice)
+10. Content should be 300+ words minimum
+11. Include internal/external link anchor text where natural
+12. Image alt text should contain focus keyword where relevant
+
+Language: ${lang}
+
+Return these fields (only what's requested):
+${fields.includes("seo_title") ? '- "seo_title": SEO title 30-60 chars, keyword near start, matches Yoast/RankMath green zone' : ""}
+${fields.includes("seo_description") ? '- "seo_description": Meta description 120-156 chars with keyword + CTA, matches Yoast green zone' : ""}
+${fields.includes("seo_keywords") ? '- "seo_keywords": Array of 5-8 LSI/related keywords (primary keyword first)' : ""}
+${fields.includes("content") ? '- "content": Full HTML with IDENTICAL structure but SEO-optimized text. Every tag/class/attribute MUST be preserved byte-for-byte. Only text nodes change.' : ""}
 
 Return ONLY valid JSON, no markdown fences.`;
 
@@ -395,11 +413,11 @@ Page type: ${page_type || "page"}
 Current content (plain text summary):
 ${truncatedText}
 
-${fields.includes("content") ? `HTML structure to optimize (preserve structure exactly, only change text):
+${fields.includes("content") ? `HTML to optimize (PRESERVE ALL TAGS/CLASSES/ATTRIBUTES — only change text inside elements):
 ${truncatedHtml}` : ""}
 
 ${instruction ? `\nUser instruction: ${instruction}\n` : ""}
-Generate optimized SEO data for this page. Focus on the main topic/keywords of the existing content.`;
+Generate SEO-optimized content that will score 90+ on Yoast SEO / RankMath. Focus keyword should be derived from the page's main topic. Ensure keyword appears in title, intro, subheadings, and throughout at 0.5-2.5% density.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -418,14 +436,14 @@ Generate optimized SEO data for this page. Focus on the main topic/keywords of t
             type: "function",
             function: {
               name: "seo_optimization_result",
-              description: "Return the SEO optimization results",
+              description: "Return SEO optimization results compatible with Yoast/RankMath 90+ scoring",
               parameters: {
                 type: "object",
                 properties: {
-                  seo_title: { type: "string", description: "Optimized SEO title (30-60 chars)" },
-                  seo_description: { type: "string", description: "Optimized meta description (120-160 chars)" },
-                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 relevant keywords" },
-                  content: { type: "string", description: "HTML content with improved text but same structure" },
+                  seo_title: { type: "string", description: "SEO title 30-60 chars, keyword near start (Yoast green)" },
+                  seo_description: { type: "string", description: "Meta description 120-156 chars with keyword + CTA (Yoast green)" },
+                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords, primary keyword first" },
+                  content: { type: "string", description: "HTML with identical structure, only text optimized for SEO 90+" },
                 },
               },
             },
