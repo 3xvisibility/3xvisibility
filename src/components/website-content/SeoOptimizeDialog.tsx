@@ -92,12 +92,18 @@ export function SeoOptimizeDialog({
     setResult(null);
 
     try {
+      // Truncate content to avoid edge function timeouts on large pages
+      const maxContentLen = 30000;
+      const contentToSend = page.content.length > maxContentLen
+        ? page.content.slice(0, maxContentLen)
+        : page.content;
+
       const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
         body: {
           website_id: websiteId,
           page_external_id: page.id,
           page_title: page.title,
-          page_content: page.content,
+          page_content: contentToSend,
           page_slug: page.slug,
           page_url: page.url,
           page_type: page.type,
