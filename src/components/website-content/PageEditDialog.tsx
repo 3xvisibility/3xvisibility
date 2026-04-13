@@ -478,7 +478,7 @@ export function PageEditDialog({
               )}
 
               {/* Editor Area */}
-              <div className={`${editMode === "split" ? "grid grid-cols-2 gap-2" : ""}`}>
+              <div className={`${editMode === "split" ? "grid grid-cols-1 sm:grid-cols-2 gap-2" : ""}`}>
                 {/* Visual Editor */}
                 {(editMode === "visual" || editMode === "split") && (
                   <div className="rounded-md border overflow-hidden">
