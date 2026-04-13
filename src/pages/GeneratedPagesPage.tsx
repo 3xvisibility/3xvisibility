@@ -128,9 +128,9 @@ export default function GeneratedPagesPage() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: async ({ pageIds, type }: { pageIds: string[]; type: "page" | "product" }) => {
+    mutationFn: async ({ pageIds, type, websiteId }: { pageIds: string[]; type: "page" | "product"; websiteId?: string }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: pageIds, publish_type: type },
+        body: { page_ids: pageIds, publish_type: type, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -140,6 +140,8 @@ export default function GeneratedPagesPage() {
       queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
       toast({ title: "Publishing complete", description: `${data.published} published, ${data.failed} failed.` });
       if (wsId) logAudit(wsId, "page_published", "page", variables.pageIds[0], { count: variables.pageIds.length });
+      setShowWebsiteSelector(false);
+      setPendingPublishIds([]);
     },
     onError: (err: Error) => toast({ title: "Publishing failed", description: err.message, variant: "destructive" }),
   });
