@@ -113,6 +113,9 @@ Deno.serve(async (req) => {
       seo_title,
       seo_description,
       seo_keywords,
+      page_seo_title,
+      page_seo_description,
+      page_seo_keywords,
       update_template,
     } = body;
 
@@ -351,7 +354,18 @@ Deno.serve(async (req) => {
     }
 
     const fields = optimize_fields || ["seo_title", "seo_description", "seo_keywords", "content"];
-    const lang = language || "en";
+    const existingSeoKeywords = Array.isArray(page_seo_keywords)
+      ? page_seo_keywords.filter((keyword: unknown): keyword is string => typeof keyword === "string" && keyword.trim().length > 0)
+      : [];
+    const primaryKeyword = existingSeoKeywords[0] || "";
+    const effectiveSeoTitle = typeof page_seo_title === "string" && page_seo_title.trim().length > 0
+      ? page_seo_title.trim()
+      : page_title || "";
+    const effectiveSeoDescription = typeof page_seo_description === "string" && page_seo_description.trim().length > 0
+      ? page_seo_description.trim()
+      : "";
+    const lang = language
+      || (primaryKeyword ? "same as the exact focus keyword phrase and current page URL" : "same as the existing page content");
 
     // Strip HTML to get plain text for AI analysis
     const plainText = page_content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -383,10 +397,10 @@ ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
 - Preserve ALL product data: prices, SKUs, variants, add-to-cart buttons, reviews, ratings.
 
 ═══ SEO SCORE REQUIREMENTS (12 checks, need 11+ for 90+) ═══
-1. Focus keyword MUST appear in: title, first paragraph, at least one H2/H3, and throughout content
+1. Focus keyword MUST appear in: SEO title, meta description, opening lines of the content, at least one H2/H3, URL-aligned wording, and naturally throughout content
 2. Focus keyword density: 0.5-2.5%
 3. Title: 30-60 characters with primary keyword
-4. Content: 300+ words minimum
+4. Content: 600+ words minimum when rewriting content
 5. Has H1 heading
 6. Has H2/H3 subheadings with keyword in at least one
 7. Short paragraphs (under 150 words each)
@@ -417,17 +431,27 @@ YOU MUST naturally include geographic/local relevance signals:
 
 CRITICAL INTEGRATION RULE: Do NOT just dump these words randomly. Weave them naturally into engaging, human-readable copy that makes sense for the page topic. Every sentence should read naturally while hitting multiple scoring signals simultaneously.
 
+PRIMARY KEYWORD RULE:
+- If a focus keyword is provided, you MUST use that exact phrase as the primary keyword.
+- Do NOT translate, anglicize, or replace the provided focus keyword with a different phrase.
+- Keep the output in the same language as the provided focus keyword unless the user explicitly asks otherwise.
+- The first item in seo_keywords MUST be the exact primary focus keyword.
+
 Language: ${lang}
 
 Return these fields (only what's requested):
 ${fields.includes("seo_title") ? '- "seo_title": SEO title 30-60 chars, keyword near start, include an action/offer word (e.g., "Get", "Best", "Free", "Top")' : ""}
-${fields.includes("seo_description") ? '- "seo_description": Meta description 120-156 chars with keyword + CTA + benefit word + local cue' : ""}
-${fields.includes("seo_keywords") ? '- "seo_keywords": Array of 5-8 LSI/related keywords (primary keyword first)' : ""}
+${fields.includes("seo_description") ? '- "seo_description": Meta description 120-156 chars with the exact focus keyword + CTA + benefit word + local cue' : ""}
+${fields.includes("seo_keywords") ? '- "seo_keywords": Array of 5-8 LSI/related keywords with the exact primary focus keyword first' : ""}
 ${fields.includes("content") ? '- "content": Full HTML with IDENTICAL structure but text optimized to score 90+ on ALL THREE dimensions (SEO + SEA + GEO). Every tag/class/attribute MUST be preserved byte-for-byte. Only text nodes change.' : ""}
 
 Return ONLY valid JSON, no markdown fences.`;
 
     const userPrompt = `Page title: "${page_title || "Untitled"}"
+Current SEO title: ${effectiveSeoTitle || "N/A"}
+Current meta description: ${effectiveSeoDescription || "N/A"}
+Current SEO keywords: ${existingSeoKeywords.join(", ") || "N/A"}
+Primary focus keyword: ${primaryKeyword || "Derive it from the existing page title/slug and keep it language-consistent"}
 Page URL: ${page_url || page_slug || "N/A"}
 Page type: ${page_type || "page"}
 
@@ -439,11 +463,13 @@ ${truncatedHtml}` : ""}
 
 ${instruction ? `\nUser instruction: ${instruction}\n` : ""}
 IMPORTANT: Generate content that scores 90+ on ALL THREE metrics:
-- SEO: Focus keyword in title, intro, subheadings; density 0.5-2.5%; transition words; active voice; 300+ words
+- SEO: Use the exact focus keyword in SEO title, meta description, opening lines, subheadings, and naturally in the content; density 0.5-2.5%; transition words; active voice; 600+ words when content is rewritten
 - SEA: Include CTA words (buy/get/shop/order/contact), benefit words (save/fast/easy/reliable/premium), trust signals (trusted/guarantee/certified/proven), offer language (free/discount/deal), urgency cues (today/now/limited)
 - GEO: Include local signals (local/nearby/community/service area/serving), availability cues (available/today/same-day/contact us), local credibility (trusted locally/local team/area specialists)
 
-Weave all signals naturally — the text must read like professional marketing copy, not keyword spam.`;
+Weave all signals naturally — the text must read like professional marketing copy, not keyword spam.
+
+If a primary focus keyword is provided, the optimized metadata and rewritten content MUST revolve around that exact phrase so external WordPress SEO plugins score it correctly.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -527,6 +553,11 @@ Weave all signals naturally — the text must read like professional marketing c
 
     let pushResult: { external_id?: string; url?: string } | null = null;
     let pushError: string | null = null;
+    const nextSeoTitle = result.seo_title || page_seo_title || undefined;
+    const nextSeoDescription = result.seo_description || page_seo_description || undefined;
+    const nextSeoKeywords = Array.isArray(result.seo_keywords) && result.seo_keywords.length > 0
+      ? result.seo_keywords
+      : existingSeoKeywords;
 
     if (website && page_external_id && !skip_push) {
       try {
@@ -552,12 +583,12 @@ Weave all signals naturally — the text must read like professional marketing c
             elementor_edit_mode: "builder",
           };
         }
-        if (result.seo_title) updatePayload.seo_title = result.seo_title;
-        if (result.seo_description) {
-          updatePayload.seo_description = result.seo_description;
-          updatePayload.excerpt = result.seo_description;
+        if (nextSeoTitle) updatePayload.seo_title = nextSeoTitle;
+        if (nextSeoDescription) {
+          updatePayload.seo_description = nextSeoDescription;
+          updatePayload.excerpt = nextSeoDescription;
         }
-        if (result.seo_keywords) updatePayload.seo_keywords = result.seo_keywords;
+        if (nextSeoKeywords.length > 0) updatePayload.seo_keywords = nextSeoKeywords;
 
         pushResult = await connector.updatePage(page_external_id, updatePayload);
         console.log(`[OPTIMIZE] Updated existing ${isProductContent ? 'product' : 'page'} on CMS:`, pushResult);
@@ -582,12 +613,12 @@ Weave all signals naturally — the text must read like professional marketing c
       .maybeSingle();
 
     const pageRecord: Record<string, any> = {
-      title: result.seo_title || page_title,
+      title: nextSeoTitle || page_title,
       content: result.content || page_content,
       slug: page_slug || "",
-      seo_title: result.seo_title || null,
-      seo_description: result.seo_description || null,
-      seo_keywords: result.seo_keywords || null,
+      seo_title: nextSeoTitle || null,
+      seo_description: nextSeoDescription || null,
+      seo_keywords: nextSeoKeywords.length > 0 ? nextSeoKeywords : null,
       user_id: user.id,
       website_id,
       workspace_id: wsId,

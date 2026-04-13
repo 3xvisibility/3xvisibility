@@ -48,6 +48,11 @@ interface ContentItem {
   content: string;
   excerpt: string;
   modified: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_keywords?: string[] | null;
+  canonical_url?: string | null;
+  raw_meta?: Record<string, unknown>;
 }
 
 /** Decode HTML entities like &#8211; &amp; &lt; etc. */
@@ -482,7 +487,9 @@ function ContentList({
                         content={item.content}
                         slug={item.slug}
                         url={item.url}
-                        description={item.excerpt}
+                        description={item.seo_description || item.excerpt}
+                        seoTitle={item.seo_title}
+                        seoKeywords={item.seo_keywords}
                         size="sm"
                         showLabels
                       />

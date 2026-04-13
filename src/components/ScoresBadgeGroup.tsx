@@ -12,6 +12,9 @@ interface ScoresBadgeGroupProps {
   slug: string;
   url?: string;
   description?: string;
+  seoTitle?: string | null;
+  seoKeywords?: string[] | null;
+  focusKeyword?: string | null;
   size?: "sm" | "md";
   /** Show labels like "SEO", "SEA", "GEO" next to badges */
   showLabels?: boolean;
@@ -23,10 +26,19 @@ export function ScoresBadgeGroup({
   slug,
   url,
   description,
+  seoTitle,
+  seoKeywords,
+  focusKeyword,
   size = "sm",
   showLabels = false,
 }: ScoresBadgeGroupProps) {
-  const seo = calculateContentSeoScore(title, content, slug, url, description);
+  const seo = calculateContentSeoScore(title, content, slug, {
+    url,
+    description,
+    seoTitle: seoTitle ?? undefined,
+    seoKeywords: seoKeywords ?? undefined,
+    focusKeyword: focusKeyword ?? undefined,
+  });
   const sea = calculateContentSeaScore(title, content, slug, url);
   const geo = calculateContentGeoScore(title, content, slug, url);
 
@@ -49,11 +61,26 @@ function ScoreItem({ label, result, size, showLabel }: { label: string; result: 
 }
 
 /** Compute average scores for a group of pages */
-export function computeAverageScores(pages: { title: string; content: string; slug: string; url?: string }[]) {
+export function computeAverageScores(pages: {
+  title: string;
+  content: string;
+  slug: string;
+  url?: string;
+  description?: string;
+  seoTitle?: string | null;
+  seoKeywords?: string[] | null;
+  focusKeyword?: string | null;
+}[]) {
   if (pages.length === 0) return null;
   let seoSum = 0, seaSum = 0, geoSum = 0;
   for (const p of pages) {
-    seoSum += calculateContentSeoScore(p.title, p.content, p.slug, p.url).score;
+    seoSum += calculateContentSeoScore(p.title, p.content, p.slug, {
+      url: p.url,
+      description: p.description,
+      seoTitle: p.seoTitle ?? undefined,
+      seoKeywords: p.seoKeywords ?? undefined,
+      focusKeyword: p.focusKeyword ?? undefined,
+    }).score;
     seaSum += calculateContentSeaScore(p.title, p.content, p.slug, p.url).score;
     geoSum += calculateContentGeoScore(p.title, p.content, p.slug, p.url).score;
   }

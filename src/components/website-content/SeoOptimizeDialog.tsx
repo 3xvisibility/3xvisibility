@@ -35,6 +35,9 @@ interface ContentItem {
   content: string;
   excerpt: string;
   modified: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_keywords?: string[] | null;
 }
 
 interface SeoOptimizeDialogProps {
@@ -62,7 +65,7 @@ export function SeoOptimizeDialog({
   onOptimized,
 }: SeoOptimizeDialogProps) {
   const { toast } = useToast();
-  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords"]);
+  const [selectedFields, setSelectedFields] = useState<string[]>(["seo_title", "seo_description", "seo_keywords", "content"]);
   const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
@@ -109,6 +112,9 @@ export function SeoOptimizeDialog({
           page_type: page.type,
           workspace_id: workspaceId,
           optimize_fields: selectedFields,
+          page_seo_title: page.seo_title,
+          page_seo_description: page.seo_description || page.excerpt,
+          page_seo_keywords: page.seo_keywords || [],
           instruction: instruction || undefined,
         },
       });
@@ -194,7 +200,9 @@ export function SeoOptimizeDialog({
             content={page.content}
             slug={page.slug}
             url={page.url}
-            description={page.excerpt}
+            description={page.seo_description || page.excerpt}
+            seoTitle={page.seo_title}
+            seoKeywords={page.seo_keywords}
             size="sm"
             showLabels
           />
