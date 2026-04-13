@@ -592,7 +592,7 @@ export default function GeneratedPagesPage() {
                 onClick={() => {
                   const publishable = [...selectedIds].filter((id) => { const p = pages.find((pg) => pg.id === id); return p?.status === "pending" || p?.status === "failed"; });
                   if (!publishable.length) { toast({ title: "No publishable pages", variant: "destructive" }); return; }
-                  bulkPublishMutation.mutate(publishable);
+                  handlePublish(publishable, "bulk");
                 }}>
                 <Send className="h-3 w-3 mr-1" />{bulkPublishMutation.isPending ? "..." : "Publish"}
               </Button>
