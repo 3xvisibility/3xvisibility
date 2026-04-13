@@ -150,6 +150,8 @@ export class WordPressConnector implements CmsConnector {
     if (payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
       meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
+      meta._elementor_template_type = "wp-page";
+      meta._elementor_version = "3.0.0";
     }
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
