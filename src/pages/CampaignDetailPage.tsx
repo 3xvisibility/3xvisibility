@@ -89,6 +89,8 @@ export default function CampaignDetailPage() {
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [resumeIndex, setResumeIndex] = useState(0);
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
+  const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
+  const [pendingPublishPageId, setPendingPublishPageId] = useState<string | null>(null);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
     content: true,
@@ -282,19 +284,17 @@ export default function CampaignDetailPage() {
   });
 
   const republishMutation = useMutation({
-    mutationFn: async (pageId: string) => {
-      // Don't clear external_id — we need it to update the same CMS page/product
+    mutationFn: async ({ pageId, websiteId }: { pageId: string; websiteId?: string }) => {
       const { error: resetError } = await supabase
         .from("generated_pages")
         .update({ status: "pending", error_message: null })
         .eq("id", pageId);
       if (resetError) throw resetError;
 
-      // Use the campaign's type to determine publish_type (page vs product)
       const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
 
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: [pageId], publish_type: pubType },
+        body: { page_ids: [pageId], publish_type: pubType, website_id: websiteId || campaign?.website_id },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -303,8 +303,21 @@ export default function CampaignDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
       toast({ title: "Republish complete", description: "Page updated at the same URL." });
+      setShowWebsiteSelector(false);
+      setPendingPublishPageId(null);
     },
   });
+
+  const handlePublishPage = (pageId: string) => {
+    // Check if campaign or page has a website
+    const page = pages?.find((p: any) => p.id === pageId);
+    if (!campaign?.website_id && !page?.website_id) {
+      setPendingPublishPageId(pageId);
+      setShowWebsiteSelector(true);
+    } else {
+      republishMutation.mutate({ pageId });
+    }
+  };
 
   const bulkStatusMutation = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
