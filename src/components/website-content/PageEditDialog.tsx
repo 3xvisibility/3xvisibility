@@ -315,8 +315,28 @@ export function PageEditDialog({
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        if (msg.includes("402") || msg.includes("credits exhausted") || (data && typeof data === "object" && data.error?.includes?.("credits"))) {
+          toast({ title: "AI credits exhausted", description: "Your AI credits have run out. Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
+          setOptimizing(false);
+          return;
+        }
+        if (msg.includes("429") || msg.includes("Rate limit")) {
+          toast({ title: "Rate limited", description: "Too many requests. Please wait a moment and try again.", variant: "destructive" });
+          setOptimizing(false);
+          return;
+        }
+        throw new Error(msg);
+      }
+      if (data?.error) {
+        if (data.error.includes("credits") || data.error.includes("402")) {
+          toast({ title: "AI credits exhausted", description: "Your AI credits have run out. Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
+          setOptimizing(false);
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       const result = data.result || {};
 
@@ -389,8 +409,23 @@ export function PageEditDialog({
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      if (error) {
+        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        if (msg.includes("402") || msg.includes("credits")) {
+          toast({ title: "AI credits exhausted", description: "Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
+          setPublishing(false);
+          return;
+        }
+        throw new Error(msg);
+      }
+      if (data?.error) {
+        if (data.error.includes("credits") || data.error.includes("402")) {
+          toast({ title: "AI credits exhausted", description: "Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
+          setPublishing(false);
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       if (data?.pushed_to_cms) {
         setPublished(true);
