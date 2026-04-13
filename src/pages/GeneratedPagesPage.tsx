@@ -247,6 +247,29 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  // Helper: check if pages have website_id, if not show selector
+  const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
+    const pagesWithoutSite = ids.filter((pid) => {
+      const p = pages.find((pg) => pg.id === pid);
+      return !p?.website_id;
+    });
+    if (pagesWithoutSite.length > 0) {
+      setPendingPublishIds(ids);
+      setPendingPublishAction(action);
+      setShowWebsiteSelector(true);
+    } else {
+      if (action === "retry") retryFailedMutation.mutate({ ids });
+      else if (action === "bulk") bulkPublishMutation.mutate({ ids });
+      else publishMutation.mutate({ pageIds: ids, type: publishType });
+    }
+  };
+
+  const handleWebsiteSelected = (websiteId: string) => {
+    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId });
+    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId });
+    else publishMutation.mutate({ pageIds: pendingPublishIds, type: publishType, websiteId });
+  };
+
   const rewriteMutation = useMutation({
     mutationFn: async (pageId: string) => {
       const { data, error } = await supabase.functions.invoke("rewrite-content", { body: { page_id: pageId } });
