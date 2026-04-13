@@ -177,6 +177,11 @@ export default function CampaignDetailPage() {
 
   const latestJob = jobs[0];
 
+  const getPublishFailureMessage = (data: any, fallback: string) => {
+    const firstError = data?.results?.find((result: any) => result.status === "failed")?.error;
+    return firstError || fallback;
+  };
+
   // Overview stats
   const statusCounts = useMemo(() => {
     const counts = { pending: 0, published: 0, failed: 0 };
@@ -299,6 +304,9 @@ export default function CampaignDetailPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (data?.failed && !data?.published) {
+        throw new Error(getPublishFailureMessage(data, "This page failed to publish."));
+      }
       return data;
     },
     onSuccess: () => {
@@ -306,6 +314,10 @@ export default function CampaignDetailPage() {
       toast({ title: "Republish complete", description: "Page updated at the same URL." });
       setShowWebsiteSelector(false);
       setPendingPublishPageId(null);
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      toast({ title: "Republish failed", description: err.message, variant: "destructive" });
     },
   });
 

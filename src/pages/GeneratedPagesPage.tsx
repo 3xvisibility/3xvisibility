@@ -84,6 +84,11 @@ export default function GeneratedPagesPage() {
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
+  const getPublishFailureMessage = (data: any, fallback: string) => {
+    const firstError = data?.results?.find((result: any) => result.status === "failed")?.error;
+    return firstError || fallback;
+  };
+
   // ─── Data Query ────────────────────────────────────────────
   const { data: pages = [], isLoading } = useQuery({
     queryKey: ["generated-pages", wsId],
@@ -135,6 +140,9 @@ export default function GeneratedPagesPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (data?.failed && !data?.published) {
+        throw new Error(getPublishFailureMessage(data, "All selected pages failed to publish."));
+      }
       return data;
     },
     onSuccess: (data, variables) => {
@@ -196,6 +204,9 @@ export default function GeneratedPagesPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (data?.failed && !data?.published) {
+        throw new Error(getPublishFailureMessage(data, "All selected pages failed to publish."));
+      }
       return data;
     },
     onSuccess: (data, { ids }) => {
@@ -233,6 +244,9 @@ export default function GeneratedPagesPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      if (data?.failed && !data?.published) {
+        throw new Error(getPublishFailureMessage(data, "All selected pages failed to publish."));
+      }
       return data;
     },
     onSuccess: (data) => {

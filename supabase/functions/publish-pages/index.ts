@@ -316,9 +316,11 @@ Deno.serve(async (req) => {
     for (const page of pages) {
       // Resolve website if not directly joined
       if (!page.websites) {
+        const originalWebsiteId = page.website_id || null;
+        let resolvedWebsiteId: string | null = originalWebsiteId;
+
         // Try resolving from campaign
-        let resolvedWebsiteId: string | null = null;
-        if (page.campaign_id) {
+        if (!resolvedWebsiteId && page.campaign_id) {
           const { data: campaign } = await supabase
             .from("campaigns")
             .select("website_id")
@@ -341,7 +343,11 @@ Deno.serve(async (req) => {
 
           if (website) {
             page.websites = website;
-            await supabase.from("generated_pages").update({ website_id: resolvedWebsiteId }).eq("id", page.id);
+            page.website_id = resolvedWebsiteId;
+
+            if (originalWebsiteId !== resolvedWebsiteId) {
+              await supabase.from("generated_pages").update({ website_id: resolvedWebsiteId }).eq("id", page.id);
+            }
           }
         }
       }
