@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { friendlyError } from "@/lib/friendly-errors";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,11 @@ import { TemplateDetectorDialog } from "@/components/website-content/TemplateDet
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
 import { PageEditDialog } from "@/components/website-content/PageEditDialog";
 import { ScoresBadgeGroup } from "@/components/ScoresBadgeGroup";
+import {
+  clearWebsiteContentUiEditPage,
+  readWebsiteContentUiState,
+  writeWebsiteContentUiState,
+} from "@/lib/website-content-persistence";
 
 type Website = Tables<"websites">;
 
@@ -57,13 +62,14 @@ export default function WebsiteContentPage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const { toast } = useToast();
-  const [selectedWebsite, setSelectedWebsite] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<"pages" | "products">("pages");
-  const [search, setSearch] = useState("");
+  const persistedUiState = useMemo(() => readWebsiteContentUiState(), []);
+  const [selectedWebsite, setSelectedWebsite] = useState<string>(() => persistedUiState?.selectedWebsite ?? "");
+  const [activeTab, setActiveTab] = useState<"pages" | "products">(() => persistedUiState?.activeTab ?? "pages");
+  const [search, setSearch] = useState(() => persistedUiState?.search ?? "");
   const [templatePage, setTemplatePage] = useState<ContentItem | null>(null);
   const [previewPage, setPreviewPage] = useState<ContentItem | null>(null);
-  
   const [editPage, setEditPage] = useState<ContentItem | null>(null);
+  const [persistedEditPageId, setPersistedEditPageId] = useState<string | null>(() => persistedUiState?.editPageId ?? null);
 
   // Fetch connected websites
   const { data: websites = [], isLoading: loadingWebsites } = useQuery({
@@ -143,6 +149,7 @@ export default function WebsiteContentPage() {
 
   const pages = pagesData || [];
   const products = productsData || [];
+  const allItems = useMemo(() => [...pages, ...products], [pages, products]);
   const currentItems = activeTab === "pages" ? pages : products;
   const isLoading = activeTab === "pages" ? loadingPages : loadingProducts;
   const error = activeTab === "pages" ? pagesError : productsError;
@@ -158,6 +165,41 @@ export default function WebsiteContentPage() {
   }, [currentItems, search]);
 
   const currentWebsite = websites.find((w) => w.id === effectiveWebsite);
+
+  useEffect(() => {
+    if (loadingWebsites) return;
+
+    writeWebsiteContentUiState({
+      selectedWebsite: effectiveWebsite,
+      activeTab,
+      search,
+      editPageId: editPage?.id ?? persistedEditPageId,
+    });
+  }, [activeTab, editPage?.id, effectiveWebsite, loadingWebsites, persistedEditPageId, search]);
+
+  useEffect(() => {
+    if (editPage || !persistedEditPageId || !effectiveWebsite || allItems.length === 0) return;
+
+    const restoredItem = allItems.find((item) => item.id === persistedEditPageId);
+    if (!restoredItem) return;
+
+    setEditPage(restoredItem);
+    setActiveTab(restoredItem.type === "product" ? "products" : "pages");
+  }, [allItems, editPage, effectiveWebsite, persistedEditPageId]);
+
+  const handleEdit = (item: ContentItem) => {
+    setEditPage(item);
+    setPersistedEditPageId(item.id);
+    setActiveTab(item.type === "product" ? "products" : "pages");
+  };
+
+  const handleEditOpenChange = (open: boolean) => {
+    if (open) return;
+
+    setEditPage(null);
+    setPersistedEditPageId(null);
+    clearWebsiteContentUiEditPage();
+  };
 
   const platformIcon = (type: string) => {
     switch (type) {
@@ -295,7 +337,7 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
-            onEdit={setEditPage}
+            onEdit={handleEdit}
           />
         </TabsContent>
         <TabsContent value="products" className="mt-3">
@@ -305,7 +347,7 @@ export default function WebsiteContentPage() {
             error={error}
             onDetectTemplate={setTemplatePage}
             onPreview={setPreviewPage}
-            onEdit={setEditPage}
+            onEdit={handleEdit}
           />
         </TabsContent>
       </Tabs>
@@ -334,7 +376,7 @@ export default function WebsiteContentPage() {
       {editPage && currentWebsite && (
         <PageEditDialog
           open={!!editPage}
-          onOpenChange={(o) => !o && setEditPage(null)}
+          onOpenChange={handleEditOpenChange}
           page={editPage}
           websiteId={effectiveWebsite}
           websiteType={currentWebsite.type}
