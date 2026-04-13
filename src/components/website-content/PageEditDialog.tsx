@@ -349,39 +349,39 @@ export function PageEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setPublished(false); setPushError(null); setSeoResult(null); } }}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="w-[calc(100%-1rem)] sm:max-w-4xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] flex flex-col p-3 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Pencil className="h-5 w-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-sm sm:text-base">
+            <Pencil className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
             Edit & Optimize SEO
           </DialogTitle>
-          <DialogDescription className="flex items-center gap-2 truncate">
-            <span>/{page.slug}</span>
+          <DialogDescription className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <span className="truncate text-xs">/{page.slug}</span>
             <ScoresBadgeGroup title={editTitle} content={editContent} slug={page.slug} url={page.url} size="sm" showLabels />
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="shrink-0">
-            <TabsTrigger value="edit" className="text-xs gap-1.5">
-              <Pencil className="h-3.5 w-3.5" /> Edit
+          <TabsList className="shrink-0 flex-wrap h-auto gap-0.5 p-1">
+            <TabsTrigger value="edit" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-3">
+              <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Edit
             </TabsTrigger>
-            <TabsTrigger value="seo" className="text-xs gap-1.5">
-              <Sparkles className="h-3.5 w-3.5" /> Optimize SEO
+            <TabsTrigger value="seo" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-3">
+              <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden sm:inline">Optimize</span> SEO
             </TabsTrigger>
-            <TabsTrigger value="preview" className="text-xs gap-1.5">
-              <Eye className="h-3.5 w-3.5" /> Preview
+            <TabsTrigger value="preview" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-3">
+              <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Preview
             </TabsTrigger>
-            <TabsTrigger value="changes" className="text-xs gap-1.5">
-              <Diff className="h-3.5 w-3.5" /> Changes
+            <TabsTrigger value="changes" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-3">
+              <Diff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Changes
               {changedLineCount > 0 && (
-                <Badge variant="secondary" className="text-[10px] ml-1 h-4 px-1">
+                <Badge variant="secondary" className="text-[10px] ml-0.5 sm:ml-1 h-4 px-1">
                   {changedLineCount}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="source" className="text-xs gap-1.5">
-              <Code className="h-3.5 w-3.5" /> HTML
+            <TabsTrigger value="source" className="text-[10px] sm:text-xs gap-1 sm:gap-1.5 px-2 sm:px-3">
+              <Code className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> HTML
             </TabsTrigger>
           </TabsList>
 
@@ -670,7 +670,7 @@ export function PageEditDialog({
         </Tabs>
 
         {/* Actions */}
-        <div className="flex items-center justify-between gap-3 pt-3 border-t shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
             {published && (
               <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20">
@@ -678,27 +678,27 @@ export function PageEditDialog({
               </Badge>
             )}
             {pushError && (
-              <Badge variant="destructive" className="text-[10px]">
-                <AlertTriangle className="h-3 w-3 mr-1" /> {pushError.slice(0, 60)}
+              <Badge variant="destructive" className="text-[10px] max-w-full">
+                <AlertTriangle className="h-3 w-3 mr-1 shrink-0" /> <span className="truncate">{pushError.slice(0, 60)}</span>
               </Badge>
             )}
             {hasChanges && !published && (
               <span className="text-xs text-muted-foreground">{changedLineCount} lines changed</span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             {page.url && (
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8" onClick={() => window.open(page.url, "_blank")}>
-                <ArrowUpRight className="h-3.5 w-3.5" /> View Page
+              <Button size="sm" variant="outline" className="gap-1 text-[10px] sm:text-xs h-8 flex-1 sm:flex-initial" onClick={() => window.open(page.url, "_blank")}>
+                <ArrowUpRight className="h-3.5 w-3.5 shrink-0" /> View Page
               </Button>
             )}
             <Button
               size="sm"
               onClick={handlePublish}
               disabled={!hasChanges || publishing}
-              className="gap-1.5 text-xs h-8"
+              className="gap-1 text-[10px] sm:text-xs h-8 flex-1 sm:flex-initial"
             >
-              {publishing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+              {publishing ? <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" /> : <Check className="h-3.5 w-3.5 shrink-0" />}
               {publishing ? "Publishing..." : "Republish to Site"}
             </Button>
           </div>
