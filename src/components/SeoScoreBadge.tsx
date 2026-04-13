@@ -16,11 +16,12 @@ export function SeoScoreBadge({ score, label, color, checks, size = "sm", scoreT
   const [open, setOpen] = useState(false);
   const barWidth = size === "sm" ? "w-10" : "w-16";
   const textSize = size === "sm" ? "text-[10px]" : "text-xs";
+  const safeScore = Math.max(0, Math.min(100, Math.round(score)));
 
   const barColor =
-    score >= 85 ? "bg-emerald-500" :
-    score >= 60 ? "bg-primary" :
-    score >= 35 ? "bg-amber-500" : "bg-destructive";
+    safeScore >= 85 ? "bg-emerald-500" :
+    safeScore >= 60 ? "bg-primary" :
+    safeScore >= 35 ? "bg-amber-500" : "bg-destructive";
 
   const badge = (
     <button
@@ -31,10 +32,10 @@ export function SeoScoreBadge({ score, label, color, checks, size = "sm", scoreT
       <div className={`${barWidth} h-1.5 rounded-full bg-muted overflow-hidden`}>
         <div
           className={`h-full rounded-full transition-all duration-300 ${barColor}`}
-          style={{ width: `${score}%` }}
+          style={{ width: `${safeScore}%` }}
         />
       </div>
-      <span className={`${textSize} font-semibold tabular-nums ${color}`}>{score}</span>
+      <span className={`${textSize} font-semibold tabular-nums ${color}`}>{safeScore}</span>
     </button>
   );
 
@@ -48,18 +49,16 @@ export function SeoScoreBadge({ score, label, color, checks, size = "sm", scoreT
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{badge}</PopoverTrigger>
       <PopoverContent side="left" align="start" className="w-72 p-0">
-        {/* Header */}
         <div className="px-4 py-3 border-b border-border">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">{heading}</span>
-            <span className={`text-sm font-bold ${color}`}>{score}/100 — {label}</span>
+            <span className={`text-sm font-bold ${color}`}>{safeScore}/100 — {label}</span>
           </div>
           <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
-            <div className={`h-full rounded-full ${barColor}`} style={{ width: `${score}%` }} />
+            <div className={`h-full rounded-full ${barColor}`} style={{ width: `${safeScore}%` }} />
           </div>
         </div>
 
-        {/* Improvement suggestions */}
         {failed.length > 0 && (
           <div className="px-4 py-3 border-b border-border">
             <div className="flex items-center gap-1.5 mb-2">
@@ -80,7 +79,6 @@ export function SeoScoreBadge({ score, label, color, checks, size = "sm", scoreT
           </div>
         )}
 
-        {/* Passed checks */}
         {passed.length > 0 && (
           <div className="px-4 py-3">
             <div className="flex items-center gap-1.5 mb-2">

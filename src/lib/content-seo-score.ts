@@ -14,11 +14,23 @@ export interface ContentScoreResult {
 
 export type ContentSeoResult = ContentScoreResult;
 
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
 function toLabel(score: number): { label: ContentScoreResult["label"]; color: string } {
   if (score >= 85) return { label: "Excellent", color: "text-emerald-600" };
   if (score >= 60) return { label: "Good", color: "text-primary" };
   if (score >= 35) return { label: "Fair", color: "text-amber-600" };
   return { label: "Poor", color: "text-destructive" };
+}
+
+function buildScoreResult(points: number, checks: ContentScoreResult["checks"]): ContentScoreResult {
+  const totalWeight = Math.max(1, checks.reduce((sum, check) => sum + (check.weight ?? 1), 0));
+  const earnedPoints = Math.max(0, Math.min(totalWeight, points));
+  const score = clampScore((earnedPoints / totalWeight) * 100);
+
+  return { score, ...toLabel(score), checks };
 }
 
 /** Strip HTML to plain text while keeping rough paragraph boundaries */
@@ -94,10 +106,13 @@ export function calculateContentSeoScore(
   title: string,
   content: string,
   slug: string,
-  url?: string
+  url?: string,
+  description = ""
 ): ContentScoreResult {
   const plainText = stripHtml(content);
   const lowerText = plainText.toLowerCase();
+  const metaDescription = stripHtml(description);
+  const lowerDescription = metaDescription.toLowerCase();
   const focusKw = extractFocusKeyword(title, slug);
   const paragraphs = extractParagraphs(content);
   const headings = extractHeadings(content);
@@ -105,7 +120,6 @@ export function calculateContentSeoScore(
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
-  const maxPoints = 12;
   const transitionWords = /(however|therefore|additionally|moreover|furthermore|also|because|for example|in addition|as a result|first|next|finally|meanwhile|instead)/gi;
   const passiveVoiceMatches = countMatches(lowerText, /\b(am|is|are|was|were|be|been|being)\s+\w+(ed|en)\b/gi);
   const sentenceCount = Math.max(1, plainText.split(/[.!?]+/).filter((sentence) => sentence.trim().length > 0).length);
@@ -122,6 +136,23 @@ export function calculateContentSeoScore(
   const kwInTitle = focusKw ? (title || "").toLowerCase().includes(focusKw) : hasTitle;
   checks.push({ label: "Focus keyword in title", passed: kwInTitle, tip: "Include your main keyword in the page title" });
   if (kwInTitle) points++;
+
+  const metaDescriptionLength = metaDescription.length;
+  const metaDescriptionOk = metaDescriptionLength >= 120 && metaDescriptionLength <= 160;
+  checks.push({
+    label: "Meta description 120-160 chars",
+    passed: metaDescriptionOk,
+    tip: metaDescriptionLength === 0
+      ? "Add a meta description to improve search visibility"
+      : metaDescriptionLength < 120
+        ? "Meta description too short — aim for 120-160 chars"
+        : "Meta description too long — keep it under 160 chars",
+  });
+  if (metaDescriptionOk) points++;
+
+  const kwInDescription = focusKw ? lowerDescription.includes(focusKw) : false;
+  checks.push({ label: "Keyword in meta description", passed: kwInDescription, tip: "Mention your focus keyword in the meta description" });
+  if (kwInDescription) points++;
 
   const enoughWords = wordCount >= 300;
   checks.push({ label: "300+ words of content", passed: enoughWords, tip: `Only ${wordCount} words — add more content for SEO` });
@@ -169,8 +200,7 @@ export function calculateContentSeoScore(
   checks.push({ label: "Mostly active voice", passed: activeVoiceOk, tip: "Prefer direct, active sentences over passive phrasing" });
   if (activeVoiceOk) points++;
 
-  const score = Math.round((points / maxPoints) * 100);
-  return { score, ...toLabel(score), checks };
+  return buildScoreResult(points, checks);
 }
 
 // ─── SEA Score (Paid Landing Page Quality) ───────────────────
@@ -188,7 +218,6 @@ export function calculateContentSeaScore(
   const introText = (paragraphs[0] || plainText.slice(0, 300)).toLowerCase();
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
-  const maxPoints = 8;
   const ctaWords = /(buy|get|shop|order|start|book|reserve|request|contact|call|discover|learn more|try|schedule|checkout|add to cart|message us|quote|subscribe|sign up)/i;
   const benefitWords = /(save|fast|easy|simple|reliable|premium|quality|effective|powerful|best|trusted|durable|affordable|results?|boost|improve|grow|increase|protect|comfort|support)/i;
   const trustWords = /(testimonial|review|trusted|guarantee|warranty|secure|certified|proven|since\s+\d{4}|rated|award|recommended|satisfaction|verified)/i;
@@ -232,8 +261,7 @@ export function calculateContentSeaScore(
   checks.push({ label: "Urgency or proof cues", passed: hasUrgencyOrProof, tip: "Add urgency, social proof, or measurable claims when true" });
   if (hasUrgencyOrProof) points++;
 
-  const score = Math.round((points / maxPoints) * 100);
-  return { score, ...toLabel(score), checks };
+  return buildScoreResult(points, checks);
 }
 
 // ─── GEO Score (Local / Geographic Page Quality) ─────────────
@@ -252,7 +280,6 @@ export function calculateContentGeoScore(
   const slugSource = getSlugCandidate(slug, url).replace(/^\/+|\/+$/g, "").toLowerCase();
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
-  const maxPoints = 7;
   const geoWords = /(local|nearby|near you|near me|in your area|serving|service area|coverage area|delivery area|regional|community|neighborhood|area|district|county|region|town|city)/i;
   const serviceAreaWords = /(serving|available in|delivery in|coverage across|service area|throughout|across the area|nearby|near you|local service|regional support)/i;
   const communityWords = /(community|neighborhood|locals|local experts|nearby|around you|close by|in the area)/i;
@@ -287,6 +314,5 @@ export function calculateContentGeoScore(
   checks.push({ label: "Local credibility wording", passed: hasLocalCredibility, tip: "Add truthful local credibility phrases like local team or area specialists" });
   if (hasLocalCredibility) points++;
 
-  const score = Math.round((points / maxPoints) * 100);
-  return { score, ...toLabel(score), checks };
+  return buildScoreResult(points, checks);
 }

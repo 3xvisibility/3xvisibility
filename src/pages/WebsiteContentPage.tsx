@@ -442,18 +442,31 @@ function ContentList({
   }
 
   return (
-    <ScrollArea className="h-[calc(100vh-360px)]">
-      <div className="space-y-2">
+    <ScrollArea className="h-[calc(100dvh-360px)] sm:h-[calc(100vh-360px)]">
+      <div className="space-y-3 pr-1">
         {items.map((item) => (
           <Card key={item.id} className="group hover:border-primary/30 transition-colors">
-            <CardContent className="py-3 px-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <h3 className="text-sm font-medium truncate max-w-[200px] sm:max-w-none">
+            <CardContent className="px-3 py-3 sm:px-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <h3 className="min-w-0 flex-1 text-sm font-medium leading-snug break-words">
                         {decodeHtmlEntities(item.title) || "(Untitled)"}
                       </h3>
+                      {item.url && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 shrink-0"
+                          onClick={() => window.open(item.url, "_blank")}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge
                         variant="outline"
                         className={`text-[10px] shrink-0 ${
@@ -464,29 +477,28 @@ function ContentList({
                       >
                         {item.status}
                       </Badge>
-                      {/* SEO / SEA / GEO Scores */}
-                      <ScoresBadgeGroup title={item.title} content={item.content} slug={item.slug} url={item.url} size="sm" showLabels />
+                      <ScoresBadgeGroup
+                        title={item.title}
+                        content={item.content}
+                        slug={item.slug}
+                        url={item.url}
+                        description={item.excerpt}
+                        size="sm"
+                        showLabels
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
+
+                    <p className="text-xs text-muted-foreground break-all">
                       /{decodeHtmlEntities(item.slug)}
                     </p>
                   </div>
-                  {item.url && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0 shrink-0"
-                      onClick={() => window.open(item.url, "_blank")}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
+                    className="h-9 w-full justify-center gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/5"
                     onClick={() => onEdit(item)}
                   >
                     <Pencil className="h-3.5 w-3.5" /> Edit & Optimize SEO
@@ -494,14 +506,14 @@ function ContentList({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 text-xs gap-1.5"
+                    className="h-9 w-full justify-center gap-1.5 text-xs"
                     onClick={() => onPreview(item)}
                   >
                     <Eye className="h-3.5 w-3.5" /> Preview
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 text-xs gap-1.5 bg-primary text-primary-foreground"
+                    className="h-9 w-full justify-center gap-1.5 text-xs bg-primary text-primary-foreground"
                     onClick={() => onDetectTemplate(item)}
                   >
                     <Sparkles className="h-3.5 w-3.5" /> Generate Template

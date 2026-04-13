@@ -457,7 +457,15 @@ export function PageEditDialog({
           </DialogTitle>
           <DialogDescription className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
             <span className="truncate text-xs">/{page.slug}</span>
-            <ScoresBadgeGroup title={editTitle} content={editContent} slug={page.slug} url={page.url} size="sm" showLabels />
+            <ScoresBadgeGroup
+              title={editTitle}
+              content={editContent}
+              slug={page.slug}
+              url={page.url}
+              description={editExcerpt}
+              size="sm"
+              showLabels
+            />
           </DialogDescription>
         </DialogHeader>
 
