@@ -141,8 +141,10 @@ Deno.serve(async (req) => {
       let pushError: string | null = null;
 
       try {
-        const connector = await createConnector(website as WebsiteRecord);
         const isProductContent = page_type === "product";
+        const connector = isProductContent
+          ? await createProductConnector(website as WebsiteRecord)
+          : await createConnector(website as WebsiteRecord);
         const nextContent = manual_content || page_content;
         const updatePayload: Record<string, any> = {
           title: manual_title || page_title,
@@ -162,7 +164,7 @@ Deno.serve(async (req) => {
         if (seo_description) updatePayload.seo_description = seo_description;
         if (seo_keywords?.length) updatePayload.seo_keywords = seo_keywords;
         pushResult = await connector.updatePage(page_external_id, updatePayload);
-        console.log("[MANUAL] Updated existing page on CMS:", pushResult);
+        console.log(`[MANUAL] Updated existing ${isProductContent ? 'product' : 'page'} on CMS:`, pushResult);
       } catch (pushErr: any) {
         pushError = pushErr.message || "CMS update failed";
         console.error("[MANUAL] CMS push failed:", pushErr);
