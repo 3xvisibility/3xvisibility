@@ -777,7 +777,7 @@ export default function CampaignDetailPage() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7"
-                                    onClick={() => republishMutation.mutate(page.id)}
+                                    onClick={() => handlePublishPage(page.id)}
                                   >
                                     <RefreshCw className="h-3.5 w-3.5" />
                                   </Button>
@@ -1166,7 +1166,7 @@ export default function CampaignDetailPage() {
                                 variant="outline"
                                 size="sm"
                                 className="h-7 text-xs shrink-0"
-                                onClick={() => republishMutation.mutate(page.id)}
+                                onClick={() => handlePublishPage(page.id)}
                               >
                                 <RefreshCw className="h-3 w-3 mr-1" /> Retry
                               </Button>
