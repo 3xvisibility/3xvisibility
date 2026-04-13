@@ -692,6 +692,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                   { value: "google_sheet", label: "Sheet", icon: Globe, desc: "Google" },
                   { value: "rss_feed", label: "RSS", icon: Rss, desc: "Feed" },
                   { value: "website", label: "Website", icon: Globe, desc: "From Site" },
+                  { value: "url_scan", label: "URL Scan", icon: ExternalLink, desc: "Any URL" },
                   { value: "text", label: "Text", icon: FileText, desc: ".txt file" },
                 ].map(s => (
                   <button key={s.value} onClick={() => setKwSource(s.value)}
