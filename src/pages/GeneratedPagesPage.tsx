@@ -457,7 +457,7 @@ export default function GeneratedPagesPage() {
               size="sm"
               className="bg-gradient-primary border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all"
               disabled={publishMutation.isPending}
-              onClick={() => publishMutation.mutate({ pageIds: pendingPages.map((p) => p.id), type: publishType })}
+              onClick={() => handlePublish(pendingPages.map((p) => p.id), "publish")}
             >
               <Send className="h-3.5 w-3.5 mr-1.5" />
               {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
@@ -671,8 +671,8 @@ export default function GeneratedPagesPage() {
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={() => setPreviewPage(page)}><Eye className="h-3.5 w-3.5 mr-2" />Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openSeoEditor(page)}><Pencil className="h-3.5 w-3.5 mr-2" />Edit SEO</DropdownMenuItem>
-                      {page.status === "pending" && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
-                      {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
+                      {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
+                      {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
@@ -766,8 +766,8 @@ export default function GeneratedPagesPage() {
                               <Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-3.5 w-3.5" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
-                              {page.status === "pending" && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
-                              {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => publishMutation.mutate({ pageIds: [page.id], type: publishType })}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
+                              {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
+                              {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
