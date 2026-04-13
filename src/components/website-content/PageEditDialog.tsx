@@ -229,8 +229,11 @@ export function PageEditDialog({
     }
     setOptimizing(true);
     setSeoResult(null);
+    setPushError(null);
 
     try {
+      const shouldAutoPublish = ["publish", "published"].includes((page.status || "").toLowerCase());
+
       const { data, error } = await supabase.functions.invoke("optimize-seo-content", {
         body: {
           website_id: websiteId,
@@ -243,7 +246,7 @@ export function PageEditDialog({
           workspace_id: workspaceId,
           optimize_fields: seoFields,
           instruction: seoInstruction || undefined,
-          skip_push: true, // Don't push yet — let user review first
+          skip_push: !shouldAutoPublish,
         },
       });
 
@@ -269,10 +272,20 @@ export function PageEditDialog({
         seo_keywords: result.seo_keywords,
       });
 
+      setPublished(Boolean(data?.pushed_to_cms));
+      setPushError(data?.push_error || null);
+
       toast({
-        title: "SEO content generated!",
-        description: "Review the changes in the Edit tab, then republish.",
+        title: data?.pushed_to_cms ? "SEO optimized & updated live!" : "SEO content generated!",
+        description: data?.pushed_to_cms
+          ? "The existing published page was updated on your live website."
+          : data?.push_error || "Review the changes in the Edit tab, then republish.",
+        variant: data?.push_error ? "destructive" : undefined,
       });
+
+      if (data?.pushed_to_cms) {
+        onUpdated?.();
+      }
 
       // Switch to Changes tab to show diff
       setActiveTab("changes");
@@ -545,7 +558,9 @@ export function PageEditDialog({
                     <p className="text-sm font-medium">AI content applied to editor</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Review changes in the Edit or Changes tab, then click "Republish to Site" to update your page.
+                    {published
+                      ? "Changes were pushed to the live page. You can still make more edits and republish again if needed."
+                      : "Review changes in the Edit or Changes tab, then click \"Republish to Site\" to update your page."}
                   </p>
 
                   {seoResult.seo_title && (

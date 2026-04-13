@@ -130,6 +130,7 @@ export class WordPressConnector implements CmsConnector {
 
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {};
+    const resourcePath = payload.product_data ? "product" : "pages";
 
     if (payload.title || payload.seo_title) body.title = resolveWordPressTitle(payload);
 
@@ -154,7 +155,7 @@ export class WordPressConnector implements CmsConnector {
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (payload.elementor_meta?.page_template) body.template = payload.elementor_meta.page_template;
 
-    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages/${externalId}`, {
+    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`, {
       method: "PUT",
       headers: this.headers,
       body: JSON.stringify(body),
