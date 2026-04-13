@@ -58,6 +58,34 @@ function normalizeWords(value: string): string[] {
     .filter(Boolean);
 }
 
+function normalizePhrase(value: string): string {
+  return normalizeWords(value).join(" ");
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsPhrase(text: string, phrase: string): boolean {
+  const normalizedText = normalizePhrase(text);
+  const normalizedPhrase = normalizePhrase(phrase);
+
+  if (!normalizedText || !normalizedPhrase) return false;
+
+  const pattern = new RegExp(`(?:^|\\s)${escapeRegExp(normalizedPhrase).replace(/\s+/g, "\\s+")}(?:$|\\s)`, "i");
+  return pattern.test(normalizedText);
+}
+
+function countPhraseOccurrences(text: string, phrase: string): number {
+  const normalizedText = normalizePhrase(text);
+  const normalizedPhrase = normalizePhrase(phrase);
+
+  if (!normalizedText || !normalizedPhrase) return 0;
+
+  const pattern = new RegExp(`(?:^|\\s)${escapeRegExp(normalizedPhrase).replace(/\s+/g, "\\s+")}(?=$|\\s)`, "gi");
+  return normalizedText.match(pattern)?.length ?? 0;
+}
+
 function extractParagraphs(html: string): string[] {
   const withBreaks = html
     .replace(/<br\s*\/?>/gi, "\n")
@@ -73,14 +101,102 @@ function extractHeadings(html: string): string[] {
   return Array.from(html.matchAll(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi)).map(([, , text]) => stripHtml(text));
 }
 
-function extractFocusKeyword(title: string, slug = ""): string {
-  const stops = new Set([
-    "the", "a", "an", "in", "on", "at", "to", "for", "of", "and", "or", "is", "are", "was", "were", "be", "been", "being",
-    "with", "by", "from", "as", "this", "that", "it", "its", "your", "our", "their", "you",
-  ]);
+const STOP_WORDS = new Set([
+  "the", "a", "an", "in", "on", "at", "to", "for", "of", "and", "or", "is", "are", "was", "were", "be", "been", "being",
+  "with", "by", "from", "as", "this", "that", "it", "its", "your", "our", "their", "you",
+]);
 
-  const words = normalizeWords(`${title} ${slug}`).filter((word) => word.length > 2 && !stops.has(word));
-  return words.slice(0, 3).join(" ");
+const GENERIC_MARKETING_WORDS = new Set([
+  "best", "top", "today", "now", "pro", "premium", "quality", "official", "new", "easy", "fast",
+  "buy", "shop", "order", "get", "discover", "near", "nearby", "local",
+]);
+
+function trimCandidateEdges(words: string[]): string[] {
+  const candidate = [...words];
+
+  while (candidate.length > 0 && (STOP_WORDS.has(candidate[0]) || GENERIC_MARKETING_WORDS.has(candidate[0]))) {
+    candidate.shift();
+  }
+
+  while (candidate.length > 0 && (STOP_WORDS.has(candidate[candidate.length - 1]) || GENERIC_MARKETING_WORDS.has(candidate[candidate.length - 1]))) {
+    candidate.pop();
+  }
+
+  return candidate;
+}
+
+function scoreFocusKeywordCandidate(
+  phrase: string,
+  normalizedTitle: string,
+  normalizedContent: string,
+  normalizedDescription: string,
+  normalizedHeadings: string,
+  normalizedSlug: string
+): number {
+  const words = phrase.split(" ").filter(Boolean);
+  const meaningfulWordCount = words.filter((word) => !STOP_WORDS.has(word) && !GENERIC_MARKETING_WORDS.has(word)).length;
+
+  let score = meaningfulWordCount * 3;
+  if (words.length >= 3) score += 2;
+  if (containsPhrase(normalizedContent, phrase)) score += 8;
+  if (containsPhrase(normalizedDescription, phrase)) score += 5;
+  if (containsPhrase(normalizedHeadings, phrase)) score += 4;
+  if (containsPhrase(normalizedTitle, phrase)) score += 3;
+  if (containsPhrase(normalizedSlug, phrase)) score += 2;
+  if (words.some((word) => GENERIC_MARKETING_WORDS.has(word))) score -= 2;
+
+  return score;
+}
+
+function extractFocusKeyword(title: string, slug = "", content = "", description = ""): string {
+  const normalizedTitle = normalizePhrase(title);
+  const normalizedContent = normalizePhrase(content);
+  const normalizedDescription = normalizePhrase(description);
+  const normalizedHeadings = normalizePhrase(extractHeadings(content).join(" "));
+  const normalizedSlug = normalizePhrase(getSlugCandidate(slug));
+  const sources = [normalizedTitle, normalizedSlug].filter(Boolean);
+  const candidateScores = new Map<string, number>();
+
+  for (const source of sources) {
+    const words = source.split(" ").filter(Boolean);
+
+    for (let size = Math.min(4, words.length); size >= 2; size -= 1) {
+      for (let start = 0; start <= words.length - size; start += 1) {
+        const trimmed = trimCandidateEdges(words.slice(start, start + size));
+        const phrase = trimmed.join(" ");
+
+        if (!phrase) continue;
+
+        const meaningfulWordCount = trimmed.filter((word) => !STOP_WORDS.has(word) && !GENERIC_MARKETING_WORDS.has(word)).length;
+        if (meaningfulWordCount < 2) continue;
+
+        const score = scoreFocusKeywordCandidate(
+          phrase,
+          normalizedTitle,
+          normalizedContent,
+          normalizedDescription,
+          normalizedHeadings,
+          normalizedSlug
+        );
+
+        const previousScore = candidateScores.get(phrase) ?? Number.NEGATIVE_INFINITY;
+        if (score > previousScore) {
+          candidateScores.set(phrase, score);
+        }
+      }
+    }
+  }
+
+  const bestCandidate = [...candidateScores.entries()]
+    .sort((a, b) => b[1] - a[1] || b[0].split(" ").length - a[0].split(" ").length)
+    .at(0)?.[0];
+
+  if (bestCandidate) return bestCandidate;
+
+  const fallbackWords = normalizeWords(title)
+    .filter((word) => word.length > 2 && !STOP_WORDS.has(word) && !GENERIC_MARKETING_WORDS.has(word));
+
+  return fallbackWords.slice(0, 3).join(" ");
 }
 
 function countMatches(text: string, regex: RegExp): number {
@@ -113,7 +229,7 @@ export function calculateContentSeoScore(
   const lowerText = plainText.toLowerCase();
   const metaDescription = stripHtml(description);
   const lowerDescription = metaDescription.toLowerCase();
-  const focusKw = extractFocusKeyword(title, slug);
+  const focusKw = extractFocusKeyword(title, slug, content, description);
   const paragraphs = extractParagraphs(content);
   const headings = extractHeadings(content);
   const introText = (paragraphs[0] || plainText.slice(0, 400)).toLowerCase();
@@ -133,7 +249,7 @@ export function calculateContentSeoScore(
   checks.push({ label: "Title 30-60 chars", passed: titleOk, tip: titleLen < 30 ? "Title too short — aim for 30-60 chars" : titleLen > 60 ? "Title too long — keep under 60 chars" : "" });
   if (titleOk) points++;
 
-  const kwInTitle = focusKw ? (title || "").toLowerCase().includes(focusKw) : hasTitle;
+  const kwInTitle = focusKw ? containsPhrase(title || "", focusKw) : hasTitle;
   checks.push({ label: "Focus keyword in title", passed: kwInTitle, tip: "Include your main keyword in the page title" });
   if (kwInTitle) points++;
 
@@ -150,7 +266,7 @@ export function calculateContentSeoScore(
   });
   if (metaDescriptionOk) points++;
 
-  const kwInDescription = focusKw ? lowerDescription.includes(focusKw) : false;
+  const kwInDescription = focusKw ? containsPhrase(lowerDescription, focusKw) : false;
   checks.push({ label: "Keyword in meta description", passed: kwInDescription, tip: "Mention your focus keyword in the meta description" });
   if (kwInDescription) points++;
 
@@ -158,15 +274,13 @@ export function calculateContentSeoScore(
   checks.push({ label: "300+ words of content", passed: enoughWords, tip: `Only ${wordCount} words — add more content for SEO` });
   if (enoughWords) points++;
 
-  const kwInIntro = focusKw ? introText.includes(focusKw) : false;
+  const kwInIntro = focusKw ? containsPhrase(introText, focusKw) : false;
   checks.push({ label: "Keyword in introduction", passed: kwInIntro, tip: "Mention your focus keyword in the first paragraph" });
   if (kwInIntro) points++;
 
   let kwDensityOk = false;
   if (focusKw && wordCount > 0) {
-    const kwRegex = new RegExp(focusKw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
-    const kwMatches = lowerText.match(kwRegex) || [];
-    const density = (kwMatches.length / wordCount) * 100;
+    const density = (countPhraseOccurrences(lowerText, focusKw) / wordCount) * 100;
     kwDensityOk = density >= 0.5 && density <= 2.5;
     checks.push({ label: "Keyword density 0.5-2.5%", passed: kwDensityOk, tip: density < 0.5 ? "Use your focus keyword more often" : "Keyword appears too many times — reduce keyword stuffing" });
   } else {
@@ -183,7 +297,7 @@ export function calculateContentSeoScore(
   checks.push({ label: "Has H2/H3 subheadings", passed: hasSubheadings, tip: "Add subheadings to structure your content" });
   if (hasSubheadings) points++;
 
-  const kwInSubheading = focusKw ? headings.some((heading) => heading.toLowerCase().includes(focusKw)) : false;
+  const kwInSubheading = focusKw ? headings.some((heading) => containsPhrase(heading, focusKw)) : false;
   checks.push({ label: "Keyword in subheading", passed: kwInSubheading, tip: "Include focus keyword in at least one H2/H3" });
   if (kwInSubheading) points++;
 
