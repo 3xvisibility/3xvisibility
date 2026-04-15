@@ -623,3 +623,132 @@ export function buildQualityRepairChecklist(checks: QualityCheck[]): string {
     .map((check) => `- [${check.category.toUpperCase()}] ${check.tip}`)
     .join("\n");
 }
+
+/**
+ * Auto-repair content to fix common SEO issues that AI might miss.
+ * This runs AFTER AI generation to ensure critical elements are present.
+ */
+export function autoRepairContent(
+  content: string,
+  opts: {
+    title?: string;
+    seoTitle?: string;
+    primaryKeyword?: string;
+    slug?: string;
+  },
+): string {
+  let html = content;
+  const keyword = opts.primaryKeyword || "";
+  const title = opts.seoTitle || opts.title || keyword || "Welcome";
+
+  // 1. Ensure H1 exists — if missing, prepend one
+  if (!/<h1[^>]*>/i.test(html)) {
+    // Try to find the first H2 and promote it, or prepend new H1
+    const h2Match = html.match(/<h2([^>]*)>([\s\S]*?)<\/h2>/i);
+    if (h2Match) {
+      // Promote first H2 to H1
+      html = html.replace(h2Match[0], `<h1${h2Match[1]}>${h2Match[2]}</h1>`);
+    } else {
+      // Prepend H1 with title
+      const h1Text = keyword
+        ? `${title.charAt(0).toUpperCase() + title.slice(1)}`
+        : title;
+      html = `<h1>${h1Text}</h1>\n${html}`;
+    }
+  }
+
+  // 2. Ensure at least one image has alt text with keyword
+  if (keyword && /<img\b/i.test(html)) {
+    const hasKwAlt = new RegExp(`<img[^>]*alt=["'][^"']*${keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[^"']*["']`, "i").test(html);
+    if (!hasKwAlt) {
+      // Add keyword to first img alt that has empty or missing alt
+      html = html.replace(
+        /(<img\b[^>]*?)(?:alt=["'][^"']*["'])?([^>]*>)/i,
+        (match, before, after) => {
+          // Remove existing alt if present
+          const cleanBefore = before.replace(/\s*alt=["'][^"']*["']/i, "");
+          return `${cleanBefore} alt="${keyword} - professional service"${after}`;
+        },
+      );
+    }
+  }
+
+  // 3. Ensure internal link exists
+  const hasInternalLink = /<a[^>]*href=["'](?:\/|\.\/|#)[^"']*["']/i.test(html);
+  if (!hasInternalLink) {
+    // Add a contextual internal link before closing
+    const internalLinkHtml = `<p><a href="/contact" title="Contact us for more information">Contact us today</a> to learn more about our services.</p>`;
+    // Insert before last closing tag or append
+    const lastSectionClose = html.lastIndexOf("</section>");
+    const lastDivClose = html.lastIndexOf("</div>");
+    const insertPos = Math.max(lastSectionClose, lastDivClose);
+    if (insertPos > 0) {
+      html = html.slice(0, insertPos) + internalLinkHtml + html.slice(insertPos);
+    } else {
+      html += `\n${internalLinkHtml}`;
+    }
+  }
+
+  // 4. Ensure outbound link exists
+  const hasOutboundLink = /<a[^>]*href=["']https?:\/\/[^"']*["']/i.test(html);
+  if (!hasOutboundLink) {
+    // Add a relevant outbound link
+    const outboundHtml = `<p>Learn more from <a href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">trusted sources</a>.</p>`;
+    const lastP = html.lastIndexOf("</p>");
+    if (lastP > 0) {
+      html = html.slice(0, lastP + 4) + `\n${outboundHtml}` + html.slice(lastP + 4);
+    } else {
+      html += `\n${outboundHtml}`;
+    }
+  }
+
+  // 5. Ensure JSON-LD schema exists
+  if (!/application\/ld\+json/i.test(html) && !/itemscope/i.test(html)) {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: title,
+      description: keyword ? `Professional ${keyword} services - trusted, reliable, and local.` : title,
+    };
+    html += `\n<script type="application/ld+json">${JSON.stringify(schema)}</script>`;
+  }
+
+  // 6. Ensure keyword appears in intro (first paragraph)
+  if (keyword) {
+    const firstPMatch = html.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+    if (firstPMatch) {
+      const firstPText = firstPMatch[1].replace(/<[^>]*>/g, "").toLowerCase();
+      const kwLower = keyword.toLowerCase();
+      if (!firstPText.includes(kwLower)) {
+        // Prepend keyword mention to first paragraph
+        const newFirstP = firstPMatch[0].replace(
+          /(<p[^>]*>)/i,
+          `$1Looking for trusted ${keyword} services? `,
+        );
+        html = html.replace(firstPMatch[0], newFirstP);
+      }
+    }
+  }
+
+  // 7. Ensure H2/H3 subheading contains keyword
+  if (keyword) {
+    const subheadings = html.match(/<h[23][^>]*>[\s\S]*?<\/h[23]>/gi) || [];
+    const kwLower = keyword.toLowerCase();
+    const hasKwInSubheading = subheadings.some((h) =>
+      h.replace(/<[^>]*>/g, "").toLowerCase().includes(kwLower),
+    );
+    if (!hasKwInSubheading && subheadings.length > 0) {
+      // Add keyword to the first H2
+      html = html.replace(
+        /(<h2[^>]*>)([\s\S]*?)(<\/h2>)/i,
+        (_, open, text, close) => {
+          const clean = text.replace(/<[^>]*>/g, "").trim();
+          if (clean.toLowerCase().includes(kwLower)) return `${open}${text}${close}`;
+          return `${open}${keyword.charAt(0).toUpperCase() + keyword.slice(1)} — ${text}${close}`;
+        },
+      );
+    }
+  }
+
+  return html;
+}
