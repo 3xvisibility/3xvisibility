@@ -690,6 +690,16 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       });
     }
 
+    // Auto-repair content to fix missing H1, links, schema, keyword placement
+    if (includeContent && result.content) {
+      result.content = autoRepairContent(result.content, {
+        title: page_title,
+        seoTitle: result.seo_title || effectiveSeoTitle,
+        primaryKeyword: qualityReport.primaryKeyword,
+        slug: page_slug,
+      });
+    }
+
     // Fetch the website for CMS push
     const { data: website } = await supabase
       .from("websites")
