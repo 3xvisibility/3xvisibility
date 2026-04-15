@@ -566,7 +566,7 @@ async function generateSeoMetadata(
 ): Promise<{ seo_title: string; seo_description: string; seo_keywords: string[] }> {
   const snippet = pageContent.replace(/<[^>]*>/g, "").slice(0, 2000);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20_000);
+  const timeout = setTimeout(() => controller.abort(), 25_000);
 
   const websiteInfo = websiteContext?.name || websiteContext?.url
     ? `\nWebsite: ${websiteContext.name || ""}${websiteContext.url ? ` (${websiteContext.url})` : ""}`
@@ -580,15 +580,22 @@ async function generateSeoMetadata(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: `You are an SEO expert. Generate optimized SEO metadata that accurately reflects the page content and matches the website brand/domain.\nTone: ${settings.tone}\nLanguage: ${settings.language}${websiteInfo}\n\nRules:\n- The SEO title MUST include the website/brand name (e.g. "Page Title | Brand Name")\n- The meta description MUST summarize the actual page content, not generic filler\n- Keywords MUST be extracted from the real page text\n- Match the language and tone of the page content`,
+            content: `You are a Rank Math / Yoast SEO expert. Generate metadata that scores 90+ on these plugins.\nTone: ${settings.tone}\nLanguage: ${settings.language}${websiteInfo}
+
+STRICT RULES FOR HIGH SCORES:
+1. seo_title: 30-60 chars. Put the EXACT primary focus keyword within the first 18 characters. Include a brand/action word. Format: "Focus Keyword - Action | Brand"
+2. seo_description: 120-156 chars. Must contain the EXACT focus keyword phrase + a CTA (call, buy, get, order) + a benefit word (best, trusted, fast, easy) + a local cue (local, nearby, serving).
+3. seo_keywords: First item MUST be the exact primary focus keyword (2-4 word phrase). Include 4-7 additional LSI/related keywords.
+4. The primary focus keyword should be the most specific, meaningful 2-4 word phrase from the page title/content. NOT generic words like "best product" but specific like "manual poppy seed mill".
+5. Keep everything in the SAME LANGUAGE as the page content.`,
           },
           {
             role: "user",
-            content: `Generate SEO metadata for this page:\n\nTitle: ${pageTitle}\n\nFull content text:\n${snippet}`,
+            content: `Generate Rank Math/Yoast-optimized SEO metadata for:\n\nTitle: ${pageTitle}\n\nContent:\n${snippet}`,
           },
         ],
         tools: [
@@ -596,13 +603,13 @@ async function generateSeoMetadata(
             type: "function",
             function: {
               name: "set_seo_metadata",
-              description: "Set the SEO metadata for this page",
+              description: "Set SEO metadata optimized for Rank Math/Yoast 90+ scores",
               parameters: {
                 type: "object",
                 properties: {
-                  seo_title: { type: "string", description: "SEO title, max 60 chars" },
-                  seo_description: { type: "string", description: "Meta description, max 160 chars" },
-                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords" },
+                  seo_title: { type: "string", description: "SEO title 30-60 chars, keyword in first 18 chars" },
+                  seo_description: { type: "string", description: "Meta description 120-156 chars with keyword + CTA + benefit + local cue" },
+                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords, exact focus keyword first" },
                 },
                 required: ["seo_title", "seo_description", "seo_keywords"],
                 additionalProperties: false,
@@ -618,7 +625,7 @@ async function generateSeoMetadata(
     if (!response.ok) {
       return {
         seo_title: pageTitle.slice(0, 60),
-        seo_description: snippet.slice(0, 160),
+        seo_description: snippet.slice(0, 156),
         seo_keywords: [],
       };
     }
@@ -628,15 +635,17 @@ async function generateSeoMetadata(
     if (toolCall?.function?.arguments) {
       try {
         const parsed = JSON.parse(toolCall.function.arguments);
+        const title = (parsed.seo_title || pageTitle).trim();
+        const desc = (parsed.seo_description || snippet).trim();
         return {
-          seo_title: (parsed.seo_title || pageTitle).slice(0, 60),
-          seo_description: (parsed.seo_description || snippet).slice(0, 160),
+          seo_title: title.length > 60 ? title.slice(0, 57) + "..." : title,
+          seo_description: desc.length > 156 ? desc.slice(0, 153) + "..." : desc.length < 120 ? desc.padEnd(120, ".") : desc,
           seo_keywords: parsed.seo_keywords || [],
         };
       } catch { /* fallthrough */ }
     }
 
-    return { seo_title: pageTitle.slice(0, 60), seo_description: snippet.slice(0, 160), seo_keywords: [] };
+    return { seo_title: pageTitle.slice(0, 60), seo_description: snippet.slice(0, 156), seo_keywords: [] };
   } finally {
     clearTimeout(timeout);
   }

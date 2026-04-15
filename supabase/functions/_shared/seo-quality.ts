@@ -410,6 +410,37 @@ export function analyzeSeoQuality(input: SeoQualityInput): SeoQualityReport {
       critical: true,
     },
     {
+      id: "seo_img_alt_keyword",
+      category: "seo",
+      label: "Image alt text contains focus keyword",
+      passed: (() => {
+        const imgAlts = Array.from(content.matchAll(/<img[^>]*alt=["']([^"']*)["'][^>]*>/gi));
+        return primaryKeyword ? imgAlts.some(([, alt]) => containsPhrase(alt, primaryKeyword)) : false;
+      })(),
+      tip: `Add the focus keyword "${primaryKeyword}" to at least one image alt attribute.`,
+      critical: true,
+    },
+    {
+      id: "seo_internal_links",
+      category: "seo",
+      label: "Has internal links",
+      passed: (() => {
+        const links = Array.from(content.matchAll(/<a[^>]*href=["']([^"']*)["'][^>]*>/gi));
+        return links.some(([, href]) => href?.startsWith("/") || href?.startsWith("#") || href?.startsWith("./"));
+      })(),
+      tip: "Add at least one internal link to related content.",
+    },
+    {
+      id: "seo_outbound_links",
+      category: "seo",
+      label: "Has outbound links",
+      passed: (() => {
+        const links = Array.from(content.matchAll(/<a[^>]*href=["']([^"']*)["'][^>]*>/gi));
+        return links.some(([, href]) => href?.startsWith("http://") || href?.startsWith("https://"));
+      })(),
+      tip: "Add at least one outbound link to an authoritative source.",
+    },
+    {
       id: "seo_readable_paragraphs",
       category: "seo",
       label: "Paragraphs stay readable",
@@ -429,6 +460,13 @@ export function analyzeSeoQuality(input: SeoQualityInput): SeoQualityReport {
       label: "Mostly active voice",
       passed: passiveVoiceMatches <= Math.max(1, Math.floor(sentenceCount * 0.2)),
       tip: "Prefer direct active voice over passive constructions.",
+    },
+    {
+      id: "seo_schema_markup",
+      category: "seo",
+      label: "Has structured data markup",
+      passed: /application\/ld\+json/i.test(content) || /itemscope/i.test(content),
+      tip: "Add JSON-LD schema markup for better search engine rich snippets.",
     },
     {
       id: "sea_cta_language",

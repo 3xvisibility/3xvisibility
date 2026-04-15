@@ -524,16 +524,21 @@ ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
 - Keep EXACT same number of sections, divs, headings, paragraphs, lists.
 - Preserve ALL product data: prices, SKUs, variants, add-to-cart buttons, reviews, ratings.
 
-═══ SEO SCORE REQUIREMENTS (12 checks, need 11+ for 90+) ═══
-1. Focus keyword MUST appear in: SEO title, meta description, opening lines of the content, at least one H2/H3, URL-aligned wording, and naturally throughout content
+═══ SEO SCORE REQUIREMENTS (18 checks, need 16+ for 90+) ═══
+1. Focus keyword MUST appear in: SEO title (within first 18 chars), meta description, opening lines, at least one H2/H3, URL-aligned wording, and naturally throughout content
 2. Focus keyword density: 0.5-2.5%
-3. Title: 30-60 characters with primary keyword
-4. Content: 600+ words minimum when rewriting content
-5. Has H1 heading
-6. Has H2/H3 subheadings with keyword in at least one
-7. Short paragraphs (under 150 words each)
-8. Use transition words: however, therefore, additionally, moreover, furthermore, also, because, for example, in addition, as a result, first, next, finally, meanwhile, instead (need 2+ occurrences)
-9. Use active voice predominantly (minimize "is/was/were + verb-ed" passive constructions)
+3. Title: 30-60 characters with primary keyword near the start
+4. Meta description: 120-156 characters with keyword + CTA + benefit + local cue
+5. Content: 650+ words minimum when rewriting content
+6. Has H1 heading
+7. Has H2/H3 subheadings with keyword in at least one
+8. IMAGE ALT TEXT: At least one <img> must have alt text containing the focus keyword
+9. INTERNAL LINKS: Add at least one <a href="/..."> internal link
+10. OUTBOUND LINKS: Add at least one <a href="https://..."> outbound link to an authoritative source
+11. Short paragraphs (under 150 words each)
+12. Use transition words: however, therefore, additionally, moreover, furthermore, also, because, for example, in addition, as a result, first, next, finally, meanwhile, instead (need 3+ occurrences)
+13. Use active voice predominantly (minimize passive constructions)
+14. STRUCTURED DATA: Include JSON-LD <script type="application/ld+json"> with appropriate schema
 
 ═══ SEA SCORE REQUIREMENTS (9 checks, need 8+ for 90+) ═══
 YOU MUST naturally weave these signal words into the text content:
@@ -591,7 +596,7 @@ ${truncatedHtml}` : ""}
 
 ${instruction ? `\nUser instruction: ${instruction}\n` : ""}
 IMPORTANT: Generate content that scores 90+ on ALL THREE metrics:
-- SEO: Use the exact focus keyword in SEO title, meta description, opening lines, subheadings, and naturally in the content; density 0.5-2.5%; transition words; active voice; 600+ words when content is rewritten
+- SEO: Use the exact focus keyword in SEO title (first 18 chars), meta description, opening lines, subheadings, and naturally in the content; density 0.5-2.5%; transition words (3+); active voice; 650+ words; at least one image alt text with keyword; at least one internal link (href="/...") and one outbound link (href="https://..."); JSON-LD schema markup
 - SEA: Include CTA words (buy/get/shop/order/contact), benefit words (save/fast/easy/reliable/premium), trust signals (trusted/guarantee/certified/proven), offer language (free/discount/deal), urgency cues (today/now/limited)
 - GEO: Include local signals (local/nearby/community/service area/serving), availability cues (available/today/same-day/contact us), local credibility (trusted locally/local team/area specialists)
 
