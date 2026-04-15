@@ -72,14 +72,75 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
     if (!page?.id) return;
     setFixing(true);
     try {
-      // Step 1: AI optimize SEO content (fixes H1, meta, keywords, links, schema etc.)
-      const { data: optimizeData, error: optimizeErr } = await supabase.functions.invoke("optimize-seo-content", {
-        body: { page_id: page.id },
+      // Step 1: AI optimize titles via ai-seo-assistant
+      const { data: titleData, error: titleErr } = await supabase.functions.invoke("ai-seo-assistant", {
+        body: { page_id: page.id, action: "titles" },
       });
-      if (optimizeErr) throw optimizeErr;
-      if (optimizeData?.error) throw new Error(optimizeData.error);
+      if (titleErr) throw titleErr;
+      if (titleData?.error) throw new Error(titleData.error);
 
-      // Step 2: Auto-republish if page was published
+      // Step 2: AI optimize meta descriptions
+      const { data: metaData, error: metaErr } = await supabase.functions.invoke("ai-seo-assistant", {
+        body: { page_id: page.id, action: "meta" },
+      });
+      if (metaErr) throw metaErr;
+      if (metaData?.error) throw new Error(metaData.error);
+
+      // Step 3: AI optimize keywords
+      const { data: kwData, error: kwErr } = await supabase.functions.invoke("ai-seo-assistant", {
+        body: { page_id: page.id, action: "keywords" },
+      });
+      if (kwErr) throw kwErr;
+      if (kwData?.error) throw new Error(kwData.error);
+
+      // Step 4: AI fix headings (H1 etc.)
+      const { data: headingsData, error: headingsErr } = await supabase.functions.invoke("ai-seo-assistant", {
+        body: { page_id: page.id, action: "headings" },
+      });
+      if (headingsErr) throw headingsErr;
+      if (headingsData?.error) throw new Error(headingsData.error);
+
+      // Parse results and update the generated page
+      let newTitle = page.seo_title || page.title;
+      let newDescription = page.seo_description || "";
+      let newKeywords = page.seo_keywords || [];
+      let newContent = page.content;
+
+      try {
+        const titles = JSON.parse(titleData.result);
+        if (Array.isArray(titles) && titles.length > 0) newTitle = titles[0];
+      } catch {}
+
+      try {
+        const meta = JSON.parse(metaData.result);
+        if (meta?.descriptions?.[0]) newDescription = meta.descriptions[0];
+        if (meta?.suggested_title) newTitle = meta.suggested_title;
+      } catch {}
+
+      try {
+        const kw = JSON.parse(kwData.result);
+        const allKw = [...(kw.primary || []), ...(kw.secondary || []), ...(kw.long_tail || [])];
+        if (allKw.length > 0) newKeywords = allKw.slice(0, 8);
+      } catch {}
+
+      // Use headings-fixed content
+      if (headingsData?.result) {
+        newContent = headingsData.result;
+      }
+
+      // Update the generated page in DB
+      const { error: updateErr } = await supabase
+        .from("generated_pages")
+        .update({
+          seo_title: newTitle,
+          seo_description: newDescription,
+          seo_keywords: newKeywords,
+          content: newContent,
+        })
+        .eq("id", page.id);
+      if (updateErr) throw updateErr;
+
+      // Auto-republish if page was published
       let republished = false;
       if (page.status === "published" && page.external_id && page.website_id) {
         const { data: pubData, error: pubErr } = await supabase.functions.invoke("publish-pages", {
