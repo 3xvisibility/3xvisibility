@@ -1,17 +1,21 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Lightbulb, BarChart3 } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Lightbulb, BarChart3, Sparkles, Loader2, RotateCw } from "lucide-react";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext, type SeoRuleResult } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface SeoAnalysisDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   page: {
+    id?: string;
     title: string;
     slug: string;
     content: string;
@@ -20,18 +24,22 @@ interface SeoAnalysisDialogProps {
     seo_keywords?: string[] | null;
     canonical_url?: string | null;
     external_url?: string | null;
+    status?: string;
+    external_id?: string | null;
+    website_id?: string | null;
   } | null;
-  /** Other page titles in the same campaign for uniqueness checks */
   campaignTitles?: string[];
-  /** Other page slugs in the same campaign for uniqueness checks */
   campaignSlugs?: string[];
+  onUpdated?: () => void;
 }
 
-export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, campaignSlugs }: SeoAnalysisDialogProps) {
+export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, campaignSlugs, onUpdated }: SeoAnalysisDialogProps) {
+  const [fixing, setFixing] = useState(false);
+  const { toast } = useToast();
+
   const analysis = useMemo(() => {
     if (!page) return null;
 
-    // SEO rules validation
     const ctx: SeoRuleContext = {
       title: page.title,
       slug: page.slug,
@@ -39,14 +47,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
       seoDescription: page.seo_description || "",
       canonicalUrl: page.canonical_url || null,
       content: page.content,
-      jsonLd: page.content, // JSON-LD is embedded in content
+      jsonLd: page.content,
       campaignTitles,
       campaignSlugs,
     };
     const ruleResults = validateSeoRules(ctx);
     const summary = getSeoRuleSummary(ruleResults);
 
-    // Content scores
     const seo = calculateContentSeoScore(page.title, page.content, page.slug, {
       url: page.external_url || undefined,
       description: page.seo_description || "",
@@ -55,17 +62,50 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
     });
     const sea = calculateContentSeaScore(page.title, page.content, page.slug, page.external_url || undefined);
     const geo = calculateContentGeoScore(page.title, page.content, page.slug, page.external_url || undefined);
-
-    // Metadata score
     const metaScore = calculateSeoScore(page.seo_title, page.seo_description, page.seo_keywords, page.title);
-
-    // Overall composite score
     const overallScore = Math.round((seo.score * 0.4 + metaScore.score * 0.3 + sea.score * 0.15 + geo.score * 0.15));
 
     return { ruleResults, summary, seo, sea, geo, metaScore, overallScore };
   }, [page, campaignTitles, campaignSlugs]);
 
+  const handleFixAndRepublish = async () => {
+    if (!page?.id) return;
+    setFixing(true);
+    try {
+      // Step 1: AI optimize SEO content (fixes H1, meta, keywords, links, schema etc.)
+      const { data: optimizeData, error: optimizeErr } = await supabase.functions.invoke("optimize-seo-content", {
+        body: { page_id: page.id },
+      });
+      if (optimizeErr) throw optimizeErr;
+      if (optimizeData?.error) throw new Error(optimizeData.error);
+
+      // Step 2: Auto-republish if page was published
+      let republished = false;
+      if (page.status === "published" && page.external_id && page.website_id) {
+        const { data: pubData, error: pubErr } = await supabase.functions.invoke("publish-pages", {
+          body: { page_ids: [page.id], publish_type: "page", website_id: page.website_id },
+        });
+        if (!pubErr && pubData?.published > 0) republished = true;
+      }
+
+      toast({
+        title: "SEO issues fixed!",
+        description: republished
+          ? "Content optimized and republished to CMS."
+          : "Content optimized. Publish when ready.",
+      });
+      onUpdated?.();
+      onOpenChange(false);
+    } catch (err: any) {
+      toast({ title: "Fix failed", description: err.message, variant: "destructive" });
+    } finally {
+      setFixing(false);
+    }
+  };
+
   if (!page || !analysis) return null;
+
+  const hasIssues = analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0;
 
   const scoreColor = (score: number) =>
     score >= 85 ? "text-emerald-600" :
@@ -132,6 +172,22 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
               ))}
             </div>
 
+            {/* AI Fix Button */}
+            {hasIssues && page.id && (
+              <Button
+                onClick={handleFixAndRepublish}
+                disabled={fixing}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {fixing ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" />Fixing all issues...</>
+                ) : (
+                  <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
+                )}
+              </Button>
+            )}
+
             {/* Rules Validation */}
             <div className="rounded-lg border border-border">
               <div className="px-4 py-3 border-b border-border flex items-center justify-between">
@@ -191,7 +247,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
             </div>
 
             {/* Recommendations */}
-            {(analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0) && (
+            {hasIssues && (
               <div className="rounded-lg border border-border bg-muted/20 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Lightbulb className="h-4 w-4 text-amber-500" />
@@ -207,13 +263,6 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
                 </ul>
               </div>
             )}
-
-            {/* Future Integration Placeholder */}
-            <div className="rounded-lg border border-dashed border-border p-4 text-center">
-              <p className="text-xs text-muted-foreground">
-                🔌 External SEO tools (Semrush, GSC, GA) can be integrated here for deeper insights.
-              </p>
-            </div>
           </div>
         </ScrollArea>
       </DialogContent>
