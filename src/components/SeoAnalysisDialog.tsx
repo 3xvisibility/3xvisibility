@@ -10,6 +10,7 @@ import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/friendly-errors";
 
 interface SeoAnalysisDialogProps {
   open: boolean;
@@ -164,7 +165,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
       onUpdated?.();
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: "Fix failed", description: err.message, variant: "destructive" });
+      toast({ title: "Fix failed", description: friendlyError(err.message), variant: "destructive" });
     } finally {
       setFixing(false);
     }
