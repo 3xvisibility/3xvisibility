@@ -9,8 +9,6 @@ import {
   CreditCard,
   Settings,
   LogOut,
-  ScanSearch,
-  Compass,
   ShieldCheck,
   Search as SearchIcon,
   Zap,
