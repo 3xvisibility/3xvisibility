@@ -55,6 +55,11 @@ async function getWordPressError(response: Response, action: string): Promise<st
   return `WordPress ${action} error [${response.status}]: ${errorText}`;
 }
 
+function isInvalidTemplateError(errorText: string): boolean {
+  return errorText.includes('"code":"rest_invalid_param"')
+    && errorText.includes('"template"');
+}
+
 export class WordPressConnector implements CmsConnector {
   readonly type = "wordpress";
   private baseUrl: string;
@@ -80,6 +85,48 @@ export class WordPressConnector implements CmsConnector {
         Authorization: `Basic ${this.authString}`,
       };
     }
+  }
+
+  private async executePageRequest(
+    url: string,
+    method: "POST" | "PUT",
+    body: Record<string, unknown>,
+    action: "publish" | "update"
+  ) {
+    let response = await fetch(url, {
+      method,
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      if ("template" in body && isInvalidTemplateError(errorText)) {
+        const retryBody = { ...body };
+        delete retryBody.template;
+
+        response = await fetch(url, {
+          method,
+          headers: this.headers,
+          body: JSON.stringify(retryBody),
+        });
+
+        if (!response.ok) {
+          throw new Error(await getWordPressError(response, action));
+        }
+
+        return response.json();
+      }
+
+      if (isSoftaculousBlockedResponse(errorText)) {
+        throw new Error(`WordPress ${action} failed: your host blocked unsupported HTML in the page body.`);
+      }
+
+      throw new Error(`WordPress ${action} error [${response.status}]: ${errorText}`);
+    }
+
+    return response.json();
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
@@ -108,17 +155,13 @@ export class WordPressConnector implements CmsConnector {
       body.template = payload.elementor_meta.page_template;
     }
 
-    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify(body),
-    });
+    const data = await this.executePageRequest(
+      `${this.baseUrl}/wp-json/wp/v2/pages`,
+      "POST",
+      body,
+      "publish"
+    );
 
-    if (!res.ok) {
-      throw new Error(await getWordPressError(res, "publish"));
-    }
-
-    const data = await res.json();
     return {
       external_id: String(data.id),
       url: data.link || `${this.baseUrl}/${body.slug}`,
@@ -150,17 +193,13 @@ export class WordPressConnector implements CmsConnector {
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (payload.elementor_meta?.page_template) body.template = payload.elementor_meta.page_template;
 
-    const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`, {
-      method: "PUT",
-      headers: this.headers,
-      body: JSON.stringify(body),
-    });
+    const data = await this.executePageRequest(
+      `${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`,
+      "PUT",
+      body,
+      "update"
+    );
 
-    if (!res.ok) {
-      throw new Error(await getWordPressError(res, "update"));
-    }
-
-    const data = await res.json();
     return { external_id: String(data.id), url: data.link || `${this.baseUrl}/${data.slug}` };
   }
 
