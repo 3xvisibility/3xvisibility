@@ -19,7 +19,7 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
-import { AiSeoAssistantDialog } from "@/components/AiSeoAssistantDialog";
+import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { AiEnrichDialog } from "@/components/AiEnrichDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
