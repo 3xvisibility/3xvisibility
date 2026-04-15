@@ -596,7 +596,7 @@ ${truncatedHtml}` : ""}
 
 ${instruction ? `\nUser instruction: ${instruction}\n` : ""}
 IMPORTANT: Generate content that scores 90+ on ALL THREE metrics:
-- SEO: Use the exact focus keyword in SEO title, meta description, opening lines, subheadings, and naturally in the content; density 0.5-2.5%; transition words; active voice; 600+ words when content is rewritten
+- SEO: Use the exact focus keyword in SEO title (first 18 chars), meta description, opening lines, subheadings, and naturally in the content; density 0.5-2.5%; transition words (3+); active voice; 650+ words; at least one image alt text with keyword; at least one internal link (href="/...") and one outbound link (href="https://..."); JSON-LD schema markup
 - SEA: Include CTA words (buy/get/shop/order/contact), benefit words (save/fast/easy/reliable/premium), trust signals (trusted/guarantee/certified/proven), offer language (free/discount/deal), urgency cues (today/now/limited)
 - GEO: Include local signals (local/nearby/community/service area/serving), availability cues (available/today/same-day/contact us), local credibility (trusted locally/local team/area specialists)
 
