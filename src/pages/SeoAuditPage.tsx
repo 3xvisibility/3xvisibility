@@ -165,24 +165,24 @@ export default function SeoAuditPage() {
             <AccordionItem
               key={page.id}
               value={page.id}
-              className="border rounded-lg px-2 sm:px-4 bg-card"
+              className="border rounded-lg px-2 sm:px-4 bg-card overflow-hidden"
             >
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-left">
-                  <div className="w-8 sm:w-10 text-center shrink-0">
+              <AccordionTrigger className="hover:no-underline py-3 overflow-hidden">
+                <div className="flex items-center gap-1.5 sm:gap-3 flex-1 min-w-0 text-left overflow-hidden">
+                  <div className="w-7 sm:w-10 text-center shrink-0">
                     <span className={`text-xs sm:text-sm font-bold tabular-nums ${scoreColor(audit.overallScore)}`}>
                       {audit.overallScore}
                     </span>
                   </div>
-                  <div className="h-1.5 w-10 sm:w-16 rounded-full bg-muted overflow-hidden shrink-0">
+                  <div className="h-1.5 w-8 sm:w-16 rounded-full bg-muted overflow-hidden shrink-0">
                     <div
                       className={`h-full rounded-full ${scoreBarColor(audit.overallScore)}`}
                       style={{ width: `${audit.overallScore}%` }}
                     />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium truncate">{page.title}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">/{page.slug}</p>
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <p className="text-xs sm:text-sm font-medium truncate max-w-full">{page.title}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-full">/{page.slug}</p>
                   </div>
                   <div className="hidden sm:flex gap-1.5 shrink-0">
                     {audit.items.some((i) => i.category === "critical") && (
