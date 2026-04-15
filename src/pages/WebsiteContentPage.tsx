@@ -346,6 +346,85 @@ export default function WebsiteContentPage() {
         </Card>
       )}
 
+      {/* Search by URL */}
+      <Card className="border-dashed">
+        <CardContent className="py-3 px-4">
+          <form
+            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!scanUrl.trim()) return;
+              let finalUrl = scanUrl.trim();
+              if (!/^https?:\/\//i.test(finalUrl)) finalUrl = `https://${finalUrl}`;
+              scanUrlMutation.mutate(finalUrl);
+            }}
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Input
+                value={scanUrl}
+                onChange={(e) => setScanUrl(e.target.value)}
+                placeholder="Search page by URL — paste any page or product URL..."
+                className="h-9 text-sm flex-1"
+                type="url"
+              />
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={scanUrlMutation.isPending || !scanUrl.trim()}
+              className="h-9 shrink-0"
+            >
+              {scanUrlMutation.isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Scanning...</>
+              ) : (
+                <><Search className="h-3.5 w-3.5 mr-1" /> Scan URL</>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Scanned page result */}
+      {scannedItem && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <Badge variant="outline" className="text-xs">Scanned Page</Badge>
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setScannedItem(null)}>Clear</Button>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <h3 className="text-sm font-medium">{decodeHtmlEntities(scannedItem.title)}</h3>
+                  <p className="text-xs text-muted-foreground break-all">{scannedItem.url}</p>
+                  <ScoresBadgeGroup
+                    title={scannedItem.title}
+                    content={scannedItem.content}
+                    slug={scannedItem.slug}
+                    url={scannedItem.url}
+                    description={scannedItem.excerpt}
+                    size="sm"
+                    showLabels
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Button size="sm" variant="outline" className="h-9 w-full justify-center gap-1.5 text-xs" onClick={() => setPreviewPage(scannedItem)}>
+                  <Eye className="h-3.5 w-3.5" /> Preview
+                </Button>
+                <Button size="sm" className="h-9 w-full justify-center gap-1.5 text-xs bg-primary text-primary-foreground" onClick={() => setTemplatePage(scannedItem)}>
+                  <Sparkles className="h-3.5 w-3.5" /> Generate Template
+                </Button>
+                <Button size="sm" variant="outline" className="h-9 w-full justify-center gap-1.5 text-xs" onClick={() => window.open(scannedItem.url, "_blank")}>
+                  <ExternalLink className="h-3.5 w-3.5" /> Open
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tabs + Search */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pages" | "products")}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
