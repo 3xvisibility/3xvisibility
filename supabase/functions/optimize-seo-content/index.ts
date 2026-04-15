@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import {
   analyzeSeoQuality,
+  autoRepairContent,
   buildQualityRepairChecklist,
   derivePrimaryKeyword,
   ensurePrimaryKeywordFirst,
@@ -686,6 +687,16 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         slug: page_slug,
         url: page_url,
         content: includeContent ? (result.content || page_content) : page_content,
+      });
+    }
+
+    // Auto-repair content to fix missing H1, links, schema, keyword placement
+    if (includeContent && result.content) {
+      result.content = autoRepairContent(result.content, {
+        title: page_title,
+        seoTitle: result.seo_title || effectiveSeoTitle,
+        primaryKeyword: qualityReport.primaryKeyword,
+        slug: page_slug,
       });
     }
 

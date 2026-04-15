@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { autoRepairContent, derivePrimaryKeyword } from "../_shared/seo-quality.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1529,6 +1530,17 @@ Deno.serve(async (req) => {
               }
             }
           }
+
+          // Auto-repair SEO elements (H1, links, schema, keyword placement)
+          const repairKeyword = derivePrimaryKeyword({
+            title: Object.values(row).filter(Boolean).slice(0, 2).join(" "),
+            slug: slugify(Object.values(row).filter(Boolean).slice(0, 2).join(" ")),
+            content: pageContent,
+          });
+          pageContent = autoRepairContent(pageContent, {
+            title: Object.values(row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${processedCount + 1}`,
+            primaryKeyword: repairKeyword,
+          });
 
           const h1Match = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
           let pageTitle: string;
