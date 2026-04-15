@@ -71,8 +71,8 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="templates" element={wrap(<TemplatesPage />)} />
       <Route path="websites" element={wrap(<WebsitesPage />)} />
       <Route path="pages" element={wrap(<GeneratedPagesPage />)} />
-      <Route path="scanner" element={wrap(<TemplateScannerPage />)} />
-      <Route path="discovery" element={wrap(<FeatureGate feature="discovery"><WebsiteDiscoveryPage /></FeatureGate>)} />
+      <Route path="scanner" element={<Navigate to="../website-content" replace />} />
+      <Route path="discovery" element={<Navigate to="../website-content" replace />} />
       <Route path="analytics" element={wrap(<AnalyticsPage />)} />
       <Route path="marketplace" element={wrap(<TemplateMarketplacePage />)} />
       <Route path="billing" element={wrap(<BillingPage />)} />
