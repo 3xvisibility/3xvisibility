@@ -146,7 +146,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
         const { data: pubData, error: pubErr } = await supabase.functions.invoke("publish-pages", {
           body: { page_ids: [page.id], publish_type: "page", website_id: page.website_id },
         });
-        if (!pubErr && pubData?.published > 0) republished = true;
+        if (pubErr) throw pubErr;
+        if (pubData?.error) throw new Error(pubData.error);
+        if (pubData?.failed && !pubData?.published) {
+          const failedMessage = pubData?.results?.[0]?.error || "Republish failed.";
+          throw new Error(failedMessage);
+        }
+        if (pubData?.published > 0) republished = true;
       }
 
       toast({
