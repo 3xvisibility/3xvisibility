@@ -90,7 +90,7 @@ async function detectElementor(
       if (elementorPage) {
         return {
           usesElementor: true,
-          pageTemplate: elementorPage.page_template || "elementor_header_footer",
+          pageTemplate: elementorPage.page_template || undefined,
         };
       }
     }
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
             elementorMeta = {
               elementor_data: buildElementorData(cleanedContent),
               elementor_edit_mode: "builder",
-              page_template: elementorInfo.pageTemplate || "elementor_header_footer",
+              page_template: elementorInfo.pageTemplate,
             };
           }
 
@@ -376,7 +376,7 @@ Deno.serve(async (req) => {
           elementorMeta = {
             elementor_data: buildElementorData(cleanedContent),
             elementor_edit_mode: "builder",
-            page_template: elementorInfo.pageTemplate || "elementor_header_footer",
+            page_template: elementorInfo.pageTemplate,
           };
         }
 
