@@ -1096,10 +1096,7 @@ export default function GeneratedPagesPage() {
       <DuplicateContentDialog open={duplicateOpen} onOpenChange={setDuplicateOpen} pages={pages.map((p) => ({ id: p.id, title: p.title, content: p.content }))} />
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
-        campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined} />
-      <AiSeoAssistantDialog open={!!aiAssistantPage} onOpenChange={(open) => !open && setAiAssistantPage(null)} page={aiAssistantPage}
-        onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
-      <AiEnrichDialog open={!!aiEnrichPage} onOpenChange={(open) => !open && setAiEnrichPage(null)} page={aiEnrichPage}
+        campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
       <PublishWebsiteSelector
         open={showWebsiteSelector}
