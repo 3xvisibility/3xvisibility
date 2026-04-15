@@ -1,5 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
+import {
+  analyzeSeoQuality,
+  buildQualityRepairChecklist,
+  derivePrimaryKeyword,
+  ensurePrimaryKeywordFirst,
+  needsQualityRepair,
+  trimTextAtWordBoundary,
+} from "../_shared/seo-quality.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +65,126 @@ function shouldMirrorToElementor(
 
   const normalized = html.toLowerCase();
   return normalized.includes("elementor") || normalized.includes("data-elementor") || normalized.includes("e-con");
+}
+
+const OPTIMIZATION_MODEL = "google/gemini-2.5-flash";
+const MAX_QUALITY_REPAIR_ATTEMPTS = 2;
+
+function parseOptimizationResult(aiData: any): Record<string, any> {
+  let result: Record<string, any> = {};
+  const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+
+  if (toolCall?.function?.arguments) {
+    try {
+      result = typeof toolCall.function.arguments === "string"
+        ? JSON.parse(toolCall.function.arguments)
+        : toolCall.function.arguments;
+    } catch {
+      const raw = aiData.choices?.[0]?.message?.content || "";
+      try {
+        result = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, ""));
+      } catch {
+        result = {};
+      }
+    }
+  }
+
+  if (!result.seo_title && !result.seo_description && !result.seo_keywords && !result.content) {
+    const raw = aiData.choices?.[0]?.message?.content || "";
+    try {
+      result = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, ""));
+    } catch {
+      result = {};
+    }
+  }
+
+  return result;
+}
+
+async function requestOptimizationDraft(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+) {
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPTIMIZATION_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "seo_optimization_result",
+            description: "Return SEO optimization results compatible with Yoast/RankMath high-score checks",
+            parameters: {
+              type: "object",
+              properties: {
+                seo_title: { type: "string", description: "SEO title 30-60 chars with keyword near the start" },
+                seo_description: { type: "string", description: "Meta description 120-156 chars with keyword, benefit, CTA, and local cue" },
+                seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords with the exact primary keyword first" },
+                content: { type: "string", description: "HTML with identical structure, only text optimized for stronger SEO/SEA/GEO scores" },
+              },
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "seo_optimization_result" } },
+    }),
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    const error = new Error("AI generation failed") as Error & { status?: number; details?: string };
+    error.status = response.status;
+    error.details = details;
+    throw error;
+  }
+
+  return parseOptimizationResult(await response.json());
+}
+
+function normalizeOptimizationResult(
+  rawResult: Record<string, any>,
+  fallback: {
+    title: string;
+    seoTitle: string;
+    seoDescription: string;
+    seoKeywords: string[];
+    slug: string;
+    url?: string;
+    content: string;
+  },
+  requestedFields: string[],
+  includeContent: boolean,
+) {
+  const fallbackKeyword = derivePrimaryKeyword(fallback);
+  const seoTitle = trimTextAtWordBoundary(String(rawResult.seo_title || fallback.seoTitle || fallback.title || "").trim(), 60);
+  const seoDescription = trimTextAtWordBoundary(String(rawResult.seo_description || fallback.seoDescription || "").trim(), 156);
+  const content = includeContent
+    ? (typeof rawResult.content === "string" && rawResult.content.trim().length > 0 ? rawResult.content : fallback.content)
+    : undefined;
+  const primaryKeyword = derivePrimaryKeyword({
+    ...fallback,
+    seoTitle,
+    seoDescription,
+    seoKeywords: rawResult.seo_keywords ?? fallback.seoKeywords,
+    content: content || fallback.content,
+  }) || fallbackKeyword;
+
+  return {
+    ...(requestedFields.includes("seo_title") ? { seo_title: seoTitle } : {}),
+    ...(requestedFields.includes("seo_description") ? { seo_description: seoDescription } : {}),
+    ...(requestedFields.includes("seo_keywords") ? { seo_keywords: ensurePrimaryKeywordFirst(primaryKeyword, rawResult.seo_keywords ?? fallback.seoKeywords).slice(0, 8) } : {}),
+    ...(includeContent ? { content } : {}),
+  };
 }
 
 Deno.serve(async (req) => {
@@ -471,77 +599,89 @@ Weave all signals naturally — the text must read like professional marketing c
 
 If a primary focus keyword is provided, the optimized metadata and rewritten content MUST revolve around that exact phrase so external WordPress SEO plugins score it correctly.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "seo_optimization_result",
-              description: "Return SEO optimization results compatible with Yoast/RankMath 90+ scoring",
-              parameters: {
-                type: "object",
-                properties: {
-                  seo_title: { type: "string", description: "SEO title 30-60 chars, keyword near start (Yoast green)" },
-                  seo_description: { type: "string", description: "Meta description 120-156 chars with keyword + CTA (Yoast green)" },
-                  seo_keywords: { type: "array", items: { type: "string" }, description: "5-8 keywords, primary keyword first" },
-                  content: { type: "string", description: "HTML with identical structure, only text optimized for SEO 90+" },
-                },
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "seo_optimization_result" } },
-      }),
-    });
+    const includeContent = fields.includes("content");
+    const fallbackResult = {
+      title: page_title || "",
+      seoTitle: effectiveSeoTitle,
+      seoDescription: effectiveSeoDescription,
+      seoKeywords: existingSeoKeywords,
+      slug: page_slug || "",
+      url: page_url,
+      content: page_content,
+    };
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    let result: Record<string, any> = {};
+    try {
+      result = normalizeOptimizationResult(
+        await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, userPrompt),
+        fallbackResult,
+        fields,
+        includeContent,
+      );
+    } catch (error: any) {
+      if (error?.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
+      if (error?.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI error:", response.status, t);
+      console.error("AI error:", error?.status, error?.details || error);
       throw new Error("AI generation failed");
     }
 
-    const aiData = await response.json();
+    let qualityReport = analyzeSeoQuality({
+      title: page_title,
+      seoTitle: result.seo_title || effectiveSeoTitle,
+      seoDescription: result.seo_description || effectiveSeoDescription,
+      seoKeywords: result.seo_keywords || existingSeoKeywords,
+      slug: page_slug,
+      url: page_url,
+      content: includeContent ? (result.content || page_content) : page_content,
+    });
 
-    // Extract structured output from tool call
-    let result: Record<string, any> = {};
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (toolCall?.function?.arguments) {
+    for (let attempt = 0; attempt < MAX_QUALITY_REPAIR_ATTEMPTS && needsQualityRepair(qualityReport); attempt += 1) {
+      const repairPrompt = `${userPrompt}
+
+Previous draft JSON:
+${JSON.stringify(result)}
+
+Validation scores for this draft:
+- SEO: ${qualityReport.seoScore}
+- SEA: ${qualityReport.seaScore}
+- GEO: ${qualityReport.geoScore}
+- Primary keyword: ${qualityReport.primaryKeyword}
+
+Failed checks to repair:
+${buildQualityRepairChecklist(qualityReport.checks)}
+
+Revise and return the FULL JSON again. Fix every failed item, keep the exact primary keyword first in seo_keywords, and preserve HTML structure/classes/attributes exactly.`;
+
       try {
-        result = typeof toolCall.function.arguments === "string"
-          ? JSON.parse(toolCall.function.arguments)
-          : toolCall.function.arguments;
-      } catch {
-        // Fallback: try parsing message content
-        const raw = aiData.choices?.[0]?.message?.content || "";
-        try { result = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "")); } catch { /* empty */ }
+        result = normalizeOptimizationResult(
+          await requestOptimizationDraft(LOVABLE_API_KEY, systemPrompt, repairPrompt),
+          fallbackResult,
+          fields,
+          includeContent,
+        );
+      } catch (error: any) {
+        if (error?.status === 429 || error?.status === 402) break;
+        console.error("AI repair error:", error?.status, error?.details || error);
+        break;
       }
-    }
 
-    if (!result.seo_title && !result.seo_description && !result.seo_keywords && !result.content) {
-      // Last resort fallback
-      const raw = aiData.choices?.[0]?.message?.content || "";
-      try { result = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "")); } catch { /* empty */ }
+      qualityReport = analyzeSeoQuality({
+        title: page_title,
+        seoTitle: result.seo_title || effectiveSeoTitle,
+        seoDescription: result.seo_description || effectiveSeoDescription,
+        seoKeywords: result.seo_keywords || existingSeoKeywords,
+        slug: page_slug,
+        url: page_url,
+        content: includeContent ? (result.content || page_content) : page_content,
+      });
     }
 
     // Fetch the website for CMS push
@@ -553,10 +693,17 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
 
     let pushResult: { external_id?: string; url?: string } | null = null;
     let pushError: string | null = null;
-    const nextSeoTitle = result.seo_title || page_seo_title || undefined;
-    const nextSeoDescription = result.seo_description || page_seo_description || undefined;
-    const nextSeoKeywords = Array.isArray(result.seo_keywords) && result.seo_keywords.length > 0
-      ? result.seo_keywords
+    const nextSeoTitle = fields.includes("seo_title")
+      ? (result.seo_title || page_seo_title || undefined)
+      : (page_seo_title || undefined);
+    const nextSeoDescription = fields.includes("seo_description")
+      ? (result.seo_description || page_seo_description || undefined)
+      : (page_seo_description || undefined);
+    const nextSeoKeywords = fields.includes("seo_keywords")
+      ? ensurePrimaryKeywordFirst(
+      qualityReport.primaryKeyword,
+      Array.isArray(result.seo_keywords) && result.seo_keywords.length > 0 ? result.seo_keywords : existingSeoKeywords,
+      )
       : existingSeoKeywords;
 
     if (website && page_external_id && !skip_push) {
@@ -668,6 +815,12 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       pushed_to_cms: !!pushResult,
       push_error: pushError,
       external_url: pushResult?.url || page_url,
+      quality_report: {
+        primary_keyword: qualityReport.primaryKeyword,
+        seo_score: qualityReport.seoScore,
+        sea_score: qualityReport.seaScore,
+        geo_score: qualityReport.geoScore,
+      },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
