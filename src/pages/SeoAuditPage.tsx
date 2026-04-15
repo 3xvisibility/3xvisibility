@@ -85,38 +85,38 @@ export default function SeoAuditPage() {
     s >= 85 ? "bg-emerald-500" : s >= 60 ? "bg-primary" : s >= 35 ? "bg-amber-500" : "bg-destructive";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-1 sm:px-0">
       <div>
-        <h1 className="text-display">{t("seoAudit.title")}</h1>
+        <h1 className="text-lg sm:text-xl md:text-display font-bold">{t("seoAudit.title")}</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {t("seoAudit.description")}
         </p>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <p className={`text-3xl font-bold tabular-nums ${scoreColor(avgScore)}`}>{avgScore}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.avgScore")}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-5 sm:pb-4 text-center">
+            <p className={`text-2xl sm:text-3xl font-bold tabular-nums ${scoreColor(avgScore)}`}>{avgScore}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{t("seoAudit.avgScore")}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <p className="text-3xl font-bold tabular-nums text-destructive">{criticalCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.criticalIssues")}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-5 sm:pb-4 text-center">
+            <p className="text-2xl sm:text-3xl font-bold tabular-nums text-destructive">{criticalCount}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{t("seoAudit.criticalIssues")}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <p className="text-3xl font-bold tabular-nums text-amber-500">{warningCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.warnings")}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-5 sm:pb-4 text-center">
+            <p className="text-2xl sm:text-3xl font-bold tabular-nums text-amber-500">{warningCount}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{t("seoAudit.warnings")}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <p className="text-3xl font-bold tabular-nums text-emerald-600">{perfectCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">{t("seoAudit.scoreAbove90")}</p>
+          <CardContent className="pt-3 pb-3 sm:pt-5 sm:pb-4 text-center">
+            <p className="text-2xl sm:text-3xl font-bold tabular-nums text-emerald-600">{perfectCount}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{t("seoAudit.scoreAbove90")}</p>
           </CardContent>
         </Card>
       </div>
@@ -133,7 +133,7 @@ export default function SeoAuditPage() {
           />
         </div>
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -165,26 +165,26 @@ export default function SeoAuditPage() {
             <AccordionItem
               key={page.id}
               value={page.id}
-              className="border rounded-lg px-4 bg-card"
+              className="border rounded-lg px-2 sm:px-4 bg-card"
             >
               <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                  <div className="w-10 text-center shrink-0">
-                    <span className={`text-sm font-bold tabular-nums ${scoreColor(audit.overallScore)}`}>
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-left">
+                  <div className="w-8 sm:w-10 text-center shrink-0">
+                    <span className={`text-xs sm:text-sm font-bold tabular-nums ${scoreColor(audit.overallScore)}`}>
                       {audit.overallScore}
                     </span>
                   </div>
-                  <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden shrink-0">
+                  <div className="h-1.5 w-10 sm:w-16 rounded-full bg-muted overflow-hidden shrink-0">
                     <div
                       className={`h-full rounded-full ${scoreBarColor(audit.overallScore)}`}
                       style={{ width: `${audit.overallScore}%` }}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{page.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">/{page.slug}</p>
+                    <p className="text-xs sm:text-sm font-medium truncate">{page.title}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">/{page.slug}</p>
                   </div>
-                  <div className="flex gap-1.5 shrink-0">
+                  <div className="hidden sm:flex gap-1.5 shrink-0">
                     {audit.items.some((i) => i.category === "critical") && (
                       <Badge variant="destructive" className="text-[10px] px-1.5">
                         {audit.items.filter((i) => i.category === "critical").length} Critical
