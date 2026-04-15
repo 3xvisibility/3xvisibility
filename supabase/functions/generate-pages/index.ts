@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { autoRepairContent, derivePrimaryKeyword } from "../_shared/seo-quality.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

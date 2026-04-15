@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import {
   analyzeSeoQuality,
+  autoRepairContent,
   buildQualityRepairChecklist,
   derivePrimaryKeyword,
   ensurePrimaryKeywordFirst,
