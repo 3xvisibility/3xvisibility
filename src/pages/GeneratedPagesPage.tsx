@@ -782,10 +782,7 @@ export default function GeneratedPagesPage() {
                               {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
                               {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               <DropdownMenuSeparator />
