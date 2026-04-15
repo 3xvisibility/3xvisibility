@@ -66,24 +66,44 @@ serve(async (req) => {
     const kwList = Array.isArray(keywords) ? keywords.join(", ") : keywords;
     const cType = contentType || "seo";
 
-    const systemPrompt = `You are an expert SEO content writer and web designer. Generate a complete, production-ready HTML template that scores 80+ on ALL three metrics: SEO, SEA (paid landing), and GEO (local search).
+    const systemPrompt = `You are an expert SEO content writer and web designer. Generate a complete, production-ready HTML template that scores 90+ on Rank Math / Yoast SEO, SEA (paid landing), and GEO (local search).
 
 OUTPUT FORMAT: Raw HTML only. No markdown fences, no explanations. Use {variable_name} for dynamic placeholders.
 
-DESIGN REQUIREMENTS (CRITICAL):
+DESIGN REQUIREMENTS:
 - Use semantic HTML with CSS classes: hero-section, card, feature-card, service-card, grid, features-grid, testimonial, stars, badge, pricing, price, contact-info, btn, cta
-- Structure with clear sections: hero area, features/services grid, testimonials, CTA, contact/form section
-- Use professional stock images from https://picsum.photos/800/400?random=N (increment N for each image)
-- Use responsive grid layouts with class="grid" or class="features-grid" for card-based sections
+- Structure: hero area, features/services grid, testimonials, FAQ section, CTA, contact/form
+- Use professional stock images from https://picsum.photos/800/400?random=N (increment N)
+- Use responsive grid layouts with class="grid" or class="features-grid"
 - Add star ratings in testimonial sections
 - Use class="btn cta" on call-to-action links/buttons
 - Include a hero section with class="hero-section" or class="hero"
 
-MANDATORY REQUIREMENTS:
+MANDATORY SEO REQUIREMENTS (Rank Math / Yoast aligned):
+1. <h1> with the primary keyword in the first 3 words
+2. 650+ words minimum of quality content
+3. Multiple <h2>/<h3> subheadings — at least ONE must contain the primary keyword
+4. <img> tags with alt text containing the primary keyword (at least 1 image)
+5. Internal links (at least 1 <a href="/...">) and outbound links (at least 1 <a href="https://...">)
+6. Keyword density 0.5-2.5% — use the keyword naturally 4-8 times in 650+ words
+7. Short paragraphs (under 150 words each)
+8. Transition words: use "however", "additionally", "furthermore", "moreover", "because", "for example", "therefore" (at least 3 occurrences)
+9. Active voice predominantly — avoid "is/was/were + verb-ed" passive constructions
+10. JSON-LD structured data: include <script type="application/ld+json"> with LocalBusiness or WebPage schema
 
-SEO: Include <h1> with keyword, 300+ words, <h2>/<h3> subheadings, <img> with alt text, <a> links
-SEA: CTA with class="btn cta", <form> for leads, action words, trust signals, pricing
-GEO: {city}/{state} variables, address, phone, map reference, hours, "near me" phrases
+SEA REQUIREMENTS:
+- CTA words: buy, get, shop, order, contact, call, book, reserve, discover, subscribe
+- Benefit words in intro: save, fast, easy, reliable, premium, trusted, affordable, results
+- Trust signals: trusted, guarantee, certified, proven, rated, verified, satisfaction
+- Offer language: free, discount, deal, plan, package, pricing, trial
+- Urgency cues: today, now, limited, same-day, fast, instant
+
+GEO REQUIREMENTS:
+- Local cues: local, nearby, near you, serving, community, neighborhood, in your area
+- Service area language: serving, available in, coverage, throughout, local service
+- Availability: open, available, today, same-day, hours, contact us, call us
+- Local credibility: trusted locally, local team, area specialists, nearby support
+- Use {city}/{state}/{region} variables for dynamic location targeting
 
 CONTENT TYPE: "${cType}"
 KEYWORDS: ${kwList}
