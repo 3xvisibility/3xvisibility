@@ -79,8 +79,6 @@ const pgpNav: NavItem[] = [
 
 const toolsNav: NavItem[] = [
   { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers },
-  { titleKey: "sidebar.aiScanner", path: "scanner", icon: ScanSearch },
-  { titleKey: "sidebar.discovery", path: "discovery", icon: Compass, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
   { titleKey: "sidebar.performance", path: "performance", icon: Activity },
   { titleKey: "sidebar.abTesting", path: "ab-testing", icon: FlaskConical },
