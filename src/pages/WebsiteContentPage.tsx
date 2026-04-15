@@ -76,6 +76,39 @@ export default function WebsiteContentPage() {
   const [templatePage, setTemplatePage] = useState<ContentItem | null>(null);
   const [previewPage, setPreviewPage] = useState<ContentItem | null>(null);
   const [editPage, setEditPage] = useState<ContentItem | null>(null);
+
+  // URL scan state
+  const [scanUrl, setScanUrl] = useState("");
+  const [scannedItem, setScannedItem] = useState<ContentItem | null>(null);
+
+  const scanUrlMutation = useMutation({
+    mutationFn: async (urlToScan: string) => {
+      const { data, error } = await supabase.functions.invoke("scan-template", {
+        body: { url: urlToScan },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      const item: ContentItem = {
+        id: `scan-${Date.now()}`,
+        title: data.title || "Scanned Page",
+        slug: new URL(scanUrl).pathname.replace(/^\/|\/$/g, "") || "home",
+        url: scanUrl,
+        type: "page",
+        status: "external",
+        content: data.bodyHtml || "",
+        excerpt: data.blocks?.[0]?.text?.substring(0, 150) || "",
+        modified: new Date().toISOString(),
+      };
+      setScannedItem(item);
+      toast({ title: "Page scanned", description: `Found content from ${scanUrl}` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Scan failed", description: err.message, variant: "destructive" });
+    },
+  });
   const [persistedEditPageId, setPersistedEditPageId] = useState<string | null>(() => persistedUiState?.editPageId ?? null);
 
   // Fetch connected websites
