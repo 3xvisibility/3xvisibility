@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
+import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
 
 /**
@@ -145,6 +145,18 @@ function buildPayload(
   }
 
   return payload;
+}
+
+function inferPublishType(
+  page: { external_url?: string | null },
+  requestedType: string,
+): "page" | "product" {
+  if (requestedType === "product") return "product";
+
+  const externalUrl = page.external_url?.toLowerCase() || "";
+  if (externalUrl.includes("/product/")) return "product";
+
+  return "page";
 }
 
 Deno.serve(async (req) => {
@@ -359,31 +371,36 @@ Deno.serve(async (req) => {
       }
 
       try {
-        const connector = await createConnector(page.websites as WebsiteRecord);
+        const resolvedPublishType = inferPublishType(page, pubType);
+        const connector = resolvedPublishType === "product"
+          ? await createProductConnector(page.websites as WebsiteRecord)
+          : await createConnector(page.websites as WebsiteRecord);
         const cleanedContent = stripHeadTagsForCms(page.content);
 
-        // Auto-detect Elementor for this website (cached)
-        const wsKey = page.website_id || "default";
-        if (!elementorCache.has(wsKey)) {
-          const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
-          elementorCache.set(wsKey, detected);
-        }
-        const elementorInfo = elementorCache.get(wsKey)!;
-
-        // Build Elementor meta if the site uses Elementor
         let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
-        if (elementorInfo.usesElementor) {
-          elementorMeta = {
-            elementor_data: buildElementorData(cleanedContent),
-            elementor_edit_mode: "builder",
-            page_template: elementorInfo.pageTemplate,
-          };
+        if (resolvedPublishType === "page") {
+          // Auto-detect Elementor for pages only (cached)
+          const wsKey = page.website_id || "default";
+          if (!elementorCache.has(wsKey)) {
+            const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
+            elementorCache.set(wsKey, detected);
+          }
+          const elementorInfo = elementorCache.get(wsKey)!;
+
+          if (elementorInfo.usesElementor) {
+            elementorMeta = {
+              elementor_data: buildElementorData(cleanedContent),
+              elementor_edit_mode: "builder",
+              page_template: elementorInfo.pageTemplate,
+            };
+          }
         }
 
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
-          pubType,
-          elementorMeta
+          resolvedPublishType,
+          elementorMeta,
+          resolvedPublishType === "product" ? {} : undefined,
         );
 
         // If page was previously published (has external_id), update instead of creating
