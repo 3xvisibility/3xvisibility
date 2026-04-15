@@ -14,13 +14,11 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  Bot, MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
-import { AiSeoAssistantDialog } from "@/components/AiSeoAssistantDialog";
-import { AiEnrichDialog } from "@/components/AiEnrichDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
@@ -72,8 +70,6 @@ export default function GeneratedPagesPage() {
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
-  const [aiAssistantPage, setAiAssistantPage] = useState<GeneratedPage | null>(null);
-  const [aiEnrichPage, setAiEnrichPage] = useState<GeneratedPage | null>(null);
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
   const [pendingPublishAction, setPendingPublishAction] = useState<"publish" | "bulk" | "retry">("publish");
@@ -285,20 +281,7 @@ export default function GeneratedPagesPage() {
     else publishMutation.mutate({ pageIds: pendingPublishIds, type: publishType, websiteId });
   };
 
-  const rewriteMutation = useMutation({
-    mutationFn: async (pageId: string) => {
-      const { data, error } = await supabase.functions.invoke("rewrite-content", { body: { page_id: pageId, auto_republish: true } });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["generated-pages"] });
-      const msg = data?.republished ? "Content rewritten & republished to CMS" : "Content rewritten";
-      toast({ title: msg });
-    },
-    onError: (err: Error) => toast({ title: "Rewrite failed", description: err.message, variant: "destructive" }),
-  });
+
 
   const translateMutation = useMutation({
     mutationFn: async ({ pageIds, lang }: { pageIds: string[]; lang: string }) => {
@@ -690,9 +673,6 @@ export default function GeneratedPagesPage() {
                       {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
                       {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
@@ -785,10 +765,7 @@ export default function GeneratedPagesPage() {
                               {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setAiAssistantPage(page)}><Bot className="h-3.5 w-3.5 mr-2" />AI Assistant</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => rewriteMutation.mutate(page.id)}><Sparkles className="h-3.5 w-3.5 mr-2" />AI Rewrite</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setAiEnrichPage(page)}><TrendingUp className="h-3.5 w-3.5 mr-2" />AI Enrich</DropdownMenuItem>
                               {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
                               <DropdownMenuSeparator />
@@ -1102,10 +1079,7 @@ export default function GeneratedPagesPage() {
       <DuplicateContentDialog open={duplicateOpen} onOpenChange={setDuplicateOpen} pages={pages.map((p) => ({ id: p.id, title: p.title, content: p.content }))} />
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
-        campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined} />
-      <AiSeoAssistantDialog open={!!aiAssistantPage} onOpenChange={(open) => !open && setAiAssistantPage(null)} page={aiAssistantPage}
-        onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
-      <AiEnrichDialog open={!!aiEnrichPage} onOpenChange={(open) => !open && setAiEnrichPage(null)} page={aiEnrichPage}
+        campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
         onUpdated={() => queryClient.invalidateQueries({ queryKey: ["generated-pages"] })} />
       <PublishWebsiteSelector
         open={showWebsiteSelector}
