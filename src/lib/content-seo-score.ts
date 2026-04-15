@@ -340,6 +340,34 @@ export function calculateContentSeoScore(
   checks.push({ label: "Keyword in subheading", passed: kwInSubheading, tip: "Include focus keyword in at least one H2/H3" });
   if (kwInSubheading) points++;
 
+  // Image alt text with keyword (Rank Math / Yoast check)
+  const imgAltMatches = Array.from(content.matchAll(/<img[^>]*alt=["']([^"']*)["'][^>]*>/gi));
+  const hasImages = imgAltMatches.length > 0 || /<img[^>]*>/i.test(content);
+  const hasImgAltWithKw = focusKw
+    ? imgAltMatches.some(([, alt]) => containsPhrase(alt, focusKw))
+    : false;
+  checks.push({ label: "Image alt text with keyword", passed: hasImgAltWithKw, tip: hasImages ? "Add focus keyword to at least one image alt text" : "Add images with descriptive alt text containing your keyword" });
+  if (hasImgAltWithKw) points++;
+
+  // Internal links check
+  const allLinks = Array.from(content.matchAll(/<a[^>]*href=["']([^"']*)["'][^>]*>/gi));
+  const internalLinks = allLinks.filter(([, href]) => {
+    if (!href) return false;
+    return href.startsWith("/") || href.startsWith("#") || href.startsWith("./");
+  });
+  const hasInternalLinks = internalLinks.length >= 1;
+  checks.push({ label: "Has internal links", passed: hasInternalLinks, tip: "Add at least one internal link to related content" });
+  if (hasInternalLinks) points++;
+
+  // Outbound/external links check
+  const externalLinks = allLinks.filter(([, href]) => {
+    if (!href) return false;
+    return href.startsWith("http://") || href.startsWith("https://");
+  });
+  const hasExternalLinks = externalLinks.length >= 1;
+  checks.push({ label: "Has outbound links", passed: hasExternalLinks, tip: "Add at least one outbound link to a relevant authoritative source" });
+  if (hasExternalLinks) points++;
+
   const longParas = paragraphs.filter((paragraph) => paragraph.split(/\s+/).length > 150).length;
   const readableParas = longParas === 0;
   checks.push({ label: "Short readable paragraphs", passed: readableParas, tip: "Break long paragraphs into smaller ones (< 150 words each)" });
@@ -352,6 +380,11 @@ export function calculateContentSeoScore(
   const activeVoiceOk = passiveVoiceMatches <= Math.max(1, Math.floor(sentenceCount * 0.2));
   checks.push({ label: "Mostly active voice", passed: activeVoiceOk, tip: "Prefer direct, active sentences over passive phrasing" });
   if (activeVoiceOk) points++;
+
+  // Schema markup / JSON-LD check
+  const hasSchema = /application\/ld\+json/i.test(content) || /itemscope/i.test(content) || /itemprop/i.test(content);
+  checks.push({ label: "Has structured data", passed: hasSchema, tip: "Add JSON-LD schema markup for better search appearance" });
+  if (hasSchema) points++;
 
   return buildScoreResult(points, checks);
 }
