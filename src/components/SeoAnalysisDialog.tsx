@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -34,9 +34,17 @@ interface SeoAnalysisDialogProps {
   onUpdated?: () => void;
 }
 
-export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, campaignSlugs, onUpdated }: SeoAnalysisDialogProps) {
+export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campaignTitles, campaignSlugs, onUpdated }: SeoAnalysisDialogProps) {
   const [fixing, setFixing] = useState(false);
+  const [fixStep, setFixStep] = useState("");
+  const [fixProgress, setFixProgress] = useState(0);
+  const [localPage, setLocalPage] = useState(initialPage);
   const { toast } = useToast();
+
+  // Sync localPage when dialog opens with new page
+  useEffect(() => { setLocalPage(initialPage); }, [initialPage]);
+
+  const page = localPage;
 
   const analysis = useMemo(() => {
     if (!page) return null;
@@ -72,36 +80,46 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
   const handleFixAndRepublish = async () => {
     if (!page?.id) return;
     setFixing(true);
+    setFixProgress(0);
     try {
-      // Step 1: AI optimize titles via ai-seo-assistant
+      // Step 1: AI optimize titles
+      setFixStep("Optimizing titles...");
+      setFixProgress(10);
       const { data: titleData, error: titleErr } = await supabase.functions.invoke("ai-seo-assistant", {
         body: { page_id: page.id, action: "titles" },
       });
       if (titleErr) throw titleErr;
       if (titleData?.error) throw new Error(titleData.error);
+      setFixProgress(25);
 
       // Step 2: AI optimize meta descriptions
+      setFixStep("Writing meta descriptions...");
       const { data: metaData, error: metaErr } = await supabase.functions.invoke("ai-seo-assistant", {
         body: { page_id: page.id, action: "meta" },
       });
       if (metaErr) throw metaErr;
       if (metaData?.error) throw new Error(metaData.error);
+      setFixProgress(45);
 
       // Step 3: AI optimize keywords
+      setFixStep("Researching keywords...");
       const { data: kwData, error: kwErr } = await supabase.functions.invoke("ai-seo-assistant", {
         body: { page_id: page.id, action: "keywords" },
       });
       if (kwErr) throw kwErr;
       if (kwData?.error) throw new Error(kwData.error);
+      setFixProgress(60);
 
-      // Step 4: AI fix headings (H1 etc.)
+      // Step 4: AI fix headings
+      setFixStep("Improving headings...");
       const { data: headingsData, error: headingsErr } = await supabase.functions.invoke("ai-seo-assistant", {
         body: { page_id: page.id, action: "headings" },
       });
       if (headingsErr) throw headingsErr;
       if (headingsData?.error) throw new Error(headingsData.error);
+      setFixProgress(75);
 
-      // Parse results and update the generated page
+      // Parse results
       let newTitle = page.seo_title || page.title;
       let newDescription = page.seo_description || "";
       let newKeywords = page.seo_keywords || [];
@@ -124,12 +142,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
         if (allKw.length > 0) newKeywords = allKw.slice(0, 8);
       } catch {}
 
-      // Use headings-fixed content
       if (headingsData?.result) {
         newContent = headingsData.result;
       }
 
-      // Update the generated page in DB
+      // Step 5: Save to DB
+      setFixStep("Saving optimized content...");
+      setFixProgress(85);
       const { error: updateErr } = await supabase
         .from("generated_pages")
         .update({
@@ -141,9 +160,11 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
         .eq("id", page.id);
       if (updateErr) throw updateErr;
 
-      // Auto-republish if page was published
+      // Step 6: Republish if needed
       let republished = false;
       if (page.status === "published" && page.external_id && page.website_id) {
+        setFixStep("Republishing to CMS...");
+        setFixProgress(92);
         const { data: pubData, error: pubErr } = await supabase.functions.invoke("publish-pages", {
           body: { page_ids: [page.id], publish_type: "page", website_id: page.website_id },
         });
@@ -156,18 +177,31 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
         if (pubData?.published > 0) republished = true;
       }
 
+      setFixProgress(100);
+      setFixStep("Done!");
+
+      // Update local page so scores refresh in the dialog
+      setLocalPage({
+        ...page,
+        seo_title: newTitle,
+        seo_description: newDescription,
+        seo_keywords: newKeywords,
+        content: newContent,
+      });
+
       toast({
         title: "SEO issues fixed!",
         description: republished
           ? "Content optimized and republished to CMS."
-          : "Content optimized. Publish when ready.",
+          : "Content optimized. Scores updated above.",
       });
       onUpdated?.();
-      onOpenChange(false);
     } catch (err: any) {
       toast({ title: "Fix failed", description: friendlyError(err.message), variant: "destructive" });
     } finally {
       setFixing(false);
+      setFixStep("");
+      setFixProgress(0);
     }
   };
 
@@ -242,18 +276,26 @@ export function SeoAnalysisDialog({ open, onOpenChange, page, campaignTitles, ca
 
             {/* AI Fix Button */}
             {hasIssues && page.id && (
-              <Button
-                onClick={handleFixAndRepublish}
-                disabled={fixing}
-                className="w-full gap-2"
-                size="lg"
-              >
-                {fixing ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" />Fixing all issues...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
+              <div className="space-y-2">
+                <Button
+                  onClick={handleFixAndRepublish}
+                  disabled={fixing}
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  {fixing ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />{fixStep || "Processing..."}</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
+                  )}
+                </Button>
+                {fixing && (
+                  <div className="space-y-1">
+                    <Progress value={fixProgress} className="h-1.5" />
+                    <p className="text-[10px] text-muted-foreground text-center">{fixStep}</p>
+                  </div>
                 )}
-              </Button>
+              </div>
             )}
 
             {/* Rules Validation */}
