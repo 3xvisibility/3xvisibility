@@ -42,7 +42,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   const { toast } = useToast();
 
   // Sync localPage when dialog opens with new page
-  useMemo(() => { setLocalPage(initialPage); }, [initialPage]);
+  useEffect(() => { setLocalPage(initialPage); }, [initialPage]);
 
   const page = localPage;
 
