@@ -640,8 +640,9 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                 <TableRow>
                   <TableHead className="min-w-[140px]">Keyword</TableHead>
+                  <TableHead className="min-w-[80px]">Folder</TableHead>
                   <TableHead className="min-w-[80px]">Source</TableHead>
                   <TableHead className="min-w-[60px]">Terms</TableHead>
                   <TableHead className="hidden md:table-cell min-w-[60px]">Columns</TableHead>
@@ -657,6 +658,13 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                         <KeyRound className="h-4 w-4 text-primary shrink-0" />
                         <span className="font-medium font-mono text-xs sm:text-sm cursor-pointer hover:text-primary truncate max-w-[120px] sm:max-w-none" onClick={() => openEditor(kw)}>{`{${kw.name}}`}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {kw.folder ? (
+                        <Badge variant="secondary" className="text-[10px]"><FolderOpen className="h-3 w-3 mr-1" />{kw.folder}</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell><Badge variant="outline" className="text-[10px] capitalize">{sourceLabels[kw.source] || kw.source}</Badge></TableCell>
                     <TableCell><span className="text-sm tabular-nums">{kw.term_count}</span></TableCell>
