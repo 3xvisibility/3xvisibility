@@ -715,6 +715,27 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
               <p className="text-[11px] text-muted-foreground">Use in templates as <code className="bg-muted px-1 rounded">{`{${kwName || "keyword"}}`}</code></p>
             </div>
 
+            {/* Folder Selection */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Folder <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <div className="flex gap-2">
+                <Select value={kwFolder || "__none__"} onValueChange={(v) => { setKwFolder(v === "__none__" ? "" : v); setNewFolderName(""); }}>
+                  <SelectTrigger className="h-9 flex-1">
+                    <SelectValue placeholder="No folder" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No folder</SelectItem>
+                    {folders.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    <SelectItem value="__new__">+ Create new folder</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {kwFolder === "__new__" && (
+                <Input placeholder="Enter folder name, e.g. Shop, Web Design" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} className="h-9 mt-1.5" autoFocus />
+              )}
+              <p className="text-[11px] text-muted-foreground">Group keywords by website or project for easy filtering</p>
+            </div>
+
             {/* Source Selection */}
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Source</Label>
