@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
   ArrowRight, CheckCircle2, Target, Plus, X, Loader2,
-  FileText, ShoppingBag, Briefcase,
+  FileText, ShoppingBag, Briefcase, FolderOpen, Folder,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,6 +81,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [targetUrl, setTargetUrl] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
   const [contentType, setContentType] = useState<ContentType>("pages");
+  const [folderFilter, setFolderFilter] = useState<string>("__all__");
 
   // AI keyword suggestion
   const [businessNiche, setBusinessNiche] = useState("");
@@ -97,10 +98,10 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pgp_keywords")
-        .select("id, name, term_count")
+        .select("id, name, term_count, folder")
         .eq("workspace_id", wsId!);
       if (error) throw error;
-      return data;
+      return data as { id: string; name: string; term_count: number; folder: string | null }[];
     },
   });
 
@@ -196,6 +197,25 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
   const displaySuggestions = aiSuggestions.length > 0 ? aiSuggestions : FALLBACK_KEYWORDS;
   const availableSuggestions = displaySuggestions.filter(k => !selectedKeywords.includes(k));
   const availableExisting = existingKeywords.filter(kw => !selectedKeywords.includes(kw.name));
+
+  // Folder list (unique, sorted) + filter
+  const folders = Array.from(new Set(availableExisting.map(k => k.folder).filter((f): f is string => !!f))).sort();
+  const filteredExisting = availableExisting.filter(kw => {
+    if (folderFilter === "__all__") return true;
+    if (folderFilter === "__none__") return !kw.folder;
+    return kw.folder === folderFilter;
+  });
+  // Group filtered keywords by folder for display
+  const groupedExisting = filteredExisting.reduce<Record<string, typeof filteredExisting>>((acc, kw) => {
+    const key = kw.folder || "__uncategorized__";
+    (acc[key] ||= []).push(kw);
+    return acc;
+  }, {});
+  const groupedKeys = Object.keys(groupedExisting).sort((a, b) => {
+    if (a === "__uncategorized__") return 1;
+    if (b === "__uncategorized__") return -1;
+    return a.localeCompare(b);
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -379,23 +399,58 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
                 </div>
               )}
 
-              {/* Existing PGP keywords */}
+              {/* Existing PGP keywords (grouped by folder) */}
               {availableExisting.length > 0 && (
-                <div className="space-y-1.5 mt-3">
-                  <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">From your keyword groups</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableExisting.map(kw => (
-                      <button
-                        key={kw.id}
-                        onClick={() => toggleKeyword(kw.name)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-border bg-background hover:border-primary/50 transition-colors"
-                      >
-                        <Plus className="h-2.5 w-2.5" />
-                        {`{${kw.name}}`}
-                        <span className="text-[10px] opacity-60">{kw.term_count} terms</span>
-                      </button>
-                    ))}
+                <div className="space-y-2 mt-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">From your keyword groups</span>
+                    {folders.length > 0 && (
+                      <Select value={folderFilter} onValueChange={setFolderFilter}>
+                        <SelectTrigger className="h-7 w-auto min-w-[140px] text-[11px]">
+                          <FolderOpen className="h-3 w-3 mr-1 text-muted-foreground" />
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__all__">All folders</SelectItem>
+                          <SelectItem value="__none__">Uncategorized</SelectItem>
+                          {folders.map(f => (
+                            <SelectItem key={f} value={f}>{f}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
+
+                  {filteredExisting.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground italic px-1">No keywords in this folder.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {groupedKeys.map(folderKey => (
+                        <div key={folderKey} className="space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <Folder className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                              {folderKey === "__uncategorized__" ? "Uncategorized" : folderKey}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/60">({groupedExisting[folderKey].length})</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 pl-1">
+                            {groupedExisting[folderKey].map(kw => (
+                              <button
+                                key={kw.id}
+                                onClick={() => toggleKeyword(kw.name)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-border bg-background hover:border-primary/50 transition-colors"
+                              >
+                                <Plus className="h-2.5 w-2.5" />
+                                {`{${kw.name}}`}
+                                <span className="text-[10px] opacity-60">{kw.term_count} terms</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
