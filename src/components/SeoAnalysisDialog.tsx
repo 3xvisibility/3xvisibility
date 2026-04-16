@@ -276,18 +276,26 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
             {/* AI Fix Button */}
             {hasIssues && page.id && (
-              <Button
-                onClick={handleFixAndRepublish}
-                disabled={fixing}
-                className="w-full gap-2"
-                size="lg"
-              >
-                {fixing ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" />Fixing all issues...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
+              <div className="space-y-2">
+                <Button
+                  onClick={handleFixAndRepublish}
+                  disabled={fixing}
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  {fixing ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" />{fixStep || "Processing..."}</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" />AI Fix All Issues {page.status === "published" && page.external_id ? "& Republish" : ""}</>
+                  )}
+                </Button>
+                {fixing && (
+                  <div className="space-y-1">
+                    <Progress value={fixProgress} className="h-1.5" />
+                    <p className="text-[10px] text-muted-foreground text-center">{fixStep}</p>
+                  </div>
                 )}
-              </Button>
+              </div>
             )}
 
             {/* Rules Validation */}
