@@ -1343,6 +1343,7 @@ export type Database = {
           columns: string[] | null
           created_at: string
           delimiter: string | null
+          folder: string | null
           id: string
           name: string
           source: string
@@ -1357,6 +1358,7 @@ export type Database = {
           columns?: string[] | null
           created_at?: string
           delimiter?: string | null
+          folder?: string | null
           id?: string
           name: string
           source?: string
@@ -1371,6 +1373,7 @@ export type Database = {
           columns?: string[] | null
           created_at?: string
           delimiter?: string | null
+          folder?: string | null
           id?: string
           name?: string
           source?: string

@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Plus, KeyRound, Trash2, Upload, Download, Copy, Search as SearchIcon,
   Pencil, MoreVertical, Loader2, Sparkles, FileText, Database, ChevronLeft, ChevronRight,
-  MapPin, Globe, Link2, Rss, Wand2, ExternalLink,
+  MapPin, Globe, Link2, Rss, Wand2, ExternalLink, FolderOpen, FolderPlus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,7 @@ interface PgpKeyword {
   workspace_id: string;
   user_id: string;
   name: string;
+  folder: string | null;
   source: string;
   terms: string[];
   delimiter: string | null;
@@ -48,6 +49,9 @@ export default function PgpKeywordsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [autoWizardOpen, setAutoWizardOpen] = useState(false);
+  const [folderFilter, setFolderFilter] = useState<string>("__all__");
+  const [kwFolder, setKwFolder] = useState("");
+  const [newFolderName, setNewFolderName] = useState("");
 
   // Editor state
   const [kwName, setKwName] = useState("");
@@ -141,7 +145,15 @@ export default function PgpKeywordsPage() {
     },
   });
 
-  const filtered = keywords.filter(kw => !searchQuery || kw.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Derive unique folders
+  const folders = [...new Set(keywords.map(kw => kw.folder).filter(Boolean))] as string[];
+
+  const filtered = keywords.filter(kw => {
+    if (searchQuery && !kw.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (folderFilter === "__none__") return !kw.folder;
+    if (folderFilter !== "__all__" && kw.folder !== folderFilter) return false;
+    return true;
+  });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -152,12 +164,12 @@ export default function PgpKeywordsPage() {
     setLocMode("area"); setLocRadius("50"); setLocRadiusUnit("miles"); setLocCenterCity("");
     setLocInclude({ city: true, state: true, zip: false, county: false, region: false, area_code: false, population: false, demographics: false });
     setLocFormat("{city}, {state}"); setDynUrl(""); setWebSiteId(""); setScanUrl("");
-    setEditing(null);
+    setEditing(null); setKwFolder(""); setNewFolderName("");
   };
 
   const openEditor = (kw?: PgpKeyword) => {
     if (kw) {
-      setEditing(kw); setKwName(kw.name); setKwSource(kw.source);
+      setEditing(kw); setKwName(kw.name); setKwSource(kw.source); setKwFolder(kw.folder || "");
       setKwTerms((kw.terms || []).join("\n")); setKwDelimiter(kw.delimiter || "");
       setKwColumns((kw.columns || []).join(", "));
       if (kw.source_config) {
@@ -193,7 +205,8 @@ export default function PgpKeywordsPage() {
       } else if (kwSource === "url_scan") {
         sourceConfig.url = scanUrl;
       }
-      const payload = { name: cleanName, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
+      const folderValue = newFolderName.trim() || (kwFolder && kwFolder !== "__new__" && kwFolder !== "__none__" ? kwFolder : null);
+      const payload = { name: cleanName, folder: folderValue, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
       if (editing?.id) {
         const { error } = await supabase.from("pgp_keywords").update(payload as any).eq("id", editing.id);
         if (error) throw error;
@@ -570,9 +583,24 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
         </div>
       )}
 
-      <div className="relative w-full sm:max-w-xs">
-        <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search keywords..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative w-full sm:max-w-xs">
+          <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search keywords..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
+        </div>
+        {folders.length > 0 && (
+          <Select value={folderFilter} onValueChange={(v) => { setFolderFilter(v); setCurrentPage(1); }}>
+            <SelectTrigger className="h-9 w-full sm:w-[180px]">
+              <FolderOpen className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="All Folders" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All Folders</SelectItem>
+              <SelectItem value="__none__">Uncategorized</SelectItem>
+              {folders.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {isLoading ? (
@@ -612,8 +640,9 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                 <TableRow>
                   <TableHead className="min-w-[140px]">Keyword</TableHead>
+                  <TableHead className="min-w-[80px]">Folder</TableHead>
                   <TableHead className="min-w-[80px]">Source</TableHead>
                   <TableHead className="min-w-[60px]">Terms</TableHead>
                   <TableHead className="hidden md:table-cell min-w-[60px]">Columns</TableHead>
@@ -629,6 +658,13 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
                         <KeyRound className="h-4 w-4 text-primary shrink-0" />
                         <span className="font-medium font-mono text-xs sm:text-sm cursor-pointer hover:text-primary truncate max-w-[120px] sm:max-w-none" onClick={() => openEditor(kw)}>{`{${kw.name}}`}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {kw.folder ? (
+                        <Badge variant="secondary" className="text-[10px]"><FolderOpen className="h-3 w-3 mr-1" />{kw.folder}</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell><Badge variant="outline" className="text-[10px] capitalize">{sourceLabels[kw.source] || kw.source}</Badge></TableCell>
                     <TableCell><span className="text-sm tabular-nums">{kw.term_count}</span></TableCell>
@@ -677,6 +713,27 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
               <Label className="text-sm font-semibold">Keyword Name</Label>
               <Input placeholder="e.g., service, city, product_name" value={kwName} onChange={(e) => setKwName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"))} className="font-mono h-11" />
               <p className="text-[11px] text-muted-foreground">Use in templates as <code className="bg-muted px-1 rounded">{`{${kwName || "keyword"}}`}</code></p>
+            </div>
+
+            {/* Folder Selection */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Folder <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <div className="flex gap-2">
+                <Select value={kwFolder || "__none__"} onValueChange={(v) => { setKwFolder(v === "__none__" ? "" : v); setNewFolderName(""); }}>
+                  <SelectTrigger className="h-9 flex-1">
+                    <SelectValue placeholder="No folder" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No folder</SelectItem>
+                    {folders.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    <SelectItem value="__new__">+ Create new folder</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {kwFolder === "__new__" && (
+                <Input placeholder="Enter folder name, e.g. Shop, Web Design" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} className="h-9 mt-1.5" autoFocus />
+              )}
+              <p className="text-[11px] text-muted-foreground">Group keywords by website or project for easy filtering</p>
             </div>
 
             {/* Source Selection */}
