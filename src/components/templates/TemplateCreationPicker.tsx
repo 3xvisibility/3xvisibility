@@ -198,6 +198,25 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
   const availableSuggestions = displaySuggestions.filter(k => !selectedKeywords.includes(k));
   const availableExisting = existingKeywords.filter(kw => !selectedKeywords.includes(kw.name));
 
+  // Folder list (unique, sorted) + filter
+  const folders = Array.from(new Set(availableExisting.map(k => k.folder).filter((f): f is string => !!f))).sort();
+  const filteredExisting = availableExisting.filter(kw => {
+    if (folderFilter === "__all__") return true;
+    if (folderFilter === "__none__") return !kw.folder;
+    return kw.folder === folderFilter;
+  });
+  // Group filtered keywords by folder for display
+  const groupedExisting = filteredExisting.reduce<Record<string, typeof filteredExisting>>((acc, kw) => {
+    const key = kw.folder || "__uncategorized__";
+    (acc[key] ||= []).push(kw);
+    return acc;
+  }, {});
+  const groupedKeys = Object.keys(groupedExisting).sort((a, b) => {
+    if (a === "__uncategorized__") return 1;
+    if (b === "__uncategorized__") return -1;
+    return a.localeCompare(b);
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto p-0 gap-0">
