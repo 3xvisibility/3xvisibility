@@ -81,6 +81,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [targetUrl, setTargetUrl] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
   const [contentType, setContentType] = useState<ContentType>("pages");
+  const [folderFilter, setFolderFilter] = useState<string>("__all__");
 
   // AI keyword suggestion
   const [businessNiche, setBusinessNiche] = useState("");
