@@ -583,9 +583,24 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
         </div>
       )}
 
-      <div className="relative w-full sm:max-w-xs">
-        <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search keywords..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative w-full sm:max-w-xs">
+          <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search keywords..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
+        </div>
+        {folders.length > 0 && (
+          <Select value={folderFilter} onValueChange={(v) => { setFolderFilter(v); setCurrentPage(1); }}>
+            <SelectTrigger className="h-9 w-full sm:w-[180px]">
+              <FolderOpen className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="All Folders" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All Folders</SelectItem>
+              <SelectItem value="__none__">Uncategorized</SelectItem>
+              {folders.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {isLoading ? (
