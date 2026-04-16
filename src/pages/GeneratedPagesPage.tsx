@@ -669,7 +669,7 @@ export default function GeneratedPagesPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem onClick={() => setPreviewPage(page)}><Eye className="h-3.5 w-3.5 mr-2" />Preview</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openSeoEditor(page)}><Pencil className="h-3.5 w-3.5 mr-2" />Edit SEO</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openSeoEditor(page)}><Pencil className="h-3.5 w-3.5 mr-2" />Edit Content</DropdownMenuItem>
                       {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
@@ -751,7 +751,7 @@ export default function GeneratedPagesPage() {
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-0.5 justify-end">
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit SEO">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openSeoEditor(page)} title="Edit Content">
                             <Pencil className="h-3 w-3" />
                           </Button>
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setPreviewPage(page)} title="Preview">
@@ -887,7 +887,7 @@ export default function GeneratedPagesPage() {
       <Dialog open={!!seoEditPage} onOpenChange={(open) => !open && setSeoEditPage(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Tag className="h-5 w-5 text-primary" />Edit SEO Metadata</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Tag className="h-5 w-5 text-primary" />Edit Content</DialogTitle>
           </DialogHeader>
           {seoEditPage && (() => {
             const liveKeywords = seoForm.seo_keywords.split(",").map(k => k.trim()).filter(Boolean);
