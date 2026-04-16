@@ -17,7 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Plus, KeyRound, Trash2, Upload, Download, Copy, Search as SearchIcon,
   Pencil, MoreVertical, Loader2, Sparkles, FileText, Database, ChevronLeft, ChevronRight,
-  MapPin, Globe, Link2, Rss, Wand2, ExternalLink,
+  MapPin, Globe, Link2, Rss, Wand2, ExternalLink, FolderOpen, FolderPlus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,7 @@ interface PgpKeyword {
   workspace_id: string;
   user_id: string;
   name: string;
+  folder: string | null;
   source: string;
   terms: string[];
   delimiter: string | null;
@@ -48,6 +49,9 @@ export default function PgpKeywordsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [autoWizardOpen, setAutoWizardOpen] = useState(false);
+  const [folderFilter, setFolderFilter] = useState<string>("__all__");
+  const [kwFolder, setKwFolder] = useState("");
+  const [newFolderName, setNewFolderName] = useState("");
 
   // Editor state
   const [kwName, setKwName] = useState("");
@@ -141,7 +145,15 @@ export default function PgpKeywordsPage() {
     },
   });
 
-  const filtered = keywords.filter(kw => !searchQuery || kw.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Derive unique folders
+  const folders = [...new Set(keywords.map(kw => kw.folder).filter(Boolean))] as string[];
+
+  const filtered = keywords.filter(kw => {
+    if (searchQuery && !kw.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (folderFilter === "__none__") return !kw.folder;
+    if (folderFilter !== "__all__" && kw.folder !== folderFilter) return false;
+    return true;
+  });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -152,12 +164,12 @@ export default function PgpKeywordsPage() {
     setLocMode("area"); setLocRadius("50"); setLocRadiusUnit("miles"); setLocCenterCity("");
     setLocInclude({ city: true, state: true, zip: false, county: false, region: false, area_code: false, population: false, demographics: false });
     setLocFormat("{city}, {state}"); setDynUrl(""); setWebSiteId(""); setScanUrl("");
-    setEditing(null);
+    setEditing(null); setKwFolder(""); setNewFolderName("");
   };
 
   const openEditor = (kw?: PgpKeyword) => {
     if (kw) {
-      setEditing(kw); setKwName(kw.name); setKwSource(kw.source);
+      setEditing(kw); setKwName(kw.name); setKwSource(kw.source); setKwFolder(kw.folder || "");
       setKwTerms((kw.terms || []).join("\n")); setKwDelimiter(kw.delimiter || "");
       setKwColumns((kw.columns || []).join(", "));
       if (kw.source_config) {
@@ -193,7 +205,8 @@ export default function PgpKeywordsPage() {
       } else if (kwSource === "url_scan") {
         sourceConfig.url = scanUrl;
       }
-      const payload = { name: cleanName, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
+      const folderValue = newFolderName.trim() || kwFolder || null;
+      const payload = { name: cleanName, folder: folderValue, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
       if (editing?.id) {
         const { error } = await supabase.from("pgp_keywords").update(payload as any).eq("id", editing.id);
         if (error) throw error;
