@@ -96,7 +96,7 @@ export function TemplateEditorDialog({
   const { toast } = useToast();
 
   const resetAllFields = useCallback(() => {
-    setName(""); setContent(""); setShowPreview(false); setActiveTab("content");
+    setName(""); setContent(""); setViewMode("code"); setActiveTab("content");
     setSeoTitlePattern(""); setSeoDescriptionPattern("");
     setSlugPattern(""); setCanonicalUrlPattern("");
     setOgTitlePattern(""); setOgDescriptionPattern("");
@@ -147,7 +147,7 @@ export function TemplateEditorDialog({
       setParentPage(cfg._parentPage || "");
       setMenuAssignment(cfg._menuAssignment || "");
       setPageTemplate(cfg._pageTemplate || "default");
-      setShowPreview(false);
+      setViewMode("code");
       setActiveTab("content");
       setAiSeoNiche("");
     } else {
@@ -349,14 +349,20 @@ ${content}`
               <div className="flex items-center gap-2 px-3 sm:px-5 py-2 border-b bg-muted/20 shrink-0 overflow-x-auto">
                 <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0">
                   <button
-                    onClick={() => setShowPreview(false)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${!showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => setViewMode("code")}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${viewMode === "code" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     <Code className="h-3 w-3 inline mr-1" /> Code
                   </button>
                   <button
-                    onClick={() => setShowPreview(true)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${showPreview ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => setViewMode("builder")}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${viewMode === "builder" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <LayoutPanelTop className="h-3 w-3 inline mr-1" /> Builder
+                  </button>
+                  <button
+                    onClick={() => setViewMode("preview")}
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${viewMode === "preview" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     <Eye className="h-3 w-3 inline mr-1" /> Preview
                   </button>
@@ -389,11 +395,19 @@ ${content}`
                 )}
               </div>
 
-              {/* Editor / Preview area */}
+              {/* Editor / Builder / Preview area */}
               <div className="flex-1 min-h-[50vh]">
-                {showPreview ? (
+                {viewMode === "preview" ? (
                   <div className="h-full">
                     <TemplatePreview html={content} />
+                  </div>
+                ) : viewMode === "builder" ? (
+                  <div className="h-full min-h-[60vh]">
+                    <ElementorEditor
+                      html={content}
+                      onChange={(html) => setContent(html)}
+                      customVars={uniqueVars}
+                    />
                   </div>
                 ) : (
                   <textarea
