@@ -1033,9 +1033,14 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-card">
+          <div className="flex flex-wrap items-center justify-end gap-2 px-6 py-3 border-t bg-card">
             <Button variant="outline" onClick={() => { setEditorOpen(false); resetEditor(); }}>Cancel</Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={!kwName.trim() || saveMutation.isPending}>
+            {!editing && (
+              <Button variant="secondary" onClick={() => saveMutation.mutate({ keepOpen: true })} disabled={!kwName.trim() || saveMutation.isPending}>
+                {saveMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Saving...</> : <><Plus className="h-4 w-4 mr-1" /> Save & Add Another</>}
+              </Button>
+            )}
+            <Button onClick={() => saveMutation.mutate({})} disabled={!kwName.trim() || saveMutation.isPending}>
               {saveMutation.isPending ? "Saving..." : editing ? "Save Changes" : "Create Keyword"}
             </Button>
           </div>
