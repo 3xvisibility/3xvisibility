@@ -167,7 +167,7 @@ export default function PgpKeywordsPage() {
     setEditing(null); setKwFolder(""); setNewFolderName("");
   };
 
-  const openEditor = (kw?: PgpKeyword) => {
+  const openEditor = (kw?: PgpKeyword, prefillFolder?: string) => {
     if (kw) {
       setEditing(kw); setKwName(kw.name); setKwSource(kw.source); setKwFolder(kw.folder || "");
       setKwTerms((kw.terms || []).join("\n")); setKwDelimiter(kw.delimiter || "");
@@ -179,7 +179,10 @@ export default function PgpKeywordsPage() {
         if (kw.source_config.url) setDynUrl(kw.source_config.url);
         if (kw.source_config.mode) setLocMode(kw.source_config.mode);
       }
-    } else { resetEditor(); }
+    } else {
+      resetEditor();
+      if (prefillFolder) setKwFolder(prefillFolder);
+    }
     setEditorOpen(true);
   };
 
