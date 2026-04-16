@@ -1,0 +1,1 @@
+ALTER TABLE public.pgp_keywords ADD COLUMN folder text DEFAULT NULL;
