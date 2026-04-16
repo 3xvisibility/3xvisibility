@@ -205,7 +205,7 @@ export default function PgpKeywordsPage() {
       } else if (kwSource === "url_scan") {
         sourceConfig.url = scanUrl;
       }
-      const folderValue = newFolderName.trim() || kwFolder || null;
+      const folderValue = newFolderName.trim() || (kwFolder && kwFolder !== "__new__" && kwFolder !== "__none__" ? kwFolder : null);
       const payload = { name: cleanName, folder: folderValue, source: kwSource, terms: termsArray, delimiter: kwDelimiter || null, columns: columnsArray, term_count: termsArray.length, source_config: sourceConfig, workspace_id: wsId, user_id: user.id };
       if (editing?.id) {
         const { error } = await supabase.from("pgp_keywords").update(payload as any).eq("id", editing.id);
