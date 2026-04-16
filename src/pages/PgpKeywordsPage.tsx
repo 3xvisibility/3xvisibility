@@ -604,7 +604,35 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
             </SelectContent>
           </Select>
         )}
+        {folderFilter !== "__all__" && folderFilter !== "__none__" && (
+          <Button size="sm" variant="outline" onClick={() => openEditor(undefined, folderFilter)} className="h-9">
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Add to "{folderFilter}"
+          </Button>
+        )}
       </div>
+
+      {/* Folder summary cards */}
+      {folders.length > 0 && folderFilter === "__all__" && !searchQuery && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {folders.map(folder => {
+            const count = keywords.filter(k => k.folder === folder).length;
+            return (
+              <div key={folder} className="group flex items-center justify-between rounded-lg border bg-card hover:bg-accent/50 transition-colors p-2.5">
+                <button onClick={() => { setFolderFilter(folder); setCurrentPage(1); }} className="flex items-center gap-2 min-w-0 flex-1 text-left">
+                  <FolderOpen className="h-4 w-4 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate">{folder}</p>
+                    <p className="text-[10px] text-muted-foreground">{count} keyword{count !== 1 ? "s" : ""}</p>
+                  </div>
+                </button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={() => openEditor(undefined, folder)} title={`Add keyword to ${folder}`}>
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
