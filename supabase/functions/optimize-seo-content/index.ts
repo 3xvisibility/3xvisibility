@@ -577,6 +577,7 @@ PRIMARY KEYWORD RULE:
 - The first item in seo_keywords MUST be the exact primary focus keyword.
 
 Language: ${lang}
+${languageInstruction}
 
 Return these fields (only what's requested):
 ${fields.includes("seo_title") ? '- "seo_title": SEO title 30-60 chars, keyword near start, include an action/offer word (e.g., "Get", "Best", "Free", "Top")' : ""}
