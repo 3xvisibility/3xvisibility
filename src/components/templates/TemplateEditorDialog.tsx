@@ -45,7 +45,7 @@ export function TemplateEditorDialog({
 }: TemplateEditorDialogProps) {
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
-  const [showPreview, setShowPreview] = useState(false);
+  const [viewMode, setViewMode] = useState<"code" | "builder" | "preview">("code");
   const [activeTab, setActiveTab] = useState("content");
 
   // SEO
