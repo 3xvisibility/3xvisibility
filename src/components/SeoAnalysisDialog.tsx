@@ -17,6 +17,7 @@ interface SeoAnalysisDialogProps {
   onOpenChange: (open: boolean) => void;
   page: {
     id?: string;
+    workspace_id?: string | null;
     title: string;
     slug: string;
     content: string;
@@ -32,6 +33,19 @@ interface SeoAnalysisDialogProps {
   campaignTitles?: string[];
   campaignSlugs?: string[];
   onUpdated?: () => void;
+}
+
+type AnalysisPage = NonNullable<SeoAnalysisDialogProps["page"]>;
+
+function inferPublishType(page: Pick<AnalysisPage, "external_url">) {
+  return page.external_url?.toLowerCase().includes("/product/") ? "product" : "page";
+}
+
+function normalizeKeywords(value: unknown) {
+  if (!Array.isArray(value)) return [] as string[];
+  return value
+    .filter((keyword): keyword is string => typeof keyword === "string" && keyword.trim().length > 0)
+    .slice(0, 8);
 }
 
 export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campaignTitles, campaignSlugs, onUpdated }: SeoAnalysisDialogProps) {
@@ -79,94 +93,156 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
   const handleFixAndRepublish = async () => {
     if (!page?.id) return;
+    const currentPage = page;
+
     setFixing(true);
     setFixProgress(0);
+
     try {
-      // Step 1: AI optimize titles
-      setFixStep("Optimizing titles...");
-      setFixProgress(10);
-      const { data: titleData, error: titleErr } = await supabase.functions.invoke("ai-seo-assistant", {
-        body: { page_id: page.id, action: "titles" },
-      });
-      if (titleErr) throw titleErr;
-      if (titleData?.error) throw new Error(titleData.error);
-      setFixProgress(25);
+      const resolveCanonicalUrl = async (targetPage: AnalysisPage) => {
+        if (targetPage.canonical_url) return targetPage.canonical_url;
+        if (targetPage.external_url) return targetPage.external_url;
+        if (!targetPage.website_id) return null;
 
-      // Step 2: AI optimize meta descriptions
-      setFixStep("Writing meta descriptions...");
-      const { data: metaData, error: metaErr } = await supabase.functions.invoke("ai-seo-assistant", {
-        body: { page_id: page.id, action: "meta" },
-      });
-      if (metaErr) throw metaErr;
-      if (metaData?.error) throw new Error(metaData.error);
-      setFixProgress(45);
+        const { data: website, error } = await supabase
+          .from("websites")
+          .select("url")
+          .eq("id", targetPage.website_id)
+          .maybeSingle();
 
-      // Step 3: AI optimize keywords
-      setFixStep("Researching keywords...");
-      const { data: kwData, error: kwErr } = await supabase.functions.invoke("ai-seo-assistant", {
-        body: { page_id: page.id, action: "keywords" },
-      });
-      if (kwErr) throw kwErr;
-      if (kwData?.error) throw new Error(kwData.error);
-      setFixProgress(60);
+        if (error || !website?.url) return null;
 
-      // Step 4: AI fix headings
-      setFixStep("Improving headings...");
-      const { data: headingsData, error: headingsErr } = await supabase.functions.invoke("ai-seo-assistant", {
-        body: { page_id: page.id, action: "headings" },
-      });
-      if (headingsErr) throw headingsErr;
-      if (headingsData?.error) throw new Error(headingsData.error);
-      setFixProgress(75);
+        const baseUrl = website.url.replace(/\/+$/, "");
+        const slug = targetPage.slug.replace(/^\/+/, "");
+        return slug ? `${baseUrl}/${slug}` : baseUrl;
+      };
 
-      // Parse results
-      let newTitle = page.seo_title || page.title;
-      let newDescription = page.seo_description || "";
-      let newKeywords = page.seo_keywords || [];
-      let newContent = page.content;
+      let newTitle = currentPage.seo_title || currentPage.title;
+      let newDescription = currentPage.seo_description || "";
+      let newKeywords = normalizeKeywords(currentPage.seo_keywords);
+      let newContent = currentPage.content;
 
-      try {
-        const titles = JSON.parse(titleData.result);
-        if (Array.isArray(titles) && titles.length > 0) newTitle = titles[0];
-      } catch {}
+      if (currentPage.website_id && currentPage.external_id) {
+        setFixStep("Optimizing original content...");
+        setFixProgress(20);
 
-      try {
-        const meta = JSON.parse(metaData.result);
-        if (meta?.descriptions?.[0]) newDescription = meta.descriptions[0];
-        if (meta?.suggested_title) newTitle = meta.suggested_title;
-      } catch {}
+        const { data: optimizeData, error: optimizeErr } = await supabase.functions.invoke("optimize-seo-content", {
+          body: {
+            website_id: currentPage.website_id,
+            page_external_id: currentPage.external_id,
+            page_title: currentPage.title,
+            page_content: currentPage.content,
+            page_slug: currentPage.slug,
+            page_url: currentPage.external_url,
+            page_type: inferPublishType(currentPage),
+            workspace_id: currentPage.workspace_id,
+            optimize_fields: ["seo_title", "seo_description", "seo_keywords", "content"],
+            page_seo_title: currentPage.seo_title,
+            page_seo_description: currentPage.seo_description,
+            page_seo_keywords: currentPage.seo_keywords || [],
+          },
+        });
 
-      try {
-        const kw = JSON.parse(kwData.result);
-        const allKw = [...(kw.primary || []), ...(kw.secondary || []), ...(kw.long_tail || [])];
-        if (allKw.length > 0) newKeywords = allKw.slice(0, 8);
-      } catch {}
+        if (optimizeErr) throw optimizeErr;
+        if (optimizeData?.error) throw new Error(optimizeData.error);
 
-      if (headingsData?.result) {
-        newContent = headingsData.result;
+        const optimized = optimizeData?.result || {};
+        newTitle = typeof optimized.seo_title === "string" && optimized.seo_title.trim().length > 0
+          ? optimized.seo_title.trim()
+          : newTitle;
+        newDescription = typeof optimized.seo_description === "string" && optimized.seo_description.trim().length > 0
+          ? optimized.seo_description.trim()
+          : newDescription;
+        newKeywords = normalizeKeywords(optimized.seo_keywords).length > 0
+          ? normalizeKeywords(optimized.seo_keywords)
+          : newKeywords;
+        newContent = typeof optimized.content === "string" && optimized.content.trim().length > 0
+          ? optimized.content
+          : newContent;
+
+        setFixProgress(70);
+      } else {
+        setFixStep("Optimizing titles...");
+        setFixProgress(10);
+        const { data: titleData, error: titleErr } = await supabase.functions.invoke("ai-seo-assistant", {
+          body: { page_id: currentPage.id, action: "titles" },
+        });
+        if (titleErr) throw titleErr;
+        if (titleData?.error) throw new Error(titleData.error);
+
+        setFixStep("Writing meta descriptions...");
+        setFixProgress(28);
+        const { data: metaData, error: metaErr } = await supabase.functions.invoke("ai-seo-assistant", {
+          body: { page_id: currentPage.id, action: "meta" },
+        });
+        if (metaErr) throw metaErr;
+        if (metaData?.error) throw new Error(metaData.error);
+
+        setFixStep("Researching keywords...");
+        setFixProgress(46);
+        const { data: kwData, error: kwErr } = await supabase.functions.invoke("ai-seo-assistant", {
+          body: { page_id: currentPage.id, action: "keywords" },
+        });
+        if (kwErr) throw kwErr;
+        if (kwData?.error) throw new Error(kwData.error);
+
+        setFixStep("Rewriting original content...");
+        setFixProgress(64);
+        const { data: rewriteData, error: rewriteErr } = await supabase.functions.invoke("ai-seo-assistant", {
+          body: { page_id: currentPage.id, action: "full_rewrite" },
+        });
+        if (rewriteErr) throw rewriteErr;
+        if (rewriteData?.error) throw new Error(rewriteData.error);
+
+        try {
+          const titles = JSON.parse(titleData.result);
+          if (Array.isArray(titles) && titles.length > 0) newTitle = titles[0];
+        } catch {}
+
+        try {
+          const meta = JSON.parse(metaData.result);
+          if (meta?.descriptions?.[0]) newDescription = meta.descriptions[0];
+          if (meta?.suggested_title) newTitle = meta.suggested_title;
+        } catch {}
+
+        try {
+          const kw = JSON.parse(kwData.result);
+          const allKw = [...(kw.primary || []), ...(kw.secondary || []), ...(kw.long_tail || [])];
+          if (allKw.length > 0) newKeywords = allKw.slice(0, 8);
+        } catch {}
+
+        if (rewriteData?.result) {
+          newContent = rewriteData.result;
+        }
       }
 
-      // Step 5: Save to DB
-      setFixStep("Saving optimized content...");
-      setFixProgress(85);
+      const canonicalUrl = await resolveCanonicalUrl(currentPage);
+
+      setFixStep("Saving updated page...");
+      setFixProgress(84);
       const { error: updateErr } = await supabase
         .from("generated_pages")
         .update({
+          title: newTitle,
           seo_title: newTitle,
           seo_description: newDescription,
-          seo_keywords: newKeywords,
+          seo_keywords: newKeywords.length > 0 ? newKeywords : null,
           content: newContent,
+          canonical_url: canonicalUrl,
         })
-        .eq("id", page.id);
+        .eq("id", currentPage.id);
       if (updateErr) throw updateErr;
 
-      // Step 6: Republish if needed
       let republished = false;
-      if (page.status === "published" && page.external_id && page.website_id) {
-        setFixStep("Republishing to CMS...");
+      if (currentPage.status === "published" && currentPage.external_id && currentPage.website_id) {
+        setFixStep("Republishing updated page...");
         setFixProgress(92);
         const { data: pubData, error: pubErr } = await supabase.functions.invoke("publish-pages", {
-          body: { page_ids: [page.id], publish_type: "page", website_id: page.website_id },
+          body: {
+            page_ids: [currentPage.id],
+            publish_type: inferPublishType(currentPage),
+            website_id: currentPage.website_id,
+          },
         });
         if (pubErr) throw pubErr;
         if (pubData?.error) throw new Error(pubData.error);
@@ -180,20 +256,21 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
       setFixProgress(100);
       setFixStep("Done!");
 
-      // Update local page so scores refresh in the dialog
       setLocalPage({
-        ...page,
+        ...currentPage,
+        title: newTitle,
         seo_title: newTitle,
         seo_description: newDescription,
         seo_keywords: newKeywords,
         content: newContent,
+        canonical_url: canonicalUrl,
       });
 
       toast({
         title: "SEO issues fixed!",
         description: republished
-          ? "Content optimized and republished to CMS."
-          : "Content optimized. Scores updated above.",
+          ? "Original content updated and republished."
+          : "Original content updated. Scores refreshed above.",
       });
       onUpdated?.();
     } catch (err: any) {
