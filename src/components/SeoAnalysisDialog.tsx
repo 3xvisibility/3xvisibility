@@ -18,6 +18,7 @@ interface SeoAnalysisDialogProps {
   page: {
     id?: string;
     workspace_id?: string | null;
+    campaign_id?: string | null;
     title: string;
     slug: string;
     content: string;
