@@ -167,7 +167,7 @@ export default function PgpKeywordsPage() {
     setEditing(null); setKwFolder(""); setNewFolderName("");
   };
 
-  const openEditor = (kw?: PgpKeyword) => {
+  const openEditor = (kw?: PgpKeyword, prefillFolder?: string) => {
     if (kw) {
       setEditing(kw); setKwName(kw.name); setKwSource(kw.source); setKwFolder(kw.folder || "");
       setKwTerms((kw.terms || []).join("\n")); setKwDelimiter(kw.delimiter || "");
@@ -179,12 +179,15 @@ export default function PgpKeywordsPage() {
         if (kw.source_config.url) setDynUrl(kw.source_config.url);
         if (kw.source_config.mode) setLocMode(kw.source_config.mode);
       }
-    } else { resetEditor(); }
+    } else {
+      resetEditor();
+      if (prefillFolder) setKwFolder(prefillFolder);
+    }
     setEditorOpen(true);
   };
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ keepOpen }: { keepOpen?: boolean } = {}) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
       const cleanName = kwName.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
@@ -214,8 +217,19 @@ export default function PgpKeywordsPage() {
         const { error } = await supabase.from("pgp_keywords").insert(payload as any);
         if (error) throw error;
       }
+      return { keepOpen, folderValue };
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] }); toast({ title: editing ? "Keyword updated" : "Keyword created" }); setEditorOpen(false); resetEditor(); },
+    onSuccess: ({ keepOpen, folderValue }) => {
+      queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] });
+      toast({ title: editing ? "Keyword updated" : "Keyword created" });
+      if (keepOpen && !editing) {
+        resetEditor();
+        if (folderValue) setKwFolder(folderValue);
+      } else {
+        setEditorOpen(false);
+        resetEditor();
+      }
+    },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
@@ -601,7 +615,35 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
             </SelectContent>
           </Select>
         )}
+        {folderFilter !== "__all__" && folderFilter !== "__none__" && (
+          <Button size="sm" variant="outline" onClick={() => openEditor(undefined, folderFilter)} className="h-9">
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Add to "{folderFilter}"
+          </Button>
+        )}
       </div>
+
+      {/* Folder summary cards */}
+      {folders.length > 0 && folderFilter === "__all__" && !searchQuery && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {folders.map(folder => {
+            const count = keywords.filter(k => k.folder === folder).length;
+            return (
+              <div key={folder} className="group flex items-center justify-between rounded-lg border bg-card hover:bg-accent/50 transition-colors p-2.5">
+                <button onClick={() => { setFolderFilter(folder); setCurrentPage(1); }} className="flex items-center gap-2 min-w-0 flex-1 text-left">
+                  <FolderOpen className="h-4 w-4 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold truncate">{folder}</p>
+                    <p className="text-[10px] text-muted-foreground">{count} keyword{count !== 1 ? "s" : ""}</p>
+                  </div>
+                </button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={() => openEditor(undefined, folder)} title={`Add keyword to ${folder}`}>
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
@@ -991,9 +1033,14 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-card">
+          <div className="flex flex-wrap items-center justify-end gap-2 px-6 py-3 border-t bg-card">
             <Button variant="outline" onClick={() => { setEditorOpen(false); resetEditor(); }}>Cancel</Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={!kwName.trim() || saveMutation.isPending}>
+            {!editing && (
+              <Button variant="secondary" onClick={() => saveMutation.mutate({ keepOpen: true })} disabled={!kwName.trim() || saveMutation.isPending}>
+                {saveMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Saving...</> : <><Plus className="h-4 w-4 mr-1" /> Save & Add Another</>}
+              </Button>
+            )}
+            <Button onClick={() => saveMutation.mutate({})} disabled={!kwName.trim() || saveMutation.isPending}>
               {saveMutation.isPending ? "Saving..." : editing ? "Save Changes" : "Create Keyword"}
             </Button>
           </div>
