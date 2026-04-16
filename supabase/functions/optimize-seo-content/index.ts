@@ -494,7 +494,12 @@ Deno.serve(async (req) => {
       ? page_seo_description.trim()
       : "";
     const lang = language
-      || (primaryKeyword ? "same as the exact focus keyword phrase and current page URL" : "same as the existing page content");
+      || (primaryKeyword ? "same as the exact focus keyword phrase and current page URL" : "auto-detect from the existing page content and title");
+
+    // Build a stronger language instruction for the AI
+    const languageInstruction = language
+      ? `CRITICAL LANGUAGE RULE: ALL output (seo_title, seo_description, seo_keywords, and content) MUST be written in ${language}. Do NOT output in English unless the language IS English. The website content language is ${language} — respect it exactly.`
+      : "LANGUAGE RULE: Detect the language from the existing page content and title. ALL output MUST be in that same language. Do NOT translate to English if the original content is in another language.";
 
     // Strip HTML to get plain text for AI analysis
     const plainText = page_content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -572,6 +577,7 @@ PRIMARY KEYWORD RULE:
 - The first item in seo_keywords MUST be the exact primary focus keyword.
 
 Language: ${lang}
+${languageInstruction}
 
 Return these fields (only what's requested):
 ${fields.includes("seo_title") ? '- "seo_title": SEO title 30-60 chars, keyword near start, include an action/offer word (e.g., "Get", "Best", "Free", "Top")' : ""}

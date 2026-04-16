@@ -18,6 +18,7 @@ interface SeoAnalysisDialogProps {
   page: {
     id?: string;
     workspace_id?: string | null;
+    campaign_id?: string | null;
     title: string;
     slug: string;
     content: string;
@@ -99,6 +100,19 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     setFixProgress(0);
 
     try {
+      // Detect language from campaign
+      let detectedLanguage: string | null = null;
+      if (currentPage.campaign_id) {
+        setFixStep("Detecting language...");
+        setFixProgress(5);
+        const { data: campaign } = await supabase
+          .from("campaigns")
+          .select("language")
+          .eq("id", currentPage.campaign_id)
+          .maybeSingle();
+        if (campaign?.language) detectedLanguage = campaign.language;
+      }
+
       const resolveCanonicalUrl = async (targetPage: AnalysisPage) => {
         if (targetPage.canonical_url) return targetPage.canonical_url;
         if (targetPage.external_url) return targetPage.external_url;
@@ -140,6 +154,7 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
             page_seo_title: currentPage.seo_title,
             page_seo_description: currentPage.seo_description,
             page_seo_keywords: currentPage.seo_keywords || [],
+            language: detectedLanguage,
           },
         });
 
