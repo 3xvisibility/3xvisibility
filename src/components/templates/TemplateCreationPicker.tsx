@@ -98,10 +98,10 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pgp_keywords")
-        .select("id, name, term_count")
+        .select("id, name, term_count, folder")
         .eq("workspace_id", wsId!);
       if (error) throw error;
-      return data;
+      return data as { id: string; name: string; term_count: number; folder: string | null }[];
     },
   });
 
