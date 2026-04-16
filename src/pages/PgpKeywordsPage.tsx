@@ -187,7 +187,7 @@ export default function PgpKeywordsPage() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ keepOpen }: { keepOpen?: boolean } = {}) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
       const cleanName = kwName.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
@@ -217,8 +217,19 @@ export default function PgpKeywordsPage() {
         const { error } = await supabase.from("pgp_keywords").insert(payload as any);
         if (error) throw error;
       }
+      return { keepOpen, folderValue };
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] }); toast({ title: editing ? "Keyword updated" : "Keyword created" }); setEditorOpen(false); resetEditor(); },
+    onSuccess: ({ keepOpen, folderValue }) => {
+      queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] });
+      toast({ title: editing ? "Keyword updated" : "Keyword created" });
+      if (keepOpen && !editing) {
+        resetEditor();
+        if (folderValue) setKwFolder(folderValue);
+      } else {
+        setEditorOpen(false);
+        resetEditor();
+      }
+    },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
