@@ -962,6 +962,10 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
   
   const handleSelectNode = useCallback((id: string | null) => {
     setSelectedId(id);
+    // Auto-open properties drawer on mobile/tablet (matches lg: breakpoint = 1024px)
+    if (id && typeof window !== "undefined" && window.innerWidth < 1024) {
+      setMobilePropsOpen(true);
+    }
   }, []);
   
   const handleUpdateNode = useCallback((updated: ElementorNode) => {
