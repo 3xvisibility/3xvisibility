@@ -125,7 +125,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     onSuccess: (data) => {
       setGeneratedContent(data.content);
       setGeneratedName(data.suggestedName);
-      toast({ title: "Template generated", description: "Review and save your template." });
+      setStep("review");
+      toast({ title: "Template generated", description: "Review, edit and save your template." });
     },
     onError: (err: Error) => {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
