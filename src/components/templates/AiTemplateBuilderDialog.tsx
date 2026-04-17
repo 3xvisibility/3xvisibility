@@ -191,7 +191,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(true); }}>
-      <DialogContent className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="!w-[calc(100vw-1rem)] sm:!w-[calc(100vw-2rem)] !max-w-none max-h-[calc(100dvh-1rem)] sm:!max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
