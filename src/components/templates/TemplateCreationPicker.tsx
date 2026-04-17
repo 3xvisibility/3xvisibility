@@ -272,6 +272,39 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
             </div>
           </div>
 
+          {/* Conditional: Platform picker for "Design Your Own" */}
+          {selected === "design" && (
+            <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold">Target Platform</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Choose where this template will be used. The editor will scaffold platform-specific markup so it stays editable in the native page builder.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {PLATFORMS.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setPlatform(p.id)}
+                    className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                      platform === p.id
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border bg-card hover:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{p.icon}</span>
+                      <span className="text-xs font-semibold">{p.label}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground leading-tight">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Conditional: URL input */}
           {selected === "url" && (
             <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
