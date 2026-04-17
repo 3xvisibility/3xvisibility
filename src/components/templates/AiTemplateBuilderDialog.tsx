@@ -455,12 +455,23 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </Button>
           </TabsContent>
         </Tabs>
+        )}
 
-        {/* Generated result (shared by both modes) */}
-        {generatedContent && (
-          <div className="space-y-4 pt-4 border-t border-border">
+        {/* ─── Step 2: Review & Edit ─── */}
+        {step === "review" && generatedContent && (
+          <div className="space-y-4 mt-2">
+            <div className="rounded-xl border border-success/30 bg-success/5 p-3 flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-success-foreground">Your template is ready!</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Use <strong>Visual Edit</strong> to click & change colors, text, fonts. Switch to <strong>Preview</strong> to see the final look, or <strong>Code</strong> for raw HTML.
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
-              <Label>Template Name</Label>
+              <Label className="text-sm font-semibold">Template Name</Label>
               <Input value={generatedName} onChange={(e) => setGeneratedName(e.target.value)} />
             </div>
 
@@ -485,7 +496,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-2">
-                  💡 Click any element (heading, text, button, image) to edit its content, colors, fonts and spacing. Changes save automatically to the template.
+                  💡 Click any element (heading, text, button, image) to edit its content, colors, fonts and spacing. Changes save automatically.
                 </p>
               </TabsContent>
               <TabsContent value="preview" className="mt-3">
@@ -510,16 +521,22 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               </div>
             )}
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => { setGeneratedContent(""); setGeneratedName(""); }}>
-                Discard
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-2 border-t border-border">
+              <Button variant="ghost" onClick={() => { setStep("configure"); setGeneratedContent(""); setGeneratedName(""); }}>
+                <ArrowLeft className="mr-1.5 h-4 w-4" /> Back & Regenerate
               </Button>
-              <Button
-                onClick={() => onSave(generatedName, generatedContent)}
-                disabled={!generatedName || !generatedContent || isSaving}
-              >
-                {isSaving ? "Saving..." : "Save Template"}
-              </Button>
+              <div className="flex gap-2 sm:justify-end">
+                <Button variant="outline" onClick={() => { setGeneratedContent(""); setGeneratedName(""); setStep("configure"); }}>
+                  Discard
+                </Button>
+                <Button
+                  onClick={() => onSave(generatedName, generatedContent)}
+                  disabled={!generatedName || !generatedContent || isSaving}
+                  className="min-w-[140px]"
+                >
+                  {isSaving ? "Saving..." : "Save Template"}
+                </Button>
+              </div>
             </div>
           </div>
         )}
