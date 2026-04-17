@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,13 @@ const BUSINESS_TYPES = [
   { value: "blog post page", label: "Blog Post", icon: "📝" },
   { value: "event page", label: "Event Page", icon: "🎫" },
   { value: "booking/appointment page", label: "Booking", icon: "📅" },
+];
+
+const PLATFORMS = [
+  { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor" },
+  { value: "shopify", label: "Shopify", icon: "🛍️", desc: "Liquid-friendly markup" },
+  { value: "prestashop", label: "PrestaShop", icon: "🛒", desc: "Smarty-compatible" },
+  { value: "generic", label: "Universal HTML", icon: "🌐", desc: "Works anywhere" },
 ];
 
 const SECTIONS = [
@@ -79,10 +86,12 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [includeHeaderFooter, setIncludeHeaderFooter] = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedName, setGeneratedName] = useState("");
+  const [platform, setPlatform] = useState("wordpress");
 
   // Quick Content state
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiContentType, setAiContentType] = useState("seo");
+  const [aiNiche, setAiNiche] = useState("");
 
   const { toast } = useToast();
 
@@ -96,6 +105,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       const langLabel = AI_LANGUAGES.find(l => l.code === language)?.label || language;
       parts.push(`. Generate ALL text content in ${langLabel}`);
     }
+    const platformLabel = PLATFORMS.find(p => p.value === platform)?.label || platform;
+    parts.push(`. Target platform: ${platformLabel} — ensure markup is fully compatible and editable in this platform's native page builder`);
     if (extraDetails) parts.push(`. Additional details: ${extraDetails}`);
     return parts.join(" ");
   };
@@ -103,7 +114,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter },
+        body: { prompt, includeHeaderFooter, platform },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -120,9 +131,14 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   });
 
   const aiContentMutation = useMutation({
-    mutationFn: async ({ keywords, contentType }: { keywords: string; contentType: string }) => {
+    mutationFn: async ({ keywords, contentType, niche: cNiche }: { keywords: string; contentType: string; niche: string }) => {
       const { data, error } = await supabase.functions.invoke("generate-seo-content", {
-        body: { keywords: keywords.split(",").map(k => k.trim()).filter(Boolean), contentType },
+        body: {
+          keywords: keywords.split(",").map(k => k.trim()).filter(Boolean),
+          contentType,
+          niche: cNiche,
+          platform,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -159,10 +175,12 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     setNiche("");
     setExtraDetails("");
     setLanguage("en");
+    setPlatform("wordpress");
     setSections(["hero", "features", "testimonials", "faq", "cta"]);
     setIncludeHeaderFooter(false);
     setAiKeywords("");
     setAiContentType("seo");
+    setAiNiche("");
     setMode("builder");
     onOpenChange(false);
   };
@@ -237,6 +255,33 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               </div>
             </div>
 
+            {/* Platform picker */}
+            <div>
+              <Label className="flex items-center gap-2 text-sm font-semibold mb-2">
+                <Layers className="h-4 w-4 text-primary" /> Target Platform
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {PLATFORMS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPlatform(p.value)}
+                    className={`flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                      platform === p.value
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border bg-card hover:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{p.icon}</span>
+                      <span className="text-xs font-semibold">{p.label}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <Label className="text-sm font-semibold mb-2 block">Sections to include</Label>
               <div className="flex flex-wrap gap-2">
@@ -305,12 +350,48 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Keywords (comma-separated)</Label>
+              <Label className="text-sm font-semibold">Business niche / industry (optional)</Label>
+              <Input
+                value={aiNiche}
+                onChange={(e) => setAiNiche(e.target.value)}
+                placeholder="e.g., Plumbing services, Online yoga classes, Vegan bakery..."
+              />
+              <p className="text-[11px] text-muted-foreground">Helps AI tailor the design and copy to your industry.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Keywords / services / products (comma-separated)</Label>
               <Input
                 value={aiKeywords}
                 onChange={(e) => setAiKeywords(e.target.value)}
                 placeholder="plumbing, new york, emergency repair, 24/7 service"
               />
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2 text-sm font-semibold mb-2">
+                <Layers className="h-4 w-4 text-primary" /> Target Platform
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {PLATFORMS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPlatform(p.value)}
+                    className={`flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                      platform === p.value
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border bg-card hover:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{p.icon}</span>
+                      <span className="text-xs font-semibold">{p.label}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -340,7 +421,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </div>
 
             <Button
-              onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType })}
+              onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType, niche: aiNiche })}
               disabled={!aiKeywords.trim() || aiContentMutation.isPending}
               className="w-full"
               size="lg"

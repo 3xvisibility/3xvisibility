@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { keywords, contentType, language, prompt, type } = body;
+    const { keywords, contentType, language, prompt, type, niche, platform } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -107,7 +107,11 @@ GEO REQUIREMENTS:
 
 CONTENT TYPE: "${cType}"
 KEYWORDS: ${kwList}
-LANGUAGE: ${language || "en"}`;
+LANGUAGE: ${language || "en"}
+${niche ? `BUSINESS NICHE: ${niche} — tailor copy, tone and visual style to this industry.` : ""}
+${platform === "wordpress" ? "PLATFORM: WordPress + Elementor — wrap each block in <section class=\"elementor-section pgp-section\"> with .elementor-container and .elementor-column wrappers, headings as .elementor-heading-title, buttons as .elementor-button. The template MUST stay editable inside Elementor." : ""}
+${platform === "shopify" ? "PLATFORM: Shopify — use clean Online Store 2.0 compatible HTML, no Liquid tags, kebab-case classes." : ""}
+${platform === "prestashop" ? "PLATFORM: PrestaShop — use Bootstrap container/row/col-md classes, no inline scripts." : ""}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
