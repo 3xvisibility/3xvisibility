@@ -71,6 +71,13 @@ const CONTENT_TYPES: { id: ContentType; icon: typeof FileText; label: string; de
   { id: "services", icon: Briefcase, label: "Services", desc: "Service offerings & descriptions" },
 ];
 
+const PLATFORMS: { id: TargetPlatform; icon: string; label: string; desc: string }[] = [
+  { id: "wordpress", icon: "🟦", label: "WordPress / Elementor", desc: "Editable in Elementor page builder" },
+  { id: "shopify", icon: "🛍️", label: "Shopify", desc: "Liquid-friendly, OS 2.0 sections" },
+  { id: "prestashop", icon: "🛒", label: "PrestaShop", desc: "Smarty + Bootstrap grid" },
+  { id: "generic", icon: "🌐", label: "Universal HTML", desc: "Works on any platform" },
+];
+
 const FALLBACK_KEYWORDS = [
   "city", "state", "service", "product", "brand_name",
   "price", "phone", "address", "category", "neighborhood",
