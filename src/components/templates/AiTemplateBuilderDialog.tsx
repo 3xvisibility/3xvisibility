@@ -215,7 +215,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
           </div>
         </DialogHeader>
 
-        {/* Mode Tabs */}
+        {/* Mode Tabs — only in configure step */}
+        {step === "configure" && (
         <Tabs value={mode} onValueChange={(v) => setMode(v as any)} className="mt-2">
           <TabsList className="grid w-full grid-cols-2 max-w-sm">
             <TabsTrigger value="builder" className="flex items-center gap-1.5">
