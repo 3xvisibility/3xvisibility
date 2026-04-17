@@ -20,6 +20,7 @@ type Website = Tables<"websites">;
 
 export type CreationMethod = "design" | "ai" | "url" | "website";
 export type ContentType = "pages" | "products" | "services";
+export type TargetPlatform = "wordpress" | "shopify" | "prestashop" | "generic";
 
 interface TemplateCreationPickerProps {
   open: boolean;
@@ -29,6 +30,7 @@ interface TemplateCreationPickerProps {
     targetUrl?: string;
     selectedWebsite?: Website;
     contentType?: ContentType;
+    platform?: TargetPlatform;
   }) => void;
 }
 
