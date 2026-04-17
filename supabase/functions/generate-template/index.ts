@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, includeHeaderFooter } = await req.json();
+    const { prompt, includeHeaderFooter, platform } = await req.json();
     if (!prompt || typeof prompt !== "string") {
       return new Response(JSON.stringify({ error: "A prompt is required." }), {
         status: 400,
@@ -26,6 +26,23 @@ serve(async (req) => {
     const headerFooterRule = includeHeaderFooter
       ? "13. Include a professional header with navigation and a footer with contact info and links."
       : "13. Do NOT include any <header>, <nav>, or <footer> elements — the user's connected website provides those. Only generate the main page body content.";
+
+    // Platform-specific guidance
+    const platformRules: Record<string, string> = {
+      wordpress: `PLATFORM: WordPress + Elementor.
+- Structure each section as <section class="elementor-section elementor-top-section pgp-section"> with inner <div class="elementor-container"> and column wrappers <div class="elementor-column elementor-col-100"> (or 50/33).
+- Wrap headings in <h2 class="elementor-heading-title"></h2>, paragraphs in <div class="elementor-widget-text-editor"><p>...</p></div>, buttons in <a class="elementor-button elementor-button-link"><span class="elementor-button-text">...</span></a>, images in <img class="elementor-image"/>.
+- This ensures the imported template stays editable inside Elementor's drag-and-drop editor on the client's WordPress site.`,
+      shopify: `PLATFORM: Shopify.
+- Use semantic HTML compatible with Shopify Online Store 2.0 sections.
+- Wrap product placeholders in <div class="product-card"> blocks. Use Shopify-friendly class naming (kebab-case, no Liquid tags).
+- Keep markup clean enough that it can be pasted into a Custom Liquid section or Page Template.`,
+      prestashop: `PLATFORM: PrestaShop.
+- Use Bootstrap-style class names (container, row, col-md-*) since PrestaShop's default theme is Bootstrap-based.
+- Keep HTML compatible with the TinyMCE editor used in PrestaShop CMS pages — no inline <script> tags.`,
+      generic: `PLATFORM: Universal HTML — keep markup framework-agnostic.`,
+    };
+    const platformRule = platformRules[platform as string] || platformRules.generic;
 
     const systemPrompt = `You are a world-class web designer specializing in high-converting landing pages for programmatic SEO. Generate a stunning, fully responsive HTML template with embedded <style> block and {variable} syntax for dynamic content.
 
@@ -60,7 +77,9 @@ CONTENT VARIABLE RULES:
 STRUCTURE:
 19. Wrap all content in a <div class="pgp-page"> container.
 20. Include: hero section, features/services grid, testimonials, FAQ (use <details>/<summary>), CTA section, contact section.
-${headerFooterRule}`;
+${headerFooterRule}
+
+${platformRule}`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
