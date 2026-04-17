@@ -90,6 +90,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [targetUrl, setTargetUrl] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
   const [contentType, setContentType] = useState<ContentType>("pages");
+  const [platform, setPlatform] = useState<TargetPlatform>("wordpress");
   const [folderFilter, setFolderFilter] = useState<string>("__all__");
 
   // AI keyword suggestion
@@ -184,6 +185,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
       targetUrl: selected === "url" ? targetUrl : undefined,
       selectedWebsite: selected === "website" ? website : undefined,
       contentType: selected === "website" ? contentType : undefined,
+      platform: selected === "design" ? platform : undefined,
     });
     // Reset
     setSelected(null);
@@ -192,6 +194,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     setTargetUrl("");
     setSelectedWebsiteId("");
     setContentType("pages");
+    setPlatform("wordpress");
     setBusinessNiche("");
     setAiSuggestions([]);
   };
@@ -200,6 +203,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     if (!selected) return false;
     if (selected === "url" && !targetUrl.trim()) return false;
     if (selected === "website" && !selectedWebsiteId) return false;
+    if (selected === "design" && !platform) return false;
     return true;
   };
 
