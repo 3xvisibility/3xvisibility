@@ -86,10 +86,12 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [includeHeaderFooter, setIncludeHeaderFooter] = useState(false);
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedName, setGeneratedName] = useState("");
+  const [platform, setPlatform] = useState("wordpress");
 
   // Quick Content state
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiContentType, setAiContentType] = useState("seo");
+  const [aiNiche, setAiNiche] = useState("");
 
   const { toast } = useToast();
 
@@ -103,6 +105,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       const langLabel = AI_LANGUAGES.find(l => l.code === language)?.label || language;
       parts.push(`. Generate ALL text content in ${langLabel}`);
     }
+    const platformLabel = PLATFORMS.find(p => p.value === platform)?.label || platform;
+    parts.push(`. Target platform: ${platformLabel} — ensure markup is fully compatible and editable in this platform's native page builder`);
     if (extraDetails) parts.push(`. Additional details: ${extraDetails}`);
     return parts.join(" ");
   };
