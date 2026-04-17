@@ -145,7 +145,7 @@ export default function PgpContentGroupsPage() {
     setEditorOpen(true);
   };
 
-  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string }) => {
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; platform?: "wordpress" | "shopify" | "prestashop" | "generic" }) => {
     setPendingKeywords(config.selectedKeywords);
     setPickerOpen(false);
 
@@ -161,8 +161,56 @@ export default function PgpContentGroupsPage() {
       setEditingTemplate(null);
       setEditorOpen(true);
     } else {
-      // design own
-      setEditingTemplate(null);
+      // Design your own — platform-aware scaffold
+      const platform = config.platform || "wordpress";
+      const kws = config.selectedKeywords;
+      const kwBlocks = kws.map(k => `<p>{${k}}</p>`).join("\n      ");
+
+      let scaffold = "";
+      if (platform === "wordpress") {
+        scaffold = `<section class="elementor-section elementor-top-section elementor-section-boxed">
+  <div class="elementor-container elementor-column-gap-default">
+    <div class="elementor-column elementor-col-100 elementor-top-column">
+      <div class="elementor-widget-wrap elementor-element-populated">
+        <div class="elementor-element elementor-widget elementor-widget-heading">
+          <div class="elementor-widget-container">
+            <h1 class="elementor-heading-title elementor-size-default">{title}</h1>
+          </div>
+        </div>
+        <div class="elementor-element elementor-widget elementor-widget-text-editor">
+          <div class="elementor-widget-container">
+            ${kwBlocks || "<p>Edit this content in Elementor.</p>"}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>`;
+      } else if (platform === "shopify") {
+        scaffold = `<div class="page-width">
+  <div class="rich-text">
+    <h1 class="rich-text__heading">{title}</h1>
+    <div class="rich-text__text">${kwBlocks}</div>
+  </div>
+</div>`;
+      } else if (platform === "prestashop") {
+        scaffold = `<section class="page-content card card-block">
+  <div class="container">
+    <h1 class="page-title h1">{title}</h1>
+    ${kwBlocks}
+  </div>
+</section>`;
+      } else {
+        scaffold = `<div class="template">\n  <h1>{title}</h1>\n  ${kwBlocks}\n</div>`;
+      }
+
+      setEditingTemplate({
+        id: "", name: "New Content Group", content: scaffold,
+        variables: kws, user_id: "", created_at: "", updated_at: "",
+        workspace_id: null, schema_type: "WebPage",
+        schema_config: { _platform: platform } as any,
+        seo_title_pattern: "", seo_description_pattern: "",
+      } as any);
       setEditorOpen(true);
     }
   };
