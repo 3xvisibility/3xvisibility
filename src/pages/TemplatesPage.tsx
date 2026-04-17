@@ -484,7 +484,7 @@ export default function TemplatesPage() {
     setEditorOpen(true);
   };
 
-  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType }) => {
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType; platform?: "wordpress" | "shopify" | "prestashop" | "generic" }) => {
     setPendingKeywords(config.selectedKeywords);
     setPickerOpen(false);
 
@@ -499,12 +499,80 @@ export default function TemplatesPage() {
       loadSitePages(config.selectedWebsite.id, ct);
       setSiteDialogOpen(true);
     } else {
-      // Design your own
-      const keywordVars = config.selectedKeywords.map(k => `<p>{${k}}</p>`).join("\n");
-      const scaffold = keywordVars
-        ? `<div class="template">\n  <h1>{title}</h1>\n${keywordVars}\n</div>`
-        : "";
-      setEditingTemplate(scaffold ? { id: "", name: "New Template", content: scaffold, variables: config.selectedKeywords, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any : null);
+      // Design your own — build platform-specific scaffold
+      const platform = config.platform || "wordpress";
+      const kws = config.selectedKeywords;
+      const kwBlocks = kws.map(k => `<p>{${k}}</p>`).join("\n      ");
+
+      let scaffold = "";
+      if (platform === "wordpress") {
+        // Elementor-compatible structure with proper section/container/widget classes
+        scaffold = `<section class="elementor-section elementor-top-section elementor-section-boxed">
+  <div class="elementor-container elementor-column-gap-default">
+    <div class="elementor-column elementor-col-100 elementor-top-column">
+      <div class="elementor-widget-wrap elementor-element-populated">
+        <div class="elementor-element elementor-widget elementor-widget-heading">
+          <div class="elementor-widget-container">
+            <h1 class="elementor-heading-title elementor-size-default">{title}</h1>
+          </div>
+        </div>
+        <div class="elementor-element elementor-widget elementor-widget-text-editor">
+          <div class="elementor-widget-container">
+            ${kwBlocks || "<p>Edit this content in Elementor.</p>"}
+          </div>
+        </div>
+        <div class="elementor-element elementor-widget elementor-widget-button">
+          <div class="elementor-widget-container">
+            <a class="elementor-button elementor-button-link elementor-size-md" href="#"><span class="elementor-button-text">Get Started</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>`;
+      } else if (platform === "shopify") {
+        scaffold = `<div class="page-width">
+  <div class="rich-text">
+    <h1 class="rich-text__heading">{title}</h1>
+    <div class="rich-text__text">
+      ${kwBlocks || "<p>Edit this content in your Shopify theme editor.</p>"}
+    </div>
+    <a href="#" class="button button--primary">Shop Now</a>
+  </div>
+</div>`;
+      } else if (platform === "prestashop") {
+        scaffold = `<section class="page-content card card-block">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <h1 class="page-title h1">{title}</h1>
+        ${kwBlocks || "<p>Edit this content in PrestaShop's TinyMCE editor.</p>"}
+        <a href="#" class="btn btn-primary">Discover More</a>
+      </div>
+    </div>
+  </div>
+</section>`;
+      } else {
+        scaffold = `<div class="template">
+  <h1>{title}</h1>
+  ${kwBlocks}
+</div>`;
+      }
+
+      setEditingTemplate({
+        id: "",
+        name: "New Template",
+        content: scaffold,
+        variables: kws,
+        user_id: "",
+        created_at: "",
+        updated_at: "",
+        workspace_id: wsId || null,
+        schema_type: "WebPage",
+        schema_config: { _platform: platform } as any,
+        seo_title_pattern: "",
+        seo_description_pattern: "",
+      } as any);
       setEditorOpen(true);
     }
   };
