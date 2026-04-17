@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Type, Image, List, MousePointerClick, LayoutPanelTop, Trash2, Plus,
   Variable, Hash, Wand2, Columns, Square, Palette, AlignLeft, AlignCenter,
@@ -16,7 +17,7 @@ import {
   Redo2, Move, Settings2, Layers, ChevronRight, Eye, EyeOff, Copy, Code,
   PaintBucket, Maximize2, Minimize2, LayoutGrid, SplitSquareVertical,
   GripVertical, ChevronDown, ImagePlus, MapPin, Youtube, BookOpen, Star,
-  CloudSun, Map as MapIcon, ImageIcon,
+  CloudSun, Map as MapIcon, ImageIcon, PanelLeft, PanelRight,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────
