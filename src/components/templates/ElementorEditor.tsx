@@ -902,6 +902,7 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
   const [history, setHistory] = useState<ElementorNode[][]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [customCss, setCustomCss] = useState(css || extractedStyles);
+  const [mobilePropsOpen, setMobilePropsOpen] = useState(false);
   
   // Find selected node
   const findNode = useCallback((nodeList: ElementorNode[], id: string): ElementorNode | null => {
