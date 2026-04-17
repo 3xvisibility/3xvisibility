@@ -350,12 +350,48 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Keywords (comma-separated)</Label>
+              <Label className="text-sm font-semibold">Business niche / industry (optional)</Label>
+              <Input
+                value={aiNiche}
+                onChange={(e) => setAiNiche(e.target.value)}
+                placeholder="e.g., Plumbing services, Online yoga classes, Vegan bakery..."
+              />
+              <p className="text-[11px] text-muted-foreground">Helps AI tailor the design and copy to your industry.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Keywords / services / products (comma-separated)</Label>
               <Input
                 value={aiKeywords}
                 onChange={(e) => setAiKeywords(e.target.value)}
                 placeholder="plumbing, new york, emergency repair, 24/7 service"
               />
+            </div>
+
+            <div>
+              <Label className="flex items-center gap-2 text-sm font-semibold mb-2">
+                <Layers className="h-4 w-4 text-primary" /> Target Platform
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {PLATFORMS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPlatform(p.value)}
+                    className={`flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                      platform === p.value
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border bg-card hover:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{p.icon}</span>
+                      <span className="text-xs font-semibold">{p.label}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -385,7 +421,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </div>
 
             <Button
-              onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType })}
+              onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType, niche: aiNiche })}
               disabled={!aiKeywords.trim() || aiContentMutation.isPending}
               className="w-full"
               size="lg"
