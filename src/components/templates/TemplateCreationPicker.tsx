@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
   ArrowRight, CheckCircle2, Target, Plus, X, Loader2,
-  FileText, ShoppingBag, Briefcase, FolderOpen, Folder,
+  FileText, ShoppingBag, Briefcase, FolderOpen, Folder, Layers,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
