@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,13 @@ const BUSINESS_TYPES = [
   { value: "blog post page", label: "Blog Post", icon: "📝" },
   { value: "event page", label: "Event Page", icon: "🎫" },
   { value: "booking/appointment page", label: "Booking", icon: "📅" },
+];
+
+const PLATFORMS = [
+  { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor" },
+  { value: "shopify", label: "Shopify", icon: "🛍️", desc: "Liquid-friendly markup" },
+  { value: "prestashop", label: "PrestaShop", icon: "🛒", desc: "Smarty-compatible" },
+  { value: "generic", label: "Universal HTML", icon: "🌐", desc: "Works anywhere" },
 ];
 
 const SECTIONS = [
