@@ -185,6 +185,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     setAiContentType("seo");
     setAiNiche("");
     setMode("builder");
+    setStep("configure");
     onOpenChange(false);
   };
 
