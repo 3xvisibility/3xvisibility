@@ -374,7 +374,7 @@ ${content}`
                   onClick={aiImproveContent}
                 >
                   {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  {aiImproving ? "Improving…" : "AI Improve"}
+                  <span className="hidden sm:inline">{aiImproving ? "Improving…" : "AI Improve"}</span>
                 </button>
                 <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
                 {uniqueVars.length > 0 && (
