@@ -114,7 +114,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter },
+        body: { prompt, includeHeaderFooter, platform },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -131,9 +131,14 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   });
 
   const aiContentMutation = useMutation({
-    mutationFn: async ({ keywords, contentType }: { keywords: string; contentType: string }) => {
+    mutationFn: async ({ keywords, contentType, niche: cNiche }: { keywords: string; contentType: string; niche: string }) => {
       const { data, error } = await supabase.functions.invoke("generate-seo-content", {
-        body: { keywords: keywords.split(",").map(k => k.trim()).filter(Boolean), contentType },
+        body: {
+          keywords: keywords.split(",").map(k => k.trim()).filter(Boolean),
+          contentType,
+          niche: cNiche,
+          platform,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -170,10 +175,12 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     setNiche("");
     setExtraDetails("");
     setLanguage("en");
+    setPlatform("wordpress");
     setSections(["hero", "features", "testimonials", "faq", "cta"]);
     setIncludeHeaderFooter(false);
     setAiKeywords("");
     setAiContentType("seo");
+    setAiNiche("");
     setMode("builder");
     onOpenChange(false);
   };
