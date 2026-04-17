@@ -273,37 +273,37 @@ ${content}`
       <DialogContent className="sm:w-[min(96vw,72rem)] sm:max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] flex flex-col overflow-hidden p-0 gap-0">
         
         {/* ── Top Bar ── */}
-        <div className="flex items-center justify-between px-5 py-3 border-b bg-card shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="flex items-center justify-between gap-2 px-3 sm:px-5 py-3 border-b bg-card shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <div>
-              <h2 className="text-sm font-semibold leading-tight">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold leading-tight truncate">
                 {editingTemplate?.id ? "Edit Template" : "New Template"}
               </h2>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground truncate">
                 {uniqueVars.length > 0 ? `${uniqueVars.length} variable(s) detected` : "Use {variable} syntax in content"}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Quality scores inline */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Quality scores inline (desktop only) */}
             {content && (() => {
               const seo = calculateContentSeoScore("Sample", content, "slug");
               const sea = calculateContentSeaScore("Sample", content, "slug");
               const geo = calculateContentGeoScore("Sample", content, "slug");
               return (
-                <div className="hidden md:flex items-center gap-1.5 mr-2">
+                <div className="hidden lg:flex items-center gap-1.5 mr-2">
                   <SeoScoreBadge score={seo.score} label={seo.label} color={seo.color} checks={seo.checks} size="sm" scoreType="SEO" />
                   <SeoScoreBadge score={sea.score} label={sea.label} color={sea.color} checks={sea.checks} size="sm" scoreType="SEA" />
                   <SeoScoreBadge score={geo.score} label={geo.label} color={geo.color} checks={geo.checks} size="sm" scoreType="GEO" />
                 </div>
               );
             })()}
-            <Button variant="outline" size="sm" onClick={handleClose}>Cancel</Button>
-            <Button size="sm" onClick={handleSave} disabled={!name || !content || isSaving}>
-              {isSaving ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Saving...</> : editingTemplate?.id ? "Save Changes" : "Create Template"}
+            <Button variant="outline" size="sm" onClick={handleClose} className="h-8 px-2 sm:px-3 text-xs sm:text-sm">Cancel</Button>
+            <Button size="sm" onClick={handleSave} disabled={!name || !content || isSaving} className="h-8 px-2.5 sm:px-3 text-xs sm:text-sm">
+              {isSaving ? <><Loader2 className="h-3.5 w-3.5 animate-spin sm:mr-1.5" /> <span className="hidden sm:inline">Saving...</span></> : (editingTemplate?.id ? <><span className="hidden sm:inline">Save Changes</span><span className="sm:hidden">Save</span></> : <><span className="hidden sm:inline">Create Template</span><span className="sm:hidden">Create</span></>)}
             </Button>
           </div>
         </div>
@@ -374,7 +374,7 @@ ${content}`
                   onClick={aiImproveContent}
                 >
                   {aiImproving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                  {aiImproving ? "Improving…" : "AI Improve"}
+                  <span className="hidden sm:inline">{aiImproving ? "Improving…" : "AI Improve"}</span>
                 </button>
                 <DynamicElementsInserter onInsert={(shortcode) => setContent(prev => prev + shortcode)} />
                 {uniqueVars.length > 0 && (
