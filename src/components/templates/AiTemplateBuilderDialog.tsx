@@ -197,6 +197,22 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             <Sparkles className="h-5 w-5 text-primary" />
             AI Template Builder
           </DialogTitle>
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-1.5">
+              <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${step === "configure" ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"}`}>
+                {step === "review" ? <CheckCircle2 className="h-3.5 w-3.5" /> : "1"}
+              </div>
+              <span className={`text-xs font-medium ${step === "configure" ? "text-primary" : "text-success"}`}>Configure</span>
+            </div>
+            <div className="h-px flex-1 bg-border max-w-[120px]" />
+            <div className="flex items-center gap-1.5">
+              <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[11px] font-bold ${step === "review" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                2
+              </div>
+              <span className={`text-xs font-medium ${step === "review" ? "text-primary" : "text-muted-foreground"}`}>Review &amp; Edit</span>
+            </div>
+          </div>
         </DialogHeader>
 
         {/* Mode Tabs */}
