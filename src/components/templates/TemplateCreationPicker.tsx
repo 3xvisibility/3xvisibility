@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
   ArrowRight, CheckCircle2, Target, Plus, X, Loader2,
-  FileText, ShoppingBag, Briefcase, FolderOpen, Folder,
+  FileText, ShoppingBag, Briefcase, FolderOpen, Folder, Layers,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,7 @@ type Website = Tables<"websites">;
 
 export type CreationMethod = "design" | "ai" | "url" | "website";
 export type ContentType = "pages" | "products" | "services";
+export type TargetPlatform = "wordpress" | "shopify" | "prestashop" | "generic";
 
 interface TemplateCreationPickerProps {
   open: boolean;
@@ -29,6 +30,7 @@ interface TemplateCreationPickerProps {
     targetUrl?: string;
     selectedWebsite?: Website;
     contentType?: ContentType;
+    platform?: TargetPlatform;
   }) => void;
 }
 
@@ -69,6 +71,13 @@ const CONTENT_TYPES: { id: ContentType; icon: typeof FileText; label: string; de
   { id: "services", icon: Briefcase, label: "Services", desc: "Service offerings & descriptions" },
 ];
 
+const PLATFORMS: { id: TargetPlatform; icon: string; label: string; desc: string }[] = [
+  { id: "wordpress", icon: "🟦", label: "WordPress / Elementor", desc: "Editable in Elementor page builder" },
+  { id: "shopify", icon: "🛍️", label: "Shopify", desc: "Liquid-friendly, OS 2.0 sections" },
+  { id: "prestashop", icon: "🛒", label: "PrestaShop", desc: "Smarty + Bootstrap grid" },
+  { id: "generic", icon: "🌐", label: "Universal HTML", desc: "Works on any platform" },
+];
+
 const FALLBACK_KEYWORDS = [
   "city", "state", "service", "product", "brand_name",
   "price", "phone", "address", "category", "neighborhood",
@@ -81,6 +90,7 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [targetUrl, setTargetUrl] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
   const [contentType, setContentType] = useState<ContentType>("pages");
+  const [platform, setPlatform] = useState<TargetPlatform>("wordpress");
   const [folderFilter, setFolderFilter] = useState<string>("__all__");
 
   // AI keyword suggestion
@@ -175,6 +185,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
       targetUrl: selected === "url" ? targetUrl : undefined,
       selectedWebsite: selected === "website" ? website : undefined,
       contentType: selected === "website" ? contentType : undefined,
+      platform: selected === "design" ? platform : undefined,
     });
     // Reset
     setSelected(null);
@@ -183,6 +194,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     setTargetUrl("");
     setSelectedWebsiteId("");
     setContentType("pages");
+    setPlatform("wordpress");
     setBusinessNiche("");
     setAiSuggestions([]);
   };
@@ -191,6 +203,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     if (!selected) return false;
     if (selected === "url" && !targetUrl.trim()) return false;
     if (selected === "website" && !selectedWebsiteId) return false;
+    if (selected === "design" && !platform) return false;
     return true;
   };
 
@@ -258,6 +271,39 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
               ))}
             </div>
           </div>
+
+          {/* Conditional: Platform picker for "Design Your Own" */}
+          {selected === "design" && (
+            <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold">Target Platform</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Choose where this template will be used. The editor will scaffold platform-specific markup so it stays editable in the native page builder.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {PLATFORMS.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setPlatform(p.id)}
+                    className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                      platform === p.id
+                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                        : "border-border bg-card hover:bg-accent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">{p.icon}</span>
+                      <span className="text-xs font-semibold">{p.label}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground leading-tight">{p.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Conditional: URL input */}
           {selected === "url" && (
