@@ -77,6 +77,7 @@ interface AiTemplateBuilderDialogProps {
 
 export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, onContentGenerated }: AiTemplateBuilderDialogProps) {
   const [mode, setMode] = useState<"builder" | "content">("builder");
+  const [step, setStep] = useState<"configure" | "review">("configure");
 
   // Builder state
   const [businessType, setBusinessType] = useState("");
