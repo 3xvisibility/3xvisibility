@@ -1063,11 +1063,184 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
     return vars;
   }, [nodes]);
 
+  // ── Render shared sidebar/properties content (used both inline & in mobile Sheets) ──
+  const sidebarContent = (
+    <ScrollArea className="flex-1 h-full">
+      {sidebarTab === "widgets" && (
+        <div className="p-2 space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-1">Layout</p>
+          <button onClick={handleAddSection}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors">
+            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+              <SplitSquareVertical className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs font-medium">Section</p>
+              <p className="text-[10px] text-muted-foreground">Full-width container</p>
+            </div>
+          </button>
+          <Separator className="my-2" />
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-1">Widgets</p>
+          {WIDGET_PALETTE.map(wp => (
+            <button key={wp.type} onClick={() => handleAddWidget(wp.type)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors group">
+              <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20">
+                <wp.icon className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs font-medium">{wp.label}</p>
+                <p className="text-[10px] text-muted-foreground">{wp.desc}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      {sidebarTab === "variables" && (
+        <div className="p-2 space-y-3">
+          <p className="text-[10px] text-muted-foreground px-1">Click to copy variable to clipboard</p>
+          {VAR_CATEGORIES.map(cat => (
+            <div key={cat.label} className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">{cat.label}</p>
+              <div className="flex flex-wrap gap-1 px-1">
+                {cat.vars.map(v => (
+                  <button key={v} onClick={() => navigator.clipboard.writeText(`{${v}}`)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
+                    <Hash className="h-2.5 w-2.5" /> {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          {customVars.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">From CSV</p>
+              <div className="flex flex-wrap gap-1 px-1">
+                {customVars.map(v => (
+                  <button key={v} onClick={() => navigator.clipboard.writeText(`{${v}}`)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono rounded-md bg-accent text-accent-foreground border border-border hover:bg-accent/80 transition-colors">
+                    <Hash className="h-2.5 w-2.5" /> {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <Separator />
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">Transforms</p>
+          {TRANSFORMS.map(t => (
+            <div key={t.name} className="px-2 py-1 rounded-lg bg-muted/30">
+              <p className="text-[10px] font-mono font-medium">{t.name}</p>
+              <p className="text-[9px] text-muted-foreground font-mono">{t.ex}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {sidebarTab === "dynamic" && (
+        <div className="p-2 space-y-1">
+          <p className="text-[10px] text-muted-foreground px-1 mb-1">Add dynamic content blocks</p>
+          {SHORTCODES.map(sc => (
+            <button key={sc.type} onClick={() => handleAddShortcode(sc)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors">
+              <sc.icon className={`h-4 w-4 ${sc.color} shrink-0`} />
+              <div>
+                <p className="text-xs font-medium">{sc.label}</p>
+                <p className="text-[9px] text-muted-foreground font-mono truncate">{sc.template}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      {sidebarTab === "navigator" && (
+        <div className="p-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-2">Element Tree</p>
+          {nodes.length === 0 ? (
+            <p className="text-[10px] text-muted-foreground px-1">No elements yet. Add a section to start.</p>
+          ) : (
+            nodes.map(n => (
+              <NavigatorItem key={n.id} node={n} depth={0} selectedId={selectedId} onSelect={setSelectedId} />
+            ))
+          )}
+        </div>
+      )}
+    </ScrollArea>
+  );
+
+  const sidebarTabs = (
+    <div className="flex bg-muted/30 border-b border-border p-1 gap-0.5 shrink-0">
+      {([
+        { key: "widgets" as const, label: "Widgets", icon: LayoutGrid },
+        { key: "variables" as const, label: "Terms", icon: Variable },
+        { key: "dynamic" as const, label: "Dynamic", icon: Wand2 },
+        { key: "navigator" as const, label: "Layers", icon: Layers },
+      ]).map(({ key, label, icon: Icon }) => (
+        <button key={key} onClick={() => setSidebarTab(key)}
+          className={`flex-1 flex items-center justify-center gap-1 px-1 py-1.5 text-[10px] font-medium rounded-md transition-colors ${
+            sidebarTab === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}>
+          <Icon className="h-3 w-3" />
+          <span>{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  const propertiesContent = (
+    <>
+      <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
+        <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {selectedNode ? (selectedNode.widgetType || selectedNode.type) : "Properties"}
+        </span>
+      </div>
+      {selectedNode ? (
+        <Tabs defaultValue="content" className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid grid-cols-2 m-2 h-8 shrink-0">
+            <TabsTrigger value="content" className="text-[10px]">Content</TabsTrigger>
+            <TabsTrigger value="style" className="text-[10px]">Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="flex-1 m-0 min-h-0 overflow-hidden">
+            <StylePanel node={selectedNode} onChange={handleUpdateNode} />
+          </TabsContent>
+          <TabsContent value="style" className="flex-1 m-0 min-h-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-3 space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Custom CSS</Label>
+                  <textarea value={customCss} onChange={(e) => { setCustomCss(e.target.value); onCssChange?.(e.target.value); }}
+                    rows={10} className="w-full text-xs font-mono bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none"
+                    placeholder=".my-class { color: red; }" />
+                </div>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+          <MousePointerClick className="h-10 w-10 text-muted-foreground/20 mb-3" />
+          <p className="text-sm font-medium text-muted-foreground">Select an element</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">Click any element in the preview to edit its properties</p>
+        </div>
+      )}
+    </>
+  );
+
   return (
-    <div className="flex flex-col h-[calc(100dvh-200px)] min-h-[500px] sm:h-[75vh] border border-border rounded-xl overflow-hidden bg-background">
-      {/* Top Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/30 shrink-0">
-        <div className="flex items-center gap-1">
+    <div className="flex flex-col h-[calc(100dvh-220px)] min-h-[480px] sm:h-[75vh] border border-border rounded-xl overflow-hidden bg-background">
+      {/* Top Toolbar — scrolls horizontally on mobile */}
+      <div className="flex items-center gap-1.5 px-2 py-1.5 border-b border-border bg-muted/30 shrink-0 overflow-x-auto">
+        {/* Mobile: open Widgets sheet */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="h-7 w-7 lg:hidden shrink-0" aria-label="Open widgets">
+              <PanelLeft className="h-3.5 w-3.5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-[85vw] max-w-xs flex flex-col">
+            {sidebarTabs}
+            {sidebarContent}
+          </SheetContent>
+        </Sheet>
+
+        <div className="flex items-center gap-0.5 shrink-0">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={undo} disabled={historyIdx <= 0}>
@@ -1085,32 +1258,32 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
             <TooltipContent>Redo</TooltipContent>
           </Tooltip>
         </div>
-        
-        <Separator orientation="vertical" className="h-5" />
-        
-        <Button variant="outline" size="sm" className="text-xs h-7 gap-1.5" onClick={handleAddSection}>
+
+        <Separator orientation="vertical" className="h-5 shrink-0" />
+
+        <Button variant="outline" size="sm" className="text-xs h-7 gap-1.5 shrink-0" onClick={handleAddSection}>
           <Plus className="h-3 w-3" /> Section
         </Button>
-        
+
         {selectedNode && (
           <>
-            <Separator orientation="vertical" className="h-5" />
-            <Badge variant="secondary" className="text-[10px] font-mono capitalize">
+            <Separator orientation="vertical" className="h-5 shrink-0" />
+            <Badge variant="secondary" className="text-[10px] font-mono capitalize shrink-0">
               {selectedNode.widgetType || selectedNode.type}
             </Badge>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDuplicateSelected}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleDuplicateSelected}>
               <Copy className="h-3 w-3" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={handleDeleteSelected}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive shrink-0" onClick={handleDeleteSelected}>
               <Trash2 className="h-3 w-3" />
             </Button>
           </>
         )}
-        
-        <div className="flex-1" />
-        
+
+        <div className="flex-1 min-w-2" />
+
         {/* Responsive toggles */}
-        <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5">
+        <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0">
           {([
             { key: "desktop" as const, icon: Monitor },
             { key: "tablet" as const, icon: Tablet },
@@ -1122,186 +1295,35 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
             </button>
           ))}
         </div>
-        
-        {/* Variable count */}
+
         {detectedVars.size > 0 && (
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-[10px] shrink-0 hidden sm:inline-flex">
             <Variable className="h-3 w-3 mr-1" /> {detectedVars.size} vars
           </Badge>
         )}
+
+        {/* Mobile: open Properties sheet */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="h-7 w-7 lg:hidden shrink-0" aria-label="Open properties">
+              <PanelRight className="h-3.5 w-3.5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="p-0 w-[85vw] max-w-xs flex flex-col">
+            {propertiesContent}
+          </SheetContent>
+        </Sheet>
       </div>
-      
-      {/* Main Area: Sidebar + Preview + Properties */}
+
+      {/* Main Area: Sidebar + Preview + Properties (sidebars desktop-only) */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Left Sidebar: Widgets/Variables/Navigator */}
-        <div className="w-56 border-r border-border bg-card shrink-0 flex flex-col">
-          <div className="flex bg-muted/30 border-b border-border p-1 gap-0.5">
-            {([
-              { key: "widgets" as const, label: "Widgets", icon: LayoutGrid },
-              { key: "variables" as const, label: "Terms", icon: Variable },
-              { key: "dynamic" as const, label: "Dynamic", icon: Wand2 },
-              { key: "navigator" as const, label: "Layers", icon: Layers },
-            ]).map(({ key, label, icon: Icon }) => (
-              <Tooltip key={key}>
-                <TooltipTrigger asChild>
-                  <button onClick={() => setSidebarTab(key)}
-                    className={`flex-1 flex items-center justify-center gap-1 px-1 py-1.5 text-[10px] font-medium rounded-md transition-colors ${
-                      sidebarTab === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                    }`}>
-                    <Icon className="h-3 w-3" />
-                    <span className="hidden xl:inline">{label}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{label}</TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-          
-          <ScrollArea className="flex-1">
-            {sidebarTab === "widgets" && (
-              <div className="p-2 space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-1">Layout</p>
-                <button onClick={handleAddSection}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors">
-                  <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                    <SplitSquareVertical className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium">Section</p>
-                    <p className="text-[10px] text-muted-foreground">Full-width container</p>
-                  </div>
-                </button>
-                
-                <Separator className="my-2" />
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-1">Widgets</p>
-                {WIDGET_PALETTE.map(wp => (
-                  <button key={wp.type} onClick={() => handleAddWidget(wp.type)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors group">
-                    <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20">
-                      <wp.icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium">{wp.label}</p>
-                      <p className="text-[10px] text-muted-foreground">{wp.desc}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            
-            {sidebarTab === "variables" && (
-              <div className="p-2 space-y-3">
-                <p className="text-[10px] text-muted-foreground px-1">Click to copy variable to clipboard</p>
-                {VAR_CATEGORIES.map(cat => (
-                  <div key={cat.label} className="space-y-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">{cat.label}</p>
-                    <div className="flex flex-wrap gap-1 px-1">
-                      {cat.vars.map(v => (
-                        <button key={v} onClick={() => navigator.clipboard.writeText(`{${v}}`)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
-                          <Hash className="h-2.5 w-2.5" /> {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {customVars.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">From CSV</p>
-                    <div className="flex flex-wrap gap-1 px-1">
-                      {customVars.map(v => (
-                        <button key={v} onClick={() => navigator.clipboard.writeText(`{${v}}`)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono rounded-md bg-accent text-accent-foreground border border-border hover:bg-accent/80 transition-colors">
-                          <Hash className="h-2.5 w-2.5" /> {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <Separator />
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">Transforms</p>
-                {TRANSFORMS.map(t => (
-                  <div key={t.name} className="px-2 py-1 rounded-lg bg-muted/30">
-                    <p className="text-[10px] font-mono font-medium">{t.name}</p>
-                    <p className="text-[9px] text-muted-foreground font-mono">{t.ex}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {sidebarTab === "dynamic" && (
-              <div className="p-2 space-y-1">
-                <p className="text-[10px] text-muted-foreground px-1 mb-1">Add dynamic content blocks</p>
-                {SHORTCODES.map(sc => (
-                  <button key={sc.type} onClick={() => handleAddShortcode(sc)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors">
-                    <sc.icon className={`h-4 w-4 ${sc.color} shrink-0`} />
-                    <div>
-                      <p className="text-xs font-medium">{sc.label}</p>
-                      <p className="text-[9px] text-muted-foreground font-mono truncate">{sc.template}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            
-            {sidebarTab === "navigator" && (
-              <div className="p-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1 mb-2">Element Tree</p>
-                {nodes.length === 0 ? (
-                  <p className="text-[10px] text-muted-foreground px-1">No elements yet. Add a section to start.</p>
-                ) : (
-                  nodes.map(n => (
-                    <NavigatorItem key={n.id} node={n} depth={0} selectedId={selectedId} onSelect={setSelectedId} />
-                  ))
-                )}
-              </div>
-            )}
-          </ScrollArea>
+        <div className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
+          {sidebarTabs}
+          {sidebarContent}
         </div>
-        
-        {/* Center: Live Preview */}
         <LivePreview html={previewHtml} css={customCss} selectedId={selectedId} onSelect={handleSelectNode} previewWidth={previewWidth} />
-        
-        {/* Right: Properties Panel */}
-        <div className="w-64 border-l border-border bg-card shrink-0 flex flex-col">
-          <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center gap-2">
-            <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {selectedNode ? (selectedNode.widgetType || selectedNode.type) : "Properties"}
-            </span>
-          </div>
-          
-          {selectedNode ? (
-            <Tabs defaultValue="content" className="flex-1 flex flex-col">
-              <TabsList className="grid grid-cols-2 m-2 h-8">
-                <TabsTrigger value="content" className="text-[10px]">Content</TabsTrigger>
-                <TabsTrigger value="style" className="text-[10px]">Style</TabsTrigger>
-              </TabsList>
-              <TabsContent value="content" className="flex-1 m-0">
-                <StylePanel node={selectedNode} onChange={handleUpdateNode} />
-              </TabsContent>
-              <TabsContent value="style" className="flex-1 m-0">
-                <ScrollArea className="h-[calc(100vh-320px)] min-h-[200px]">
-                  <div className="p-3 space-y-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Custom CSS</Label>
-                      <textarea value={customCss} onChange={(e) => { setCustomCss(e.target.value); onCssChange?.(e.target.value); }}
-                        rows={10} className="w-full text-xs font-mono bg-background border border-border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none"
-                        placeholder=".my-class { color: red; }" />
-                    </div>
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-            </Tabs>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
-              <MousePointerClick className="h-10 w-10 text-muted-foreground/20 mb-3" />
-              <p className="text-sm font-medium text-muted-foreground">Select an element</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">Click any element in the preview to edit its properties</p>
-            </div>
-          )}
+        <div className="hidden lg:flex w-64 border-l border-border bg-card shrink-0 flex-col">
+          {propertiesContent}
         </div>
       </div>
     </div>
