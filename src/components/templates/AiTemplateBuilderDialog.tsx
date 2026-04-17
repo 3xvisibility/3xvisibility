@@ -160,7 +160,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       } else {
         setGeneratedContent(data.content);
         setGeneratedName(data.suggestedName);
-        setMode("builder");
+        setStep("review");
       }
       toast({ title: "AI Content generated!" });
     },
