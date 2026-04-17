@@ -444,8 +444,11 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               <Input value={generatedName} onChange={(e) => setGeneratedName(e.target.value)} />
             </div>
 
-            <Tabs defaultValue="preview" className="w-full">
-              <TabsList className="w-full grid grid-cols-2">
+            <Tabs defaultValue="visual" className="w-full">
+              <TabsList className="w-full grid grid-cols-3">
+                <TabsTrigger value="visual" className="flex items-center gap-1.5">
+                  <MousePointerClick className="h-3.5 w-3.5" /> Visual Edit
+                </TabsTrigger>
                 <TabsTrigger value="preview" className="flex items-center gap-1.5">
                   <Eye className="h-3.5 w-3.5" /> Preview
                 </TabsTrigger>
@@ -453,6 +456,18 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                   <Code className="h-3.5 w-3.5" /> Code
                 </TabsTrigger>
               </TabsList>
+              <TabsContent value="visual" className="mt-3">
+                <div className="rounded-lg border border-border overflow-hidden bg-background" style={{ minHeight: "60vh" }}>
+                  <ElementorEditor
+                    html={generatedContent}
+                    onChange={(html) => setGeneratedContent(html)}
+                    preserveOriginalStyles
+                  />
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  💡 Click any element (heading, text, button, image) to edit its content, colors, fonts and spacing. Changes save automatically to the template.
+                </p>
+              </TabsContent>
               <TabsContent value="preview" className="mt-3">
                 <TemplatePreview html={generatedContent} />
               </TabsContent>
