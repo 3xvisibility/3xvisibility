@@ -1308,13 +1308,21 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
         )}
 
         {/* Mobile: open Properties sheet */}
-        <Sheet>
+        <Sheet open={mobilePropsOpen} onOpenChange={setMobilePropsOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="h-7 w-7 lg:hidden shrink-0" aria-label="Open properties">
+            <Button
+              variant={selectedNode ? "default" : "outline"}
+              size="icon"
+              className="h-7 w-7 lg:hidden shrink-0 relative"
+              aria-label="Open properties"
+            >
               <PanelRight className="h-3.5 w-3.5" />
+              {selectedNode && (
+                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-success animate-pulse" />
+              )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="p-0 w-[85vw] max-w-xs flex flex-col">
+          <SheetContent side="right" className="p-0 w-[92vw] sm:w-[85vw] max-w-sm flex flex-col">
             {propertiesContent}
           </SheetContent>
         </Sheet>
