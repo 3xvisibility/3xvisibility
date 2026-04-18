@@ -285,7 +285,42 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return true;
   };
 
-  // --- AI Helpers ---
+  // --- AI bulk row generation ---
+  const generateAiRows = async () => {
+    if (!selectedTemplate) {
+      toast({ title: "Pick a template first", description: "Templates define which variables AI should fill.", variant: "destructive" });
+      return;
+    }
+    if (selectedTemplateVars.length === 0) {
+      toast({ title: "This template has no variables", description: "Add variables to the template first.", variant: "destructive" });
+      return;
+    }
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
+        body: {
+          variables: selectedTemplateVars,
+          count: Math.max(1, Math.min(200, aiPageCount)),
+          business: aiBusiness || undefined,
+          niche: aiNiche || undefined,
+          service: aiServiceProduct || undefined,
+          language: campaignLanguage,
+          country: campaignCountry,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const rows = Array.isArray(data?.rows) ? data.rows : [];
+      if (rows.length === 0) throw new Error("AI returned no rows");
+      setAiGeneratedRows(rows);
+      toast({ title: `Generated ${rows.length} rows`, description: "Edit any cell below before continuing." });
+    } catch (err: any) {
+      toast({ title: "AI generation failed", description: friendlyError(err.message), variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const suggestCampaignName = async () => {
     setAiSuggestingName(true);
     try {
