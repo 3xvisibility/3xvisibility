@@ -457,16 +457,21 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
             <Button
               onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType, niche: aiNiche })}
-              disabled={!aiKeywords.trim() || aiContentMutation.isPending}
+              disabled={!aiKeywords.trim() || !aiNiche.trim() || aiContentMutation.isPending}
               className="w-full"
               size="lg"
             >
               {aiContentMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating content...</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating content + niche images (30-60s)...</>
               ) : (
-                <><Zap className="mr-2 h-4 w-4" /> Generate Content</>
+                <><Zap className="mr-2 h-4 w-4" /> Generate Content with Niche Images</>
               )}
             </Button>
+            {(!aiKeywords.trim() || !aiNiche.trim()) && (
+              <p className="text-[11px] text-center text-muted-foreground">
+                ⚠️ Please enter your niche and keywords so AI can generate matching images.
+              </p>
+            )}
           </TabsContent>
         </Tabs>
         )}
