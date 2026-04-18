@@ -70,7 +70,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const campaignType = campaignTypes[0] || "seo";
 
   // Data source
-  const [dataSource, setDataSource] = useState<"csv" | "website" | "locations">("csv");
+  const [dataSource, setDataSource] = useState<"csv" | "ai" | "website" | "locations">("csv");
+  // AI bulk row generation
+  const [aiBusiness, setAiBusiness] = useState("");
+  const [aiNiche, setAiNiche] = useState("");
+  const [aiServiceProduct, setAiServiceProduct] = useState("");
+  const [aiPageCount, setAiPageCount] = useState(20);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGeneratedRows, setAiGeneratedRows] = useState<Record<string, string>[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvRawText, setCsvRawText] = useState("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -205,15 +212,23 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return { headers, rows };
   }, [dataSource, selectedPageIds, websitePages]);
 
-  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
-  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
-
   const selectedTemplateVars = useMemo(() => {
     if (!selectedTemplate) return [];
     const tpl = templates.find(t => t.id === selectedTemplate);
     if (!tpl?.variables) return [];
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
+
+  const effectiveCsvData =
+    dataSource === "website" ? websitePagesAsCsv.rows :
+    dataSource === "locations" ? locationData :
+    dataSource === "ai" ? aiGeneratedRows :
+    csvData;
+  const effectiveCsvHeaders =
+    dataSource === "website" ? websitePagesAsCsv.headers :
+    dataSource === "locations" ? locationHeaders :
+    dataSource === "ai" ? (selectedTemplateVars.length > 0 ? selectedTemplateVars : Object.keys(aiGeneratedRows[0] || {})) :
+    csvHeaders;
 
   const variableMapping = useMemo(() => {
     const headers = effectiveCsvHeaders;
@@ -259,13 +274,53 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const totalSteps = wizardSteps.length;
 
   const canProceed = () => {
-    if (step === 1) return !!campaignName;
-    if (step === 2) return dataSource === "csv" ? csvData.length > 0 : dataSource === "locations" ? locationData.length > 0 : selectedPageIds.size > 0;
+    if (step === 1) return !!campaignName && !!selectedTemplate;
+    if (step === 2) {
+      if (dataSource === "csv") return csvData.length > 0;
+      if (dataSource === "locations") return locationData.length > 0;
+      if (dataSource === "ai") return aiGeneratedRows.length > 0;
+      return selectedPageIds.size > 0;
+    }
     if (step === 3) return !!selectedTemplate;
     return true;
   };
 
-  // --- AI Helpers ---
+  // --- AI bulk row generation ---
+  const generateAiRows = async () => {
+    if (!selectedTemplate) {
+      toast({ title: "Pick a template first", description: "Templates define which variables AI should fill.", variant: "destructive" });
+      return;
+    }
+    if (selectedTemplateVars.length === 0) {
+      toast({ title: "This template has no variables", description: "Add variables to the template first.", variant: "destructive" });
+      return;
+    }
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
+        body: {
+          variables: selectedTemplateVars,
+          count: Math.max(1, Math.min(200, aiPageCount)),
+          business: aiBusiness || undefined,
+          niche: aiNiche || undefined,
+          service: aiServiceProduct || undefined,
+          language: campaignLanguage,
+          country: campaignCountry,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const rows = Array.isArray(data?.rows) ? data.rows : [];
+      if (rows.length === 0) throw new Error("AI returned no rows");
+      setAiGeneratedRows(rows);
+      toast({ title: `Generated ${rows.length} rows`, description: "Edit any cell below before continuing." });
+    } catch (err: any) {
+      toast({ title: "AI generation failed", description: friendlyError(err.message), variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const suggestCampaignName = async () => {
     setAiSuggestingName(true);
     try {
@@ -457,7 +512,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
         await supabase.from("campaign_csv_files" as any).insert({
           campaign_id: campaignId, workspace_id: wsId, user_id: user.id,
-          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations.csv" : "website-pages.csv",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations.csv" : dataSource === "ai" ? "ai-generated.csv" : "website-pages.csv",
           file_size: rawContent.length, raw_content: rawContent,
           headers: effectiveCsvHeaders as any, row_count: effectiveRowCount,
         });
@@ -465,7 +520,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         await supabase.from("data_sources").insert({
           campaign_id: campaignId, workspace_id: wsId, user_id: user.id,
           type: dataSource,
-          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations" : "website-pages",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations" : dataSource === "ai" ? "ai-generated" : "website-pages",
           file_size: dataSource === "csv" ? (csvFile?.size || rawContent.length) : rawContent.length,
           row_count: effectiveRowCount, headers: effectiveCsvHeaders as any,
         });
@@ -512,6 +567,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setSelectedPageIds(new Set()); setWebsitePagesSearch("");
     setManualMappings({}); setCustomValues({}); setTransforms({}); setTargetFieldMappings({});
     setAiNameSuggestions([]); setAiReadinessCheck(null);
+    setAiBusiness(""); setAiNiche(""); setAiServiceProduct(""); setAiPageCount(20); setAiGeneratedRows([]);
   };
 
   // Readiness stats for review step
@@ -651,6 +707,50 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                   </div>
 
+                  {/* Template selection — moved up so users see required variables before picking data */}
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-semibold">Choose Template</Label>
+                      <span className="text-[10px] text-muted-foreground ml-auto">required</span>
+                    </div>
+                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                      <SelectTrigger className="rounded-xl h-10 bg-background"><SelectValue placeholder="Pick the template these pages will use" /></SelectTrigger>
+                      <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                    </Select>
+
+                    {selectedTemplate && (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Info className="h-3 w-3" />
+                          {selectedTemplateVars.length > 0
+                            ? <>Each page needs values for these <strong className="text-foreground">{selectedTemplateVars.length}</strong> variables:</>
+                            : <>This template has no variables — every page will be identical.</>}
+                        </p>
+                        {selectedTemplateVars.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedTemplateVars.map(v => (
+                              <Badge key={v} variant="secondary" className="text-[10px] rounded-md font-mono">{`{${v}}`}</Badge>
+                            ))}
+                          </div>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-[11px] text-primary hover:text-primary"
+                          onClick={() => {
+                            const tpl = templates.find(t => t.id === selectedTemplate);
+                            if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
+                          }}
+                        >
+                          <Upload className="h-3 w-3 mr-1 rotate-180" />
+                          Download starter CSV with these columns
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Website selection inline */}
                   <div>
                     <Label className="text-xs font-medium mb-1.5 block">Publish to Website <span className="text-muted-foreground">(optional)</span></Label>
@@ -665,15 +765,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               {/* Step 2: Data Source */}
               {step === 2 && (
                 <>
-                  <div className="flex items-center gap-1 p-1 bg-muted rounded-xl">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-muted rounded-xl">
                     {([
+                      { key: "ai" as const, icon: Sparkles, label: "AI Generate" },
                       { key: "csv" as const, icon: Upload, label: "CSV / Excel" },
                       { key: "website" as const, icon: Globe, label: "Website" },
-                      { key: "locations" as const, icon: MapPin, label: "Locations DB" },
+                      { key: "locations" as const, icon: MapPin, label: "Locations" },
                     ]).map(ds => (
                       <button key={ds.key} type="button" onClick={() => setDataSource(ds.key)}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg text-xs font-medium transition-all",
+                          "flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg text-xs font-medium transition-all",
                           dataSource === ds.key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                         )}>
                         <ds.icon className="h-3.5 w-3.5" /> {ds.label}
@@ -744,6 +845,109 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             {csvHeaders.map(h => <Badge key={h} variant="secondary" className="text-xs rounded-lg">{h}</Badge>)}
                           </div>
                         </div>
+                      )}
+                    </>
+                  )}
+
+                  {dataSource === "ai" && (
+                    <>
+                      {!selectedTemplate ? (
+                        <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-start gap-2.5">
+                          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium">Pick a template first</p>
+                            <p className="text-[11px] text-muted-foreground">Go back to <strong>Step 1</strong> and choose a template — its variables tell the AI exactly what to fill.</p>
+                          </div>
+                        </div>
+                      ) : selectedTemplateVars.length === 0 ? (
+                        <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 text-xs text-muted-foreground">
+                          This template has no variables, so AI generation isn't useful. Switch to CSV/Excel or pick a different template.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-3 space-y-3">
+                            <div className="flex items-start gap-2">
+                              <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                              <div className="text-[11px] text-muted-foreground">
+                                Tell us about your business and we'll fill the <strong className="text-foreground">{selectedTemplateVars.length}</strong> template variables for as many pages as you need.
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Business / Brand</Label>
+                                <Input value={aiBusiness} onChange={(e) => setAiBusiness(e.target.value)} placeholder="Acme Plumbing" className="h-9 rounded-lg text-xs" />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Niche / Industry</Label>
+                                <Input value={aiNiche} onChange={(e) => setAiNiche(e.target.value)} placeholder="Home services" className="h-9 rounded-lg text-xs" />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Service / Product</Label>
+                                <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-9 rounded-lg text-xs" />
+                              </div>
+                            </div>
+                            <div className="flex items-end gap-2">
+                              <div className="flex-1">
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Pages to generate</Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={200}
+                                  value={aiPageCount}
+                                  onChange={(e) => setAiPageCount(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
+                                  className="h-9 rounded-lg text-xs"
+                                />
+                              </div>
+                              <Button type="button" onClick={generateAiRows} disabled={aiGenerating} className="h-9 rounded-lg text-xs gap-1.5">
+                                {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+                                {aiGeneratedRows.length > 0 ? "Regenerate" : "Generate rows"}
+                              </Button>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">Max 200 per call. AI uses {campaignLanguage.toUpperCase()} • {campaignCountry}.</p>
+                          </div>
+
+                          {aiGeneratedRows.length > 0 && (
+                            <div className="rounded-xl border border-success/30 bg-success/5 p-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-success" />
+                                <p className="text-xs font-medium">{aiGeneratedRows.length} rows ready</p>
+                                <span className="ml-auto text-[10px] text-muted-foreground">Click any cell to edit</span>
+                              </div>
+                              <ScrollArea className="h-[220px] rounded-lg border border-border bg-background">
+                                <table className="w-full text-[11px]">
+                                  <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                                    <tr>
+                                      <th className="text-[10px] font-medium text-muted-foreground px-2 py-1.5 text-left w-8">#</th>
+                                      {selectedTemplateVars.map(v => (
+                                        <th key={v} className="text-[10px] font-medium text-muted-foreground px-2 py-1.5 text-left whitespace-nowrap">{v}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {aiGeneratedRows.map((row, ri) => (
+                                      <tr key={ri} className="border-t border-border/50 hover:bg-muted/30">
+                                        <td className="px-2 py-1 text-muted-foreground tabular-nums">{ri + 1}</td>
+                                        {selectedTemplateVars.map(v => (
+                                          <td key={v} className="px-1 py-0.5">
+                                            <input
+                                              value={row[v] || ""}
+                                              onChange={(e) => {
+                                                const next = [...aiGeneratedRows];
+                                                next[ri] = { ...next[ri], [v]: e.target.value };
+                                                setAiGeneratedRows(next);
+                                              }}
+                                              className="w-full bg-transparent border-none outline-none focus:bg-background focus:ring-1 focus:ring-primary rounded px-1.5 py-1 min-w-[120px]"
+                                            />
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </ScrollArea>
+                            </div>
+                          )}
+                        </>
                       )}
                     </>
                   )}
