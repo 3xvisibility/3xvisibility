@@ -80,6 +80,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [aiPageCount, setAiPageCount] = useState(20);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiGeneratedRows, setAiGeneratedRows] = useState<Record<string, string>[]>([]);
+  const [aiPresets, setAiPresets] = useState<AiPreset[]>(() => readAiPresets());
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
+  const [savePresetOpen, setSavePresetOpen] = useState(false);
+  const [presetNameDraft, setPresetNameDraft] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvRawText, setCsvRawText] = useState("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
