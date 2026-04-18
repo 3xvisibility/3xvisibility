@@ -147,6 +147,14 @@ ${platform === "prestashop" ? "PLATFORM: PrestaShop — use Bootstrap container/
     let content = data.choices?.[0]?.message?.content ?? "";
     content = content.replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
+    // Replace generic placeholder images with niche-relevant AI-generated images
+    try {
+      const kwString = Array.isArray(keywords) ? keywords.join(", ") : String(keywords || "");
+      content = await injectNicheImages(content, { niche, businessType: cType, keywords: kwString }, LOVABLE_API_KEY);
+    } catch (imgErr) {
+      console.error("Niche image injection failed (non-fatal):", imgErr);
+    }
+
     const vars = [...new Set((content.match(/\{([a-z_]+)\}/gi) || []))];
     const primaryKeyword = Array.isArray(keywords) ? keywords[0] : keywords.split(",")[0]?.trim();
 
