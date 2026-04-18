@@ -476,11 +476,51 @@ export function MappingStep({
       <div className="space-y-2.5">
         {/* Column headers */}
         <div className="hidden sm:grid sm:grid-cols-[1fr_auto_1fr_140px_100px] gap-2 px-1 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-          <span>Template Variable</span>
+          <span className="flex items-center gap-1">
+            Template Variable
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Placeholders like <code className="font-mono">{`{city}`}</code> in your template that get replaced with real data.
+              </TooltipContent>
+            </Tooltip>
+          </span>
           <span></span>
-          <span>CSV Column / Value</span>
-          <span>Map To</span>
-          <span>Transform</span>
+          <span className="flex items-center gap-1">
+            Where data comes from
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Pick a CSV column (e.g. <span className="font-mono">city</span>) or set a fixed custom value used for every page.
+              </TooltipContent>
+            </Tooltip>
+          </span>
+          <span className="flex items-center gap-1">
+            Map to (optional)
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Tell the CMS what this is — e.g. SEO meta title, GEO city, or product price. Auto = used as plain template variable only.
+              </TooltipContent>
+            </Tooltip>
+          </span>
+          <span className="flex items-center gap-1">
+            Transform
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Optional formatting: lowercase, slugify, truncate, etc.
+              </TooltipContent>
+            </Tooltip>
+          </span>
         </div>
 
         {filteredMapping.map(({ variable, column, customValue, targetField, transform }) => {
