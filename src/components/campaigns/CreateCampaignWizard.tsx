@@ -274,8 +274,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const totalSteps = wizardSteps.length;
 
   const canProceed = () => {
-    if (step === 1) return !!campaignName;
-    if (step === 2) return dataSource === "csv" ? csvData.length > 0 : dataSource === "locations" ? locationData.length > 0 : selectedPageIds.size > 0;
+    if (step === 1) return !!campaignName && !!selectedTemplate;
+    if (step === 2) {
+      if (dataSource === "csv") return csvData.length > 0;
+      if (dataSource === "locations") return locationData.length > 0;
+      if (dataSource === "ai") return aiGeneratedRows.length > 0;
+      return selectedPageIds.size > 0;
+    }
     if (step === 3) return !!selectedTemplate;
     return true;
   };
@@ -472,7 +477,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
         await supabase.from("campaign_csv_files" as any).insert({
           campaign_id: campaignId, workspace_id: wsId, user_id: user.id,
-          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations.csv" : "website-pages.csv",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations.csv" : dataSource === "ai" ? "ai-generated.csv" : "website-pages.csv",
           file_size: rawContent.length, raw_content: rawContent,
           headers: effectiveCsvHeaders as any, row_count: effectiveRowCount,
         });
@@ -480,7 +485,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         await supabase.from("data_sources").insert({
           campaign_id: campaignId, workspace_id: wsId, user_id: user.id,
           type: dataSource,
-          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations" : "website-pages",
+          file_name: dataSource === "csv" ? (csvFile?.name || "data.csv") : dataSource === "locations" ? "locations" : dataSource === "ai" ? "ai-generated" : "website-pages",
           file_size: dataSource === "csv" ? (csvFile?.size || rawContent.length) : rawContent.length,
           row_count: effectiveRowCount, headers: effectiveCsvHeaders as any,
         });
