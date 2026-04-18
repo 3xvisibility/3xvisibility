@@ -361,17 +361,49 @@ export function MappingStep({
 
   return (
     <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-4 overflow-hidden">
+      {/* ─── How it works intro (collapsible / always visible) ─────────── */}
+      <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/0 p-3 sm:p-4">
+        <div className="flex items-start gap-2.5">
+          <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
+            <Lightbulb className="h-4 w-4 text-primary" />
+          </div>
+          <div className="space-y-1.5 min-w-0">
+            <h5 className="text-sm font-semibold flex items-center gap-2 flex-wrap">
+              Connect Your Data
+              <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] h-5">Step 1 of 1</Badge>
+            </h5>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Each <code className="px-1 py-0.5 rounded bg-muted text-foreground font-mono text-[10px]">{`{variable}`}</code> in your template needs a value. Tell us where it should come from:
+              your CSV file's column, a fixed custom value, or auto-generated content.
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <Badge variant="outline" className="text-[10px] gap-1 bg-success/5 border-success/30 text-success">
+                <Wand2 className="h-2.5 w-2.5" /> {autoMappedCount} auto-matched
+              </Badge>
+              {unmatchedCount > 0 && (
+                <Badge variant="outline" className="text-[10px] gap-1 bg-destructive/5 border-destructive/30 text-destructive">
+                  <AlertTriangle className="h-2.5 w-2.5" /> {unmatchedCount} need attention
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-[10px] gap-1">
+                <Hash className="h-2.5 w-2.5" /> {csvHeaders.length} CSV columns
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-muted/20 backdrop-blur-sm -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 -mt-3 sm:-mt-4 border-b border-border/50">
+      <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-muted/20 backdrop-blur-sm -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-semibold">Column Mapping</h4>
+          <h4 className="text-sm font-semibold">Variable Mapping</h4>
           {allMatched ? (
             <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
-              <Check className="h-3 w-3 mr-1" /> All matched
+              <Check className="h-3 w-3 mr-1" /> All set
             </Badge>
           ) : (
             <Badge variant="secondary" className="bg-destructive/10 text-destructive text-[10px] border-destructive/20 border">
-              <AlertTriangle className="h-3 w-3 mr-1" /> Unmatched
+              <AlertTriangle className="h-3 w-3 mr-1" /> {unmatchedCount} unmapped
             </Badge>
           )}
         </div>
