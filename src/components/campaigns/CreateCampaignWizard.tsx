@@ -843,21 +843,47 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     )}
                   </div>
                   {selectedTemplate && effectiveCsvHeaders.length > 0 && (
-                    <MappingStep
-                      csvHeaders={effectiveCsvHeaders}
-                      templateVars={selectedTemplateVars}
-                      campaignTypes={campaignTypes}
-                      websiteType={websites.find(w => w.id === (selectedWebsite || websiteForPages))?.type}
-                      manualMappings={manualMappings}
-                      setManualMappings={setManualMappings}
-                      customValues={customValues}
-                      setCustomValues={setCustomValues}
-                      transforms={transforms}
-                      setTransforms={setTransforms}
-                      targetFieldMappings={targetFieldMappings}
-                      setTargetFieldMappings={setTargetFieldMappings}
-                      workspaceId={wsId!}
-                    />
+                    <>
+                      {/* Smart auto-flow status banner */}
+                      {variableMapping && (() => {
+                        const total = variableMapping.matched.length;
+                        const auto = variableMapping.matched.filter(m => m.column).length;
+                        const allMatched = total > 0 && auto === total;
+                        return allMatched ? (
+                          <div className="rounded-xl border border-success/30 bg-success/5 p-3 flex items-start gap-2.5">
+                            <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              <p className="text-xs font-medium text-success">All {total} variables auto-matched 🎉</p>
+                              <p className="text-[11px] text-muted-foreground">Your CSV columns line up perfectly with this template. You can continue straight to the next step.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 flex items-start gap-2.5">
+                            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              <p className="text-xs font-medium text-warning-foreground">{auto} of {total} matched · Confirm the rest below</p>
+                              <p className="text-[11px] text-muted-foreground">A few variables need your attention — pick a CSV column or set a custom value.</p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      <MappingStep
+                        csvHeaders={effectiveCsvHeaders}
+                        templateVars={selectedTemplateVars}
+                        campaignTypes={campaignTypes}
+                        websiteType={websites.find(w => w.id === (selectedWebsite || websiteForPages))?.type}
+                        manualMappings={manualMappings}
+                        setManualMappings={setManualMappings}
+                        customValues={customValues}
+                        setCustomValues={setCustomValues}
+                        transforms={transforms}
+                        setTransforms={setTransforms}
+                        targetFieldMappings={targetFieldMappings}
+                        setTargetFieldMappings={setTargetFieldMappings}
+                        workspaceId={wsId!}
+                      />
+                    </>
                   )}
                 </>
               )}
