@@ -361,35 +361,70 @@ export function MappingStep({
 
   return (
     <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-4 overflow-hidden">
-      {/* ─── How it works intro (collapsible / always visible) ─────────── */}
-      <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/0 p-3 sm:p-4">
+      {/* ─── How it works intro with visual flow ─────────── */}
+      <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/0 p-3 sm:p-4 space-y-3">
         <div className="flex items-start gap-2.5">
           <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
             <Lightbulb className="h-4 w-4 text-primary" />
           </div>
-          <div className="space-y-1.5 min-w-0">
+          <div className="space-y-1.5 min-w-0 flex-1">
             <h5 className="text-sm font-semibold flex items-center gap-2 flex-wrap">
-              Connect Your Data
-              <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] h-5">Step 1 of 1</Badge>
+              How Mapping Works
+              <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] h-5">Auto-matched</Badge>
             </h5>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Each <code className="px-1 py-0.5 rounded bg-muted text-foreground font-mono text-[10px]">{`{variable}`}</code> in your template needs a value. Tell us where it should come from:
-              your CSV file's column, a fixed custom value, or auto-generated content.
+              Mapping connects <strong className="text-foreground">your CSV data</strong> to <strong className="text-foreground">template placeholders</strong>.
+              Each row in your CSV becomes one generated page.
             </p>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              <Badge variant="outline" className="text-[10px] gap-1 bg-success/5 border-success/30 text-success">
-                <Wand2 className="h-2.5 w-2.5" /> {autoMappedCount} auto-matched
-              </Badge>
-              {unmatchedCount > 0 && (
-                <Badge variant="outline" className="text-[10px] gap-1 bg-destructive/5 border-destructive/30 text-destructive">
-                  <AlertTriangle className="h-2.5 w-2.5" /> {unmatchedCount} need attention
-                </Badge>
-              )}
-              <Badge variant="outline" className="text-[10px] gap-1">
-                <Hash className="h-2.5 w-2.5" /> {csvHeaders.length} CSV columns
-              </Badge>
-            </div>
           </div>
+        </div>
+
+        {/* Visual flow diagram: CSV → Variable → Page */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr_auto_1fr] gap-2 sm:gap-1.5 items-center bg-background/60 rounded-lg p-2.5 border border-border/40">
+          {/* CSV source */}
+          <div className="rounded-md border border-success/30 bg-success/5 p-2 text-center">
+            <div className="text-[9px] uppercase tracking-wider text-success font-semibold mb-1">1. Your CSV</div>
+            <code className="text-[11px] font-mono text-foreground block truncate" title={csvHeaders[0] || "city"}>
+              {csvHeaders[0] || "city"}
+            </code>
+            <div className="text-[9px] text-muted-foreground mt-0.5">column name</div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground mx-auto rotate-90 sm:rotate-0" />
+          {/* Template variable */}
+          <div className="rounded-md border border-primary/30 bg-primary/5 p-2 text-center">
+            <div className="text-[9px] uppercase tracking-wider text-primary font-semibold mb-1">2. Template</div>
+            <code className="text-[11px] font-mono text-foreground block truncate">
+              {`{${csvHeaders[0] || "city"}}`}
+            </code>
+            <div className="text-[9px] text-muted-foreground mt-0.5">placeholder</div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground mx-auto rotate-90 sm:rotate-0" />
+          {/* Final page */}
+          <div className="rounded-md border border-warning/30 bg-warning/5 p-2 text-center">
+            <div className="text-[9px] uppercase tracking-wider text-warning font-semibold mb-1">3. Live Page</div>
+            <code className="text-[11px] font-mono text-foreground block truncate">
+              "New York"
+            </code>
+            <div className="text-[9px] text-muted-foreground mt-0.5">real value</div>
+          </div>
+        </div>
+
+        {/* Status badges */}
+        <div className="flex flex-wrap gap-1.5">
+          <Badge variant="outline" className="text-[10px] gap-1 bg-success/5 border-success/30 text-success">
+            <Wand2 className="h-2.5 w-2.5" /> {autoMappedCount} auto-matched
+          </Badge>
+          {unmatchedCount > 0 && (
+            <Badge variant="outline" className="text-[10px] gap-1 bg-destructive/5 border-destructive/30 text-destructive">
+              <AlertTriangle className="h-2.5 w-2.5" /> {unmatchedCount} need your attention
+            </Badge>
+          )}
+          <Badge variant="outline" className="text-[10px] gap-1">
+            <Hash className="h-2.5 w-2.5" /> {csvHeaders.length} CSV columns available
+          </Badge>
+          <Badge variant="outline" className="text-[10px] gap-1">
+            <Type className="h-2.5 w-2.5" /> {templateVars.length} template variables
+          </Badge>
         </div>
       </div>
 
