@@ -312,6 +312,8 @@ export function MappingStep({
 
   const allMatched = resolvedMapping.every(m => m.column || m.customValue || isSpecialVar(m.variable));
   const unmatchedColumns = csvHeaders.filter(h => !resolvedMapping.some(m => m.column === h));
+  const autoMappedCount = resolvedMapping.filter(m => m.column && !manualMappings[m.variable] && !customValues[m.variable]).length;
+  const unmatchedCount = resolvedMapping.filter(m => !m.column && !m.customValue && !isSpecialVar(m.variable)).length;
 
   // ─── Filtered target fields by campaign type ─────────────────────
 
