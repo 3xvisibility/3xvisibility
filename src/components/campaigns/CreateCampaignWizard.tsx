@@ -813,6 +813,109 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </>
                   )}
 
+                  {dataSource === "ai" && (
+                    <>
+                      {!selectedTemplate ? (
+                        <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 flex items-start gap-2.5">
+                          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium">Pick a template first</p>
+                            <p className="text-[11px] text-muted-foreground">Go back to <strong>Step 1</strong> and choose a template — its variables tell the AI exactly what to fill.</p>
+                          </div>
+                        </div>
+                      ) : selectedTemplateVars.length === 0 ? (
+                        <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 text-xs text-muted-foreground">
+                          This template has no variables, so AI generation isn't useful. Switch to CSV/Excel or pick a different template.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-3 space-y-3">
+                            <div className="flex items-start gap-2">
+                              <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                              <div className="text-[11px] text-muted-foreground">
+                                Tell us about your business and we'll fill the <strong className="text-foreground">{selectedTemplateVars.length}</strong> template variables for as many pages as you need.
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Business / Brand</Label>
+                                <Input value={aiBusiness} onChange={(e) => setAiBusiness(e.target.value)} placeholder="Acme Plumbing" className="h-9 rounded-lg text-xs" />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Niche / Industry</Label>
+                                <Input value={aiNiche} onChange={(e) => setAiNiche(e.target.value)} placeholder="Home services" className="h-9 rounded-lg text-xs" />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Service / Product</Label>
+                                <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-9 rounded-lg text-xs" />
+                              </div>
+                            </div>
+                            <div className="flex items-end gap-2">
+                              <div className="flex-1">
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Pages to generate</Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={200}
+                                  value={aiPageCount}
+                                  onChange={(e) => setAiPageCount(Math.max(1, Math.min(200, parseInt(e.target.value) || 1)))}
+                                  className="h-9 rounded-lg text-xs"
+                                />
+                              </div>
+                              <Button type="button" onClick={generateAiRows} disabled={aiGenerating} className="h-9 rounded-lg text-xs gap-1.5">
+                                {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+                                {aiGeneratedRows.length > 0 ? "Regenerate" : "Generate rows"}
+                              </Button>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">Max 200 per call. AI uses {campaignLanguage.toUpperCase()} • {campaignCountry}.</p>
+                          </div>
+
+                          {aiGeneratedRows.length > 0 && (
+                            <div className="rounded-xl border border-success/30 bg-success/5 p-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle2 className="h-4 w-4 text-success" />
+                                <p className="text-xs font-medium">{aiGeneratedRows.length} rows ready</p>
+                                <span className="ml-auto text-[10px] text-muted-foreground">Click any cell to edit</span>
+                              </div>
+                              <ScrollArea className="h-[220px] rounded-lg border border-border bg-background">
+                                <table className="w-full text-[11px]">
+                                  <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
+                                    <tr>
+                                      <th className="text-[10px] font-medium text-muted-foreground px-2 py-1.5 text-left w-8">#</th>
+                                      {selectedTemplateVars.map(v => (
+                                        <th key={v} className="text-[10px] font-medium text-muted-foreground px-2 py-1.5 text-left whitespace-nowrap">{v}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {aiGeneratedRows.map((row, ri) => (
+                                      <tr key={ri} className="border-t border-border/50 hover:bg-muted/30">
+                                        <td className="px-2 py-1 text-muted-foreground tabular-nums">{ri + 1}</td>
+                                        {selectedTemplateVars.map(v => (
+                                          <td key={v} className="px-1 py-0.5">
+                                            <input
+                                              value={row[v] || ""}
+                                              onChange={(e) => {
+                                                const next = [...aiGeneratedRows];
+                                                next[ri] = { ...next[ri], [v]: e.target.value };
+                                                setAiGeneratedRows(next);
+                                              }}
+                                              className="w-full bg-transparent border-none outline-none focus:bg-background focus:ring-1 focus:ring-primary rounded px-1.5 py-1 min-w-[120px]"
+                                            />
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </ScrollArea>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+
                   {dataSource === "website" && (
                     <>
                       <Select value={websiteForPages} onValueChange={(v) => { setWebsiteForPages(v); setSelectedPageIds(new Set()); }}>
