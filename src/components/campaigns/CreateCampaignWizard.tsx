@@ -666,6 +666,50 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                   </div>
 
+                  {/* Template selection — moved up so users see required variables before picking data */}
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Layers className="h-4 w-4 text-primary" />
+                      <Label className="text-sm font-semibold">Choose Template</Label>
+                      <span className="text-[10px] text-muted-foreground ml-auto">required</span>
+                    </div>
+                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                      <SelectTrigger className="rounded-xl h-10 bg-background"><SelectValue placeholder="Pick the template these pages will use" /></SelectTrigger>
+                      <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                    </Select>
+
+                    {selectedTemplate && (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Info className="h-3 w-3" />
+                          {selectedTemplateVars.length > 0
+                            ? <>Each page needs values for these <strong className="text-foreground">{selectedTemplateVars.length}</strong> variables:</>
+                            : <>This template has no variables — every page will be identical.</>}
+                        </p>
+                        {selectedTemplateVars.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedTemplateVars.map(v => (
+                              <Badge key={v} variant="secondary" className="text-[10px] rounded-md font-mono">{`{${v}}`}</Badge>
+                            ))}
+                          </div>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-[11px] text-primary hover:text-primary"
+                          onClick={() => {
+                            const tpl = templates.find(t => t.id === selectedTemplate);
+                            if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
+                          }}
+                        >
+                          <Upload className="h-3 w-3 mr-1 rotate-180" />
+                          Download starter CSV with these columns
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Website selection inline */}
                   <div>
                     <Label className="text-xs font-medium mb-1.5 block">Publish to Website <span className="text-muted-foreground">(optional)</span></Label>
@@ -680,15 +724,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               {/* Step 2: Data Source */}
               {step === 2 && (
                 <>
-                  <div className="flex items-center gap-1 p-1 bg-muted rounded-xl">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-muted rounded-xl">
                     {([
+                      { key: "ai" as const, icon: Sparkles, label: "AI Generate" },
                       { key: "csv" as const, icon: Upload, label: "CSV / Excel" },
                       { key: "website" as const, icon: Globe, label: "Website" },
-                      { key: "locations" as const, icon: MapPin, label: "Locations DB" },
+                      { key: "locations" as const, icon: MapPin, label: "Locations" },
                     ]).map(ds => (
                       <button key={ds.key} type="button" onClick={() => setDataSource(ds.key)}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg text-xs font-medium transition-all",
+                          "flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg text-xs font-medium transition-all",
                           dataSource === ds.key ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                         )}>
                         <ds.icon className="h-3.5 w-3.5" /> {ds.label}
