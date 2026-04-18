@@ -22,6 +22,8 @@ import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseD
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
 import { downloadStarterCsv } from "@/lib/csv-starter";
+import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
