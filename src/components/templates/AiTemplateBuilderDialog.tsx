@@ -116,7 +116,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter, platform },
+        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -126,7 +126,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       setGeneratedContent(data.content);
       setGeneratedName(data.suggestedName);
       setStep("review");
-      toast({ title: "Template generated", description: "Review, edit and save your template." });
+      toast({ title: "Template generated", description: "Niche-relevant images included. Review, edit and save." });
     },
     onError: (err: Error) => {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
