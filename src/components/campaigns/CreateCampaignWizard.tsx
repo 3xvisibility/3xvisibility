@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
+import { downloadStarterCsv } from "@/lib/csv-starter";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -709,6 +710,33 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         <input type="file" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="absolute inset-0 opacity-0 cursor-pointer"
                           onChange={(e) => { const f = e.target.files?.[0]; if (f) processCsvFile(f); }} />
                       </div>
+
+                      {/* Don't have a CSV? Download starter */}
+                      {!csvFile && templates.length > 0 && (
+                        <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-3 flex items-start gap-3">
+                          <Lightbulb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            <p className="text-xs font-medium">Don't have a CSV ready?</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Pick a template and we'll generate a starter file with the right columns and an example row. Just fill it in Excel/Sheets and upload it back.
+                            </p>
+                            <div className="flex items-center gap-2 pt-1">
+                              <Select
+                                value={selectedTemplate || ""}
+                                onValueChange={(v) => {
+                                  setSelectedTemplate(v);
+                                  const tpl = templates.find(t => t.id === v);
+                                  if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs rounded-lg flex-1"><SelectValue placeholder="Choose template to download starter" /></SelectTrigger>
+                                <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>)}</SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {csvData.length > 0 && (
                         <div className="rounded-xl border border-border bg-muted/30 p-3">
                           <p className="text-xs font-medium mb-2">Detected Columns</p>
@@ -815,21 +843,47 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     )}
                   </div>
                   {selectedTemplate && effectiveCsvHeaders.length > 0 && (
-                    <MappingStep
-                      csvHeaders={effectiveCsvHeaders}
-                      templateVars={selectedTemplateVars}
-                      campaignTypes={campaignTypes}
-                      websiteType={websites.find(w => w.id === (selectedWebsite || websiteForPages))?.type}
-                      manualMappings={manualMappings}
-                      setManualMappings={setManualMappings}
-                      customValues={customValues}
-                      setCustomValues={setCustomValues}
-                      transforms={transforms}
-                      setTransforms={setTransforms}
-                      targetFieldMappings={targetFieldMappings}
-                      setTargetFieldMappings={setTargetFieldMappings}
-                      workspaceId={wsId!}
-                    />
+                    <>
+                      {/* Smart auto-flow status banner */}
+                      {variableMapping && (() => {
+                        const total = variableMapping.matched.length;
+                        const auto = variableMapping.matched.filter(m => m.column).length;
+                        const allMatched = total > 0 && auto === total;
+                        return allMatched ? (
+                          <div className="rounded-xl border border-success/30 bg-success/5 p-3 flex items-start gap-2.5">
+                            <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              <p className="text-xs font-medium text-success">All {total} variables auto-matched 🎉</p>
+                              <p className="text-[11px] text-muted-foreground">Your CSV columns line up perfectly with this template. You can continue straight to the next step.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 flex items-start gap-2.5">
+                            <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1 space-y-0.5">
+                              <p className="text-xs font-medium text-warning-foreground">{auto} of {total} matched · Confirm the rest below</p>
+                              <p className="text-[11px] text-muted-foreground">A few variables need your attention — pick a CSV column or set a custom value.</p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      <MappingStep
+                        csvHeaders={effectiveCsvHeaders}
+                        templateVars={selectedTemplateVars}
+                        campaignTypes={campaignTypes}
+                        websiteType={websites.find(w => w.id === (selectedWebsite || websiteForPages))?.type}
+                        manualMappings={manualMappings}
+                        setManualMappings={setManualMappings}
+                        customValues={customValues}
+                        setCustomValues={setCustomValues}
+                        transforms={transforms}
+                        setTransforms={setTransforms}
+                        targetFieldMappings={targetFieldMappings}
+                        setTargetFieldMappings={setTargetFieldMappings}
+                        workspaceId={wsId!}
+                      />
+                    </>
                   )}
                 </>
               )}
