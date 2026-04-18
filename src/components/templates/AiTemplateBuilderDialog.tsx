@@ -375,9 +375,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               size="lg"
             >
               {generateMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating template + niche images (30-60s)...</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating template...</>
               ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Generate Template with Niche Images</>
+                <><Sparkles className="mr-2 h-4 w-4" /> Generate Template</>
               )}
             </Button>
             {(!businessType || !niche.trim()) && (
@@ -476,9 +476,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               size="lg"
             >
               {aiContentMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating content + niche images (30-60s)...</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating content...</>
               ) : (
-                <><Zap className="mr-2 h-4 w-4" /> Generate Content with Niche Images</>
+                <><Zap className="mr-2 h-4 w-4" /> Generate Content</>
               )}
             </Button>
             {(!aiKeywords.trim() || !aiNiche.trim()) && (
