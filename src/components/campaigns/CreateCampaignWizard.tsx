@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
+import { downloadStarterCsv } from "@/lib/csv-starter";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -709,6 +710,33 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         <input type="file" accept=".csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,application/json,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="absolute inset-0 opacity-0 cursor-pointer"
                           onChange={(e) => { const f = e.target.files?.[0]; if (f) processCsvFile(f); }} />
                       </div>
+
+                      {/* Don't have a CSV? Download starter */}
+                      {!csvFile && templates.length > 0 && (
+                        <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-3 flex items-start gap-3">
+                          <Lightbulb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0 space-y-1.5">
+                            <p className="text-xs font-medium">Don't have a CSV ready?</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Pick a template and we'll generate a starter file with the right columns and an example row. Just fill it in Excel/Sheets and upload it back.
+                            </p>
+                            <div className="flex items-center gap-2 pt-1">
+                              <Select
+                                value={selectedTemplate || ""}
+                                onValueChange={(v) => {
+                                  setSelectedTemplate(v);
+                                  const tpl = templates.find(t => t.id === v);
+                                  if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs rounded-lg flex-1"><SelectValue placeholder="Choose template to download starter" /></SelectTrigger>
+                                <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>)}</SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {csvData.length > 0 && (
                         <div className="rounded-xl border border-border bg-muted/30 p-3">
                           <p className="text-xs font-medium mb-2">Detected Columns</p>
