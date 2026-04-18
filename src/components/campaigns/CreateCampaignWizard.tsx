@@ -22,6 +22,8 @@ import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseD
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
 import { downloadStarterCsv } from "@/lib/csv-starter";
+import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +34,7 @@ import {
   Plus, Upload, ArrowRight, Check, AlertTriangle, Play, Loader2, Eye,
   MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon,
   Settings2, Globe, Database as DatabaseIcon, Sparkles, Wand2, Info,
-  CheckCircle2, XCircle, Lightbulb, ArrowLeft,
+  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -78,6 +80,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [aiPageCount, setAiPageCount] = useState(20);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiGeneratedRows, setAiGeneratedRows] = useState<Record<string, string>[]>([]);
+  const [aiPresets, setAiPresets] = useState<AiPreset[]>(() => readAiPresets());
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
+  const [savePresetOpen, setSavePresetOpen] = useState(false);
+  const [presetNameDraft, setPresetNameDraft] = useState("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvRawText, setCsvRawText] = useState("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -568,6 +574,49 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setManualMappings({}); setCustomValues({}); setTransforms({}); setTargetFieldMappings({});
     setAiNameSuggestions([]); setAiReadinessCheck(null);
     setAiBusiness(""); setAiNiche(""); setAiServiceProduct(""); setAiPageCount(20); setAiGeneratedRows([]);
+    setActivePresetId(null);
+  };
+
+  // --- AI preset helpers ---
+  const applyPreset = (preset: AiPreset) => {
+    setAiBusiness(preset.business);
+    setAiNiche(preset.niche);
+    setAiServiceProduct(preset.service);
+    setAiPageCount(preset.pageCount);
+    if (preset.language) setCampaignLanguage(preset.language);
+    if (preset.country) setCampaignCountry(preset.country);
+    setActivePresetId(preset.id);
+    toast({ title: "Preset loaded", description: preset.name });
+  };
+
+  const handleSavePreset = () => {
+    const name = presetNameDraft.trim();
+    if (!name) {
+      toast({ title: "Name required", description: "Give your preset a memorable name.", variant: "destructive" });
+      return;
+    }
+    const saved = saveAiPreset({
+      id: activePresetId ?? undefined,
+      name,
+      business: aiBusiness,
+      niche: aiNiche,
+      service: aiServiceProduct,
+      pageCount: aiPageCount,
+      language: campaignLanguage,
+      country: campaignCountry,
+    });
+    setAiPresets(readAiPresets());
+    setActivePresetId(saved.id);
+    setSavePresetOpen(false);
+    setPresetNameDraft("");
+    toast({ title: "Preset saved", description: `"${saved.name}" is ready to reload anytime.` });
+  };
+
+  const handleDeletePreset = (id: string, name: string) => {
+    deleteAiPreset(id);
+    setAiPresets(readAiPresets());
+    if (activePresetId === id) setActivePresetId(null);
+    toast({ title: "Preset removed", description: name });
   };
 
   // Readiness stats for review step
@@ -868,10 +917,85 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-3 space-y-3">
                             <div className="flex items-start gap-2">
                               <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                              <div className="text-[11px] text-muted-foreground">
+                              <div className="text-[11px] text-muted-foreground flex-1">
                                 Tell us about your business and we'll fill the <strong className="text-foreground">{selectedTemplateVars.length}</strong> template variables for as many pages as you need.
                               </div>
                             </div>
+
+                            {/* Presets toolbar */}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button type="button" variant="outline" size="sm" className="h-8 rounded-lg text-[11px] gap-1.5">
+                                    <Bookmark className="h-3.5 w-3.5" />
+                                    {activePresetId
+                                      ? aiPresets.find((p) => p.id === activePresetId)?.name ?? "Presets"
+                                      : `Presets${aiPresets.length ? ` (${aiPresets.length})` : ""}`}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="w-72">
+                                  <DropdownMenuLabel className="text-[11px]">Saved AI presets</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  {aiPresets.length === 0 ? (
+                                    <div className="px-2 py-3 text-[11px] text-muted-foreground">
+                                      No presets yet. Fill the fields below and click "Save preset" to reuse later.
+                                    </div>
+                                  ) : (
+                                    aiPresets.map((preset) => (
+                                      <DropdownMenuItem
+                                        key={preset.id}
+                                        onSelect={(e) => { e.preventDefault(); applyPreset(preset); }}
+                                        className="flex items-start gap-2 group"
+                                      >
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-xs font-medium truncate">{preset.name}</div>
+                                          <div className="text-[10px] text-muted-foreground truncate">
+                                            {[preset.business, preset.niche, preset.service].filter(Boolean).join(" • ") || "Empty preset"}
+                                          </div>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => { e.stopPropagation(); handleDeletePreset(preset.id, preset.name); }}
+                                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                                          aria-label={`Delete ${preset.name}`}
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                      </DropdownMenuItem>
+                                    ))
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 rounded-lg text-[11px] gap-1.5"
+                                onClick={() => {
+                                  const active = activePresetId ? aiPresets.find((p) => p.id === activePresetId) : null;
+                                  setPresetNameDraft(active?.name ?? aiBusiness ?? "");
+                                  setSavePresetOpen(true);
+                                }}
+                                disabled={!aiBusiness && !aiNiche && !aiServiceProduct}
+                              >
+                                <Save className="h-3.5 w-3.5" />
+                                {activePresetId ? "Update preset" : "Save preset"}
+                              </Button>
+
+                              {activePresetId && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 rounded-lg text-[11px] text-muted-foreground"
+                                  onClick={() => setActivePresetId(null)}
+                                >
+                                  Clear
+                                </Button>
+                              )}
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                               <div>
                                 <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Business / Brand</Label>
@@ -1301,6 +1425,46 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         </DialogContent>
       </Dialog>
       <TestPagePreviewDialog open={testPreviewOpen} onOpenChange={setTestPreviewOpen} result={testPreviewResult} />
+
+      <Dialog open={savePresetOpen} onOpenChange={setSavePresetOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              {activePresetId ? "Update preset" : "Save AI preset"}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Reuse this business / niche / service combo across future campaigns with one click.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs mb-1.5 block">Preset name</Label>
+              <Input
+                autoFocus
+                value={presetNameDraft}
+                onChange={(e) => setPresetNameDraft(e.target.value)}
+                placeholder="e.g. Plumbing — US cities"
+                className="h-9 rounded-lg text-sm"
+                onKeyDown={(e) => { if (e.key === "Enter") handleSavePreset(); }}
+              />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-2 space-y-1 text-[11px]">
+              <div className="text-muted-foreground">Will save:</div>
+              <div><span className="text-muted-foreground">Business:</span> {aiBusiness || <em className="text-muted-foreground">empty</em>}</div>
+              <div><span className="text-muted-foreground">Niche:</span> {aiNiche || <em className="text-muted-foreground">empty</em>}</div>
+              <div><span className="text-muted-foreground">Service:</span> {aiServiceProduct || <em className="text-muted-foreground">empty</em>}</div>
+              <div><span className="text-muted-foreground">Pages:</span> {aiPageCount} • {campaignLanguage.toUpperCase()} • {campaignCountry}</div>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" size="sm" onClick={() => setSavePresetOpen(false)}>Cancel</Button>
+              <Button type="button" size="sm" onClick={handleSavePreset} className="gap-1.5">
+                <Save className="h-3.5 w-3.5" />
+                {activePresetId ? "Update" : "Save preset"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
