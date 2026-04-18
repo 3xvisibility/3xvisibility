@@ -567,6 +567,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setSelectedPageIds(new Set()); setWebsitePagesSearch("");
     setManualMappings({}); setCustomValues({}); setTransforms({}); setTargetFieldMappings({});
     setAiNameSuggestions([]); setAiReadinessCheck(null);
+    setAiBusiness(""); setAiNiche(""); setAiServiceProduct(""); setAiPageCount(20); setAiGeneratedRows([]);
   };
 
   // Readiness stats for review step
