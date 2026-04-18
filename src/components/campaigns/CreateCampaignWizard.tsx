@@ -212,8 +212,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return { headers, rows };
   }, [dataSource, selectedPageIds, websitePages]);
 
-  const effectiveCsvData = dataSource === "website" ? websitePagesAsCsv.rows : dataSource === "locations" ? locationData : csvData;
-  const effectiveCsvHeaders = dataSource === "website" ? websitePagesAsCsv.headers : dataSource === "locations" ? locationHeaders : csvHeaders;
+  const effectiveCsvData =
+    dataSource === "website" ? websitePagesAsCsv.rows :
+    dataSource === "locations" ? locationData :
+    dataSource === "ai" ? aiGeneratedRows :
+    csvData;
+  const effectiveCsvHeaders =
+    dataSource === "website" ? websitePagesAsCsv.headers :
+    dataSource === "locations" ? locationHeaders :
+    dataSource === "ai" ? (selectedTemplateVars.length > 0 ? selectedTemplateVars : Object.keys(aiGeneratedRows[0] || {})) :
+    csvHeaders;
 
   const selectedTemplateVars = useMemo(() => {
     if (!selectedTemplate) return [];
