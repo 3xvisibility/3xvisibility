@@ -1445,16 +1445,17 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Process {{AI_IMAGE:prompt}} blocks — generate unique images per page
-          if (hasAiImageBlocks && LOVABLE_API_KEY) {
+          // Process {{AI_IMAGE:prompt}} blocks — replace with FREE Unsplash stock photos (zero AI cost)
+          if (hasAiImageBlocks) {
             const currentAiImageBlocks = extractAiImageBlocks(pageContent);
             for (let imgIdx = 0; imgIdx < currentAiImageBlocks.length; imgIdx++) {
               const block = currentAiImageBlocks[imgIdx];
               try {
-                const imageUrl = await generateAiImage(
-                  block.prompt, LOVABLE_API_KEY, supabase,
-                  campaign_id, processedCount, imgIdx
+                const kw = encodeURIComponent(
+                  String(block.prompt || "").split(/[\s,]+/).filter(Boolean).slice(0, 4).join(",") || "business",
                 );
+                const sig = Math.floor(Math.random() * 1_000_000);
+                const imageUrl = `https://source.unsplash.com/1200x700/?${kw}&sig=${sig}`;
                 const altText = block.prompt.replace(/"/g, '&quot;').slice(0, 200);
                 pageContent = pageContent.replace(
                   block.fullMatch,
@@ -1462,11 +1463,10 @@ Deno.serve(async (req) => {
   <img src="${imageUrl}" alt="${altText}" style="width:100%;height:auto;border-radius:8px;" loading="lazy">
 </div>`
                 );
-                aiGenerationsUsed++;
               } catch (imgErr: any) {
                 pageContent = pageContent.replace(
                   block.fullMatch,
-                  `<em style="color:#dc2626;">[AI Image failed: ${imgErr.message}]</em>`
+                  `<em style="color:#dc2626;">[Image failed: ${imgErr.message}]</em>`
                 );
               }
             }
