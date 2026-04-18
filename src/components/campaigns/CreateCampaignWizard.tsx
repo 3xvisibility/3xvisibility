@@ -212,6 +212,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return { headers, rows };
   }, [dataSource, selectedPageIds, websitePages]);
 
+  const selectedTemplateVars = useMemo(() => {
+    if (!selectedTemplate) return [];
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    if (!tpl?.variables) return [];
+    return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
+  }, [selectedTemplate, templates]);
+
   const effectiveCsvData =
     dataSource === "website" ? websitePagesAsCsv.rows :
     dataSource === "locations" ? locationData :
@@ -222,13 +229,6 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     dataSource === "locations" ? locationHeaders :
     dataSource === "ai" ? (selectedTemplateVars.length > 0 ? selectedTemplateVars : Object.keys(aiGeneratedRows[0] || {})) :
     csvHeaders;
-
-  const selectedTemplateVars = useMemo(() => {
-    if (!selectedTemplate) return [];
-    const tpl = templates.find(t => t.id === selectedTemplate);
-    if (!tpl?.variables) return [];
-    return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
-  }, [selectedTemplate, templates]);
 
   const variableMapping = useMemo(() => {
     const headers = effectiveCsvHeaders;
