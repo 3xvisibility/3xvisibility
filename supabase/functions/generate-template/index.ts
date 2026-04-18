@@ -124,6 +124,13 @@ ${platformRule}`;
     // Strip markdown fences if present
     content = content.replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
+    // Replace generic placeholder images with niche-relevant AI-generated images
+    try {
+      content = await injectNicheImages(content, { niche, businessType, keywords }, LOVABLE_API_KEY);
+    } catch (imgErr) {
+      console.error("Niche image injection failed (non-fatal):", imgErr);
+    }
+
     // Extract variables — only simple {identifier} tokens, skip CSS blocks
     const DESIGN_VARS = new Set([
       "font_family","font_size","font_weight","font_color","font_style",
