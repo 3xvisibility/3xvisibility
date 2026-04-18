@@ -356,16 +356,21 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
             <Button
               onClick={() => generateMutation.mutate(buildPrompt())}
-              disabled={(!businessType && !niche) || generateMutation.isPending}
+              disabled={!businessType || !niche.trim() || generateMutation.isPending}
               className="w-full"
               size="lg"
             >
               {generateMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating your template...</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating template + niche images (30-60s)...</>
               ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Generate Template</>
+                <><Sparkles className="mr-2 h-4 w-4" /> Generate Template with Niche Images</>
               )}
             </Button>
+            {(!businessType || !niche.trim()) && (
+              <p className="text-[11px] text-center text-muted-foreground">
+                ⚠️ Please pick a template type and enter your business niche so AI can generate matching images.
+              </p>
+            )}
           </TabsContent>
 
           {/* ─── Quick Content Mode ─── */}
