@@ -91,7 +91,8 @@ ${platformRule}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          // Cost optimization: use cheaper flash model — sufficient for HTML/CSS template scaffolding
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },
@@ -109,7 +110,7 @@ ${platformRule}`;
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add funds." }),
+          JSON.stringify({ error: "AI credits exhausted. Please top up in Settings → Cloud & AI balance, then try again." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
