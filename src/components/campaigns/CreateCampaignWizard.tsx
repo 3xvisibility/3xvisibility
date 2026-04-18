@@ -574,6 +574,49 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setManualMappings({}); setCustomValues({}); setTransforms({}); setTargetFieldMappings({});
     setAiNameSuggestions([]); setAiReadinessCheck(null);
     setAiBusiness(""); setAiNiche(""); setAiServiceProduct(""); setAiPageCount(20); setAiGeneratedRows([]);
+    setActivePresetId(null);
+  };
+
+  // --- AI preset helpers ---
+  const applyPreset = (preset: AiPreset) => {
+    setAiBusiness(preset.business);
+    setAiNiche(preset.niche);
+    setAiServiceProduct(preset.service);
+    setAiPageCount(preset.pageCount);
+    if (preset.language) setCampaignLanguage(preset.language);
+    if (preset.country) setCampaignCountry(preset.country);
+    setActivePresetId(preset.id);
+    toast({ title: "Preset loaded", description: preset.name });
+  };
+
+  const handleSavePreset = () => {
+    const name = presetNameDraft.trim();
+    if (!name) {
+      toast({ title: "Name required", description: "Give your preset a memorable name.", variant: "destructive" });
+      return;
+    }
+    const saved = saveAiPreset({
+      id: activePresetId ?? undefined,
+      name,
+      business: aiBusiness,
+      niche: aiNiche,
+      service: aiServiceProduct,
+      pageCount: aiPageCount,
+      language: campaignLanguage,
+      country: campaignCountry,
+    });
+    setAiPresets(readAiPresets());
+    setActivePresetId(saved.id);
+    setSavePresetOpen(false);
+    setPresetNameDraft("");
+    toast({ title: "Preset saved", description: `"${saved.name}" is ready to reload anytime.` });
+  };
+
+  const handleDeletePreset = (id: string, name: string) => {
+    deleteAiPreset(id);
+    setAiPresets(readAiPresets());
+    if (activePresetId === id) setActivePresetId(null);
+    toast({ title: "Preset removed", description: name });
   };
 
   // Readiness stats for review step
