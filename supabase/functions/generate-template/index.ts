@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { injectNicheImages } from "../_shared/niche-images.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, includeHeaderFooter, platform } = await req.json();
+    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords } = await req.json();
     if (!prompt || typeof prompt !== "string") {
       return new Response(JSON.stringify({ error: "A prompt is required." }), {
         status: 400,
@@ -122,6 +123,13 @@ ${platformRule}`;
 
     // Strip markdown fences if present
     content = content.replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+
+    // Replace generic placeholder images with niche-relevant AI-generated images
+    try {
+      content = await injectNicheImages(content, { niche, businessType, keywords }, LOVABLE_API_KEY);
+    } catch (imgErr) {
+      console.error("Niche image injection failed (non-fatal):", imgErr);
+    }
 
     // Extract variables — only simple {identifier} tokens, skip CSS blocks
     const DESIGN_VARS = new Set([

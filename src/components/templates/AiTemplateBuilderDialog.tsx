@@ -116,7 +116,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter, platform },
+        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -126,7 +126,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       setGeneratedContent(data.content);
       setGeneratedName(data.suggestedName);
       setStep("review");
-      toast({ title: "Template generated", description: "Review, edit and save your template." });
+      toast({ title: "Template generated", description: "Niche-relevant images included. Review, edit and save." });
     },
     onError: (err: Error) => {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
@@ -267,12 +267,18 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-semibold">Business niche / industry</Label>
+                <Label className="text-sm font-semibold flex items-center gap-1">
+                  Business niche / products / services <span className="text-destructive">*</span>
+                </Label>
                 <Input
-                  placeholder="e.g., Dental clinic, Organic skincare, Plumbing..."
+                  placeholder="e.g., Dental clinic, Organic skincare, Plumbing repair, Yoga classes..."
                   value={niche}
                   onChange={(e) => setNiche(e.target.value)}
+                  className={!niche ? "border-primary/40 ring-1 ring-primary/20" : ""}
                 />
+                <p className="text-[11px] text-muted-foreground">
+                  🎨 AI will generate niche-relevant images matching your business — be specific!
+                </p>
               </div>
             </div>
 
@@ -350,16 +356,21 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
             <Button
               onClick={() => generateMutation.mutate(buildPrompt())}
-              disabled={(!businessType && !niche) || generateMutation.isPending}
+              disabled={!businessType || !niche.trim() || generateMutation.isPending}
               className="w-full"
               size="lg"
             >
               {generateMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating your template...</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating template + niche images (30-60s)...</>
               ) : (
-                <><Sparkles className="mr-2 h-4 w-4" /> Generate Template</>
+                <><Sparkles className="mr-2 h-4 w-4" /> Generate Template with Niche Images</>
               )}
             </Button>
+            {(!businessType || !niche.trim()) && (
+              <p className="text-[11px] text-center text-muted-foreground">
+                ⚠️ Please pick a template type and enter your business niche so AI can generate matching images.
+              </p>
+            )}
           </TabsContent>
 
           {/* ─── Quick Content Mode ─── */}
@@ -371,13 +382,16 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Business niche / industry (optional)</Label>
+              <Label className="text-sm font-semibold flex items-center gap-1">
+                Business niche / products / services <span className="text-destructive">*</span>
+              </Label>
               <Input
                 value={aiNiche}
                 onChange={(e) => setAiNiche(e.target.value)}
                 placeholder="e.g., Plumbing services, Online yoga classes, Vegan bakery..."
+                className={!aiNiche ? "border-primary/40 ring-1 ring-primary/20" : ""}
               />
-              <p className="text-[11px] text-muted-foreground">Helps AI tailor the design and copy to your industry.</p>
+              <p className="text-[11px] text-muted-foreground">🎨 AI will generate niche-relevant images matching your business — be specific.</p>
             </div>
 
             <div className="space-y-1.5">
@@ -443,16 +457,21 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
             <Button
               onClick={() => aiContentMutation.mutate({ keywords: aiKeywords, contentType: aiContentType, niche: aiNiche })}
-              disabled={!aiKeywords.trim() || aiContentMutation.isPending}
+              disabled={!aiKeywords.trim() || !aiNiche.trim() || aiContentMutation.isPending}
               className="w-full"
               size="lg"
             >
               {aiContentMutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating content...</>
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating content + niche images (30-60s)...</>
               ) : (
-                <><Zap className="mr-2 h-4 w-4" /> Generate Content</>
+                <><Zap className="mr-2 h-4 w-4" /> Generate Content with Niche Images</>
               )}
             </Button>
+            {(!aiKeywords.trim() || !aiNiche.trim()) && (
+              <p className="text-[11px] text-center text-muted-foreground">
+                ⚠️ Please enter your niche and keywords so AI can generate matching images.
+              </p>
+            )}
           </TabsContent>
         </Tabs>
         )}
