@@ -70,7 +70,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const campaignType = campaignTypes[0] || "seo";
 
   // Data source
-  const [dataSource, setDataSource] = useState<"csv" | "website" | "locations">("csv");
+  const [dataSource, setDataSource] = useState<"csv" | "ai" | "website" | "locations">("csv");
+  // AI bulk row generation
+  const [aiBusiness, setAiBusiness] = useState("");
+  const [aiNiche, setAiNiche] = useState("");
+  const [aiServiceProduct, setAiServiceProduct] = useState("");
+  const [aiPageCount, setAiPageCount] = useState(20);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGeneratedRows, setAiGeneratedRows] = useState<Record<string, string>[]>([]);
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvRawText, setCsvRawText] = useState("");
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
