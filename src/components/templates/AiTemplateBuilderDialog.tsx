@@ -382,13 +382,16 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Business niche / industry (optional)</Label>
+              <Label className="text-sm font-semibold flex items-center gap-1">
+                Business niche / products / services <span className="text-destructive">*</span>
+              </Label>
               <Input
                 value={aiNiche}
                 onChange={(e) => setAiNiche(e.target.value)}
                 placeholder="e.g., Plumbing services, Online yoga classes, Vegan bakery..."
+                className={!aiNiche ? "border-primary/40 ring-1 ring-primary/20" : ""}
               />
-              <p className="text-[11px] text-muted-foreground">Helps AI tailor the design and copy to your industry.</p>
+              <p className="text-[11px] text-muted-foreground">🎨 AI will generate niche-relevant images matching your business — be specific.</p>
             </div>
 
             <div className="space-y-1.5">
