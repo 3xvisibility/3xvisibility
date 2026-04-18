@@ -34,7 +34,7 @@ import {
   Plus, Upload, ArrowRight, Check, AlertTriangle, Play, Loader2, Eye,
   MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon,
   Settings2, Globe, Database as DatabaseIcon, Sparkles, Wand2, Info,
-  CheckCircle2, XCircle, Lightbulb, ArrowLeft,
+  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save,
 } from "lucide-react";
 
 const LANGUAGES = [
