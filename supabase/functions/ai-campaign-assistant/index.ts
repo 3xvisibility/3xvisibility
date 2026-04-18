@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        // Cheap model — assistant tips/suggestions don't need a heavy model
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: prompt.system },
           { role: "user", content: prompt.user },

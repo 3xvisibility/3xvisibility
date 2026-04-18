@@ -125,7 +125,11 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        // Lighter model for assistant suggestions/keywords/FAQ — saves credits.
+        // Heavy rewrites still benefit from a stronger model.
+        model: action === "full_rewrite" || action === "rewrite"
+          ? "google/gemini-3-flash-preview"
+          : "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: prompt.system },
           { role: "user", content: prompt.user },

@@ -68,7 +68,8 @@ function shouldMirrorToElementor(
   return normalized.includes("elementor") || normalized.includes("data-elementor") || normalized.includes("e-con");
 }
 
-const OPTIMIZATION_MODEL = "google/gemini-2.5-flash";
+// Lite model is enough for SEO meta + minor text tweaks; saves significant credits.
+const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
 const MAX_QUALITY_REPAIR_ATTEMPTS = 2;
 
 function parseOptimizationResult(aiData: any): Record<string, any> {
