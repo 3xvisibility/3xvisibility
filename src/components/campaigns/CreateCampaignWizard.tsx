@@ -1425,6 +1425,46 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         </DialogContent>
       </Dialog>
       <TestPagePreviewDialog open={testPreviewOpen} onOpenChange={setTestPreviewOpen} result={testPreviewResult} />
+
+      <Dialog open={savePresetOpen} onOpenChange={setSavePresetOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              {activePresetId ? "Update preset" : "Save AI preset"}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Reuse this business / niche / service combo across future campaigns with one click.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs mb-1.5 block">Preset name</Label>
+              <Input
+                autoFocus
+                value={presetNameDraft}
+                onChange={(e) => setPresetNameDraft(e.target.value)}
+                placeholder="e.g. Plumbing — US cities"
+                className="h-9 rounded-lg text-sm"
+                onKeyDown={(e) => { if (e.key === "Enter") handleSavePreset(); }}
+              />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-2 space-y-1 text-[11px]">
+              <div className="text-muted-foreground">Will save:</div>
+              <div><span className="text-muted-foreground">Business:</span> {aiBusiness || <em className="text-muted-foreground">empty</em>}</div>
+              <div><span className="text-muted-foreground">Niche:</span> {aiNiche || <em className="text-muted-foreground">empty</em>}</div>
+              <div><span className="text-muted-foreground">Service:</span> {aiServiceProduct || <em className="text-muted-foreground">empty</em>}</div>
+              <div><span className="text-muted-foreground">Pages:</span> {aiPageCount} • {campaignLanguage.toUpperCase()} • {campaignCountry}</div>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" size="sm" onClick={() => setSavePresetOpen(false)}>Cancel</Button>
+              <Button type="button" size="sm" onClick={handleSavePreset} className="gap-1.5">
+                <Save className="h-3.5 w-3.5" />
+                {activePresetId ? "Update" : "Save preset"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
