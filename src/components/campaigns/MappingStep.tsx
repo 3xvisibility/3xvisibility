@@ -532,10 +532,31 @@ export function MappingStep({
             <div key={variable} className="rounded-lg border border-border/60 bg-background/50 p-2.5 sm:p-3">
               {/* Mobile: stacked, Desktop: grid */}
               <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr_140px_100px] gap-2 sm:items-center">
-                {/* Variable name */}
-                <Badge variant="outline" className="font-mono shrink-0 rounded-lg text-[11px] py-1 px-2 w-fit" title={`{${variable}}`}>
-                  {`{${variable}}`}
-                </Badge>
+                {/* Variable name with inline help */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Badge variant="outline" className="font-mono shrink-0 rounded-lg text-[11px] py-1 px-2 w-fit truncate" title={`{${variable}}`}>
+                    {`{${variable}}`}
+                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="shrink-0 opacity-50 hover:opacity-100 transition-opacity">
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs text-xs space-y-1.5">
+                      <p className="font-medium">{`{${variable}}`} placeholder</p>
+                      <p className="text-muted-foreground">
+                        This will be replaced with data on every generated page.
+                      </p>
+                      <div className="pt-1 border-t border-border/50">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Example</p>
+                        <p className="font-mono text-[11px]">
+                          CSV column <span className="text-success">"{csvHeaders.find(h => h.toLowerCase() === variable.toLowerCase()) || variable}"</span> → <span className="text-primary">{`{${variable}}`}</span>
+                        </p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
 
                 <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 hidden sm:block" />
 
