@@ -1,103 +1,82 @@
-// Shared helper to generate niche-relevant images via Lovable AI image model
-// and replace generic placeholder URLs (picsum.photos) and {{AI_IMAGE:...}} blocks
-// in generated HTML templates.
+// Replaces generic placeholder URLs (picsum.photos) and {{AI_IMAGE:...}} blocks
+// in generated HTML templates with FREE Unsplash stock photos based on the
+// business niche/keywords. NO AI credits are consumed.
+//
+// Unsplash Source API: https://source.unsplash.com/<size>/?<keywords>
+// - Public, free, no auth required.
+// - Returns a different relevant photo each call for the given query.
 
-const IMAGE_MODEL = "google/gemini-2.5-flash-image";
-
-async function generateImage(prompt: string, apiKey: string): Promise<string | null> {
-  try {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: IMAGE_MODEL,
-        messages: [{ role: "user", content: prompt }],
-        modalities: ["image", "text"],
-      }),
-    });
-    if (!res.ok) {
-      console.error("Image gen failed:", res.status, await res.text());
-      return null;
-    }
-    const data = await res.json();
-    const url = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    return url || null;
-  } catch (e) {
-    console.error("Image gen error:", e);
-    return null;
-  }
+function buildUnsplashUrl(keywords: string, width = 1200, height = 600): string {
+  const q = encodeURIComponent(
+    keywords
+      .split(/[\s,]+/)
+      .filter(Boolean)
+      .slice(0, 4)
+      .join(",")
+  );
+  // Add a random seed to avoid the browser cache returning the same image for every slot
+  const sig = Math.floor(Math.random() * 1_000_000);
+  return `https://source.unsplash.com/${width}x${height}/?${q}&sig=${sig}`;
 }
 
-/**
- * Build a list of contextual image prompts based on the business context
- * and the sections that exist in the HTML.
- */
-function buildImagePrompts(
-  context: { niche?: string; businessType?: string; keywords?: string },
-  count: number,
-): string[] {
-  const niche = context.niche?.trim() || context.keywords?.split(",")[0]?.trim() || "modern business";
-  const type = context.businessType?.trim() || "landing page";
-  const base = `Professional, high-quality photograph for a ${type} about "${niche}". Clean composition, natural lighting, modern editorial style, no text overlays, no watermarks, photorealistic.`;
+function buildKeywordPool(context: {
+  niche?: string;
+  businessType?: string;
+  keywords?: string;
+}): string[] {
+  const niche = context.niche?.trim() || "";
+  const type = context.businessType?.trim() || "";
+  const kws = context.keywords?.trim() || "";
+  const primary = [niche, type, kws].filter(Boolean).join(" ").trim() || "modern business";
 
-  const variants = [
-    `Hero shot — ${base} Wide cinematic banner showing the core subject of "${niche}" in action.`,
-    `Service / product detail — ${base} Close-up showing the "${niche}" service or product being delivered or used.`,
-    `Happy customer / result — ${base} Authentic person experiencing or benefiting from "${niche}".`,
-    `Workspace / environment — ${base} The professional environment, tools, or setting where "${niche}" happens.`,
-    `Detail / texture shot — ${base} Atmospheric supporting image relevant to "${niche}".`,
+  return [
+    `${primary} hero professional`,
+    `${primary} service`,
+    `${primary} team workspace`,
+    `${primary} product detail`,
+    `${primary} happy customer`,
+    `${primary} environment`,
   ];
-  return variants.slice(0, Math.max(1, Math.min(count, variants.length)));
 }
 
 /**
  * Replace generic picsum.photos URLs and {{AI_IMAGE:...}} blocks in the
- * given HTML with niche-relevant AI-generated images. Reuses generated
- * images in a round-robin if there are more placeholders than prompts.
+ * given HTML with niche-relevant FREE Unsplash stock photos.
+ *
+ * Signature kept compatible with the previous AI-based version so callers
+ * (generate-template, generate-seo-content) don't need to change.
  */
 export async function injectNicheImages(
   html: string,
   context: { niche?: string; businessType?: string; keywords?: string },
-  apiKey: string,
+  _apiKey: string,
 ): Promise<string> {
   if (!html) return html;
 
-  // Count distinct picsum URLs (cap at a reasonable number to control cost / payload)
   const picsumMatches = [...html.matchAll(/https:\/\/picsum\.photos\/[^"\s')]+/g)];
   const aiImageMatches = [...html.matchAll(/\{\{AI_IMAGE:([^}]+)\}\}/g)];
 
-  const totalPlaceholders = picsumMatches.length + aiImageMatches.length;
-  if (totalPlaceholders === 0) return html;
+  if (picsumMatches.length === 0 && aiImageMatches.length === 0) return html;
 
-  // Generate up to 3 base images for the niche to keep latency / payload reasonable
-  const promptCount = Math.min(3, Math.max(1, totalPlaceholders));
-  const prompts = buildImagePrompts(context, promptCount);
-
-  console.log(`Generating ${prompts.length} niche image(s) for: ${context.niche || context.businessType || context.keywords}`);
-
-  const generated: string[] = [];
-  for (const p of prompts) {
-    const url = await generateImage(p, apiKey);
-    if (url) generated.push(url);
-  }
-
-  if (generated.length === 0) {
-    console.warn("No niche images generated, leaving placeholders intact");
-    return html;
-  }
+  const pool = buildKeywordPool(context);
+  console.log(
+    `Replacing ${picsumMatches.length + aiImageMatches.length} placeholder image(s) with Unsplash stock for: ${context.niche || context.businessType || context.keywords}`,
+  );
 
   let out = html;
   let i = 0;
 
-  // Replace each unique picsum URL with a generated one (round-robin)
+  // Replace each unique picsum URL with a unique Unsplash URL (so each slot gets a different photo)
   const seen = new Map<string, string>();
   for (const m of picsumMatches) {
     const original = m[0];
     if (!seen.has(original)) {
-      seen.set(original, generated[i % generated.length]);
+      // Try to honor any width/height in the original picsum URL (e.g., picsum.photos/800/400)
+      const dim = original.match(/picsum\.photos\/(\d+)(?:\/(\d+))?/);
+      const w = dim?.[1] ? Math.min(parseInt(dim[1], 10), 1600) : 1200;
+      const h = dim?.[2] ? Math.min(parseInt(dim[2], 10), 1200) : Math.round(w * 0.55);
+      const kw = pool[i % pool.length];
+      seen.set(original, buildUnsplashUrl(kw, w, h));
       i++;
     }
   }
@@ -105,11 +84,13 @@ export async function injectNicheImages(
     out = out.split(orig).join(replacement);
   }
 
-  // Replace {{AI_IMAGE:...}} blocks individually so each gets a distinct image
-  out = out.replace(/\{\{AI_IMAGE:[^}]+\}\}/g, () => {
-    const url = generated[i % generated.length];
+  // Replace {{AI_IMAGE:...}} blocks. The instruction inside the block becomes
+  // additional keywords appended to the niche so the photo is more relevant.
+  out = out.replace(/\{\{AI_IMAGE:([^}]+)\}\}/g, (_full, instruction: string) => {
+    const extra = String(instruction).trim().slice(0, 80);
+    const baseKw = pool[i % pool.length];
     i++;
-    return url;
+    return buildUnsplashUrl(`${baseKw} ${extra}`.trim(), 1200, 700);
   });
 
   return out;
