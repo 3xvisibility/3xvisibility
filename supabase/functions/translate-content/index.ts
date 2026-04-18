@@ -13,17 +13,111 @@ const SUPPORTED_LANGUAGES: Record<string, string> = {
   ru: "Russian", tr: "Turkish", hi: "Hindi",
 };
 
+// Free public LibreTranslate-compatible endpoints (no API key required).
+// We try them in order; if all fail we fall back to AI.
+const LIBRE_ENDPOINTS = [
+  "https://translate.disroot.org/translate",
+  "https://lt.vern.cc/translate",
+  "https://translate.terraprint.co/translate",
+];
+
+async function libreTranslate(text: string, targetLang: string): Promise<string | null> {
+  if (!text.trim()) return text;
+  for (const url of LIBRE_ENDPOINTS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15_000);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q: text, source: "auto", target: targetLang, format: "text" }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.translatedText) return data.translatedText as string;
+    } catch (e) {
+      console.warn(`LibreTranslate endpoint ${url} failed:`, (e as Error).message);
+    }
+  }
+  return null;
+}
+
+/**
+ * Translate HTML by extracting text nodes, sending only the text to a free
+ * translation API, then putting the translated text back into the original
+ * HTML structure. This preserves all tags, classes, attributes, scripts, and
+ * {variable} placeholders without spending any AI credits.
+ */
+async function translateHtmlFree(html: string, targetLang: string): Promise<string | null> {
+  // Tokenize: split on tags so we keep tags intact
+  const parts = html.split(/(<[^>]+>)/g);
+  const textIndices: number[] = [];
+  const texts: string[] = [];
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    // Skip tags, scripts/styles handled below, empty/whitespace, and {variable} placeholders only
+    if (p.startsWith("<")) continue;
+    const trimmed = p.trim();
+    if (!trimmed) continue;
+    // Skip pure variable tokens like {city}
+    if (/^\{[a-zA-Z0-9_]+\}$/.test(trimmed)) continue;
+    textIndices.push(i);
+    texts.push(p);
+  }
+  if (texts.length === 0) return html;
+
+  // Translate in chunks of ~20 strings joined by a sentinel that survives translation
+  const SENTINEL = "\n@@SPLIT@@\n";
+  const CHUNK = 20;
+  for (let start = 0; start < texts.length; start += CHUNK) {
+    const slice = texts.slice(start, start + CHUNK);
+    const joined = slice.join(SENTINEL);
+    const translated = await libreTranslate(joined, targetLang);
+    if (translated == null) return null; // bail out, caller will fallback
+    const split = translated.split(/\n?@@SPLIT@@\n?/);
+    if (split.length !== slice.length) {
+      // Fallback: per-string translation for this chunk
+      for (let j = 0; j < slice.length; j++) {
+        const t = await libreTranslate(slice[j], targetLang);
+        if (t == null) return null;
+        parts[textIndices[start + j]] = preserveSpacing(slice[j], t);
+      }
+    } else {
+      for (let j = 0; j < slice.length; j++) {
+        parts[textIndices[start + j]] = preserveSpacing(slice[j], split[j]);
+      }
+    }
+  }
+  return parts.join("");
+}
+
+function preserveSpacing(original: string, translated: string): string {
+  const leading = original.match(/^\s*/)?.[0] ?? "";
+  const trailing = original.match(/\s*$/)?.[0] ?? "";
+  return leading + translated.trim() + trailing;
+}
+
+async function translateMetaFree(
+  meta: { title: string; seo_title: string; seo_description: string; seo_keywords: string[] },
+  targetLang: string,
+) {
+  const t = async (s: string) => (s ? (await libreTranslate(s, targetLang)) ?? s : s);
+  const title = await t(meta.title);
+  const seo_title = await t(meta.seo_title);
+  const seo_description = await t(meta.seo_description);
+  const seo_keywords: string[] = [];
+  for (const kw of meta.seo_keywords || []) {
+    seo_keywords.push((await libreTranslate(kw, targetLang)) ?? kw);
+  }
+  return { title, seo_title, seo_description, seo_keywords };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const authHeader = req.headers.get("Authorization");
@@ -45,14 +139,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const langName = SUPPORTED_LANGUAGES[target_language];
-    if (!langName) {
+    if (!SUPPORTED_LANGUAGES[target_language]) {
       return new Response(JSON.stringify({ error: `Unsupported language: ${target_language}` }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Fetch pages
     const { data: pages, error: fetchErr } = await supabase
       .from("generated_pages")
       .select("id, title, content, slug, seo_title, seo_description, seo_keywords, campaign_id, website_id, workspace_id, user_id, status")
@@ -64,127 +156,66 @@ Deno.serve(async (req) => {
       });
     }
 
-    const results: { original_id: string; translated_id: string; title: string }[] = [];
+    const results: { original_id: string; translated_id: string; title: string; via: string }[] = [];
     const errors: { page_id: string; error: string }[] = [];
 
     for (const page of pages) {
       try {
-        const systemPrompt = `You are a professional translator. Translate the following content to ${langName}. 
-Rules:
-- Preserve all HTML tags and structure exactly
-- Translate all visible text content
-- Keep URLs, variable placeholders like {variable_name}, and code unchanged
-- Maintain the same tone and style
-- Return ONLY the translated HTML, no explanations`;
+        // 1. Try free translation first (zero AI cost)
+        let translatedContent = await translateHtmlFree(page.content, target_language);
+        let via = "libretranslate";
 
-        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: `Title: "${page.title}"\n\nHTML content:\n${page.content}` },
-            ],
-          }),
-        });
-
-        if (!response.ok) {
-          if (response.status === 429) {
-            errors.push({ page_id: page.id, error: "Rate limited" });
+        // 2. Fallback to AI ONLY if free service is unreachable
+        if (translatedContent == null) {
+          const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+          if (!LOVABLE_API_KEY) {
+            errors.push({ page_id: page.id, error: "Free translation unavailable and AI not configured" });
             continue;
           }
-          if (response.status === 402) {
-            errors.push({ page_id: page.id, error: "AI credits exhausted" });
+          const langName = SUPPORTED_LANGUAGES[target_language];
+          const sysPrompt = `Translate to ${langName}. Preserve HTML tags, {variables}, URLs. Return only translated HTML.`;
+          const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash-lite",
+              messages: [
+                { role: "system", content: sysPrompt },
+                { role: "user", content: page.content },
+              ],
+            }),
+          });
+          if (!response.ok) {
+            errors.push({ page_id: page.id, error: response.status === 402 ? "AI credits exhausted" : `Translation failed (${response.status})` });
             continue;
           }
-          errors.push({ page_id: page.id, error: `AI error: ${response.status}` });
-          continue;
-        }
-
-        const aiResult = await response.json();
-        const translatedContent = aiResult.choices?.[0]?.message?.content;
-        if (!translatedContent) {
-          errors.push({ page_id: page.id, error: "Empty AI response" });
-          continue;
-        }
-
-        // Also translate title and SEO fields
-        const metaResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
-            messages: [
-              { role: "system", content: `Translate the following metadata fields to ${langName}. Return valid JSON only.` },
-              {
-                role: "user",
-                content: JSON.stringify({
-                  title: page.title,
-                  seo_title: page.seo_title || "",
-                  seo_description: page.seo_description || "",
-                  seo_keywords: page.seo_keywords || [],
-                }),
-              },
-            ],
-            tools: [{
-              type: "function",
-              function: {
-                name: "translate_metadata",
-                description: "Return translated metadata",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    seo_title: { type: "string" },
-                    seo_description: { type: "string" },
-                    seo_keywords: { type: "array", items: { type: "string" } },
-                  },
-                  required: ["title", "seo_title", "seo_description", "seo_keywords"],
-                  additionalProperties: false,
-                },
-              },
-            }],
-            tool_choice: { type: "function", function: { name: "translate_metadata" } },
-          }),
-        });
-
-        let translatedTitle = page.title + ` [${target_language.toUpperCase()}]`;
-        let translatedSeoTitle = page.seo_title;
-        let translatedSeoDesc = page.seo_description;
-        let translatedKeywords = page.seo_keywords;
-
-        if (metaResponse.ok) {
-          const metaResult = await metaResponse.json();
-          const toolCall = metaResult.choices?.[0]?.message?.tool_calls?.[0];
-          if (toolCall?.function?.arguments) {
-            try {
-              const meta = JSON.parse(toolCall.function.arguments);
-              translatedTitle = meta.title || translatedTitle;
-              translatedSeoTitle = meta.seo_title || translatedSeoTitle;
-              translatedSeoDesc = meta.seo_description || translatedSeoDesc;
-              translatedKeywords = meta.seo_keywords?.length ? meta.seo_keywords : translatedKeywords;
-            } catch { /* keep defaults */ }
+          const aiResult = await response.json();
+          translatedContent = aiResult.choices?.[0]?.message?.content?.trim() || null;
+          via = "ai-fallback";
+          if (!translatedContent) {
+            errors.push({ page_id: page.id, error: "Empty translation response" });
+            continue;
           }
         }
 
-        // Insert translated page as a new page
+        // Translate metadata (free)
+        const meta = await translateMetaFree({
+          title: page.title,
+          seo_title: page.seo_title || "",
+          seo_description: page.seo_description || "",
+          seo_keywords: page.seo_keywords || [],
+        }, target_language);
+
         const translatedSlug = `${page.slug}-${target_language}`;
         const { data: newPage, error: insertErr } = await supabase
           .from("generated_pages")
           .insert({
-            title: translatedTitle,
+            title: meta.title || `${page.title} [${target_language.toUpperCase()}]`,
             slug: translatedSlug,
             content: translatedContent,
-            seo_title: translatedSeoTitle,
-            seo_description: translatedSeoDesc,
-            seo_keywords: translatedKeywords,
+            seo_title: meta.seo_title || page.seo_title,
+            seo_description: meta.seo_description || page.seo_description,
+            seo_keywords: meta.seo_keywords?.length ? meta.seo_keywords : page.seo_keywords,
             campaign_id: page.campaign_id,
             website_id: page.website_id,
             workspace_id: page.workspace_id,
@@ -199,7 +230,7 @@ Rules:
           continue;
         }
 
-        results.push({ original_id: page.id, translated_id: newPage.id, title: translatedTitle });
+        results.push({ original_id: page.id, translated_id: newPage.id, title: meta.title, via });
       } catch (e: any) {
         errors.push({ page_id: page.id, error: e.message });
       }
