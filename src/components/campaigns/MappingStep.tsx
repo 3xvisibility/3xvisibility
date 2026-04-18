@@ -13,6 +13,7 @@ import {
 import {
   ArrowRight, Check, AlertTriangle, X, Save, FolderOpen, Trash2,
   ArrowDownAZ, Hash, Link2, Type, MapPin, Target, Search as SearchIcon,
+  HelpCircle, Sparkles, Lightbulb, Wand2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -311,6 +312,8 @@ export function MappingStep({
 
   const allMatched = resolvedMapping.every(m => m.column || m.customValue || isSpecialVar(m.variable));
   const unmatchedColumns = csvHeaders.filter(h => !resolvedMapping.some(m => m.column === h));
+  const autoMappedCount = resolvedMapping.filter(m => m.column && !manualMappings[m.variable] && !customValues[m.variable]).length;
+  const unmatchedCount = resolvedMapping.filter(m => !m.column && !m.customValue && !isSpecialVar(m.variable)).length;
 
   // ─── Filtered target fields by campaign type ─────────────────────
 
@@ -358,17 +361,49 @@ export function MappingStep({
 
   return (
     <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-4 overflow-hidden">
+      {/* ─── How it works intro (collapsible / always visible) ─────────── */}
+      <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/0 p-3 sm:p-4">
+        <div className="flex items-start gap-2.5">
+          <div className="rounded-md bg-primary/10 p-1.5 shrink-0">
+            <Lightbulb className="h-4 w-4 text-primary" />
+          </div>
+          <div className="space-y-1.5 min-w-0">
+            <h5 className="text-sm font-semibold flex items-center gap-2 flex-wrap">
+              Connect Your Data
+              <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px] h-5">Step 1 of 1</Badge>
+            </h5>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Each <code className="px-1 py-0.5 rounded bg-muted text-foreground font-mono text-[10px]">{`{variable}`}</code> in your template needs a value. Tell us where it should come from:
+              your CSV file's column, a fixed custom value, or auto-generated content.
+            </p>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <Badge variant="outline" className="text-[10px] gap-1 bg-success/5 border-success/30 text-success">
+                <Wand2 className="h-2.5 w-2.5" /> {autoMappedCount} auto-matched
+              </Badge>
+              {unmatchedCount > 0 && (
+                <Badge variant="outline" className="text-[10px] gap-1 bg-destructive/5 border-destructive/30 text-destructive">
+                  <AlertTriangle className="h-2.5 w-2.5" /> {unmatchedCount} need attention
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-[10px] gap-1">
+                <Hash className="h-2.5 w-2.5" /> {csvHeaders.length} CSV columns
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-muted/20 backdrop-blur-sm -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 -mt-3 sm:-mt-4 border-b border-border/50">
+      <div className="flex items-center justify-between gap-2 sticky top-0 z-10 bg-muted/20 backdrop-blur-sm -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-semibold">Column Mapping</h4>
+          <h4 className="text-sm font-semibold">Variable Mapping</h4>
           {allMatched ? (
             <Badge variant="secondary" className="bg-success/10 text-success text-[10px] border-success/20 border">
-              <Check className="h-3 w-3 mr-1" /> All matched
+              <Check className="h-3 w-3 mr-1" /> All set
             </Badge>
           ) : (
             <Badge variant="secondary" className="bg-destructive/10 text-destructive text-[10px] border-destructive/20 border">
-              <AlertTriangle className="h-3 w-3 mr-1" /> Unmatched
+              <AlertTriangle className="h-3 w-3 mr-1" /> {unmatchedCount} unmapped
             </Badge>
           )}
         </div>
@@ -441,11 +476,51 @@ export function MappingStep({
       <div className="space-y-2.5">
         {/* Column headers */}
         <div className="hidden sm:grid sm:grid-cols-[1fr_auto_1fr_140px_100px] gap-2 px-1 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-          <span>Template Variable</span>
+          <span className="flex items-center gap-1">
+            Template Variable
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Placeholders like <code className="font-mono">{`{city}`}</code> in your template that get replaced with real data.
+              </TooltipContent>
+            </Tooltip>
+          </span>
           <span></span>
-          <span>CSV Column / Value</span>
-          <span>Map To</span>
-          <span>Transform</span>
+          <span className="flex items-center gap-1">
+            Where data comes from
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Pick a CSV column (e.g. <span className="font-mono">city</span>) or set a fixed custom value used for every page.
+              </TooltipContent>
+            </Tooltip>
+          </span>
+          <span className="flex items-center gap-1">
+            Map to (optional)
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Tell the CMS what this is — e.g. SEO meta title, GEO city, or product price. Auto = used as plain template variable only.
+              </TooltipContent>
+            </Tooltip>
+          </span>
+          <span className="flex items-center gap-1">
+            Transform
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3 w-3 cursor-help opacity-60 hover:opacity-100" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs text-xs">
+                Optional formatting: lowercase, slugify, truncate, etc.
+              </TooltipContent>
+            </Tooltip>
+          </span>
         </div>
 
         {filteredMapping.map(({ variable, column, customValue, targetField, transform }) => {
@@ -457,10 +532,31 @@ export function MappingStep({
             <div key={variable} className="rounded-lg border border-border/60 bg-background/50 p-2.5 sm:p-3">
               {/* Mobile: stacked, Desktop: grid */}
               <div className="flex flex-col sm:grid sm:grid-cols-[1fr_auto_1fr_140px_100px] gap-2 sm:items-center">
-                {/* Variable name */}
-                <Badge variant="outline" className="font-mono shrink-0 rounded-lg text-[11px] py-1 px-2 w-fit" title={`{${variable}}`}>
-                  {`{${variable}}`}
-                </Badge>
+                {/* Variable name with inline help */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Badge variant="outline" className="font-mono shrink-0 rounded-lg text-[11px] py-1 px-2 w-fit truncate" title={`{${variable}}`}>
+                    {`{${variable}}`}
+                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="shrink-0 opacity-50 hover:opacity-100 transition-opacity">
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-xs text-xs space-y-1.5">
+                      <p className="font-medium">{`{${variable}}`} placeholder</p>
+                      <p className="text-muted-foreground">
+                        This will be replaced with data on every generated page.
+                      </p>
+                      <div className="pt-1 border-t border-border/50">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Example</p>
+                        <p className="font-mono text-[11px]">
+                          CSV column <span className="text-success">"{csvHeaders.find(h => h.toLowerCase() === variable.toLowerCase()) || variable}"</span> → <span className="text-primary">{`{${variable}}`}</span>
+                        </p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
 
                 <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0 hidden sm:block" />
 
