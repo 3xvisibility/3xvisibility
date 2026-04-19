@@ -283,7 +283,10 @@ Deno.serve(async (req) => {
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
-            elementorMeta
+            elementorMeta,
+            undefined,
+            // Mirror the site's preferred template when no Elementor data is present.
+            !elementorMeta ? elementorInfo.pageTemplate : undefined,
           );
 
           // If an external_id is provided, update the existing page; otherwise create new
