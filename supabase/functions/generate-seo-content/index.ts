@@ -28,7 +28,8 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          // Cost optimization: flash tier handles JSON-array generation reliably
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: "You are a professional SEO page generator. Return only a valid JSON array. No markdown fences." },
             { role: "user", content: prompt },
@@ -121,7 +122,8 @@ ${platform === "prestashop" ? "PLATFORM: PrestaShop — use Bootstrap container/
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        // Cost optimization: flash sufficient for HTML template generation
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Generate a high-scoring SEO/SEA/GEO optimized HTML page template for: ${kwList}. Type: "${cType}". All scores above 80.` },

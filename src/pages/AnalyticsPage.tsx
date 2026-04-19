@@ -571,7 +571,7 @@ export default function AnalyticsPage() {
                           }}
                         >
                           {percentage > 15 && (
-                            <span className="text-[10px] font-bold text-white">{percentage}%</span>
+                            <span className="text-[10px] font-bold text-primary-foreground">{percentage}%</span>
                           )}
                         </div>
                       </div>
