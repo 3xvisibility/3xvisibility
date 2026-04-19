@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { friendlyError } from "@/lib/friendly-errors";
+import { handleApiError } from "@/lib/handle-api-error";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -205,7 +206,7 @@ export default function TemplateScannerPage() {
       toast({ title: "Pages loaded", description: `Found ${pages.length} WordPress pages.` });
     },
     onError: (err: Error) => {
-      toast({ title: "Failed to load pages", description: err.message, variant: "destructive" });
+      handleApiError(err, { title: "Failed to load pages" });
     },
   });
 
@@ -245,7 +246,7 @@ export default function TemplateScannerPage() {
       });
     },
     onError: (err: Error) => {
-      toast({ title: "Scan failed", description: err.message, variant: "destructive" });
+      handleApiError(err, { title: "Scan failed" });
     },
   });
 
