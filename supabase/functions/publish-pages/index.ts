@@ -147,7 +147,8 @@ function buildPayload(
   page: { title: string; content: string; slug: string; seo_title?: string | null; seo_description?: string | null; seo_keywords?: string[] | null; canonical_url?: string | null },
   publishType: string,
   elementorMeta?: { elementor_data?: string; elementor_edit_mode?: string; page_template?: string },
-  extraData?: Record<string, unknown>
+  extraData?: Record<string, unknown>,
+  pageTemplate?: string,
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
@@ -161,6 +162,12 @@ function buildPayload(
   };
 
   if (page.seo_description) payload.excerpt = page.seo_description;
+
+  // Forward the detected/explicit page_template so non-Elementor sites also
+  // inherit the active theme's preferred template (e.g. Divi, Astra, default).
+  if (pageTemplate) {
+    payload.page_template = pageTemplate;
+  }
 
   if (elementorMeta?.elementor_data) {
     payload.elementor_meta = {
