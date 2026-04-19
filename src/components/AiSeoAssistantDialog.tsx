@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleApiError } from "@/lib/handle-api-error";
 import { Sparkles, Copy, Check, Loader2, Wand2, Type, FileText, HelpCircle, Search, RotateCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,7 +57,7 @@ export function AiSeoAssistantDialog({ open, onOpenChange, page, onUpdated }: Ai
       if (data?.error) throw new Error(data.error);
       setResult(data.result);
     } catch (err: any) {
-      toast({ title: "AI Error", description: err.message, variant: "destructive" });
+      handleApiError(err, { title: "AI Error" });
     } finally {
       setLoading(false);
     }
@@ -114,7 +115,7 @@ export function AiSeoAssistantDialog({ open, onOpenChange, page, onUpdated }: Ai
         onUpdated?.();
       }
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      handleApiError(err, { title: "Error" });
     } finally {
       setLoading(false);
     }
