@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { WorkspaceRouter } from "@/components/WorkspaceRouter";
 import { WorkspaceRedirect } from "@/components/WorkspaceRedirect";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
@@ -138,6 +139,7 @@ const App = () => {
   }
 
   return (
+    <ErrorBoundary>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
@@ -190,6 +192,7 @@ const App = () => {
       </LanguageProvider>
     </QueryClientProvider>
     </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 
