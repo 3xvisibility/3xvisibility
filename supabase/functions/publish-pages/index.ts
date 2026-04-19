@@ -445,6 +445,10 @@ Deno.serve(async (req) => {
           resolvedPublishType,
           elementorMeta,
           resolvedPublishType === "product" ? {} : undefined,
+          // For non-Elementor sites, still forward the detected site template.
+          (resolvedPublishType === "page" && !elementorMeta)
+            ? elementorCache.get(page.website_id || "default")?.pageTemplate
+            : undefined,
         );
 
         // If page was previously published (has external_id), update instead of creating
