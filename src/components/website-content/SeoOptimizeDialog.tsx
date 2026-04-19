@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { handleApiError } from "@/lib/handle-api-error";
 import {
   Sparkles,
   Loader2,
@@ -119,28 +120,8 @@ export function SeoOptimizeDialog({
         },
       });
 
-      if (error) {
-        const msg = typeof error === "object" && error?.message ? error.message : String(error);
-        if (msg.includes("402") || msg.includes("credits exhausted") || msg.includes("credits")) {
-          toast({ title: "AI credits exhausted", description: "Your AI credits have run out. Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
-          setLoading(false);
-          return;
-        }
-        if (msg.includes("429") || msg.includes("Rate limit")) {
-          toast({ title: "Rate limited", description: "Too many requests. Please wait and try again.", variant: "destructive" });
-          setLoading(false);
-          return;
-        }
-        throw new Error(msg);
-      }
-      if (data?.error) {
-        if (data.error.includes("credits") || data.error.includes("402")) {
-          toast({ title: "AI credits exhausted", description: "Your AI credits have run out. Please add more credits in Settings → Cloud & AI balance.", variant: "destructive" });
-          setLoading(false);
-          return;
-        }
-        throw new Error(data.error);
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       setResult({
         ...data.result,
@@ -159,7 +140,7 @@ export function SeoOptimizeDialog({
 
       onOptimized?.();
     } catch (err: any) {
-      toast({ title: "Optimization failed", description: err.message, variant: "destructive" });
+      handleApiError(err, { title: "Optimization failed" });
     } finally {
       setLoading(false);
     }

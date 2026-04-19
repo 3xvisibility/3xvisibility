@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Sparkles, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { handleApiError } from "@/lib/handle-api-error";
 
 interface AiEnrichDialogProps {
   open: boolean;
@@ -120,7 +121,7 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
         setCustomInstruction("");
       }, 1200);
     } catch (err: any) {
-      toast({ title: "Enrichment failed", description: err.message, variant: "destructive" });
+      handleApiError(err, { title: "Enrichment failed" });
     } finally {
       setLoading(false);
     }
