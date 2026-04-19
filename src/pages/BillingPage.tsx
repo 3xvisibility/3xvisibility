@@ -360,7 +360,7 @@ export default function BillingPage() {
           onClick={() => setIsYearly(!isYearly)}
           className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-muted"}`}
         >
-          <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
+          <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-card shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
         </button>
         <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("billing.yearly")}</span>
         {isYearly && (

@@ -1095,8 +1095,8 @@ ${headStyles}
                             loading="lazy"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                           />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                            <span className="text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">Copy URL</span>
+                          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/40 transition-all flex items-center justify-center">
+                            <span className="text-background text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">Copy URL</span>
                           </div>
                         </div>
                       ))}
