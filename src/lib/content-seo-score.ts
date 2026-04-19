@@ -447,6 +447,11 @@ export function calculateContentSeaScore(
   checks.push({ label: "Urgency or proof cues", passed: hasUrgencyOrProof, tip: "Add urgency, social proof, or measurable claims when true" });
   if (hasUrgencyOrProof) points++;
 
+  // Additional SEA quality checks (so total = 10)
+  const hasClickableCta = /<a[^>]*href=[^>]*>([\s\S]*?)<\/a>/i.test(content) || /<button[^>]*>/i.test(content);
+  checks.push({ label: "Clickable CTA element", passed: hasClickableCta, tip: "Add at least one clickable button or link as a CTA" });
+  if (hasClickableCta) points++;
+
   return buildScoreResult(points, checks);
 }
 
@@ -499,6 +504,20 @@ export function calculateContentGeoScore(
   const hasLocalCredibility = credibilityWords.test(lowerText) || /(area specialists|local support|serving customers near you)/i.test(lowerText);
   checks.push({ label: "Local credibility wording", passed: hasLocalCredibility, tip: "Add truthful local credibility phrases like local team or area specialists" });
   if (hasLocalCredibility) points++;
+
+  // Additional GEO quality checks (so total = 10)
+  const hasContactCue = /(call us|contact us|visit us|email us|message us|book now|get directions|find us|reach us|\b\d{3}[-.\s]?\d{3,4}[-.\s]?\d{3,4}\b|\+\d{1,3}[\s-]?\d{2,})/i.test(lowerText);
+  checks.push({ label: "Contact / directions cue", passed: hasContactCue, tip: "Add a phone number, address, or call/visit/contact us phrase" });
+  if (hasContactCue) points++;
+
+  const hasHoursOrSchedule = /(monday|tuesday|wednesday|thursday|friday|saturday|sunday|24\/7|open daily|business hours|opening hours|same-day|next-day|response time|by appointment)/i.test(lowerText);
+  checks.push({ label: "Hours or schedule mentioned", passed: hasHoursOrSchedule, tip: "Mention business hours, day availability, or response times" });
+  if (hasHoursOrSchedule) points++;
+
+  const hasLocationKeyword = /(city|town|county|region|state|country|street|road|avenue|district|neighborhood|zip|postal|area code)/i.test(lowerText)
+    || /\{(city|state|region|country|zip|county)\}/i.test(content);
+  checks.push({ label: "Location keyword present", passed: hasLocationKeyword, tip: "Reference a city, region, street, or location variable in the content" });
+  if (hasLocationKeyword) points++;
 
   return buildScoreResult(points, checks);
 }
