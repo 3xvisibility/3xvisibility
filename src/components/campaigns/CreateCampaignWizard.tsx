@@ -544,11 +544,26 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           if (mappingRows.length > 0) await supabase.from("mappings").insert(mappingRows);
         }
       }
+      // Auto-trigger generation if scheduled for "now" (not later/recurring)
+      const shouldRunNow = scheduleMode === "now" && campaignId;
+      if (shouldRunNow) {
+        try {
+          await supabase.functions.invoke("generate-pages", { body: { campaign_id: campaignId } });
+        } catch (e) {
+          console.warn("Auto-trigger generate-pages failed (campaign saved, can run manually):", e);
+        }
+      }
       return campaignId;
     },
     onSuccess: (campaignId) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast({ title: "Campaign created", description: `"${campaignName}" has been saved.` });
+      const ranNow = scheduleMode === "now";
+      toast({
+        title: ranNow ? "Campaign started" : "Campaign created",
+        description: ranNow
+          ? `"${campaignName}" is now generating pages.`
+          : `"${campaignName}" has been saved.`,
+      });
       resetForm();
       if (campaignId) onCreated?.(campaignId);
     },
