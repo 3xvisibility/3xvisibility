@@ -141,25 +141,29 @@ export class WordPressConnector implements CmsConnector {
 
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
 
+    // Resolve the WordPress page_template:
+    //  1. Explicit elementor_meta.page_template (passed from caller)
+    //  2. Top-level payload.page_template (auto-detected from site's existing pages)
+    //  3. Otherwise leave unset → WordPress uses the active theme default.
+    const resolvedTemplate =
+      payload.elementor_meta?.page_template
+      || payload.page_template
+      || undefined;
+
     if (payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
       meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
       meta._elementor_template_type = "wp-page";
       meta._elementor_version = "3.0.0";
-      // Default to Elementor Canvas (full-width, no header/footer) so generated
-      // pages visually match the original imported site design.
-      meta._wp_page_template = payload.elementor_meta.page_template || "elementor_canvas";
+      if (resolvedTemplate) meta._wp_page_template = resolvedTemplate;
+    } else if (resolvedTemplate) {
+      meta._wp_page_template = resolvedTemplate;
     }
 
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
 
-    // Force full-width Elementor Canvas template by default for Elementor pages.
-    if (payload.elementor_meta?.elementor_data) {
-      body.template = payload.elementor_meta.page_template || "elementor_canvas";
-    } else if (payload.elementor_meta?.page_template) {
-      body.template = payload.elementor_meta.page_template;
-    }
+    if (resolvedTemplate) body.template = resolvedTemplate;
 
     const data = await this.executePageRequest(
       `${this.baseUrl}/wp-json/wp/v2/pages`,
@@ -189,20 +193,24 @@ export class WordPressConnector implements CmsConnector {
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
+
+    const resolvedTemplate =
+      payload.elementor_meta?.page_template
+      || payload.page_template
+      || undefined;
+
     if (payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
       meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
       meta._elementor_template_type = "wp-page";
       meta._elementor_version = "3.0.0";
-      meta._wp_page_template = payload.elementor_meta.page_template || "elementor_canvas";
+      if (resolvedTemplate) meta._wp_page_template = resolvedTemplate;
+    } else if (resolvedTemplate) {
+      meta._wp_page_template = resolvedTemplate;
     }
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
-    if (payload.elementor_meta?.elementor_data) {
-      body.template = payload.elementor_meta.page_template || "elementor_canvas";
-    } else if (payload.elementor_meta?.page_template) {
-      body.template = payload.elementor_meta.page_template;
-    }
+    if (resolvedTemplate) body.template = resolvedTemplate;
 
     const data = await this.executePageRequest(
       `${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`,

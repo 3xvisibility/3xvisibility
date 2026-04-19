@@ -12,6 +12,13 @@ export interface PagePayload {
   seo_description?: string;
   seo_keywords?: string[];
   canonical_url?: string;
+  /**
+   * WordPress page template slug (e.g. "elementor_canvas", "elementor_header_footer",
+   * "page-templates/full-width.php", or theme-specific). When set, mirrors the
+   * template the rest of the site already uses so generated pages inherit the
+   * same theme/builder layout.
+   */
+  page_template?: string;
   schema_json?: Record<string, unknown>;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;

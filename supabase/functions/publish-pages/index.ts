@@ -83,19 +83,53 @@ async function detectElementor(
   if (websiteType !== "wordpress") return { usesElementor: false };
 
   try {
-    // Try listing a few pages to check for Elementor meta
     if (typeof connector.listContent === "function") {
       const pages = await connector.listContent("pages");
-      const elementorPage = pages.find((p: any) => p.elementor_data || p.elementor_edit_mode);
-      if (elementorPage) {
+
+      // Tally page_template usage across published pages so we mirror whatever
+      // theme/builder template the site already uses (Elementor, Divi, default, etc.).
+      const templateCounts = new Map<string, number>();
+      let elementorPagesCount = 0;
+      let elementorPreferredTemplate: string | undefined;
+
+      for (const p of pages) {
+        const tmpl = (p.page_template && String(p.page_template).trim()) || "default";
+        templateCounts.set(tmpl, (templateCounts.get(tmpl) || 0) + 1);
+        if (p.elementor_data || p.elementor_edit_mode) {
+          elementorPagesCount++;
+          if (!elementorPreferredTemplate && p.page_template) {
+            elementorPreferredTemplate = p.page_template;
+          }
+        }
+      }
+
+      // Pick the most-frequently-used template across the site.
+      let mostCommonTemplate: string | undefined;
+      let maxCount = 0;
+      for (const [tmpl, count] of templateCounts.entries()) {
+        if (count > maxCount) {
+          maxCount = count;
+          mostCommonTemplate = tmpl === "default" ? undefined : tmpl;
+        }
+      }
+
+      if (elementorPagesCount > 0) {
         return {
           usesElementor: true,
-          pageTemplate: elementorPage.page_template || undefined,
+          // Prefer the template used by other Elementor pages on the site;
+          // fall back to the site-wide most-common template (matches the active theme/builder).
+          pageTemplate: elementorPreferredTemplate || mostCommonTemplate,
         };
+      }
+
+      // Non-Elementor site: still mirror the site's dominant template so the new
+      // page inherits the same theme layout as existing pages.
+      if (mostCommonTemplate) {
+        return { usesElementor: false, pageTemplate: mostCommonTemplate };
       }
     }
   } catch (err) {
-    console.log("[PUBLISH] Elementor detection failed, using standard publish:", err);
+    console.log("[PUBLISH] Template detection failed, using standard publish:", err);
   }
   return { usesElementor: false };
 }
@@ -113,7 +147,8 @@ function buildPayload(
   page: { title: string; content: string; slug: string; seo_title?: string | null; seo_description?: string | null; seo_keywords?: string[] | null; canonical_url?: string | null },
   publishType: string,
   elementorMeta?: { elementor_data?: string; elementor_edit_mode?: string; page_template?: string },
-  extraData?: Record<string, unknown>
+  extraData?: Record<string, unknown>,
+  pageTemplate?: string,
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
@@ -127,6 +162,12 @@ function buildPayload(
   };
 
   if (page.seo_description) payload.excerpt = page.seo_description;
+
+  // Forward the detected/explicit page_template so non-Elementor sites also
+  // inherit the active theme's preferred template (e.g. Divi, Astra, default).
+  if (pageTemplate) {
+    payload.page_template = pageTemplate;
+  }
 
   if (elementorMeta?.elementor_data) {
     payload.elementor_meta = {
@@ -242,7 +283,10 @@ Deno.serve(async (req) => {
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
-            elementorMeta
+            elementorMeta,
+            undefined,
+            // Mirror the site's preferred template when no Elementor data is present.
+            !elementorMeta ? elementorInfo.pageTemplate : undefined,
           );
 
           // If an external_id is provided, update the existing page; otherwise create new
@@ -401,6 +445,10 @@ Deno.serve(async (req) => {
           resolvedPublishType,
           elementorMeta,
           resolvedPublishType === "product" ? {} : undefined,
+          // For non-Elementor sites, still forward the detected site template.
+          (resolvedPublishType === "page" && !elementorMeta)
+            ? elementorCache.get(page.website_id || "default")?.pageTemplate
+            : undefined,
         );
 
         // If page was previously published (has external_id), update instead of creating
