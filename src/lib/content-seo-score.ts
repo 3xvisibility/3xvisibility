@@ -447,6 +447,11 @@ export function calculateContentSeaScore(
   checks.push({ label: "Urgency or proof cues", passed: hasUrgencyOrProof, tip: "Add urgency, social proof, or measurable claims when true" });
   if (hasUrgencyOrProof) points++;
 
+  // Additional SEA quality checks (so total = 10)
+  const hasClickableCta = /<a[^>]*href=[^>]*>([\s\S]*?)<\/a>/i.test(content) || /<button[^>]*>/i.test(content);
+  checks.push({ label: "Clickable CTA element", passed: hasClickableCta, tip: "Add at least one clickable button or link as a CTA" });
+  if (hasClickableCta) points++;
+
   return buildScoreResult(points, checks);
 }
 
