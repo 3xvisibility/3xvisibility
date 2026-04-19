@@ -118,22 +118,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche },
       });
-      if (error) {
-        const msg = (error as any)?.message ?? String(error);
-        if (msg.includes("402") || msg.toLowerCase().includes("credit")) {
-          throw new Error("AI credits exhausted. Please add credits in Settings → Cloud & AI balance, then try again.");
-        }
-        if (msg.includes("429")) {
-          throw new Error("Too many requests right now. Please wait a moment and try again.");
-        }
-        throw error;
-      }
-      if (data?.error) {
-        if (data.error.includes("credit") || data.error.includes("402")) {
-          throw new Error("AI credits exhausted. Please add credits in Settings → Cloud & AI balance, then try again.");
-        }
-        throw new Error(data.error);
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       return data as { content: string; variables: string[]; suggestedName: string };
     },
     onSuccess: (data) => {
@@ -143,7 +129,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       toast({ title: "Template generated", description: "Niche-relevant images included. Review, edit and save." });
     },
     onError: (err: Error) => {
-      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+      // Centralised credit/error handling with "Top up" CTA
+      import("@/lib/handle-api-error").then(({ handleApiError }) => handleApiError(err, { title: "Generation failed" }));
     },
   });
 
