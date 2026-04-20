@@ -659,7 +659,14 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       content: includeContent ? (result.content || page_content) : page_content,
     });
 
-    for (let attempt = 0; attempt < MAX_QUALITY_REPAIR_ATTEMPTS && needsQualityRepair(qualityReport); attempt += 1) {
+    const repairLoopStart = Date.now();
+    for (
+      let attempt = 0;
+      attempt < MAX_QUALITY_REPAIR_ATTEMPTS &&
+      needsQualityRepair(qualityReport) &&
+      Date.now() - repairLoopStart < REPAIR_LOOP_BUDGET_MS;
+      attempt += 1
+    ) {
       const repairPrompt = `${userPrompt}
 
 Previous draft JSON:
