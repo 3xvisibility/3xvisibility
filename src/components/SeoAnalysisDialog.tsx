@@ -4,7 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Lightbulb, BarChart3, Sparkles, Loader2, RotateCw } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Lightbulb, BarChart3, Sparkles, Loader2, RotateCw, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext, type SeoRuleResult } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
@@ -340,30 +341,63 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               </div>
             </div>
 
-            {/* Score Breakdown */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Score Breakdown — clickable to expand checks */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { label: "Content SEO", score: analysis.seo.score, weight: "40%" },
-                { label: "Metadata", score: analysis.metaScore.score, weight: "30%" },
-                { label: "SEA Quality", score: analysis.sea.score, weight: "15%" },
-                { label: "GEO Signals", score: analysis.geo.score, weight: "15%" },
-              ].map((item) => (
-                <div key={item.label} className="rounded-lg border border-border p-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-muted-foreground">{item.label}</span>
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0">{item.weight}</Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${barColor(item.score)}`}
-                        style={{ width: `${item.score}%` }}
-                      />
-                    </div>
-                    <span className={`text-xs font-bold tabular-nums ${scoreColor(item.score)}`}>{item.score}</span>
-                  </div>
-                </div>
-              ))}
+                { label: "Content SEO", score: analysis.seo.score, weight: "40%", checks: analysis.seo.checks },
+                { label: "Metadata", score: analysis.metaScore.score, weight: "30%", checks: analysis.metaScore.checks },
+                { label: "SEA Quality", score: analysis.sea.score, weight: "15%", checks: analysis.sea.checks },
+                { label: "GEO Signals", score: analysis.geo.score, weight: "15%", checks: analysis.geo.checks },
+              ].map((item) => {
+                const passedCount = item.checks.filter((c) => c.passed).length;
+                const total = item.checks.length;
+                return (
+                  <Collapsible key={item.label} className="rounded-lg border border-border overflow-hidden">
+                    <CollapsibleTrigger className="w-full p-3 hover:bg-muted/40 transition-colors text-left group">
+                      <div className="flex items-center justify-between mb-1.5 gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-xs text-muted-foreground truncate">{item.label}</span>
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 shrink-0">{item.weight}</Badge>
+                        </div>
+                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180 shrink-0" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${barColor(item.score)}`}
+                            style={{ width: `${item.score}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs font-bold tabular-nums ${scoreColor(item.score)}`}>{item.score}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 text-left">
+                        {passedCount}/{total} checks passed
+                      </p>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="border-t border-border bg-muted/20 px-3 py-2 space-y-1.5">
+                        {item.checks.map((check, idx) => (
+                          <div key={idx} className="flex items-start gap-1.5">
+                            {check.passed ? (
+                              <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0 mt-0.5" />
+                            ) : (
+                              <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-[10px] leading-tight ${check.passed ? "text-muted-foreground" : "text-foreground font-medium"}`}>
+                                {check.label}
+                              </p>
+                              {!check.passed && check.tip && (
+                                <p className="text-[9px] text-muted-foreground mt-0.5">{check.tip}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
             </div>
 
             {/* AI Fix Button */}
