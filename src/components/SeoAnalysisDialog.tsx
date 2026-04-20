@@ -4,9 +4,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, BarChart3, Sparkles, Loader2, ChevronDown } from "lucide-react";
+import { CheckCircle2, XCircle, BarChart3, Sparkles, Loader2, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext, type SeoRuleResult } from "@/lib/seo-rules";
+import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { supabase } from "@/integrations/supabase/client";
@@ -430,64 +430,6 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               </div>
             )}
 
-            {/* Rules Validation */}
-            <div className="rounded-lg border border-border">
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-semibold">SEO Rules</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {analysis.summary.passed.length}/{analysis.summary.total} passed
-                </span>
-              </div>
-
-              {analysis.summary.errors.length > 0 && (
-                <div className="px-4 py-3 border-b border-border">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <XCircle className="h-3.5 w-3.5 text-destructive" />
-                    <span className="text-xs font-semibold text-destructive">Errors ({analysis.summary.errors.length})</span>
-                  </div>
-                  <div className="space-y-2">
-                    {analysis.summary.errors.map((r) => (
-                      <RuleItem key={r.id} result={r} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {analysis.summary.warnings.length > 0 && (
-                <div className="px-4 py-3 border-b border-border">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                    <span className="text-xs font-semibold text-foreground">Warnings ({analysis.summary.warnings.length})</span>
-                  </div>
-                  <div className="space-y-2">
-                    {analysis.summary.warnings.map((r) => (
-                      <RuleItem key={r.id} result={r} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {analysis.summary.passed.length > 0 && (
-                <div className="px-4 py-3">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    <span className="text-xs font-semibold text-muted-foreground">Passed ({analysis.summary.passed.length})</span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {analysis.summary.passed.map((r) => (
-                      <div key={r.id} className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />
-                        <span className="text-[11px] text-muted-foreground">{r.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
           </div>
         </ScrollArea>
       </DialogContent>
@@ -495,22 +437,6 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   );
 }
 
-
-function RuleItem({ result }: { result: SeoRuleResult }) {
-  const icon = result.severity === "error"
-    ? <XCircle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
-    : <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />;
-
-  return (
-    <div className="flex items-start gap-2">
-      {icon}
-      <div>
-        <p className="text-[11px] font-medium text-foreground">{result.label}</p>
-        <p className="text-[10px] text-muted-foreground">{result.tip}</p>
-      </div>
-    </div>
-  );
-}
 
 /** Compute campaign-level SEO summary for a collection of pages */
 export function computeCampaignSeoSummary(pages: {

@@ -54,14 +54,16 @@ export function calculateSeoScore(
   checks.push({ label: "Keywords defined", passed: hasKeywords, tip: "Add SEO keywords" });
   if (hasKeywords) points++;
 
-  // 6. 3+ keywords
-  const enoughKeywords = keywords.length >= 3;
-  checks.push({ label: "3+ keywords", passed: enoughKeywords, tip: "Add at least 3 keywords" });
+  // 6. Has focus keyword (1+ is enough — modern SEO emphasizes focus over volume)
+  const enoughKeywords = keywords.length >= 1;
+  checks.push({ label: "Has focus keyword", passed: enoughKeywords, tip: "Add at least 1 focus keyword" });
   if (enoughKeywords) points++;
 
-  // 7. Title differs from page title
-  const titleUnique = hasTitle && pageTitle ? title.toLowerCase() !== pageTitle.toLowerCase() : hasTitle;
-  checks.push({ label: "Unique SEO title", passed: titleUnique, tip: "SEO title should differ from page title" });
+  // 7. Title differs from page title (or has brand/separator)
+  const titleUnique = hasTitle && pageTitle
+    ? title.toLowerCase().trim() !== pageTitle.toLowerCase().trim() || /[|\-–·•]/.test(title)
+    : hasTitle;
+  checks.push({ label: "Unique SEO title", passed: titleUnique, tip: "Make SEO title differ from page title (add brand or separator)" });
   if (titleUnique) points++;
 
   const score = Math.round((points / maxPoints) * 100);
