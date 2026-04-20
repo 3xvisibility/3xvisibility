@@ -70,7 +70,10 @@ function shouldMirrorToElementor(
 
 // Lite model is enough for SEO meta + minor text tweaks; saves significant credits.
 const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
-const MAX_QUALITY_REPAIR_ATTEMPTS = 2;
+const MAX_QUALITY_REPAIR_ATTEMPTS = 1;
+// Stop the repair loop once we're approaching the 150s edge function idle timeout.
+// Leaves headroom for CMS push + DB writes after the AI loop completes.
+const REPAIR_LOOP_BUDGET_MS = 90_000;
 
 function parseOptimizationResult(aiData: any): Record<string, any> {
   let result: Record<string, any> = {};
@@ -656,7 +659,14 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       content: includeContent ? (result.content || page_content) : page_content,
     });
 
-    for (let attempt = 0; attempt < MAX_QUALITY_REPAIR_ATTEMPTS && needsQualityRepair(qualityReport); attempt += 1) {
+    const repairLoopStart = Date.now();
+    for (
+      let attempt = 0;
+      attempt < MAX_QUALITY_REPAIR_ATTEMPTS &&
+      needsQualityRepair(qualityReport) &&
+      Date.now() - repairLoopStart < REPAIR_LOOP_BUDGET_MS;
+      attempt += 1
+    ) {
       const repairPrompt = `${userPrompt}
 
 Previous draft JSON:
