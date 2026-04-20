@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Lightbulb, BarChart3, Sparkles, Loader2, RotateCw, ChevronDown } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, BarChart3, Sparkles, Loader2, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext, type SeoRuleResult } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
