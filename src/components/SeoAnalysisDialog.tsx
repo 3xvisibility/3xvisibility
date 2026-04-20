@@ -488,29 +488,15 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               )}
             </div>
 
-            {/* Recommendations */}
-            {hasIssues && (
-              <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm font-semibold">Recommendations</span>
-                </div>
-                <ul className="space-y-2 text-xs text-muted-foreground">
-                  {[...analysis.summary.errors, ...analysis.summary.warnings].map((r) => (
-                    <li key={r.id} className="flex items-start gap-2">
-                      <span className="text-foreground">•</span>
-                      <span><span className="font-medium text-foreground">{r.label}:</span> {r.tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 }
+
+// Helper unused after removing duplicate close — keep structure
+const _unused = null;
 
 function RuleItem({ result }: { result: SeoRuleResult }) {
   const icon = result.severity === "error"
