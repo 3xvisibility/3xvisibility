@@ -300,7 +300,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
   if (!page || !analysis) return null;
 
-  const hasIssues = analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0;
+  const hasRuleIssues = analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0;
+  const hasFailedChecks =
+    analysis.seo.checks.some((c) => !c.passed) ||
+    analysis.metaScore.checks.some((c) => !c.passed) ||
+    analysis.sea.checks.some((c) => !c.passed) ||
+    analysis.geo.checks.some((c) => !c.passed);
+  const hasIssues = hasRuleIssues || hasFailedChecks;
 
   const scoreColor = (score: number) =>
     score >= 85 ? "text-emerald-600" :
