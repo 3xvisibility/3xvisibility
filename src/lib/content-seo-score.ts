@@ -404,11 +404,11 @@ export function calculateContentSeaScore(
   const introText = (paragraphs[0] || plainText.slice(0, 300)).toLowerCase();
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
-  const ctaWords = /(buy|get|shop|order|start|book|reserve|request|contact|call|discover|learn more|try|schedule|checkout|add to cart|message us|quote|subscribe|sign up)/i;
-  const benefitWords = /(save|fast|easy|simple|reliable|premium|quality|effective|powerful|best|trusted|durable|affordable|results?|boost|improve|grow|increase|protect|comfort|support)/i;
-  const trustWords = /(testimonial|review|trusted|guarantee|warranty|secure|certified|proven|since\s+\d{4}|rated|award|recommended|satisfaction|verified)/i;
-  const offerWords = /(free|discount|offer|deal|plan|package|price|pricing|quote|estimate|starting at|from only|trial|bundle|save)/i;
-  const intentWords = /(call|contact|message|book|reserve|request|checkout|order|buy|subscribe|sign up|speak to)/i;
+  const ctaWords = /(buy|get|shop|order|start|book|reserve|request|contact|call|discover|learn more|try|schedule|checkout|add to cart|message us|quote|subscribe|sign up|explore|find|claim|join|download|register|apply|enroll|select|choose|pick|view|browse|see)/i;
+  const benefitWords = /(save|fast|easy|simple|reliable|premium|quality|effective|powerful|best|trusted|durable|affordable|results?|boost|improve|grow|increase|protect|comfort|support|exceptional|professional|top|expert|leading|outstanding|superior|advanced|innovative|smart|perfect|ideal|exclusive|complete|comprehensive|guaranteed|proven|efficient|seamless|smooth|convenient|optimal|enhanced|free|low cost|value|benefit|advantage|solution|help)/i;
+  const trustWords = /(testimonial|review|trusted|guarantee|warranty|secure|certified|proven|since\s+\d{4}|rated|award|recommended|satisfaction|verified|professional|expert|experienced|qualified|licensed|insured|accredited|established|reputation|happy clients|customers|years of|specialist|authority)/i;
+  const offerWords = /(free|discount|offer|deal|plan|package|price|pricing|quote|estimate|starting at|from only|trial|bundle|save|exclusive|special|limited|bonus|gift|complimentary|affordable|value|low|cheap|best price)/i;
+  const intentWords = /(call|contact|message|book|reserve|request|checkout|order|buy|subscribe|sign up|speak to|get in touch|reach out|find out|learn|click|tap|visit|see|view|explore|discover|browse|shop|try)/i;
 
   const hasCta = ctaWords.test(lowerText) || /<button/i.test(content) || /<a[^>]*>([\s\S]*?)<\/a>/i.test(content);
   checks.push({ label: "Has CTA language", passed: hasCta, tip: "Use clear action phrases like book, buy, request, contact" });
@@ -471,11 +471,11 @@ export function calculateContentGeoScore(
   const slugSource = getSlugCandidate(slug, url).replace(/^\/+|\/+$/g, "").toLowerCase();
   const checks: ContentScoreResult["checks"] = [];
   let points = 0;
-  const geoWords = /(local|nearby|near you|near me|in your area|serving|service area|coverage area|delivery area|regional|community|neighborhood|area|district|county|region|town|city)/i;
-  const serviceAreaWords = /(serving|available in|delivery in|coverage across|service area|throughout|across the area|nearby|near you|local service|regional support)/i;
-  const communityWords = /(community|neighborhood|locals|local experts|nearby|around you|close by|in the area)/i;
-  const availabilityWords = /(open|available|today|same-day|response time|hours|coverage|dispatch|delivery window|visit|call us|contact us)/i;
-  const credibilityWords = /(trusted locally|local team|regional team|community trusted|serving customers|area specialists|nearby support)/i;
+  const geoWords = /(local|nearby|near you|near me|in your area|serving|service area|coverage area|delivery area|regional|community|neighborhood|area|district|county|region|town|city|state|location|locally|locale|hometown|residents|surrounding|across|throughout|wherever|home|family|here|around|office|near|close|destination|spot|place|where|here in|right here|on-site|onsite)/i;
+  const serviceAreaWords = /(serving|available in|delivery in|coverage across|service area|throughout|across the area|nearby|near you|local service|regional support|operating in|based in|located in|covers|reaches|spans|extends|present in|active in|works with|supports|delivers to)/i;
+  const communityWords = /(community|neighborhood|locals|local experts|nearby|around you|close by|in the area|families|residents|members|together|shared|fellow|people|customers|clients|patients|students|partners|together|local team)/i;
+  const availabilityWords = /(open|available|today|same-day|response time|hours|coverage|dispatch|delivery window|visit|call us|contact us|book|schedule|appointment|reach|access|reachable|on call|ready|standing by|whenever|anytime)/i;
+  const credibilityWords = /(trusted locally|local team|regional team|community trusted|serving customers|area specialists|nearby support|professional|expert|experienced|reliable|established|reputable|recommended|certified|qualified|leading|top-rated|preferred|chosen|loved by)/i;
 
   const hasGeoTitle = geoWords.test((title || "").toLowerCase()) || geoWords.test(introText);
   checks.push({ label: "Local cue in title or intro", passed: hasGeoTitle, tip: "Use phrases like local, nearby, in your area, or serving the area" });
