@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Lightbulb, BarChart3, Sparkles, Loader2, RotateCw, ChevronDown } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, BarChart3, Sparkles, Loader2, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext, type SeoRuleResult } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
@@ -300,7 +300,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 
   if (!page || !analysis) return null;
 
-  const hasIssues = analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0;
+  const hasRuleIssues = analysis.summary.errors.length > 0 || analysis.summary.warnings.length > 0;
+  const hasFailedChecks =
+    analysis.seo.checks.some((c) => !c.passed) ||
+    analysis.metaScore.checks.some((c) => !c.passed) ||
+    analysis.sea.checks.some((c) => !c.passed) ||
+    analysis.geo.checks.some((c) => !c.passed);
+  const hasIssues = hasRuleIssues || hasFailedChecks;
 
   const scoreColor = (score: number) =>
     score >= 85 ? "text-emerald-600" :
@@ -482,29 +488,13 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               )}
             </div>
 
-            {/* Recommendations */}
-            {hasIssues && (
-              <div className="rounded-lg border border-border bg-muted/20 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm font-semibold">Recommendations</span>
-                </div>
-                <ul className="space-y-2 text-xs text-muted-foreground">
-                  {[...analysis.summary.errors, ...analysis.summary.warnings].map((r) => (
-                    <li key={r.id} className="flex items-start gap-2">
-                      <span className="text-foreground">•</span>
-                      <span><span className="font-medium text-foreground">{r.label}:</span> {r.tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
   );
 }
+
 
 function RuleItem({ result }: { result: SeoRuleResult }) {
   const icon = result.severity === "error"
