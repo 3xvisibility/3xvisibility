@@ -438,22 +438,6 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
 }
 
 
-function RuleItem({ result }: { result: SeoRuleResult }) {
-  const icon = result.severity === "error"
-    ? <XCircle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
-    : <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />;
-
-  return (
-    <div className="flex items-start gap-2">
-      {icon}
-      <div>
-        <p className="text-[11px] font-medium text-foreground">{result.label}</p>
-        <p className="text-[10px] text-muted-foreground">{result.tip}</p>
-      </div>
-    </div>
-  );
-}
-
 /** Compute campaign-level SEO summary for a collection of pages */
 export function computeCampaignSeoSummary(pages: {
   title: string;
