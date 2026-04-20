@@ -495,8 +495,6 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   );
 }
 
-// Helper unused after removing duplicate close — keep structure
-const _unused = null;
 
 function RuleItem({ result }: { result: SeoRuleResult }) {
   const icon = result.severity === "error"
