@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts } = await req.json();
+    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts, backgroundImage } = await req.json();
     if (!prompt || typeof prompt !== "string") {
       return new Response(JSON.stringify({ error: "A prompt is required." }), {
         status: 400,
@@ -186,6 +186,46 @@ QUALITY BAR: The result must look like a premium agency-built landing page — c
       content = await injectNicheImages(content, { niche, businessType, keywords }, LOVABLE_API_KEY);
     } catch (imgErr) {
       console.error("Niche image injection failed (non-fatal):", imgErr);
+    }
+
+    // Inject background image aspect ratio + focal point overrides so the
+    // user's choices reliably apply to every .pgp-hero / .pgp-cta-band block.
+    if (backgroundImage && typeof backgroundImage === "object") {
+      const aspectDesktop = String(backgroundImage.aspectDesktop || "auto");
+      const aspectMobile = String(backgroundImage.aspectMobile || "4/3");
+      const fx = Math.max(0, Math.min(100, Number(backgroundImage.focalX ?? 50)));
+      const fy = Math.max(0, Math.min(100, Number(backgroundImage.focalY ?? 40)));
+      const desktopRule =
+        aspectDesktop === "auto"
+          ? "min-height: clamp(420px, 70vh, 680px); aspect-ratio: auto;"
+          : `aspect-ratio: ${aspectDesktop}; min-height: 0; height: auto;`;
+      const mobileRule =
+        aspectMobile === "auto"
+          ? "min-height: clamp(360px, 80vh, 560px); aspect-ratio: auto;"
+          : `aspect-ratio: ${aspectMobile}; min-height: 0; height: auto;`;
+      const overrideStyle = `<style data-pgp-bg-override>
+.pgp-page .pgp-hero,
+.pgp-page .pgp-cta-band,
+.pgp-page section[class*="hero"],
+.pgp-page section[class*="cta"] {
+  background-position: ${fx}% ${fy}% !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  ${desktopRule}
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .pgp-page .pgp-hero,
+  .pgp-page .pgp-cta-band,
+  .pgp-page section[class*="hero"],
+  .pgp-page section[class*="cta"] {
+    ${mobileRule}
+    background-attachment: scroll !important;
+  }
+}
+</style>`;
+      // Append override at the end so it wins the cascade.
+      content = content + "\n" + overrideStyle;
     }
 
     // Extract variables — only simple {identifier} tokens, skip CSS blocks
