@@ -111,10 +111,112 @@ const BASE_STYLES = `<style>
 </style>`;
 
 // ── Image helpers ──────────────────────────────────────────────────────────
-// Unsplash Source — free, no auth, niche-relevant photos. The backend's
-// niche-injection layer can rewrite these to be even more specific per page.
-const img = (keywords: string, w = 1600, h = 900, sig = 1) =>
-  `https://source.unsplash.com/${w}x${h}/?${encodeURIComponent(keywords)}&sig=${sig}`;
+// We use TWO free image sources that always load (no API key, no auth):
+//   1. Curated Unsplash photo IDs (images.unsplash.com/photo-<id>) — niche-
+//      relevant, stable CDN URLs that never break. Used when we have a good
+//      keyword match in NICHE_PHOTOS below.
+//   2. Picsum Photos (picsum.photos/seed/<seed>/<w>/<h>) — deterministic
+//      free fallback that ALWAYS returns a valid image. Same seed = same
+//      photo, so the marketplace preview is consistent.
+//
+// Note: source.unsplash.com was deprecated in 2024 and now returns broken
+// responses — DO NOT use it.
+//
+// On publish, the backend `injectNicheImages` helper can still rewrite these
+// URLs to be even more specific. Clients can also edit any image URL later
+// in the visual / HTML editor.
+
+// Curated free Unsplash photo IDs by niche keyword. Each entry maps a
+// keyword found in `bgKeywords` to a list of stable photo IDs that we cycle
+// through. All photos are licensed under the free Unsplash license.
+const NICHE_PHOTOS: Record<string, string[]> = {
+  plumber:    ["1581094794329-c8112a89af12", "1607472586893-edb57bdc0e39", "1585704032915-c3400ca199e7"],
+  hvac:       ["1581094794329-c8112a89af12", "1558618666-fcd25c85cd64", "1504328345606-18bbc8c9d7d1"],
+  cleaning:   ["1581578731548-c64695cc6952", "1556909114-f6e7ad7d3136", "1527515637462-cff94eecc1ac"],
+  dental:     ["1606811971618-4486d14f3f99", "1588776814546-1ffcf47267a5", "1629909613654-28e377c37b09"],
+  law:        ["1589829545856-d10d557cf95f", "1450101499163-c8848c66ca85", "1505664194779-8beaceb93744"],
+  legal:      ["1589829545856-d10d557cf95f", "1450101499163-c8848c66ca85"],
+  courthouse: ["1505664194779-8beaceb93744", "1589994965851-a8f479c573a9"],
+  restaurant: ["1517248135467-4c7edcad34c4", "1414235077428-338989a2e8c0", "1555396273-367ea4eb4db5"],
+  dinner:     ["1414235077428-338989a2e8c0", "1559339352-11d035aa65de"],
+  cuisine:    ["1565299624946-b28f40a0ae38", "1504674900247-0877df9cc836"],
+  fitness:    ["1517836357463-d25dfeac3438", "1571019613454-1cb2f99b2d8b", "1534438327276-14e5300c3a48"],
+  gym:        ["1517836357463-d25dfeac3438", "1534438327276-14e5300c3a48"],
+  realestate: ["1564013799919-ab600027ffc6", "1568605114967-8130f3a36994", "1600596542815-ffad4c1539a9"],
+  property:   ["1564013799919-ab600027ffc6", "1605114760725-a8db8db5fcf2"],
+  home:       ["1600596542815-ffad4c1539a9", "1583847268964-b28dc8f51f92"],
+  car:        ["1503376780353-7e6692767b70", "1492144534655-ae79c964c9d7", "1494976388531-d1058494cdd8"],
+  automotive: ["1492144534655-ae79c964c9d7", "1503376780353-7e6692767b70"],
+  dealership: ["1567789884554-0b844b597180", "1492144534655-ae79c964c9d7"],
+  hotel:      ["1566073771259-6a8506099945", "1582719508461-905c673771fd", "1551882547-ff40c63fe5fa"],
+  luxury:     ["1582719508461-905c673771fd", "1564501049412-61c2a3083791"],
+  travel:     ["1488646953014-85cb44e25828", "1469854523086-cc02fe5d8800"],
+  fashion:    ["1483985988355-763728e1935b", "1485518882345-15568b007407", "1490481651871-ab68de25d43d"],
+  shop:       ["1567401893414-76b7b1e5a7a5", "1483985988355-763728e1935b"],
+  retail:     ["1441986300917-64674bd600d8", "1567401893414-76b7b1e5a7a5"],
+  ecommerce:  ["1556742111-a301076d9d18", "1607082348824-0a96f2a4b9da"],
+  product:    ["1542291026-7eec264c27ff", "1505740420928-5e560c06d30e", "1523275335684-37898b6baf30"],
+  premium:    ["1556742049-0cfed4f6a45d", "1505740420928-5e560c06d30e"],
+  saas:       ["1551434678-e076c223a692", "1460925895917-afdab827c52f", "1497366216548-37526070297c"],
+  tech:       ["1518770660439-4636190af475", "1531297484001-80022131f5a1"],
+  technology: ["1518770660439-4636190af475", "1517433670267-08bbd4be890f"],
+  dashboard:  ["1551288049-bebda4e38f71", "1460925895917-afdab827c52f"],
+  futuristic: ["1518770660439-4636190af475", "1451187580459-43490279c0fa"],
+  business:   ["1556761175-5973dc0f32e7", "1521737711867-e3b97375f902", "1454165804606-c3d57bc86b40"],
+  office:     ["1497366216548-37526070297c", "1497366811353-6870744d04b2"],
+  professional:["1556761175-5973dc0f32e7", "1521737711867-e3b97375f902"],
+  service:    ["1521791136064-7986c2920216", "1556761175-5973dc0f32e7"],
+  handshake:  ["1521791136064-7986c2920216", "1556761175-5973dc0f32e7"],
+  education:  ["1503676260728-1c00da094a0b", "1513258496099-48168024aec0", "1523240795612-9a054b0db644"],
+  learning:   ["1513258496099-48168024aec0", "1522202176988-66273c2fd55f"],
+  graduation: ["1523050854058-8df90110c9f1", "1627556704290-2b1f5853ff78"],
+  online:     ["1522202176988-66273c2fd55f", "1531403009284-440f080d1e12"],
+  student:    ["1523240795612-9a054b0db644", "1503676260728-1c00da094a0b"],
+  course:     ["1513258496099-48168024aec0", "1522202176988-66273c2fd55f"],
+  creative:   ["1513475382585-d06e58bcb0e0", "1542744173-8e7e53415bb0", "1452860606245-08befc0ff44b"],
+  designer:   ["1561070791-2526d30994b8", "1542744173-8e7e53415bb0"],
+  art:        ["1513475382585-d06e58bcb0e0", "1452860606245-08befc0ff44b"],
+  workspace:  ["1497366216548-37526070297c", "1518770660439-4636190af475"],
+  coffee:     ["1495474472287-4d71bcdd2085", "1442512595331-e89e73853f31"],
+  editorial:  ["1455390582262-044cdead277a", "1481277542470-605612bd2d61"],
+  article:    ["1455390582262-044cdead277a", "1481277542470-605612bd2d61"],
+  photography:["1452587925148-ce544e77e70d", "1542038784456-1ea8e935640e"],
+  sale:       ["1607082348824-0a96f2a4b9da", "1483985988355-763728e1935b"],
+  promotion:  ["1607082348824-0a96f2a4b9da", "1556742049-0cfed4f6a45d"],
+  shopping:   ["1483985988355-763728e1935b", "1567401893414-76b7b1e5a7a5"],
+  collection: ["1490481651871-ab68de25d43d", "1485518882345-15568b007407"],
+  brand:      ["1490481651871-ab68de25d43d", "1556742049-0cfed4f6a45d"],
+  // Generic safe fallback
+  default:    ["1497366216548-37526070297c", "1556761175-5973dc0f32e7", "1518770660439-4636190af475"],
+};
+
+function pickPhotoId(keywords: string, sig: number): string | null {
+  const lower = keywords.toLowerCase();
+  // Try to find the first niche keyword that appears in the bgKeywords string.
+  for (const key of Object.keys(NICHE_PHOTOS)) {
+    if (key === "default") continue;
+    if (lower.includes(key)) {
+      const list = NICHE_PHOTOS[key];
+      return list[sig % list.length];
+    }
+  }
+  return null;
+}
+
+const img = (keywords: string, w = 1600, h = 900, sig = 1) => {
+  const id = pickPhotoId(keywords, sig);
+  if (id) {
+    // Stable Unsplash CDN URL — always loads, free under Unsplash license.
+    return `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=75`;
+  }
+  // Picsum fallback — deterministic by seed, always returns a real photo.
+  // Seed is built from the keywords so the same template always renders the
+  // same image, making the marketplace preview stable.
+  const seed = encodeURIComponent(
+    keywords.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) || "page"
+  ) + `-${sig}`;
+  return `https://picsum.photos/seed/${seed}/${w}/${h}`;
+};
 
 const avatar = (n: number) => `https://i.pravatar.cc/96?img=${n}`;
 

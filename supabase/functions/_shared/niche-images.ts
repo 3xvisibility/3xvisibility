@@ -6,17 +6,21 @@
 // - Public, free, no auth required.
 // - Returns a different relevant photo each call for the given query.
 
-function buildUnsplashUrl(keywords: string, width = 1200, height = 600): string {
-  const q = encodeURIComponent(
+// Unsplash deprecated source.unsplash.com in 2024 — it now returns broken
+// responses. We use Picsum Photos with a deterministic seed built from the
+// niche keywords, which always returns a real free photo.
+//   https://picsum.photos/seed/<seed>/<w>/<h>
+function buildFreeImageUrl(keywords: string, width = 1200, height = 600): string {
+  const slug =
     keywords
-      .split(/[\s,]+/)
-      .filter(Boolean)
-      .slice(0, 4)
-      .join(",")
-  );
-  // Add a random seed to avoid the browser cache returning the same image for every slot
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "page";
+  // Add a random suffix so different slots get different images even when
+  // the keyword string is the same.
   const sig = Math.floor(Math.random() * 1_000_000);
-  return `https://source.unsplash.com/${width}x${height}/?${q}&sig=${sig}`;
+  return `https://picsum.photos/seed/${slug}-${sig}/${width}/${height}`;
 }
 
 function buildKeywordPool(context: {
@@ -76,7 +80,7 @@ export async function injectNicheImages(
       const w = dim?.[1] ? Math.min(parseInt(dim[1], 10), 1600) : 1200;
       const h = dim?.[2] ? Math.min(parseInt(dim[2], 10), 1200) : Math.round(w * 0.55);
       const kw = pool[i % pool.length];
-      seen.set(original, buildUnsplashUrl(kw, w, h));
+      seen.set(original, buildFreeImageUrl(kw, w, h));
       i++;
     }
   }
@@ -90,7 +94,7 @@ export async function injectNicheImages(
     const extra = String(instruction).trim().slice(0, 80);
     const baseKw = pool[i % pool.length];
     i++;
-    return buildUnsplashUrl(`${baseKw} ${extra}`.trim(), 1200, 700);
+    return buildFreeImageUrl(`${baseKw} ${extra}`.trim(), 1200, 700);
   });
 
   return out;
