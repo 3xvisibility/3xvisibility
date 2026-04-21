@@ -497,13 +497,13 @@ function StatCard({
 const UNMAPPED = "__unmapped__";
 
 function MappingEditor({
-  varName, currentColumn, csvColumns, onChange, isPending, compact,
+  varName, currentColumn, csvColumns, onChange, isDirty, compact,
 }: {
   varName: string;
   currentColumn: string | null;
   csvColumns: string[];
   onChange: (column: string | null) => void;
-  isPending?: boolean;
+  isDirty?: boolean;
   compact?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -527,15 +527,17 @@ function MappingEditor({
         ) : (
           <Badge variant="destructive" className="text-[10px]">unmapped</Badge>
         )}
+        {isDirty && (
+          <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-300">unsaved</Badge>
+        )}
         <Button
           variant="ghost"
           size="icon"
           className="h-6 w-6 shrink-0"
           onClick={() => setEditing(true)}
           aria-label={`Change mapping for ${varName}`}
-          disabled={isPending}
         >
-          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Pencil className="h-3 w-3" />}
+          <Pencil className="h-3 w-3" />
         </Button>
       </div>
     );
