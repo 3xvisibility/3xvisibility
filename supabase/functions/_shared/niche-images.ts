@@ -80,7 +80,7 @@ export async function injectNicheImages(
       const w = dim?.[1] ? Math.min(parseInt(dim[1], 10), 1600) : 1200;
       const h = dim?.[2] ? Math.min(parseInt(dim[2], 10), 1200) : Math.round(w * 0.55);
       const kw = pool[i % pool.length];
-      seen.set(original, buildUnsplashUrl(kw, w, h));
+      seen.set(original, buildFreeImageUrl(kw, w, h));
       i++;
     }
   }
@@ -94,7 +94,7 @@ export async function injectNicheImages(
     const extra = String(instruction).trim().slice(0, 80);
     const baseKw = pool[i % pool.length];
     i++;
-    return buildUnsplashUrl(`${baseKw} ${extra}`.trim(), 1200, 700);
+    return buildFreeImageUrl(`${baseKw} ${extra}`.trim(), 1200, 700);
   });
 
   return out;
