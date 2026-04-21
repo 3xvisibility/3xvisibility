@@ -320,22 +320,13 @@ export default function TemplateMappingPage() {
                                     </code>
                                   </TableCell>
                                   <TableCell>
-                                    {col ? (
-                                      <span className="inline-flex items-center gap-1.5 text-xs">
-                                        <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                        <span className="font-medium">{col}</span>
-                                      </span>
-                                    ) : (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Badge variant="destructive" className="text-[10px] cursor-help">unmapped</Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          No CSV column maps to {`{${v.name}}`}. Map it from
-                                          the campaign Mapping step.
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    )}
+                                    <MappingEditor
+                                      varName={v.name}
+                                      currentColumn={col}
+                                      csvColumns={csvColumns}
+                                      isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
+                                      onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                    />
                                   </TableCell>
                                   <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[260px] truncate">
                                     {sample || <span className="italic opacity-60">—</span>}
