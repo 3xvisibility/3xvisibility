@@ -19,6 +19,7 @@ import {
 import {
   ArrowRight, Columns3, FileText, Info, Search, Sparkles,
   Image as ImageIcon, MessageSquareQuote, Rocket, Globe2, Layers,
+  Pencil, X as XIcon, Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
