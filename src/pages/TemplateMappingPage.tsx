@@ -290,6 +290,54 @@ export default function TemplateMappingPage() {
             <StatCard label="Unmapped" value={String(unmappedVars)} tone={unmappedVars ? "warn" : "muted"} />
           </div>
 
+          {/* ── Save bar ──────────────────────── */}
+          <div
+            className={`sticky top-0 z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border px-3 py-2 backdrop-blur ${
+              isDirty
+                ? "border-amber-300 bg-amber-50/90 dark:bg-amber-500/10"
+                : "border-border bg-background/80"
+            }`}
+          >
+            <div className="flex items-center gap-2 text-xs">
+              {isDirty ? (
+                <>
+                  <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-400">
+                    {dirtyKeys.length} unsaved
+                  </Badge>
+                  <span className="text-muted-foreground truncate">
+                    Click Save to apply mappings to future page generation.
+                  </span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">All mapping changes saved.</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={discardChanges}
+                disabled={!isDirty || saveMapping.isPending}
+              >
+                <Undo2 className="h-3.5 w-3.5 mr-1.5" /> Discard
+              </Button>
+              <Button
+                size="sm"
+                className="h-8"
+                onClick={() => saveMapping.mutate()}
+                disabled={!isDirty || saveMapping.isPending}
+              >
+                {saveMapping.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Save className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Save mappings
+              </Button>
+            </div>
+          </div>
+
           {/* ── Search ────────────────────────── */}
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
