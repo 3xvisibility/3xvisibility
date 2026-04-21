@@ -22,6 +22,7 @@ import {
   Activity,
   Gift,
   KeyRound,
+  Columns3,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -77,6 +78,7 @@ const pgpNav: NavItem[] = [
 
 const toolsNav: NavItem[] = [
   { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers },
+  { titleKey: "Variable Mapping", path: "template-mapping", icon: Columns3 },
   { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
   { titleKey: "sidebar.performance", path: "performance", icon: Activity },
   { titleKey: "sidebar.abTesting", path: "ab-testing", icon: FlaskConical },
