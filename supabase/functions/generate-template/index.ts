@@ -134,7 +134,7 @@ REQUIRED SECTIONS (in this order):
 21. Sections: (a) Hero with background image + overlay, (b) Trust strip / quick stats, (c) Features or Services grid (3-6 cards with icons or images), (d) About section with side image and text, (e) Gallery / showcase (2-4 images grid), (f) Testimonials carousel, (g) FAQ using <details>/<summary>, (h) Final CTA section with bg image + overlay, (i) Contact section.
 ${headerFooterRule}
 
-${platformRule}
+${platformRule}${themeRule}
 
 QUALITY BAR: The result must look like a premium agency-built landing page — clean typography, strong visual hierarchy, beautiful imagery, generous whitespace, smooth hover states. Never amateur, never blocky, never generic.`;
 
