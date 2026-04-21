@@ -113,6 +113,29 @@ export default function TemplateMappingPage() {
     },
   });
 
+  const queryClient = useQueryClient();
+
+  /** Persist a mapping change for a single variable → CSV column. */
+  const updateMapping = useMutation({
+    mutationFn: async ({ varName, column }: { varName: string; column: string | null }) => {
+      if (!activeCampaign) throw new Error("No campaign selected");
+      const next = { ...(activeCampaign.mapping || {}) } as Record<string, string>;
+      if (column) next[varName] = column;
+      else delete next[varName];
+      const { error } = await supabase
+        .from("campaigns")
+        .update({ mapping: next })
+        .eq("id", activeCampaign.id);
+      if (error) throw error;
+      return next;
+    },
+    onSuccess: (_n, vars) => {
+      toast.success(vars.column ? `Mapped {${vars.varName}} → ${vars.column}` : `Cleared mapping for {${vars.varName}}`);
+      queryClient.invalidateQueries({ queryKey: ["mapping-campaigns", wsId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to update mapping"),
+  });
+
   // Classify variables once template is loaded
   const classified = useMemo<ClassifiedVariable[]>(() => {
     if (!template) return [];
