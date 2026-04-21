@@ -455,3 +455,86 @@ function StatCard({
     </Card>
   );
 }
+
+/* ─── inline mapping editor ─────────────────────── */
+
+const UNMAPPED = "__unmapped__";
+
+function MappingEditor({
+  varName, currentColumn, csvColumns, onChange, isPending, compact,
+}: {
+  varName: string;
+  currentColumn: string | null;
+  csvColumns: string[];
+  onChange: (column: string | null) => void;
+  isPending?: boolean;
+  compact?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (csvColumns.length === 0) {
+    return (
+      <span className="text-[11px] italic text-muted-foreground">
+        No CSV columns available
+      </span>
+    );
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-1.5 min-w-0">
+        {currentColumn ? (
+          <span className="inline-flex items-center gap-1.5 text-xs min-w-0">
+            {!compact && <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />}
+            <span className="font-medium truncate" title={currentColumn}>{currentColumn}</span>
+          </span>
+        ) : (
+          <Badge variant="destructive" className="text-[10px]">unmapped</Badge>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 shrink-0"
+          onClick={() => setEditing(true)}
+          aria-label={`Change mapping for ${varName}`}
+          disabled={isPending}
+        >
+          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Pencil className="h-3 w-3" />}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <Select
+        defaultValue={currentColumn || UNMAPPED}
+        onValueChange={(val) => {
+          onChange(val === UNMAPPED ? null : val);
+          setEditing(false);
+        }}
+      >
+        <SelectTrigger className="h-7 text-xs min-w-[140px] max-w-[220px]">
+          <SelectValue placeholder="Pick a CSV column" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={UNMAPPED}>
+            <span className="italic text-muted-foreground">— Unmapped —</span>
+          </SelectItem>
+          {csvColumns.map(c => (
+            <SelectItem key={c} value={c}>{c}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        onClick={() => setEditing(false)}
+        aria-label="Cancel"
+      >
+        <XIcon className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+}
