@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts } = await req.json();
+    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts, backgroundImage } = await req.json();
     if (!prompt || typeof prompt !== "string") {
       return new Response(JSON.stringify({ error: "A prompt is required." }), {
         status: 400,
