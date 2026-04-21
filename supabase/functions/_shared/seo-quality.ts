@@ -845,5 +845,117 @@ export function autoRepairContent(
     html = block + html;
   }
 
+  // 10. Keyword density balancer — guarantees density lands in the 0.8%–2.0% sweet spot.
+  //     This is the single biggest reason "Keyword density" check fails: too many mentions
+  //     (stuffing) on short pages, too few on long pages.
+  if (keyword) {
+    html = balanceKeywordDensity(html, keyword);
+  }
+
+  return html;
+}
+
+/**
+ * Deterministically tune keyword density to land in the 0.8%–2.0% range
+ * (centered around 1.4%, well inside the 0.5–2.5% green zone).
+ *
+ * - If density is too LOW: append a short natural paragraph that mentions the keyword
+ *   the right number of times to reach ~1.4%.
+ * - If density is too HIGH: replace surplus exact-match occurrences inside <p> bodies
+ *   with neutral pronouns ("our service", "this", "it") until density falls back into range.
+ */
+function balanceKeywordDensity(html: string, keyword: string): string {
+  const TARGET_MIN = 0.8;
+  const TARGET_MAX = 2.0;
+  const TARGET_IDEAL = 1.4;
+
+  const escapedKw = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const exactRe = new RegExp(`\\b${escapedKw}\\b`, "gi");
+
+  const getStats = (currentHtml: string) => {
+    const text = currentHtml
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const words = text.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+    const occurrences = (text.match(exactRe) || []).length;
+    const density = wordCount > 0 ? (occurrences / wordCount) * 100 : 0;
+    return { wordCount, occurrences, density };
+  };
+
+  let { wordCount, occurrences, density } = getStats(html);
+  if (wordCount < 50) return html; // too short to meaningfully balance
+
+  // CASE A: density too LOW → add a synonym-rich paragraph with extra mentions.
+  if (density < TARGET_MIN) {
+    const targetOccurrences = Math.ceil((TARGET_IDEAL / 100) * wordCount);
+    const needed = Math.max(1, targetOccurrences - occurrences);
+
+    // Build a natural-sounding paragraph that includes the keyword `needed` times.
+    const sentences: string[] = [];
+    const templates = [
+      `Our ${keyword} team focuses on real results that customers actually notice.`,
+      `When you choose our ${keyword}, you get clear pricing and friendly support from start to finish.`,
+      `We make ${keyword} simple, so you spend less time worrying and more time enjoying the outcome.`,
+      `Every ${keyword} project follows a proven process built around quality and care.`,
+      `If you have questions about ${keyword}, our specialists are happy to walk you through every step.`,
+      `Booking ${keyword} with us is fast, transparent and designed around your schedule.`,
+    ];
+    for (let i = 0; i < needed; i += 1) {
+      sentences.push(templates[i % templates.length]);
+    }
+    const filler = `\n<p>${sentences.join(" ")}</p>`;
+
+    // Insert before the last closing </section> or </div>, otherwise append.
+    const lastSection = html.lastIndexOf("</section>");
+    const lastDiv = html.lastIndexOf("</div>");
+    const insertAt = Math.max(lastSection, lastDiv);
+    if (insertAt > 0) {
+      html = html.slice(0, insertAt) + filler + html.slice(insertAt);
+    } else {
+      html += filler;
+    }
+
+    // Re-check; if we overshot (rare), fall through to the trim branch.
+    ({ wordCount, occurrences, density } = getStats(html));
+  }
+
+  // CASE B: density too HIGH → replace surplus exact-match occurrences with neutral substitutes.
+  if (density > TARGET_MAX) {
+    const targetOccurrences = Math.max(1, Math.floor((TARGET_IDEAL / 100) * wordCount));
+    let surplus = occurrences - targetOccurrences;
+    if (surplus <= 0) return html;
+
+    const substitutes = ["our service", "this service", "the service", "our work", "our team's work"];
+    let subIdx = 0;
+
+    // Only mutate text inside <p>...</p> blocks to keep headings, titles, alts intact.
+    html = html.replace(/<p\b([^>]*)>([\s\S]*?)<\/p>/gi, (full, attrs, inner) => {
+      if (surplus <= 0) return full;
+      const replaced = inner.replace(new RegExp(`\\b${escapedKw}\\b`, "i"), () => {
+        if (surplus <= 0) return keyword;
+        surplus -= 1;
+        const sub = substitutes[subIdx % substitutes.length];
+        subIdx += 1;
+        return sub;
+      });
+      // Repeat the per-paragraph replace if there's still surplus (handles multiple hits in one <p>)
+      let current = replaced;
+      while (surplus > 0 && new RegExp(`\\b${escapedKw}\\b`, "i").test(current)) {
+        current = current.replace(new RegExp(`\\b${escapedKw}\\b`, "i"), () => {
+          if (surplus <= 0) return keyword;
+          surplus -= 1;
+          const sub = substitutes[subIdx % substitutes.length];
+          subIdx += 1;
+          return sub;
+        });
+      }
+      return `<p${attrs}>${current}</p>`;
+    });
+  }
+
   return html;
 }
