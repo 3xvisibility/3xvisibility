@@ -117,26 +117,63 @@ export default function TemplateMappingPage() {
 
   const queryClient = useQueryClient();
 
-  /** Persist a mapping change for a single variable → CSV column. */
-  const updateMapping = useMutation({
-    mutationFn: async ({ varName, column }: { varName: string; column: string | null }) => {
+  // Local draft mapping — edits stay here until user clicks Save.
+  const [draftMapping, setDraftMapping] = useState<Record<string, string> | null>(null);
+
+  // Reset draft whenever the active campaign (or its server mapping) changes.
+  useEffect(() => {
+    setDraftMapping(activeCampaign ? { ...(activeCampaign.mapping || {}) } : null);
+  }, [activeCampaignId, activeCampaign?.mapping]);
+
+  const savedMapping = activeCampaign?.mapping || {};
+  const workingMapping = draftMapping || savedMapping;
+
+  // Compute which entries differ from saved.
+  const dirtyKeys = useMemo(() => {
+    const keys = new Set<string>([
+      ...Object.keys(savedMapping),
+      ...Object.keys(workingMapping),
+    ]);
+    const dirty: string[] = [];
+    keys.forEach(k => {
+      if ((savedMapping[k] || "") !== (workingMapping[k] || "")) dirty.push(k);
+    });
+    return dirty;
+  }, [savedMapping, workingMapping]);
+  const isDirty = dirtyKeys.length > 0;
+
+  /** Stage a mapping change locally (does not persist until Save). */
+  const stageMapping = (varName: string, column: string | null) => {
+    setDraftMapping(prev => {
+      const base = { ...(prev || savedMapping) };
+      if (column) base[varName] = column;
+      else delete base[varName];
+      return base;
+    });
+  };
+
+  /** Persist the entire draft mapping to Supabase. */
+  const saveMapping = useMutation({
+    mutationFn: async () => {
       if (!activeCampaign) throw new Error("No campaign selected");
-      const next = { ...(activeCampaign.mapping || {}) } as Record<string, string>;
-      if (column) next[varName] = column;
-      else delete next[varName];
       const { error } = await supabase
         .from("campaigns")
-        .update({ mapping: next })
+        .update({ mapping: workingMapping })
         .eq("id", activeCampaign.id);
       if (error) throw error;
-      return next;
+      return workingMapping;
     },
-    onSuccess: (_n, vars) => {
-      toast.success(vars.column ? `Mapped {${vars.varName}} → ${vars.column}` : `Cleared mapping for {${vars.varName}}`);
+    onSuccess: () => {
+      toast.success(`Saved ${dirtyKeys.length} mapping change${dirtyKeys.length === 1 ? "" : "s"}`);
       queryClient.invalidateQueries({ queryKey: ["mapping-campaigns", wsId] });
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to update mapping"),
+    onError: (e: any) => toast.error(e?.message || "Failed to save mappings"),
   });
+
+  const discardChanges = () => {
+    setDraftMapping({ ...savedMapping });
+    toast.info("Changes discarded");
+  };
 
   // Classify variables once template is loaded
   const classified = useMemo<ClassifiedVariable[]>(() => {
@@ -165,12 +202,10 @@ export default function TemplateMappingPage() {
     return Object.keys(csvRows[0] || {});
   }, [csvRows]);
 
-  /** Resolve which CSV column feeds a given variable name. */
+  /** Resolve which CSV column feeds a given variable name (uses working draft). */
   const resolveColumnForVar = (varName: string): string | null => {
-    const m = activeCampaign?.mapping || {};
-    // direct mapping wins
+    const m = workingMapping;
     if (typeof m[varName] === "string" && m[varName]) return m[varName];
-    // fallback: case-insensitive direct match against csv columns
     const hit = csvColumns.find(c => c.toLowerCase() === varName.toLowerCase());
     return hit || null;
   };
