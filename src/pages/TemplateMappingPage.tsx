@@ -439,8 +439,8 @@ export default function TemplateMappingPage() {
                                         currentColumn={col}
                                         csvColumns={csvColumns}
                                         compact
-                                        isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
-                                        onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                        isDirty={dirtyKeys.includes(v.name)}
+                                        onChange={(column) => stageMapping(v.name, column)}
                                       />
                                     </TableCell>
                                     <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
