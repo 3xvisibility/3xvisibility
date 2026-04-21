@@ -171,8 +171,34 @@ function normalizeOptimizationResult(
   includeContent: boolean,
 ) {
   const fallbackKeyword = derivePrimaryKeyword(fallback);
-  const seoTitle = trimTextAtWordBoundary(String(rawResult.seo_title || fallback.seoTitle || fallback.title || "").trim(), 60);
+  let seoTitle = trimTextAtWordBoundary(String(rawResult.seo_title || fallback.seoTitle || fallback.title || "").trim(), 60);
   const seoDescription = trimTextAtWordBoundary(String(rawResult.seo_description || fallback.seoDescription || "").trim(), 156);
+
+  // ── Deterministic SEO title polish: ensure uniqueness (separator) + action word for SEA score ──
+  const ACTION_WORD_RE = /\b(buy|get|shop|order|book|reserve|request|contact|call|discover|subscribe|free|best|top|new|save|deal|premium|try|hire|find|learn)\b/i;
+  const SEPARATOR_RE = /[|\-–·•:]/;
+  const provisionalKeyword = (Array.isArray(rawResult.seo_keywords) && typeof rawResult.seo_keywords[0] === "string"
+    ? rawResult.seo_keywords[0]
+    : fallback.seoKeywords?.[0]) || fallbackKeyword || "Trusted Local Service";
+
+  if (seoTitle) {
+    // 1. Add separator + keyword tag if missing (and we have room)
+    if (!SEPARATOR_RE.test(seoTitle)) {
+      const tag = String(provisionalKeyword).trim().slice(0, 28);
+      const candidate = `${seoTitle} | ${tag}`;
+      seoTitle = candidate.length <= 60 ? candidate : trimTextAtWordBoundary(candidate, 60);
+    }
+    // 2. Prepend an action word if missing
+    if (!ACTION_WORD_RE.test(seoTitle)) {
+      const candidate = `Get ${seoTitle}`;
+      seoTitle = candidate.length <= 60 ? candidate : trimTextAtWordBoundary(candidate, 60);
+    }
+    // 3. Final length safety (>= 30 chars target)
+    if (seoTitle.length < 30) {
+      const padded = `${seoTitle} — Trusted Local Service`;
+      seoTitle = padded.length <= 60 ? padded : trimTextAtWordBoundary(padded, 60);
+    }
+  }
   const content = includeContent
     ? (typeof rawResult.content === "string" && rawResult.content.trim().length > 0 ? rawResult.content : fallback.content)
     : undefined;
