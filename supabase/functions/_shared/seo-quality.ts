@@ -819,15 +819,16 @@ export function autoRepairContent(
     block += `<h2>Local ${keyword ? keyword.charAt(0).toUpperCase() + keyword.slice(1) + " " : ""}Service Serving Your Area</h2>`;
   }
   // Lead paragraph packed with benefit + local + CTA + trust + offer + urgency words.
-  block += `<p>Looking for trusted ${keyword || "expert"} services? We are a local team serving customers near you and in your area, delivering fast, easy, reliable and premium results. Our certified, proven and recommended specialists provide same-day, top-rated support today — get a free quote with transparent pricing and contact us now to book your consultation.</p>`;
+  const kw = keyword || "expert service";
+  block += `<p>Looking for trusted ${kw}? We are a local team serving customers near you and in your area, delivering fast, easy, reliable and premium ${kw} results. Our certified, proven and recommended ${kw} specialists provide same-day, top-rated support today — get a free quote with transparent pricing and contact us now to book your ${kw} consultation.</p>`;
   // Add any remaining specific signals as supporting paragraphs
   const supporting: string[] = [];
-  if (!geoCommunity) supporting.push("As local experts, we work closely with the community and families around you, with our nearby team ready to help.");
-  if (!geoServiceArea) supporting.push("Our service area covers nearby neighborhoods, with delivery and coverage available throughout the region.");
-  if (!geoAvailability) supporting.push("We are open and available today during business hours — visit us, call us, or contact us for same-day response.");
-  if (!geoCredibility) supporting.push("Trusted locally, our area specialists provide nearby support that customers recommend across the region.");
-  if (!seaTrust) supporting.push("Backed by verified reviews, testimonials, a satisfaction guarantee, and warranty-protected service from certified experts.");
-  if (!seaOffer) supporting.push("Take advantage of our exclusive free trial, special discount package, and starting-at pricing plan with bundle savings.");
+  if (!geoCommunity) supporting.push(`As local experts in ${kw}, we work closely with the community and families around you, with our nearby team ready to help.`);
+  if (!geoServiceArea) supporting.push(`Our ${kw} service area covers nearby neighborhoods, with delivery and coverage available throughout the region.`);
+  if (!geoAvailability) supporting.push(`We are open and available today for ${kw} during business hours — visit us, call us, or contact us for same-day response.`);
+  if (!geoCredibility) supporting.push(`Trusted locally, our ${kw} area specialists provide nearby support that customers recommend across the region.`);
+  if (!seaTrust) supporting.push(`Backed by verified reviews, testimonials, a satisfaction guarantee, and warranty-protected ${kw} service from certified experts.`);
+  if (!seaOffer) supporting.push(`Take advantage of our exclusive free ${kw} trial, special discount package, and starting-at pricing plan with bundle savings.`);
   for (const part of supporting) {
     block += `<p>${part}</p>`;
   }
