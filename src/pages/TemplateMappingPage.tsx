@@ -360,8 +360,8 @@ export default function TemplateMappingPage() {
                                       varName={v.name}
                                       currentColumn={col}
                                       csvColumns={csvColumns}
-                                      isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
-                                      onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                      isDirty={dirtyKeys.includes(v.name)}
+                                      onChange={(column) => stageMapping(v.name, column)}
                                     />
                                   </TableCell>
                                   <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[260px] truncate">
