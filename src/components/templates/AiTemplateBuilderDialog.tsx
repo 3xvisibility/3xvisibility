@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw, Image as ImageIcon } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { filterDesignVars } from "@/lib/design-vars-filter";
