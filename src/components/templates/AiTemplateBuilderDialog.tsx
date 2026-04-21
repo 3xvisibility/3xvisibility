@@ -517,6 +517,106 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               )}
             </div>
 
+            {/* ─── Background image controls ─── */}
+            <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4 text-primary" />
+                <Label className="text-sm font-semibold">Background image — aspect ratio &amp; focal point</Label>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Controls how hero/CTA background images crop on each screen size, so the important part of the photo always stays visible.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Desktop aspect ratio</Label>
+                  <div className="grid grid-cols-5 gap-1">
+                    {ASPECT_RATIOS.map((r) => (
+                      <button
+                        key={r.v}
+                        type="button"
+                        onClick={() => setHeroAspectDesktop(r.v)}
+                        title={r.desc}
+                        className={`px-1.5 py-1.5 rounded-md border text-[11px] font-medium transition-all ${
+                          heroAspectDesktop === r.v
+                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                            : "border-border bg-card hover:bg-accent"
+                        }`}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Mobile aspect ratio</Label>
+                  <div className="grid grid-cols-5 gap-1">
+                    {ASPECT_RATIOS.map((r) => (
+                      <button
+                        key={r.v}
+                        type="button"
+                        onClick={() => setHeroAspectMobile(r.v)}
+                        title={r.desc}
+                        className={`px-1.5 py-1.5 rounded-md border text-[11px] font-medium transition-all ${
+                          heroAspectMobile === r.v
+                            ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                            : "border-border bg-card hover:bg-accent"
+                        }`}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Focal point picker */}
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-muted-foreground">
+                  Focal point ({focalX}% × {focalY}%) — click on the preview to set what stays centered when cropped
+                </Label>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+                    const y = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
+                    setFocalX(x);
+                    setFocalY(y);
+                  }}
+                  className="relative w-full aspect-[16/9] rounded-md border border-border bg-cover bg-center cursor-crosshair overflow-hidden select-none"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(135deg, rgba(0,0,0,.45), rgba(0,0,0,.25)), url('https://picsum.photos/seed/focal-preview/800/450')",
+                  }}
+                >
+                  <div
+                    className="absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary shadow-lg ring-2 ring-primary/40 pointer-events-none"
+                    style={{ left: `${focalX}%`, top: `${focalY}%` }}
+                  />
+                  <div className="absolute inset-x-0 border-t border-white/30 pointer-events-none" style={{ top: `${focalY}%` }} />
+                  <div className="absolute inset-y-0 border-l border-white/30 pointer-events-none" style={{ left: `${focalX}%` }} />
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { l: "Top", x: 50, y: 15 },
+                    { l: "Center", x: 50, y: 50 },
+                    { l: "Bottom", x: 50, y: 85 },
+                  ].map((p) => (
+                    <button
+                      key={p.l}
+                      type="button"
+                      onClick={() => { setFocalX(p.x); setFocalY(p.y); }}
+                      className="px-2 py-1 rounded-md border border-border bg-card text-[11px] hover:bg-accent"
+                    >
+                      {p.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
 
               <Textarea
