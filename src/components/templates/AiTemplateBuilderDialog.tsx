@@ -8,13 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 const AI_LANGUAGES = [
   { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
@@ -89,6 +89,47 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedName, setGeneratedName] = useState("");
   const [platform, setPlatform] = useState("wordpress");
+
+  // Theme color controls
+  const [themeMode, setThemeMode] = useState<"auto" | "website" | "custom">("auto");
+  const [websiteId, setWebsiteId] = useState<string>("");
+  const [primaryColor, setPrimaryColor] = useState("#2563eb");
+  const [accentColor, setAccentColor] = useState("#f59e0b");
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [textColor, setTextColor] = useState("#111827");
+  const [themeFont, setThemeFont] = useState("");
+  const [extracting, setExtracting] = useState(false);
+
+  const websitesQuery = useQuery({
+    queryKey: ["websites-for-theme"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("websites").select("id, name, url").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const extractColors = async (id: string) => {
+    if (!id) return;
+    setExtracting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-site-colors", { body: { website_id: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const c = data.colors || {};
+      if (c.primary) setPrimaryColor(c.primary);
+      if (c.accent) setAccentColor(c.accent);
+      if (c.background) setBgColor(c.background);
+      if (c.text) setTextColor(c.text);
+      if (data.fonts?.[0]) setThemeFont(data.fonts[0]);
+      toast({ title: "Colors extracted", description: `Primary ${c.primary || "—"} · Background ${c.background || "—"}` });
+    } catch (err: any) {
+      toast({ title: "Could not extract colors", description: err.message, variant: "destructive" });
+    } finally {
+      setExtracting(false);
+    }
+  };
+
 
   // Quick Content state
   const [aiKeywords, setAiKeywords] = useState("");
