@@ -8,13 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 const AI_LANGUAGES = [
   { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
@@ -90,6 +90,47 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [generatedName, setGeneratedName] = useState("");
   const [platform, setPlatform] = useState("wordpress");
 
+  // Theme color controls
+  const [themeMode, setThemeMode] = useState<"auto" | "website" | "custom">("auto");
+  const [websiteId, setWebsiteId] = useState<string>("");
+  const [primaryColor, setPrimaryColor] = useState("#2563eb");
+  const [accentColor, setAccentColor] = useState("#f59e0b");
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [textColor, setTextColor] = useState("#111827");
+  const [themeFont, setThemeFont] = useState("");
+  const [extracting, setExtracting] = useState(false);
+
+  const websitesQuery = useQuery({
+    queryKey: ["websites-for-theme"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("websites").select("id, name, url").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const extractColors = async (id: string) => {
+    if (!id) return;
+    setExtracting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-site-colors", { body: { website_id: id } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const c = data.colors || {};
+      if (c.primary) setPrimaryColor(c.primary);
+      if (c.accent) setAccentColor(c.accent);
+      if (c.background) setBgColor(c.background);
+      if (c.text) setTextColor(c.text);
+      if (data.fonts?.[0]) setThemeFont(data.fonts[0]);
+      toast({ title: "Colors extracted", description: `Primary ${c.primary || "—"} · Background ${c.background || "—"}` });
+    } catch (err: any) {
+      toast({ title: "Could not extract colors", description: err.message, variant: "destructive" });
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+
   // Quick Content state
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiContentType, setAiContentType] = useState("seo");
@@ -113,10 +154,19 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     return parts.join(" ");
   };
 
+  const buildThemePayload = () => {
+    if (themeMode === "auto") return { themeColors: undefined, themeFonts: undefined };
+    return {
+      themeColors: { primary: primaryColor, accent: accentColor, background: bgColor, text: textColor },
+      themeFonts: themeFont ? [themeFont] : undefined,
+    };
+  };
+
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
+      const theme = buildThemePayload();
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche },
+        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche, ...theme },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -333,8 +383,118 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               </div>
             </div>
 
+
+            {/* ─── Theme Colors ─── */}
+            <div className="rounded-xl border border-border bg-muted/20 p-3 sm:p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Palette className="h-4 w-4 text-primary" />
+                <Label className="text-sm font-semibold">Theme colors</Label>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { v: "auto", label: "Auto", desc: "Inherit from site" },
+                  { v: "website", label: "From website", desc: "Pull live colors" },
+                  { v: "custom", label: "Custom", desc: "Pick your own" },
+                ].map((m) => (
+                  <button
+                    key={m.v}
+                    type="button"
+                    onClick={() => setThemeMode(m.v as any)}
+                    className={`flex flex-col items-start gap-0.5 px-3 py-2 rounded-lg border text-left transition-all ${
+                      themeMode === m.v ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border bg-card hover:bg-accent"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold">{m.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{m.desc}</span>
+                  </button>
+                ))}
+              </div>
+
+              {themeMode === "auto" && (
+                <p className="text-[11px] text-muted-foreground">
+                  ✨ Template uses <code>color: inherit</code> so it adopts your connected website's theme automatically when published.
+                </p>
+              )}
+
+              {themeMode === "website" && (
+                <div className="space-y-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Select value={websiteId} onValueChange={(v) => { setWebsiteId(v); extractColors(v); }}>
+                      <SelectTrigger className="flex-1 h-9">
+                        <SelectValue placeholder="Pick a connected website" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(websitesQuery.data ?? []).map((w: any) => (
+                          <SelectItem key={w.id} value={w.id}>{w.name} · {w.url}</SelectItem>
+                        ))}
+                        {(!websitesQuery.data || websitesQuery.data.length === 0) && (
+                          <div className="px-2 py-1.5 text-xs text-muted-foreground">No websites connected yet</div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => extractColors(websiteId)}
+                      disabled={!websiteId || extracting}
+                    >
+                      {extracting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      <span className="ml-1.5">Re-scan</span>
+                    </Button>
+                  </div>
+                  {websiteId && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Tip: you can still tweak any color below before generating.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {themeMode !== "auto" && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label: "Primary", value: primaryColor, set: setPrimaryColor },
+                    { label: "Accent", value: accentColor, set: setAccentColor },
+                    { label: "Background", value: bgColor, set: setBgColor },
+                    { label: "Text", value: textColor, set: setTextColor },
+                  ].map((c) => (
+                    <div key={c.label} className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">{c.label}</Label>
+                      <div className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1">
+                        <input
+                          type="color"
+                          value={c.value}
+                          onChange={(e) => c.set(e.target.value)}
+                          className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                        />
+                        <Input
+                          value={c.value}
+                          onChange={(e) => c.set(e.target.value)}
+                          className="h-6 px-1 text-xs font-mono border-0 shadow-none focus-visible:ring-0"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {themeMode !== "auto" && (
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">Font family (optional)</Label>
+                  <Input
+                    value={themeFont}
+                    onChange={(e) => setThemeFont(e.target.value)}
+                    placeholder="e.g., Inter, Poppins, Roboto"
+                    className="h-8 text-xs"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Additional details (optional)</Label>
+
               <Textarea
                 placeholder="Any specific requirements... e.g., 'include comparison table', 'focus on local SEO'"
                 value={extraDetails}
