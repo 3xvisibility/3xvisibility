@@ -6,17 +6,21 @@
 // - Public, free, no auth required.
 // - Returns a different relevant photo each call for the given query.
 
-function buildUnsplashUrl(keywords: string, width = 1200, height = 600): string {
-  const q = encodeURIComponent(
+// Unsplash deprecated source.unsplash.com in 2024 — it now returns broken
+// responses. We use Picsum Photos with a deterministic seed built from the
+// niche keywords, which always returns a real free photo.
+//   https://picsum.photos/seed/<seed>/<w>/<h>
+function buildFreeImageUrl(keywords: string, width = 1200, height = 600): string {
+  const slug =
     keywords
-      .split(/[\s,]+/)
-      .filter(Boolean)
-      .slice(0, 4)
-      .join(",")
-  );
-  // Add a random seed to avoid the browser cache returning the same image for every slot
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "page";
+  // Add a random suffix so different slots get different images even when
+  // the keyword string is the same.
   const sig = Math.floor(Math.random() * 1_000_000);
-  return `https://source.unsplash.com/${width}x${height}/?${q}&sig=${sig}`;
+  return `https://picsum.photos/seed/${slug}-${sig}/${width}/${height}`;
 }
 
 function buildKeywordPool(context: {
