@@ -707,14 +707,25 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       });
     }
 
-    // Auto-repair content to fix missing H1, links, schema, keyword placement
-    if (includeContent && result.content) {
-      result.content = autoRepairContent(result.content, {
+    // Auto-repair content to fix missing H1, links, schema, keyword placement,
+    // SEA signals (CTA/benefit/trust/offer/urgency), and GEO signals (local/community/availability).
+    // Run even when "content" wasn't explicitly requested — we still need the live page to score 10/10.
+    const baseContentForRepair = (includeContent && result.content) ? result.content : page_content;
+    if (baseContentForRepair) {
+      result.content = autoRepairContent(baseContentForRepair, {
         title: page_title,
         seoTitle: result.seo_title || effectiveSeoTitle,
         primaryKeyword: qualityReport.primaryKeyword,
         slug: page_slug,
       });
+    }
+
+    // Ensure SEO title contains an action/offer word (SEA: "Action words in title")
+    const actionWordRegex = /(buy|get|shop|order|book|reserve|request|contact|call|discover|subscribe|sign up|free|best|top|new|save|deal|premium)/i;
+    if (fields.includes("seo_title") && result.seo_title && !actionWordRegex.test(result.seo_title)) {
+      const prefix = "Get ";
+      const candidate = `${prefix}${result.seo_title}`;
+      result.seo_title = candidate.length <= 60 ? candidate : result.seo_title;
     }
 
     // Fetch the website for CMS push
