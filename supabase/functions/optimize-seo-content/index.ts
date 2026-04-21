@@ -756,7 +756,9 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         const connector = isProductContent
           ? await createProductConnector(website as WebsiteRecord)
           : await createConnector(website as WebsiteRecord);
-        const rewrittenContent = result.content && fields.includes("content") ? result.content : null;
+        // Push repaired content to CMS even if user didn't request "content" field —
+        // the auto-repair adds GEO/SEA signals required to score 10/10 on the live page.
+        const rewrittenContent = result.content && result.content !== page_content ? result.content : null;
         // Always UPDATE existing page — never create a new one
         const updatePayload: Record<string, any> = {
           title: result.seo_title || page_title,
