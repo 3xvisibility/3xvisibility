@@ -19,25 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
-
-interface MarketplaceTemplate {
-  id: string;
-  name: string;
-  description: string;
-  content: string;
-  variables: string[];
-  category: string;
-  tags: string[];
-  author: string;
-  downloads: number;
-  rating: number;
-  ratingCount?: number;
-  seo_title_pattern?: string;
-  seo_description_pattern?: string;
-  schema_type?: string;
-  isShared?: boolean; // from shared_templates table
-  shared_id?: string;
-}
+import { COMMUNITY_TEMPLATES, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
 const CATEGORIES = [
   { id: "all", label: "All", icon: Store },
