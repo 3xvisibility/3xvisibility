@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { Save, Undo2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,26 +117,63 @@ export default function TemplateMappingPage() {
 
   const queryClient = useQueryClient();
 
-  /** Persist a mapping change for a single variable → CSV column. */
-  const updateMapping = useMutation({
-    mutationFn: async ({ varName, column }: { varName: string; column: string | null }) => {
+  // Local draft mapping — edits stay here until user clicks Save.
+  const [draftMapping, setDraftMapping] = useState<Record<string, string> | null>(null);
+
+  // Reset draft whenever the active campaign (or its server mapping) changes.
+  useEffect(() => {
+    setDraftMapping(activeCampaign ? { ...(activeCampaign.mapping || {}) } : null);
+  }, [activeCampaignId, activeCampaign?.mapping]);
+
+  const savedMapping = activeCampaign?.mapping || {};
+  const workingMapping = draftMapping || savedMapping;
+
+  // Compute which entries differ from saved.
+  const dirtyKeys = useMemo(() => {
+    const keys = new Set<string>([
+      ...Object.keys(savedMapping),
+      ...Object.keys(workingMapping),
+    ]);
+    const dirty: string[] = [];
+    keys.forEach(k => {
+      if ((savedMapping[k] || "") !== (workingMapping[k] || "")) dirty.push(k);
+    });
+    return dirty;
+  }, [savedMapping, workingMapping]);
+  const isDirty = dirtyKeys.length > 0;
+
+  /** Stage a mapping change locally (does not persist until Save). */
+  const stageMapping = (varName: string, column: string | null) => {
+    setDraftMapping(prev => {
+      const base = { ...(prev || savedMapping) };
+      if (column) base[varName] = column;
+      else delete base[varName];
+      return base;
+    });
+  };
+
+  /** Persist the entire draft mapping to Supabase. */
+  const saveMapping = useMutation({
+    mutationFn: async () => {
       if (!activeCampaign) throw new Error("No campaign selected");
-      const next = { ...(activeCampaign.mapping || {}) } as Record<string, string>;
-      if (column) next[varName] = column;
-      else delete next[varName];
       const { error } = await supabase
         .from("campaigns")
-        .update({ mapping: next })
+        .update({ mapping: workingMapping })
         .eq("id", activeCampaign.id);
       if (error) throw error;
-      return next;
+      return workingMapping;
     },
-    onSuccess: (_n, vars) => {
-      toast.success(vars.column ? `Mapped {${vars.varName}} → ${vars.column}` : `Cleared mapping for {${vars.varName}}`);
+    onSuccess: () => {
+      toast.success(`Saved ${dirtyKeys.length} mapping change${dirtyKeys.length === 1 ? "" : "s"}`);
       queryClient.invalidateQueries({ queryKey: ["mapping-campaigns", wsId] });
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to update mapping"),
+    onError: (e: any) => toast.error(e?.message || "Failed to save mappings"),
   });
+
+  const discardChanges = () => {
+    setDraftMapping({ ...savedMapping });
+    toast.info("Changes discarded");
+  };
 
   // Classify variables once template is loaded
   const classified = useMemo<ClassifiedVariable[]>(() => {
@@ -164,12 +202,10 @@ export default function TemplateMappingPage() {
     return Object.keys(csvRows[0] || {});
   }, [csvRows]);
 
-  /** Resolve which CSV column feeds a given variable name. */
+  /** Resolve which CSV column feeds a given variable name (uses working draft). */
   const resolveColumnForVar = (varName: string): string | null => {
-    const m = activeCampaign?.mapping || {};
-    // direct mapping wins
+    const m = workingMapping;
     if (typeof m[varName] === "string" && m[varName]) return m[varName];
-    // fallback: case-insensitive direct match against csv columns
     const hit = csvColumns.find(c => c.toLowerCase() === varName.toLowerCase());
     return hit || null;
   };
@@ -254,6 +290,54 @@ export default function TemplateMappingPage() {
             <StatCard label="Unmapped" value={String(unmappedVars)} tone={unmappedVars ? "warn" : "muted"} />
           </div>
 
+          {/* ── Save bar ──────────────────────── */}
+          <div
+            className={`sticky top-0 z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border px-3 py-2 backdrop-blur ${
+              isDirty
+                ? "border-amber-300 bg-amber-50/90 dark:bg-amber-500/10"
+                : "border-border bg-background/80"
+            }`}
+          >
+            <div className="flex items-center gap-2 text-xs">
+              {isDirty ? (
+                <>
+                  <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-400">
+                    {dirtyKeys.length} unsaved
+                  </Badge>
+                  <span className="text-muted-foreground truncate">
+                    Click Save to apply mappings to future page generation.
+                  </span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">All mapping changes saved.</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={discardChanges}
+                disabled={!isDirty || saveMapping.isPending}
+              >
+                <Undo2 className="h-3.5 w-3.5 mr-1.5" /> Discard
+              </Button>
+              <Button
+                size="sm"
+                className="h-8"
+                onClick={() => saveMapping.mutate()}
+                disabled={!isDirty || saveMapping.isPending}
+              >
+                {saveMapping.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Save className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                Save mappings
+              </Button>
+            </div>
+          </div>
+
           {/* ── Search ────────────────────────── */}
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -324,8 +408,8 @@ export default function TemplateMappingPage() {
                                       varName={v.name}
                                       currentColumn={col}
                                       csvColumns={csvColumns}
-                                      isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
-                                      onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                      isDirty={dirtyKeys.includes(v.name)}
+                                      onChange={(column) => stageMapping(v.name, column)}
                                     />
                                   </TableCell>
                                   <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[260px] truncate">
@@ -403,8 +487,8 @@ export default function TemplateMappingPage() {
                                         currentColumn={col}
                                         csvColumns={csvColumns}
                                         compact
-                                        isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
-                                        onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                        isDirty={dirtyKeys.includes(v.name)}
+                                        onChange={(column) => stageMapping(v.name, column)}
                                       />
                                     </TableCell>
                                     <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
@@ -461,13 +545,13 @@ function StatCard({
 const UNMAPPED = "__unmapped__";
 
 function MappingEditor({
-  varName, currentColumn, csvColumns, onChange, isPending, compact,
+  varName, currentColumn, csvColumns, onChange, isDirty, compact,
 }: {
   varName: string;
   currentColumn: string | null;
   csvColumns: string[];
   onChange: (column: string | null) => void;
-  isPending?: boolean;
+  isDirty?: boolean;
   compact?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -491,15 +575,17 @@ function MappingEditor({
         ) : (
           <Badge variant="destructive" className="text-[10px]">unmapped</Badge>
         )}
+        {isDirty && (
+          <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-300">unsaved</Badge>
+        )}
         <Button
           variant="ghost"
           size="icon"
           className="h-6 w-6 shrink-0"
           onClick={() => setEditing(true)}
           aria-label={`Change mapping for ${varName}`}
-          disabled={isPending}
         >
-          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Pencil className="h-3 w-3" />}
+          <Pencil className="h-3 w-3" />
         </Button>
       </div>
     );
