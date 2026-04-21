@@ -154,10 +154,19 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     return parts.join(" ");
   };
 
+  const buildThemePayload = () => {
+    if (themeMode === "auto") return { themeColors: undefined, themeFonts: undefined };
+    return {
+      themeColors: { primary: primaryColor, accent: accentColor, background: bgColor, text: textColor },
+      themeFonts: themeFont ? [themeFont] : undefined,
+    };
+  };
+
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
+      const theme = buildThemePayload();
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche },
+        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche, ...theme },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
