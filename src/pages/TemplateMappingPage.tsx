@@ -397,8 +397,15 @@ export default function TemplateMappingPage() {
                                         {`{${v.name}}`}
                                       </code>
                                     </TableCell>
-                                    <TableCell className="text-xs">
-                                      {col || <span className="italic text-muted-foreground">—</span>}
+                                    <TableCell>
+                                      <MappingEditor
+                                        varName={v.name}
+                                        currentColumn={col}
+                                        csvColumns={csvColumns}
+                                        compact
+                                        isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
+                                        onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                      />
                                     </TableCell>
                                     <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
                                       {value || <span className="italic opacity-60">empty</span>}
