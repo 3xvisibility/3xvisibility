@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
 import {
   ArrowRight, Columns3, FileText, Info, Search, Sparkles,
   Image as ImageIcon, MessageSquareQuote, Rocket, Globe2, Layers,
+  Pencil, X as XIcon, Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -110,6 +112,29 @@ export default function TemplateMappingPage() {
       if (error) throw error;
       return (data || []) as GeneratedPage[];
     },
+  });
+
+  const queryClient = useQueryClient();
+
+  /** Persist a mapping change for a single variable → CSV column. */
+  const updateMapping = useMutation({
+    mutationFn: async ({ varName, column }: { varName: string; column: string | null }) => {
+      if (!activeCampaign) throw new Error("No campaign selected");
+      const next = { ...(activeCampaign.mapping || {}) } as Record<string, string>;
+      if (column) next[varName] = column;
+      else delete next[varName];
+      const { error } = await supabase
+        .from("campaigns")
+        .update({ mapping: next })
+        .eq("id", activeCampaign.id);
+      if (error) throw error;
+      return next;
+    },
+    onSuccess: (_n, vars) => {
+      toast.success(vars.column ? `Mapped {${vars.varName}} → ${vars.column}` : `Cleared mapping for {${vars.varName}}`);
+      queryClient.invalidateQueries({ queryKey: ["mapping-campaigns", wsId] });
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to update mapping"),
   });
 
   // Classify variables once template is loaded
@@ -295,22 +320,13 @@ export default function TemplateMappingPage() {
                                     </code>
                                   </TableCell>
                                   <TableCell>
-                                    {col ? (
-                                      <span className="inline-flex items-center gap-1.5 text-xs">
-                                        <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                        <span className="font-medium">{col}</span>
-                                      </span>
-                                    ) : (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Badge variant="destructive" className="text-[10px] cursor-help">unmapped</Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          No CSV column maps to {`{${v.name}}`}. Map it from
-                                          the campaign Mapping step.
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    )}
+                                    <MappingEditor
+                                      varName={v.name}
+                                      currentColumn={col}
+                                      csvColumns={csvColumns}
+                                      isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
+                                      onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                    />
                                   </TableCell>
                                   <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[260px] truncate">
                                     {sample || <span className="italic opacity-60">—</span>}
@@ -381,8 +397,15 @@ export default function TemplateMappingPage() {
                                         {`{${v.name}}`}
                                       </code>
                                     </TableCell>
-                                    <TableCell className="text-xs">
-                                      {col || <span className="italic text-muted-foreground">—</span>}
+                                    <TableCell>
+                                      <MappingEditor
+                                        varName={v.name}
+                                        currentColumn={col}
+                                        csvColumns={csvColumns}
+                                        compact
+                                        isPending={updateMapping.isPending && updateMapping.variables?.varName === v.name}
+                                        onChange={(column) => updateMapping.mutate({ varName: v.name, column })}
+                                      />
                                     </TableCell>
                                     <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
                                       {value || <span className="italic opacity-60">empty</span>}
@@ -430,5 +453,88 @@ function StatCard({
         <p className={`mt-1 text-sm sm:text-base font-semibold truncate ${toneCls}`}>{value}</p>
       </CardContent>
     </Card>
+  );
+}
+
+/* ─── inline mapping editor ─────────────────────── */
+
+const UNMAPPED = "__unmapped__";
+
+function MappingEditor({
+  varName, currentColumn, csvColumns, onChange, isPending, compact,
+}: {
+  varName: string;
+  currentColumn: string | null;
+  csvColumns: string[];
+  onChange: (column: string | null) => void;
+  isPending?: boolean;
+  compact?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (csvColumns.length === 0) {
+    return (
+      <span className="text-[11px] italic text-muted-foreground">
+        No CSV columns available
+      </span>
+    );
+  }
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-1.5 min-w-0">
+        {currentColumn ? (
+          <span className="inline-flex items-center gap-1.5 text-xs min-w-0">
+            {!compact && <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />}
+            <span className="font-medium truncate" title={currentColumn}>{currentColumn}</span>
+          </span>
+        ) : (
+          <Badge variant="destructive" className="text-[10px]">unmapped</Badge>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 shrink-0"
+          onClick={() => setEditing(true)}
+          aria-label={`Change mapping for ${varName}`}
+          disabled={isPending}
+        >
+          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Pencil className="h-3 w-3" />}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <Select
+        defaultValue={currentColumn || UNMAPPED}
+        onValueChange={(val) => {
+          onChange(val === UNMAPPED ? null : val);
+          setEditing(false);
+        }}
+      >
+        <SelectTrigger className="h-7 text-xs min-w-[140px] max-w-[220px]">
+          <SelectValue placeholder="Pick a CSV column" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={UNMAPPED}>
+            <span className="italic text-muted-foreground">— Unmapped —</span>
+          </SelectItem>
+          {csvColumns.map(c => (
+            <SelectItem key={c} value={c}>{c}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 shrink-0"
+        onClick={() => setEditing(false)}
+        aria-label="Cancel"
+      >
+        <XIcon className="h-3 w-3" />
+      </Button>
+    </div>
   );
 }
