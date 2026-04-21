@@ -45,42 +45,81 @@ serve(async (req) => {
     };
     const platformRule = platformRules[platform as string] || platformRules.generic;
 
-    const systemPrompt = `You are a world-class web designer specializing in high-converting landing pages for programmatic SEO. Generate a stunning, fully responsive HTML template with embedded <style> block and {variable} syntax for dynamic content.
+    const systemPrompt = `You are an award-winning senior web designer (think Awwwards / SiteInspire level) specializing in high-converting, visually stunning landing pages for programmatic SEO. Generate a fully responsive, magazine-quality HTML template with an embedded <style> block and {variable} syntax for dynamic content. The output must look like it was crafted by a top design agency — never generic, never AI-looking.
 
-DESIGN REQUIREMENTS — professional, theme-adaptive:
+OUTPUT RULES:
 1. Output ONLY raw HTML. Start with a <style> tag containing all CSS, then the HTML body content. No markdown fences, no explanation.
-2. The <style> block MUST include a complete embedded stylesheet scoped to .pgp-page class.
-3. CRITICAL — THEME INHERITANCE: The template will be embedded inside the client's existing website (WordPress, Shopify, PrestaShop). All text styling MUST inherit from the host site:
+2. The <style> block MUST include a complete embedded stylesheet scoped to .pgp-page class so it never conflicts with the host site.
+3. CRITICAL — THEME INHERITANCE (so it matches the connected website's color/font when published):
    - .pgp-page: font-family: inherit; color: inherit;
-   - h1, h2, h3, h4, p, li, span: color: inherit; font-family: inherit; — NEVER hardcode colors like #333, #000, #2563eb on text elements.
-   - Links: color: inherit or currentColor — not hardcoded blue.
-   - Backgrounds: use transparent, rgba(128,128,128,.04), or rgba(128,128,128,.08) — NEVER white (#fff) as it clashes with dark themes.
-   - Borders: use rgba(128,128,128,.2) — NEVER hardcoded colors.
-   - Buttons: use background: currentColor with color: #fff for the text, or a very subtle background.
-4. Layout: Use CSS Grid and Flexbox. Cards in 3-column grid on desktop, single column on mobile. @media breakpoints at 768px and 480px.
-5. Typography: Use clamp() for fluid responsive sizing. Do NOT import Google Fonts — the host site already has its own fonts.
-6. Spacing: Generous whitespace, clean sections, professional structure.
-7. Cards: transparent background, subtle border (rgba), rounded corners, hover effect.
-8. Hero: subtle background tint using rgba, large headline, subtitle, CTA.
-9. CTA buttons: padding, border-radius, font-weight 600, hover opacity change.
-10. Testimonials: subtle background, quote marks, star ratings.
-11. FAQ: Use <details>/<summary> elements.
+   - h1, h2, h3, h4, p, li, span, a (in body text): color: inherit; font-family: inherit; — NEVER hardcode colors like #333, #000, #2563eb on text elements.
+   - Section backgrounds: use transparent, rgba(128,128,128,.04), or rgba(128,128,128,.08) — NEVER solid white (#fff) or solid black, they clash with dark/light host themes.
+   - Borders: use rgba(128,128,128,.18) — NEVER hardcoded colors.
+   - Accent / CTA buttons: use background: currentColor with color: #fff (so the button picks up the host site's text color as the brand color automatically). Hover: opacity .88, translateY(-2px).
+   - On hero/CTA sections that use a dark background image overlay, text inside that section CAN be color: #fff (because the overlay guarantees dark background) — this is the only allowed exception.
 
-CONTENT VARIABLE RULES:
-12. Include 3-8 content variables using {variable_name} syntax. Variables must be real DATA fields only: {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {service_name}, {tagline}. 
-13. ABSOLUTELY NEVER create variables for ANY design/styling properties — no {font_family}, {background_color}, {primary_color}, {text_color}, etc. All visual styling must be hardcoded in CSS.
-14. Variable names must be lowercase_snake_case.
-15. For AI-generated unique content per page: {{AI:instruction using {variables}}}
-16. For AI-generated images per page: {{AI_IMAGE:description using {variables}}}
-17. Include at least one {{AI:...}} block.
-18. Use https://picsum.photos/800/400?random=N for placeholder images.
+HERO SECTION (MUST be stunning — this is the most important part):
+4. Hero MUST use a full-width background image with a dark gradient overlay so text is perfectly readable. Use this exact pattern:
+   <section class="pgp-hero">
+     <div class="pgp-hero-overlay"></div>
+     <div class="pgp-hero-content">
+       <h1>...headline...</h1>
+       <p class="pgp-hero-sub">...subtitle...</p>
+       <div class="pgp-hero-cta"><a href="#contact" class="pgp-btn pgp-btn-primary">Primary CTA</a> <a href="#services" class="pgp-btn pgp-btn-ghost">Learn more</a></div>
+     </div>
+   </section>
+   CSS for hero:
+   .pgp-hero { position: relative; min-height: clamp(420px, 70vh, 680px); display: flex; align-items: center; justify-content: center; text-align: center; background-image: url('https://picsum.photos/1920/1080?random=1'); background-size: cover; background-position: center; background-attachment: fixed; overflow: hidden; }
+   .pgp-hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.45) 100%); z-index: 1; }
+   .pgp-hero-content { position: relative; z-index: 2; max-width: 900px; padding: 4rem 1.5rem; color: #fff; }
+   .pgp-hero h1 { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin: 0 0 1rem; color: #fff; letter-spacing: -.02em; }
+   .pgp-hero-sub { font-size: clamp(1rem, 1.4vw, 1.25rem); opacity: .92; margin: 0 0 2rem; color: #fff; }
+   .pgp-btn { display: inline-block; padding: .9rem 2rem; border-radius: 999px; font-weight: 600; text-decoration: none; transition: all .25s ease; }
+   .pgp-btn-primary { background: currentColor; color: #fff; }
+   .pgp-btn-primary span, .pgp-btn-primary { color: #fff; }
+   .pgp-btn-ghost { border: 2px solid rgba(255,255,255,.6); color: #fff; }
+   .pgp-btn:hover { transform: translateY(-2px); opacity: .9; }
 
-STRUCTURE:
-19. Wrap all content in a <div class="pgp-page"> container.
-20. Include: hero section, features/services grid, testimonials, FAQ (use <details>/<summary>), CTA section, contact section.
+LAYOUT & POLISH:
+5. Use CSS Grid + Flexbox. Cards 3-col desktop / 2-col tablet / 1-col mobile. Breakpoints @ 992px, 768px, 480px.
+6. Typography: clamp() for fluid sizing. Headings font-weight: 700-800 with letter-spacing: -.01em. Body line-height: 1.7.
+7. Generous whitespace: section padding clamp(4rem, 8vw, 7rem) 1.5rem.
+8. Cards: subtle background rgba(128,128,128,.05), border rgba(128,128,128,.15), border-radius 16px, padding 2rem, hover: translateY(-4px) + box-shadow 0 12px 32px rgba(0,0,0,.08).
+9. Each section MUST have a centered eyebrow label (small uppercase text), an H2 heading, and a short intro paragraph above the grid.
+10. Section images: use realistic 16:9 or 4:3 ratios with border-radius: 12px and object-fit: cover.
+
+TESTIMONIALS — MUST be a horizontal scroll carousel (no JS needed, pure CSS):
+11. Use this exact structure:
+    <section class="pgp-testimonials"><div class="pgp-section-head">...</div>
+      <div class="pgp-carousel">
+        <article class="pgp-tcard">★★★★★<p>"...quote..."</p><footer><img src="https://i.pravatar.cc/80?img=12" alt=""><div><strong>Name</strong><span>Role</span></div></footer></article>
+        <!-- 4 to 6 testimonial cards total -->
+      </div>
+    </section>
+12. CSS: .pgp-carousel { display: flex; gap: 1.5rem; overflow-x: auto; scroll-snap-type: x mandatory; padding: 1rem .5rem 2rem; scrollbar-width: thin; }
+    .pgp-tcard { flex: 0 0 min(360px, 85vw); scroll-snap-align: start; background: rgba(128,128,128,.06); border: 1px solid rgba(128,128,128,.15); border-radius: 16px; padding: 2rem; }
+    .pgp-tcard footer { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
+    .pgp-tcard footer img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+13. Use https://i.pravatar.cc/80?img=N (N = 1..70) for testimonial avatars — these are FREE and load fast.
+
+IMAGES — niche-relevant FREE stock photos (no AI credits used):
+14. Use https://picsum.photos/<width>/<height>?random=N for ALL stock photos. The backend will automatically replace these with niche-relevant Unsplash photos based on the business type/keywords. Always vary the random=N number so each slot gets a unique image.
+15. Include at least 4-6 images across the page (hero bg, feature icons/illustrations, about/team photo, gallery section).
+
+CONTENT VARIABLES:
+16. Include 4-8 content variables using {variable_name} (lowercase_snake_case). Real DATA only: {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {service_name}, {tagline}.
+17. NEVER create variables for design/styling properties (no {font_family}, {primary_color}, etc.).
+18. For AI-generated per-page unique copy use {{AI:instruction using {variables}}}. Include at least 2 such blocks (one for hero subtitle/intro, one for the about section).
+19. NEVER use {{AI_IMAGE:...}} — always use picsum URLs (rule 14).
+
+REQUIRED SECTIONS (in this order):
+20. Wrap everything in <div class="pgp-page">.
+21. Sections: (a) Hero with background image + overlay, (b) Trust strip / quick stats, (c) Features or Services grid (3-6 cards with icons or images), (d) About section with side image and text, (e) Gallery / showcase (2-4 images grid), (f) Testimonials carousel, (g) FAQ using <details>/<summary>, (h) Final CTA section with bg image + overlay, (i) Contact section.
 ${headerFooterRule}
 
-${platformRule}`;
+${platformRule}
+
+QUALITY BAR: The result must look like a premium agency-built landing page — clean typography, strong visual hierarchy, beautiful imagery, generous whitespace, smooth hover states. Never amateur, never blocky, never generic.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
