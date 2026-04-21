@@ -176,11 +176,21 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     };
   };
 
+  const buildBackgroundPayload = () => ({
+    backgroundImage: {
+      aspectDesktop: heroAspectDesktop,
+      aspectMobile: heroAspectMobile,
+      focalX,
+      focalY,
+    },
+  });
+
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
       const theme = buildThemePayload();
+      const bg = buildBackgroundPayload();
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche, ...theme },
+        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche, ...theme, ...bg },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
