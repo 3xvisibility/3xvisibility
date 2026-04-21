@@ -45,6 +45,23 @@ serve(async (req) => {
     };
     const platformRule = platformRules[platform as string] || platformRules.generic;
 
+    // Theme override: when explicit colors/fonts are provided, force the AI to use them
+    // instead of the default "inherit" rule.
+    const hasTheme = themeColors && (themeColors.primary || themeColors.background);
+    const themeRule = hasTheme
+      ? `\n\nTHEME OVERRIDE (HIGHEST PRIORITY — replaces rule 3):
+- Use these EXACT colors throughout the design (do NOT use 'inherit' when these are provided):
+  • Primary / brand color: ${themeColors.primary || "#2563eb"} — use for CTAs, links, key accents.
+  • Accent color: ${themeColors.accent || themeColors.primary || "#2563eb"} — use for secondary highlights.
+  • Background color: ${themeColors.background || "#ffffff"} — use as the .pgp-page background.
+  • Body text color: ${themeColors.text || "#111827"} — use for paragraphs and default text.
+- .pgp-page { background: ${themeColors.background || "#ffffff"}; color: ${themeColors.text || "#111827"}; }
+- .pgp-btn-primary { background: ${themeColors.primary || "#2563eb"}; color: #fff; }
+- Hero overlay must still darken background images so white text stays readable.
+${themeFonts && themeFonts.length ? `- Use "${themeFonts[0]}" as the primary font. If it's a Google Font, add @import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(themeFonts[0]).replace(/%20/g, "+")}:wght@400;600;700;800&display=swap'); at the top of the <style> block.` : ""}`
+      : "";
+
+
     const systemPrompt = `You are an award-winning senior web designer (think Awwwards / SiteInspire level) specializing in high-converting, visually stunning landing pages for programmatic SEO. Generate a fully responsive, magazine-quality HTML template with an embedded <style> block and {variable} syntax for dynamic content. The output must look like it was crafted by a top design agency — never generic, never AI-looking.
 
 OUTPUT RULES:
