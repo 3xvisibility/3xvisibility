@@ -111,6 +111,12 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const testMutation = useMutation({
     mutationFn: async () => {
       if (!hasCredentialInput()) throw new Error("Enter new credentials to test");
+      if (site.type === "shopify") {
+        const shopDomain = (url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+        const dErr = validateShopifyDomain(shopDomain);
+        const tErr = validateShopifyToken(shopifyToken);
+        if (dErr || tErr) throw new Error(dErr || tErr || "Invalid Shopify credentials");
+      }
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url, type: site.type, credentials: buildCredentials() },
       });
