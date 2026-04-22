@@ -108,12 +108,40 @@ export class ShopifyConnector implements CmsConnector {
   }
 
   async testConnection(): Promise<boolean> {
-    try {
-      const res = await shopifyFetch(`${this.apiBase}/shop.json`, { headers: this.headers });
-      return res.ok;
-    } catch {
-      return false;
+    if (!this.shopDomain) {
+      throw new Error("Shopify shop domain is missing. Provide your *.myshopify.com URL.");
     }
+    if (!/\.myshopify\.com$/i.test(this.shopDomain)) {
+      throw new Error(
+        `Invalid Shopify shop domain "${this.shopDomain}". It must end with .myshopify.com (e.g. my-store.myshopify.com).`,
+      );
+    }
+    const headersObj = this.headers as Record<string, string>;
+    if (!headersObj["X-Shopify-Access-Token"]) {
+      throw new Error("Shopify Admin API access token is missing. Paste your shpat_... token.");
+    }
+
+    const res = await shopifyFetch(`${this.apiBase}/shop.json`, { headers: this.headers });
+    if (res.ok) return true;
+
+    const body = await res.text().catch(() => "");
+    let detail = body;
+    try {
+      const json = JSON.parse(body);
+      detail = json.errors ? JSON.stringify(json.errors) : body;
+    } catch { /* keep raw body */ }
+
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(
+        `Shopify rejected the access token (HTTP ${res.status}). Make sure the custom app is installed and the token has read_content / read_products scopes. Detail: ${detail}`,
+      );
+    }
+    if (res.status === 404) {
+      throw new Error(
+        `Shopify shop not found at https://${this.shopDomain} (HTTP 404). Double-check the *.myshopify.com domain.`,
+      );
+    }
+    throw new Error(`Shopify connection failed (HTTP ${res.status}): ${detail}`);
   }
 
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
