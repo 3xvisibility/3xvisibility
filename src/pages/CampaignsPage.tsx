@@ -344,32 +344,117 @@ export default function CampaignsPage() {
       {isLoading ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{[1,2,3].map(i => <Card key={i} className="border-0 shadow-surface"><CardContent className="p-5"><Skeleton className="h-24 w-full" /></CardContent></Card>)}</div>
       ) : filteredCampaigns.length === 0 ? (
-        <Card className="border-0 shadow-surface">
-          <CardContent className="p-12 text-center">
-            <div className="flex flex-col items-center gap-4">
-              {campaigns.length === 0 ? (
-                <>
-                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                    <Sparkles className="h-10 w-10 text-primary/40" />
+        campaigns.length === 0 ? (
+          <Card className="border-0 shadow-surface overflow-hidden relative">
+            {/* Decorative gradient header */}
+            <div className="h-2 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
+            <CardContent className="p-6 sm:p-10">
+              <div className="flex flex-col items-center text-center gap-4 mb-8">
+                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center ring-1 ring-primary/10">
+                  <Sparkles className="h-10 w-10 text-primary" />
+                </div>
+                <div className="space-y-2 max-w-xl">
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                    আপনার প্রথম ক্যাম্পেইন তৈরি করুন
+                  </h2>
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    মাত্র ৩টি সহজ ধাপে শত শত SEO-অপ্টিমাইজড পেজ তৈরি করুন। নিচে দেখুন কী কী লাগবে এবং প্রতিটি অংশ কীভাবে কাজ করে।
+                  </p>
+                  <p className="text-xs text-muted-foreground/80 italic">
+                    Create hundreds of SEO-ready pages in 3 simple steps.
+                  </p>
+                </div>
+              </div>
+
+              {/* 3-step explainer grid */}
+              <div className="grid gap-4 sm:grid-cols-3 mb-8">
+                {[
+                  {
+                    num: 1,
+                    icon: FileText,
+                    color: "from-blue-500/15 to-blue-500/5 text-blue-600 dark:text-blue-400 ring-blue-500/20",
+                    titleBn: "CSV ডেটা (সারি)",
+                    titleEn: "CSV rows",
+                    descBn: "একটি CSV ফাইল আপলোড করুন — যেমন শহরের নাম, সার্ভিসের তালিকা, বা প্রোডাক্ট ডিটেইলস। প্রতিটি সারি (row) থেকে একটি আলাদা পেজ তৈরি হবে।",
+                    exBn: "উদাহরণ: ১০০টি শহর = ১০০টি পেজ।",
+                  },
+                  {
+                    num: 2,
+                    icon: Sparkles,
+                    color: "from-primary/15 to-primary/5 text-primary ring-primary/20",
+                    titleBn: "টেমপ্লেট",
+                    titleEn: "Template",
+                    descBn: "একটি ডিজাইন বাছুন বা AI দিয়ে তৈরি করুন। টেমপ্লেটে {{city}}, {{service}} এর মতো ভেরিয়েবল থাকবে — যেগুলো CSV-এর ডেটা দিয়ে অটোমেটিক পূরণ হবে।",
+                    exBn: "একটি ডিজাইন → অসংখ্য পেজ।",
+                  },
+                  {
+                    num: 3,
+                    icon: Globe,
+                    color: "from-success/15 to-success/5 text-success ring-success/20",
+                    titleBn: "কানেক্টেড ওয়েবসাইট",
+                    titleEn: "Connected website",
+                    descBn: "আপনার WordPress, Shopify বা PrestaShop সাইট কানেক্ট করুন। জেনারেট হওয়া পেজগুলো সরাসরি সেখানে পাবলিশ হবে — কোনো ম্যানুয়াল কপি-পেস্ট লাগবে না।",
+                    exBn: "এক ক্লিকে লাইভ পাবলিশ।",
+                  },
+                ].map((step) => (
+                  <div
+                    key={step.num}
+                    className="relative rounded-xl border border-border/60 bg-card/50 p-4 hover:border-primary/30 hover:shadow-md transition-all"
+                  >
+                    <div className="absolute -top-2.5 -left-2.5 h-6 w-6 rounded-full bg-foreground text-background text-[11px] font-bold flex items-center justify-center shadow">
+                      {step.num}
+                    </div>
+                    <div className={cn("h-11 w-11 rounded-xl bg-gradient-to-br ring-1 flex items-center justify-center mb-3", step.color)}>
+                      <step.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-semibold text-sm mb-0.5">{step.titleBn}</h3>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-2">
+                      {step.titleEn}
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{step.descBn}</p>
+                    <p className="text-[11px] text-primary/80 mt-2 font-medium">{step.exBn}</p>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-lg">{t("campaigns.noCampaigns")}</h3>
-                    <p className="text-muted-foreground text-sm max-w-sm mt-1">{t("campaigns.description")}</p>
-                  </div>
-                  <Button onClick={() => setWizardOpen(true)} className="rounded-xl bg-gradient-primary hover:brightness-110 gap-2 mt-2">
-                    <Sparkles className="h-4 w-4" /> Create Your First Campaign
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <SearchIconLucide className="h-10 w-10 text-muted-foreground/40" />
-                  <h3 className="font-semibold">{t("campaigns.noCampaignsSearch")}</h3>
-                  <p className="text-muted-foreground text-sm">{t("common.tryAdjustingFilters")}</p>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+
+              {/* Flow indicator */}
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-6">
+                <span className="px-2 py-0.5 rounded-md bg-muted">CSV</span>
+                <span>+</span>
+                <span className="px-2 py-0.5 rounded-md bg-muted">টেমপ্লেট</span>
+                <span>+</span>
+                <span className="px-2 py-0.5 rounded-md bg-muted">ওয়েবসাইট</span>
+                <span>=</span>
+                <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-semibold">পাবলিশড পেজ</span>
+              </div>
+
+              {/* CTA */}
+              <div className="flex flex-col items-center gap-2">
+                <Button
+                  onClick={() => setWizardOpen(true)}
+                  size="lg"
+                  className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-lg gap-2 px-8"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  আপনার প্রথম ক্যাম্পেইন তৈরি করুন
+                </Button>
+                <p className="text-[11px] text-muted-foreground">
+                  Wizard আপনাকে ধাপে ধাপে গাইড করবে — কোনো টেকনিক্যাল জ্ঞান লাগবে না।
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-0 shadow-surface">
+            <CardContent className="p-12 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <SearchIconLucide className="h-10 w-10 text-muted-foreground/40" />
+                <h3 className="font-semibold">{t("campaigns.noCampaignsSearch")}</h3>
+                <p className="text-muted-foreground text-sm">{t("common.tryAdjustingFilters")}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {orderedCampaigns.map((c) => {
