@@ -22,6 +22,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
 import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
+import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
