@@ -199,21 +199,27 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               </>
             )}
 
-            {hasCredentialInput() && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => testMutation.mutate()}
-                disabled={testMutation.isPending}
-              >
-                {testMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
-                ) : (
-                  <><Zap className="h-4 w-4 mr-1" /> Test Connection</>
-                )}
-              </Button>
-            )}
+            {hasCredentialInput() && (() => {
+              const shopifyInvalid = site.type === "shopify" && (
+                !!validateShopifyDomain((url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")) ||
+                !!validateShopifyToken(shopifyToken)
+              );
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => testMutation.mutate()}
+                  disabled={testMutation.isPending || shopifyInvalid}
+                >
+                  {testMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
+                  ) : (
+                    <><Zap className="h-4 w-4 mr-1" /> Test Connection</>
+                  )}
+                </Button>
+              );
+            })()}
           </TabsContent>
         </Tabs>
 
