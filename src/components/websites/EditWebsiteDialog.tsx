@@ -12,6 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
 import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
+import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
 
@@ -110,6 +111,12 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const testMutation = useMutation({
     mutationFn: async () => {
       if (!hasCredentialInput()) throw new Error("Enter new credentials to test");
+      if (site.type === "shopify") {
+        const shopDomain = (url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+        const dErr = validateShopifyDomain(shopDomain);
+        const tErr = validateShopifyToken(shopifyToken);
+        if (dErr || tErr) throw new Error(dErr || tErr || "Invalid Shopify credentials");
+      }
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url, type: site.type, credentials: buildCredentials() },
       });
@@ -192,21 +199,27 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               </>
             )}
 
-            {hasCredentialInput() && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => testMutation.mutate()}
-                disabled={testMutation.isPending}
-              >
-                {testMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
-                ) : (
-                  <><Zap className="h-4 w-4 mr-1" /> Test Connection</>
-                )}
-              </Button>
-            )}
+            {hasCredentialInput() && (() => {
+              const shopifyInvalid = site.type === "shopify" && (
+                !!validateShopifyDomain((url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")) ||
+                !!validateShopifyToken(shopifyToken)
+              );
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => testMutation.mutate()}
+                  disabled={testMutation.isPending || shopifyInvalid}
+                >
+                  {testMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
+                  ) : (
+                    <><Zap className="h-4 w-4 mr-1" /> Test Connection</>
+                  )}
+                </Button>
+              );
+            })()}
           </TabsContent>
         </Tabs>
 

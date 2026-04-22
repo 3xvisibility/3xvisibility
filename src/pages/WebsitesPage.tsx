@@ -22,6 +22,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
 import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
+import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
@@ -80,6 +81,11 @@ export default function WebsitesPage() {
   const maxSites = features.websites;
   const filteredWebsites = filterType === "all" ? websites : websites.filter((s) => s.type === filterType);
 
+  // Shopify-specific frontend validation (Bengali warnings shown inline in fields).
+  const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
+  const shopifyTokenError = siteType === "shopify" ? validateShopifyToken(shopifyToken) : null;
+  const shopifyInvalid = siteType === "shopify" && (!!shopifyDomainError || !!shopifyTokenError);
+
   const buildCredentials = () => {
     if (siteType === "wordpress") {
       return wpAuthMethod === "application_password"
@@ -129,6 +135,11 @@ export default function WebsitesPage() {
 
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
+      if (siteType === "shopify") {
+        const dErr = validateShopifyDomain(shopDomain);
+        const tErr = validateShopifyToken(shopifyToken);
+        if (dErr || tErr) throw new Error(dErr || tErr || "Invalid Shopify credentials");
+      }
       const testUrl = siteType === "shopify" && shopDomain
         ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
         : siteUrl;
@@ -278,7 +289,7 @@ export default function WebsitesPage() {
                     variant="outline"
                     className="w-full sm:w-auto"
                     onClick={() => testConnectionMutation.mutate()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || testConnectionMutation.isPending}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending}
                   >
                     {testConnectionMutation.isPending ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
@@ -286,7 +297,7 @@ export default function WebsitesPage() {
                       <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
                     )}
                   </Button>
-                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || createMutation.isPending}>
+                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || createMutation.isPending}>
                     {createMutation.isPending ? t("common.connecting") : t("common.connect")}
                   </Button>
                 </div>
