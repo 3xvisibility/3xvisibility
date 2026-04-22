@@ -12,6 +12,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
 import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
+import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
 
