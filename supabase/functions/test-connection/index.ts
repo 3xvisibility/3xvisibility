@@ -45,10 +45,16 @@ Deno.serve(async (req) => {
 
     const website: WebsiteRecord = { url, type, credentials: credentials || {} };
     const connector = await createConnector(website);
-    const ok = await connector.testConnection();
+    let ok = false;
+    try {
+      ok = await connector.testConnection();
+    } catch (innerErr: any) {
+      console.error(`[test-connection] ${type} threw:`, innerErr?.message || innerErr);
+      throw new Error(innerErr?.message || `${type} connection test failed`);
+    }
 
     if (!ok) {
-      throw new Error(`${type} connection test failed`);
+      throw new Error(`${type} connection test failed (no detail returned by provider)`);
     }
 
     return new Response(
