@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizard";
+import { CampaignHowItWorks } from "@/components/campaigns/CampaignHowItWorks";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -282,7 +283,9 @@ export default function CampaignsPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Friendly "How a campaign works" guide — bilingual EN + BN */}
+      <CampaignHowItWorks onCreateClick={() => setWizardOpen(true)} compact={campaigns.length > 0} />
+
       {!isLoading && campaigns.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
