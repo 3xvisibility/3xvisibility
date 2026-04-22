@@ -135,6 +135,11 @@ export default function WebsitesPage() {
 
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
+      if (siteType === "shopify") {
+        const dErr = validateShopifyDomain(shopDomain);
+        const tErr = validateShopifyToken(shopifyToken);
+        if (dErr || tErr) throw new Error(dErr || tErr || "Invalid Shopify credentials");
+      }
       const testUrl = siteType === "shopify" && shopDomain
         ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
         : siteUrl;
