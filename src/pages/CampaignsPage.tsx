@@ -283,8 +283,10 @@ export default function CampaignsPage() {
         </div>
       </div>
 
-      {/* Friendly "How a campaign works" guide — bilingual EN + BN */}
-      <CampaignHowItWorks onCreateClick={() => setWizardOpen(true)} compact={campaigns.length > 0} />
+      {/* Friendly "How a campaign works" guide — only show once user has at least 1 campaign */}
+      {campaigns.length > 0 && (
+        <CampaignHowItWorks onCreateClick={() => setWizardOpen(true)} compact={true} />
+      )}
 
       {!isLoading && campaigns.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
