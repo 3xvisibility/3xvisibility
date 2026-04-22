@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
 import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizard";
+import { CampaignHowItWorks } from "@/components/campaigns/CampaignHowItWorks";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
