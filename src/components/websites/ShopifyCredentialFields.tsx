@@ -1,7 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 interface ShopifyCredentialFieldsProps {
   shopDomain: string;
@@ -16,6 +18,11 @@ export function ShopifyCredentialFields({
   accessToken,
   onAccessTokenChange,
 }: ShopifyCredentialFieldsProps) {
+  const domainError = shopDomain ? validateShopifyDomain(shopDomain) : null;
+  const tokenError = accessToken ? validateShopifyToken(accessToken) : null;
+  const domainOk = !!shopDomain && !domainError;
+  const tokenOk = !!accessToken && !tokenError;
+
   return (
     <div className="space-y-4">
       <Alert className="bg-muted/50 border-muted">
@@ -38,10 +45,27 @@ export function ShopifyCredentialFields({
           placeholder="my-store.myshopify.com"
           value={shopDomain}
           onChange={(e) => onShopDomainChange(e.target.value)}
+          aria-invalid={!!domainError}
+          className={cn(
+            domainError && "border-destructive focus-visible:ring-destructive",
+            domainOk && "border-emerald-500/60 focus-visible:ring-emerald-500/60",
+          )}
         />
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Your <code>.myshopify.com</code> domain (found in Shopify Admin → Settings → Domains)
-        </p>
+        {domainError ? (
+          <p className="text-[11px] text-destructive mt-1 flex items-start gap-1">
+            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+            <span>{domainError}</span>
+          </p>
+        ) : domainOk ? (
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            ডোমেইন ফরম্যাট ঠিক আছে
+          </p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Your <code>.myshopify.com</code> domain (found in Shopify Admin → Settings → Domains)
+          </p>
+        )}
       </div>
 
       <div>
@@ -52,7 +76,23 @@ export function ShopifyCredentialFields({
           placeholder="shpat_xxxxx"
           value={accessToken}
           onChange={(e) => onAccessTokenChange(e.target.value)}
+          aria-invalid={!!tokenError}
+          className={cn(
+            tokenError && "border-destructive focus-visible:ring-destructive",
+            tokenOk && "border-emerald-500/60 focus-visible:ring-emerald-500/60",
+          )}
         />
+        {tokenError ? (
+          <p className="text-[11px] text-destructive mt-1 flex items-start gap-1">
+            <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+            <span>{tokenError}</span>
+          </p>
+        ) : tokenOk ? (
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            টোকেন ফরম্যাট ঠিক আছে
+          </p>
+        ) : null}
       </div>
     </div>
   );
