@@ -8,6 +8,7 @@ import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWor
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
+import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -1045,6 +1046,12 @@ export default function CampaignDetailPage() {
 
           {/* Spintax Preview */}
           <SpintaxPreview />
+
+          {/* Row → Variable Mapping Preview (shown before generate) */}
+          <RowMappingPreview
+            csvData={(campaign.csv_data as Record<string, string>[]) || []}
+            templateContent={templateContent || ""}
+          />
 
           {/* Live Variable Preview */}
           {campaign.template_id && templateContent && (
