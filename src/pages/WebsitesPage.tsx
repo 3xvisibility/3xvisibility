@@ -257,18 +257,24 @@ export default function WebsitesPage() {
                   />
                 )}
                 {siteType === "shopify" && (
-                  <ShopifyCredentialFields
-                    shopDomain={shopDomain}
-                    onShopDomainChange={setShopDomain}
-                    accessToken={shopifyToken}
-                    onAccessTokenChange={setShopifyToken}
-                  />
+                  <>
+                    <ConnectionSetupGuide provider="shopify" siteHint={shopDomain} />
+                    <ShopifyCredentialFields
+                      shopDomain={shopDomain}
+                      onShopDomainChange={setShopDomain}
+                      accessToken={shopifyToken}
+                      onAccessTokenChange={setShopifyToken}
+                    />
+                  </>
                 )}
                 {siteType === "prestashop" && (
-                  <PrestaShopCredentialFields
-                    apiKey={prestashopApiKey}
-                    onApiKeyChange={setPrestashopApiKey}
-                  />
+                  <>
+                    <ConnectionSetupGuide provider="prestashop" siteHint={siteUrl} />
+                    <PrestaShopCredentialFields
+                      apiKey={prestashopApiKey}
+                      onApiKeyChange={setPrestashopApiKey}
+                    />
+                  </>
                 )}
                 {siteType === "woocommerce" && (
                   <>
