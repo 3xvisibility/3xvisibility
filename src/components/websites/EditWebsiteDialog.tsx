@@ -174,18 +174,27 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               />
             )}
             {site.type === "shopify" && (
-              <ShopifyCredentialFields
-                shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
-                onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
-                accessToken={shopifyToken}
-                onAccessTokenChange={setShopifyToken}
-              />
+              <>
+                <ConnectionSetupGuide
+                  provider="shopify"
+                  siteHint={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
+                />
+                <ShopifyCredentialFields
+                  shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
+                  onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
+                  accessToken={shopifyToken}
+                  onAccessTokenChange={setShopifyToken}
+                />
+              </>
             )}
             {site.type === "prestashop" && (
-              <PrestaShopCredentialFields
-                apiKey={prestashopApiKey}
-                onApiKeyChange={setPrestashopApiKey}
-              />
+              <>
+                <ConnectionSetupGuide provider="prestashop" siteHint={url} />
+                <PrestaShopCredentialFields
+                  apiKey={prestashopApiKey}
+                  onApiKeyChange={setPrestashopApiKey}
+                />
+              </>
             )}
             {site.type === "woocommerce" && (
               <>
