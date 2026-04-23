@@ -24,7 +24,6 @@ interface ConnectionSetupGuideProps {
 
 interface Step {
   title: string;
-  body: string;
   /** Optional dynamic link built from the user's site hint. */
   link?: { label: string; url: string };
   /** Optional code/value snippet the user can copy. */
@@ -54,32 +53,31 @@ function getShopifySteps(siteHint?: string): Step[] {
   const adminBase = domain ? `https://${domain}/admin` : "https://admin.shopify.com";
   return [
     {
-      title: "১. Shopify Admin-এ যান",
-      body: "আপনার Shopify স্টোরের Admin প্যানেল খুলুন। (নিচের বাটনে ক্লিক করলে সরাসরি Apps সেকশনে যাবেন)",
+      title: "Open Shopify Admin → Settings → Apps and sales channels.",
       link: {
         label: domain ? "Open Apps & Sales Channels" : "Open Shopify Admin",
         url: `${adminBase}/settings/apps/development`,
       },
     },
     {
-      title: "২. Custom App তৈরি করুন",
-      body:
-        "Settings → Apps and sales channels → 'Develop apps' এ যান → 'Create an app' এ ক্লিক করুন → একটি নাম দিন (যেমন: Lovable Connector)।",
+      title: "Click 'Develop apps' → 'Create an app' and name it (e.g. Lovable Connector).",
     },
     {
-      title: "৩. API Scopes দিন",
-      body:
-        "'Configuration' ট্যাব → 'Admin API access scopes' → এই scopes গুলো বাছাই করুন:",
+      title: "In the Configuration tab, enable these Admin API scopes:",
       copyValue: "read_content, write_content, read_products, write_products",
     },
     {
-      title: "৪. App Install করে Token কপি করুন",
-      body:
-        "'Install app' এ ক্লিক করুন → 'API credentials' ট্যাবে গিয়ে 'Admin API access token' এ 'Reveal token once' এ ক্লিক করে টোকেনটি কপি করুন। টোকেনটি `shpat_` দিয়ে শুরু হবে।",
+      title: "Click 'Install app', open the API credentials tab, then 'Reveal token once' to copy the Admin API access token (starts with shpat_).",
     },
     {
-      title: "৫. নিচের ফিল্ডে পেস্ট করুন",
-      body: "Shop Domain (যেমন: my-store.myshopify.com) এবং Access Token নিচের ফিল্ডে পেস্ট করে 'Test Connection' চাপুন।",
+      title: "Paste the shop domain (e.g. my-store.myshopify.com) and access token below, then click Test Connection.",
+    },
+    {
+      title: "If this is a development store: open the store in Shopify Partners → 'Transfer ownership' or 'Select plan' to release/launch it for live selling.",
+      link: {
+        label: "Open Shopify Partners",
+        url: "https://partners.shopify.com/current/stores",
+      },
     },
   ];
 }
@@ -89,29 +87,20 @@ function getPrestashopSteps(siteHint?: string): Step[] {
   const adminLink = origin ? `${origin}/admin` : null;
   return [
     {
-      title: "১. PrestaShop Back Office-এ লগইন করুন",
-      body: "আপনার PrestaShop অ্যাডমিন প্যানেলে যান (সাধারণত /admin URL-এ)।",
+      title: "Log in to your PrestaShop Back Office (usually at /admin).",
       ...(adminLink ? { link: { label: "Open Back Office", url: adminLink } } : {}),
     },
     {
-      title: "২. Webservice চালু করুন",
-      body:
-        "Advanced Parameters → Webservice → 'Enable PrestaShop's webservice' কে YES করুন → Save করুন।",
+      title: "Go to Advanced Parameters → Webservice and set 'Enable PrestaShop's webservice' to YES, then Save.",
     },
     {
-      title: "৩. নতুন API Key তৈরি করুন",
-      body:
-        "একই পেজে 'Add new webservice key' এ ক্লিক করুন → একটি Key জেনারেট হবে → সেটি কপি করে রাখুন।",
+      title: "On the same page, click 'Add new webservice key' to generate a new API key and copy it.",
     },
     {
-      title: "৪. Permissions দিন",
-      body:
-        "Resources লিস্টে নিচের গুলোতে 'GET, POST, PUT' টিক দিন: cms (পেজের জন্য), products (প্রোডাক্টের জন্য), categories। তারপর Save করুন।",
+      title: "In the Resources list, grant GET, POST, PUT for: cms, products, categories. Save.",
     },
     {
-      title: "৫. Site URL ও API Key পেস্ট করুন",
-      body:
-        "Site URL (যেমন: https://my-shop.com) এবং API Key নিচের ফিল্ডে পেস্ট করে 'Test Connection' চাপুন।",
+      title: "Paste the site URL (e.g. https://my-shop.com) and API key below, then click Test Connection.",
     },
   ];
 }
@@ -123,19 +112,17 @@ export function ConnectionSetupGuide({ provider, siteHint }: ConnectionSetupGuid
 
   const steps = provider === "shopify" ? getShopifySteps(siteHint) : getPrestashopSteps(siteHint);
   const Icon = provider === "shopify" ? ShoppingBag : Store;
-  const title =
-    provider === "shopify"
-      ? "Shopify সংযোগের সহজ গাইড"
-      : "PrestaShop সংযোগের সহজ গাইড";
+  const title = provider === "shopify" ? "Shopify setup" : "PrestaShop setup";
+  const subtitle = provider === "shopify" ? "6 quick steps" : "5 quick steps";
 
   const handleCopy = async (value: string, idx: number) => {
     try {
       await navigator.clipboard.writeText(value);
       setCopiedIdx(idx);
-      toast({ title: "কপি হয়েছে", description: "মান ক্লিপবোর্ডে কপি করা হয়েছে।" });
+      toast({ title: "Copied" });
       setTimeout(() => setCopiedIdx(null), 1500);
     } catch {
-      toast({ title: "কপি করা যায়নি", variant: "destructive" });
+      toast({ title: "Copy failed", variant: "destructive" });
     }
   };
 
@@ -156,9 +143,7 @@ export function ConnectionSetupGuide({ provider, siteHint }: ConnectionSetupGuid
                   <Sparkles className="h-3 w-3 text-primary shrink-0" />
                   <span className="truncate">{title}</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  ৫টি ছোট ধাপ — ২ মিনিটেই কানেক্ট
-                </p>
+                <p className="text-[11px] text-muted-foreground">{subtitle}</p>
               </div>
             </div>
             <ChevronDown
@@ -184,10 +169,7 @@ export function ConnectionSetupGuide({ provider, siteHint }: ConnectionSetupGuid
                     {idx + 1}
                   </Badge>
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <p className="text-xs font-medium leading-snug">{step.title}</p>
-                    <p className="text-[11px] leading-relaxed text-muted-foreground">
-                      {step.body}
-                    </p>
+                    <p className="text-xs leading-snug">{step.title}</p>
                     {step.copyValue && (
                       <div className="flex items-center gap-1.5">
                         <Input
