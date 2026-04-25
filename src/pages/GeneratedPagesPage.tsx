@@ -426,8 +426,13 @@ export default function GeneratedPagesPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const s = { total: pages.length, published: 0, pending: 0, failed: 0 };
-    pages.forEach((p) => { if (p.status in s) (s as any)[p.status]++; });
+    const s = { total: pages.length, published: 0, pending: 0, failed: 0, active: 0 };
+    pages.forEach((p) => {
+      if (p.status === "published" || p.status === "done") s.published++;
+      else if (p.status === "failed") s.failed++;
+      else if (p.status === "generating" || p.status === "publishing" || p.status === "queued") s.active++;
+      else if (p.status === "pending") s.pending++;
+    });
     return s;
   }, [pages]);
 
