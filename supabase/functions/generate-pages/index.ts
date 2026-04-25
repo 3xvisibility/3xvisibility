@@ -1099,9 +1099,10 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Resolve language: connected website's locked language wins over the user's
-    // global default — so a French-locked Shopify/WordPress site always gets French
-    // copy even if the user's profile is set to English.
+    // Resolve language priority (highest → lowest):
+    //   1) per-run override sent in the request body (this run only, never persisted)
+    //   2) connected website's locked language (sticky for that site)
+    //   3) user's profile default
     let resolvedLanguage = profile?.ai_language || "en";
     try {
       const websiteIdForLang = (campaign as { website_id?: string | null } | null)?.website_id;
@@ -1117,6 +1118,10 @@ Deno.serve(async (req) => {
         }
       }
     } catch (_) { /* non-critical */ }
+    if (typeof language_override === "string" && language_override.trim().length > 0) {
+      resolvedLanguage = language_override.trim();
+      console.log(`[GENERATE-PAGES] Per-run language override applied: ${resolvedLanguage}`);
+    }
 
     const aiSettings = {
       tone: profile?.ai_tone || "professional",
