@@ -1811,7 +1811,44 @@ Deno.serve(async (req) => {
           const canonicalTag = canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : "";
           // Wrap content with responsive stylesheet and container
           const responsiveStyles = buildResponsiveStylesheet();
-          pageContent = `${ogTags}\n${canonicalTag}\n${jsonLd}\n${responsiveStyles}\n<div class="pgp-page">\n${pageContent}\n</div>`;
+
+          // ── Additive SEO enhancements (multi-engine + AI-friendly) ──
+          // These never replace existing tags; they are appended so any
+          // engine/AI crawler that ignored Google-first hints can still parse
+          // the page. Failures here must NEVER break page generation.
+          let extendedSeo = "";
+          let extraJsonLd = "";
+          let aiFaqHtml = "";
+          let aiFaqJsonLd = "";
+          try {
+            extendedSeo = buildMultiEngineMeta({
+              title: seoData.seo_title,
+              description: seoData.seo_description,
+              language: resolvedLanguage,
+              siteName: websiteName,
+              canonicalUrl,
+              modifiedAt: new Date().toISOString(),
+              keywords: seoData.seo_keywords,
+            });
+            extraJsonLd = buildExtraJsonLd(
+              campaign.campaign_type || "seo",
+              pageTitle,
+              seoData.seo_description,
+              canonicalUrl,
+              row,
+            );
+            // Only auto-generate FAQ when the template did NOT already declare
+            // a FAQPage schema (avoids duplicate FAQPage JSON-LD).
+            if (tplSchemaType !== "FAQPage") {
+              const faq = buildAutoFaq(pageContent, row);
+              aiFaqHtml = faq.html;
+              aiFaqJsonLd = faq.jsonLd || "";
+            }
+          } catch (extErr) {
+            console.warn("[GENERATE-PAGES] Extended SEO enhancements skipped:", (extErr as Error).message);
+          }
+
+          pageContent = `${ogTags}\n${extendedSeo}\n${canonicalTag}\n${jsonLd}\n${extraJsonLd}\n${aiFaqJsonLd}\n${responsiveStyles}\n<div class="pgp-page">\n${pageContent}${aiFaqHtml}\n</div>`;
 
           // Extract SEA ad IDs from utm_settings or row data
           const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;
