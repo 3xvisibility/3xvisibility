@@ -215,6 +215,8 @@ export function MappingStep({
   targetFieldMappings,
   setTargetFieldMappings,
   workspaceId,
+  faqPairs,
+  setFaqPairs,
 }: MappingStepProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [saveProfileName, setSaveProfileName] = useState("");
