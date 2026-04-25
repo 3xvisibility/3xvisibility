@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Languages, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Languages, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 
 interface Props {
   open: boolean;
