@@ -930,7 +930,8 @@ Deno.serve(async (req) => {
   }
 
   let activeCampaignId: string | null = null;
-  let supabase: ReturnType<typeof createClient> | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let supabase: any = null;
 
   try {
     const authHeader = req.headers.get("Authorization");
