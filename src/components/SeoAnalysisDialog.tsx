@@ -149,6 +149,49 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     return { ruleResults, summary, seo, sea, geo, metaScore, overallScore, extended };
   }, [page, campaignTitles, campaignSlugs]);
 
+  // Keyword usage suggestions — driven by CSV primary keyword + template content.
+  const keywordUsage = useMemo<KeywordUsageAnalysis | null>(() => {
+    if (!page) return null;
+    const primary = resolvePrimaryKeyword(csvRow, page.title);
+    if (!primary) return null;
+    return analyzeKeywordUsage({
+      primaryKeyword: primary,
+      templateContent,
+      pageTitle: page.title,
+      pageContent: page.content,
+      seoTitle: page.seo_title,
+      seoDescription: page.seo_description,
+      seoKeywords: page.seo_keywords,
+      csvRow,
+    });
+  }, [page, csvRow, templateContent]);
+
+  const applyKeywordSuggestions = async (
+    additions: string[] = [],
+    removals: string[] = [],
+  ) => {
+    if (!page?.id) return;
+    const current = new Set((page.seo_keywords || []).map((k) => k.trim()).filter(Boolean));
+    additions.forEach((k) => k && current.add(k.trim()));
+    removals.forEach((k) => current.delete(k.trim()));
+    const next = [...current].slice(0, 12);
+    try {
+      const { error } = await supabase
+        .from("generated_pages")
+        .update({ seo_keywords: next.length ? next : null })
+        .eq("id", page.id);
+      if (error) throw error;
+      setLocalPage({ ...page, seo_keywords: next });
+      toast({
+        title: "Keywords updated",
+        description: `${additions.length} added, ${removals.length} removed.`,
+      });
+      onUpdated?.();
+    } catch (err: any) {
+      toast({ title: "Update failed", description: friendlyError(err.message), variant: "destructive" });
+    }
+  };
+
   const handleFixAndRepublish = async () => {
     if (!page?.id) return;
     const currentPage = page;
