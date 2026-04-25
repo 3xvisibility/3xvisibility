@@ -21,6 +21,7 @@ import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeo
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { LiveSerpPreview } from "@/components/templates/LiveSerpPreview";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Template = Tables<"templates">;
@@ -484,21 +485,8 @@ ${content}`
                 </div>
               </div>
 
-              {/* SERP Preview */}
-              {(seoTitlePattern || seoDescriptionPattern) && (
-                <div className="rounded-xl border p-4 bg-background space-y-1">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Google Search Preview</p>
-                  <p className="text-[#1a0dab] text-base leading-snug truncate" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    {seoTitlePattern ? seoTitlePattern.replace(/\{([^}]+)\}/g, (_, v: string) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')) : name || 'Page Title'}
-                  </p>
-                  <p className="text-[#006621] text-xs truncate" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    example.com/{slugPattern ? slugPattern.replace(/\{([^}]+)\}/g, (_, v: string) => v.replace(/_/g, '-')) : 'page-slug'}
-                  </p>
-                  <p className="text-[#545454] text-xs leading-relaxed line-clamp-2" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    {seoDescriptionPattern ? seoDescriptionPattern.replace(/\{([^}]+)\}/g, (_, v: string) => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')) : 'Meta description...'}
-                  </p>
-                </div>
-              )}
+              {/* Live SERP & Social Preview — reflects every SEO field below */}
+
 
               {/* Open Graph & Social */}
               <div className="space-y-3">
@@ -528,6 +516,18 @@ ${content}`
                   </div>
                 </div>
               </div>
+
+              <LiveSerpPreview
+                seoTitle={seoTitlePattern}
+                seoDescription={seoDescriptionPattern}
+                ogTitle={ogTitlePattern}
+                ogDescription={ogDescriptionPattern}
+                ogImage={ogImagePattern}
+                twitterCard={twitterCard}
+                slugPattern={slugPattern}
+                canonicalUrlPattern={canonicalUrlPattern}
+                templateName={name}
+              />
             </TabsContent>
 
             {/* ── Permalink Tab ── */}
