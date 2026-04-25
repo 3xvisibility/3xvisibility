@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
 import { TestPagePreviewDialog } from "@/components/campaigns/TestPagePreviewDialog";
 import { MappingStep } from "@/components/campaigns/MappingStep";
+import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -104,6 +105,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [transforms, setTransforms] = useState<Record<string, string>>({});
   const [targetFieldMappings, setTargetFieldMappings] = useState<Record<string, string>>({});
   const [faqPairs, setFaqPairs] = useState<import("./FaqMappingPanel").FaqPair[]>([]);
+  const [fillRules, setFillRules] = useState<Record<string, import("./FillRulesPanel").FillRule>>({});
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
@@ -532,6 +534,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
             niche: aiNiche || "",
             service: aiServiceProduct || "",
           },
+          // Per-variable rules controlling CSV vs AI fill behavior.
+          fill_rules: fillRules,
         } as any,
         publish_mode: publishMode,
         generation_method: generationMethod,
@@ -1243,6 +1247,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         </div>
                       </div>
                     </div>
+                  )}
+                  {selectedTemplate && selectedTemplateVars.length > 0 && (
+                    <FillRulesPanel
+                      templateVars={selectedTemplateVars}
+                      csvHeaders={effectiveCsvHeaders}
+                      manualMappings={manualMappings}
+                      customValues={customValues}
+                      rules={fillRules}
+                      setRules={setFillRules}
+                      hasAiContext={!!(aiBusiness || aiNiche || aiServiceProduct)}
+                    />
                   )}
                   {selectedTemplate && effectiveCsvHeaders.length > 0 && (
                     <>
