@@ -56,10 +56,12 @@ export default function TemplatesPage() {
 
   // AI Regenerate Design state
   const [regenTarget, setRegenTarget] = useState<Template | null>(null);
+  const [regenMode, setRegenMode] = useState<"full" | "variants-only">("full");
   const [regenNiche, setRegenNiche] = useState("");
   const [regenServices, setRegenServices] = useState("");
   const [regenBusiness, setRegenBusiness] = useState("");
   const [regenLoading, setRegenLoading] = useState(false);
+  const [regenVariants, setRegenVariants] = useState<SectionVariants>({ ...DEFAULT_VARIANTS });
 
   // CSV template state
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
