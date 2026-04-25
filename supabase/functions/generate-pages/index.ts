@@ -2034,6 +2034,10 @@ Deno.serve(async (req) => {
           const canonicalTag = canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : "";
           // Wrap content with responsive stylesheet and container
           const responsiveStyles = buildResponsiveStylesheet();
+          // Per-campaign vibe theme override (palette, typography, density).
+          // Returns "" when the campaign uses the default vibe.
+          const vibeTheme = (((campaign.mapping || {}) as { vibe_theme?: VibeTheme }).vibe_theme) || null;
+          const vibeOverride = buildVibeOverrideStyles(vibeTheme);
 
           // ── Additive SEO enhancements (multi-engine + AI-friendly) ──
           // These never replace existing tags; they are appended so any
