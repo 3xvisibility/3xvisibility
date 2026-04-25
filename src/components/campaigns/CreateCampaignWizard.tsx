@@ -501,7 +501,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         utm_settings: utmSettings as any,
         geo_settings: geoSettings as any,
         directory_structure: dirStructure as any,
-        mapping: { seo_title_format: seoTitleFormat } as any,
+        mapping: {
+          seo_title_format: seoTitleFormat,
+          // Only persist FAQ pairs that have BOTH a question and answer column.
+          faq_pairs: faqPairs.filter((p) => p.question && p.answer),
+        } as any,
         publish_mode: publishMode,
         generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
