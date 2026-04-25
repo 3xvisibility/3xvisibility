@@ -1260,7 +1260,16 @@ Deno.serve(async (req) => {
         Object.keys((campaign.geo_settings || {}) as Record<string, unknown>).map((k) => k.toLowerCase()),
       );
 
+      // Per-variable fill rules: csv_first (default) | csv_only | ai_only | ai_first
+      type FillRule = "csv_first" | "csv_only" | "ai_only" | "ai_first";
+      const fillRules = (((campaign.mapping || {}) as { fill_rules?: Record<string, FillRule> }).fill_rules) || {};
+      const ruleFor = (v: string): FillRule => (fillRules[v] || fillRules[v.toLowerCase()] || "csv_first");
+
       const unmapped = candidateVars.filter((v) => {
+        const rule = ruleFor(v);
+        if (rule === "csv_only") return false;
+        if (rule === "ai_only" || rule === "ai_first") return true;
+        // csv_first → only AI fill if no CSV/mapping/geo value exists
         const k = v.toLowerCase();
         return !mappedTargets.has(k) && !csvHeaderSet.has(k) && !geoSettingsKeys.has(k);
       });
@@ -1269,10 +1278,10 @@ Deno.serve(async (req) => {
       const hasContext = !!(aiContext.business || aiContext.niche || aiContext.service);
 
       if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext) {
-        console.log(`[GENERATE-PAGES] AI auto-fill: ${unmapped.length} unmapped variable(s) →`, unmapped.join(", "));
+        console.log(`[GENERATE-PAGES] AI fill targets: ${unmapped.length} variable(s) →`, unmapped.join(", "));
         aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY);
         const filledCount = Object.keys(aiVarDefaults).length;
-        console.log(`[GENERATE-PAGES] AI auto-fill produced ${filledCount}/${unmapped.length} default(s)`);
+        console.log(`[GENERATE-PAGES] AI fill produced ${filledCount}/${unmapped.length} default(s)`);
         if (filledCount > 0) {
           aiAutofillUsed = 1;
           await logEvent(
@@ -1280,14 +1289,17 @@ Deno.serve(async (req) => {
             campaign_id,
             user.id,
             "ai_defaults_filled",
-            `AI auto-filled ${filledCount} unmapped variable(s) using niche/services: ${Object.keys(aiVarDefaults).join(", ")}`,
+            `AI filled ${filledCount} variable(s) using niche/services rules: ${Object.keys(aiVarDefaults).join(", ")}`,
           );
         }
       } else if (unmapped.length > 0 && !hasContext) {
-        console.log(`[GENERATE-PAGES] ${unmapped.length} unmapped variable(s) but no niche/services context — skipping AI auto-fill`);
+        console.log(`[GENERATE-PAGES] ${unmapped.length} variable(s) need AI fill but no niche/services context — skipping`);
       }
+
+      // Expose to row loop via closure variable
+      (globalThis as unknown as { __fillRules?: Record<string, FillRule> }).__fillRules = fillRules;
     } catch (err) {
-      console.error("[GENERATE-PAGES] AI auto-fill setup failed:", err);
+      console.error("[GENERATE-PAGES] AI fill setup failed:", err);
     }
 
 
