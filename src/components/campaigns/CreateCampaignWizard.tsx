@@ -661,6 +661,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setAiNameSuggestions([]); setAiReadinessCheck(null);
     setAiBusiness(""); setAiNiche(""); setAiServiceProduct(""); setAiPageCount(20); setAiGeneratedRows([]);
     setActivePresetId(null);
+    setVibePalette(DEFAULT_VIBE.palette); setVibeTypography(DEFAULT_VIBE.typography); setVibeDensity(DEFAULT_VIBE.density);
+    setVibeCustomVarsText(""); setVibeCustomCss(""); setVibeAdvancedOpen(false);
   };
 
   // --- AI preset helpers ---
