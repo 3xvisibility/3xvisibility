@@ -191,6 +191,7 @@ export default function WebsitesPage() {
     setWooConsumerSecret("");
     setSiteType("");
     setWpAuthMethod("application_password");
+    setSiteLanguage(null);
   };
 
   return (
