@@ -550,6 +550,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           // same value for every row) or once per CSV row (richer per-row
           // results that incorporate that row's data — costs 1 AI call/row).
           ai_fill_mode: aiFillMode,
+          // Vibe theme — applied as a CSS override on top of BASE_STYLES at
+          // generation time so this campaign's pages adopt the chosen palette,
+          // typography mood, and layout density.
+          vibe_theme: {
+            palette: vibePalette,
+            typography: vibeTypography,
+            density: vibeDensity,
+          },
         } as any,
         publish_mode: publishMode,
         generation_method: generationMethod,
