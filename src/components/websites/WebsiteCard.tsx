@@ -195,6 +195,13 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
       </Card>
 
       <EditWebsiteDialog site={site} open={editOpen} onOpenChange={setEditOpen} />
+      <RetranslateSiteDialog
+        open={retransOpen}
+        onOpenChange={setRetransOpen}
+        websiteId={site.id}
+        websiteName={site.name}
+        siteLanguage={site.language}
+      />
     </>
   );
 }
