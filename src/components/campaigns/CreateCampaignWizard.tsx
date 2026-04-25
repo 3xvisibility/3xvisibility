@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +27,7 @@ import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
 import {
   VIBE_PALETTES, VIBE_TYPOGRAPHIES, VIBE_DENSITIES, DEFAULT_VIBE,
+  parseCustomVarsInput,
   type VibePalette, type VibeTypography, type VibeDensity,
 } from "@/lib/vibe-theme";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -116,6 +118,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [vibePalette, setVibePalette] = useState<VibePalette>(DEFAULT_VIBE.palette);
   const [vibeTypography, setVibeTypography] = useState<VibeTypography>(DEFAULT_VIBE.typography);
   const [vibeDensity, setVibeDensity] = useState<VibeDensity>(DEFAULT_VIBE.density);
+  // Optional brand overrides — emitted after the preset block so they win.
+  // `vibeCustomVarsText` is parsed `key: value` lines into a map at save time.
+  const [vibeCustomVarsText, setVibeCustomVarsText] = useState<string>("");
+  const [vibeCustomCss, setVibeCustomCss] = useState<string>("");
+  const [vibeAdvancedOpen, setVibeAdvancedOpen] = useState<boolean>(false);
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
@@ -557,6 +564,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
             palette: vibePalette,
             typography: vibeTypography,
             density: vibeDensity,
+            // Optional brand overrides — only persisted when non-empty so the
+            // edge function can fast-path default themes.
+            customVars: (() => {
+              const parsed = parseCustomVarsInput(vibeCustomVarsText);
+              return Object.keys(parsed).length ? parsed : undefined;
+            })(),
+            customCss: vibeCustomCss.trim() || undefined,
           },
         } as any,
         publish_mode: publishMode,
@@ -648,6 +662,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setAiNameSuggestions([]); setAiReadinessCheck(null);
     setAiBusiness(""); setAiNiche(""); setAiServiceProduct(""); setAiPageCount(20); setAiGeneratedRows([]);
     setActivePresetId(null);
+    setVibePalette(DEFAULT_VIBE.palette); setVibeTypography(DEFAULT_VIBE.typography); setVibeDensity(DEFAULT_VIBE.density);
+    setVibeCustomVarsText(""); setVibeCustomCss(""); setVibeAdvancedOpen(false);
   };
 
   // --- AI preset helpers ---
@@ -1258,7 +1274,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             Customize the marketplace template look — palette, typography mood, and layout density. Applied to every page in this campaign.
                           </p>
                         </div>
-                        {(vibePalette !== DEFAULT_VIBE.palette || vibeTypography !== DEFAULT_VIBE.typography || vibeDensity !== DEFAULT_VIBE.density) && (
+                        {(vibePalette !== DEFAULT_VIBE.palette || vibeTypography !== DEFAULT_VIBE.typography || vibeDensity !== DEFAULT_VIBE.density || vibeCustomVarsText.trim() || vibeCustomCss.trim()) && (
                           <Button
                             type="button"
                             variant="ghost"
@@ -1268,6 +1284,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               setVibePalette(DEFAULT_VIBE.palette);
                               setVibeTypography(DEFAULT_VIBE.typography);
                               setVibeDensity(DEFAULT_VIBE.density);
+                              setVibeCustomVarsText("");
+                              setVibeCustomCss("");
                             }}
                           >
                             Reset
@@ -1338,6 +1356,66 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             </button>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Brand overrides — optional CSS variables + raw CSS that
+                          win the cascade over the preset block above. Useful
+                          for matching a client's exact brand color or tweaking
+                          spacing per-campaign without forking the template. */}
+                      <div className="rounded-lg border border-dashed border-border/50 bg-muted/20">
+                        <button
+                          type="button"
+                          onClick={() => setVibeAdvancedOpen((v) => !v)}
+                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-[11px] font-medium hover:bg-muted/40 rounded-lg transition-colors"
+                          aria-expanded={vibeAdvancedOpen}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Settings2 className="h-3 w-3 text-muted-foreground" />
+                            Brand overrides (optional)
+                            {(vibeCustomVarsText.trim() || vibeCustomCss.trim()) && (
+                              <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">active</Badge>
+                            )}
+                          </span>
+                          <span className="text-muted-foreground text-[10px]">{vibeAdvancedOpen ? "Hide" : "Show"}</span>
+                        </button>
+                        {vibeAdvancedOpen && (
+                          <div className="p-2.5 pt-1 space-y-2.5 border-t border-border/40">
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-muted-foreground">
+                                CSS variables
+                                <span className="ml-1 text-[10px] font-normal text-muted-foreground/70">— one per line, <code className="px-1 rounded bg-muted text-[10px]">name: value</code></span>
+                              </Label>
+                              <Textarea
+                                value={vibeCustomVarsText}
+                                onChange={(e) => setVibeCustomVarsText(e.target.value)}
+                                placeholder={"brand-color: #ff0066\nsection-padding: 6rem\nradius: 18px"}
+                                rows={3}
+                                className="text-[11px] font-mono leading-snug resize-y min-h-[60px]"
+                                spellCheck={false}
+                              />
+                              <p className="text-[10px] text-muted-foreground">
+                                Emitted as <code className="px-1 rounded bg-muted">--name: value;</code> on <code className="px-1 rounded bg-muted">.pgp-page</code>. Reference them in your CSS below with <code className="px-1 rounded bg-muted">var(--name)</code>.
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-muted-foreground">
+                                Custom CSS
+                                <span className="ml-1 text-[10px] font-normal text-muted-foreground/70">— scoped to <code className="px-1 rounded bg-muted text-[10px]">.pgp-page</code></span>
+                              </Label>
+                              <Textarea
+                                value={vibeCustomCss}
+                                onChange={(e) => setVibeCustomCss(e.target.value)}
+                                placeholder={".pgp-page .pgp-btn-primary { background: var(--brand-color); }\n.pgp-page .pgp-section { padding: var(--section-padding) 0; }"}
+                                rows={5}
+                                className="text-[11px] font-mono leading-snug resize-y min-h-[100px]"
+                                spellCheck={false}
+                              />
+                              <p className="text-[10px] text-muted-foreground">
+                                Appended last so it wins over the preset. Always prefix selectors with <code className="px-1 rounded bg-muted">.pgp-page</code> to keep styles scoped.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}

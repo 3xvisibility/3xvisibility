@@ -13,6 +13,34 @@ export interface VibeTheme {
   palette?: VibePalette;
   typography?: VibeTypography;
   density?: VibeDensity;
+  /** Per-campaign brand CSS variable overrides. Emitted as `--key: value;`
+   * declarations on `.pgp-page` so they override defaults and feed any
+   * authored custom CSS. */
+  customVars?: Record<string, string>;
+  /** Per-campaign raw CSS appended after the preset block. Sanitized server
+   * side; authors should scope rules to `.pgp-page`. */
+  customCss?: string;
+}
+
+/** Parse a textarea where each line is `key: value` or `key=value` (lines
+ * starting with `#` or `//` are treated as comments). Used by the wizard UI. */
+export function parseCustomVarsInput(text: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!text) return out;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#") || line.startsWith("//")) continue;
+    const m = line.match(/^([A-Za-z0-9_-]+)\s*[:=]\s*(.+?)\s*;?$/);
+    if (!m) continue;
+    out[m[1]] = m[2];
+  }
+  return out;
+}
+
+/** Inverse of `parseCustomVarsInput`. */
+export function stringifyCustomVars(vars?: Record<string, string>): string {
+  if (!vars) return "";
+  return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join("\n");
 }
 
 export const VIBE_PALETTES: { value: VibePalette; label: string; swatch: string }[] = [
@@ -40,7 +68,7 @@ export const VIBE_DENSITIES: { value: VibeDensity; label: string; hint: string }
   { value: "spacious",    label: "Spacious",    hint: "Generous whitespace, premium" },
 ];
 
-export const DEFAULT_VIBE: Required<VibeTheme> = {
+export const DEFAULT_VIBE: Required<Pick<VibeTheme, "palette" | "typography" | "density">> = {
   palette: "lovable",
   typography: "modern",
   density: "comfortable",

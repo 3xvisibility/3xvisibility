@@ -19,6 +19,40 @@ export interface VibeTheme {
   palette?: VibePalette;
   typography?: VibeTypography;
   density?: VibeDensity;
+  /** Optional brand CSS variable overrides (e.g. `{ "brand-color": "#ff0066" }`).
+   * Emitted as `--brand-color: #ff0066;` declarations on `.pgp-page` so they
+   * cascade into existing styles and any custom CSS authored below. */
+  customVars?: Record<string, string>;
+  /** Optional raw CSS appended at the very end of the override block (highest
+   * specificity wins). Sanitized to strip `</style>` and HTML comments to
+   * prevent breakouts. Authors should scope rules to `.pgp-page` themselves. */
+  customCss?: string;
+}
+
+/** Strip dangerous sequences from user-supplied CSS so it can't break out of
+ * the `<style>` block or inject scripts. We don't sanitize CSS properties
+ * themselves — the browser ignores anything invalid. */
+function sanitizeUserCss(input: string): string {
+  return String(input || "")
+    .replace(/<\/style/gi, "<\\/style")
+    .replace(/<!--/g, "")
+    .replace(/-->/g, "")
+    .replace(/<script/gi, "<\\script")
+    .trim();
+}
+
+/** Format `customVars` map into `--key: value;` declarations. Keys are
+ * coerced to safe CSS identifiers (lowercase, alphanumeric + dash). */
+function formatCustomVars(vars?: Record<string, string>): string {
+  if (!vars) return "";
+  const entries = Object.entries(vars).filter(([k, v]) => k && v != null && String(v).trim() !== "");
+  if (entries.length === 0) return "";
+  const decls = entries.map(([k, v]) => {
+    const safeKey = String(k).trim().replace(/^--/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 60);
+    const safeVal = String(v).replace(/[;{}<>]/g, "").trim().slice(0, 200);
+    return `--${safeKey}:${safeVal}`;
+  }).join(";");
+  return `.pgp-page{${decls}}`;
 }
 
 interface PaletteSpec {
@@ -84,10 +118,14 @@ export function buildVibeOverrideStyles(theme?: VibeTheme | null): string {
   const palette = theme.palette ?? "lovable";
   const typography = theme.typography ?? "modern";
   const density = theme.density ?? "comfortable";
-  // Skip when fully default — the BASE_STYLES already match this.
-  if (palette === "lovable" && typography === "modern" && density === "comfortable") {
-    return "";
-  }
+
+  const customVarsBlock = formatCustomVars(theme.customVars);
+  const customCssClean = sanitizeUserCss(theme.customCss || "");
+  const hasCustom = !!(customVarsBlock || customCssClean);
+  const isDefault = palette === "lovable" && typography === "modern" && density === "comfortable";
+
+  // Skip when fully default AND no custom overrides — saves bytes.
+  if (isDefault && !hasCustom) return "";
 
   const p = PALETTES[palette] ?? PALETTES.lovable;
   const t = TYPOGRAPHY[typography] ?? TYPOGRAPHY.modern;
@@ -97,8 +135,9 @@ export function buildVibeOverrideStyles(theme?: VibeTheme | null): string {
     .map((spec) => `@import url('https://fonts.googleapis.com/css2?family=${spec}&display=swap');`)
     .join("\n");
 
-  return `<style data-pgp-vibe="${palette}-${typography}-${density}">
-${fontImports}
+  // Base preset block — only emitted when the preset isn't fully default.
+  // Otherwise we still emit a minimal wrapper so custom overrides ship.
+  const presetBlock = isDefault ? "" : `${fontImports}
 .pgp-page{font-size:${d.baseFontPx}px}
 .pgp-page,.pgp-page p,.pgp-page li,.pgp-page span,.pgp-page a,.pgp-page input,.pgp-page textarea,.pgp-page button{font-family:'${t.bodyFamily}',inherit,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 .pgp-page h1,.pgp-page h2,.pgp-page h3,.pgp-page h4,.pgp-page h5,.pgp-page h6{font-family:'${t.headingFamily}','${t.bodyFamily}',inherit,sans-serif;font-weight:${t.headingWeight};letter-spacing:${t.letterSpacing}}
@@ -129,7 +168,18 @@ ${fontImports}
 .pgp-page .pgp-form-group input:focus,.pgp-page .pgp-form-group textarea:focus{border-color:rgba(${p.glowRgb},.6);background:rgba(${p.glowRgb},.04);box-shadow:0 0 0 4px rgba(${p.glowRgb},.12)}
 .pgp-page .pgp-carousel::-webkit-scrollbar-thumb{background:linear-gradient(90deg,${p.gradStart},${p.gradEnd})}
 @keyframes pgp-pulse-glow-vibe{0%,100%{box-shadow:0 0 0 0 rgba(${p.glowRgb},.35),0 12px 32px rgba(0,0,0,.18)}50%{box-shadow:0 0 0 14px rgba(${p.glowRgb},0),0 18px 40px rgba(0,0,0,.22)}}
-.pgp-page .pgp-hero-cta .pgp-btn-primary{animation:pgp-pulse-glow-vibe 3.5s ease-in-out infinite}
+.pgp-page .pgp-hero-cta .pgp-btn-primary{animation:pgp-pulse-glow-vibe 3.5s ease-in-out infinite}`;
+
+  // Custom vars + raw CSS appear LAST so they win the cascade.
+  const customBlock = [
+    customVarsBlock,
+    customCssClean,
+  ].filter(Boolean).join("\n");
+
+  const customMarker = hasCustom ? ' data-pgp-vibe-custom="1"' : '';
+  return `<style data-pgp-vibe="${palette}-${typography}-${density}"${customMarker}>
+${presetBlock}
+${customBlock ? `/* --- campaign brand overrides --- */\n${customBlock}` : ""}
 </style>`;
 }
 
