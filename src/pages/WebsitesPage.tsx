@@ -48,6 +48,7 @@ export default function WebsitesPage() {
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
+  const [siteLanguage, setSiteLanguage] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
