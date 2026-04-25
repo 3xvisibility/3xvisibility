@@ -115,6 +115,25 @@ export function StartGenerationDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-2">
+          {/* Language mismatch warning — fires when template/CSV are obviously
+              in a different language than the locked site / run language. */}
+          {showMismatch && mismatchInfo && (
+            <div className="flex items-start gap-2 p-3 rounded-xl border border-warning/30 bg-warning/10 dark:bg-warning/5">
+              <Languages className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium">Language mismatch detected</p>
+                <p className="text-xs text-muted-foreground">
+                  Your template and CSV look like{" "}
+                  <span className="font-medium text-foreground">{mismatchInfo.detected}</span>, but
+                  pages will be generated in{" "}
+                  <span className="font-medium text-foreground">{mismatchInfo.siteLanguage}</span>
+                  {languageOverrideEnabled ? " (run override)" : " (site language)"}.
+                  AI will translate the source content — review the first few pages to confirm.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Retry failed rows toggle */}
           {failedRowsCount > 0 && (
             <div className="flex items-center justify-between p-3 rounded-xl border border-destructive/20 bg-destructive/5">
