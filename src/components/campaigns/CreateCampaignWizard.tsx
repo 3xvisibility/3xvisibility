@@ -1424,6 +1424,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         </div>
                       )}
 
+                      {/* Brand overrides — optional CSS variables + raw CSS that
                           win the cascade over the preset block above. Useful
                           for matching a client's exact brand color or tweaking
                           spacing per-campaign without forking the template. */}
