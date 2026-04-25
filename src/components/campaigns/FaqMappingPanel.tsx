@@ -87,15 +87,52 @@ export function FaqMappingPanel({ csvHeaders, pairs, onChange, maxPairs = 10 }: 
         )}
       </div>
 
-      {!hasHeaders ? (
-        <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 flex items-start gap-2">
-          <HelpCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-[11px] text-muted-foreground">
-            Upload or pick a CSV first to see column options here.
-          </p>
+      {hasMappingsButNoHeaders && (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-xs font-medium text-warning-foreground">
+              FAQ mappings saved but no CSV columns are available
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              You have {pairs.length} saved FAQ pair{pairs.length === 1 ? "" : "s"}, but no CSV is
+              loaded right now. Upload (or pick) a CSV to make these columns selectable, or clear
+              the saved mappings.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={clearAll}
+              className="rounded-lg text-[11px] h-7 mt-1"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              Clear FAQ mappings
+            </Button>
+          </div>
         </div>
+      )}
+
+      {!hasHeaders ? (
+        !hasMappingsButNoHeaders && (
+          <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 flex items-start gap-2">
+            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[11px] text-muted-foreground">
+              Upload or pick a CSV first to see column options here.
+            </p>
+          </div>
+        )
       ) : (
         <div className="space-y-2">
+          {orphanedPairs.length > 0 && (
+            <div className="rounded-xl border border-warning/40 bg-warning/10 p-2.5 flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground flex-1">
+                {orphanedPairs.length} FAQ pair{orphanedPairs.length === 1 ? "" : "s"} reference{orphanedPairs.length === 1 ? "s" : ""}{" "}
+                column{orphanedPairs.length === 1 ? "" : "s"} that no longer exist in this CSV. Re-pick a column or remove the row.
+              </p>
+            </div>
+          )}
           {safePairs.map((pair, i) => (
             <div
               key={`${id}-pair-${i}`}
