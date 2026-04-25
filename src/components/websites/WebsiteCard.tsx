@@ -109,8 +109,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
             </p>
           )}
 
-          {/* Per-site test connection */}
-          <div className="mt-3">
+          {/* Per-site actions */}
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
@@ -123,6 +123,20 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
               ) : (
                 <><Zap className="h-3 w-3 mr-1" /> Test Connection</>
               )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={() => setRetransOpen(true)}
+              title={
+                site.language
+                  ? `Re-translate the most recent pages to ${site.language} and republish them`
+                  : "Set a Site Language first to enable this action"
+              }
+            >
+              <Languages className="h-3 w-3 mr-1" />
+              Re-translate to {site.language || "site language"}
             </Button>
           </div>
 
