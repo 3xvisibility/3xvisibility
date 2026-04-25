@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages } from "lucide-react";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
+import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 
 interface StartGenerationDialogProps {
   open: boolean;
@@ -27,6 +28,11 @@ interface StartGenerationDialogProps {
   isPending: boolean;
   /** Currently locked site language (from connected website). Shown as the default. */
   siteLanguage?: string | null;
+  /**
+   * Combined sample text (template + a few CSV rows) used to warn the user when
+   * the source content language doesn't match the connected site language.
+   */
+  languageSampleText?: string;
 }
 
 export interface GenerationOptions {
@@ -46,6 +52,7 @@ export function StartGenerationDialog({
   onStart,
   isPending,
   siteLanguage,
+  languageSampleText,
 }: StartGenerationDialogProps) {
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
