@@ -651,13 +651,7 @@ async function generateSeoMetadata(
     ? `\nWebsite: ${websiteContext.name || ""}${websiteContext.url ? ` (${websiteContext.url})` : ""}`
     : "";
 
-  const languageMap: Record<string, string> = {
-    en: "English", es: "Spanish", fr: "French", de: "German",
-    pt: "Portuguese", it: "Italian", nl: "Dutch", ja: "Japanese",
-    zh: "Chinese", ko: "Korean", ar: "Arabic",
-  };
-  const rawLang = (settings.language || "").trim();
-  const resolvedLangName = languageMap[rawLang.toLowerCase()] || rawLang || "English";
+  const resolvedLangName = resolveLanguageName(settings.language);
 
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
