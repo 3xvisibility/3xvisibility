@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
+import { analyzeExtendedSeo } from "@/lib/seo-extended-analysis";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { friendlyError } from "@/lib/friendly-errors";
@@ -89,8 +90,14 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
     const geo = calculateContentGeoScore(page.title, page.content, page.slug, page.external_url || undefined);
     const metaScore = calculateSeoScore(page.seo_title, page.seo_description, page.seo_keywords, page.title);
     const overallScore = Math.round((seo.score * 0.4 + metaScore.score * 0.3 + sea.score * 0.15 + geo.score * 0.15));
+    const extended = analyzeExtendedSeo({
+      html: page.content,
+      seoTitle: page.seo_title,
+      seoDescription: page.seo_description,
+      seoKeywords: page.seo_keywords,
+    });
 
-    return { ruleResults, summary, seo, sea, geo, metaScore, overallScore };
+    return { ruleResults, summary, seo, sea, geo, metaScore, overallScore, extended };
   }, [page, campaignTitles, campaignSlugs]);
 
   const handleFixAndRepublish = async () => {
@@ -426,6 +433,77 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
                 );
               })}
             </div>
+
+            {/* Extended Analysis — additive: AI / multi-engine readiness, readability, headings, keywords */}
+            <Collapsible className="rounded-lg border border-border overflow-hidden" defaultOpen>
+              <CollapsibleTrigger className="w-full p-3 hover:bg-muted/40 transition-colors text-left group">
+                <div className="flex items-center justify-between mb-1.5 gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Sparkles className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-xs font-semibold">AI &amp; Multi-Engine SEO</span>
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 shrink-0">extra</Badge>
+                  </div>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180 shrink-0" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${barColor(analysis.extended.score)}`}
+                      style={{ width: `${analysis.extended.score}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-bold tabular-nums ${scoreColor(analysis.extended.score)}`}>{analysis.extended.score}</span>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="border-t border-border bg-muted/20 px-3 py-3 space-y-3">
+                  <div className="grid grid-cols-3 gap-2 text-[10px]">
+                    <div className="rounded border border-border p-2">
+                      <div className="text-muted-foreground">Readability</div>
+                      <div className="font-semibold tabular-nums">{analysis.extended.readability.score} · {analysis.extended.readability.grade}</div>
+                      <div className="text-muted-foreground">{analysis.extended.readability.avgWordsPerSentence} w/sent</div>
+                    </div>
+                    <div className="rounded border border-border p-2">
+                      <div className="text-muted-foreground">Headings</div>
+                      <div className="font-semibold tabular-nums">H1·{analysis.extended.headings.h1Count} H2·{analysis.extended.headings.h2Count} H3·{analysis.extended.headings.h3Count}</div>
+                      <div className="text-muted-foreground">{analysis.extended.headings.orderOk ? "Order OK" : "Skipped levels"}</div>
+                    </div>
+                    <div className="rounded border border-border p-2">
+                      <div className="text-muted-foreground">Primary kw</div>
+                      <div className="font-semibold truncate">{analysis.extended.keywords.primary || "—"}</div>
+                      <div className="text-muted-foreground">{analysis.extended.keywords.densityPct}% density</div>
+                    </div>
+                  </div>
+                  {analysis.extended.keywords.suggestions.length > 0 && (
+                    <div className="text-[10px] text-muted-foreground">
+                      Suggested keywords:{" "}
+                      {analysis.extended.keywords.suggestions.map((k) => (
+                        <Badge key={k} variant="outline" className="text-[9px] mr-1">{k}</Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    {analysis.extended.checks.map((check, idx) => (
+                      <div key={idx} className="flex items-start gap-1.5">
+                        {check.passed ? (
+                          <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0 mt-0.5" />
+                        ) : (
+                          <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-[10px] leading-tight ${check.passed ? "text-muted-foreground" : "text-foreground font-medium"}`}>
+                            {check.label}
+                          </p>
+                          {!check.passed && check.tip && (
+                            <p className="text-[9px] text-muted-foreground mt-0.5">{check.tip}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* AI Fix Button */}
             {hasIssues && page.id && (
