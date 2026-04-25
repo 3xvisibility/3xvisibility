@@ -36,6 +36,31 @@ export function RetranslateSiteDialog({ open, onOpenChange, websiteId, websiteNa
 
   const hasLanguage = !!(siteLanguage && siteLanguage.trim());
 
+  // Sample the most recent pages on this site to detect their actual language
+  // and warn the user when it doesn't match the locked site language.
+  const { data: sampleDetection } = useQuery({
+    queryKey: ["retranslate-lang-sample", websiteId, count, open],
+    enabled: open && hasLanguage && !!websiteId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("generated_pages")
+        .select("title, content, seo_description")
+        .eq("website_id", websiteId)
+        .order("created_at", { ascending: false })
+        .limit(Math.min(Number(count) || 5, 10));
+      const sample = (data || [])
+        .map((p) => `${p.title || ""}\n${p.seo_description || ""}\n${(p.content || "").slice(0, 800)}`)
+        .join("\n");
+      const detection = detectTextLanguage(sample);
+      const cmp = compareWithSiteLanguage(detection.language, siteLanguage);
+      return { detection, cmp };
+    },
+  });
+
+  const showMismatch =
+    !!sampleDetection?.cmp?.mismatch && (sampleDetection?.detection.confidence ?? 0) >= 0.4;
+
+
   const mutation = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("retranslate-site-pages", {
