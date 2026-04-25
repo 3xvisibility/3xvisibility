@@ -1226,6 +1226,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         targetFieldMappings={targetFieldMappings}
                         setTargetFieldMappings={setTargetFieldMappings}
                         workspaceId={wsId!}
+                        faqPairs={faqPairs}
+                        setFaqPairs={setFaqPairs}
                       />
                     </>
                   )}
