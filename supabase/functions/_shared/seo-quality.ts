@@ -637,8 +637,11 @@ export function autoRepairContent(
     seoTitle?: string;
     primaryKeyword?: string;
     slug?: string;
+    /** ISO-2 code, full English name, or native name. Falls back to English. */
+    language?: string | null;
   },
 ): string {
+  const pack: PhrasePack = resolvePhrasePack(opts.language);
   let html = content;
   const keyword = opts.primaryKeyword || "";
   const title = opts.seoTitle || opts.title || keyword || "Welcome";
