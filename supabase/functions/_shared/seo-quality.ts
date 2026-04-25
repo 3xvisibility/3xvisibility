@@ -713,7 +713,7 @@ export function autoRepairContent(
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: title,
-      description: keyword ? `Professional ${keyword} services - trusted, reliable, and local.` : title,
+      description: pack.schemaDescription(keyword),
     };
     html += `\n<script type="application/ld+json">${JSON.stringify(schema)}</script>`;
   }
