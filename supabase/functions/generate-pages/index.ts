@@ -1224,6 +1224,72 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : BATCH_SIZE;
 
+    // ─────────────────────────────────────────────────────────────────────
+    // AI auto-fill for unmapped variables
+    // If a template variable has no CSV column, no custom value mapping,
+    // and doesn't appear as a key in the CSV rows, fill it once with AI
+    // using the campaign's niche / business / services context. The same
+    // value is reused across every row → costs only 1 AI generation.
+    // ─────────────────────────────────────────────────────────────────────
+    let aiVarDefaults: Record<string, string> = {};
+    let aiAutofillUsed = 0;
+    try {
+      const declaredVars = (((campaign.templates as { variables?: string[] }).variables) || []) as string[];
+      const tokenMatches = templateContent.match(/\{([a-zA-Z0-9_.-]+)\}/g) || [];
+      const tokenVars = tokenMatches.map((t: string) => t.slice(1, -1));
+      const allVarsSet = new Set<string>([...declaredVars, ...tokenVars]);
+      const reservedPrefixes = ["AI:", "AI_IMAGE:", "MAP:", "YOUTUBE:", "IMAGE:", "WEATHER:", "GEO_BLOCKS"];
+      const candidateVars = Array.from(allVarsSet).filter((v) => {
+        if (!v) return false;
+        if (v.includes(":")) return false;
+        if (reservedPrefixes.some((p) => v.toUpperCase().startsWith(p))) return false;
+        return true;
+      });
+
+      const mappedTargets = new Set<string>(
+        (customMappings || [])
+          .map((m: { target_field?: string }) => (m.target_field || "").toLowerCase())
+          .filter(Boolean),
+      );
+      const csvHeaderSet = new Set<string>();
+      if (csvRows.length > 0) {
+        for (const k of Object.keys(csvRows[0])) csvHeaderSet.add(k.toLowerCase());
+      }
+      const geoSettingsKeys = new Set<string>(
+        Object.keys((campaign.geo_settings || {}) as Record<string, unknown>).map((k) => k.toLowerCase()),
+      );
+
+      const unmapped = candidateVars.filter((v) => {
+        const k = v.toLowerCase();
+        return !mappedTargets.has(k) && !csvHeaderSet.has(k) && !geoSettingsKeys.has(k);
+      });
+
+      const aiContext = (((campaign.mapping || {}) as { ai_context?: { business?: string; niche?: string; service?: string } }).ai_context) || {};
+      const hasContext = !!(aiContext.business || aiContext.niche || aiContext.service);
+
+      if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext) {
+        console.log(`[GENERATE-PAGES] AI auto-fill: ${unmapped.length} unmapped variable(s) →`, unmapped.join(", "));
+        aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY);
+        const filledCount = Object.keys(aiVarDefaults).length;
+        console.log(`[GENERATE-PAGES] AI auto-fill produced ${filledCount}/${unmapped.length} default(s)`);
+        if (filledCount > 0) {
+          aiAutofillUsed = 1;
+          await logEvent(
+            supabase,
+            campaign_id,
+            user.id,
+            "ai_defaults_filled",
+            `AI auto-filled ${filledCount} unmapped variable(s) using niche/services: ${Object.keys(aiVarDefaults).join(", ")}`,
+          );
+        }
+      } else if (unmapped.length > 0 && !hasContext) {
+        console.log(`[GENERATE-PAGES] ${unmapped.length} unmapped variable(s) but no niche/services context — skipping AI auto-fill`);
+      }
+    } catch (err) {
+      console.error("[GENERATE-PAGES] AI auto-fill setup failed:", err);
+    }
+
+
     // Count custom value mappings (no AI needed for these)
     const customValueMappings = (customMappings || []).filter((m: any) => m.source_column?.startsWith("__custom__:"));
     const aiGenerationsNeeded = hasAiBlocks ? remainingRows.length * aiBlocks.length : 0;
