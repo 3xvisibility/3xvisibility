@@ -247,6 +247,26 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
 
+  // Pre-fill vibe controls from a template's saved `vibe_theme` whenever the
+  // user picks (or switches) a template. Persists the auto-fix outcome from
+  // last session so the same safe combo is reused on next campaign.
+  // Only writes when a saved theme exists — otherwise we keep the current
+  // wizard defaults to avoid overwriting in-flight edits.
+  useEffect(() => {
+    if (!selectedTemplate) return;
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    const saved = (tpl as { vibe_theme?: { palette?: VibePalette; typography?: VibeTypography; density?: VibeDensity; customVars?: Record<string, string>; customCss?: string } | null } | undefined)?.vibe_theme;
+    if (!saved) return;
+    if (saved.palette) setVibePalette(saved.palette);
+    if (saved.typography) setVibeTypography(saved.typography);
+    if (saved.density) setVibeDensity(saved.density);
+    if (saved.customVars && Object.keys(saved.customVars).length > 0) {
+      setVibeCustomVarsText(Object.entries(saved.customVars).map(([k, v]) => `${k}: ${v}`).join("\n"));
+    }
+    if (saved.customCss) setVibeCustomCss(saved.customCss);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate]);
+
   // Vibe validator — runs on every change of template/palette/typography/density
   // and surfaces clash warnings + one-click fixes inside the vibe panel.
   const vibeValidation = useMemo(() => {
