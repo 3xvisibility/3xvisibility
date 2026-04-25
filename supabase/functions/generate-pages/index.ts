@@ -2462,12 +2462,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Final summary log including AI autofill stats
+    const aiFilledKeys = Object.keys(aiVarDefaults || {});
+    if (aiFilledKeys.length > 0) {
+      try {
+        await logEvent(
+          supabase,
+          campaign_id,
+          user.id,
+          "generation_summary",
+          `Generation complete: ${successCount} page(s) generated. AI auto-filled ${aiFilledKeys.length} variable(s) using niche/services context → ${aiFilledKeys.join(", ")}`,
+        );
+      } catch (_e) { /* best-effort */ }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       generated: successCount,
       failed: failedCount,
       total: csvRows.length,
       ai_generations_used: aiGenerationsUsed,
+      ai_autofill: {
+        count: aiFilledKeys.length,
+        variables: aiFilledKeys,
+      },
       job_id: jobId,
       publishing_queued: campaign.publish_mode === "published" && campaign.website_id && successCount > 0,
     }), {
