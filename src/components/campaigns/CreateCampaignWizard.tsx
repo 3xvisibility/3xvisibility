@@ -1422,7 +1422,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                   variant="default"
                                   size="sm"
                                   className="h-7 px-2.5 text-[11px] gap-1"
-                                  onClick={() => {
+                                  onClick={async () => {
                                     const result = computeSafestVibe({
                                       templateContent: (tpl as { content?: string } | undefined)?.content || "",
                                       templateCategory: marketplaceMatch?.category ?? null,
@@ -1441,9 +1441,37 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                     setVibePalette(result.palette);
                                     setVibeTypography(result.typography);
                                     setVibeDensity(result.density);
+                                    // Persist the safe combo onto the template
+                                    // so the next campaign reusing it gets the
+                                    // same defaults pre-filled (per-template
+                                    // memory). Best-effort — wizard still works
+                                    // if the write fails (e.g. read-only role).
+                                    let saved = false;
+                                    if (tpl?.id) {
+                                      const parsedVars = parseCustomVarsInput(vibeCustomVarsText);
+                                      const themePayload = {
+                                        palette: result.palette,
+                                        typography: result.typography,
+                                        density: result.density,
+                                        ...(Object.keys(parsedVars).length ? { customVars: parsedVars } : {}),
+                                        ...(vibeCustomCss.trim() ? { customCss: vibeCustomCss.trim() } : {}),
+                                      };
+                                      const { error: saveErr } = await supabase
+                                        .from("templates")
+                                        .update({ vibe_theme: themePayload as never })
+                                        .eq("id", tpl.id);
+                                      if (!saveErr) {
+                                        saved = true;
+                                        queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
+                                      } else {
+                                        console.warn("[vibe auto-fix] template save failed:", saveErr.message);
+                                      }
+                                    }
                                     toast({
                                       title: `Applied ${result.appliedFixes.length} fix${result.appliedFixes.length === 1 ? "" : "es"}`,
-                                      description: `Vibe set to ${result.palette} · ${result.typography} · ${result.density}.`,
+                                      description: saved
+                                        ? `Vibe ${result.palette} · ${result.typography} · ${result.density} saved as this template's default.`
+                                        : `Vibe set to ${result.palette} · ${result.typography} · ${result.density}.`,
                                     });
                                   }}
                                 >
