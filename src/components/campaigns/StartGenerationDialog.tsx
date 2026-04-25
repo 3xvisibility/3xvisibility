@@ -262,6 +262,9 @@ export function StartGenerationDialog({
               <>Will process <span className="text-foreground font-medium">{effectiveRows}</span> row{effectiveRows !== 1 ? "s" : ""}</>
             )}
             {" "}as <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{publishMode}</Badge>
+            {languageOverrideEnabled && (
+              <> in <Badge variant="outline" className="text-[10px] h-4 px-1.5 gap-1"><Languages className="h-2.5 w-2.5" />{languageOverride}</Badge></>
+            )}
             {scheduleMode === "later" && scheduledAt && (
               <> — scheduled for {new Date(scheduledAt).toLocaleString()}</>
             )}
