@@ -525,6 +525,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           seo_title_format: seoTitleFormat,
           // Only persist FAQ pairs that have BOTH a question and answer column.
           faq_pairs: faqPairs.filter((p) => p.question && p.answer),
+          // AI context — used by generate-pages to auto-fill unmapped template
+          // variables when the CSV doesn't provide a value for them.
+          ai_context: {
+            business: aiBusiness || "",
+            niche: aiNiche || "",
+            service: aiServiceProduct || "",
+          },
         } as any,
         publish_mode: publishMode,
         generation_method: generationMethod,
