@@ -1632,8 +1632,35 @@ Deno.serve(async (req) => {
           const _fillRules = (((campaign.mapping || {}) as { fill_rules?: Record<string, FillRule> }).fill_rules) || {};
           const _ruleFor = (v: string): FillRule => (_fillRules[v] || _fillRules[v.toLowerCase()] || "csv_first");
 
+          // Per-row AI fill: regenerate AI defaults using this row's data as
+          // additional context (e.g. so {tagline} for "New York" differs from
+          // "Los Angeles"). Falls back to the per-campaign defaults computed
+          // upfront when not enabled.
+          let rowAiDefaults = aiVarDefaults;
+          const _aiFillMode = (globalThis as unknown as { __aiFillMode?: string }).__aiFillMode || "per_campaign";
+          const _aiFillTargets = (globalThis as unknown as { __aiFillTargets?: string[] }).__aiFillTargets || [];
+          const _aiFillCtx = (globalThis as unknown as { __aiFillContext?: { business?: string; niche?: string; service?: string } }).__aiFillContext || {};
+          if (_aiFillMode === "per_row" && _aiFillTargets.length > 0 && LOVABLE_API_KEY) {
+            // Merge row data into context so the AI sees this row's specifics.
+            const rowSummary = Object.entries(row)
+              .filter(([, v]) => typeof v === "string" && (v as string).trim())
+              .slice(0, 12)
+              .map(([k, v]) => `${k}: ${v}`).join("; ");
+            const perRowCtx = {
+              business: _aiFillCtx.business,
+              niche: _aiFillCtx.niche,
+              service: [_aiFillCtx.service, rowSummary].filter(Boolean).join(" — Row data: "),
+            };
+            try {
+              rowAiDefaults = await generateAiVarDefaults(_aiFillTargets, perRowCtx, aiSettings, LOVABLE_API_KEY);
+            } catch (e) {
+              console.error("[GENERATE-PAGES] per-row AI fill failed, falling back to campaign defaults:", e);
+              rowAiDefaults = aiVarDefaults;
+            }
+          }
+
           // 1. Apply AI defaults first when rule is ai_only or ai_first.
-          for (const [key, value] of Object.entries(aiVarDefaults)) {
+          for (const [key, value] of Object.entries(rowAiDefaults)) {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") {
               if (value || rule === "ai_only") {
