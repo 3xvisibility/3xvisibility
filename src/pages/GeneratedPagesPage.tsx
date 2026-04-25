@@ -14,8 +14,9 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, Send as SendIcon
 } from "lucide-react";
+import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
@@ -38,10 +39,14 @@ type GeneratedPage = Tables<"generated_pages"> & {
   websites?: { name: string } | null;
 };
 
-const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string }> = {
-  pending: { icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  published: { icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-  failed: { icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/10 text-destructive border-destructive/20" },
+const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
+  queued:     { icon: Clock,         color: "text-muted-foreground", bg: "bg-muted text-muted-foreground border-border", label: "Queued" },
+  pending:    { icon: Clock,         color: "text-amber-500",        bg: "bg-amber-500/10 text-amber-600 border-amber-500/20", label: "Pending" },
+  generating: { icon: Loader2,       color: "text-primary",          bg: "bg-primary/10 text-primary border-primary/20", label: "Generating" },
+  publishing: { icon: SendIcon,      color: "text-blue-500",         bg: "bg-blue-500/10 text-blue-600 border-blue-500/20", label: "Publishing" },
+  published:  { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Published" },
+  done:       { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Done" },
+  failed:     { icon: AlertCircle,   color: "text-destructive",      bg: "bg-destructive/10 text-destructive border-destructive/20", label: "Failed" },
 };
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
@@ -421,8 +426,13 @@ export default function GeneratedPagesPage() {
 
   // Stats
   const stats = useMemo(() => {
-    const s = { total: pages.length, published: 0, pending: 0, failed: 0 };
-    pages.forEach((p) => { if (p.status in s) (s as any)[p.status]++; });
+    const s = { total: pages.length, published: 0, pending: 0, failed: 0, active: 0 };
+    pages.forEach((p) => {
+      if (p.status === "published" || p.status === "done") s.published++;
+      else if (p.status === "failed") s.failed++;
+      else if (p.status === "generating" || p.status === "publishing" || p.status === "queued") s.active++;
+      else if (p.status === "pending") s.pending++;
+    });
     return s;
   }, [pages]);
 
@@ -479,11 +489,15 @@ export default function GeneratedPagesPage() {
         </div>
       </div>
 
+      {/* Live progress card (only renders when active jobs exist) */}
+      {wsId && <LiveGenerationProgress workspaceId={wsId} />}
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {[
           { label: "Total Pages", value: stats.total, icon: FileText, color: "text-foreground" },
           { label: "Published", value: stats.published, icon: CheckCircle2, color: "text-emerald-500" },
+          { label: "In Progress", value: stats.active, icon: Activity, color: "text-primary" },
           { label: "Pending", value: stats.pending, icon: Clock, color: "text-amber-500" },
           { label: "Failed", value: stats.failed, icon: AlertCircle, color: "text-destructive" },
         ].map((s) => (
@@ -521,11 +535,15 @@ export default function GeneratedPagesPage() {
           <Input placeholder="Search pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="queued">Queued</SelectItem>
+            <SelectItem value="generating">Generating</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="publishing">Publishing</SelectItem>
             <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="done">Done</SelectItem>
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>
@@ -657,7 +675,10 @@ export default function GeneratedPagesPage() {
                       <span className="font-medium text-sm truncate">{displayTitle}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={`text-[10px] ${cfg.bg}`}>{page.status}</Badge>
+                      <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
+                        <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
+                        {cfg.label}
+                      </Badge>
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
                     </div>
@@ -726,7 +747,10 @@ export default function GeneratedPagesPage() {
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge variant="outline" className={`text-[10px] ${cfg.bg}`}>{page.status}</Badge>
+                        <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
+                          <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
+                          {cfg.label}
+                        </Badge>
                         {page.error_message && (
                           <TooltipProvider>
                             <Tooltip>
