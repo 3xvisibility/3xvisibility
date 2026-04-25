@@ -514,11 +514,16 @@ async function generateAiContent(
     pt: "Portuguese", it: "Italian", nl: "Dutch", ja: "Japanese",
     zh: "Chinese", ko: "Korean", ar: "Arabic",
   };
+  // Site language can arrive as a 2-letter code ("fr") OR a full name ("French",
+  // "Français (French)"). Normalize so the AI always receives a clear name.
+  const rawLang = (settings.language || "").trim();
+  const resolvedLangName = languageMap[rawLang.toLowerCase()] || rawLang || "English";
 
   const systemPrompt = `You are an expert content writer. Generate high-quality, engaging content.
 Tone: ${settings.tone}
 Length: ${lengthGuide[settings.contentLength] || lengthGuide.medium}
-Language: ${languageMap[settings.language] || "English"}
+
+CRITICAL LANGUAGE RULE: ALL generated text MUST be written in ${resolvedLangName}. This is the website's primary language and is non-negotiable. If the input prompt, template, or CSV data is in another language (e.g. English), TRANSLATE it into ${resolvedLangName}. Never output English unless ${resolvedLangName} IS English.
 
 IMPORTANT: Return ONLY the generated content text. No markdown formatting, no headers, no extra commentary.`;
 
