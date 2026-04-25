@@ -1168,11 +1168,17 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     // Resolve language priority (highest → lowest):
-    //   1) per-run override sent in the request body — UNLESS the connected website
-    //      has language_locked = true, in which case the override is ignored.
+    //   1) per-run override sent in the request body — UNLESS the connected
+    //      website has language_locked = true, in which case the override is
+    //      ignored.
     //   2) connected website's saved language (sticky for that site)
-    //   3) user's profile default
+    //   3) campaign.language (chosen in the wizard for this campaign)
+    //   4) user's profile default
     let resolvedLanguage = profile?.ai_language || "en";
+    const campaignLang = (campaign as { language?: string | null } | null)?.language;
+    if (typeof campaignLang === "string" && campaignLang.trim().length > 0) {
+      resolvedLanguage = campaignLang.trim();
+    }
     let siteLanguageLocked = false;
     try {
       const websiteIdForLang = (campaign as { website_id?: string | null } | null)?.website_id;
@@ -1197,6 +1203,7 @@ Deno.serve(async (req) => {
         console.log(`[GENERATE-PAGES] Per-run language override applied: ${resolvedLanguage}`);
       }
     }
+    console.log(`[GENERATE-PAGES] Resolved AI language: ${resolvedLanguage} → ${resolveLanguageName(resolvedLanguage)}`);
 
     const aiSettings = {
       tone: profile?.ai_tone || "professional",
