@@ -1018,34 +1018,85 @@ export default function TemplatesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* AI Regenerate Design */}
+      {/* AI Regenerate Design + Layout Variants */}
       <Dialog open={!!regenTarget} onOpenChange={(o) => { if (!o && !regenLoading) setRegenTarget(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[88dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Wand2 className="h-4 w-4 text-primary" /> Regenerate Design
+              {regenMode === "variants-only"
+                ? (<><LayoutGrid className="h-4 w-4 text-primary" /> Layout Variants</>)
+                : (<><Wand2 className="h-4 w-4 text-primary" /> Regenerate Design</>)}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              AI will rewrite the visual style of <span className="font-medium text-foreground">{regenTarget?.name}</span> to feel modern and tailored to your niche. Variables and HTML structure stay intact.
+              {regenMode === "variants-only"
+                ? <>Pick AI-vibe section layouts for <span className="font-medium text-foreground">{regenTarget?.name}</span>. Instant, no AI cost — your styles and content stay intact.</>
+                : <>AI will rewrite the visual style of <span className="font-medium text-foreground">{regenTarget?.name}</span> to feel modern and tailored to your niche. Variables and HTML structure stay intact.</>}
             </p>
-            <div className="space-y-1">
-              <Label htmlFor="regen-niche" className="text-xs">Target niche <span className="text-destructive">*</span></Label>
-              <Input id="regen-niche" placeholder="e.g. dental clinic, law firm, SaaS, restaurant" value={regenNiche} onChange={(e) => setRegenNiche(e.target.value)} disabled={regenLoading} />
+
+            {regenMode === "full" && (
+              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <div className="space-y-1">
+                  <Label htmlFor="regen-niche" className="text-xs">Target niche <span className="text-destructive">*</span></Label>
+                  <Input id="regen-niche" placeholder="e.g. dental clinic, law firm, SaaS, restaurant" value={regenNiche} onChange={(e) => setRegenNiche(e.target.value)} disabled={regenLoading} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="regen-services" className="text-xs">Services / products (optional)</Label>
+                  <Input id="regen-services" placeholder="e.g. teeth whitening, implants" value={regenServices} onChange={(e) => setRegenServices(e.target.value)} disabled={regenLoading} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="regen-business" className="text-xs">Business name (optional)</Label>
+                  <Input id="regen-business" placeholder="e.g. BrightSmile Dental" value={regenBusiness} onChange={(e) => setRegenBusiness(e.target.value)} disabled={regenLoading} />
+                </div>
+              </div>
+            )}
+
+            {/* ─── Section variant pickers ─── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Section layouts</Label>
+                <button type="button" className="text-[10px] text-primary hover:underline disabled:opacity-50" disabled={regenLoading} onClick={() => setRegenVariants({ ...DEFAULT_VARIANTS })}>Reset</button>
+              </div>
+
+              {[
+                { key: "hero" as const, label: "Hero",  options: HERO_VARIANTS },
+                { key: "grid" as const, label: "Grid",  options: GRID_VARIANTS },
+                { key: "cta"  as const, label: "CTA",   options: CTA_VARIANTS },
+                { key: "faq"  as const, label: "FAQ",   options: FAQ_VARIANTS },
+              ].map(({ key, label, options }) => (
+                <div key={key} className="space-y-1.5">
+                  <Label className="text-xs">{label}</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {options.map(opt => {
+                      const active = (regenVariants as any)[key] === opt.value;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.value}
+                          disabled={regenLoading}
+                          onClick={() => setRegenVariants(v => ({ ...v, [key]: opt.value as any }))}
+                          title={opt.hint}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all ${active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted"} disabled:opacity-50`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              <p className="text-[10px] text-muted-foreground">{summarizeVariants(regenVariants)}</p>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="regen-services" className="text-xs">Services / products (optional)</Label>
-              <Input id="regen-services" placeholder="e.g. teeth whitening, implants" value={regenServices} onChange={(e) => setRegenServices(e.target.value)} disabled={regenLoading} />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="regen-business" className="text-xs">Business name (optional)</Label>
-              <Input id="regen-business" placeholder="e.g. BrightSmile Dental" value={regenBusiness} onChange={(e) => setRegenBusiness(e.target.value)} disabled={regenLoading} />
-            </div>
+
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="ghost" size="sm" onClick={() => setRegenTarget(null)} disabled={regenLoading}>Cancel</Button>
-              <Button size="sm" onClick={runRegenDesign} disabled={regenLoading || !regenNiche.trim()}>
-                {regenLoading ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Generating…</>) : (<><Sparkles className="h-3.5 w-3.5 mr-2" /> Regenerate</>)}
+              <Button size="sm" onClick={runRegenDesign} disabled={regenLoading || (regenMode === "full" && !regenNiche.trim())}>
+                {regenLoading
+                  ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> {regenMode === "variants-only" ? "Applying…" : "Generating…"}</>)
+                  : regenMode === "variants-only"
+                    ? (<><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Apply Layouts</>)
+                    : (<><Sparkles className="h-3.5 w-3.5 mr-2" /> Regenerate</>)}
               </Button>
             </div>
           </div>
