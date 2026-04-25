@@ -1609,6 +1609,14 @@ Deno.serve(async (req) => {
             pageContent = pageContent.replace(regex, value || "");
           }
 
+          // AI auto-fill fallback for variables that have no CSV/mapping value.
+          // These were generated once before the batch loop using niche/services
+          // context, and the same value is reused across every row.
+          for (const [key, value] of Object.entries(aiVarDefaults)) {
+            const regex = new RegExp(`\\{${key}\\}`, "gi");
+            pageContent = pageContent.replace(regex, value || "");
+          }
+
 
           // Process spintax {option1|option2|option3}
           pageContent = processSpintax(pageContent);
