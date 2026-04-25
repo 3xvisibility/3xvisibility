@@ -672,7 +672,7 @@ export function autoRepairContent(
         (match, before, after) => {
           // Remove existing alt if present
           const cleanBefore = before.replace(/\s*alt=["'][^"']*["']/i, "");
-          return `${cleanBefore} alt="${keyword} - professional service"${after}`;
+          return `${cleanBefore} alt="${keyword}${pack.imgAltSuffix}"${after}`;
         },
       );
     }
