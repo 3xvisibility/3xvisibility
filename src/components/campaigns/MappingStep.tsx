@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { FaqMappingPanel, type FaqPair } from "./FaqMappingPanel";
 
 // ─── Structured target fields ─────────────────────────────────────
 
