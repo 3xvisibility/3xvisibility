@@ -526,11 +526,15 @@ export default function GeneratedPagesPage() {
           <Input placeholder="Search pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="queued">Queued</SelectItem>
+            <SelectItem value="generating">Generating</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="publishing">Publishing</SelectItem>
             <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="done">Done</SelectItem>
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>
