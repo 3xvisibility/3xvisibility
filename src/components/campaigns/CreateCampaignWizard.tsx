@@ -1243,6 +1243,104 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </Select>
                     )}
                   </div>
+                  {/* AI vibe theme — palette + typography mood + layout density.
+                      Applied as a CSS override at generation time so the same
+                      template can adopt many distinct looks per campaign. */}
+                  {selectedTemplate && (
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-3 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold flex items-center gap-1.5">
+                            <Wand2 className="h-3.5 w-3.5 text-primary" />
+                            AI vibe theme
+                          </p>
+                          <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
+                            Customize the marketplace template look — palette, typography mood, and layout density. Applied to every page in this campaign.
+                          </p>
+                        </div>
+                        {(vibePalette !== DEFAULT_VIBE.palette || vibeTypography !== DEFAULT_VIBE.typography || vibeDensity !== DEFAULT_VIBE.density) && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-[10px] shrink-0"
+                            onClick={() => {
+                              setVibePalette(DEFAULT_VIBE.palette);
+                              setVibeTypography(DEFAULT_VIBE.typography);
+                              setVibeDensity(DEFAULT_VIBE.density);
+                            }}
+                          >
+                            Reset
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Palette */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] font-medium text-muted-foreground">Color palette</Label>
+                        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+                          {VIBE_PALETTES.map((p) => (
+                            <button
+                              key={p.value}
+                              type="button"
+                              onClick={() => setVibePalette(p.value)}
+                              title={p.label}
+                              aria-label={`${p.label} palette`}
+                              aria-pressed={vibePalette === p.value}
+                              className={`group relative h-10 rounded-lg border-2 transition-all overflow-hidden ${vibePalette === p.value ? "border-primary ring-2 ring-primary/30 scale-[1.04]" : "border-border/40 hover:border-primary/50"}`}
+                              style={{ background: p.swatch }}
+                            >
+                              {vibePalette === p.value && (
+                                <Check className="h-4 w-4 absolute inset-0 m-auto text-white drop-shadow" />
+                              )}
+                              <span className="absolute inset-x-0 bottom-0 text-[8px] font-semibold text-white/95 px-1 pb-0.5 leading-tight bg-gradient-to-t from-black/40 to-transparent text-center">
+                                {p.label}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Typography mood */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] font-medium text-muted-foreground">Typography mood</Label>
+                        <Select value={vibeTypography} onValueChange={(v) => setVibeTypography(v as VibeTypography)}>
+                          <SelectTrigger className="h-8 rounded-lg text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {VIBE_TYPOGRAPHIES.map((t) => (
+                              <SelectItem key={t.value} value={t.value} className="text-xs">
+                                <span className="font-medium">{t.label}</span>
+                                <span className="text-muted-foreground ml-2">— {t.hint}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Layout density */}
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px] font-medium text-muted-foreground">Layout density</Label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {VIBE_DENSITIES.map((d) => (
+                            <button
+                              key={d.value}
+                              type="button"
+                              onClick={() => setVibeDensity(d.value)}
+                              className={`text-left rounded-md border p-2 transition-colors ${vibeDensity === d.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}
+                            >
+                              <div className="text-[11px] font-medium flex items-center gap-1">
+                                {vibeDensity === d.value && <Check className="h-3 w-3 text-primary" />}
+                                {d.label}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{d.hint}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {selectedTemplate && (() => {
                     const targetSite = websites.find((w) => w.id === (selectedWebsite || websiteForPages));
                     const siteLang = (targetSite as { language?: string | null } | undefined)?.language;
