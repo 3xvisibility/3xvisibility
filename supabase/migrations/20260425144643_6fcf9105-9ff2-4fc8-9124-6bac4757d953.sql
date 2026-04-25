@@ -1,0 +1,2 @@
+ALTER TABLE public.generated_pages ADD COLUMN IF NOT EXISTS seo_warnings jsonb;
+COMMENT ON COLUMN public.generated_pages.seo_warnings IS 'Non-blocking SEO/JSON-LD validation results captured at generation time. Shape: { jsonld: { blocks, valid, invalid, types, error_count, warning_count, issues:[{block,severity,code,message,type}] } }';
