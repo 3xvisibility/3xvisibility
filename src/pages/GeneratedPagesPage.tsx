@@ -734,7 +734,10 @@ export default function GeneratedPagesPage() {
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge variant="outline" className={`text-[10px] ${cfg.bg}`}>{page.status}</Badge>
+                        <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
+                          <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
+                          {cfg.label}
+                        </Badge>
                         {page.error_message && (
                           <TooltipProvider>
                             <Tooltip>
