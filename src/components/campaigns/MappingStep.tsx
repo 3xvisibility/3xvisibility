@@ -536,6 +536,35 @@ export function MappingStep({
               </SelectContent>
             </Select>
           )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1 rounded-lg border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-50"
+                  onClick={handleAiFill}
+                  disabled={aiFilling || aiFillCandidates.length === 0 || !hasAiContext}
+                >
+                  {aiFilling ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  AI Fill
+                  {aiFillCandidates.length > 0 && (
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-0.5 bg-primary/15 text-primary border-0">
+                      {aiFillCandidates.length}
+                    </Badge>
+                  )}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {!canAiFill && aiFillCandidates.length === 0
+                ? "All variables are already mapped or have a custom value."
+                : !hasAiContext
+                ? "Add business / niche / services context in the AI auto-fill card above to enable AI Fill."
+                : `Generate values for ${aiFillCandidates.length} unmapped variable(s) using your niche & services context. Each row will reuse the same value.`}
+            </TooltipContent>
+          </Tooltip>
           <Button variant="outline" size="sm" className="h-8 text-xs gap-1 rounded-lg" onClick={() => setProfileDialogOpen(true)}>
             <Save className="h-3 w-3" /> Save
           </Button>
