@@ -111,6 +111,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [faqPairs, setFaqPairs] = useState<import("./FaqMappingPanel").FaqPair[]>([]);
   const [fillRules, setFillRules] = useState<Record<string, import("./FillRulesPanel").FillRule>>({});
   const [aiFillMode, setAiFillMode] = useState<"per_campaign" | "per_row">("per_campaign");
+  // AI vibe theme — palette + typography + density override applied at
+  // generation time so a single template can adopt many distinct looks.
+  const [vibePalette, setVibePalette] = useState<VibePalette>(DEFAULT_VIBE.palette);
+  const [vibeTypography, setVibeTypography] = useState<VibeTypography>(DEFAULT_VIBE.typography);
+  const [vibeDensity, setVibeDensity] = useState<VibeDensity>(DEFAULT_VIBE.density);
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
