@@ -117,6 +117,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [vibePalette, setVibePalette] = useState<VibePalette>(DEFAULT_VIBE.palette);
   const [vibeTypography, setVibeTypography] = useState<VibeTypography>(DEFAULT_VIBE.typography);
   const [vibeDensity, setVibeDensity] = useState<VibeDensity>(DEFAULT_VIBE.density);
+  // Optional brand overrides — emitted after the preset block so they win.
+  // `vibeCustomVarsText` is parsed `key: value` lines into a map at save time.
+  const [vibeCustomVarsText, setVibeCustomVarsText] = useState<string>("");
+  const [vibeCustomCss, setVibeCustomCss] = useState<string>("");
+  const [vibeAdvancedOpen, setVibeAdvancedOpen] = useState<boolean>(false);
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
