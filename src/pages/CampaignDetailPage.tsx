@@ -107,7 +107,7 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("*, templates(name), websites(name, url, language)")
+        .select("*, templates(name), websites(name, url, language, language_locked)")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -1337,6 +1337,7 @@ export default function CampaignDetailPage() {
         failedRowsCount={statusCounts.failed}
         isPending={executeMutation.isPending}
         siteLanguage={(campaign as any)?.websites?.language ?? null}
+        siteLanguageLocked={!!(campaign as any)?.websites?.language_locked}
         languageSampleText={[
           templateContent || "",
           ...(((campaign?.csv_data as Record<string, string>[]) || [])
