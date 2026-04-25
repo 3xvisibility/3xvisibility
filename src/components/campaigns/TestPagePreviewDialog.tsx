@@ -152,6 +152,9 @@ export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePr
           </div>
         )}
 
+        {/* Heading outline (H1/H2/H3 hierarchy preview) */}
+        <HeadingOutline html={result.html} />
+
         <div className="space-y-3 text-xs">
           <div className="rounded-lg border border-border bg-muted/30 p-3">
             <span className="text-muted-foreground font-medium">SEO Description:</span>
