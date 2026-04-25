@@ -33,6 +33,11 @@ import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilde
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
 import { downloadStarterCsv } from "@/lib/csv-starter";
+import {
+  type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
+  HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
+  type HeroVariant, type GridVariant, type CtaVariant, type FaqVariant,
+} from "@/lib/section-variants";
 
 type Template = Tables<"templates">;
 const PAGE_SIZE = 10;
