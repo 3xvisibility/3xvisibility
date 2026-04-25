@@ -119,6 +119,7 @@ export default function WebsitesPage() {
           type: siteType,
           credentials: buildCredentials(),
           workspace_id: wsId,
+          language: siteLanguage,
         },
       });
       if (error) throw error;
