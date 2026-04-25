@@ -57,10 +57,58 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
   const [fixStep, setFixStep] = useState("");
   const [fixProgress, setFixProgress] = useState(0);
   const [localPage, setLocalPage] = useState(initialPage);
+  const [csvRow, setCsvRow] = useState<Record<string, unknown> | null>(null);
+  const [templateContent, setTemplateContent] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Sync localPage when dialog opens with new page
   useEffect(() => { setLocalPage(initialPage); }, [initialPage]);
+
+  // Fetch matching CSV row + template content (best-effort, non-blocking) so we
+  // can power the keyword usage suggestions panel.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!open || !initialPage?.campaign_id) {
+        setCsvRow(null);
+        setTemplateContent(null);
+        return;
+      }
+      try {
+        const { data: campaign } = await supabase
+          .from("campaigns")
+          .select("template_id, csv_data, mapping")
+          .eq("id", initialPage.campaign_id)
+          .maybeSingle();
+        if (cancelled) return;
+
+        // Match CSV row by slug or title — best-effort.
+        const rows = Array.isArray(campaign?.csv_data) ? (campaign!.csv_data as Record<string, unknown>[]) : [];
+        const slugLower = (initialPage.slug || "").toLowerCase();
+        const titleLower = (initialPage.title || "").toLowerCase();
+        const matched = rows.find((r) => {
+          const values = Object.values(r).map((v) => String(v ?? "").toLowerCase());
+          return values.some((v) => v && (slugLower.includes(v) || titleLower.includes(v) || v === slugLower || v === titleLower));
+        }) || rows[0] || null;
+        setCsvRow(matched);
+
+        if (campaign?.template_id) {
+          const { data: tpl } = await supabase
+            .from("templates")
+            .select("content")
+            .eq("id", campaign.template_id)
+            .maybeSingle();
+          if (!cancelled) setTemplateContent(tpl?.content ?? null);
+        }
+      } catch {
+        if (!cancelled) {
+          setCsvRow(null);
+          setTemplateContent(null);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, initialPage?.campaign_id, initialPage?.slug, initialPage?.title]);
 
   const page = localPage;
 
