@@ -1678,7 +1678,7 @@ Deno.serve(async (req) => {
           }
 
           // 3. AI fallback for any still-unfilled placeholders (csv_first when CSV empty).
-          for (const [key, value] of Object.entries(aiVarDefaults)) {
+          for (const [key, value] of Object.entries(rowAiDefaults)) {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") continue; // already applied
             const regex = new RegExp(`\\{${key}\\}`, "gi");
