@@ -725,10 +725,10 @@ export function autoRepairContent(
       const firstPText = firstPMatch[1].replace(/<[^>]*>/g, "").toLowerCase();
       const kwLower = keyword.toLowerCase();
       if (!firstPText.includes(kwLower)) {
-        // Prepend keyword mention to first paragraph
+        // Prepend keyword mention to first paragraph (in target language)
         const newFirstP = firstPMatch[0].replace(
           /(<p[^>]*>)/i,
-          `$1Looking for trusted ${keyword} services? `,
+          `$1${pack.lookingForPrefix(keyword)}`,
         );
         html = html.replace(firstPMatch[0], newFirstP);
       }
