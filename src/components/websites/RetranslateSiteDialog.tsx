@@ -119,6 +119,22 @@ export function RetranslateSiteDialog({ open, onOpenChange, websiteId, websiteNa
               <div className="font-medium text-sm mt-0.5">{siteLanguage}</div>
             </div>
 
+            {showMismatch && sampleDetection?.cmp && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-xs">
+                <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Existing pages look like a different language</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    The latest pages appear to be in{" "}
+                    <span className="font-medium text-foreground">{sampleDetection.cmp.detected}</span>,
+                    but your site is locked to{" "}
+                    <span className="font-medium text-foreground">{sampleDetection.cmp.siteLanguage}</span>.
+                    That's exactly what this action fixes — proceed to re-translate &amp; republish.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div>
               <Label htmlFor="retrans-count">How many recent pages to re-translate?</Label>
               <Select value={count} onValueChange={setCount} disabled={mutation.isPending}>
