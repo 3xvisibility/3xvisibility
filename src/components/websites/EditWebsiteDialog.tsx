@@ -53,6 +53,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
     if (open) {
       setName(site.name);
       setUrl(site.url);
+      setLanguage((site as unknown as { language?: string | null }).language ?? null);
       // Reset credential fields (don't pre-fill encrypted values)
       setUsername("");
       setAppPassword("");
