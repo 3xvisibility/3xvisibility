@@ -13,6 +13,8 @@
 //
 // Response: { content: string, summary: string }
 
+import { applyVariantsToTemplate, type SectionVariants } from "../_shared/section-variants.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
