@@ -222,10 +222,13 @@ export function MappingStep({
   workspaceId,
   faqPairs,
   setFaqPairs,
+  aiContext,
+  aiLanguage,
 }: MappingStepProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [saveProfileName, setSaveProfileName] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [aiFilling, setAiFilling] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
