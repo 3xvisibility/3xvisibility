@@ -294,6 +294,10 @@ export default function WebsitesPage() {
                   </>
                 )}
 
+                {siteType && (
+                  <WebsiteLanguageSelect value={siteLanguage} onChange={setSiteLanguage} />
+                )}
+
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">{t("common.cancel")}</Button>
                   <Button
