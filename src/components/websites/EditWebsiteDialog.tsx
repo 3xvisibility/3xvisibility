@@ -27,6 +27,9 @@ interface EditWebsiteDialogProps {
 export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialogProps) {
   const [name, setName] = useState(site.name);
   const [url, setUrl] = useState(site.url);
+  const [language, setLanguage] = useState<string | null>(
+    (site as unknown as { language?: string | null }).language ?? null
+  );
   // WordPress credential fields
   const creds = (site.credentials as Record<string, string> | null) || {};
   const [wpAuthMethod, setWpAuthMethod] = useState<WpAuthMethod>(
