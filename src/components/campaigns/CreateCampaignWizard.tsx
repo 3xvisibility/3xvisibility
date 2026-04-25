@@ -1258,9 +1258,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           <Label className="text-[11px] text-muted-foreground">Services / products</Label>
                           <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-8 rounded-lg text-xs" />
                         </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   {selectedTemplate && selectedTemplateVars.length > 0 && (
                     <FillRulesPanel
                       templateVars={selectedTemplateVars}
