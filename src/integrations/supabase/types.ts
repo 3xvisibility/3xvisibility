@@ -1871,6 +1871,7 @@ export type Database = {
           google_service_account: Json | null
           id: string
           language: string | null
+          language_locked: boolean
           last_sync: string | null
           name: string
           status: Database["public"]["Enums"]["website_status"]
@@ -1887,6 +1888,7 @@ export type Database = {
           google_service_account?: Json | null
           id?: string
           language?: string | null
+          language_locked?: boolean
           last_sync?: string | null
           name: string
           status?: Database["public"]["Enums"]["website_status"]
@@ -1903,6 +1905,7 @@ export type Database = {
           google_service_account?: Json | null
           id?: string
           language?: string | null
+          language_locked?: boolean
           last_sync?: string | null
           name?: string
           status?: Database["public"]["Enums"]["website_status"]

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, ExternalLink, Loader2, Zap, Pencil, Languages } from "lucide-react";
+import { Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, ExternalLink, Loader2, Zap, Pencil, Languages, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -102,6 +102,15 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
             <Badge variant={site.status === "connected" ? "secondary" : "destructive"} className={site.status === "connected" ? "bg-success/10 text-success" : ""}>
               {site.status}
             </Badge>
+            {site.language && (
+              <Badge variant="outline" className="text-xs gap-1">
+                <Languages className="h-3 w-3" />
+                {site.language}
+                {(site as unknown as { language_locked?: boolean }).language_locked && (
+                  <Lock className="h-3 w-3 ml-0.5" />
+                )}
+              </Badge>
+            )}
           </div>
           {site.last_sync && (
             <p className="mt-3 text-xs text-muted-foreground tabular-nums">
