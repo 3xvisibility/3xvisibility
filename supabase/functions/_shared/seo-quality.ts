@@ -698,7 +698,7 @@ export function autoRepairContent(
   const hasOutboundLink = /<a[^>]*href=["']https?:\/\/[^"']*["']/i.test(html);
   if (!hasOutboundLink) {
     // Add a relevant outbound link
-    const outboundHtml = `<p>Learn more from <a href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">trusted sources</a>.</p>`;
+    const outboundHtml = `<p>${pack.outboundPrefix}<a href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">${pack.outboundLinkText}</a>${pack.outboundSuffix}</p>`;
     const lastP = html.lastIndexOf("</p>");
     if (lastP > 0) {
       html = html.slice(0, lastP + 4) + `\n${outboundHtml}` + html.slice(lastP + 4);
