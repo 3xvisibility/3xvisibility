@@ -1870,6 +1870,7 @@ export type Database = {
           google_indexing_enabled: boolean | null
           google_service_account: Json | null
           id: string
+          language: string | null
           last_sync: string | null
           name: string
           status: Database["public"]["Enums"]["website_status"]
@@ -1885,6 +1886,7 @@ export type Database = {
           google_indexing_enabled?: boolean | null
           google_service_account?: Json | null
           id?: string
+          language?: string | null
           last_sync?: string | null
           name: string
           status?: Database["public"]["Enums"]["website_status"]
@@ -1900,6 +1902,7 @@ export type Database = {
           google_indexing_enabled?: boolean | null
           google_service_account?: Json | null
           id?: string
+          language?: string | null
           last_sync?: string | null
           name?: string
           status?: Database["public"]["Enums"]["website_status"]

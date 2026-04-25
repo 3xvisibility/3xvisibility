@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { id, name, url, type, credentials, workspace_id } = await req.json();
+    const { id, name, url, type, credentials, workspace_id, language } = await req.json();
 
     if (!url || !type || !workspace_id) {
       return new Response(JSON.stringify({ error: "url, type, and workspace_id are required" }), {
@@ -46,14 +46,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Encrypt credential values
-    const encryptedCreds = credentials ? await encryptCredentials(credentials) : {};
+    // Encrypt credential values only when caller actually provided new ones.
+    const hasNewCredentials = credentials && Object.keys(credentials).length > 0;
+    const encryptedCreds = hasNewCredentials ? await encryptCredentials(credentials) : null;
+
+    // Normalize language: empty/whitespace ⇒ NULL (= auto-detect).
+    const normalizedLanguage = typeof language === "string" && language.trim().length > 0
+      ? language.trim()
+      : null;
+    const languageProvided = typeof language !== "undefined";
 
     if (id) {
-      // Update existing website
-      const updatePayload: Record<string, unknown> = { credentials: encryptedCreds };
+      // Update existing website (only patch fields the caller sent)
+      const updatePayload: Record<string, unknown> = {};
+      if (encryptedCreds) updatePayload.credentials = encryptedCreds;
       if (name) updatePayload.name = name;
       if (url) updatePayload.url = url;
+      if (languageProvided) updatePayload.language = normalizedLanguage;
 
       const { error } = await serviceClient
         .from("websites")
@@ -72,7 +81,8 @@ Deno.serve(async (req) => {
         name: name || new URL(url).hostname,
         url,
         type,
-        credentials: encryptedCreds,
+        credentials: encryptedCreds || {},
+        language: normalizedLanguage,
         user_id: user.id,
         workspace_id,
       }).select("id").single();

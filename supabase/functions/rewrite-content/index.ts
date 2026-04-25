@@ -66,7 +66,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Resolve target language from the connected website (locks rewrites to the
+    // site's primary language so French sites stay French, etc.).
+    let targetLanguage: string | null = null;
+    if (page.website_id) {
+      try {
+        const { data: site } = await supabase
+          .from("websites")
+          .select("language")
+          .eq("id", page.website_id)
+          .maybeSingle();
+        const siteLang = (site as { language?: string | null } | null)?.language;
+        if (typeof siteLang === "string" && siteLang.trim().length > 0) {
+          targetLanguage = siteLang.trim();
+        }
+      } catch (_) { /* non-critical */ }
+    }
+
     const userInstruction = instruction || "Refresh and improve this content while keeping the same structure, topic, and HTML tags. Make it more current, engaging, and SEO-friendly.";
+
+    const languageInstruction = targetLanguage
+      ? `\n- CRITICAL: ALL rewritten visible text MUST be written in ${targetLanguage}. If any source text is in another language (e.g. English), translate it into ${targetLanguage}. Never output English unless the target language IS English.`
+      : `\n- Keep the visible text in the SAME language as the original page. Detect from the existing content. Never translate to English unless the original is English.`;
 
     const systemPrompt = `You are an expert content editor and SEO specialist. You rewrite HTML content to make it fresher, more engaging, and better optimized for search engines.
 
@@ -80,7 +101,7 @@ CRITICAL RULES - You MUST follow these exactly:
 - Do NOT change any image sources, links, or media references
 - Maintain the same approximate content length per section
 - Return ONLY the rewritten HTML content, no explanations
-- If the content has classes like "pgp-page", "elementor-*", "wp-*", "shopify-*", preserve them exactly`;
+- If the content has classes like "pgp-page", "elementor-*", "wp-*", "shopify-*", preserve them exactly${languageInstruction}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -94,7 +115,7 @@ CRITICAL RULES - You MUST follow these exactly:
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: `Page title: "${page.title}"\nSlug: "${page.slug}"\n\nInstruction: ${userInstruction}\n\nOriginal HTML content:\n${page.content}`,
+            content: `Page title: "${page.title}"\nSlug: "${page.slug}"\n${targetLanguage ? `Target language: ${targetLanguage}\n` : ""}\nInstruction: ${userInstruction}\n\nOriginal HTML content:\n${page.content}`,
           },
         ],
       }),

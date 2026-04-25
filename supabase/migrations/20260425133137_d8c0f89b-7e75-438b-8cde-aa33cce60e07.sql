@@ -1,0 +1,3 @@
+ALTER TABLE public.websites ADD COLUMN IF NOT EXISTS language text;
+COMMENT ON COLUMN public.websites.language IS 'ISO language code or human-readable language name (e.g. "fr", "French", "en"). When set, all AI-generated content (SEO titles, descriptions, keywords, rewrites) for this website will be forced to this language. NULL = auto-detect from existing page content.';
+UPDATE public.websites SET language = 'French' WHERE id = 'f75a6f84-6bb1-419e-88c1-e02ec473250d' AND language IS NULL;

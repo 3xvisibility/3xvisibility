@@ -1084,10 +1084,29 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    // Resolve language: connected website's locked language wins over the user's
+    // global default — so a French-locked Shopify/WordPress site always gets French
+    // copy even if the user's profile is set to English.
+    let resolvedLanguage = profile?.ai_language || "en";
+    try {
+      const websiteIdForLang = (campaign as { website_id?: string | null } | null)?.website_id;
+      if (websiteIdForLang) {
+        const { data: siteRow } = await supabase
+          .from("websites")
+          .select("language")
+          .eq("id", websiteIdForLang)
+          .maybeSingle();
+        const siteLang = (siteRow as { language?: string | null } | null)?.language;
+        if (typeof siteLang === "string" && siteLang.trim().length > 0) {
+          resolvedLanguage = siteLang.trim();
+        }
+      }
+    } catch (_) { /* non-critical */ }
+
     const aiSettings = {
       tone: profile?.ai_tone || "professional",
       contentLength: profile?.ai_content_length || "medium",
-      language: profile?.ai_language || "en",
+      language: resolvedLanguage,
     };
 
     const templateContent = campaign.templates.content as string;

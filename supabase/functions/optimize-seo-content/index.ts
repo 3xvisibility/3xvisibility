@@ -523,12 +523,33 @@ Deno.serve(async (req) => {
     const effectiveSeoDescription = typeof page_seo_description === "string" && page_seo_description.trim().length > 0
       ? page_seo_description.trim()
       : "";
-    const lang = language
+    // Resolve effective language: explicit param → website setting → auto-detect.
+    // This guarantees that if the connected website has a configured language
+    // (e.g. French), all republished/optimized content uses it even when the caller
+    // forgets to pass `language` in the request body.
+    let effectiveLanguage: string | null = typeof language === "string" && language.trim().length > 0
+      ? language.trim()
+      : null;
+    if (!effectiveLanguage && website_id) {
+      try {
+        const { data: siteRow } = await supabase
+          .from("websites")
+          .select("language")
+          .eq("id", website_id)
+          .maybeSingle();
+        const siteLang = (siteRow as { language?: string | null } | null)?.language;
+        if (typeof siteLang === "string" && siteLang.trim().length > 0) {
+          effectiveLanguage = siteLang.trim();
+        }
+      } catch (_) { /* non-critical */ }
+    }
+
+    const lang = effectiveLanguage
       || (primaryKeyword ? "same as the exact focus keyword phrase and current page URL" : "auto-detect from the existing page content and title");
 
     // Build a stronger language instruction for the AI
-    const languageInstruction = language
-      ? `CRITICAL LANGUAGE RULE: ALL output (seo_title, seo_description, seo_keywords, and content) MUST be written in ${language}. Do NOT output in English unless the language IS English. The website content language is ${language} — respect it exactly.`
+    const languageInstruction = effectiveLanguage
+      ? `CRITICAL LANGUAGE RULE: ALL output (seo_title, seo_description, seo_keywords, and content) MUST be written in ${effectiveLanguage}. Do NOT output in English unless the language IS English. The website content language is ${effectiveLanguage} — respect it exactly. Translate any English source text into ${effectiveLanguage}.`
       : "LANGUAGE RULE: Detect the language from the existing page content and title. ALL output MUST be in that same language. Do NOT translate to English if the original content is in another language.";
 
     // Strip HTML to get plain text for AI analysis
