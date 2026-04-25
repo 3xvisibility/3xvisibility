@@ -101,6 +101,56 @@ export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePr
           </div>
         )}
 
+        {/* JSON-LD / schema.org validation (non-blocking) */}
+        {jsonLdValidation && jsonLdValidation.blocks > 0 && (
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Code2 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-foreground">
+                JSON-LD — {jsonLdValidation.valid}/{jsonLdValidation.blocks} valid
+              </span>
+              {jsonLdValidation.types.map((t) => (
+                <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+              ))}
+            </div>
+            {jsonLdValidation.issues.length === 0 ? (
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                Schema.org compliant — no issues detected
+              </div>
+            ) : (
+              <>
+                {jsonLdValidation.issues.slice(0, 8).map((issue, i) => (
+                  <div key={`${issue.code}-${i}`} className="flex items-start gap-2 text-xs">
+                    {issue.severity === "error" ? (
+                      <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-destructive" />
+                    ) : issue.severity === "warning" ? (
+                      <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                    ) : (
+                      <ShieldAlert className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
+                    )}
+                    <div>
+                      <span className={
+                        issue.severity === "error" ? "font-medium text-destructive" :
+                        issue.severity === "warning" ? "font-medium text-foreground" :
+                        "font-medium text-muted-foreground"
+                      }>
+                        Block {issue.block + 1}{issue.type ? ` · ${issue.type}` : ""}
+                      </span>
+                      <span className="text-muted-foreground ml-1">— {issue.message}</span>
+                    </div>
+                  </div>
+                ))}
+                {jsonLdValidation.issues.length > 8 && (
+                  <div className="text-[10px] text-muted-foreground">
+                    +{jsonLdValidation.issues.length - 8} more issues hidden
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         <div className="space-y-3 text-xs">
           <div className="rounded-lg border border-border bg-muted/30 p-3">
             <span className="text-muted-foreground font-medium">SEO Description:</span>
