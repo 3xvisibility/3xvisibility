@@ -18,6 +18,7 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
+  Wand2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,13 @@ export default function TemplatesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; linkedCampaigns: { id: string; name: string }[] } | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
+  // AI Regenerate Design state
+  const [regenTarget, setRegenTarget] = useState<Template | null>(null);
+  const [regenNiche, setRegenNiche] = useState("");
+  const [regenServices, setRegenServices] = useState("");
+  const [regenBusiness, setRegenBusiness] = useState("");
+  const [regenLoading, setRegenLoading] = useState(false);
 
   // CSV template state
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
@@ -308,6 +316,49 @@ export default function TemplatesPage() {
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally { setBulkDeleteOpen(false); }
+  };
+
+  // ──── AI Regenerate Design ────
+  const openRegenDialog = (tpl: Template) => {
+    setRegenTarget(tpl);
+    setRegenNiche("");
+    setRegenServices("");
+    setRegenBusiness("");
+  };
+
+  const runRegenDesign = async () => {
+    if (!regenTarget) return;
+    if (!regenNiche.trim()) {
+      toast({ title: "Niche required", description: "Tell the AI what niche this template targets.", variant: "destructive" });
+      return;
+    }
+    setRegenLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("regenerate-template-design", {
+        body: {
+          content: regenTarget.content,
+          niche: regenNiche.trim(),
+          services: regenServices.trim(),
+          business: regenBusiness.trim(),
+        },
+      });
+      if (error) throw new Error(friendlyError(error));
+      const newContent: string = data?.content;
+      if (!newContent) throw new Error("AI returned no content");
+      const variables = filterDesignVars([...new Set(newContent.match(/\{[^}]+\}/g) || [])]);
+      const { error: upErr } = await supabase.from("templates").update({
+        content: newContent,
+        variables,
+      } as any).eq("id", regenTarget.id);
+      if (upErr) throw upErr;
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Design regenerated", description: data?.summary || `New design applied for ${regenNiche}.` });
+      setRegenTarget(null);
+    } catch (err: any) {
+      toast({ title: "Regeneration failed", description: err.message, variant: "destructive" });
+    } finally {
+      setRegenLoading(false);
+    }
   };
 
   const createFromCsv = () => {
@@ -690,6 +741,7 @@ export default function TemplatesPage() {
                     <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7 shrink-0"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -743,6 +795,7 @@ export default function TemplatesPage() {
                           <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -797,6 +850,7 @@ export default function TemplatesPage() {
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}><Button size="icon" variant="ghost" className="h-7 w-7 shrink-0"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl); }}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -946,6 +1000,39 @@ export default function TemplatesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* AI Regenerate Design */}
+      <Dialog open={!!regenTarget} onOpenChange={(o) => { if (!o && !regenLoading) setRegenTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wand2 className="h-4 w-4 text-primary" /> Regenerate Design
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              AI will rewrite the visual style of <span className="font-medium text-foreground">{regenTarget?.name}</span> to feel modern and tailored to your niche. Variables and HTML structure stay intact.
+            </p>
+            <div className="space-y-1">
+              <Label htmlFor="regen-niche" className="text-xs">Target niche <span className="text-destructive">*</span></Label>
+              <Input id="regen-niche" placeholder="e.g. dental clinic, law firm, SaaS, restaurant" value={regenNiche} onChange={(e) => setRegenNiche(e.target.value)} disabled={regenLoading} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="regen-services" className="text-xs">Services / products (optional)</Label>
+              <Input id="regen-services" placeholder="e.g. teeth whitening, implants" value={regenServices} onChange={(e) => setRegenServices(e.target.value)} disabled={regenLoading} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="regen-business" className="text-xs">Business name (optional)</Label>
+              <Input id="regen-business" placeholder="e.g. BrightSmile Dental" value={regenBusiness} onChange={(e) => setRegenBusiness(e.target.value)} disabled={regenLoading} />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="ghost" size="sm" onClick={() => setRegenTarget(null)} disabled={regenLoading}>Cancel</Button>
+              <Button size="sm" onClick={runRegenDesign} disabled={regenLoading || !regenNiche.trim()}>
+                {regenLoading ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Generating…</>) : (<><Sparkles className="h-3.5 w-3.5 mr-2" /> Regenerate</>)}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
