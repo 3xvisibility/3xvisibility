@@ -318,6 +318,49 @@ export default function TemplatesPage() {
     } finally { setBulkDeleteOpen(false); }
   };
 
+  // ──── AI Regenerate Design ────
+  const openRegenDialog = (tpl: Template) => {
+    setRegenTarget(tpl);
+    setRegenNiche("");
+    setRegenServices("");
+    setRegenBusiness("");
+  };
+
+  const runRegenDesign = async () => {
+    if (!regenTarget) return;
+    if (!regenNiche.trim()) {
+      toast({ title: "Niche required", description: "Tell the AI what niche this template targets.", variant: "destructive" });
+      return;
+    }
+    setRegenLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("regenerate-template-design", {
+        body: {
+          content: regenTarget.content,
+          niche: regenNiche.trim(),
+          services: regenServices.trim(),
+          business: regenBusiness.trim(),
+        },
+      });
+      if (error) throw new Error(friendlyError(error));
+      const newContent: string = data?.content;
+      if (!newContent) throw new Error("AI returned no content");
+      const variables = filterDesignVars([...new Set(newContent.match(/\{[^}]+\}/g) || [])]);
+      const { error: upErr } = await supabase.from("templates").update({
+        content: newContent,
+        variables,
+      } as any).eq("id", regenTarget.id);
+      if (upErr) throw upErr;
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Design regenerated", description: data?.summary || `New design applied for ${regenNiche}.` });
+      setRegenTarget(null);
+    } catch (err: any) {
+      toast({ title: "Regeneration failed", description: err.message, variant: "destructive" });
+    } finally {
+      setRegenLoading(false);
+    }
+  };
+
   const createFromCsv = () => {
     if (!csvText.trim()) return;
     const lines = csvText.split("\n").filter(l => l.trim());
