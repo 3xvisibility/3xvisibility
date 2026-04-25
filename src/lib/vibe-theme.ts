@@ -68,7 +68,7 @@ export const VIBE_DENSITIES: { value: VibeDensity; label: string; hint: string }
   { value: "spacious",    label: "Spacious",    hint: "Generous whitespace, premium" },
 ];
 
-export const DEFAULT_VIBE: Required<VibeTheme> = {
+export const DEFAULT_VIBE: Required<Pick<VibeTheme, "palette" | "typography" | "density">> = {
   palette: "lovable",
   typography: "modern",
   density: "comfortable",
