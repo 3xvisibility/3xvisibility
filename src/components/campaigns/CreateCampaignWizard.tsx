@@ -181,7 +181,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     queryKey: ["templates", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name, variables, content, seo_title_pattern, seo_description_pattern, schema_type, schema_config").eq("workspace_id", wsId!).order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables, content, seo_title_pattern, seo_description_pattern, schema_type, schema_config, vibe_theme").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
