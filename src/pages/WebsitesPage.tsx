@@ -23,6 +23,7 @@ import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websi
 import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
+import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
