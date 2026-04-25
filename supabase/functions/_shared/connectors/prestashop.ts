@@ -15,6 +15,17 @@ export class PrestaShopConnector implements CmsConnector {
     this.auth = btoa(`${config.api_key}:`);
   }
 
+  async testConnection(): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/languages?output_format=JSON&limit=1`, {
+        headers: { Authorization: `Basic ${this.auth}` },
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   private async getDefaultLangId(): Promise<string> {
     try {
       const res = await fetch(
