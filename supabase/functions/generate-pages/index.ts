@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { autoRepairContent, derivePrimaryKeyword } from "../_shared/seo-quality.ts";
 import { buildMultiEngineMeta, buildAutoFaq, buildExtraJsonLd } from "../_shared/seo-meta.ts";
 import { validateJsonLdInHtml, summarizeValidation } from "../_shared/jsonld-validator.ts";
+import { resolveLanguageName } from "../_shared/languages.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
