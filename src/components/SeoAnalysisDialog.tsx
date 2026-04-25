@@ -597,6 +597,155 @@ export function SeoAnalysisDialog({ open, onOpenChange, page: initialPage, campa
               </CollapsibleContent>
             </Collapsible>
 
+            {/* Keyword Usage Suggestions — based on CSV primary keyword + template */}
+            {keywordUsage && (
+              <Collapsible className="rounded-lg border border-border overflow-hidden" defaultOpen>
+                <CollapsibleTrigger className="w-full p-3 hover:bg-muted/40 transition-colors text-left group">
+                  <div className="flex items-center justify-between mb-1.5 gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Target className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-xs font-semibold">Keyword Usage Suggestions</span>
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 shrink-0 truncate max-w-[180px]">
+                        primary: {keywordUsage.primary}
+                      </Badge>
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180 shrink-0" />
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span className="tabular-nums">
+                      density {keywordUsage.primaryDensity}% · {keywordUsage.primaryOccurrences}× in {keywordUsage.totalWords}w
+                    </span>
+                    <span className="tabular-nums">
+                      +{keywordUsage.recommendedAdditions.length} add · −{keywordUsage.recommendedRemovals.length} remove
+                    </span>
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="border-t border-border bg-muted/20 px-3 py-3 space-y-3">
+                    {/* Placement chips */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { ok: keywordUsage.inTitle || keywordUsage.inSeoTitle, label: "Title" },
+                        { ok: keywordUsage.inSeoDescription, label: "Meta description" },
+                        { ok: keywordUsage.inFirstParagraph, label: "First paragraph" },
+                        { ok: keywordUsage.inHeadings, label: "Headings" },
+                      ].map((p) => (
+                        <Badge
+                          key={p.label}
+                          variant="outline"
+                          className={`text-[10px] gap-1 ${p.ok ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400" : "border-amber-500/40 text-amber-700 dark:text-amber-400"}`}
+                        >
+                          {p.ok ? <CheckCircle2 className="h-2.5 w-2.5" /> : <XCircle className="h-2.5 w-2.5" />}
+                          {p.label}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {/* Notes */}
+                    {keywordUsage.notes.length > 0 && (
+                      <ul className="space-y-1">
+                        {keywordUsage.notes.map((n, i) => (
+                          <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1.5">
+                            <span className="text-amber-500 mt-0.5">•</span>
+                            <span>{n}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {/* Recommended additions */}
+                    {keywordUsage.recommendedAdditions.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <Plus className="h-2.5 w-2.5" /> Add
+                          </span>
+                          {page.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 text-[10px] gap-1"
+                              onClick={() => applyKeywordSuggestions(keywordUsage.recommendedAdditions.map((s) => s.keyword), [])}
+                            >
+                              <Plus className="h-2.5 w-2.5" /> Add all
+                            </Button>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          {keywordUsage.recommendedAdditions.map((s) => (
+                            <div key={s.keyword} className="flex items-start justify-between gap-2 text-[10px] rounded border border-border/60 bg-background/40 px-2 py-1.5">
+                              <div className="min-w-0">
+                                <p className="font-medium text-foreground truncate">{s.keyword}</p>
+                                <p className="text-muted-foreground">{s.reason}</p>
+                              </div>
+                              {page.id && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-1.5 text-[10px] gap-1 shrink-0"
+                                  onClick={() => applyKeywordSuggestions([s.keyword], [])}
+                                >
+                                  <Plus className="h-2.5 w-2.5" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recommended removals */}
+                    {keywordUsage.recommendedRemovals.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-destructive flex items-center gap-1">
+                            <Minus className="h-2.5 w-2.5" /> Remove
+                          </span>
+                          {page.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 text-[10px] gap-1"
+                              onClick={() => applyKeywordSuggestions([], keywordUsage.recommendedRemovals.map((s) => s.keyword))}
+                            >
+                              <Minus className="h-2.5 w-2.5" /> Remove all
+                            </Button>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          {keywordUsage.recommendedRemovals.map((s) => (
+                            <div key={s.keyword} className="flex items-start justify-between gap-2 text-[10px] rounded border border-border/60 bg-background/40 px-2 py-1.5">
+                              <div className="min-w-0">
+                                <p className="font-medium text-foreground truncate">{s.keyword}</p>
+                                <p className="text-muted-foreground">{s.reason}</p>
+                              </div>
+                              {page.id && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-1.5 text-[10px] gap-1 shrink-0 text-destructive hover:text-destructive"
+                                  onClick={() => applyKeywordSuggestions([], [s.keyword])}
+                                >
+                                  <Minus className="h-2.5 w-2.5" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {keywordUsage.recommendedAdditions.length === 0 && keywordUsage.recommendedRemovals.length === 0 && (
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                        Keyword usage looks balanced — no changes recommended.
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+
             {/* AI Fix Button */}
             {hasIssues && page.id && (
               <div className="space-y-2">
