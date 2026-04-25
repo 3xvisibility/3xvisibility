@@ -1,3 +1,5 @@
+import { resolvePhrasePack, type PhrasePack } from "./seo-language-phrases.ts";
+
 export type QualityCategory = "seo" | "sea" | "geo";
 
 export interface SeoQualityInput {
@@ -635,8 +637,11 @@ export function autoRepairContent(
     seoTitle?: string;
     primaryKeyword?: string;
     slug?: string;
+    /** ISO-2 code, full English name, or native name. Falls back to English. */
+    language?: string | null;
   },
 ): string {
+  const pack: PhrasePack = resolvePhrasePack(opts.language);
   let html = content;
   const keyword = opts.primaryKeyword || "";
   const title = opts.seoTitle || opts.title || keyword || "Welcome";
@@ -667,7 +672,7 @@ export function autoRepairContent(
         (match, before, after) => {
           // Remove existing alt if present
           const cleanBefore = before.replace(/\s*alt=["'][^"']*["']/i, "");
-          return `${cleanBefore} alt="${keyword} - professional service"${after}`;
+          return `${cleanBefore} alt="${keyword}${pack.imgAltSuffix}"${after}`;
         },
       );
     }
@@ -677,7 +682,7 @@ export function autoRepairContent(
   const hasInternalLink = /<a[^>]*href=["'](?:\/|\.\/|#)[^"']*["']/i.test(html);
   if (!hasInternalLink) {
     // Add a contextual internal link before closing
-    const internalLinkHtml = `<p><a href="/contact" title="Contact us for more information">Contact us today</a> to learn more about our services.</p>`;
+    const internalLinkHtml = `<p><a href="/contact" title="${pack.internalLinkTitle}">${pack.internalLinkText}</a>${pack.internalLinkTrailing}</p>`;
     // Insert before last closing tag or append
     const lastSectionClose = html.lastIndexOf("</section>");
     const lastDivClose = html.lastIndexOf("</div>");
@@ -693,7 +698,7 @@ export function autoRepairContent(
   const hasOutboundLink = /<a[^>]*href=["']https?:\/\/[^"']*["']/i.test(html);
   if (!hasOutboundLink) {
     // Add a relevant outbound link
-    const outboundHtml = `<p>Learn more from <a href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">trusted sources</a>.</p>`;
+    const outboundHtml = `<p>${pack.outboundPrefix}<a href="https://www.wikipedia.org" target="_blank" rel="noopener noreferrer">${pack.outboundLinkText}</a>${pack.outboundSuffix}</p>`;
     const lastP = html.lastIndexOf("</p>");
     if (lastP > 0) {
       html = html.slice(0, lastP + 4) + `\n${outboundHtml}` + html.slice(lastP + 4);
@@ -708,7 +713,7 @@ export function autoRepairContent(
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: title,
-      description: keyword ? `Professional ${keyword} services - trusted, reliable, and local.` : title,
+      description: pack.schemaDescription(keyword),
     };
     html += `\n<script type="application/ld+json">${JSON.stringify(schema)}</script>`;
   }
@@ -720,10 +725,10 @@ export function autoRepairContent(
       const firstPText = firstPMatch[1].replace(/<[^>]*>/g, "").toLowerCase();
       const kwLower = keyword.toLowerCase();
       if (!firstPText.includes(kwLower)) {
-        // Prepend keyword mention to first paragraph
+        // Prepend keyword mention to first paragraph (in target language)
         const newFirstP = firstPMatch[0].replace(
           /(<p[^>]*>)/i,
-          `$1Looking for trusted ${keyword} services? `,
+          `$1${pack.lookingForPrefix(keyword)}`,
         );
         html = html.replace(firstPMatch[0], newFirstP);
       }
@@ -754,7 +759,7 @@ export function autoRepairContent(
   const transitionRegex = /(however|therefore|additionally|moreover|furthermore|also|because|for example|in addition|as a result|first|next|finally|meanwhile|instead)/gi;
   const transitionCount = (html.replace(/<[^>]*>/g, " ").match(transitionRegex) || []).length;
   if (transitionCount < 3) {
-    const transitionBlock = `<p>Additionally, our team is committed to quality. Moreover, we focus on results. Therefore, you can rely on us for consistent service.</p>`;
+    const transitionBlock = pack.transitionBlock;
     const lastP = html.lastIndexOf("</p>");
     if (lastP > 0) {
       html = html.slice(0, lastP + 4) + `\n${transitionBlock}` + html.slice(lastP + 4);
