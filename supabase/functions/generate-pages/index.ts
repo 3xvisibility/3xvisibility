@@ -1100,27 +1100,34 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     // Resolve language priority (highest → lowest):
-    //   1) per-run override sent in the request body (this run only, never persisted)
-    //   2) connected website's locked language (sticky for that site)
+    //   1) per-run override sent in the request body — UNLESS the connected website
+    //      has language_locked = true, in which case the override is ignored.
+    //   2) connected website's saved language (sticky for that site)
     //   3) user's profile default
     let resolvedLanguage = profile?.ai_language || "en";
+    let siteLanguageLocked = false;
     try {
       const websiteIdForLang = (campaign as { website_id?: string | null } | null)?.website_id;
       if (websiteIdForLang) {
         const { data: siteRow } = await supabase
           .from("websites")
-          .select("language")
+          .select("language, language_locked")
           .eq("id", websiteIdForLang)
           .maybeSingle();
         const siteLang = (siteRow as { language?: string | null } | null)?.language;
+        siteLanguageLocked = !!(siteRow as { language_locked?: boolean } | null)?.language_locked;
         if (typeof siteLang === "string" && siteLang.trim().length > 0) {
           resolvedLanguage = siteLang.trim();
         }
       }
     } catch (_) { /* non-critical */ }
     if (typeof language_override === "string" && language_override.trim().length > 0) {
-      resolvedLanguage = language_override.trim();
-      console.log(`[GENERATE-PAGES] Per-run language override applied: ${resolvedLanguage}`);
+      if (siteLanguageLocked) {
+        console.log(`[GENERATE-PAGES] Ignoring per-run language override "${language_override}" — website language is locked to "${resolvedLanguage}"`);
+      } else {
+        resolvedLanguage = language_override.trim();
+        console.log(`[GENERATE-PAGES] Per-run language override applied: ${resolvedLanguage}`);
+      }
     }
 
     const aiSettings = {

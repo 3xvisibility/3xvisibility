@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { id, name, url, type, credentials, workspace_id, language } = await req.json();
+    const { id, name, url, type, credentials, workspace_id, language, language_locked } = await req.json();
 
     if (!url || !type || !workspace_id) {
       return new Response(JSON.stringify({ error: "url, type, and workspace_id are required" }), {
@@ -55,6 +55,8 @@ Deno.serve(async (req) => {
       ? language.trim()
       : null;
     const languageProvided = typeof language !== "undefined";
+    const languageLockedProvided = typeof language_locked !== "undefined";
+    const normalizedLanguageLocked = !!language_locked;
 
     if (id) {
       // Update existing website (only patch fields the caller sent)
@@ -63,6 +65,7 @@ Deno.serve(async (req) => {
       if (name) updatePayload.name = name;
       if (url) updatePayload.url = url;
       if (languageProvided) updatePayload.language = normalizedLanguage;
+      if (languageLockedProvided) updatePayload.language_locked = normalizedLanguageLocked;
 
       const { error } = await serviceClient
         .from("websites")
@@ -83,6 +86,7 @@ Deno.serve(async (req) => {
         type,
         credentials: encryptedCreds || {},
         language: normalizedLanguage,
+        language_locked: normalizedLanguageLocked,
         user_id: user.id,
         workspace_id,
       }).select("id").single();
