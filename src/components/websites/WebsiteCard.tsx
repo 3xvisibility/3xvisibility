@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, ExternalLink, Loader2, Zap, Pencil } from "lucide-react";
+import { Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download, ExternalLink, Loader2, Zap, Pencil, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
+import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 
 type Website = Tables<"websites">;
 
@@ -20,6 +21,7 @@ interface WebsiteCardProps {
 
 export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCardProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [retransOpen, setRetransOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -107,8 +109,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
             </p>
           )}
 
-          {/* Per-site test connection */}
-          <div className="mt-3">
+          {/* Per-site actions */}
+          <div className="mt-3 flex items-center gap-2 flex-wrap">
             <Button
               size="sm"
               variant="outline"
@@ -121,6 +123,20 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
               ) : (
                 <><Zap className="h-3 w-3 mr-1" /> Test Connection</>
               )}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={() => setRetransOpen(true)}
+              title={
+                site.language
+                  ? `Re-translate the most recent pages to ${site.language} and republish them`
+                  : "Set a Site Language first to enable this action"
+              }
+            >
+              <Languages className="h-3 w-3 mr-1" />
+              Re-translate to {site.language || "site language"}
             </Button>
           </div>
 
@@ -179,6 +195,13 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
       </Card>
 
       <EditWebsiteDialog site={site} open={editOpen} onOpenChange={setEditOpen} />
+      <RetranslateSiteDialog
+        open={retransOpen}
+        onOpenChange={setRetransOpen}
+        websiteId={site.id}
+        websiteName={site.name}
+        siteLanguage={site.language}
+      />
     </>
   );
 }
