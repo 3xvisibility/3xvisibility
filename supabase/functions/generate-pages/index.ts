@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { autoRepairContent, derivePrimaryKeyword } from "../_shared/seo-quality.ts";
 import { buildMultiEngineMeta, buildAutoFaq, buildExtraJsonLd } from "../_shared/seo-meta.ts";
+import { validateJsonLdInHtml, summarizeValidation } from "../_shared/jsonld-validator.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1850,6 +1851,27 @@ Deno.serve(async (req) => {
 
           pageContent = `${ogTags}\n${extendedSeo}\n${canonicalTag}\n${jsonLd}\n${extraJsonLd}\n${aiFaqJsonLd}\n${responsiveStyles}\n<div class="pgp-page">\n${pageContent}${aiFaqHtml}\n</div>`;
 
+          // ── Server-side JSON-LD validation (non-blocking) ──
+          // We validate every <script type="application/ld+json"> block we
+          // just emitted (primary schema, extra schema, FAQ). Failures here
+          // MUST NEVER block generation — we only log + persist a summary
+          // on the page record so the UI can surface it later.
+          let seoWarnings: Record<string, unknown> | null = null;
+          try {
+            const validation = validateJsonLdInHtml(pageContent);
+            if (validation.blocks > 0) {
+              const summary = summarizeValidation(validation);
+              seoWarnings = { jsonld: summary, validated_at: new Date().toISOString() };
+              if (summary.error_count > 0 || summary.warning_count > 0) {
+                console.warn(
+                  `[GENERATE-PAGES] JSON-LD validation flagged ${summary.error_count} errors / ${summary.warning_count} warnings on "${pageTitle}" (types=${summary.types.join(",")})`,
+                );
+              }
+            }
+          } catch (vErr) {
+            console.warn("[GENERATE-PAGES] JSON-LD validator skipped:", (vErr as Error).message);
+          }
+
           // Extract SEA ad IDs from utm_settings or row data
           const adCampaignId = (utmSettings as any).ad_campaign_id || row.ad_campaign_id || null;
           const adGroupId = (utmSettings as any).ad_group_id || row.ad_group_id || null;
@@ -1870,6 +1892,7 @@ Deno.serve(async (req) => {
             canonical_url: canonicalUrl,
             ad_campaign_id: adCampaignId,
             ad_group_id: adGroupId,
+            seo_warnings: seoWarnings,
           });
 
           processedCount++;
