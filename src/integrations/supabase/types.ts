@@ -1758,6 +1758,7 @@ export type Database = {
           updated_at: string
           user_id: string
           variables: string[] | null
+          vibe_theme: Json | null
           workspace_id: string | null
         }
         Insert: {
@@ -1772,6 +1773,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           variables?: string[] | null
+          vibe_theme?: Json | null
           workspace_id?: string | null
         }
         Update: {
@@ -1786,6 +1788,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           variables?: string[] | null
+          vibe_theme?: Json | null
           workspace_id?: string | null
         }
         Relationships: [

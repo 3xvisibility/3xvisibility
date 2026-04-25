@@ -181,7 +181,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     queryKey: ["templates", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name, variables, content, seo_title_pattern, seo_description_pattern, schema_type, schema_config").eq("workspace_id", wsId!).order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables, content, seo_title_pattern, seo_description_pattern, schema_type, schema_config, vibe_theme").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
@@ -246,6 +246,26 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     if (!tpl?.variables) return [];
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
+
+  // Pre-fill vibe controls from a template's saved `vibe_theme` whenever the
+  // user picks (or switches) a template. Persists the auto-fix outcome from
+  // last session so the same safe combo is reused on next campaign.
+  // Only writes when a saved theme exists — otherwise we keep the current
+  // wizard defaults to avoid overwriting in-flight edits.
+  useEffect(() => {
+    if (!selectedTemplate) return;
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    const saved = (tpl as { vibe_theme?: { palette?: VibePalette; typography?: VibeTypography; density?: VibeDensity; customVars?: Record<string, string>; customCss?: string } | null } | undefined)?.vibe_theme;
+    if (!saved) return;
+    if (saved.palette) setVibePalette(saved.palette);
+    if (saved.typography) setVibeTypography(saved.typography);
+    if (saved.density) setVibeDensity(saved.density);
+    if (saved.customVars && Object.keys(saved.customVars).length > 0) {
+      setVibeCustomVarsText(Object.entries(saved.customVars).map(([k, v]) => `${k}: ${v}`).join("\n"));
+    }
+    if (saved.customCss) setVibeCustomCss(saved.customCss);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate]);
 
   // Vibe validator — runs on every change of template/palette/typography/density
   // and surfaces clash warnings + one-click fixes inside the vibe panel.
@@ -1402,7 +1422,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                   variant="default"
                                   size="sm"
                                   className="h-7 px-2.5 text-[11px] gap-1"
-                                  onClick={() => {
+                                  onClick={async () => {
                                     const result = computeSafestVibe({
                                       templateContent: (tpl as { content?: string } | undefined)?.content || "",
                                       templateCategory: marketplaceMatch?.category ?? null,
@@ -1421,9 +1441,37 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                     setVibePalette(result.palette);
                                     setVibeTypography(result.typography);
                                     setVibeDensity(result.density);
+                                    // Persist the safe combo onto the template
+                                    // so the next campaign reusing it gets the
+                                    // same defaults pre-filled (per-template
+                                    // memory). Best-effort — wizard still works
+                                    // if the write fails (e.g. read-only role).
+                                    let saved = false;
+                                    if (tpl?.id) {
+                                      const parsedVars = parseCustomVarsInput(vibeCustomVarsText);
+                                      const themePayload = {
+                                        palette: result.palette,
+                                        typography: result.typography,
+                                        density: result.density,
+                                        ...(Object.keys(parsedVars).length ? { customVars: parsedVars } : {}),
+                                        ...(vibeCustomCss.trim() ? { customCss: vibeCustomCss.trim() } : {}),
+                                      };
+                                      const { error: saveErr } = await supabase
+                                        .from("templates")
+                                        .update({ vibe_theme: themePayload as never })
+                                        .eq("id", tpl.id);
+                                      if (!saveErr) {
+                                        saved = true;
+                                        queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
+                                      } else {
+                                        console.warn("[vibe auto-fix] template save failed:", saveErr.message);
+                                      }
+                                    }
                                     toast({
                                       title: `Applied ${result.appliedFixes.length} fix${result.appliedFixes.length === 1 ? "" : "es"}`,
-                                      description: `Vibe set to ${result.palette} · ${result.typography} · ${result.density}.`,
+                                      description: saved
+                                        ? `Vibe ${result.palette} · ${result.typography} · ${result.density} saved as this template's default.`
+                                        : `Vibe set to ${result.palette} · ${result.typography} · ${result.density}.`,
                                     });
                                   }}
                                 >
