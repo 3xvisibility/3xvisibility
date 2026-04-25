@@ -54,6 +54,13 @@ export default function TemplatesPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; linkedCampaigns: { id: string; name: string }[] } | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
+  // AI Regenerate Design state
+  const [regenTarget, setRegenTarget] = useState<Template | null>(null);
+  const [regenNiche, setRegenNiche] = useState("");
+  const [regenServices, setRegenServices] = useState("");
+  const [regenBusiness, setRegenBusiness] = useState("");
+  const [regenLoading, setRegenLoading] = useState(false);
+
   // CSV template state
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [csvText, setCsvText] = useState("");
