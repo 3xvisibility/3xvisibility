@@ -305,3 +305,75 @@ export function validateVibeForTemplate(input: VibeValidationInput): VibeValidat
     hasBlockingIssue: deduped.some((w) => w.severity === "danger"),
   };
 }
+
+/**
+ * Iteratively apply every warning's `suggest` patch until validation
+ * stabilises (no more `info|warning|danger` warnings produce a `suggest`).
+ *
+ * Why a loop: applying one fix can unmask a different rule (e.g. switching
+ * to "modern" typography may surface a palette warning that was previously
+ * dominated by the typography one). We cap iterations to prevent any
+ * accidental cycle from spinning forever.
+ *
+ * Returns the final safe combination plus the list of changes applied. If
+ * no warnings are present (or none have a suggestion), `changed` is false
+ * and the original vibe is returned unchanged.
+ */
+export interface AutoFixResult {
+  palette: VibePalette;
+  typography: VibeTypography;
+  density: VibeDensity;
+  changed: boolean;
+  /** Stable warning ids that were resolved by the auto-fix. */
+  appliedFixes: string[];
+  /** Warnings still present after the fix loop (no suggestion to apply). */
+  remainingWarnings: VibeWarning[];
+}
+
+export function computeSafestVibe(input: VibeValidationInput): AutoFixResult {
+  let palette = input.palette;
+  let typography = input.typography;
+  let density = input.density;
+  const appliedFixes: string[] = [];
+  const seenSuggestionKey = new Set<string>();
+
+  // Hard cap — far above what any realistic chain needs.
+  for (let i = 0; i < 8; i++) {
+    const { warnings } = validateVibeForTemplate({
+      ...input, palette, typography, density,
+    });
+    // Pick the first warning that has a suggestion AND would actually change
+    // at least one dimension. Severity priority: danger → warning → info.
+    const sorted = [...warnings].sort((a, b) => {
+      const order: Record<VibeSeverity, number> = { danger: 0, warning: 1, info: 2 };
+      return order[a.severity] - order[b.severity];
+    });
+    const next = sorted.find((w) => {
+      if (!w.suggest) return false;
+      const willChange =
+        (w.suggest.palette && w.suggest.palette !== palette) ||
+        (w.suggest.typography && w.suggest.typography !== typography) ||
+        (w.suggest.density && w.suggest.density !== density);
+      // Avoid revisiting the same suggestion in a cycle.
+      const key = `${w.id}:${w.suggest.palette || ""}:${w.suggest.typography || ""}:${w.suggest.density || ""}`;
+      return !!willChange && !seenSuggestionKey.has(key);
+    });
+    if (!next || !next.suggest) break;
+    if (next.suggest.palette) palette = next.suggest.palette;
+    if (next.suggest.typography) typography = next.suggest.typography;
+    if (next.suggest.density) density = next.suggest.density;
+    appliedFixes.push(next.id);
+    seenSuggestionKey.add(`${next.id}:${next.suggest.palette || ""}:${next.suggest.typography || ""}:${next.suggest.density || ""}`);
+  }
+
+  const finalCheck = validateVibeForTemplate({ ...input, palette, typography, density });
+  return {
+    palette,
+    typography,
+    density,
+    changed: palette !== input.palette || typography !== input.typography || density !== input.density,
+    appliedFixes,
+    remainingWarnings: finalCheck.warnings,
+  };
+}
+
