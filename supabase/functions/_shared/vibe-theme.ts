@@ -19,6 +19,40 @@ export interface VibeTheme {
   palette?: VibePalette;
   typography?: VibeTypography;
   density?: VibeDensity;
+  /** Optional brand CSS variable overrides (e.g. `{ "brand-color": "#ff0066" }`).
+   * Emitted as `--brand-color: #ff0066;` declarations on `.pgp-page` so they
+   * cascade into existing styles and any custom CSS authored below. */
+  customVars?: Record<string, string>;
+  /** Optional raw CSS appended at the very end of the override block (highest
+   * specificity wins). Sanitized to strip `</style>` and HTML comments to
+   * prevent breakouts. Authors should scope rules to `.pgp-page` themselves. */
+  customCss?: string;
+}
+
+/** Strip dangerous sequences from user-supplied CSS so it can't break out of
+ * the `<style>` block or inject scripts. We don't sanitize CSS properties
+ * themselves — the browser ignores anything invalid. */
+function sanitizeUserCss(input: string): string {
+  return String(input || "")
+    .replace(/<\/style/gi, "<\\/style")
+    .replace(/<!--/g, "")
+    .replace(/-->/g, "")
+    .replace(/<script/gi, "<\\script")
+    .trim();
+}
+
+/** Format `customVars` map into `--key: value;` declarations. Keys are
+ * coerced to safe CSS identifiers (lowercase, alphanumeric + dash). */
+function formatCustomVars(vars?: Record<string, string>): string {
+  if (!vars) return "";
+  const entries = Object.entries(vars).filter(([k, v]) => k && v != null && String(v).trim() !== "");
+  if (entries.length === 0) return "";
+  const decls = entries.map(([k, v]) => {
+    const safeKey = String(k).trim().replace(/^--/, "").toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 60);
+    const safeVal = String(v).replace(/[;{}<>]/g, "").trim().slice(0, 200);
+    return `--${safeKey}:${safeVal}`;
+  }).join(";");
+  return `.pgp-page{${decls}}`;
 }
 
 interface PaletteSpec {
