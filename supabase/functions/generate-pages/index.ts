@@ -2515,8 +2515,13 @@ Deno.serve(async (req) => {
     // Final summary log including AI autofill + vibe theme stats
     const aiFilledKeys = Object.keys(aiVarDefaults || {});
     const summaryVibe = (((campaign.mapping || {}) as { vibe_theme?: VibeTheme }).vibe_theme) || null;
+    const customVarCount = summaryVibe?.customVars ? Object.keys(summaryVibe.customVars).length : 0;
+    const customCssLen = summaryVibe?.customCss ? summaryVibe.customCss.length : 0;
+    const customSuffix = (customVarCount || customCssLen)
+      ? ` + brand overrides (${customVarCount} var${customVarCount === 1 ? "" : "s"}${customCssLen ? `, ${customCssLen}b CSS` : ""})`
+      : "";
     const vibeLabel = summaryVibe
-      ? `${summaryVibe.palette || "lovable"} · ${summaryVibe.typography || "modern"} · ${summaryVibe.density || "comfortable"}`
+      ? `${summaryVibe.palette || "lovable"} · ${summaryVibe.typography || "modern"} · ${summaryVibe.density || "comfortable"}${customSuffix}`
       : "default";
     if (aiFilledKeys.length > 0) {
       try {
