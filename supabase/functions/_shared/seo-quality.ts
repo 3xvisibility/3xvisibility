@@ -682,7 +682,7 @@ export function autoRepairContent(
   const hasInternalLink = /<a[^>]*href=["'](?:\/|\.\/|#)[^"']*["']/i.test(html);
   if (!hasInternalLink) {
     // Add a contextual internal link before closing
-    const internalLinkHtml = `<p><a href="/contact" title="Contact us for more information">Contact us today</a> to learn more about our services.</p>`;
+    const internalLinkHtml = `<p><a href="/contact" title="${pack.internalLinkTitle}">${pack.internalLinkText}</a>${pack.internalLinkTrailing}</p>`;
     // Insert before last closing tag or append
     const lastSectionClose = html.lastIndexOf("</section>");
     const lastDivClose = html.lastIndexOf("</div>");
