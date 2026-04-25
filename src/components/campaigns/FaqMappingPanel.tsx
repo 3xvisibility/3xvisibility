@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { HelpCircle, Plus, Trash2, MessageSquareQuote } from "lucide-react";
+import { HelpCircle, Plus, Trash2, MessageSquareQuote, AlertTriangle } from "lucide-react";
 
 /**
  * One mapping entry: a CSV column name (or empty) for the question and one for the answer.
@@ -57,6 +57,15 @@ export function FaqMappingPanel({ csvHeaders, pairs, onChange, maxPairs = 10 }: 
 
   const hasHeaders = csvHeaders.length > 0;
   const configuredCount = safePairs.filter((p) => p.question && p.answer).length;
+  // Pairs are "orphaned" if a previously-mapped column is no longer present in
+  // the current CSV headers — usually because the user re-uploaded a different CSV.
+  const headerSet = new Set(csvHeaders);
+  const orphanedPairs = pairs.filter(
+    (p) => (p.question && !headerSet.has(p.question)) || (p.answer && !headerSet.has(p.answer)),
+  );
+  const hasMappingsButNoHeaders = !hasHeaders && pairs.some((p) => p.question || p.answer);
+
+  const clearAll = () => onChange([]);
 
   return (
     <Card className="p-4 rounded-2xl border border-border bg-card/50 space-y-3">
