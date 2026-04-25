@@ -753,6 +753,15 @@ export function MappingStep({
         </div>
       )}
 
+      {/* FAQ column mapping (optional, controlled by parent) */}
+      {setFaqPairs && (
+        <FaqMappingPanel
+          csvHeaders={csvHeaders}
+          pairs={faqPairs ?? []}
+          onChange={(next) => setFaqPairs(next)}
+        />
+      )}
+
       {/* Save Profile Dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="sm:max-w-md">
