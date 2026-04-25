@@ -662,7 +662,10 @@ export default function GeneratedPagesPage() {
                       <span className="font-medium text-sm truncate">{displayTitle}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={`text-[10px] ${cfg.bg}`}>{page.status}</Badge>
+                      <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
+                        <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
+                        {cfg.label}
+                      </Badge>
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
                     </div>
