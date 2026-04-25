@@ -1379,7 +1379,51 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         </div>
                       </div>
 
-                      {/* Brand overrides — optional CSS variables + raw CSS that
+                      {/* Vibe validator — surfaces clashes between the chosen
+                          palette/typography/density and the selected template
+                          (formal vertical + playful font, compact density on
+                          long content, etc) with one-click fixes. */}
+                      {vibeValidation.warnings.length > 0 && (
+                        <div className="space-y-1.5">
+                          {vibeValidation.warnings.map((w) => {
+                            const tone = w.severity === "danger"
+                              ? "border-destructive/40 bg-destructive/10 text-destructive-foreground"
+                              : w.severity === "warning"
+                              ? "border-amber-500/40 bg-amber-500/10"
+                              : "border-primary/30 bg-primary/5";
+                            const Icon = w.severity === "info" ? Info : AlertTriangle;
+                            return (
+                              <div
+                                key={w.id}
+                                role="alert"
+                                className={`flex items-start gap-2 rounded-lg border p-2 ${tone}`}
+                              >
+                                <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${w.severity === "info" ? "text-primary" : "text-amber-600 dark:text-amber-400"}`} />
+                                <div className="min-w-0 flex-1 space-y-0.5">
+                                  <p className="text-[11px] font-semibold leading-tight">{w.title}</p>
+                                  <p className="text-[10px] text-muted-foreground leading-snug">{w.reason}</p>
+                                  {w.suggest && w.suggestLabel && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-6 mt-1 px-2 text-[10px]"
+                                      onClick={() => {
+                                        if (w.suggest?.palette) setVibePalette(w.suggest.palette);
+                                        if (w.suggest?.typography) setVibeTypography(w.suggest.typography);
+                                        if (w.suggest?.density) setVibeDensity(w.suggest.density);
+                                      }}
+                                    >
+                                      {w.suggestLabel}
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
                           win the cascade over the preset block above. Useful
                           for matching a client's exact brand color or tweaking
                           spacing per-campaign without forking the template. */}
