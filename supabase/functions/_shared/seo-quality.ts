@@ -1,3 +1,5 @@
+import { resolvePhrasePack, type PhrasePack } from "./seo-language-phrases.ts";
+
 export type QualityCategory = "seo" | "sea" | "geo";
 
 export interface SeoQualityInput {
