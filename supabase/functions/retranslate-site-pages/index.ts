@@ -8,7 +8,7 @@
 // 2. Fallback to Lovable AI Gateway only if LibreTranslate is unreachable
 // 3. UPDATE the existing generated_pages row in place (do NOT create duplicates)
 // 4. Re-publish via the existing publish-pages function so the live site updates
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
