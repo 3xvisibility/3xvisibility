@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Loader2, Zap, Languages } from "lucide-react";
+import { Plus, Loader2, Zap, Languages, Lock } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
@@ -49,6 +50,7 @@ export default function WebsitesPage() {
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
   const [siteLanguage, setSiteLanguage] = useState<string | null>(null);
+  const [languageLocked, setLanguageLocked] = useState<boolean>(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -120,6 +122,7 @@ export default function WebsitesPage() {
           credentials: buildCredentials(),
           workspace_id: wsId,
           language: siteLanguage,
+          language_locked: languageLocked,
         },
       });
       if (error) throw error;
@@ -222,6 +225,7 @@ export default function WebsitesPage() {
     setSiteType("");
     setWpAuthMethod("application_password");
     setSiteLanguage(null);
+    setLanguageLocked(false);
   };
 
   return (
@@ -344,6 +348,23 @@ export default function WebsitesPage() {
                         <><Languages className="h-3 w-3 mr-1" /> Auto-detect from site</>
                       )}
                     </Button>
+                    <div className="flex items-start justify-between gap-3 rounded-lg border border-border p-3 mt-2">
+                      <div className="flex items-start gap-2 min-w-0">
+                        <Lock className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <Label htmlFor="lang-lock" className="text-sm font-medium">Lock language</Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            When on, campaign per-run overrides and edits cannot change this site's language.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="lang-lock"
+                        checked={languageLocked}
+                        onCheckedChange={setLanguageLocked}
+                        disabled={!siteLanguage}
+                      />
+                    </div>
                   </div>
                 )}
 
