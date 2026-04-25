@@ -3,6 +3,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { HeadingOutline } from "@/components/HeadingOutline";
 
 interface ContentItem {
   id: string;
@@ -50,6 +51,7 @@ export function PagePreviewDialog({ open, onOpenChange, page }: PagePreviewDialo
             )}
           </div>
         </DialogHeader>
+        <HeadingOutline html={page.content} hideWhenEmpty className="mt-3" />
         <ScrollArea className="flex-1 mt-3">
           <div
             className="prose prose-sm dark:prose-invert max-w-none"

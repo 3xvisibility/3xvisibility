@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, XCircle, ShieldAlert, Code2 } from "lucide
 import type { RenderResult } from "@/lib/renderer";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
 import { validateJsonLdInHtml } from "@/lib/jsonld-validator";
+import { HeadingOutline } from "@/components/HeadingOutline";
 import { useMemo } from "react";
 
 interface TestPagePreviewDialogProps {
@@ -150,6 +151,9 @@ export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePr
             )}
           </div>
         )}
+
+        {/* Heading outline (H1/H2/H3 hierarchy preview) */}
+        <HeadingOutline html={result.html} />
 
         <div className="space-y-3 text-xs">
           <div className="rounded-lg border border-border bg-muted/30 p-3">
