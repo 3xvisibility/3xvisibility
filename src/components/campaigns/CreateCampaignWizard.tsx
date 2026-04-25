@@ -30,7 +30,7 @@ import {
   parseCustomVarsInput,
   type VibePalette, type VibeTypography, type VibeDensity,
 } from "@/lib/vibe-theme";
-import { validateVibeForTemplate, type VibeWarning } from "@/lib/vibe-validator";
+import { validateVibeForTemplate, computeSafestVibe, type VibeWarning } from "@/lib/vibe-validator";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
@@ -1385,6 +1385,54 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           long content, etc) with one-click fixes. */}
                       {vibeValidation.warnings.length > 0 && (
                         <div className="space-y-1.5">
+                          {/* Auto-fix all — runs the validator in a loop and
+                              applies the safest combination in one click. Only
+                              shown when at least one warning has a suggestion. */}
+                          {vibeValidation.warnings.some((w) => !!w.suggest) && (() => {
+                            const tpl = templates.find((t) => t.id === selectedTemplate);
+                            const marketplaceMatch = COMMUNITY_TEMPLATES.find((m) => m.name === (tpl as { name?: string } | undefined)?.name);
+                            const fixCount = vibeValidation.warnings.filter((w) => !!w.suggest).length;
+                            return (
+                              <div className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 border border-border/50 px-2.5 py-1.5">
+                                <span className="text-[11px] text-muted-foreground">
+                                  {fixCount} fixable {fixCount === 1 ? "issue" : "issues"} detected
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="default"
+                                  size="sm"
+                                  className="h-7 px-2.5 text-[11px] gap-1"
+                                  onClick={() => {
+                                    const result = computeSafestVibe({
+                                      templateContent: (tpl as { content?: string } | undefined)?.content || "",
+                                      templateCategory: marketplaceMatch?.category ?? null,
+                                      templateTags: marketplaceMatch?.tags ?? null,
+                                      palette: vibePalette,
+                                      typography: vibeTypography,
+                                      density: vibeDensity,
+                                    });
+                                    if (!result.changed) {
+                                      toast({
+                                        title: "Nothing to auto-fix",
+                                        description: "Remaining warnings have no safe automatic fix — review them manually.",
+                                      });
+                                      return;
+                                    }
+                                    setVibePalette(result.palette);
+                                    setVibeTypography(result.typography);
+                                    setVibeDensity(result.density);
+                                    toast({
+                                      title: `Applied ${result.appliedFixes.length} fix${result.appliedFixes.length === 1 ? "" : "es"}`,
+                                      description: `Vibe set to ${result.palette} · ${result.typography} · ${result.density}.`,
+                                    });
+                                  }}
+                                >
+                                  <Wand2 className="h-3 w-3" />
+                                  Auto-fix all warnings
+                                </Button>
+                              </div>
+                            );
+                          })()}
                           {vibeValidation.warnings.map((w) => {
                             const tone = w.severity === "danger"
                               ? "border-destructive/40 bg-destructive/10 text-destructive-foreground"
