@@ -30,6 +30,8 @@ import {
   parseCustomVarsInput,
   type VibePalette, type VibeTypography, type VibeDensity,
 } from "@/lib/vibe-theme";
+import { validateVibeForTemplate, type VibeWarning } from "@/lib/vibe-validator";
+import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
