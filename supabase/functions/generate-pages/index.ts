@@ -512,15 +512,7 @@ async function generateAiContent(
     medium: "Write a well-developed paragraph of 3-5 sentences.",
     long: "Write a detailed, comprehensive section of 2-3 paragraphs.",
   };
-  const languageMap: Record<string, string> = {
-    en: "English", es: "Spanish", fr: "French", de: "German",
-    pt: "Portuguese", it: "Italian", nl: "Dutch", ja: "Japanese",
-    zh: "Chinese", ko: "Korean", ar: "Arabic",
-  };
-  // Site language can arrive as a 2-letter code ("fr") OR a full name ("French",
-  // "Français (French)"). Normalize so the AI always receives a clear name.
-  const rawLang = (settings.language || "").trim();
-  const resolvedLangName = languageMap[rawLang.toLowerCase()] || rawLang || "English";
+  const resolvedLangName = resolveLanguageName(settings.language);
 
   const systemPrompt = `You are an expert content writer. Generate high-quality, engaging content.
 Tone: ${settings.tone}
