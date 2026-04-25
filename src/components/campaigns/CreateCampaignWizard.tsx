@@ -30,6 +30,8 @@ import {
   parseCustomVarsInput,
   type VibePalette, type VibeTypography, type VibeDensity,
 } from "@/lib/vibe-theme";
+import { validateVibeForTemplate, type VibeWarning } from "@/lib/vibe-validator";
+import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
@@ -244,6 +246,25 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     if (!tpl?.variables) return [];
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
+
+  // Vibe validator — runs on every change of template/palette/typography/density
+  // and surfaces clash warnings + one-click fixes inside the vibe panel.
+  const vibeValidation = useMemo(() => {
+    if (!selectedTemplate) return { warnings: [] as VibeWarning[], hasBlockingIssue: false };
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    if (!tpl) return { warnings: [], hasBlockingIssue: false };
+    // DB templates don't store category — try to enrich from the marketplace
+    // catalog by matching name (best-effort, no-op when nothing matches).
+    const marketplaceMatch = COMMUNITY_TEMPLATES.find(m => m.name === (tpl as { name?: string }).name);
+    return validateVibeForTemplate({
+      templateContent: (tpl as { content?: string }).content || "",
+      templateCategory: marketplaceMatch?.category ?? null,
+      templateTags: marketplaceMatch?.tags ?? null,
+      palette: vibePalette,
+      typography: vibeTypography,
+      density: vibeDensity,
+    });
+  }, [selectedTemplate, templates, vibePalette, vibeTypography, vibeDensity]);
 
   const effectiveCsvData =
     dataSource === "website" ? websitePagesAsCsv.rows :
@@ -1357,6 +1378,51 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           ))}
                         </div>
                       </div>
+
+                      {/* Vibe validator — surfaces clashes between the chosen
+                          palette/typography/density and the selected template
+                          (formal vertical + playful font, compact density on
+                          long content, etc) with one-click fixes. */}
+                      {vibeValidation.warnings.length > 0 && (
+                        <div className="space-y-1.5">
+                          {vibeValidation.warnings.map((w) => {
+                            const tone = w.severity === "danger"
+                              ? "border-destructive/40 bg-destructive/10 text-destructive-foreground"
+                              : w.severity === "warning"
+                              ? "border-amber-500/40 bg-amber-500/10"
+                              : "border-primary/30 bg-primary/5";
+                            const Icon = w.severity === "info" ? Info : AlertTriangle;
+                            return (
+                              <div
+                                key={w.id}
+                                role="alert"
+                                className={`flex items-start gap-2 rounded-lg border p-2 ${tone}`}
+                              >
+                                <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${w.severity === "info" ? "text-primary" : "text-amber-600 dark:text-amber-400"}`} />
+                                <div className="min-w-0 flex-1 space-y-0.5">
+                                  <p className="text-[11px] font-semibold leading-tight">{w.title}</p>
+                                  <p className="text-[10px] text-muted-foreground leading-snug">{w.reason}</p>
+                                  {w.suggest && w.suggestLabel && (
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-6 mt-1 px-2 text-[10px]"
+                                      onClick={() => {
+                                        if (w.suggest?.palette) setVibePalette(w.suggest.palette);
+                                        if (w.suggest?.typography) setVibeTypography(w.suggest.typography);
+                                        if (w.suggest?.density) setVibeDensity(w.suggest.density);
+                                      }}
+                                    >
+                                      {w.suggestLabel}
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
 
                       {/* Brand overrides — optional CSS variables + raw CSS that
                           win the cascade over the preset block above. Useful
