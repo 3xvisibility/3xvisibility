@@ -179,6 +179,38 @@ export function StartGenerationDialog({
 
           <Separator />
 
+          {/* Language Override (this run only) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Languages className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-semibold">Override site language</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    This run only — site stays locked to <span className="font-medium text-foreground">{siteLangLabel}</span>
+                  </p>
+                </div>
+              </div>
+              <Switch checked={languageOverrideEnabled} onCheckedChange={setLanguageOverrideEnabled} />
+            </div>
+            {languageOverrideEnabled && (
+              <Select value={languageOverride} onValueChange={setLanguageOverride}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pick a language for this run" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {SITE_LANGUAGE_OPTIONS.filter((o) => o.value !== "__auto__").map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <Separator />
+
           {/* Schedule */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold">Schedule</Label>
