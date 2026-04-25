@@ -1356,6 +1356,66 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           ))}
                         </div>
                       </div>
+
+                      {/* Brand overrides — optional CSS variables + raw CSS that
+                          win the cascade over the preset block above. Useful
+                          for matching a client's exact brand color or tweaking
+                          spacing per-campaign without forking the template. */}
+                      <div className="rounded-lg border border-dashed border-border/50 bg-muted/20">
+                        <button
+                          type="button"
+                          onClick={() => setVibeAdvancedOpen((v) => !v)}
+                          className="w-full flex items-center justify-between px-2.5 py-1.5 text-[11px] font-medium hover:bg-muted/40 rounded-lg transition-colors"
+                          aria-expanded={vibeAdvancedOpen}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Settings2 className="h-3 w-3 text-muted-foreground" />
+                            Brand overrides (optional)
+                            {(vibeCustomVarsText.trim() || vibeCustomCss.trim()) && (
+                              <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">active</Badge>
+                            )}
+                          </span>
+                          <span className="text-muted-foreground text-[10px]">{vibeAdvancedOpen ? "Hide" : "Show"}</span>
+                        </button>
+                        {vibeAdvancedOpen && (
+                          <div className="p-2.5 pt-1 space-y-2.5 border-t border-border/40">
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-muted-foreground">
+                                CSS variables
+                                <span className="ml-1 text-[10px] font-normal text-muted-foreground/70">— one per line, <code className="px-1 rounded bg-muted text-[10px]">name: value</code></span>
+                              </Label>
+                              <Textarea
+                                value={vibeCustomVarsText}
+                                onChange={(e) => setVibeCustomVarsText(e.target.value)}
+                                placeholder={"brand-color: #ff0066\nsection-padding: 6rem\nradius: 18px"}
+                                rows={3}
+                                className="text-[11px] font-mono leading-snug resize-y min-h-[60px]"
+                                spellCheck={false}
+                              />
+                              <p className="text-[10px] text-muted-foreground">
+                                Emitted as <code className="px-1 rounded bg-muted">--name: value;</code> on <code className="px-1 rounded bg-muted">.pgp-page</code>. Reference them in your CSS below with <code className="px-1 rounded bg-muted">var(--name)</code>.
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-muted-foreground">
+                                Custom CSS
+                                <span className="ml-1 text-[10px] font-normal text-muted-foreground/70">— scoped to <code className="px-1 rounded bg-muted text-[10px]">.pgp-page</code></span>
+                              </Label>
+                              <Textarea
+                                value={vibeCustomCss}
+                                onChange={(e) => setVibeCustomCss(e.target.value)}
+                                placeholder={".pgp-page .pgp-btn-primary { background: var(--brand-color); }\n.pgp-page .pgp-section { padding: var(--section-padding) 0; }"}
+                                rows={5}
+                                className="text-[11px] font-mono leading-snug resize-y min-h-[100px]"
+                                spellCheck={false}
+                              />
+                              <p className="text-[10px] text-muted-foreground">
+                                Appended last so it wins over the preset. Always prefix selectors with <code className="px-1 rounded bg-muted">.pgp-page</code> to keep styles scoped.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                   {selectedTemplate && (() => {
