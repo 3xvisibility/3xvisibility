@@ -714,8 +714,9 @@ export function PageEditDialog({
           </TabsContent>
 
           {/* ── Preview Tab ── */}
-          <TabsContent value="preview" className="flex-1 min-h-0 mt-3">
-            <ScrollArea className="h-[450px]">
+          <TabsContent value="preview" className="flex-1 min-h-0 mt-3 space-y-3 overflow-y-auto">
+            <HeadingOutline html={`<h1>${editTitle || ""}</h1>${editContent}`} />
+            <ScrollArea className="h-[420px]">
               <div className="rounded-lg border p-4">
                 <h1 className="text-lg font-bold mb-2">{editTitle}</h1>
                 {editExcerpt && (
