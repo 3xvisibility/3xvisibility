@@ -489,11 +489,15 @@ export default function GeneratedPagesPage() {
         </div>
       </div>
 
+      {/* Live progress card (only renders when active jobs exist) */}
+      {wsId && <LiveGenerationProgress workspaceId={wsId} />}
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {[
           { label: "Total Pages", value: stats.total, icon: FileText, color: "text-foreground" },
           { label: "Published", value: stats.published, icon: CheckCircle2, color: "text-emerald-500" },
+          { label: "In Progress", value: stats.active, icon: Activity, color: "text-primary" },
           { label: "Pending", value: stats.pending, icon: Clock, color: "text-amber-500" },
           { label: "Failed", value: stats.failed, icon: AlertCircle, color: "text-destructive" },
         ].map((s) => (
