@@ -326,16 +326,18 @@ export default function TemplatesPage() {
   };
 
   // ──── AI Regenerate Design ────
-  const openRegenDialog = (tpl: Template) => {
+  const openRegenDialog = (tpl: Template, mode: "full" | "variants-only" = "full") => {
     setRegenTarget(tpl);
+    setRegenMode(mode);
     setRegenNiche("");
     setRegenServices("");
     setRegenBusiness("");
+    setRegenVariants({ ...DEFAULT_VARIANTS });
   };
 
   const runRegenDesign = async () => {
     if (!regenTarget) return;
-    if (!regenNiche.trim()) {
+    if (regenMode === "full" && !regenNiche.trim()) {
       toast({ title: "Niche required", description: "Tell the AI what niche this template targets.", variant: "destructive" });
       return;
     }
@@ -344,9 +346,11 @@ export default function TemplatesPage() {
       const { data, error } = await supabase.functions.invoke("regenerate-template-design", {
         body: {
           content: regenTarget.content,
+          mode: regenMode,
           niche: regenNiche.trim(),
           services: regenServices.trim(),
           business: regenBusiness.trim(),
+          variants: regenVariants,
         },
       });
       if (error) throw new Error(friendlyError(error));
@@ -359,14 +363,18 @@ export default function TemplatesPage() {
       } as any).eq("id", regenTarget.id);
       if (upErr) throw upErr;
       queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Design regenerated", description: data?.summary || `New design applied for ${regenNiche}.` });
+      toast({
+        title: regenMode === "variants-only" ? "Layout updated" : "Design regenerated",
+        description: data?.summary || (regenMode === "variants-only" ? `Variants: ${summarizeVariants(regenVariants)}` : `New design applied for ${regenNiche}.`),
+      });
       setRegenTarget(null);
     } catch (err: any) {
-      toast({ title: "Regeneration failed", description: err.message, variant: "destructive" });
+      toast({ title: regenMode === "variants-only" ? "Layout update failed" : "Regeneration failed", description: err.message, variant: "destructive" });
     } finally {
       setRegenLoading(false);
     }
   };
+
 
   const createFromCsv = () => {
     if (!csvText.trim()) return;
