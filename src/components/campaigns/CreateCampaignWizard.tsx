@@ -1248,6 +1248,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </div>
                     </div>
                   )}
+                  {selectedTemplate && selectedTemplateVars.length > 0 && (
+                    <FillRulesPanel
+                      templateVars={selectedTemplateVars}
+                      csvHeaders={effectiveCsvHeaders}
+                      manualMappings={manualMappings}
+                      customValues={customValues}
+                      rules={fillRules}
+                      setRules={setFillRules}
+                      hasAiContext={!!(aiBusiness || aiNiche || aiServiceProduct)}
+                    />
+                  )}
                   {selectedTemplate && effectiveCsvHeaders.length > 0 && (
                     <>
                       {/* Smart auto-flow status banner */}
