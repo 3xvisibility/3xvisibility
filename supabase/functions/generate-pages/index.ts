@@ -565,6 +565,84 @@ IMPORTANT: Return ONLY the generated content text. No markdown formatting, no he
   }
 }
 
+/**
+ * Generate AI default values for unmapped template variables, in one batched
+ * call, using the campaign's niche / business / services context. Returns the
+ * same value for every row (template-level defaults) so it costs only 1 AI
+ * generation regardless of how many pages the campaign produces.
+ */
+async function generateAiVarDefaults(
+  variables: string[],
+  context: { business?: string; niche?: string; service?: string },
+  settings: { tone: string; contentLength: string; language: string },
+  apiKey: string,
+): Promise<Record<string, string>> {
+  if (variables.length === 0) return {};
+  const languageMap: Record<string, string> = {
+    en: "English", es: "Spanish", fr: "French", de: "German",
+    pt: "Portuguese", it: "Italian", nl: "Dutch", ja: "Japanese",
+    zh: "Chinese", ko: "Korean", ar: "Arabic",
+  };
+  const rawLang = (settings.language || "").trim();
+  const langName = languageMap[rawLang.toLowerCase()] || rawLang || "English";
+  const ctxLine = [
+    context.business && `Business: ${context.business}`,
+    context.niche && `Niche: ${context.niche}`,
+    context.service && `Services / products: ${context.service}`,
+  ].filter(Boolean).join("\n") || "(no extra context provided — infer reasonable values)";
+
+  const systemPrompt = `You generate default values for template variables of a programmatic SEO page.
+LANGUAGE: ALL values MUST be written in ${langName}. Never output another language.
+TONE: ${settings.tone}.
+Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels.`;
+  const userPrompt = `${ctxLine}
+
+For each variable name below, return a concise, realistic default value that fits the niche/services above.
+Variables: ${variables.join(", ")}
+
+Return ONLY a JSON object, no prose, no code fences. Example:
+{"variable_name": "value", "another": "value"}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      console.error("[AI-DEFAULTS] gateway error", response.status, await response.text());
+      return {};
+    }
+    const data = await response.json();
+    const raw = data.choices?.[0]?.message?.content || "{}";
+    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    let parsed: Record<string, unknown> = {};
+    try { parsed = JSON.parse(cleaned); } catch { parsed = {}; }
+    const out: Record<string, string> = {};
+    for (const v of variables) {
+      const val = parsed[v] ?? parsed[v.toLowerCase()];
+      if (typeof val === "string" && val.trim()) out[v] = val.trim();
+      else if (typeof val === "number" || typeof val === "boolean") out[v] = String(val);
+    }
+    return out;
+  } catch (err) {
+    console.error("[AI-DEFAULTS] failed", err);
+    return {};
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function generateSeoMetadata(
   pageTitle: string,
   pageContent: string,
