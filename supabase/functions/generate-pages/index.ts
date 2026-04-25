@@ -2512,8 +2512,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Final summary log including AI autofill stats
+    // Final summary log including AI autofill + vibe theme stats
     const aiFilledKeys = Object.keys(aiVarDefaults || {});
+    const summaryVibe = (((campaign.mapping || {}) as { vibe_theme?: VibeTheme }).vibe_theme) || null;
+    const vibeLabel = summaryVibe
+      ? `${summaryVibe.palette || "lovable"} · ${summaryVibe.typography || "modern"} · ${summaryVibe.density || "comfortable"}`
+      : "default";
     if (aiFilledKeys.length > 0) {
       try {
         await logEvent(
@@ -2521,7 +2525,17 @@ Deno.serve(async (req) => {
           campaign_id,
           user.id,
           "generation_summary",
-          `Generation complete: ${successCount} page(s) generated. AI auto-filled ${aiFilledKeys.length} variable(s) using niche/services context → ${aiFilledKeys.join(", ")}`,
+          `Generation complete: ${successCount} page(s) generated. AI auto-filled ${aiFilledKeys.length} variable(s) using niche/services context → ${aiFilledKeys.join(", ")}. Vibe theme: ${vibeLabel}.`,
+        );
+      } catch (_e) { /* best-effort */ }
+    } else if (summaryVibe) {
+      try {
+        await logEvent(
+          supabase,
+          campaign_id,
+          user.id,
+          "generation_summary",
+          `Generation complete: ${successCount} page(s) generated. Vibe theme: ${vibeLabel}.`,
         );
       } catch (_e) { /* best-effort */ }
     }
