@@ -21,6 +21,7 @@ interface WebsiteCardProps {
 
 export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCardProps) {
   const [editOpen, setEditOpen] = useState(false);
+  const [retransOpen, setRetransOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
