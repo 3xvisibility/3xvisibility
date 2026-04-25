@@ -23,6 +23,7 @@ import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websi
 import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
+import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
@@ -47,6 +48,7 @@ export default function WebsitesPage() {
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
+  const [siteLanguage, setSiteLanguage] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -117,6 +119,7 @@ export default function WebsitesPage() {
           type: siteType,
           credentials: buildCredentials(),
           workspace_id: wsId,
+          language: siteLanguage,
         },
       });
       if (error) throw error;
@@ -188,6 +191,7 @@ export default function WebsitesPage() {
     setWooConsumerSecret("");
     setSiteType("");
     setWpAuthMethod("application_password");
+    setSiteLanguage(null);
   };
 
   return (
@@ -288,6 +292,10 @@ export default function WebsitesPage() {
                       <p className="text-[11px] text-muted-foreground mt-1">Found in WooCommerce → Settings → Advanced → REST API</p>
                     </div>
                   </>
+                )}
+
+                {siteType && (
+                  <WebsiteLanguageSelect value={siteLanguage} onChange={setSiteLanguage} />
                 )}
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
