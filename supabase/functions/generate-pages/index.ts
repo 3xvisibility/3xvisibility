@@ -1838,14 +1838,14 @@ Deno.serve(async (req) => {
             // Still generate keywords via AI for test previews only to keep campaign publishing fast.
             if (shouldUseAiSeo) {
               try {
-                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
+                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY!, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
                 seoData.seo_keywords = aiSeo.seo_keywords;
                 aiGenerationsUsed++;
               } catch { /* keep empty keywords */ }
             }
           } else if (shouldUseAiSeo) {
             try {
-              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
+              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY!, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
               // Apply the user's chosen format to the AI-generated title
               seoData.seo_title = applyTitleFormat(
                 seoData.seo_title.replace(new RegExp(`\\s*[|—-]\\s*${(websiteName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, "i"), "")

@@ -257,7 +257,7 @@ QUALITY BAR: The result must look like a premium agency-built landing page — c
     };
     // Only match simple {word} tokens — not CSS blocks
     const vars = [...new Set((content.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || []))]
-      .filter(v => !isDesignVar(v));
+      .filter((v): v is string => typeof v === "string" && !isDesignVar(v));
 
     // Suggest a name from the prompt
     const nameMatch = prompt.match(/for\s+(?:a\s+)?(.+?)(?:\s+company|\s+business|\s+website|\s+page)?\.?$/i);
