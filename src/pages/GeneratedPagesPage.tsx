@@ -39,10 +39,14 @@ type GeneratedPage = Tables<"generated_pages"> & {
   websites?: { name: string } | null;
 };
 
-const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string }> = {
-  pending: { icon: Clock, color: "text-amber-500", bg: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  published: { icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
-  failed: { icon: AlertCircle, color: "text-destructive", bg: "bg-destructive/10 text-destructive border-destructive/20" },
+const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
+  queued:     { icon: Clock,         color: "text-muted-foreground", bg: "bg-muted text-muted-foreground border-border", label: "Queued" },
+  pending:    { icon: Clock,         color: "text-amber-500",        bg: "bg-amber-500/10 text-amber-600 border-amber-500/20", label: "Pending" },
+  generating: { icon: Loader2,       color: "text-primary",          bg: "bg-primary/10 text-primary border-primary/20", label: "Generating" },
+  publishing: { icon: SendIcon,      color: "text-blue-500",         bg: "bg-blue-500/10 text-blue-600 border-blue-500/20", label: "Publishing" },
+  published:  { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Published" },
+  done:       { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Done" },
+  failed:     { icon: AlertCircle,   color: "text-destructive",      bg: "bg-destructive/10 text-destructive border-destructive/20", label: "Failed" },
 };
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
