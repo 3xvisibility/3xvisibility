@@ -1217,6 +1217,33 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </Select>
                     )}
                   </div>
+                  {selectedTemplate && (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2.5">
+                      <div className="flex items-start gap-2">
+                        <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium">AI auto-fill for unmapped variables</p>
+                          <p className="text-[11px] text-muted-foreground leading-snug">
+                            If a variable has no CSV column or custom value, AI will fill it once using your niche &amp; services — same value across all rows (1 AI credit total).
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Business</Label>
+                          <Input value={aiBusiness} onChange={(e) => setAiBusiness(e.target.value)} placeholder="Acme Plumbing" className="h-8 rounded-lg text-xs" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Niche</Label>
+                          <Input value={aiNiche} onChange={(e) => setAiNiche(e.target.value)} placeholder="Home services" className="h-8 rounded-lg text-xs" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Services / products</Label>
+                          <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-8 rounded-lg text-xs" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {selectedTemplate && effectiveCsvHeaders.length > 0 && (
                     <>
                       {/* Smart auto-flow status banner */}
