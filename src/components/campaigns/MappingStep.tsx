@@ -197,6 +197,11 @@ interface MappingStepProps {
   /** FAQ mapping — optional. When provided, renders the FAQ column mapper. */
   faqPairs?: FaqPair[];
   setFaqPairs?: React.Dispatch<React.SetStateAction<FaqPair[]>>;
+  /** AI auto-fill context — when provided, enables the "AI Fill" button that
+   *  generates values for unmapped variables using niche/services context. */
+  aiContext?: { business?: string; niche?: string; service?: string };
+  /** Target language for AI-generated values (e.g. "fr"). Defaults to English. */
+  aiLanguage?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────
