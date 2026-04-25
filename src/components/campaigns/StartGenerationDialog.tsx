@@ -28,6 +28,8 @@ interface StartGenerationDialogProps {
   isPending: boolean;
   /** Currently locked site language (from connected website). Shown as the default. */
   siteLanguage?: string | null;
+  /** When true, the connected website language is locked and per-run overrides are disabled. */
+  siteLanguageLocked?: boolean;
   /**
    * Combined sample text (template + a few CSV rows) used to warn the user when
    * the source content language doesn't match the connected site language.
@@ -52,6 +54,7 @@ export function StartGenerationDialog({
   onStart,
   isPending,
   siteLanguage,
+  siteLanguageLocked = false,
   languageSampleText,
 }: StartGenerationDialogProps) {
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
@@ -73,7 +76,7 @@ export function StartGenerationDialog({
 
   // Detect language of template + CSV sample and compare against the
   // language we'll actually generate in (override if set, else site lang).
-  const effectiveTargetLang = languageOverrideEnabled ? languageOverride : siteLanguage;
+  const effectiveTargetLang = (languageOverrideEnabled && !siteLanguageLocked) ? languageOverride : siteLanguage;
   const detection = languageSampleText ? detectTextLanguage(languageSampleText) : null;
   const mismatchInfo = detection?.language
     ? compareWithSiteLanguage(detection.language, effectiveTargetLang)
@@ -93,7 +96,7 @@ export function StartGenerationDialog({
     if (retryFailedOnly) {
       options.retry_failed_only = true;
     }
-    if (languageOverrideEnabled && languageOverride) {
+    if (languageOverrideEnabled && languageOverride && !siteLanguageLocked) {
       options.language_override = languageOverride;
     }
     onStart(options);
@@ -222,13 +225,21 @@ export function StartGenerationDialog({
                 <div>
                   <Label className="text-sm font-semibold">Override site language</Label>
                   <p className="text-[11px] text-muted-foreground">
-                    This run only — site stays locked to <span className="font-medium text-foreground">{siteLangLabel}</span>
+                    {siteLanguageLocked ? (
+                      <>Locked to <span className="font-medium text-foreground">{siteLangLabel}</span> — unlock in website settings to override.</>
+                    ) : (
+                      <>This run only — site stays locked to <span className="font-medium text-foreground">{siteLangLabel}</span></>
+                    )}
                   </p>
                 </div>
               </div>
-              <Switch checked={languageOverrideEnabled} onCheckedChange={setLanguageOverrideEnabled} />
+              <Switch
+                checked={languageOverrideEnabled && !siteLanguageLocked}
+                onCheckedChange={setLanguageOverrideEnabled}
+                disabled={siteLanguageLocked}
+              />
             </div>
-            {languageOverrideEnabled && (
+            {languageOverrideEnabled && !siteLanguageLocked && (
               <Select value={languageOverride} onValueChange={setLanguageOverride}>
                 <SelectTrigger>
                   <SelectValue placeholder="Pick a language for this run" />
