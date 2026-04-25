@@ -887,8 +887,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields, publish_mode: body.publish_mode, retry_failed_only: body.retry_failed_only }));
-    const { campaign_id, action, test_mode, overwrite_fields, publish_mode, retry_failed_only } = body;
+    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields, publish_mode: body.publish_mode, retry_failed_only: body.retry_failed_only, language_override: body.language_override }));
+    const { campaign_id, action, test_mode, overwrite_fields, publish_mode, retry_failed_only, language_override } = body;
     activeCampaignId = campaign_id ?? null;
     // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
     const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
