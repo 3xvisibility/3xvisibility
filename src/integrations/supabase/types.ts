@@ -2081,7 +2081,14 @@ export type Database = {
         | "failed"
         | "cancelled"
       indexing_status: "pending" | "submitted" | "indexed" | "failed"
-      page_status: "pending" | "published" | "failed"
+      page_status:
+        | "pending"
+        | "published"
+        | "failed"
+        | "queued"
+        | "generating"
+        | "publishing"
+        | "done"
       website_status: "connected" | "error" | "disconnected"
       website_type: "wordpress" | "shopify" | "prestashop" | "woocommerce"
       workspace_role: "owner" | "admin" | "member" | "readonly"
@@ -2224,7 +2231,15 @@ export const Constants = {
         "cancelled",
       ],
       indexing_status: ["pending", "submitted", "indexed", "failed"],
-      page_status: ["pending", "published", "failed"],
+      page_status: [
+        "pending",
+        "published",
+        "failed",
+        "queued",
+        "generating",
+        "publishing",
+        "done",
+      ],
       website_status: ["connected", "error", "disconnected"],
       website_type: ["wordpress", "shopify", "prestashop", "woocommerce"],
       workspace_role: ["owner", "admin", "member", "readonly"],
