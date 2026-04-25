@@ -1221,17 +1221,30 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </Select>
                     )}
                   </div>
-                  {selectedTemplate && (
-                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2.5">
-                      <div className="flex items-start gap-2">
-                        <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium">AI auto-fill for unmapped variables</p>
-                          <p className="text-[11px] text-muted-foreground leading-snug">
-                            If a variable has no CSV column or custom value, AI will fill it once using your niche &amp; services — same value across all rows (1 AI credit total).
-                          </p>
+                  {selectedTemplate && (() => {
+                    const targetSite = websites.find((w) => w.id === (selectedWebsite || websiteForPages));
+                    const siteLang = (targetSite as { language?: string | null } | undefined)?.language;
+                    const siteLocked = !!(targetSite as { language_locked?: boolean } | undefined)?.language_locked;
+                    const effectiveLangCode = (siteLang || campaignLanguage || "en").toString();
+                    const langLabel = LANGUAGES.find((l) => l.code === effectiveLangCode.toLowerCase())?.label || effectiveLangCode;
+                    return (
+                      <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2.5">
+                        <div className="flex items-start gap-2">
+                          <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium flex items-center gap-1.5 flex-wrap">
+                              AI auto-fill for unmapped variables
+                              <Badge variant="outline" className="h-4 px-1.5 text-[9px] gap-1 border-primary/30 text-primary">
+                                <Globe className="h-2.5 w-2.5" />
+                                {langLabel}
+                                {siteLocked && <span title="Locked by site">🔒</span>}
+                              </Badge>
+                            </p>
+                            <p className="text-[11px] text-muted-foreground leading-snug">
+                              AI will write all values in <strong className="text-foreground">{langLabel}</strong>{siteLocked ? " (locked by the connected site)" : siteLang ? " (from connected site)" : " (from campaign language)"} — even if your business / niche / services text below is in English.
+                            </p>
+                          </div>
                         </div>
-                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <div className="space-y-1">
                           <Label className="text-[11px] text-muted-foreground">Business</Label>
@@ -1245,9 +1258,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           <Label className="text-[11px] text-muted-foreground">Services / products</Label>
                           <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-8 rounded-lg text-xs" />
                         </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   {selectedTemplate && selectedTemplateVars.length > 0 && (
                     <FillRulesPanel
                       templateVars={selectedTemplateVars}
