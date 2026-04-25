@@ -1336,6 +1336,7 @@ export default function CampaignDetailPage() {
         totalRows={campaign?.total_rows || 0}
         failedRowsCount={statusCounts.failed}
         isPending={executeMutation.isPending}
+        siteLanguage={(campaign as any)?.websites?.language ?? null}
         onStart={(options) => {
           executeMutation.mutate({ generation_options: options });
         }}
