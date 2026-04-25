@@ -106,6 +106,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [targetFieldMappings, setTargetFieldMappings] = useState<Record<string, string>>({});
   const [faqPairs, setFaqPairs] = useState<import("./FaqMappingPanel").FaqPair[]>([]);
   const [fillRules, setFillRules] = useState<Record<string, import("./FillRulesPanel").FillRule>>({});
+  const [aiFillMode, setAiFillMode] = useState<"per_campaign" | "per_row">("per_campaign");
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
