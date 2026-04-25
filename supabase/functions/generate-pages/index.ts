@@ -1615,16 +1615,33 @@ Deno.serve(async (req) => {
             return rawVal;
           });
 
-          // Standard variable replacement for any remaining placeholders
+          // Per-variable fill rules: ai_only / ai_first override CSV.
+          type FillRule = "csv_first" | "csv_only" | "ai_only" | "ai_first";
+          const _fillRules = (((campaign.mapping || {}) as { fill_rules?: Record<string, FillRule> }).fill_rules) || {};
+          const _ruleFor = (v: string): FillRule => (_fillRules[v] || _fillRules[v.toLowerCase()] || "csv_first");
+
+          // 1. Apply AI defaults first when rule is ai_only or ai_first.
+          for (const [key, value] of Object.entries(aiVarDefaults)) {
+            const rule = _ruleFor(key);
+            if (rule === "ai_only" || rule === "ai_first") {
+              if (value || rule === "ai_only") {
+                pageContent = pageContent.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+              }
+            }
+          }
+
+          // 2. Standard CSV/row variable replacement for remaining placeholders.
           for (const [key, value] of Object.entries(row)) {
+            const rule = _ruleFor(key);
+            if (rule === "ai_only") continue; // CSV must be ignored
             const regex = new RegExp(`\\{${key}\\}`, "gi");
             pageContent = pageContent.replace(regex, value || "");
           }
 
-          // AI auto-fill fallback for variables that have no CSV/mapping value.
-          // These were generated once before the batch loop using niche/services
-          // context, and the same value is reused across every row.
+          // 3. AI fallback for any still-unfilled placeholders (csv_first when CSV empty).
           for (const [key, value] of Object.entries(aiVarDefaults)) {
+            const rule = _ruleFor(key);
+            if (rule === "ai_only" || rule === "ai_first") continue; // already applied
             const regex = new RegExp(`\\{${key}\\}`, "gi");
             pageContent = pageContent.replace(regex, value || "");
           }
