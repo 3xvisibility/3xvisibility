@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Loader2, Zap } from "lucide-react";
+import { Plus, Loader2, Zap, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/audit";
@@ -137,6 +137,37 @@ export default function WebsitesPage() {
     },
   });
 
+  const buildTestUrl = () =>
+    siteType === "shopify" && shopDomain
+      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : siteUrl;
+
+  const detectLanguageMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("detect-site-language", {
+        body: { url: buildTestUrl(), type: siteType, credentials: buildCredentials() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data?.language as string | null;
+    },
+    onSuccess: (lang) => {
+      if (lang) {
+        setSiteLanguage(lang);
+        toast({ title: "Site language detected", description: `Preselected: ${lang}` });
+      } else {
+        toast({
+          title: "Could not detect language",
+          description: "Please pick the site language manually.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (err: Error) => {
+      toast({ title: "Detection failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const testConnectionMutation = useMutation({
     mutationFn: async () => {
       if (siteType === "shopify") {
@@ -144,11 +175,8 @@ export default function WebsitesPage() {
         const tErr = validateShopifyToken(shopifyToken);
         if (dErr || tErr) throw new Error(dErr || tErr || "Invalid Shopify credentials");
       }
-      const testUrl = siteType === "shopify" && shopDomain
-        ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
-        : siteUrl;
       const { data, error } = await supabase.functions.invoke("test-connection", {
-        body: { url: testUrl, type: siteType, credentials: buildCredentials() },
+        body: { url: buildTestUrl(), type: siteType, credentials: buildCredentials() },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -156,6 +184,8 @@ export default function WebsitesPage() {
     },
     onSuccess: (data) => {
       toast({ title: "Connection successful", description: data.message });
+      // Auto-detect site language after successful connection (only if not already chosen).
+      if (!siteLanguage) detectLanguageMutation.mutate();
     },
     onError: (err: Error) => {
       toast({ title: "Connection failed", description: err.message, variant: "destructive" });
@@ -295,7 +325,26 @@ export default function WebsitesPage() {
                 )}
 
                 {siteType && (
-                  <WebsiteLanguageSelect value={siteLanguage} onChange={setSiteLanguage} />
+                  <div className="space-y-2">
+                    <WebsiteLanguageSelect value={siteLanguage} onChange={setSiteLanguage} />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => detectLanguageMutation.mutate()}
+                      disabled={
+                        !(siteType === "shopify" ? shopDomain : siteUrl) ||
+                        detectLanguageMutation.isPending
+                      }
+                    >
+                      {detectLanguageMutation.isPending ? (
+                        <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Detecting…</>
+                      ) : (
+                        <><Languages className="h-3 w-3 mr-1" /> Auto-detect from site</>
+                      )}
+                    </Button>
+                  </div>
                 )}
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
