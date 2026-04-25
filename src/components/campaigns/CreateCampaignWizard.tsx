@@ -534,6 +534,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
             niche: aiNiche || "",
             service: aiServiceProduct || "",
           },
+          // Per-variable rules controlling CSV vs AI fill behavior.
+          fill_rules: fillRules,
         } as any,
         publish_mode: publishMode,
         generation_method: generationMethod,
