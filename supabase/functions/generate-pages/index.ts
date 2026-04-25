@@ -578,13 +578,7 @@ async function generateAiVarDefaults(
   apiKey: string,
 ): Promise<Record<string, string>> {
   if (variables.length === 0) return {};
-  const languageMap: Record<string, string> = {
-    en: "English", es: "Spanish", fr: "French", de: "German",
-    pt: "Portuguese", it: "Italian", nl: "Dutch", ja: "Japanese",
-    zh: "Chinese", ko: "Korean", ar: "Arabic",
-  };
-  const rawLang = (settings.language || "").trim();
-  const langName = languageMap[rawLang.toLowerCase()] || rawLang || "English";
+  const langName = resolveLanguageName(settings.language);
   const ctxLine = [
     context.business && `Business: ${context.business}`,
     context.niche && `Niche: ${context.niche}`,
@@ -592,16 +586,22 @@ async function generateAiVarDefaults(
   ].filter(Boolean).join("\n") || "(no extra context provided — infer reasonable values)";
 
   const systemPrompt = `You generate default values for template variables of a programmatic SEO page.
-LANGUAGE: ALL values MUST be written in ${langName}. Never output another language.
+
+CRITICAL LANGUAGE RULE: ALL values MUST be written in ${langName}. This is non-negotiable.
+- Translate any English business / niche / services context above into ${langName} before generating.
+- Brand names stay in their original form, but every other word (services, descriptions, CTAs, locations qualifiers) MUST be in ${langName}.
+- Never mix languages within a single value.
+- If ${langName} is not English and you would naturally write the value in English, STOP and rewrite it in ${langName}.
+
 TONE: ${settings.tone}.
-Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels.`;
+Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels, no language tags.`;
   const userPrompt = `${ctxLine}
 
-For each variable name below, return a concise, realistic default value that fits the niche/services above.
+For each variable name below, return a concise, realistic default value that fits the niche/services above, written in ${langName}.
 Variables: ${variables.join(", ")}
 
 Return ONLY a JSON object, no prose, no code fences. Example:
-{"variable_name": "value", "another": "value"}`;
+{"variable_name": "value in ${langName}", "another": "value in ${langName}"}`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
