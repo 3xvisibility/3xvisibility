@@ -578,6 +578,14 @@ async function generateSeoMetadata(
     ? `\nWebsite: ${websiteContext.name || ""}${websiteContext.url ? ` (${websiteContext.url})` : ""}`
     : "";
 
+  const languageMap: Record<string, string> = {
+    en: "English", es: "Spanish", fr: "French", de: "German",
+    pt: "Portuguese", it: "Italian", nl: "Dutch", ja: "Japanese",
+    zh: "Chinese", ko: "Korean", ar: "Arabic",
+  };
+  const rawLang = (settings.language || "").trim();
+  const resolvedLangName = languageMap[rawLang.toLowerCase()] || rawLang || "English";
+
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -590,18 +598,20 @@ async function generateSeoMetadata(
         messages: [
           {
             role: "system",
-            content: `You are a Rank Math / Yoast SEO expert. Generate metadata that scores 90+ on these plugins.\nTone: ${settings.tone}\nLanguage: ${settings.language}${websiteInfo}
+            content: `You are a Rank Math / Yoast SEO expert. Generate metadata that scores 90+ on these plugins.\nTone: ${settings.tone}${websiteInfo}
+
+CRITICAL LANGUAGE RULE: ALL output (seo_title, seo_description, seo_keywords) MUST be written in ${resolvedLangName}. This is the website's primary language and is non-negotiable. If the source title/content is in another language (e.g. English), TRANSLATE the metadata into ${resolvedLangName}. Never output English unless ${resolvedLangName} IS English.
 
 STRICT RULES FOR HIGH SCORES:
 1. seo_title: 30-60 chars. Put the EXACT primary focus keyword within the first 18 characters. Include a brand/action word. Format: "Focus Keyword - Action | Brand"
 2. seo_description: 120-156 chars. Must contain the EXACT focus keyword phrase + a CTA (call, buy, get, order) + a benefit word (best, trusted, fast, easy) + a local cue (local, nearby, serving).
 3. seo_keywords: First item MUST be the exact primary focus keyword (2-4 word phrase). Include 4-7 additional LSI/related keywords.
 4. The primary focus keyword should be the most specific, meaningful 2-4 word phrase from the page title/content. NOT generic words like "best product" but specific like "manual poppy seed mill".
-5. Keep everything in the SAME LANGUAGE as the page content.`,
+5. All CTAs, benefit words, and local cues MUST be expressed in ${resolvedLangName} (translate them if needed — e.g. "buy" → "acheter" in French).`,
           },
           {
             role: "user",
-            content: `Generate Rank Math/Yoast-optimized SEO metadata for:\n\nTitle: ${pageTitle}\n\nContent:\n${snippet}`,
+            content: `Generate Rank Math/Yoast-optimized SEO metadata for:\n\nTitle: ${pageTitle}\n\nContent:\n${snippet}\n\nReminder: Output language MUST be ${resolvedLangName}.`,
           },
         ],
         tools: [
