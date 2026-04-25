@@ -1841,7 +1841,25 @@ Deno.serve(async (req) => {
             // Only auto-generate FAQ when the template did NOT already declare
             // a FAQPage schema (avoids duplicate FAQPage JSON-LD).
             if (tplSchemaType !== "FAQPage") {
-              const faq = buildAutoFaq(pageContent, row);
+              // Project user-mapped CSV columns into the normalized faq_q1/faq_a1
+              // keys that buildAutoFaq already understands. Existing keys on the
+              // row are preserved (mapping wins only when both sides are set).
+              const faqMapping = ((campaign as any)?.mapping?.faq_pairs ?? []) as Array<{
+                question?: string;
+                answer?: string;
+              }>;
+              const faqRow: Record<string, string> = { ...row };
+              let slot = 1;
+              for (const pair of faqMapping) {
+                const q = pair?.question ? row[pair.question] : "";
+                const a = pair?.answer ? row[pair.answer] : "";
+                if (q && a) {
+                  faqRow[`faq_q${slot}`] = q;
+                  faqRow[`faq_a${slot}`] = a;
+                  slot++;
+                }
+              }
+              const faq = buildAutoFaq(pageContent, faqRow);
               aiFaqHtml = faq.html;
               aiFaqJsonLd = faq.jsonLd || "";
             }

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { FaqMappingPanel, type FaqPair } from "./FaqMappingPanel";
 
 // ─── Structured target fields ─────────────────────────────────────
 
@@ -193,6 +194,9 @@ interface MappingStepProps {
   targetFieldMappings: Record<string, string>;
   setTargetFieldMappings: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   workspaceId: string;
+  /** FAQ mapping — optional. When provided, renders the FAQ column mapper. */
+  faqPairs?: FaqPair[];
+  setFaqPairs?: React.Dispatch<React.SetStateAction<FaqPair[]>>;
 }
 
 // ─── Component ────────────────────────────────────────────────────
@@ -211,6 +215,8 @@ export function MappingStep({
   targetFieldMappings,
   setTargetFieldMappings,
   workspaceId,
+  faqPairs,
+  setFaqPairs,
 }: MappingStepProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [saveProfileName, setSaveProfileName] = useState("");
@@ -745,6 +751,15 @@ export function MappingStep({
             ))}
           </div>
         </div>
+      )}
+
+      {/* FAQ column mapping (optional, controlled by parent) */}
+      {setFaqPairs && (
+        <FaqMappingPanel
+          csvHeaders={csvHeaders}
+          pairs={faqPairs ?? []}
+          onChange={(next) => setFaqPairs(next)}
+        />
       )}
 
       {/* Save Profile Dialog */}
