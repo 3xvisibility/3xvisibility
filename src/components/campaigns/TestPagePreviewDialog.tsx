@@ -1,9 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle2, XCircle, ShieldAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, XCircle, ShieldAlert, Code2 } from "lucide-react";
 import type { RenderResult } from "@/lib/renderer";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
+import { validateJsonLdInHtml } from "@/lib/jsonld-validator";
 import { useMemo } from "react";
 
 interface TestPagePreviewDialogProps {
@@ -28,6 +29,17 @@ export function TestPagePreviewDialog({ open, onOpenChange, result }: TestPagePr
   }, [result]);
 
   const summary = useMemo(() => seoResults ? getSeoRuleSummary(seoResults) : null, [seoResults]);
+
+  // US — Server-side JSON-LD validation, mirrored client-side for the preview.
+  const jsonLdValidation = useMemo(() => {
+    if (!result) return null;
+    // Validate both the inline JSON-LD (always present in result.jsonLd) and
+    // any additional <script type="application/ld+json"> blocks injected into
+    // the rendered HTML.
+    const combined = `${result.jsonLd || ""}\n${result.html || ""}`;
+    return validateJsonLdInHtml(combined);
+  }, [result]);
+
 
   if (!result) return null;
 
