@@ -759,7 +759,7 @@ export function autoRepairContent(
   const transitionRegex = /(however|therefore|additionally|moreover|furthermore|also|because|for example|in addition|as a result|first|next|finally|meanwhile|instead)/gi;
   const transitionCount = (html.replace(/<[^>]*>/g, " ").match(transitionRegex) || []).length;
   if (transitionCount < 3) {
-    const transitionBlock = `<p>Additionally, our team is committed to quality. Moreover, we focus on results. Therefore, you can rely on us for consistent service.</p>`;
+    const transitionBlock = pack.transitionBlock;
     const lastP = html.lastIndexOf("</p>");
     if (lastP > 0) {
       html = html.slice(0, lastP + 4) + `\n${transitionBlock}` + html.slice(lastP + 4);
