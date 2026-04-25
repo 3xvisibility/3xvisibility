@@ -3,6 +3,7 @@ import { autoRepairContent, derivePrimaryKeyword } from "../_shared/seo-quality.
 import { buildMultiEngineMeta, buildAutoFaq, buildExtraJsonLd } from "../_shared/seo-meta.ts";
 import { validateJsonLdInHtml, summarizeValidation } from "../_shared/jsonld-validator.ts";
 import { resolveLanguageName } from "../_shared/languages.ts";
+import { buildVibeOverrideStyles, type VibeTheme } from "../_shared/vibe-theme.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2033,6 +2034,10 @@ Deno.serve(async (req) => {
           const canonicalTag = canonicalUrl ? `<link rel="canonical" href="${canonicalUrl}">` : "";
           // Wrap content with responsive stylesheet and container
           const responsiveStyles = buildResponsiveStylesheet();
+          // Per-campaign vibe theme override (palette, typography, density).
+          // Returns "" when the campaign uses the default vibe.
+          const vibeTheme = (((campaign.mapping || {}) as { vibe_theme?: VibeTheme }).vibe_theme) || null;
+          const vibeOverride = buildVibeOverrideStyles(vibeTheme);
 
           // ── Additive SEO enhancements (multi-engine + AI-friendly) ──
           // These never replace existing tags; they are appended so any
@@ -2088,7 +2093,7 @@ Deno.serve(async (req) => {
             console.warn("[GENERATE-PAGES] Extended SEO enhancements skipped:", (extErr as Error).message);
           }
 
-          pageContent = `${ogTags}\n${extendedSeo}\n${canonicalTag}\n${jsonLd}\n${extraJsonLd}\n${aiFaqJsonLd}\n${responsiveStyles}\n<div class="pgp-page">\n${pageContent}${aiFaqHtml}\n</div>`;
+          pageContent = `${ogTags}\n${extendedSeo}\n${canonicalTag}\n${jsonLd}\n${extraJsonLd}\n${aiFaqJsonLd}\n${responsiveStyles}\n${vibeOverride}\n<div class="pgp-page">\n${pageContent}${aiFaqHtml}\n</div>`;
 
           // ── Server-side JSON-LD validation (non-blocking) ──
           // We validate every <script type="application/ld+json"> block we
@@ -2507,8 +2512,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Final summary log including AI autofill stats
+    // Final summary log including AI autofill + vibe theme stats
     const aiFilledKeys = Object.keys(aiVarDefaults || {});
+    const summaryVibe = (((campaign.mapping || {}) as { vibe_theme?: VibeTheme }).vibe_theme) || null;
+    const vibeLabel = summaryVibe
+      ? `${summaryVibe.palette || "lovable"} · ${summaryVibe.typography || "modern"} · ${summaryVibe.density || "comfortable"}`
+      : "default";
     if (aiFilledKeys.length > 0) {
       try {
         await logEvent(
@@ -2516,7 +2525,17 @@ Deno.serve(async (req) => {
           campaign_id,
           user.id,
           "generation_summary",
-          `Generation complete: ${successCount} page(s) generated. AI auto-filled ${aiFilledKeys.length} variable(s) using niche/services context → ${aiFilledKeys.join(", ")}`,
+          `Generation complete: ${successCount} page(s) generated. AI auto-filled ${aiFilledKeys.length} variable(s) using niche/services context → ${aiFilledKeys.join(", ")}. Vibe theme: ${vibeLabel}.`,
+        );
+      } catch (_e) { /* best-effort */ }
+    } else if (summaryVibe) {
+      try {
+        await logEvent(
+          supabase,
+          campaign_id,
+          user.id,
+          "generation_summary",
+          `Generation complete: ${successCount} page(s) generated. Vibe theme: ${vibeLabel}.`,
         );
       } catch (_e) { /* best-effort */ }
     }
