@@ -124,6 +124,8 @@ Deno.serve(async (req) => {
       services?: string;
       business?: string;
       vibe?: VibeHint;
+      variants?: SectionVariants;
+      mode?: "full" | "variants-only"; // variants-only skips AI (free + instant)
     };
 
     const content = (body.content || "").toString();
@@ -131,12 +133,27 @@ Deno.serve(async (req) => {
     const services = (body.services || "").trim();
     const business = (body.business || "").trim();
     const vibe = body.vibe || {};
+    const variants = body.variants || {};
+    const mode = body.mode === "variants-only" ? "variants-only" : "full";
 
     if (!content) {
       return new Response(JSON.stringify({ error: "Template content is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ── Variants-only mode: just re-apply the layout variant CSS, no AI call.
+    if (mode === "variants-only") {
+      const newContent = applyVariantsToTemplate(content, variants);
+      const summary = `Applied layout variants — ${
+        Object.entries(variants).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(" · ") || "defaults"
+      }.`;
+      return new Response(JSON.stringify({ content: newContent, summary }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Full regenerate: niche required, run AI, then layer variants on top.
     if (!niche) {
       return new Response(JSON.stringify({ error: "A target niche is required to regenerate the design." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -152,9 +169,14 @@ Deno.serve(async (req) => {
     }
 
     const { stripped, hadStyle } = stripExistingStyles(content);
-    const newContent = `${styleBlock}\n${stripped}`.trim();
+    let newContent = `${styleBlock}\n${stripped}`.trim();
+    // Re-apply variants if user picked any
+    if (Object.values(variants).some(Boolean)) {
+      newContent = applyVariantsToTemplate(newContent, variants);
+    }
 
-    const summary = `Regenerated design for niche "${niche}"${services ? ` (services: ${services})` : ""}${hadStyle ? " — replaced existing styles" : " — added a fresh style block"}.`;
+    const variantSummary = Object.entries(variants).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(" · ");
+    const summary = `Regenerated design for niche "${niche}"${services ? ` (services: ${services})` : ""}${hadStyle ? " — replaced existing styles" : " — added a fresh style block"}${variantSummary ? ` · variants: ${variantSummary}` : ""}.`;
 
     return new Response(JSON.stringify({ content: newContent, summary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
