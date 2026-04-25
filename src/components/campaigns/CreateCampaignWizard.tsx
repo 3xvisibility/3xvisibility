@@ -563,6 +563,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
             palette: vibePalette,
             typography: vibeTypography,
             density: vibeDensity,
+            // Optional brand overrides — only persisted when non-empty so the
+            // edge function can fast-path default themes.
+            customVars: (() => {
+              const parsed = parseCustomVarsInput(vibeCustomVarsText);
+              return Object.keys(parsed).length ? parsed : undefined;
+            })(),
+            customCss: vibeCustomCss.trim() || undefined,
           },
         } as any,
         publish_mode: publishMode,
