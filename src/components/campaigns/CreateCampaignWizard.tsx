@@ -237,6 +237,26 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     dataSource === "ai" ? (selectedTemplateVars.length > 0 ? selectedTemplateVars : Object.keys(aiGeneratedRows[0] || {})) :
     csvHeaders;
 
+  // Auto-clear FAQ pairs whenever the underlying CSV/data-source signature changes,
+  // so users don't accidentally carry mappings from a previous CSV into a new upload.
+  // We track a stable signature (sorted headers + dataSource) and skip the very first
+  // run so that loading an existing draft / opening the wizard doesn't wipe state.
+  const headersSignature = useMemo(
+    () => `${dataSource}:${[...effectiveCsvHeaders].sort().join("|")}`,
+    [dataSource, effectiveCsvHeaders],
+  );
+  const lastHeadersSignatureRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastHeadersSignatureRef.current === null) {
+      lastHeadersSignatureRef.current = headersSignature;
+      return;
+    }
+    if (lastHeadersSignatureRef.current !== headersSignature) {
+      lastHeadersSignatureRef.current = headersSignature;
+      setFaqPairs((prev) => (prev.length > 0 ? [] : prev));
+    }
+  }, [headersSignature]);
+
   const variableMapping = useMemo(() => {
     const headers = effectiveCsvHeaders;
     if (selectedTemplateVars.length === 0 || headers.length === 0) return null;
