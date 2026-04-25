@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap } from "lucide-react";
+import { Loader2, Zap, Lock } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -164,6 +165,26 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
             <div>
               <Label htmlFor="edit-url">Site URL</Label>
               <Input id="edit-url" value={url} onChange={(e) => setUrl(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <WebsiteLanguageSelect value={language} onChange={setLanguage} />
+              <div className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+                <div className="flex items-start gap-2 min-w-0">
+                  <Lock className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <Label htmlFor="edit-lang-lock" className="text-sm font-medium">Lock language</Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      When on, campaign per-run overrides and edits cannot change this site's language.
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="edit-lang-lock"
+                  checked={languageLocked}
+                  onCheckedChange={setLanguageLocked}
+                  disabled={!language}
+                />
+              </div>
             </div>
           </TabsContent>
 
