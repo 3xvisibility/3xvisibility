@@ -371,6 +371,68 @@ export function MappingStep({
     });
   }, [resolvedMapping, filterCategory, targetFieldMappings]);
 
+  // ─── AI Fill: variables eligible for on-demand AI generation ─────
+  // Excludes variables that are already mapped (CSV / custom) and any
+  // special tokens like {AI:…}, {MAP:…}, {YOUTUBE:…} etc.
+  const aiFillCandidates = useMemo(() => {
+    const reservedPrefixes = ["AI:", "AI_IMAGE:", "MAP:", "YOUTUBE:", "IMAGE:", "WEATHER:", "GEO_BLOCKS"];
+    return resolvedMapping
+      .filter(m => !m.column && !m.customValue)
+      .filter(m => {
+        const v = m.variable;
+        if (!v || v.includes(":")) return false;
+        if (reservedPrefixes.some(p => v.toUpperCase().startsWith(p))) return false;
+        return !isSpecialVar(v);
+      })
+      .map(m => m.variable);
+  }, [resolvedMapping]);
+
+  const hasAiContext = !!(aiContext?.business || aiContext?.niche || aiContext?.service);
+  const canAiFill = aiFillCandidates.length > 0 && hasAiContext;
+
+  const handleAiFill = async () => {
+    if (aiFillCandidates.length === 0) {
+      toast({ title: "Nothing to fill", description: "Every variable is already mapped or has a custom value." });
+      return;
+    }
+    if (!hasAiContext) {
+      toast({
+        title: "Add business context first",
+        description: "Fill in business, niche, or services in the AI auto-fill card above so the AI knows what to generate.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setAiFilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-fill-variables", {
+        body: {
+          variables: aiFillCandidates,
+          context: aiContext,
+          settings: { language: aiLanguage || "en", tone: "professional", contentLength: "medium" },
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const values = (data?.values || {}) as Record<string, string>;
+      const filledKeys = Object.keys(values);
+      if (filledKeys.length === 0) {
+        toast({ title: "No values generated", description: "The AI returned no usable values — try refining your niche/services.", variant: "destructive" });
+        return;
+      }
+      setCustomValues(prev => ({ ...prev, ...values }));
+      toast({
+        title: "AI filled " + filledKeys.length + " variable(s)",
+        description: filledKeys.join(", "),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI fill failed";
+      toast({ title: "AI fill failed", description: msg, variant: "destructive" });
+    } finally {
+      setAiFilling(false);
+    }
+  };
+
   if (templateVars.length === 0 || csvHeaders.length === 0) return null;
 
   return (
