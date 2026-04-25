@@ -256,6 +256,7 @@ export default function CampaignDetailPage() {
           overwrite_fields: params?.overwrite_fields || undefined,
           publish_mode: opts?.publish_mode,
           retry_failed_only: opts?.retry_failed_only,
+          language_override: opts?.language_override,
         },
       });
       if (error) {
