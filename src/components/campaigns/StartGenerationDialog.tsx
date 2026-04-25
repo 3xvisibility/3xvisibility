@@ -45,6 +45,7 @@ export function StartGenerationDialog({
   failedRowsCount,
   onStart,
   isPending,
+  siteLanguage,
 }: StartGenerationDialogProps) {
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
@@ -52,12 +53,16 @@ export function StartGenerationDialog({
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
   const [scheduledAt, setScheduledAt] = useState("");
   const [retryFailedOnly, setRetryFailedOnly] = useState(false);
+  const [languageOverrideEnabled, setLanguageOverrideEnabled] = useState(false);
+  const [languageOverride, setLanguageOverride] = useState<string>("English");
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
     : maxRowsEnabled
     ? Math.min(maxRows, totalRows)
     : totalRows;
+
+  const siteLangLabel = siteLanguage && siteLanguage.trim().length > 0 ? siteLanguage : "Auto-detect";
 
   const handleStart = () => {
     const options: GenerationOptions = {
@@ -71,6 +76,9 @@ export function StartGenerationDialog({
     }
     if (retryFailedOnly) {
       options.retry_failed_only = true;
+    }
+    if (languageOverrideEnabled && languageOverride) {
+      options.language_override = languageOverride;
     }
     onStart(options);
   };
