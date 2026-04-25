@@ -2093,7 +2093,7 @@ Deno.serve(async (req) => {
             console.warn("[GENERATE-PAGES] Extended SEO enhancements skipped:", (extErr as Error).message);
           }
 
-          pageContent = `${ogTags}\n${extendedSeo}\n${canonicalTag}\n${jsonLd}\n${extraJsonLd}\n${aiFaqJsonLd}\n${responsiveStyles}\n<div class="pgp-page">\n${pageContent}${aiFaqHtml}\n</div>`;
+          pageContent = `${ogTags}\n${extendedSeo}\n${canonicalTag}\n${jsonLd}\n${extraJsonLd}\n${aiFaqJsonLd}\n${responsiveStyles}\n${vibeOverride}\n<div class="pgp-page">\n${pageContent}${aiFaqHtml}\n</div>`;
 
           // ── Server-side JSON-LD validation (non-blocking) ──
           // We validate every <script type="application/ld+json"> block we
