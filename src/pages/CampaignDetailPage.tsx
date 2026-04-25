@@ -1337,6 +1337,12 @@ export default function CampaignDetailPage() {
         failedRowsCount={statusCounts.failed}
         isPending={executeMutation.isPending}
         siteLanguage={(campaign as any)?.websites?.language ?? null}
+        languageSampleText={[
+          templateContent || "",
+          ...(((campaign?.csv_data as Record<string, string>[]) || [])
+            .slice(0, 5)
+            .map((row) => Object.values(row || {}).join(" "))),
+        ].join("\n")}
         onStart={(options) => {
           executeMutation.mutate({ generation_options: options });
         }}

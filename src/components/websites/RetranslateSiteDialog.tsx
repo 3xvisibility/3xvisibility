@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Languages, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, Languages, CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 
 interface Props {
   open: boolean;
@@ -34,6 +35,31 @@ export function RetranslateSiteDialog({ open, onOpenChange, websiteId, websiteNa
   const queryClient = useQueryClient();
 
   const hasLanguage = !!(siteLanguage && siteLanguage.trim());
+
+  // Sample the most recent pages on this site to detect their actual language
+  // and warn the user when it doesn't match the locked site language.
+  const { data: sampleDetection } = useQuery({
+    queryKey: ["retranslate-lang-sample", websiteId, count, open],
+    enabled: open && hasLanguage && !!websiteId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("generated_pages")
+        .select("title, content, seo_description")
+        .eq("website_id", websiteId)
+        .order("created_at", { ascending: false })
+        .limit(Math.min(Number(count) || 5, 10));
+      const sample = (data || [])
+        .map((p) => `${p.title || ""}\n${p.seo_description || ""}\n${(p.content || "").slice(0, 800)}`)
+        .join("\n");
+      const detection = detectTextLanguage(sample);
+      const cmp = compareWithSiteLanguage(detection.language, siteLanguage);
+      return { detection, cmp };
+    },
+  });
+
+  const showMismatch =
+    !!sampleDetection?.cmp?.mismatch && (sampleDetection?.detection.confidence ?? 0) >= 0.4;
+
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -92,6 +118,22 @@ export function RetranslateSiteDialog({ open, onOpenChange, websiteId, websiteNa
               <div className="text-muted-foreground">Locked site language</div>
               <div className="font-medium text-sm mt-0.5">{siteLanguage}</div>
             </div>
+
+            {showMismatch && sampleDetection?.cmp && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-xs">
+                <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Existing pages look like a different language</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    The latest pages appear to be in{" "}
+                    <span className="font-medium text-foreground">{sampleDetection.cmp.detected}</span>,
+                    but your site is locked to{" "}
+                    <span className="font-medium text-foreground">{sampleDetection.cmp.siteLanguage}</span>.
+                    That's exactly what this action fixes — proceed to re-translate &amp; republish.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="retrans-count">How many recent pages to re-translate?</Label>

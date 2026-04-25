@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages } from "lucide-react";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
+import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 
 interface StartGenerationDialogProps {
   open: boolean;
@@ -27,6 +28,11 @@ interface StartGenerationDialogProps {
   isPending: boolean;
   /** Currently locked site language (from connected website). Shown as the default. */
   siteLanguage?: string | null;
+  /**
+   * Combined sample text (template + a few CSV rows) used to warn the user when
+   * the source content language doesn't match the connected site language.
+   */
+  languageSampleText?: string;
 }
 
 export interface GenerationOptions {
@@ -46,6 +52,7 @@ export function StartGenerationDialog({
   onStart,
   isPending,
   siteLanguage,
+  languageSampleText,
 }: StartGenerationDialogProps) {
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
@@ -63,6 +70,15 @@ export function StartGenerationDialog({
     : totalRows;
 
   const siteLangLabel = siteLanguage && siteLanguage.trim().length > 0 ? siteLanguage : "Auto-detect";
+
+  // Detect language of template + CSV sample and compare against the
+  // language we'll actually generate in (override if set, else site lang).
+  const effectiveTargetLang = languageOverrideEnabled ? languageOverride : siteLanguage;
+  const detection = languageSampleText ? detectTextLanguage(languageSampleText) : null;
+  const mismatchInfo = detection?.language
+    ? compareWithSiteLanguage(detection.language, effectiveTargetLang)
+    : null;
+  const showMismatch = !!mismatchInfo?.mismatch && (detection?.confidence ?? 0) >= 0.4;
 
   const handleStart = () => {
     const options: GenerationOptions = {
@@ -99,6 +115,25 @@ export function StartGenerationDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-2">
+          {/* Language mismatch warning — fires when template/CSV are obviously
+              in a different language than the locked site / run language. */}
+          {showMismatch && mismatchInfo && (
+            <div className="flex items-start gap-2 p-3 rounded-xl border border-warning/30 bg-warning/10 dark:bg-warning/5">
+              <Languages className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium">Language mismatch detected</p>
+                <p className="text-xs text-muted-foreground">
+                  Your template and CSV look like{" "}
+                  <span className="font-medium text-foreground">{mismatchInfo.detected}</span>, but
+                  pages will be generated in{" "}
+                  <span className="font-medium text-foreground">{mismatchInfo.siteLanguage}</span>
+                  {languageOverrideEnabled ? " (run override)" : " (site language)"}.
+                  AI will translate the source content — review the first few pages to confirm.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Retry failed rows toggle */}
           {failedRowsCount > 0 && (
             <div className="flex items-center justify-between p-3 rounded-xl border border-destructive/20 bg-destructive/5">
