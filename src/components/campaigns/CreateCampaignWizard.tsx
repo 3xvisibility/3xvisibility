@@ -1264,6 +1264,46 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-8 rounded-lg text-xs" />
                         </div>
                         </div>
+                        {/* Generation mode: per campaign vs per row */}
+                        <div className="rounded-lg border border-border/60 bg-background/60 p-2.5 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-[11px] font-semibold">AI generation mode</p>
+                              <p className="text-[10px] text-muted-foreground leading-snug">
+                                {aiFillMode === "per_campaign"
+                                  ? "Generate once and reuse the same value on every page (1 AI call total — cheapest)."
+                                  : "Generate per CSV row using that row's data as extra context (1 AI call per row — richer, more unique)."}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="h-5 px-1.5 text-[9px] shrink-0">
+                              {aiFillMode === "per_campaign" ? "1 call" : "N calls"}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setAiFillMode("per_campaign")}
+                              className={`text-left rounded-md border p-2 transition-colors ${aiFillMode === "per_campaign" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}
+                            >
+                              <div className="text-[11px] font-medium flex items-center gap-1">
+                                {aiFillMode === "per_campaign" && <Check className="h-3 w-3 text-primary" />}
+                                Once per campaign
+                              </div>
+                              <div className="text-[10px] text-muted-foreground mt-0.5">Same value on every row. Cheapest.</div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAiFillMode("per_row")}
+                              className={`text-left rounded-md border p-2 transition-colors ${aiFillMode === "per_row" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}
+                            >
+                              <div className="text-[11px] font-medium flex items-center gap-1">
+                                {aiFillMode === "per_row" && <Check className="h-3 w-3 text-primary" />}
+                                Once per row
+                              </div>
+                              <div className="text-[10px] text-muted-foreground mt-0.5">Unique per row. Costs ~1 AI call/row.</div>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     );
                   })()}
