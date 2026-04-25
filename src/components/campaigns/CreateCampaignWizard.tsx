@@ -1273,7 +1273,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             Customize the marketplace template look — palette, typography mood, and layout density. Applied to every page in this campaign.
                           </p>
                         </div>
-                        {(vibePalette !== DEFAULT_VIBE.palette || vibeTypography !== DEFAULT_VIBE.typography || vibeDensity !== DEFAULT_VIBE.density) && (
+                        {(vibePalette !== DEFAULT_VIBE.palette || vibeTypography !== DEFAULT_VIBE.typography || vibeDensity !== DEFAULT_VIBE.density || vibeCustomVarsText.trim() || vibeCustomCss.trim()) && (
                           <Button
                             type="button"
                             variant="ghost"
@@ -1283,6 +1283,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               setVibePalette(DEFAULT_VIBE.palette);
                               setVibeTypography(DEFAULT_VIBE.typography);
                               setVibeDensity(DEFAULT_VIBE.density);
+                              setVibeCustomVarsText("");
+                              setVibeCustomCss("");
                             }}
                           >
                             Reset
