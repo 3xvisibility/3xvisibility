@@ -117,7 +117,7 @@ serve(async (req) => {
           }
         }
       } catch (e) {
-        logStep("Failed to parse period end", { error: e.message });
+        logStep("Failed to parse period end", { error: e instanceof Error ? e.message : String(e) });
       }
 
       productId = String(sub.items.data[0]?.price?.product ?? "");
@@ -148,8 +148,9 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    logStep("ERROR", { message: error.message });
-    return new Response(JSON.stringify({ error: error.message }), {
+    const msg = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: msg });
+    return new Response(JSON.stringify({ error: msg }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

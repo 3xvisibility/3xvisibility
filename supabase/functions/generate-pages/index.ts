@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { autoRepairContent, derivePrimaryKeyword } from "../_shared/seo-quality.ts";
 import { buildMultiEngineMeta, buildAutoFaq, buildExtraJsonLd } from "../_shared/seo-meta.ts";
 import { validateJsonLdInHtml, summarizeValidation } from "../_shared/jsonld-validator.ts";
@@ -565,6 +565,84 @@ IMPORTANT: Return ONLY the generated content text. No markdown formatting, no he
   }
 }
 
+/**
+ * Generate AI default values for unmapped template variables, in one batched
+ * call, using the campaign's niche / business / services context. Returns the
+ * same value for every row (template-level defaults) so it costs only 1 AI
+ * generation regardless of how many pages the campaign produces.
+ */
+async function generateAiVarDefaults(
+  variables: string[],
+  context: { business?: string; niche?: string; service?: string },
+  settings: { tone: string; contentLength: string; language: string },
+  apiKey: string,
+): Promise<Record<string, string>> {
+  if (variables.length === 0) return {};
+  const languageMap: Record<string, string> = {
+    en: "English", es: "Spanish", fr: "French", de: "German",
+    pt: "Portuguese", it: "Italian", nl: "Dutch", ja: "Japanese",
+    zh: "Chinese", ko: "Korean", ar: "Arabic",
+  };
+  const rawLang = (settings.language || "").trim();
+  const langName = languageMap[rawLang.toLowerCase()] || rawLang || "English";
+  const ctxLine = [
+    context.business && `Business: ${context.business}`,
+    context.niche && `Niche: ${context.niche}`,
+    context.service && `Services / products: ${context.service}`,
+  ].filter(Boolean).join("\n") || "(no extra context provided — infer reasonable values)";
+
+  const systemPrompt = `You generate default values for template variables of a programmatic SEO page.
+LANGUAGE: ALL values MUST be written in ${langName}. Never output another language.
+TONE: ${settings.tone}.
+Each value must be short, natural, and directly usable as a substitution in HTML. No markdown, no quotes, no labels.`;
+  const userPrompt = `${ctxLine}
+
+For each variable name below, return a concise, realistic default value that fits the niche/services above.
+Variables: ${variables.join(", ")}
+
+Return ONLY a JSON object, no prose, no code fences. Example:
+{"variable_name": "value", "another": "value"}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      console.error("[AI-DEFAULTS] gateway error", response.status, await response.text());
+      return {};
+    }
+    const data = await response.json();
+    const raw = data.choices?.[0]?.message?.content || "{}";
+    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    let parsed: Record<string, unknown> = {};
+    try { parsed = JSON.parse(cleaned); } catch { parsed = {}; }
+    const out: Record<string, string> = {};
+    for (const v of variables) {
+      const val = parsed[v] ?? parsed[v.toLowerCase()];
+      if (typeof val === "string" && val.trim()) out[v] = val.trim();
+      else if (typeof val === "number" || typeof val === "boolean") out[v] = String(val);
+    }
+    return out;
+  } catch (err) {
+    console.error("[AI-DEFAULTS] failed", err);
+    return {};
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function generateSeoMetadata(
   pageTitle: string,
   pageContent: string,
@@ -852,7 +930,8 @@ Deno.serve(async (req) => {
   }
 
   let activeCampaignId: string | null = null;
-  let supabase: ReturnType<typeof createClient> | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let supabase: any = null;
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -1145,6 +1224,72 @@ Deno.serve(async (req) => {
     const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const effectiveBatchSize = hasAiBlocks || hasAiImageBlocks ? 1 : BATCH_SIZE;
+
+    // ─────────────────────────────────────────────────────────────────────
+    // AI auto-fill for unmapped variables
+    // If a template variable has no CSV column, no custom value mapping,
+    // and doesn't appear as a key in the CSV rows, fill it once with AI
+    // using the campaign's niche / business / services context. The same
+    // value is reused across every row → costs only 1 AI generation.
+    // ─────────────────────────────────────────────────────────────────────
+    let aiVarDefaults: Record<string, string> = {};
+    let aiAutofillUsed = 0;
+    try {
+      const declaredVars = (((campaign.templates as { variables?: string[] }).variables) || []) as string[];
+      const tokenMatches = templateContent.match(/\{([a-zA-Z0-9_.-]+)\}/g) || [];
+      const tokenVars = tokenMatches.map((t: string) => t.slice(1, -1));
+      const allVarsSet = new Set<string>([...declaredVars, ...tokenVars]);
+      const reservedPrefixes = ["AI:", "AI_IMAGE:", "MAP:", "YOUTUBE:", "IMAGE:", "WEATHER:", "GEO_BLOCKS"];
+      const candidateVars = Array.from(allVarsSet).filter((v) => {
+        if (!v) return false;
+        if (v.includes(":")) return false;
+        if (reservedPrefixes.some((p) => v.toUpperCase().startsWith(p))) return false;
+        return true;
+      });
+
+      const mappedTargets = new Set<string>(
+        (customMappings || [])
+          .map((m: { target_field?: string }) => (m.target_field || "").toLowerCase())
+          .filter(Boolean),
+      );
+      const csvHeaderSet = new Set<string>();
+      if (csvRows.length > 0) {
+        for (const k of Object.keys(csvRows[0])) csvHeaderSet.add(k.toLowerCase());
+      }
+      const geoSettingsKeys = new Set<string>(
+        Object.keys((campaign.geo_settings || {}) as Record<string, unknown>).map((k) => k.toLowerCase()),
+      );
+
+      const unmapped = candidateVars.filter((v) => {
+        const k = v.toLowerCase();
+        return !mappedTargets.has(k) && !csvHeaderSet.has(k) && !geoSettingsKeys.has(k);
+      });
+
+      const aiContext = (((campaign.mapping || {}) as { ai_context?: { business?: string; niche?: string; service?: string } }).ai_context) || {};
+      const hasContext = !!(aiContext.business || aiContext.niche || aiContext.service);
+
+      if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext) {
+        console.log(`[GENERATE-PAGES] AI auto-fill: ${unmapped.length} unmapped variable(s) →`, unmapped.join(", "));
+        aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY);
+        const filledCount = Object.keys(aiVarDefaults).length;
+        console.log(`[GENERATE-PAGES] AI auto-fill produced ${filledCount}/${unmapped.length} default(s)`);
+        if (filledCount > 0) {
+          aiAutofillUsed = 1;
+          await logEvent(
+            supabase,
+            campaign_id,
+            user.id,
+            "ai_defaults_filled",
+            `AI auto-filled ${filledCount} unmapped variable(s) using niche/services: ${Object.keys(aiVarDefaults).join(", ")}`,
+          );
+        }
+      } else if (unmapped.length > 0 && !hasContext) {
+        console.log(`[GENERATE-PAGES] ${unmapped.length} unmapped variable(s) but no niche/services context — skipping AI auto-fill`);
+      }
+    } catch (err) {
+      console.error("[GENERATE-PAGES] AI auto-fill setup failed:", err);
+    }
+
 
     // Count custom value mappings (no AI needed for these)
     const customValueMappings = (customMappings || []).filter((m: any) => m.source_column?.startsWith("__custom__:"));
@@ -1464,6 +1609,14 @@ Deno.serve(async (req) => {
             pageContent = pageContent.replace(regex, value || "");
           }
 
+          // AI auto-fill fallback for variables that have no CSV/mapping value.
+          // These were generated once before the batch loop using niche/services
+          // context, and the same value is reused across every row.
+          for (const [key, value] of Object.entries(aiVarDefaults)) {
+            const regex = new RegExp(`\\{${key}\\}`, "gi");
+            pageContent = pageContent.replace(regex, value || "");
+          }
+
 
           // Process spintax {option1|option2|option3}
           pageContent = processSpintax(pageContent);
@@ -1693,14 +1846,14 @@ Deno.serve(async (req) => {
             // Still generate keywords via AI for test previews only to keep campaign publishing fast.
             if (shouldUseAiSeo) {
               try {
-                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
+                const aiSeo = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY!, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
                 seoData.seo_keywords = aiSeo.seo_keywords;
                 aiGenerationsUsed++;
               } catch { /* keep empty keywords */ }
             }
           } else if (shouldUseAiSeo) {
             try {
-              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
+              seoData = await generateSeoMetadata(pageTitle, pageContent, aiSettings, LOVABLE_API_KEY!, { name: websiteName || undefined, url: websiteBaseUrl || undefined });
               // Apply the user's chosen format to the AI-generated title
               seoData.seo_title = applyTitleFormat(
                 seoData.seo_title.replace(new RegExp(`\\s*[|—-]\\s*${(websiteName || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, "i"), "")
