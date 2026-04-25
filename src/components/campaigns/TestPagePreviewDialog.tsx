@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, XCircle, ShieldAlert, Code2 } from "lucide
 import type { RenderResult } from "@/lib/renderer";
 import { validateSeoRules, getSeoRuleSummary, type SeoRuleContext } from "@/lib/seo-rules";
 import { validateJsonLdInHtml } from "@/lib/jsonld-validator";
+import { HeadingOutline } from "@/components/HeadingOutline";
 import { useMemo } from "react";
 
 interface TestPagePreviewDialogProps {
