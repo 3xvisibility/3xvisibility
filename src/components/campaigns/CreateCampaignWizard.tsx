@@ -247,6 +247,25 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
 
+  // Vibe validator — runs on every change of template/palette/typography/density
+  // and surfaces clash warnings + one-click fixes inside the vibe panel.
+  const vibeValidation = useMemo(() => {
+    if (!selectedTemplate) return { warnings: [] as VibeWarning[], hasBlockingIssue: false };
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    if (!tpl) return { warnings: [], hasBlockingIssue: false };
+    // DB templates don't store category — try to enrich from the marketplace
+    // catalog by matching name (best-effort, no-op when nothing matches).
+    const marketplaceMatch = COMMUNITY_TEMPLATES.find(m => m.name === (tpl as { name?: string }).name);
+    return validateVibeForTemplate({
+      templateContent: (tpl as { content?: string }).content || "",
+      templateCategory: marketplaceMatch?.category ?? null,
+      templateTags: marketplaceMatch?.tags ?? null,
+      palette: vibePalette,
+      typography: vibeTypography,
+      density: vibeDensity,
+    });
+  }, [selectedTemplate, templates, vibePalette, vibeTypography, vibeDensity]);
+
   const effectiveCsvData =
     dataSource === "website" ? websitePagesAsCsv.rows :
     dataSource === "locations" ? locationData :
