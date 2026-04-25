@@ -887,8 +887,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields, publish_mode: body.publish_mode, retry_failed_only: body.retry_failed_only }));
-    const { campaign_id, action, test_mode, overwrite_fields, publish_mode, retry_failed_only } = body;
+    console.log("[GENERATE-PAGES] Body parsed:", JSON.stringify({ campaign_id: body.campaign_id, action: body.action, test_mode: body.test_mode, overwrite_fields: body.overwrite_fields, publish_mode: body.publish_mode, retry_failed_only: body.retry_failed_only, language_override: body.language_override }));
+    const { campaign_id, action, test_mode, overwrite_fields, publish_mode, retry_failed_only, language_override } = body;
     activeCampaignId = campaign_id ?? null;
     // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
     const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
@@ -1099,9 +1099,10 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Resolve language: connected website's locked language wins over the user's
-    // global default — so a French-locked Shopify/WordPress site always gets French
-    // copy even if the user's profile is set to English.
+    // Resolve language priority (highest → lowest):
+    //   1) per-run override sent in the request body (this run only, never persisted)
+    //   2) connected website's locked language (sticky for that site)
+    //   3) user's profile default
     let resolvedLanguage = profile?.ai_language || "en";
     try {
       const websiteIdForLang = (campaign as { website_id?: string | null } | null)?.website_id;
@@ -1117,6 +1118,10 @@ Deno.serve(async (req) => {
         }
       }
     } catch (_) { /* non-critical */ }
+    if (typeof language_override === "string" && language_override.trim().length > 0) {
+      resolvedLanguage = language_override.trim();
+      console.log(`[GENERATE-PAGES] Per-run language override applied: ${resolvedLanguage}`);
+    }
 
     const aiSettings = {
       tone: profile?.ai_tone || "professional",

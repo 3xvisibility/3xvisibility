@@ -107,7 +107,7 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("*, templates(name), websites(name, url)")
+        .select("*, templates(name), websites(name, url, language)")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -256,6 +256,7 @@ export default function CampaignDetailPage() {
           overwrite_fields: params?.overwrite_fields || undefined,
           publish_mode: opts?.publish_mode,
           retry_failed_only: opts?.retry_failed_only,
+          language_override: opts?.language_override,
         },
       });
       if (error) {
@@ -1335,6 +1336,7 @@ export default function CampaignDetailPage() {
         totalRows={campaign?.total_rows || 0}
         failedRowsCount={statusCounts.failed}
         isPending={executeMutation.isPending}
+        siteLanguage={(campaign as any)?.websites?.language ?? null}
         onStart={(options) => {
           executeMutation.mutate({ generation_options: options });
         }}

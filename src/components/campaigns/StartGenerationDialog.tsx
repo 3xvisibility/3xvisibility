@@ -14,7 +14,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages } from "lucide-react";
+import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 
 interface StartGenerationDialogProps {
   open: boolean;
@@ -23,6 +25,8 @@ interface StartGenerationDialogProps {
   failedRowsCount: number;
   onStart: (options: GenerationOptions) => void;
   isPending: boolean;
+  /** Currently locked site language (from connected website). Shown as the default. */
+  siteLanguage?: string | null;
 }
 
 export interface GenerationOptions {
@@ -30,6 +34,8 @@ export interface GenerationOptions {
   max_rows?: number;
   scheduled_at?: string;
   retry_failed_only?: boolean;
+  /** One-time override for this run only — does NOT persist to the website settings. */
+  language_override?: string;
 }
 
 export function StartGenerationDialog({
@@ -39,6 +45,7 @@ export function StartGenerationDialog({
   failedRowsCount,
   onStart,
   isPending,
+  siteLanguage,
 }: StartGenerationDialogProps) {
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
@@ -46,12 +53,16 @@ export function StartGenerationDialog({
   const [scheduleMode, setScheduleMode] = useState<"now" | "later">("now");
   const [scheduledAt, setScheduledAt] = useState("");
   const [retryFailedOnly, setRetryFailedOnly] = useState(false);
+  const [languageOverrideEnabled, setLanguageOverrideEnabled] = useState(false);
+  const [languageOverride, setLanguageOverride] = useState<string>("English");
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
     : maxRowsEnabled
     ? Math.min(maxRows, totalRows)
     : totalRows;
+
+  const siteLangLabel = siteLanguage && siteLanguage.trim().length > 0 ? siteLanguage : "Auto-detect";
 
   const handleStart = () => {
     const options: GenerationOptions = {
@@ -65,6 +76,9 @@ export function StartGenerationDialog({
     }
     if (retryFailedOnly) {
       options.retry_failed_only = true;
+    }
+    if (languageOverrideEnabled && languageOverride) {
+      options.language_override = languageOverride;
     }
     onStart(options);
   };
@@ -165,6 +179,38 @@ export function StartGenerationDialog({
 
           <Separator />
 
+          {/* Language Override (this run only) */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Languages className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-semibold">Override site language</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    This run only — site stays locked to <span className="font-medium text-foreground">{siteLangLabel}</span>
+                  </p>
+                </div>
+              </div>
+              <Switch checked={languageOverrideEnabled} onCheckedChange={setLanguageOverrideEnabled} />
+            </div>
+            {languageOverrideEnabled && (
+              <Select value={languageOverride} onValueChange={setLanguageOverride}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pick a language for this run" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {SITE_LANGUAGE_OPTIONS.filter((o) => o.value !== "__auto__").map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          <Separator />
+
           {/* Schedule */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold">Schedule</Label>
@@ -216,6 +262,9 @@ export function StartGenerationDialog({
               <>Will process <span className="text-foreground font-medium">{effectiveRows}</span> row{effectiveRows !== 1 ? "s" : ""}</>
             )}
             {" "}as <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{publishMode}</Badge>
+            {languageOverrideEnabled && (
+              <> in <Badge variant="outline" className="text-[10px] h-4 px-1.5 gap-1"><Languages className="h-2.5 w-2.5" />{languageOverride}</Badge></>
+            )}
             {scheduleMode === "later" && scheduledAt && (
               <> — scheduled for {new Date(scheduledAt).toLocaleString()}</>
             )}
