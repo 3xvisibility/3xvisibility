@@ -26,6 +26,7 @@ import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
 import {
   VIBE_PALETTES, VIBE_TYPOGRAPHIES, VIBE_DENSITIES, DEFAULT_VIBE,
+  parseCustomVarsInput,
   type VibePalette, type VibeTypography, type VibeDensity,
 } from "@/lib/vibe-theme";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
