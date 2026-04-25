@@ -14,7 +14,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages } from "lucide-react";
+import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 
 interface StartGenerationDialogProps {
   open: boolean;
@@ -23,6 +25,8 @@ interface StartGenerationDialogProps {
   failedRowsCount: number;
   onStart: (options: GenerationOptions) => void;
   isPending: boolean;
+  /** Currently locked site language (from connected website). Shown as the default. */
+  siteLanguage?: string | null;
 }
 
 export interface GenerationOptions {
@@ -30,6 +34,8 @@ export interface GenerationOptions {
   max_rows?: number;
   scheduled_at?: string;
   retry_failed_only?: boolean;
+  /** One-time override for this run only — does NOT persist to the website settings. */
+  language_override?: string;
 }
 
 export function StartGenerationDialog({
