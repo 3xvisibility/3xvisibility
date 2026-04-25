@@ -71,6 +71,15 @@ export function StartGenerationDialog({
 
   const siteLangLabel = siteLanguage && siteLanguage.trim().length > 0 ? siteLanguage : "Auto-detect";
 
+  // Detect language of template + CSV sample and compare against the
+  // language we'll actually generate in (override if set, else site lang).
+  const effectiveTargetLang = languageOverrideEnabled ? languageOverride : siteLanguage;
+  const detection = languageSampleText ? detectTextLanguage(languageSampleText) : null;
+  const mismatchInfo = detection?.language
+    ? compareWithSiteLanguage(detection.language, effectiveTargetLang)
+    : null;
+  const showMismatch = !!mismatchInfo?.mismatch && (detection?.confidence ?? 0) >= 0.4;
+
   const handleStart = () => {
     const options: GenerationOptions = {
       publish_mode: publishMode,
