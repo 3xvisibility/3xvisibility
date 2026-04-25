@@ -282,7 +282,14 @@ export default function CampaignDetailPage() {
       if (data?.scheduled) {
         toast({ title: "Generation scheduled", description: "The campaign will run at the scheduled time." });
       } else {
-        toast({ title: data.paused ? "Generation paused" : "Generation complete", description: `${data.generated || 0} pages generated.` });
+        const aiAutofill = data?.ai_autofill;
+        const autofillNote = aiAutofill && aiAutofill.count > 0
+          ? ` AI auto-filled ${aiAutofill.count} variable(s) using niche/services: ${(aiAutofill.variables || []).join(", ")}.`
+          : "";
+        toast({
+          title: data.paused ? "Generation paused" : "Generation complete",
+          description: `${data.generated || 0} pages generated.${autofillNote}`,
+        });
       }
       if (wsId) logAudit(wsId, "campaign_started", "campaign", id!, { name: campaign?.name, generated: data?.generated });
     },
