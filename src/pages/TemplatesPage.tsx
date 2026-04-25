@@ -1000,6 +1000,39 @@ export default function TemplatesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* AI Regenerate Design */}
+      <Dialog open={!!regenTarget} onOpenChange={(o) => { if (!o && !regenLoading) setRegenTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wand2 className="h-4 w-4 text-primary" /> Regenerate Design
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              AI will rewrite the visual style of <span className="font-medium text-foreground">{regenTarget?.name}</span> to feel modern and tailored to your niche. Variables and HTML structure stay intact.
+            </p>
+            <div className="space-y-1">
+              <Label htmlFor="regen-niche" className="text-xs">Target niche <span className="text-destructive">*</span></Label>
+              <Input id="regen-niche" placeholder="e.g. dental clinic, law firm, SaaS, restaurant" value={regenNiche} onChange={(e) => setRegenNiche(e.target.value)} disabled={regenLoading} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="regen-services" className="text-xs">Services / products (optional)</Label>
+              <Input id="regen-services" placeholder="e.g. teeth whitening, implants" value={regenServices} onChange={(e) => setRegenServices(e.target.value)} disabled={regenLoading} />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="regen-business" className="text-xs">Business name (optional)</Label>
+              <Input id="regen-business" placeholder="e.g. BrightSmile Dental" value={regenBusiness} onChange={(e) => setRegenBusiness(e.target.value)} disabled={regenLoading} />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="ghost" size="sm" onClick={() => setRegenTarget(null)} disabled={regenLoading}>Cancel</Button>
+              <Button size="sm" onClick={runRegenDesign} disabled={regenLoading || !regenNiche.trim()}>
+                {regenLoading ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Generating…</>) : (<><Sparkles className="h-3.5 w-3.5 mr-2" /> Regenerate</>)}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
