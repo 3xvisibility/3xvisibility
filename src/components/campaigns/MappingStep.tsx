@@ -194,6 +194,9 @@ interface MappingStepProps {
   targetFieldMappings: Record<string, string>;
   setTargetFieldMappings: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   workspaceId: string;
+  /** FAQ mapping — optional. When provided, renders the FAQ column mapper. */
+  faqPairs?: FaqPair[];
+  setFaqPairs?: React.Dispatch<React.SetStateAction<FaqPair[]>>;
 }
 
 // ─── Component ────────────────────────────────────────────────────
