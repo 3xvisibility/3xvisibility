@@ -3,6 +3,7 @@ import { autoRepairContent, derivePrimaryKeyword } from "../_shared/seo-quality.
 import { buildMultiEngineMeta, buildAutoFaq, buildExtraJsonLd } from "../_shared/seo-meta.ts";
 import { validateJsonLdInHtml, summarizeValidation } from "../_shared/jsonld-validator.ts";
 import { resolveLanguageName } from "../_shared/languages.ts";
+import { buildVibeOverrideStyles, type VibeTheme } from "../_shared/vibe-theme.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
