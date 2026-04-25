@@ -13,7 +13,7 @@ import {
 import {
   ArrowRight, Check, AlertTriangle, X, Save, FolderOpen, Trash2,
   ArrowDownAZ, Hash, Link2, Type, MapPin, Target, Search as SearchIcon,
-  HelpCircle, Sparkles, Lightbulb, Wand2,
+  HelpCircle, Sparkles, Lightbulb, Wand2, Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -197,6 +197,11 @@ interface MappingStepProps {
   /** FAQ mapping — optional. When provided, renders the FAQ column mapper. */
   faqPairs?: FaqPair[];
   setFaqPairs?: React.Dispatch<React.SetStateAction<FaqPair[]>>;
+  /** AI auto-fill context — when provided, enables the "AI Fill" button that
+   *  generates values for unmapped variables using niche/services context. */
+  aiContext?: { business?: string; niche?: string; service?: string };
+  /** Target language for AI-generated values (e.g. "fr"). Defaults to English. */
+  aiLanguage?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────
@@ -217,10 +222,13 @@ export function MappingStep({
   workspaceId,
   faqPairs,
   setFaqPairs,
+  aiContext,
+  aiLanguage,
 }: MappingStepProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [saveProfileName, setSaveProfileName] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [aiFilling, setAiFilling] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -363,6 +371,68 @@ export function MappingStep({
     });
   }, [resolvedMapping, filterCategory, targetFieldMappings]);
 
+  // ─── AI Fill: variables eligible for on-demand AI generation ─────
+  // Excludes variables that are already mapped (CSV / custom) and any
+  // special tokens like {AI:…}, {MAP:…}, {YOUTUBE:…} etc.
+  const aiFillCandidates = useMemo(() => {
+    const reservedPrefixes = ["AI:", "AI_IMAGE:", "MAP:", "YOUTUBE:", "IMAGE:", "WEATHER:", "GEO_BLOCKS"];
+    return resolvedMapping
+      .filter(m => !m.column && !m.customValue)
+      .filter(m => {
+        const v = m.variable;
+        if (!v || v.includes(":")) return false;
+        if (reservedPrefixes.some(p => v.toUpperCase().startsWith(p))) return false;
+        return !isSpecialVar(v);
+      })
+      .map(m => m.variable);
+  }, [resolvedMapping]);
+
+  const hasAiContext = !!(aiContext?.business || aiContext?.niche || aiContext?.service);
+  const canAiFill = aiFillCandidates.length > 0 && hasAiContext;
+
+  const handleAiFill = async () => {
+    if (aiFillCandidates.length === 0) {
+      toast({ title: "Nothing to fill", description: "Every variable is already mapped or has a custom value." });
+      return;
+    }
+    if (!hasAiContext) {
+      toast({
+        title: "Add business context first",
+        description: "Fill in business, niche, or services in the AI auto-fill card above so the AI knows what to generate.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setAiFilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-fill-variables", {
+        body: {
+          variables: aiFillCandidates,
+          context: aiContext,
+          settings: { language: aiLanguage || "en", tone: "professional", contentLength: "medium" },
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const values = (data?.values || {}) as Record<string, string>;
+      const filledKeys = Object.keys(values);
+      if (filledKeys.length === 0) {
+        toast({ title: "No values generated", description: "The AI returned no usable values — try refining your niche/services.", variant: "destructive" });
+        return;
+      }
+      setCustomValues(prev => ({ ...prev, ...values }));
+      toast({
+        title: "AI filled " + filledKeys.length + " variable(s)",
+        description: filledKeys.join(", "),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "AI fill failed";
+      toast({ title: "AI fill failed", description: msg, variant: "destructive" });
+    } finally {
+      setAiFilling(false);
+    }
+  };
+
   if (templateVars.length === 0 || csvHeaders.length === 0) return null;
 
   return (
@@ -466,6 +536,35 @@ export function MappingStep({
               </SelectContent>
             </Select>
           )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1 rounded-lg border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-50"
+                  onClick={handleAiFill}
+                  disabled={aiFilling || aiFillCandidates.length === 0 || !hasAiContext}
+                >
+                  {aiFilling ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                  AI Fill
+                  {aiFillCandidates.length > 0 && (
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-0.5 bg-primary/15 text-primary border-0">
+                      {aiFillCandidates.length}
+                    </Badge>
+                  )}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {!canAiFill && aiFillCandidates.length === 0
+                ? "All variables are already mapped or have a custom value."
+                : !hasAiContext
+                ? "Add business / niche / services context in the AI auto-fill card above to enable AI Fill."
+                : `Generate values for ${aiFillCandidates.length} unmapped variable(s) using your niche & services context. Each row will reuse the same value.`}
+            </TooltipContent>
+          </Tooltip>
           <Button variant="outline" size="sm" className="h-8 text-xs gap-1 rounded-lg" onClick={() => setProfileDialogOpen(true)}>
             <Save className="h-3 w-3" /> Save
           </Button>

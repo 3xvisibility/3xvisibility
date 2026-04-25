@@ -1315,6 +1315,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         workspaceId={wsId!}
                         faqPairs={faqPairs}
                         setFaqPairs={setFaqPairs}
+                        aiContext={{
+                          business: aiBusiness || undefined,
+                          niche: aiNiche || undefined,
+                          service: aiServiceProduct || undefined,
+                        }}
+                        aiLanguage={
+                          (websites.find(w => w.id === (selectedWebsite || websiteForPages)) as { language?: string | null } | undefined)?.language
+                          || campaignLanguage
+                          || "en"
+                        }
                       />
                     </>
                   )}
