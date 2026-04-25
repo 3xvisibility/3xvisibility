@@ -33,6 +33,11 @@ import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilde
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
 import { downloadStarterCsv } from "@/lib/csv-starter";
+import {
+  type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
+  HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
+  type HeroVariant, type GridVariant, type CtaVariant, type FaqVariant,
+} from "@/lib/section-variants";
 
 type Template = Tables<"templates">;
 const PAGE_SIZE = 10;
@@ -56,10 +61,12 @@ export default function TemplatesPage() {
 
   // AI Regenerate Design state
   const [regenTarget, setRegenTarget] = useState<Template | null>(null);
+  const [regenMode, setRegenMode] = useState<"full" | "variants-only">("full");
   const [regenNiche, setRegenNiche] = useState("");
   const [regenServices, setRegenServices] = useState("");
   const [regenBusiness, setRegenBusiness] = useState("");
   const [regenLoading, setRegenLoading] = useState(false);
+  const [regenVariants, setRegenVariants] = useState<SectionVariants>({ ...DEFAULT_VARIANTS });
 
   // CSV template state
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
@@ -319,16 +326,18 @@ export default function TemplatesPage() {
   };
 
   // ──── AI Regenerate Design ────
-  const openRegenDialog = (tpl: Template) => {
+  const openRegenDialog = (tpl: Template, mode: "full" | "variants-only" = "full") => {
     setRegenTarget(tpl);
+    setRegenMode(mode);
     setRegenNiche("");
     setRegenServices("");
     setRegenBusiness("");
+    setRegenVariants({ ...DEFAULT_VARIANTS });
   };
 
   const runRegenDesign = async () => {
     if (!regenTarget) return;
-    if (!regenNiche.trim()) {
+    if (regenMode === "full" && !regenNiche.trim()) {
       toast({ title: "Niche required", description: "Tell the AI what niche this template targets.", variant: "destructive" });
       return;
     }
@@ -337,9 +346,11 @@ export default function TemplatesPage() {
       const { data, error } = await supabase.functions.invoke("regenerate-template-design", {
         body: {
           content: regenTarget.content,
+          mode: regenMode,
           niche: regenNiche.trim(),
           services: regenServices.trim(),
           business: regenBusiness.trim(),
+          variants: regenVariants,
         },
       });
       if (error) throw new Error(friendlyError(error));
@@ -352,14 +363,18 @@ export default function TemplatesPage() {
       } as any).eq("id", regenTarget.id);
       if (upErr) throw upErr;
       queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast({ title: "Design regenerated", description: data?.summary || `New design applied for ${regenNiche}.` });
+      toast({
+        title: regenMode === "variants-only" ? "Layout updated" : "Design regenerated",
+        description: data?.summary || (regenMode === "variants-only" ? `Variants: ${summarizeVariants(regenVariants)}` : `New design applied for ${regenNiche}.`),
+      });
       setRegenTarget(null);
     } catch (err: any) {
-      toast({ title: "Regeneration failed", description: err.message, variant: "destructive" });
+      toast({ title: regenMode === "variants-only" ? "Layout update failed" : "Regeneration failed", description: err.message, variant: "destructive" });
     } finally {
       setRegenLoading(false);
     }
   };
+
 
   const createFromCsv = () => {
     if (!csvText.trim()) return;
@@ -742,6 +757,7 @@ export default function TemplatesPage() {
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -796,6 +812,7 @@ export default function TemplatesPage() {
                           <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -851,6 +868,7 @@ export default function TemplatesPage() {
                       <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl); }}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] })}><FileSpreadsheet className="h-3.5 w-3.5 mr-2" /> Download CSV starter</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => exportTemplate(tpl)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
@@ -1000,34 +1018,85 @@ export default function TemplatesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* AI Regenerate Design */}
+      {/* AI Regenerate Design + Layout Variants */}
       <Dialog open={!!regenTarget} onOpenChange={(o) => { if (!o && !regenLoading) setRegenTarget(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[88dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Wand2 className="h-4 w-4 text-primary" /> Regenerate Design
+              {regenMode === "variants-only"
+                ? (<><LayoutGrid className="h-4 w-4 text-primary" /> Layout Variants</>)
+                : (<><Wand2 className="h-4 w-4 text-primary" /> Regenerate Design</>)}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              AI will rewrite the visual style of <span className="font-medium text-foreground">{regenTarget?.name}</span> to feel modern and tailored to your niche. Variables and HTML structure stay intact.
+              {regenMode === "variants-only"
+                ? <>Pick AI-vibe section layouts for <span className="font-medium text-foreground">{regenTarget?.name}</span>. Instant, no AI cost — your styles and content stay intact.</>
+                : <>AI will rewrite the visual style of <span className="font-medium text-foreground">{regenTarget?.name}</span> to feel modern and tailored to your niche. Variables and HTML structure stay intact.</>}
             </p>
-            <div className="space-y-1">
-              <Label htmlFor="regen-niche" className="text-xs">Target niche <span className="text-destructive">*</span></Label>
-              <Input id="regen-niche" placeholder="e.g. dental clinic, law firm, SaaS, restaurant" value={regenNiche} onChange={(e) => setRegenNiche(e.target.value)} disabled={regenLoading} />
+
+            {regenMode === "full" && (
+              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <div className="space-y-1">
+                  <Label htmlFor="regen-niche" className="text-xs">Target niche <span className="text-destructive">*</span></Label>
+                  <Input id="regen-niche" placeholder="e.g. dental clinic, law firm, SaaS, restaurant" value={regenNiche} onChange={(e) => setRegenNiche(e.target.value)} disabled={regenLoading} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="regen-services" className="text-xs">Services / products (optional)</Label>
+                  <Input id="regen-services" placeholder="e.g. teeth whitening, implants" value={regenServices} onChange={(e) => setRegenServices(e.target.value)} disabled={regenLoading} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="regen-business" className="text-xs">Business name (optional)</Label>
+                  <Input id="regen-business" placeholder="e.g. BrightSmile Dental" value={regenBusiness} onChange={(e) => setRegenBusiness(e.target.value)} disabled={regenLoading} />
+                </div>
+              </div>
+            )}
+
+            {/* ─── Section variant pickers ─── */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Section layouts</Label>
+                <button type="button" className="text-[10px] text-primary hover:underline disabled:opacity-50" disabled={regenLoading} onClick={() => setRegenVariants({ ...DEFAULT_VARIANTS })}>Reset</button>
+              </div>
+
+              {[
+                { key: "hero" as const, label: "Hero",  options: HERO_VARIANTS },
+                { key: "grid" as const, label: "Grid",  options: GRID_VARIANTS },
+                { key: "cta"  as const, label: "CTA",   options: CTA_VARIANTS },
+                { key: "faq"  as const, label: "FAQ",   options: FAQ_VARIANTS },
+              ].map(({ key, label, options }) => (
+                <div key={key} className="space-y-1.5">
+                  <Label className="text-xs">{label}</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {options.map(opt => {
+                      const active = (regenVariants as any)[key] === opt.value;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.value}
+                          disabled={regenLoading}
+                          onClick={() => setRegenVariants(v => ({ ...v, [key]: opt.value as any }))}
+                          title={opt.hint}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all ${active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-foreground border-border hover:border-primary/50 hover:bg-muted"} disabled:opacity-50`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              <p className="text-[10px] text-muted-foreground">{summarizeVariants(regenVariants)}</p>
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="regen-services" className="text-xs">Services / products (optional)</Label>
-              <Input id="regen-services" placeholder="e.g. teeth whitening, implants" value={regenServices} onChange={(e) => setRegenServices(e.target.value)} disabled={regenLoading} />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="regen-business" className="text-xs">Business name (optional)</Label>
-              <Input id="regen-business" placeholder="e.g. BrightSmile Dental" value={regenBusiness} onChange={(e) => setRegenBusiness(e.target.value)} disabled={regenLoading} />
-            </div>
+
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="ghost" size="sm" onClick={() => setRegenTarget(null)} disabled={regenLoading}>Cancel</Button>
-              <Button size="sm" onClick={runRegenDesign} disabled={regenLoading || !regenNiche.trim()}>
-                {regenLoading ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> Generating…</>) : (<><Sparkles className="h-3.5 w-3.5 mr-2" /> Regenerate</>)}
+              <Button size="sm" onClick={runRegenDesign} disabled={regenLoading || (regenMode === "full" && !regenNiche.trim())}>
+                {regenLoading
+                  ? (<><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" /> {regenMode === "variants-only" ? "Applying…" : "Generating…"}</>)
+                  : regenMode === "variants-only"
+                    ? (<><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Apply Layouts</>)
+                    : (<><Sparkles className="h-3.5 w-3.5 mr-2" /> Regenerate</>)}
               </Button>
             </div>
           </div>
