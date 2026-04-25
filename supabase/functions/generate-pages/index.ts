@@ -1270,12 +1270,13 @@ Deno.serve(async (req) => {
 
       const aiContext = (((campaign.mapping || {}) as { ai_context?: { business?: string; niche?: string; service?: string } }).ai_context) || {};
       const hasContext = !!(aiContext.business || aiContext.niche || aiContext.service);
+      const aiFillMode = (((campaign.mapping || {}) as { ai_fill_mode?: "per_campaign" | "per_row" }).ai_fill_mode) || "per_campaign";
 
-      if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext) {
-        console.log(`[GENERATE-PAGES] AI fill targets: ${unmapped.length} variable(s) →`, unmapped.join(", "));
+      if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext && aiFillMode === "per_campaign") {
+        console.log(`[GENERATE-PAGES] AI fill (per_campaign): ${unmapped.length} variable(s) →`, unmapped.join(", "));
         aiVarDefaults = await generateAiVarDefaults(unmapped, aiContext, aiSettings, LOVABLE_API_KEY);
         const filledCount = Object.keys(aiVarDefaults).length;
-        console.log(`[GENERATE-PAGES] AI fill produced ${filledCount}/${unmapped.length} default(s)`);
+        console.log(`[GENERATE-PAGES] AI fill produced ${filledCount}/${unmapped.length} default(s) — reused across all rows`);
         if (filledCount > 0) {
           aiAutofillUsed = 1;
           await logEvent(
@@ -1283,15 +1284,32 @@ Deno.serve(async (req) => {
             campaign_id,
             user.id,
             "ai_defaults_filled",
-            `AI filled ${filledCount} variable(s) using niche/services rules: ${Object.keys(aiVarDefaults).join(", ")}`,
+            `AI filled ${filledCount} variable(s) once per campaign (reused on all rows): ${Object.keys(aiVarDefaults).join(", ")}`,
           );
         }
+      } else if (unmapped.length > 0 && LOVABLE_API_KEY && hasContext && aiFillMode === "per_row") {
+        console.log(`[GENERATE-PAGES] AI fill (per_row) deferred: ${unmapped.length} variable(s) will be generated per CSV row →`, unmapped.join(", "));
+        await logEvent(
+          supabase,
+          campaign_id,
+          user.id,
+          "ai_defaults_deferred",
+          `AI fill set to per-row mode — ${unmapped.length} variable(s) will be generated per row using row context: ${unmapped.join(", ")}`,
+        );
       } else if (unmapped.length > 0 && !hasContext) {
         console.log(`[GENERATE-PAGES] ${unmapped.length} variable(s) need AI fill but no niche/services context — skipping`);
       }
 
-      // Expose to row loop via closure variable
-      (globalThis as unknown as { __fillRules?: Record<string, FillRule> }).__fillRules = fillRules;
+      // Expose to row loop via closure variables
+      (globalThis as unknown as {
+        __fillRules?: Record<string, FillRule>;
+        __aiFillMode?: string;
+        __aiFillTargets?: string[];
+        __aiFillContext?: typeof aiContext;
+      }).__fillRules = fillRules;
+      (globalThis as unknown as { __aiFillMode?: string }).__aiFillMode = aiFillMode;
+      (globalThis as unknown as { __aiFillTargets?: string[] }).__aiFillTargets = unmapped;
+      (globalThis as unknown as { __aiFillContext?: typeof aiContext }).__aiFillContext = aiContext;
     } catch (err) {
       console.error("[GENERATE-PAGES] AI fill setup failed:", err);
     }
@@ -1614,8 +1632,35 @@ Deno.serve(async (req) => {
           const _fillRules = (((campaign.mapping || {}) as { fill_rules?: Record<string, FillRule> }).fill_rules) || {};
           const _ruleFor = (v: string): FillRule => (_fillRules[v] || _fillRules[v.toLowerCase()] || "csv_first");
 
+          // Per-row AI fill: regenerate AI defaults using this row's data as
+          // additional context (e.g. so {tagline} for "New York" differs from
+          // "Los Angeles"). Falls back to the per-campaign defaults computed
+          // upfront when not enabled.
+          let rowAiDefaults = aiVarDefaults;
+          const _aiFillMode = (globalThis as unknown as { __aiFillMode?: string }).__aiFillMode || "per_campaign";
+          const _aiFillTargets = (globalThis as unknown as { __aiFillTargets?: string[] }).__aiFillTargets || [];
+          const _aiFillCtx = (globalThis as unknown as { __aiFillContext?: { business?: string; niche?: string; service?: string } }).__aiFillContext || {};
+          if (_aiFillMode === "per_row" && _aiFillTargets.length > 0 && LOVABLE_API_KEY) {
+            // Merge row data into context so the AI sees this row's specifics.
+            const rowSummary = Object.entries(row)
+              .filter(([, v]) => typeof v === "string" && (v as string).trim())
+              .slice(0, 12)
+              .map(([k, v]) => `${k}: ${v}`).join("; ");
+            const perRowCtx = {
+              business: _aiFillCtx.business,
+              niche: _aiFillCtx.niche,
+              service: [_aiFillCtx.service, rowSummary].filter(Boolean).join(" — Row data: "),
+            };
+            try {
+              rowAiDefaults = await generateAiVarDefaults(_aiFillTargets, perRowCtx, aiSettings, LOVABLE_API_KEY);
+            } catch (e) {
+              console.error("[GENERATE-PAGES] per-row AI fill failed, falling back to campaign defaults:", e);
+              rowAiDefaults = aiVarDefaults;
+            }
+          }
+
           // 1. Apply AI defaults first when rule is ai_only or ai_first.
-          for (const [key, value] of Object.entries(aiVarDefaults)) {
+          for (const [key, value] of Object.entries(rowAiDefaults)) {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") {
               if (value || rule === "ai_only") {
@@ -1633,7 +1678,7 @@ Deno.serve(async (req) => {
           }
 
           // 3. AI fallback for any still-unfilled placeholders (csv_first when CSV empty).
-          for (const [key, value] of Object.entries(aiVarDefaults)) {
+          for (const [key, value] of Object.entries(rowAiDefaults)) {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") continue; // already applied
             const regex = new RegExp(`\\{${key}\\}`, "gi");
