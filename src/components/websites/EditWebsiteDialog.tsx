@@ -30,6 +30,9 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [language, setLanguage] = useState<string | null>(
     (site as unknown as { language?: string | null }).language ?? null
   );
+  const [languageLocked, setLanguageLocked] = useState<boolean>(
+    !!(site as unknown as { language_locked?: boolean }).language_locked
+  );
   // WordPress credential fields
   const creds = (site.credentials as Record<string, string> | null) || {};
   const [wpAuthMethod, setWpAuthMethod] = useState<WpAuthMethod>(
@@ -54,6 +57,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       setName(site.name);
       setUrl(site.url);
       setLanguage((site as unknown as { language?: string | null }).language ?? null);
+      setLanguageLocked(!!(site as unknown as { language_locked?: boolean }).language_locked);
       // Reset credential fields (don't pre-fill encrypted values)
       setUsername("");
       setAppPassword("");
@@ -95,6 +99,8 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
         url,
         type: site.type,
         workspace_id: site.workspace_id,
+        language,
+        language_locked: languageLocked,
       };
       // Only send credentials if user filled them in
       if (hasCredentialInput()) {
