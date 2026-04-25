@@ -516,6 +516,18 @@ ${content}`
                   </div>
                 </div>
               </div>
+
+              <LiveSerpPreview
+                seoTitle={seoTitlePattern}
+                seoDescription={seoDescriptionPattern}
+                ogTitle={ogTitlePattern}
+                ogDescription={ogDescriptionPattern}
+                ogImage={ogImagePattern}
+                twitterCard={twitterCard}
+                slugPattern={slugPattern}
+                canonicalUrlPattern={canonicalUrlPattern}
+                templateName={name}
+              />
             </TabsContent>
 
             {/* ── Permalink Tab ── */}
