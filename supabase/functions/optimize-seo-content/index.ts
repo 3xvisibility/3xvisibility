@@ -323,12 +323,13 @@ Deno.serve(async (req) => {
           status: "publish",
         };
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
-        if (shouldMirrorToElementor(website.type, page_type, nextContent)) {
+        if (!preserveDesign && shouldMirrorToElementor(website.type, page_type, nextContent)) {
           updatePayload.elementor_meta = {
             elementor_data: buildElementorData(nextContent),
             elementor_edit_mode: "builder",
           };
         }
+        if (preserveDesign) updatePayload.preserve_design = true;
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
         if (seo_title) updatePayload.seo_title = seo_title;
         if (seo_description) updatePayload.seo_description = seo_description;
