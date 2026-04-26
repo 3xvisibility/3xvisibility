@@ -149,6 +149,7 @@ function buildPayload(
   elementorMeta?: { elementor_data?: string; elementor_edit_mode?: string; page_template?: string },
   extraData?: Record<string, unknown>,
   pageTemplate?: string,
+  preserveDesign?: boolean,
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
@@ -163,13 +164,16 @@ function buildPayload(
 
   if (page.seo_description) payload.excerpt = page.seo_description;
 
+  if (preserveDesign) payload.preserve_design = true;
+
   // Forward the detected/explicit page_template so non-Elementor sites also
   // inherit the active theme's preferred template (e.g. Divi, Astra, default).
-  if (pageTemplate) {
+  // Skipped when preserving the live design — we don't want to retemplate the page.
+  if (pageTemplate && !preserveDesign) {
     payload.page_template = pageTemplate;
   }
 
-  if (elementorMeta?.elementor_data) {
+  if (elementorMeta?.elementor_data && !preserveDesign) {
     payload.elementor_meta = {
       elementor_data: elementorMeta.elementor_data,
       elementor_edit_mode: elementorMeta.elementor_edit_mode || "builder",
