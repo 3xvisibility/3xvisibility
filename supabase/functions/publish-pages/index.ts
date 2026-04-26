@@ -234,9 +234,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { page_ids, publish_type, website_id, pages: directPages } = body;
+    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design } = body;
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
+    // Default behavior: when republishing an existing CMS page, preserve its
+    // design (Elementor layout, theme blocks, builder structure) and only push
+    // metadata-level fields. Caller can opt out with `overwrite_design: true`
+    // (e.g. for first publish or explicit content rewrites).
+    const allowOverwriteDesign = overwrite_design === true;
 
     // ═══════════════════════════════════════════════════════════
     // Direct publish mode (from TemplateDetectorDialog)
