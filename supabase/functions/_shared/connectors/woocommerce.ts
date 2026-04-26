@@ -89,22 +89,26 @@ export class WooCommerceConnector implements CmsConnector {
 
     const auth = btoa(`${this.consumerKey}:${this.consumerSecret}`);
     const body: Record<string, unknown> = {};
+    const preserveDesign = payload.preserve_design === true;
 
     if (payload.title || payload.seo_title) body.title = payload.title || payload.seo_title;
-    if (typeof payload.content === "string") body.content = payload.content || "<p></p>";
+    // Preserve existing on-site design when republishing — only metadata flows through.
+    if (!preserveDesign && typeof payload.content === "string") {
+      body.content = payload.content || "<p></p>";
+    }
     if (payload.slug) body.slug = slugify(payload.slug);
     if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
-    if (payload.elementor_meta?.elementor_data) {
+    if (!preserveDesign && payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
       meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
       meta._elementor_template_type = "wp-page";
       meta._elementor_version = "3.0.0";
     }
     if (Object.keys(meta).length > 0) body.meta = meta;
-    if (payload.elementor_meta?.page_template) body.template = payload.elementor_meta.page_template;
+    if (!preserveDesign && payload.elementor_meta?.page_template) body.template = payload.elementor_meta.page_template;
 
     const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages/${externalId}`, {
       method: "PUT",
@@ -129,9 +133,11 @@ export class WooCommerceConnector implements CmsConnector {
 
   private async updateProduct(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {};
+    const preserveDesign = payload.preserve_design === true;
 
     if (payload.title || payload.seo_title) body.name = payload.title || payload.seo_title;
-    if (typeof payload.content === "string") body.description = payload.content;
+    // Preserve product description/layout on republish — only meta updates.
+    if (!preserveDesign && typeof payload.content === "string") body.description = payload.content;
     if (payload.slug || payload.product_data?.handle) {
       body.slug = slugify(payload.product_data?.handle || payload.slug || externalId);
     }
@@ -139,7 +145,7 @@ export class WooCommerceConnector implements CmsConnector {
     if (payload.excerpt) body.short_description = payload.excerpt;
     if (!body.short_description && payload.seo_description) body.short_description = payload.seo_description;
     if (payload.product_data?.price) body.regular_price = String(payload.product_data.price);
-    if (payload.product_data?.images?.length) {
+    if (!preserveDesign && payload.product_data?.images?.length) {
       body.images = payload.product_data.images
         .filter((img) => img.src && !img.src.startsWith("data:"))
         .map((img) => ({ src: img.src, alt: img.alt }));
