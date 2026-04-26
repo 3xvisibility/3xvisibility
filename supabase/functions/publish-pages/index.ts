@@ -275,13 +275,17 @@ Deno.serve(async (req) => {
       for (const dp of directPages) {
         try {
           const cleanedContent = stripHeadTagsForCms(dp.content);
+          // Republish of an already-published page → preserve existing on-site design.
+          const isRepublish = !!dp.external_id;
+          const preserveDesign = isRepublish && !allowOverwriteDesign;
 
-          // If page already has Elementor data, use it; otherwise auto-generate if site uses Elementor
-          let elementorMeta = dp.elementor_data
+          // If page already has Elementor data, use it; otherwise auto-generate if site uses Elementor.
+          // Skipped entirely on design-preserving republishes.
+          let elementorMeta = (!preserveDesign && dp.elementor_data)
             ? { elementor_data: dp.elementor_data, elementor_edit_mode: dp.elementor_edit_mode, page_template: dp.page_template }
             : undefined;
 
-          if (!elementorMeta && elementorInfo.usesElementor) {
+          if (!preserveDesign && !elementorMeta && elementorInfo.usesElementor) {
             elementorMeta = {
               elementor_data: buildElementorData(cleanedContent),
               elementor_edit_mode: "builder",
@@ -295,7 +299,8 @@ Deno.serve(async (req) => {
             elementorMeta,
             undefined,
             // Mirror the site's preferred template when no Elementor data is present.
-            !elementorMeta ? elementorInfo.pageTemplate : undefined,
+            (!preserveDesign && !elementorMeta) ? elementorInfo.pageTemplate : undefined,
+            preserveDesign,
           );
 
           // If an external_id is provided, update the existing page; otherwise create new
