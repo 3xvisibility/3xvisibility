@@ -434,10 +434,15 @@ Deno.serve(async (req) => {
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
         const cleanedContent = stripHeadTagsForCms(page.content);
+        // Republish of an already-published CMS page → preserve existing on-site
+        // design (Elementor layout, theme blocks, builder structure). Only
+        // metadata (title, slug, SEO meta, canonical) flows through.
+        const isRepublish = !!page.external_id;
+        const preserveDesign = isRepublish && !allowOverwriteDesign;
 
         let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
-        if (resolvedPublishType === "page") {
-          // Auto-detect Elementor for pages only (cached)
+        if (resolvedPublishType === "page" && !preserveDesign) {
+          // Auto-detect Elementor for pages only (cached) — first publish only.
           const wsKey = page.website_id || "default";
           if (!elementorCache.has(wsKey)) {
             const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
@@ -459,10 +464,11 @@ Deno.serve(async (req) => {
           resolvedPublishType,
           elementorMeta,
           resolvedPublishType === "product" ? {} : undefined,
-          // For non-Elementor sites, still forward the detected site template.
-          (resolvedPublishType === "page" && !elementorMeta)
+          // For non-Elementor sites on first publish, still forward the detected site template.
+          (resolvedPublishType === "page" && !elementorMeta && !preserveDesign)
             ? elementorCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
+          preserveDesign,
         );
 
         // If page was previously published (has external_id), update instead of creating
