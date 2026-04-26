@@ -103,7 +103,13 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
       if (pageData?.status === "published" && pageData?.external_id && pageData?.website_id) {
         try {
           const { data: pubData } = await supabase.functions.invoke("publish-pages", {
-            body: { page_ids: [page.id], publish_type: "page", website_id: pageData.website_id },
+            body: {
+              page_ids: [page.id],
+              publish_type: "page",
+              website_id: pageData.website_id,
+              // AI enrichment intentionally rewrites body content — opt into design overwrite.
+              overwrite_design: true,
+            },
           });
           republished = pubData?.published > 0;
         } catch (_) { /* non-critical */ }
