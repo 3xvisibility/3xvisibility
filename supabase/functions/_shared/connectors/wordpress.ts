@@ -181,11 +181,18 @@ export class WordPressConnector implements CmsConnector {
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {};
     const resourcePath = payload.product_data ? "product" : "pages";
+    const preserveDesign = payload.preserve_design === true;
 
     if (payload.title || payload.seo_title) body.title = resolveWordPressTitle(payload);
 
-    if (typeof payload.content === "string") {
-      body.content = sanitizeWordPressContent(payload.content) || "<p></p>";
+    // DESIGN-PRESERVATION MODE: when republishing an existing CMS page (e.g. after
+    // an AI SEO rewrite), do NOT overwrite the live body content, Elementor data,
+    // or page template. Only metadata fields are sent to WordPress so the page
+    // looks exactly the same — better SEO/title text only.
+    if (!preserveDesign) {
+      if (typeof payload.content === "string") {
+        body.content = sanitizeWordPressContent(payload.content) || "<p></p>";
+      }
     }
 
     if (payload.slug) body.slug = slugify(payload.slug);
@@ -194,23 +201,24 @@ export class WordPressConnector implements CmsConnector {
 
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
 
-    const resolvedTemplate =
-      payload.elementor_meta?.page_template
-      || payload.page_template
-      || undefined;
+    const resolvedTemplate = preserveDesign
+      ? undefined
+      : (payload.elementor_meta?.page_template
+        || payload.page_template
+        || undefined);
 
-    if (payload.elementor_meta?.elementor_data) {
+    if (!preserveDesign && payload.elementor_meta?.elementor_data) {
       meta._elementor_data = payload.elementor_meta.elementor_data;
       meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
       meta._elementor_template_type = "wp-page";
       meta._elementor_version = "3.0.0";
       if (resolvedTemplate) meta._wp_page_template = resolvedTemplate;
-    } else if (resolvedTemplate) {
+    } else if (!preserveDesign && resolvedTemplate) {
       meta._wp_page_template = resolvedTemplate;
     }
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
-    if (resolvedTemplate) body.template = resolvedTemplate;
+    if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
 
     const data = await this.executePageRequest(
       `${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`,
