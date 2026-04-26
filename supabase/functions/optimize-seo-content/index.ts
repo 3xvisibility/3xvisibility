@@ -276,7 +276,15 @@ Deno.serve(async (req) => {
       page_seo_description,
       page_seo_keywords,
       update_template,
+      overwrite_design,
     } = body;
+    // Republishing an existing CMS page → preserve its on-site design (Elementor
+    // layout, theme blocks, builder structure) by default. Caller can opt out
+    // with `overwrite_design: true` (e.g. manual full-rewrite flows). When the
+    // caller explicitly supplies `manual_content`, we treat it as an intentional
+    // body update so the new content actually reaches the CMS.
+    const allowOverwriteDesign = overwrite_design === true || !!manual_content;
+    const preserveDesign = !allowOverwriteDesign;
 
     if (!website_id) {
       return new Response(JSON.stringify({ error: "website_id is required" }), {
