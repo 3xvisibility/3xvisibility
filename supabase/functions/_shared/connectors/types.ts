@@ -22,6 +22,15 @@ export interface PagePayload {
   schema_json?: Record<string, unknown>;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
+  /**
+   * When true (default for republishes of existing CMS pages), the connector MUST
+   * NOT touch the live page's body content, Elementor data, builder layout, or
+   * page template. Only metadata-level fields (title, slug, SEO title/description/
+   * keywords, canonical, excerpt) are updated. This preserves the original site
+   * design exactly as the user built it on the CMS, while still allowing AI-driven
+   * SEO improvements to flow through.
+   */
+  preserve_design?: boolean;
   elementor_meta?: {
     elementor_data?: string;
     elementor_edit_mode?: string;

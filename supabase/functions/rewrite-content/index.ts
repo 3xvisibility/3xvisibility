@@ -187,6 +187,8 @@ CRITICAL RULES - You MUST follow these exactly:
             page_ids: [page_id],
             publish_type: "page",
             website_id: page.website_id,
+            // Rewrite-content explicitly changes the body, so design overwrite IS desired here.
+            overwrite_design: true,
           }),
         });
 

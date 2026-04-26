@@ -149,6 +149,7 @@ function buildPayload(
   elementorMeta?: { elementor_data?: string; elementor_edit_mode?: string; page_template?: string },
   extraData?: Record<string, unknown>,
   pageTemplate?: string,
+  preserveDesign?: boolean,
 ): PagePayload {
   const payload: PagePayload = {
     title: page.title,
@@ -163,13 +164,16 @@ function buildPayload(
 
   if (page.seo_description) payload.excerpt = page.seo_description;
 
+  if (preserveDesign) payload.preserve_design = true;
+
   // Forward the detected/explicit page_template so non-Elementor sites also
   // inherit the active theme's preferred template (e.g. Divi, Astra, default).
-  if (pageTemplate) {
+  // Skipped when preserving the live design — we don't want to retemplate the page.
+  if (pageTemplate && !preserveDesign) {
     payload.page_template = pageTemplate;
   }
 
-  if (elementorMeta?.elementor_data) {
+  if (elementorMeta?.elementor_data && !preserveDesign) {
     payload.elementor_meta = {
       elementor_data: elementorMeta.elementor_data,
       elementor_edit_mode: elementorMeta.elementor_edit_mode || "builder",
@@ -230,9 +234,14 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { page_ids, publish_type, website_id, pages: directPages } = body;
+    const { page_ids, publish_type, website_id, pages: directPages, overwrite_design } = body;
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
+    // Default behavior: when republishing an existing CMS page, preserve its
+    // design (Elementor layout, theme blocks, builder structure) and only push
+    // metadata-level fields. Caller can opt out with `overwrite_design: true`
+    // (e.g. for first publish or explicit content rewrites).
+    const allowOverwriteDesign = overwrite_design === true;
 
     // ═══════════════════════════════════════════════════════════
     // Direct publish mode (from TemplateDetectorDialog)
@@ -266,13 +275,17 @@ Deno.serve(async (req) => {
       for (const dp of directPages) {
         try {
           const cleanedContent = stripHeadTagsForCms(dp.content);
+          // Republish of an already-published page → preserve existing on-site design.
+          const isRepublish = !!dp.external_id;
+          const preserveDesign = isRepublish && !allowOverwriteDesign;
 
-          // If page already has Elementor data, use it; otherwise auto-generate if site uses Elementor
-          let elementorMeta = dp.elementor_data
+          // If page already has Elementor data, use it; otherwise auto-generate if site uses Elementor.
+          // Skipped entirely on design-preserving republishes.
+          let elementorMeta = (!preserveDesign && dp.elementor_data)
             ? { elementor_data: dp.elementor_data, elementor_edit_mode: dp.elementor_edit_mode, page_template: dp.page_template }
             : undefined;
 
-          if (!elementorMeta && elementorInfo.usesElementor) {
+          if (!preserveDesign && !elementorMeta && elementorInfo.usesElementor) {
             elementorMeta = {
               elementor_data: buildElementorData(cleanedContent),
               elementor_edit_mode: "builder",
@@ -286,7 +299,8 @@ Deno.serve(async (req) => {
             elementorMeta,
             undefined,
             // Mirror the site's preferred template when no Elementor data is present.
-            !elementorMeta ? elementorInfo.pageTemplate : undefined,
+            (!preserveDesign && !elementorMeta) ? elementorInfo.pageTemplate : undefined,
+            preserveDesign,
           );
 
           // If an external_id is provided, update the existing page; otherwise create new
@@ -420,10 +434,15 @@ Deno.serve(async (req) => {
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
         const cleanedContent = stripHeadTagsForCms(page.content);
+        // Republish of an already-published CMS page → preserve existing on-site
+        // design (Elementor layout, theme blocks, builder structure). Only
+        // metadata (title, slug, SEO meta, canonical) flows through.
+        const isRepublish = !!page.external_id;
+        const preserveDesign = isRepublish && !allowOverwriteDesign;
 
         let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
-        if (resolvedPublishType === "page") {
-          // Auto-detect Elementor for pages only (cached)
+        if (resolvedPublishType === "page" && !preserveDesign) {
+          // Auto-detect Elementor for pages only (cached) — first publish only.
           const wsKey = page.website_id || "default";
           if (!elementorCache.has(wsKey)) {
             const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
@@ -445,10 +464,11 @@ Deno.serve(async (req) => {
           resolvedPublishType,
           elementorMeta,
           resolvedPublishType === "product" ? {} : undefined,
-          // For non-Elementor sites, still forward the detected site template.
-          (resolvedPublishType === "page" && !elementorMeta)
+          // For non-Elementor sites on first publish, still forward the detected site template.
+          (resolvedPublishType === "page" && !elementorMeta && !preserveDesign)
             ? elementorCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
+          preserveDesign,
         );
 
         // If page was previously published (has external_id), update instead of creating

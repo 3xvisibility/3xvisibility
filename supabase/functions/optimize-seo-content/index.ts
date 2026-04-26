@@ -276,7 +276,15 @@ Deno.serve(async (req) => {
       page_seo_description,
       page_seo_keywords,
       update_template,
+      overwrite_design,
     } = body;
+    // Republishing an existing CMS page → preserve its on-site design (Elementor
+    // layout, theme blocks, builder structure) by default. Caller can opt out
+    // with `overwrite_design: true` (e.g. manual full-rewrite flows). When the
+    // caller explicitly supplies `manual_content`, we treat it as an intentional
+    // body update so the new content actually reaches the CMS.
+    const allowOverwriteDesign = overwrite_design === true || !!manual_content;
+    const preserveDesign = !allowOverwriteDesign;
 
     if (!website_id) {
       return new Response(JSON.stringify({ error: "website_id is required" }), {
@@ -315,12 +323,13 @@ Deno.serve(async (req) => {
           status: "publish",
         };
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
-        if (shouldMirrorToElementor(website.type, page_type, nextContent)) {
+        if (!preserveDesign && shouldMirrorToElementor(website.type, page_type, nextContent)) {
           updatePayload.elementor_meta = {
             elementor_data: buildElementorData(nextContent),
             elementor_edit_mode: "builder",
           };
         }
+        if (preserveDesign) updatePayload.preserve_design = true;
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
         if (seo_title) updatePayload.seo_title = seo_title;
         if (seo_description) updatePayload.seo_description = seo_description;
@@ -814,15 +823,18 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         };
 
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
-        if (rewrittenContent) {
+        // Only push rewritten body content when the caller explicitly opted into
+        // a design overwrite — preserves Elementor/builder layouts on republish.
+        if (rewrittenContent && !preserveDesign) {
           updatePayload.content = rewrittenContent;
         }
-        if (rewrittenContent && shouldMirrorToElementor(website.type, page_type, page_content || rewrittenContent)) {
+        if (rewrittenContent && !preserveDesign && shouldMirrorToElementor(website.type, page_type, page_content || rewrittenContent)) {
           updatePayload.elementor_meta = {
             elementor_data: buildElementorData(rewrittenContent),
             elementor_edit_mode: "builder",
           };
         }
+        if (preserveDesign) updatePayload.preserve_design = true;
         if (nextSeoTitle) updatePayload.seo_title = nextSeoTitle;
         if (nextSeoDescription) {
           updatePayload.seo_description = nextSeoDescription;

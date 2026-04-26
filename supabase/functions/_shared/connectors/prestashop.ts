@@ -135,6 +135,7 @@ export class PrestaShopConnector implements CmsConnector {
     const isProduct = !!payload.product_data;
     const resource = isProduct ? "products" : "cms";
     const linkRewrite = payload.slug ? slugify(payload.slug) : undefined;
+    const preserveDesign = payload.preserve_design === true;
 
     // Build partial XML — PrestaShop requires full resource XML for PUT, so fetch existing first
     const getResp = await fetch(`${this.baseUrl}/api/${resource}/${externalId}?output_format=JSON`, {
@@ -157,7 +158,8 @@ export class PrestaShopConnector implements CmsConnector {
         record[field] = [{ id: langId, value: payload.title }];
       }
     }
-    if (payload.content) {
+    // Preserve existing on-site design when republishing — skip body content overwrites.
+    if (!preserveDesign && payload.content) {
       const field = isProduct ? "description" : "content";
       if (Array.isArray(record[field])) {
         record[field] = record[field].map((l: any) => ({ ...l, value: payload.content }));

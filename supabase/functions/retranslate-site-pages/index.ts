@@ -293,6 +293,8 @@ Deno.serve(async (req) => {
             page_ids: updated.map((u) => u.id),
             publish_type: "publish",
             website_id: websiteId,
+            // Retranslate explicitly rewrites the body content, so design overwrite IS desired.
+            overwrite_design: true,
           },
         });
         if (pubErr) {

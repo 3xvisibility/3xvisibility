@@ -148,8 +148,11 @@ export class ShopifyConnector implements CmsConnector {
     if (payload.product_data) return this.updateProduct(externalId, payload);
 
     const body: Record<string, unknown> = {};
+    const preserveDesign = payload.preserve_design === true;
+
     if (payload.title) body.title = payload.title;
-    if (payload.content) body.body_html = payload.content;
+    // Preserve existing on-site design when republishing — only metadata flows through.
+    if (!preserveDesign && payload.content) body.body_html = payload.content;
     if (payload.slug) body.handle = slugify(payload.slug);
     if (payload.status) body.published = payload.status === "publish";
     if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
@@ -175,11 +178,13 @@ export class ShopifyConnector implements CmsConnector {
 
   private async updateProduct(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {};
+    const preserveDesign = payload.preserve_design === true;
+
     if (payload.title) body.title = payload.title;
-    if (payload.content) body.body_html = payload.content;
+    if (!preserveDesign && payload.content) body.body_html = payload.content;
     if (payload.product_data?.handle || payload.slug) body.handle = slugify(payload.product_data?.handle || payload.slug || "");
     if (payload.product_data?.price) body.variants = [{ price: String(payload.product_data.price) }];
-    if (payload.product_data?.images?.length) {
+    if (!preserveDesign && payload.product_data?.images?.length) {
       body.images = payload.product_data.images
         .filter((img) => img.src && !img.src.startsWith("data:"))
         .map((img) => ({ src: img.src, alt: img.alt }));
