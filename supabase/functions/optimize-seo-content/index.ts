@@ -823,15 +823,18 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         };
 
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
-        if (rewrittenContent) {
+        // Only push rewritten body content when the caller explicitly opted into
+        // a design overwrite — preserves Elementor/builder layouts on republish.
+        if (rewrittenContent && !preserveDesign) {
           updatePayload.content = rewrittenContent;
         }
-        if (rewrittenContent && shouldMirrorToElementor(website.type, page_type, page_content || rewrittenContent)) {
+        if (rewrittenContent && !preserveDesign && shouldMirrorToElementor(website.type, page_type, page_content || rewrittenContent)) {
           updatePayload.elementor_meta = {
             elementor_data: buildElementorData(rewrittenContent),
             elementor_edit_mode: "builder",
           };
         }
+        if (preserveDesign) updatePayload.preserve_design = true;
         if (nextSeoTitle) updatePayload.seo_title = nextSeoTitle;
         if (nextSeoDescription) {
           updatePayload.seo_description = nextSeoDescription;
