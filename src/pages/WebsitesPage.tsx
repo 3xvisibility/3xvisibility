@@ -52,6 +52,8 @@ export default function WebsitesPage() {
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
   const [siteLanguage, setSiteLanguage] = useState<string | null>(null);
   const [languageLocked, setLanguageLocked] = useState<boolean>(false);
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
