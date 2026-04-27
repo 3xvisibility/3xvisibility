@@ -90,7 +90,7 @@ export function ShopifyCredentialFields({
         ) : tokenOk ? (
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
-            টোকেন ফরম্যাট ঠিক আছে
+            Token format looks good
           </p>
         ) : null}
       </div>
