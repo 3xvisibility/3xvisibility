@@ -303,7 +303,7 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
       : "AI Generated Template";
 
     return new Response(
-      JSON.stringify({ content, variables: vars, suggestedName }),
+      JSON.stringify({ content, variables: vars, suggestedName, designDirection: direction.name }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
