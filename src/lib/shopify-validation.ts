@@ -1,45 +1,45 @@
 /**
  * Frontend validators for Shopify credentials.
- * Returns Bengali warning messages so users see inline guidance before
+ * Returns inline warning messages so users see guidance before
  * triggering a test-connection request.
  */
 
 export function validateShopifyDomain(raw: string): string | null {
   const value = (raw || "").trim();
-  if (!value) return "শপ ডোমেইন দিন (যেমন: my-store.myshopify.com)";
+  if (!value) return "Enter your shop domain (e.g. my-store.myshopify.com)";
 
   if (/^https?:\/\//i.test(value)) {
-    return "শুধু ডোমেইন লিখুন, https:// বা http:// দরকার নেই";
+    return "Enter the domain only — no https:// or http:// needed";
   }
   if (value.includes("/")) {
-    return "শুধু ডোমেইন লিখুন, কোনো path / slash যোগ করবেন না";
+    return "Enter the domain only — do not include any path or slash";
   }
   if (value.includes(" ")) {
-    return "ডোমেইনে কোনো স্পেস থাকা যাবে না";
+    return "Domain cannot contain spaces";
   }
   if (!/\.myshopify\.com$/i.test(value)) {
-    return "ডোমেইনটি অবশ্যই .myshopify.com দিয়ে শেষ হতে হবে (custom domain নয়)";
+    return "Domain must end with .myshopify.com (not a custom domain)";
   }
   // Shopify subdomains: lowercase letters, numbers, hyphens, 3-60 chars
   const subdomain = value.replace(/\.myshopify\.com$/i, "");
   if (!/^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$/i.test(subdomain)) {
-    return "ডোমেইন ফরম্যাট ঠিক নেই। শুধু অক্ষর, সংখ্যা এবং হাইফেন (-) ব্যবহার করুন";
+    return "Invalid domain format. Use only letters, numbers, and hyphens (-)";
   }
   return null;
 }
 
 export function validateShopifyToken(raw: string): string | null {
   const value = (raw || "").trim();
-  if (!value) return "Admin API access token দিন";
+  if (!value) return "Enter the Admin API access token";
 
   if (!value.startsWith("shpat_")) {
-    return "টোকেনটি অবশ্যই shpat_ দিয়ে শুরু হতে হবে (Admin API access token)";
+    return "Token must start with shpat_ (Admin API access token)";
   }
   if (value.length < 20) {
-    return "টোকেন অনেক ছোট মনে হচ্ছে — সম্পূর্ণ টোকেন কপি করেছেন কি?";
+    return "Token looks too short — did you copy the full token?";
   }
   if (/\s/.test(value)) {
-    return "টোকেনে কোনো স্পেস বা নতুন লাইন থাকা যাবে না";
+    return "Token cannot contain spaces or newlines";
   }
   return null;
 }
