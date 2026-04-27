@@ -867,8 +867,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     toast({ title: "Preset removed", description: name });
   };
 
-  // --- SEO Title Pattern auto-fix ---
-  const [fixingSeoPattern, setFixingSeoPattern] = useState(false);
+  // --- SEO Pattern auto-fix ---
+  const [fixingSeoTitle, setFixingSeoTitle] = useState(false);
+  const [fixingSeoDescription, setFixingSeoDescription] = useState(false);
 
   const buildSeoPatternsFromMapping = useCallback(() => {
     // Variables that have an actual mapping (CSV column or custom value)
@@ -885,23 +886,50 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       mapped[0];
     const locationVar = findBy(["city", "location", "area", "region", "state", "country", "place"]);
     const brandVar = findBy(["brand", "company", "business", "businessname", "site", "sitename"]);
-    const descVar = findBy(["description", "summary", "excerpt", "tagline", "about"]);
+    const descVar = findBy(["description", "summary", "excerpt", "tagline", "about", "metadescription"]);
+    const benefitVar = findBy(["benefit", "benefits", "feature", "features", "value", "valueprop"]);
+    const ctaVar = findBy(["cta", "calltoaction", "offer", "promo"]);
 
     if (!titleVar) return null;
 
+    // Title pattern: {title} in {city} | {brand}
     const titleParts: string[] = [`{${titleVar}}`];
     if (locationVar) titleParts.push(`in {${locationVar}}`);
     const titleSuffix = brandVar ? ` | {${brandVar}}` : "";
     const titlePattern = titleParts.join(" ") + titleSuffix;
 
-    const descBase = descVar ? `{${descVar}}` : `Discover {${titleVar}}`;
-    const descLocation = locationVar ? ` in {${locationVar}}` : "";
-    const descPattern = `${descBase}${descLocation}. Learn more today.`;
+    // Description pattern: prefer an explicit description variable; else compose
+    // from title + benefit/location + cta. Keeps under ~160 chars typical SEO limit.
+    let descPattern: string;
+    if (descVar) {
+      descPattern = `{${descVar}}`;
+    } else {
+      const descParts: string[] = [`Discover {${titleVar}}`];
+      if (locationVar) descParts.push(`in {${locationVar}}`);
+      let body = descParts.join(" ");
+      if (benefitVar) body += ` — {${benefitVar}}`;
+      const tail = ctaVar ? `{${ctaVar}}` : "Learn more today";
+      descPattern = `${body}. ${tail}.`;
+    }
 
-    return { titlePattern, descPattern, titleVar, locationVar, brandVar };
+    return { titlePattern, descPattern, titleVar, locationVar, brandVar, descVar };
   }, [variableMapping]);
 
-  const handleAutoFixSeoPattern = useCallback(async () => {
+  const persistTemplatePattern = useCallback(
+    async (field: "seo_title_pattern" | "seo_description_pattern", value: string) => {
+      const tpl = templates.find(t => t.id === selectedTemplate);
+      if (!tpl) throw new Error("Template not found");
+      const { error } = await supabase
+        .from("templates")
+        .update({ [field]: value })
+        .eq("id", tpl.id);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
+    },
+    [templates, selectedTemplate, queryClient, wsId],
+  );
+
+  const handleAutoFixSeoTitle = useCallback(async () => {
     const tpl = templates.find(t => t.id === selectedTemplate);
     if (!tpl) {
       toast({ title: "Pick a template first", variant: "destructive" });
@@ -916,27 +944,42 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       });
       return;
     }
-    setFixingSeoPattern(true);
+    setFixingSeoTitle(true);
     try {
-      const { error } = await supabase
-        .from("templates")
-        .update({
-          seo_title_pattern: built.titlePattern,
-          seo_description_pattern: tpl.seo_description_pattern || built.descPattern,
-        })
-        .eq("id", tpl.id);
-      if (error) throw error;
-      await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
-      toast({
-        title: "SEO pattern set",
-        description: `Title: ${built.titlePattern}`,
-      });
+      await persistTemplatePattern("seo_title_pattern", built.titlePattern);
+      toast({ title: "SEO title set", description: built.titlePattern });
     } catch (err: any) {
       toast({ title: "Auto-fix failed", description: err.message, variant: "destructive" });
     } finally {
-      setFixingSeoPattern(false);
+      setFixingSeoTitle(false);
     }
-  }, [templates, selectedTemplate, buildSeoPatternsFromMapping, queryClient, wsId, toast]);
+  }, [templates, selectedTemplate, buildSeoPatternsFromMapping, persistTemplatePattern, toast]);
+
+  const handleAutoFixSeoDescription = useCallback(async () => {
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    if (!tpl) {
+      toast({ title: "Pick a template first", variant: "destructive" });
+      return;
+    }
+    const built = buildSeoPatternsFromMapping();
+    if (!built) {
+      toast({
+        title: "No variables available",
+        description: "Map at least one CSV column or custom value first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setFixingSeoDescription(true);
+    try {
+      await persistTemplatePattern("seo_description_pattern", built.descPattern);
+      toast({ title: "SEO description set", description: built.descPattern });
+    } catch (err: any) {
+      toast({ title: "Auto-fix failed", description: err.message, variant: "destructive" });
+    } finally {
+      setFixingSeoDescription(false);
+    }
+  }, [templates, selectedTemplate, buildSeoPatternsFromMapping, persistTemplatePattern, toast]);
 
   // Readiness stats for review step
   const readinessItems = useMemo(() => {
@@ -944,10 +987,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     items.push({ label: "Campaign Name", status: campaignName ? "ok" : "error", detail: campaignName || "Not set" });
     items.push({ label: "Data Source", status: effectiveCsvData.length > 0 ? "ok" : "error", detail: `${effectiveCsvData.length} rows from ${dataSource}` });
     items.push({ label: "Template", status: selectedTemplate ? "ok" : "error", detail: templates.find(t => t.id === selectedTemplate)?.name || "Not selected" });
-    
+
     const unmapped = variableMapping?.matched.filter(m => !m.column && !m.customValue) || [];
     items.push({ label: "Variable Mapping", status: unmapped.length === 0 ? "ok" : unmapped.length <= 2 ? "warn" : "error", detail: unmapped.length === 0 ? "All mapped" : `${unmapped.length} unmapped` });
-    
+
     const tpl = templates.find(t => t.id === selectedTemplate);
     const hasMappedVars = (variableMapping?.matched || []).some(m => m.column || m.customValue);
     items.push({
@@ -955,13 +998,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       status: tpl?.seo_title_pattern ? "ok" : "warn",
       detail: tpl?.seo_title_pattern || "Using default",
       fix: !tpl?.seo_title_pattern && tpl && hasMappedVars
-        ? { label: "Auto-fix", run: handleAutoFixSeoPattern, loading: fixingSeoPattern }
+        ? { label: "Auto-fix", run: handleAutoFixSeoTitle, loading: fixingSeoTitle }
+        : undefined,
+    });
+    items.push({
+      label: "SEO Description Pattern",
+      status: tpl?.seo_description_pattern ? "ok" : "warn",
+      detail: tpl?.seo_description_pattern || "Using default",
+      fix: !tpl?.seo_description_pattern && tpl && hasMappedVars
+        ? { label: "Auto-fix", run: handleAutoFixSeoDescription, loading: fixingSeoDescription }
         : undefined,
     });
     items.push({ label: "Website", status: (selectedWebsite || websiteForPages) ? "ok" : "warn", detail: websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "Not assigned" });
-    
+
     return items;
-  }, [campaignName, effectiveCsvData, dataSource, selectedTemplate, templates, variableMapping, selectedWebsite, websiteForPages, websites, handleAutoFixSeoPattern, fixingSeoPattern]);
+  }, [campaignName, effectiveCsvData, dataSource, selectedTemplate, templates, variableMapping, selectedWebsite, websiteForPages, websites, handleAutoFixSeoTitle, fixingSeoTitle, handleAutoFixSeoDescription, fixingSeoDescription]);
 
   return (
     <>
