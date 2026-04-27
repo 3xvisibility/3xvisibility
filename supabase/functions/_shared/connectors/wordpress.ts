@@ -5,15 +5,38 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+function stripImagesWithPlaceholderSrc(html: string): string {
+  // Match a full <img ...> tag (including quoted attributes that may contain '>'
+  // and optional self-closing '/>'). Use a tolerant attribute matcher so we
+  // never leave orphan attribute fragments like `" alt="..." />` in the output.
+  const IMG_TAG = /<img\b(?:\s+[a-zA-Z_:][-a-zA-Z0-9_:.]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*\s*\/?>/gi;
+  return html.replace(IMG_TAG, (tag) => {
+    // Drop the image only if its src/srcset/poster still contains an unresolved
+    // {variable} placeholder OR is empty/missing. Otherwise keep it.
+    const srcMatch = tag.match(/\b(?:src|srcset|poster)\s*=\s*("([^"]*)"|'([^']*)')/i);
+    const srcVal = srcMatch ? (srcMatch[2] ?? srcMatch[3] ?? "") : "";
+    if (!srcMatch) return ""; // no src at all → drop
+    if (!srcVal.trim()) return ""; // empty src → drop
+    if (/\{[^}]*\}/.test(srcVal)) return ""; // unresolved placeholder → drop
+    return tag;
+  });
+}
+
 function sanitizeWordPressContent(content?: string): string | undefined {
   if (typeof content !== "string") return content;
 
-  const sanitized = content
+  let sanitized = content
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/<meta\b[^>]*>/gi, "")
     .replace(/<link\b[^>]*>/gi, "")
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<img\b(?=[^>]*\b(?:src|srcset|poster)\s*=\s*["'][^"']*\{)[^>]*>/gi, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  sanitized = stripImagesWithPlaceholderSrc(sanitized);
+
+  // Mop up orphan attribute fragments left over from earlier mangled <img> tags,
+  // e.g. `" alt="Foo" style="..." />` sitting alone in the markup.
+  sanitized = sanitized
+    .replace(/^\s*["']?\s*(?:alt|src|srcset|style|width|height|class|loading|decoding|sizes|title)\s*=\s*["'][^"']*["'][^<>]*\/?>/gim, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
