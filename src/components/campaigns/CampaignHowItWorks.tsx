@@ -22,11 +22,8 @@ interface Step {
   num: number;
   icon: React.ElementType;
   title: string;
-  titleBn: string;
   desc: string;
-  descBn: string;
   tip?: string;
-  tipBn?: string;
 }
 
 const STEPS: Step[] = [
@@ -34,39 +31,28 @@ const STEPS: Step[] = [
     num: 1,
     icon: Database,
     title: "Add your data",
-    titleBn: "আপনার ডেটা দিন",
     desc: "Upload a CSV, let AI generate rows, or pick locations. Each row becomes one page.",
-    descBn: "একটি CSV আপলোড করুন, AI দিয়ে সারি তৈরি করুন, অথবা লোকেশন বেছে নিন। প্রতিটি সারি = একটি পেজ।",
     tip: "Example: 100 cities × 1 service = 100 unique pages",
-    tipBn: "উদাহরণ: ১০০টি শহর × ১টি সার্ভিস = ১০০টি আলাদা পেজ",
   },
   {
     num: 2,
     icon: FileText,
     title: "Pick a template",
-    titleBn: "একটি টেমপ্লেট বাছুন",
     desc: "Choose a design from the marketplace or build one with AI. The template is the layout for every page.",
-    descBn: "মার্কেটপ্লেস থেকে ডিজাইন বাছুন বা AI দিয়ে তৈরি করুন। টেমপ্লেট প্রতিটি পেজের লেআউট।",
     tip: "Template variables like {city}, {service} get filled from your data",
-    tipBn: "টেমপ্লেটের {city}, {service} ভেরিয়েবল আপনার ডেটা থেকে ভরে যায়",
   },
   {
     num: 3,
     icon: Globe,
     title: "Connect a website",
-    titleBn: "একটি ওয়েবসাইট যুক্ত করুন",
     desc: "Link the WordPress, Shopify or PrestaShop site where pages should be published. Optional — you can also keep them as drafts.",
-    descBn: "WordPress, Shopify বা PrestaShop সাইট কানেক্ট করুন যেখানে পেজ পাবলিশ হবে। ঐচ্ছিক — ড্রাফট হিসাবে রাখাও যায়।",
   },
   {
     num: 4,
     icon: Play,
     title: "Run the campaign",
-    titleBn: "ক্যাম্পেইন চালান",
     desc: "Click Run. We generate every page, optimise SEO, and publish (or save as drafts) automatically.",
-    descBn: "Run চাপুন। আমরা প্রতিটি পেজ তৈরি করি, SEO অপটিমাইজ করি, এবং অটোমেটিক পাবলিশ (বা ড্রাফট সেভ) করি।",
     tip: "Use Test mode first to preview 1 page before generating all of them",
-    tipBn: "সব পেজ তৈরির আগে Test mode দিয়ে ১টি পেজ প্রিভিউ করুন",
   },
 ];
 
