@@ -21,16 +21,17 @@ export function VideoSection() {
           <div className="relative rounded-2xl overflow-hidden border border-[hsl(217,91%,60%,0.15)] shadow-2xl glow-purple-sm">
             <div className="relative aspect-video bg-[hsl(220,40%,8%)]">
               {playing ? (
-                <iframe className="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/JxKJSjHGNzg?autoplay=1&rel=0&modestbranding=1" title="PageGen Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                <video className="absolute inset-0 w-full h-full object-cover" src="/pagegen-demo.mp4" autoPlay controls playsInline />
               ) : (
-                <div className="absolute inset-0 cursor-pointer group bg-gradient-to-br from-[hsl(217,91%,60%,0.05)] to-[hsl(210,100%,70%,0.05)]" onClick={() => setPlaying(true)}>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:shadow-primary/40 transition-all duration-300">
+                <>
+                  <video className="absolute inset-0 w-full h-full object-cover" src="/pagegen-demo.mp4" muted loop autoPlay playsInline preload="metadata" />
+                  <div className="absolute inset-0 cursor-pointer group bg-gradient-to-br from-[hsl(220,40%,5%,0.55)] to-[hsl(220,40%,5%,0.25)] flex flex-col items-center justify-center gap-4" onClick={() => setPlaying(true)}>
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:shadow-primary/40">
                       <Play className="h-6 w-6 ml-1 fill-current" />
                     </motion.div>
-                    <p className="text-sm font-medium text-[hsl(220,15%,65%)]">{t("video.watchDemo")}</p>
+                    <p className="text-sm font-medium text-[hsl(220,15%,85%)]">{t("video.watchDemo")}</p>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>
