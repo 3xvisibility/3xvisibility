@@ -455,13 +455,17 @@ export default function WebsitesPage() {
                   </div>
                 )}
 
+                {progressSteps.length > 0 && (
+                  <ConnectionProgressSteps steps={progressSteps} />
+                )}
+
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">{t("common.cancel")}</Button>
+                  <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
                   <Button
                     variant="outline"
                     className="w-full sm:w-auto"
                     onClick={() => testConnectionMutation.mutate()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending || isConnecting}
                   >
                     {testConnectionMutation.isPending ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
@@ -469,8 +473,16 @@ export default function WebsitesPage() {
                       <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
                     )}
                   </Button>
-                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || createMutation.isPending}>
-                    {createMutation.isPending ? t("common.connecting") : t("common.connect")}
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={() => runConnectFlow()}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
+                  >
+                    {isConnecting ? (
+                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
+                    ) : (
+                      t("common.connect")
+                    )}
                   </Button>
                 </div>
               </div>
