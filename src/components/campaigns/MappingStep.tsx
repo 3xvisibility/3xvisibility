@@ -13,7 +13,7 @@ import {
 import {
   ArrowRight, Check, AlertTriangle, X, Save, FolderOpen, Trash2,
   ArrowDownAZ, Hash, Link2, Type, MapPin, Target, Search as SearchIcon,
-  HelpCircle, Sparkles, Lightbulb, Wand2, Loader2,
+  HelpCircle, Sparkles, Lightbulb, Wand2, Loader2, Zap,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -310,6 +310,121 @@ export function MappingStep({
     toast({ title: "Profile loaded", description: `"${profile.name}" applied.` });
   };
 
+  // ─── Auto-Map: commit smart suggestions to manualMappings ────────
+
+  const norm = (s: string) => s.toLowerCase().replace(/[\s\-_./]+/g, "");
+
+  const SYNONYMS: Record<string, string[]> = {
+    title: ["title", "name", "heading", "h1", "pagetitle", "producttitle", "productname"],
+    name: ["name", "title", "fullname", "businessname", "company"],
+    slug: ["slug", "url", "permalink", "handle", "path"],
+    content: ["content", "body", "description", "text", "article", "bodyhtml"],
+    excerpt: ["excerpt", "summary", "teaser", "shortdescription"],
+    description: ["description", "desc", "summary", "about"],
+    keyword: ["keyword", "kw", "primarykeyword", "focuskeyword"],
+    service: ["service", "serviceoffered", "offering"],
+    category: ["category", "cat", "type", "section"],
+    tags: ["tags", "tag", "labels"],
+    author: ["author", "writtenby", "by"],
+    date: ["date", "publishdate", "createdat", "publishedat"],
+    price: ["price", "cost", "amount", "regularprice"],
+    city: ["city", "town", "locality"],
+    region: ["region", "state", "province"],
+    country: ["country", "nation"],
+    postcode: ["postcode", "postalcode", "zip", "zipcode"],
+    latitude: ["latitude", "lat"],
+    longitude: ["longitude", "lng", "lon", "long"],
+  };
+
+  const scoreMatch = (variable: string, header: string): number => {
+    const v = norm(variable);
+    const h = norm(header);
+    if (!v || !h) return 0;
+    if (v === h) return 100;
+    const syns = SYNONYMS[variable.toLowerCase()] || [];
+    if (syns.includes(h)) return 95;
+    for (const [key, list] of Object.entries(SYNONYMS)) {
+      if (list.includes(v) && list.includes(h)) return 90;
+      if (norm(key) === v && list.includes(h)) return 90;
+    }
+    if (v.includes(h) || h.includes(v)) return 70 + Math.min(20, Math.min(v.length, h.length));
+    // token overlap
+    const vTokens = variable.toLowerCase().split(/[\s\-_./]+/).filter(Boolean);
+    const hTokens = header.toLowerCase().split(/[\s\-_./]+/).filter(Boolean);
+    const overlap = vTokens.filter(t => hTokens.includes(t)).length;
+    if (overlap > 0) return 50 + overlap * 10;
+    return 0;
+  };
+
+  const handleAutoMap = () => {
+    const used = new Set<string>();
+    const newMappings: Record<string, string> = {};
+    let confirmed = 0;
+    let overridden = 0;
+
+    // Pass 1: collect best candidate per variable
+    const candidates: Array<{ v: string; h: string; score: number }> = [];
+    for (const v of templateVars) {
+      if (customValues[v]) continue; // skip variables with explicit custom value
+      let best: { h: string; score: number } | null = null;
+      for (const h of csvHeaders) {
+        const s = scoreMatch(v, h);
+        if (s > 0 && (!best || s > best.score)) best = { h, score: s };
+      }
+      if (best && best.score >= 50) candidates.push({ v, h: best.h, score: best.score });
+    }
+    // Sort by score desc so strongest matches reserve their column first
+    candidates.sort((a, b) => b.score - a.score);
+    for (const c of candidates) {
+      if (used.has(c.h)) continue;
+      newMappings[c.v] = c.h;
+      used.add(c.h);
+      if (manualMappings[c.v] && manualMappings[c.v] !== c.h && manualMappings[c.v] !== "__none__") overridden++;
+      confirmed++;
+    }
+
+    if (confirmed === 0) {
+      toast({
+        title: "No matches found",
+        description: "We couldn't auto-map any CSV columns. Map them manually below.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setManualMappings(prev => ({ ...prev, ...newMappings }));
+    toast({
+      title: `Auto-mapped ${confirmed} variable${confirmed === 1 ? "" : "s"}`,
+      description: overridden > 0
+        ? `${overridden} previous mapping${overridden === 1 ? "" : "s"} updated. Review and edit below.`
+        : "Review the suggested mappings below — edit any if needed.",
+    });
+  };
+
+  // Count how many auto-map suggestions are available (and not yet manually set)
+  const autoMapSuggestionCount = useMemo(() => {
+    const used = new Set<string>();
+    const candidates: Array<{ v: string; h: string; score: number }> = [];
+    for (const v of templateVars) {
+      if (customValues[v]) continue;
+      let best: { h: string; score: number } | null = null;
+      for (const h of csvHeaders) {
+        const s = scoreMatch(v, h);
+        if (s > 0 && (!best || s > best.score)) best = { h, score: s };
+      }
+      if (best && best.score >= 50) candidates.push({ v, h: best.h, score: best.score });
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    let count = 0;
+    for (const c of candidates) {
+      if (used.has(c.h)) continue;
+      used.add(c.h);
+      if (manualMappings[c.v] !== c.h) count++;
+    }
+    return count;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateVars, csvHeaders, customValues, manualMappings]);
+
   // ─── Computed mapping ────────────────────────────────────────────
 
   const resolvedMapping: MappingEntry[] = useMemo(() => {
@@ -536,6 +651,35 @@ export function MappingStep({
               </SelectContent>
             </Select>
           )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs gap-1 rounded-lg border-success/40 text-success hover:bg-success/10 disabled:opacity-50"
+                  onClick={handleAutoMap}
+                  disabled={csvHeaders.length === 0 || templateVars.length === 0}
+                >
+                  <Zap className="h-3 w-3" />
+                  Auto-Map
+                  {autoMapSuggestionCount > 0 && (
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-0.5 bg-success/15 text-success border-0">
+                      {autoMapSuggestionCount}
+                    </Badge>
+                  )}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {csvHeaders.length === 0
+                ? "Upload a CSV first to enable auto-mapping."
+                : autoMapSuggestionCount === 0
+                ? "All possible matches are already applied. Edit any mapping below if needed."
+                : `Auto-match ${autoMapSuggestionCount} CSV column${autoMapSuggestionCount === 1 ? "" : "s"} to template variables. You can edit any mapping after.`}
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <span>
