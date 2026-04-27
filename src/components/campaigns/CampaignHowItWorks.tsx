@@ -186,9 +186,6 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
               <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
               <span>
                 Tip: Start with <strong className="text-foreground">10–20 rows</strong> to test, then scale up.
-                <span className="block sm:inline sm:ml-1 italic">
-                  শুরুতে ১০–২০টি সারি দিয়ে টেস্ট করুন, পরে বাড়ান।
-                </span>
               </span>
             </div>
             {onCreateClick && (
