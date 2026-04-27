@@ -173,6 +173,8 @@ ${platformRule}${themeRule}
 
 QUALITY BAR: Output must look like a flagship landing page from a Series-B startup or premium agency portfolio — Linear, Vercel, Stripe, Arc, Framer, Cron, Raycast, Notion caliber. Bold. Confident. Unmistakable. Never amateur. Never the same as last time.`;
 
+    console.log(`generate-template: chosen direction = "${direction.name}"`);
+
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -182,11 +184,11 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // Cost optimization: use cheaper flash model — sufficient for HTML/CSS template scaffolding
-          model: "google/gemini-2.5-flash",
+          // Use the next-gen flash preview for richer design quality at low cost.
+          model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
+            { role: "user", content: `${prompt}\n\n(Aesthetic for this build: ${direction.name})` },
           ],
         }),
       }
