@@ -81,6 +81,23 @@ export function SeoOptimizeDialog({
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Persist field selection + instruction per page so users don't lose
+  // their tweaks when navigating away.
+  const seoSnapshot = useMemo(
+    () => ({ selectedFields, instruction }),
+    [selectedFields, instruction],
+  );
+  const clearSeoSnapshot = usePersistedSnapshot(
+    `seo-optimize-dialog:${page.id}`,
+    seoSnapshot,
+    (s: any) => {
+      if (!s || typeof s !== "object") return;
+      if (Array.isArray(s.selectedFields) && s.selectedFields.length) setSelectedFields(s.selectedFields);
+      if (typeof s.instruction === "string") setInstruction(s.instruction);
+    },
+    { version: 1 },
+  );
+
   const toggleField = (field: string) => {
     setSelectedFields((prev) =>
       prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
