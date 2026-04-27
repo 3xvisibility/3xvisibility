@@ -105,6 +105,78 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  // ─── Realtime: live publish-status updates ────────────────
+  // Subscribes to `generated_pages` UPDATE/INSERT/DELETE events for the
+  // current workspace so each row's status (publishing → published /
+  // failed) reflects WordPress + Shopify publish completions immediately
+  // — no manual refresh needed. UPDATE events patch the cache in place
+  // (no flicker). INSERT/DELETE invalidate so new/removed rows appear.
+  useEffect(() => {
+    if (!wsId) return;
+    const channel = supabase
+      .channel(`generated-pages-${wsId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "generated_pages", filter: `workspace_id=eq.${wsId}` },
+        (payload) => {
+          const next = payload.new as GeneratedPage;
+          const prev = payload.old as Partial<GeneratedPage>;
+          // Patch cache in-place to avoid refetch flicker. Preserve the
+          // joined campaigns/websites relations from the existing cached
+          // row since postgres_changes only delivers base-table columns.
+          queryClient.setQueryData<GeneratedPage[] | undefined>(
+            ["generated-pages", wsId],
+            (old) => {
+              if (!old) return old;
+              return old.map((p) =>
+                p.id === next.id
+                  ? { ...p, ...next, campaigns: p.campaigns, websites: p.websites }
+                  : p
+              );
+            }
+          );
+          // Toast on terminal publish transitions for the WP/Shopify flow.
+          if (prev?.status !== next.status) {
+            if (next.status === "published") {
+              toast({
+                title: "Page published",
+                description: next.external_url ? `Live at ${next.external_url}` : next.title,
+              });
+            } else if (next.status === "failed" && prev?.status === "publishing") {
+              toast({
+                title: "Publish failed",
+                description: next.error_message || next.title,
+                variant: "destructive",
+              });
+            }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "generated_pages", filter: `workspace_id=eq.${wsId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["generated-pages", wsId] });
+          queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "generated_pages", filter: `workspace_id=eq.${wsId}` },
+        (payload) => {
+          const oldRow = payload.old as Partial<GeneratedPage>;
+          queryClient.setQueryData<GeneratedPage[] | undefined>(
+            ["generated-pages", wsId],
+            (old) => (old ? old.filter((p) => p.id !== oldRow.id) : old)
+          );
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [wsId, queryClient, toast]);
+
   // ─── Mutations ─────────────────────────────────────────────
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
