@@ -795,7 +795,19 @@ export function MappingStep({
           {mandatoryWarnings.map((w, i) => (
             <div key={i} className="flex items-start gap-2 text-xs text-warning bg-warning/5 border border-warning/20 rounded-lg p-2.5">
               <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>{w}</span>
+              <span className="flex-1">{w.message}</span>
+              {w.fix && w.fixLabel && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[11px] shrink-0"
+                  onClick={w.fix}
+                >
+                  <Wand2 className="h-3 w-3 mr-1" />
+                  {w.fixLabel}
+                </Button>
+              )}
             </div>
           ))}
         </div>
