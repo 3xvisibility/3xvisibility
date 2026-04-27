@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,6 +151,59 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [aiContentType, setAiContentType] = useState("seo");
   const [aiNiche, setAiNiche] = useState("");
 
+  // Auto-save / auto-restore builder progress so users don't lose work
+  // when they switch tabs or accidentally close the dialog.
+  const builderSnapshot = useMemo(() => ({
+    mode, step,
+    businessType, niche, language, sections, extraDetails, includeHeaderFooter,
+    generatedContent, generatedName, platform,
+    themeMode, websiteId, primaryColor, accentColor, bgColor, textColor, themeFont,
+    heroAspectDesktop, heroAspectMobile, focalX, focalY,
+    aiKeywords, aiContentType, aiNiche,
+  }), [
+    mode, step, businessType, niche, language, sections, extraDetails, includeHeaderFooter,
+    generatedContent, generatedName, platform,
+    themeMode, websiteId, primaryColor, accentColor, bgColor, textColor, themeFont,
+    heroAspectDesktop, heroAspectMobile, focalX, focalY,
+    aiKeywords, aiContentType, aiNiche,
+  ]);
+
+  const clearBuilderSnapshot = usePersistedSnapshot(
+    "ai-template-builder",
+    builderSnapshot,
+    (s: any) => {
+      if (!s || typeof s !== "object") return;
+      try {
+        if (typeof s.mode === "string") setMode(s.mode);
+        if (typeof s.step === "string") setStep(s.step);
+        if (typeof s.businessType === "string") setBusinessType(s.businessType);
+        if (typeof s.niche === "string") setNiche(s.niche);
+        if (typeof s.language === "string") setLanguage(s.language);
+        if (Array.isArray(s.sections)) setSections(s.sections);
+        if (typeof s.extraDetails === "string") setExtraDetails(s.extraDetails);
+        if (typeof s.includeHeaderFooter === "boolean") setIncludeHeaderFooter(s.includeHeaderFooter);
+        if (typeof s.generatedContent === "string") setGeneratedContent(s.generatedContent);
+        if (typeof s.generatedName === "string") setGeneratedName(s.generatedName);
+        if (typeof s.platform === "string") setPlatform(s.platform);
+        if (typeof s.themeMode === "string") setThemeMode(s.themeMode);
+        if (typeof s.websiteId === "string") setWebsiteId(s.websiteId);
+        if (typeof s.primaryColor === "string") setPrimaryColor(s.primaryColor);
+        if (typeof s.accentColor === "string") setAccentColor(s.accentColor);
+        if (typeof s.bgColor === "string") setBgColor(s.bgColor);
+        if (typeof s.textColor === "string") setTextColor(s.textColor);
+        if (typeof s.themeFont === "string") setThemeFont(s.themeFont);
+        if (typeof s.heroAspectDesktop === "string") setHeroAspectDesktop(s.heroAspectDesktop);
+        if (typeof s.heroAspectMobile === "string") setHeroAspectMobile(s.heroAspectMobile);
+        if (typeof s.focalX === "number") setFocalX(s.focalX);
+        if (typeof s.focalY === "number") setFocalY(s.focalY);
+        if (typeof s.aiKeywords === "string") setAiKeywords(s.aiKeywords);
+        if (typeof s.aiContentType === "string") setAiContentType(s.aiContentType);
+        if (typeof s.aiNiche === "string") setAiNiche(s.aiNiche);
+      } catch { /* corrupt snapshot — ignore */ }
+    },
+    { version: 1 },
+  );
+
   const { toast } = useToast();
 
   const buildPrompt = () => {
@@ -261,6 +315,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     setAiNiche("");
     setMode("builder");
     setStep("configure");
+    clearBuilderSnapshot();
     onOpenChange(false);
   };
 

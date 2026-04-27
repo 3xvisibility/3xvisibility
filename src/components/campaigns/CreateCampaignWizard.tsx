@@ -25,6 +25,7 @@ import { MappingStep } from "@/components/campaigns/MappingStep";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
+import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import {
   VIBE_PALETTES, VIBE_TYPOGRAPHIES, VIBE_DENSITIES, DEFAULT_VIBE,
   parseCustomVarsInput,
@@ -175,6 +176,122 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       return [...prev, val];
     });
   };
+
+  // ----------------------------------------------------------------
+  // Auto-save / auto-restore wizard progress to localStorage so users
+  // never lose work when they switch tabs or navigate away.
+  // - File objects and Sets are excluded (not JSON-serialisable).
+  // - Snapshot is keyed per workspace so different workspaces stay isolated.
+  // - Cleared in resetForm() after a successful submit.
+  // ----------------------------------------------------------------
+  const wizardSnapshot = useMemo(() => ({
+    step,
+    campaignName, campaignLanguage, campaignCountry, campaignTypes,
+    dataSource,
+    aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
+    csvRawText, csvHeaders, csvData,
+    locationData,
+    websiteForPages, websiteContentType, selectedPageIdsArr: Array.from(selectedPageIds), websitePagesSearch,
+    selectedTemplate, selectedWebsite,
+    manualMappings, customValues, transforms, targetFieldMappings,
+    faqPairs, fillRules, aiFillMode,
+    vibePalette, vibeTypography, vibeDensity,
+    vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
+    publishMode, maxRows, generationMethod,
+    scheduleMode,
+    scheduledDate: scheduledDate ? scheduledDate.toISOString() : null,
+    recurringInterval,
+    recurringEndDate: recurringEndDate ? recurringEndDate.toISOString() : null,
+    seoTitleFormat,
+    utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
+    adCampaignId, adGroupId, seaDirectoryLevels,
+    geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, geoLanguage,
+  }), [
+    step, campaignName, campaignLanguage, campaignCountry, campaignTypes,
+    dataSource, aiBusiness, aiNiche, aiServiceProduct, aiPageCount, aiGeneratedRows, activePresetId,
+    csvRawText, csvHeaders, csvData, locationData,
+    websiteForPages, websiteContentType, selectedPageIds, websitePagesSearch,
+    selectedTemplate, selectedWebsite,
+    manualMappings, customValues, transforms, targetFieldMappings,
+    faqPairs, fillRules, aiFillMode,
+    vibePalette, vibeTypography, vibeDensity,
+    vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
+    publishMode, maxRows, generationMethod,
+    scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat,
+    utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
+    adCampaignId, adGroupId, seaDirectoryLevels,
+    geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, geoLanguage,
+  ]);
+
+  const clearWizardSnapshot = usePersistedSnapshot(
+    `create-campaign-wizard:${wsId ?? "anon"}`,
+    wizardSnapshot,
+    (s: any) => {
+      if (!s || typeof s !== "object") return;
+      try {
+        if (typeof s.step === "number") setStep(s.step);
+        if (typeof s.campaignName === "string") setCampaignName(s.campaignName);
+        if (typeof s.campaignLanguage === "string") setCampaignLanguage(s.campaignLanguage);
+        if (typeof s.campaignCountry === "string") setCampaignCountry(s.campaignCountry);
+        if (Array.isArray(s.campaignTypes)) setCampaignTypes(s.campaignTypes);
+        if (typeof s.dataSource === "string") setDataSource(s.dataSource);
+        if (typeof s.aiBusiness === "string") setAiBusiness(s.aiBusiness);
+        if (typeof s.aiNiche === "string") setAiNiche(s.aiNiche);
+        if (typeof s.aiServiceProduct === "string") setAiServiceProduct(s.aiServiceProduct);
+        if (typeof s.aiPageCount === "number") setAiPageCount(s.aiPageCount);
+        if (Array.isArray(s.aiGeneratedRows)) setAiGeneratedRows(s.aiGeneratedRows);
+        if (s.activePresetId !== undefined) setActivePresetId(s.activePresetId);
+        if (typeof s.csvRawText === "string") setCsvRawText(s.csvRawText);
+        if (Array.isArray(s.csvHeaders)) setCsvHeaders(s.csvHeaders);
+        if (Array.isArray(s.csvData)) setCsvData(s.csvData);
+        if (Array.isArray(s.locationData)) setLocationData(s.locationData);
+        if (typeof s.websiteForPages === "string") setWebsiteForPages(s.websiteForPages);
+        if (typeof s.websiteContentType === "string") setWebsiteContentType(s.websiteContentType);
+        if (Array.isArray(s.selectedPageIdsArr)) setSelectedPageIds(new Set(s.selectedPageIdsArr));
+        if (typeof s.websitePagesSearch === "string") setWebsitePagesSearch(s.websitePagesSearch);
+        if (typeof s.selectedTemplate === "string") setSelectedTemplate(s.selectedTemplate);
+        if (typeof s.selectedWebsite === "string") setSelectedWebsite(s.selectedWebsite);
+        if (s.manualMappings) setManualMappings(s.manualMappings);
+        if (s.customValues) setCustomValues(s.customValues);
+        if (s.transforms) setTransforms(s.transforms);
+        if (s.targetFieldMappings) setTargetFieldMappings(s.targetFieldMappings);
+        if (Array.isArray(s.faqPairs)) setFaqPairs(s.faqPairs);
+        if (s.fillRules) setFillRules(s.fillRules);
+        if (typeof s.aiFillMode === "string") setAiFillMode(s.aiFillMode);
+        if (s.vibePalette) setVibePalette(s.vibePalette);
+        if (s.vibeTypography) setVibeTypography(s.vibeTypography);
+        if (s.vibeDensity) setVibeDensity(s.vibeDensity);
+        if (typeof s.vibeCustomVarsText === "string") setVibeCustomVarsText(s.vibeCustomVarsText);
+        if (typeof s.vibeCustomCss === "string") setVibeCustomCss(s.vibeCustomCss);
+        if (typeof s.vibeAdvancedOpen === "boolean") setVibeAdvancedOpen(s.vibeAdvancedOpen);
+        if (typeof s.publishMode === "string") setPublishMode(s.publishMode);
+        if (typeof s.maxRows === "string") setMaxRows(s.maxRows);
+        if (typeof s.generationMethod === "string") setGenerationMethod(s.generationMethod);
+        if (typeof s.scheduleMode === "string") setScheduleMode(s.scheduleMode);
+        if (s.scheduledDate) setScheduledDate(new Date(s.scheduledDate));
+        if (typeof s.recurringInterval === "string") setRecurringInterval(s.recurringInterval);
+        if (s.recurringEndDate) setRecurringEndDate(new Date(s.recurringEndDate));
+        if (typeof s.seoTitleFormat === "string") setSeoTitleFormat(s.seoTitleFormat);
+        if (typeof s.utmSource === "string") setUtmSource(s.utmSource);
+        if (typeof s.utmMedium === "string") setUtmMedium(s.utmMedium);
+        if (typeof s.utmCampaign === "string") setUtmCampaign(s.utmCampaign);
+        if (typeof s.utmTerm === "string") setUtmTerm(s.utmTerm);
+        if (typeof s.utmContent === "string") setUtmContent(s.utmContent);
+        if (typeof s.adCampaignId === "string") setAdCampaignId(s.adCampaignId);
+        if (typeof s.adGroupId === "string") setAdGroupId(s.adGroupId);
+        if (typeof s.seaDirectoryLevels === "string") setSeaDirectoryLevels(s.seaDirectoryLevels);
+        if (typeof s.geoCountry === "string") setGeoCountry(s.geoCountry);
+        if (typeof s.geoRegion === "string") setGeoRegion(s.geoRegion);
+        if (typeof s.geoCity === "string") setGeoCity(s.geoCity);
+        if (typeof s.geoPostcode === "string") setGeoPostcode(s.geoPostcode);
+        if (typeof s.geoLat === "string") setGeoLat(s.geoLat);
+        if (typeof s.geoLng === "string") setGeoLng(s.geoLng);
+        if (typeof s.geoLanguage === "string") setGeoLanguage(s.geoLanguage);
+      } catch { /* corrupt snapshot — ignore */ }
+    },
+    { version: 2 },
+  );
+
 
   // --- Queries ---
   const { data: templates = [] } = useQuery({
@@ -705,6 +822,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setActivePresetId(null);
     setVibePalette(DEFAULT_VIBE.palette); setVibeTypography(DEFAULT_VIBE.typography); setVibeDensity(DEFAULT_VIBE.density);
     setVibeCustomVarsText(""); setVibeCustomCss(""); setVibeAdvancedOpen(false);
+    clearWizardSnapshot();
   };
 
   // --- AI preset helpers ---

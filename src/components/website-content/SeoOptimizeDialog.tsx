@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { handleApiError } from "@/lib/handle-api-error";
 import {
   Sparkles,
@@ -79,6 +80,23 @@ export function SeoOptimizeDialog({
     external_url?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Persist field selection + instruction per page so users don't lose
+  // their tweaks when navigating away.
+  const seoSnapshot = useMemo(
+    () => ({ selectedFields, instruction }),
+    [selectedFields, instruction],
+  );
+  const clearSeoSnapshot = usePersistedSnapshot(
+    `seo-optimize-dialog:${page.id}`,
+    seoSnapshot,
+    (s: any) => {
+      if (!s || typeof s !== "object") return;
+      if (Array.isArray(s.selectedFields) && s.selectedFields.length) setSelectedFields(s.selectedFields);
+      if (typeof s.instruction === "string") setInstruction(s.instruction);
+    },
+    { version: 1 },
+  );
 
   const toggleField = (field: string) => {
     setSelectedFields((prev) =>
@@ -161,7 +179,7 @@ export function SeoOptimizeDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setResult(null); setInstruction(""); } }}>
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setResult(null); setInstruction(""); clearSeoSnapshot(); } }}>
       <DialogContent className="w-[calc(100%-1rem)] sm:max-w-2xl max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

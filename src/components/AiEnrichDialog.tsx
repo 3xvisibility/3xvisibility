@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +49,19 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const { toast } = useToast();
+
+  // Persist mode + custom instruction per page so users can resume.
+  const enrichSnapshot = useMemo(() => ({ mode, customInstruction }), [mode, customInstruction]);
+  const clearEnrichSnapshot = usePersistedSnapshot(
+    `ai-enrich-dialog:${page?.id ?? "anon"}`,
+    enrichSnapshot,
+    (s: any) => {
+      if (!s || typeof s !== "object") return;
+      if (typeof s.mode === "string") setMode(s.mode);
+      if (typeof s.customInstruction === "string") setCustomInstruction(s.customInstruction);
+    },
+    { version: 1 },
+  );
 
   const handleEnrich = async () => {
     if (!page) return;
@@ -134,7 +148,7 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!loading) { onOpenChange(v); setDone(false); setCustomInstruction(""); } }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!loading) { onOpenChange(v); if (!v) { setDone(false); setCustomInstruction(""); clearEnrichSnapshot(); } } }}>
       <DialogContent className="sm:max-w-md overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
