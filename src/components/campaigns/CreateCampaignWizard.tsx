@@ -1732,6 +1732,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                            <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />}
                           <span className="font-medium">{item.label}</span>
                           <span className="text-muted-foreground ml-auto truncate max-w-[200px]">{item.detail}</span>
+                          {item.fix && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-[11px] shrink-0"
+                              onClick={item.fix.run}
+                              disabled={item.fix.loading}
+                            >
+                              {item.fix.loading
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <Wand2 className="h-3 w-3 mr-1" />}
+                              {item.fix.label}
+                            </Button>
+                          )}
                         </div>
                       ))}
                     </div>
