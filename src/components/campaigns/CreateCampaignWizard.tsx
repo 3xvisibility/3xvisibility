@@ -25,6 +25,7 @@ import { MappingStep } from "@/components/campaigns/MappingStep";
 import { FillRulesPanel } from "@/components/campaigns/FillRulesPanel";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { readAiPresets, saveAiPreset, deleteAiPreset, type AiPreset } from "@/lib/ai-presets";
+import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import {
   VIBE_PALETTES, VIBE_TYPOGRAPHIES, VIBE_DENSITIES, DEFAULT_VIBE,
   parseCustomVarsInput,
