@@ -1,12 +1,39 @@
 import { ScrollReveal } from "./ScrollReveal";
 import { Play } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
+
+const DEFAULT_VIDEO = "/pagegen-demo.mp4";
 
 export function VideoSection() {
   const [playing, setPlaying] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  // Try /pagegen-demo-{lang}.mp4; fall back to default if not present.
+  const candidate = useMemo(
+    () => (language && language !== "en" ? `/pagegen-demo-${language}.mp4` : DEFAULT_VIDEO),
+    [language]
+  );
+  const [videoSrc, setVideoSrc] = useState<string>(DEFAULT_VIDEO);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPlaying(false);
+    if (candidate === DEFAULT_VIDEO) {
+      setVideoSrc(DEFAULT_VIDEO);
+      return;
+    }
+    fetch(candidate, { method: "HEAD" })
+      .then((r) => {
+        if (cancelled) return;
+        setVideoSrc(r.ok ? candidate : DEFAULT_VIDEO);
+      })
+      .catch(() => !cancelled && setVideoSrc(DEFAULT_VIDEO));
+    return () => {
+      cancelled = true;
+    };
+  }, [candidate]);
 
   return (
     <section id="demo-video" className="py-20 md:py-28 relative overflow-hidden">
@@ -21,10 +48,10 @@ export function VideoSection() {
           <div className="relative rounded-2xl overflow-hidden border border-[hsl(217,91%,60%,0.15)] shadow-2xl glow-purple-sm">
             <div className="relative aspect-video bg-[hsl(220,40%,8%)]">
               {playing ? (
-                <video className="absolute inset-0 w-full h-full object-cover" src="/pagegen-demo.mp4" autoPlay controls playsInline />
+                <video key={`play-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} autoPlay controls playsInline />
               ) : (
                 <>
-                  <video className="absolute inset-0 w-full h-full object-cover" src="/pagegen-demo.mp4" muted loop autoPlay playsInline preload="metadata" />
+                  <video key={`preview-${videoSrc}`} className="absolute inset-0 w-full h-full object-cover" src={videoSrc} muted loop autoPlay playsInline preload="metadata" />
                   <div className="absolute inset-0 cursor-pointer group bg-gradient-to-br from-[hsl(220,40%,5%,0.55)] to-[hsl(220,40%,5%,0.25)] flex flex-col items-center justify-center gap-4" onClick={() => setPlaying(true)}>
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:shadow-primary/40">
                       <Play className="h-6 w-6 ml-1 fill-current" />
