@@ -312,6 +312,7 @@ export default function WebsitesPage() {
     setWpAuthMethod("application_password");
     setSiteLanguage(null);
     setLanguageLocked(false);
+    setProgressSteps([]);
   };
 
   return (
