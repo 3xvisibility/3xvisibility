@@ -13,7 +13,7 @@ import {
 import {
   ArrowRight, Check, AlertTriangle, X, Save, FolderOpen, Trash2,
   ArrowDownAZ, Hash, Link2, Type, MapPin, Target, Search as SearchIcon,
-  HelpCircle, Sparkles, Lightbulb, Wand2, Loader2,
+  HelpCircle, Sparkles, Lightbulb, Wand2, Loader2, Zap,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
