@@ -867,9 +867,80 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     toast({ title: "Preset removed", description: name });
   };
 
+  // --- SEO Title Pattern auto-fix ---
+  const [fixingSeoPattern, setFixingSeoPattern] = useState(false);
+
+  const buildSeoPatternsFromMapping = useCallback(() => {
+    // Variables that have an actual mapping (CSV column or custom value)
+    const mapped = (variableMapping?.matched || [])
+      .filter(m => m.column || m.customValue)
+      .map(m => m.variable);
+
+    const norm = (s: string) => s.toLowerCase().replace(/[\s\-_./]+/g, "");
+    const findBy = (synonyms: string[]) =>
+      mapped.find(v => synonyms.includes(norm(v)));
+
+    const titleVar =
+      findBy(["title", "name", "h1", "pagetitle", "service", "servicename", "product", "productname", "tagline", "keyword"]) ||
+      mapped[0];
+    const locationVar = findBy(["city", "location", "area", "region", "state", "country", "place"]);
+    const brandVar = findBy(["brand", "company", "business", "businessname", "site", "sitename"]);
+    const descVar = findBy(["description", "summary", "excerpt", "tagline", "about"]);
+
+    if (!titleVar) return null;
+
+    const titleParts: string[] = [`{${titleVar}}`];
+    if (locationVar) titleParts.push(`in {${locationVar}}`);
+    const titleSuffix = brandVar ? ` | {${brandVar}}` : "";
+    const titlePattern = titleParts.join(" ") + titleSuffix;
+
+    const descBase = descVar ? `{${descVar}}` : `Discover {${titleVar}}`;
+    const descLocation = locationVar ? ` in {${locationVar}}` : "";
+    const descPattern = `${descBase}${descLocation}. Learn more today.`;
+
+    return { titlePattern, descPattern, titleVar, locationVar, brandVar };
+  }, [variableMapping]);
+
+  const handleAutoFixSeoPattern = useCallback(async () => {
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    if (!tpl) {
+      toast({ title: "Pick a template first", variant: "destructive" });
+      return;
+    }
+    const built = buildSeoPatternsFromMapping();
+    if (!built) {
+      toast({
+        title: "No variables available",
+        description: "Map at least one CSV column or custom value first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setFixingSeoPattern(true);
+    try {
+      const { error } = await supabase
+        .from("templates")
+        .update({
+          seo_title_pattern: built.titlePattern,
+          seo_description_pattern: tpl.seo_description_pattern || built.descPattern,
+        })
+        .eq("id", tpl.id);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
+      toast({
+        title: "SEO pattern set",
+        description: `Title: ${built.titlePattern}`,
+      });
+    } catch (err: any) {
+      toast({ title: "Auto-fix failed", description: err.message, variant: "destructive" });
+    } finally {
+      setFixingSeoPattern(false);
+    }
+  }, [templates, selectedTemplate, buildSeoPatternsFromMapping, queryClient, wsId, toast]);
+
   // Readiness stats for review step
   const readinessItems = useMemo(() => {
-    const items: { label: string; status: "ok" | "warn" | "error"; detail: string }[] = [];
+    const items: { label: string; status: "ok" | "warn" | "error"; detail: string; fix?: { label: string; run: () => void; loading?: boolean } }[] = [];
     items.push({ label: "Campaign Name", status: campaignName ? "ok" : "error", detail: campaignName || "Not set" });
     items.push({ label: "Data Source", status: effectiveCsvData.length > 0 ? "ok" : "error", detail: `${effectiveCsvData.length} rows from ${dataSource}` });
     items.push({ label: "Template", status: selectedTemplate ? "ok" : "error", detail: templates.find(t => t.id === selectedTemplate)?.name || "Not selected" });
@@ -878,11 +949,19 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     items.push({ label: "Variable Mapping", status: unmapped.length === 0 ? "ok" : unmapped.length <= 2 ? "warn" : "error", detail: unmapped.length === 0 ? "All mapped" : `${unmapped.length} unmapped` });
     
     const tpl = templates.find(t => t.id === selectedTemplate);
-    items.push({ label: "SEO Title Pattern", status: tpl?.seo_title_pattern ? "ok" : "warn", detail: tpl?.seo_title_pattern || "Using default" });
+    const hasMappedVars = (variableMapping?.matched || []).some(m => m.column || m.customValue);
+    items.push({
+      label: "SEO Title Pattern",
+      status: tpl?.seo_title_pattern ? "ok" : "warn",
+      detail: tpl?.seo_title_pattern || "Using default",
+      fix: !tpl?.seo_title_pattern && tpl && hasMappedVars
+        ? { label: "Auto-fix", run: handleAutoFixSeoPattern, loading: fixingSeoPattern }
+        : undefined,
+    });
     items.push({ label: "Website", status: (selectedWebsite || websiteForPages) ? "ok" : "warn", detail: websites.find(w => w.id === (selectedWebsite || websiteForPages))?.name || "Not assigned" });
     
     return items;
-  }, [campaignName, effectiveCsvData, dataSource, selectedTemplate, templates, variableMapping, selectedWebsite, websiteForPages, websites]);
+  }, [campaignName, effectiveCsvData, dataSource, selectedTemplate, templates, variableMapping, selectedWebsite, websiteForPages, websites, handleAutoFixSeoPattern, fixingSeoPattern]);
 
   return (
     <>
