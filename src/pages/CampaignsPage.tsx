@@ -355,13 +355,10 @@ export default function CampaignsPage() {
                 </div>
                 <div className="space-y-2 max-w-xl">
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                    আপনার প্রথম ক্যাম্পেইন তৈরি করুন
+                    Create your first campaign
                   </h2>
                   <p className="text-muted-foreground text-sm sm:text-base">
-                    মাত্র ৩টি সহজ ধাপে শত শত SEO-অপ্টিমাইজড পেজ তৈরি করুন। নিচে দেখুন কী কী লাগবে এবং প্রতিটি অংশ কীভাবে কাজ করে।
-                  </p>
-                  <p className="text-xs text-muted-foreground/80 italic">
-                    Create hundreds of SEO-ready pages in 3 simple steps.
+                    Generate hundreds of SEO-optimized pages in just 3 simple steps. See below what you need and how each part works.
                   </p>
                 </div>
               </div>
@@ -373,28 +370,25 @@ export default function CampaignsPage() {
                     num: 1,
                     icon: FileText,
                     color: "from-blue-500/15 to-blue-500/5 text-blue-600 dark:text-blue-400 ring-blue-500/20",
-                    titleBn: "CSV ডেটা (সারি)",
-                    titleEn: "CSV rows",
-                    descBn: "একটি CSV ফাইল আপলোড করুন — যেমন শহরের নাম, সার্ভিসের তালিকা, বা প্রোডাক্ট ডিটেইলস। প্রতিটি সারি (row) থেকে একটি আলাদা পেজ তৈরি হবে।",
-                    exBn: "উদাহরণ: ১০০টি শহর = ১০০টি পেজ।",
+                    title: "CSV rows",
+                    desc: "Upload a CSV file — for example city names, a list of services, or product details. Each row creates one unique page.",
+                    ex: "Example: 100 cities = 100 pages.",
                   },
                   {
                     num: 2,
                     icon: Sparkles,
                     color: "from-primary/15 to-primary/5 text-primary ring-primary/20",
-                    titleBn: "টেমপ্লেট",
-                    titleEn: "Template",
-                    descBn: "একটি ডিজাইন বাছুন বা AI দিয়ে তৈরি করুন। টেমপ্লেটে {{city}}, {{service}} এর মতো ভেরিয়েবল থাকবে — যেগুলো CSV-এর ডেটা দিয়ে অটোমেটিক পূরণ হবে।",
-                    exBn: "একটি ডিজাইন → অসংখ্য পেজ।",
+                    title: "Template",
+                    desc: "Pick a design or build one with AI. The template uses variables like {{city}} and {{service}} which get filled automatically from your CSV data.",
+                    ex: "One design → unlimited pages.",
                   },
                   {
                     num: 3,
                     icon: Globe,
                     color: "from-success/15 to-success/5 text-success ring-success/20",
-                    titleBn: "কানেক্টেড ওয়েবসাইট",
-                    titleEn: "Connected website",
-                    descBn: "আপনার WordPress, Shopify বা PrestaShop সাইট কানেক্ট করুন। জেনারেট হওয়া পেজগুলো সরাসরি সেখানে পাবলিশ হবে — কোনো ম্যানুয়াল কপি-পেস্ট লাগবে না।",
-                    exBn: "এক ক্লিকে লাইভ পাবলিশ।",
+                    title: "Connected website",
+                    desc: "Connect your WordPress, Shopify or PrestaShop site. Generated pages publish there directly — no manual copy-paste needed.",
+                    ex: "Live publish in one click.",
                   },
                 ].map((step) => (
                   <div
@@ -407,12 +401,9 @@ export default function CampaignsPage() {
                     <div className={cn("h-11 w-11 rounded-xl bg-gradient-to-br ring-1 flex items-center justify-center mb-3", step.color)}>
                       <step.icon className="h-5 w-5" />
                     </div>
-                    <h3 className="font-semibold text-sm mb-0.5">{step.titleBn}</h3>
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground/70 mb-2">
-                      {step.titleEn}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{step.descBn}</p>
-                    <p className="text-[11px] text-primary/80 mt-2 font-medium">{step.exBn}</p>
+                    <h3 className="font-semibold text-sm mb-2">{step.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+                    <p className="text-[11px] text-primary/80 mt-2 font-medium">{step.ex}</p>
                   </div>
                 ))}
               </div>
@@ -421,11 +412,11 @@ export default function CampaignsPage() {
               <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-6">
                 <span className="px-2 py-0.5 rounded-md bg-muted">CSV</span>
                 <span>+</span>
-                <span className="px-2 py-0.5 rounded-md bg-muted">টেমপ্লেট</span>
+                <span className="px-2 py-0.5 rounded-md bg-muted">Template</span>
                 <span>+</span>
-                <span className="px-2 py-0.5 rounded-md bg-muted">ওয়েবসাইট</span>
+                <span className="px-2 py-0.5 rounded-md bg-muted">Website</span>
                 <span>=</span>
-                <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-semibold">পাবলিশড পেজ</span>
+                <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-semibold">Published page</span>
               </div>
 
               {/* CTA */}
@@ -436,10 +427,10 @@ export default function CampaignsPage() {
                   className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-lg gap-2 px-8"
                 >
                   <Sparkles className="h-4 w-4" />
-                  আপনার প্রথম ক্যাম্পেইন তৈরি করুন
+                  Create your first campaign
                 </Button>
                 <p className="text-[11px] text-muted-foreground">
-                  Wizard আপনাকে ধাপে ধাপে গাইড করবে — কোনো টেকনিক্যাল জ্ঞান লাগবে না।
+                  The wizard guides you step by step — no technical knowledge required.
                 </p>
               </div>
             </CardContent>
