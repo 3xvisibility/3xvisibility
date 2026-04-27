@@ -26,6 +26,7 @@ import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCred
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
+import { ConnectionProgressSteps, type ProgressStep, type StepStatus } from "@/components/websites/ConnectionProgressSteps";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
@@ -51,6 +52,8 @@ export default function WebsitesPage() {
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
   const [siteLanguage, setSiteLanguage] = useState<string | null>(null);
   const [languageLocked, setLanguageLocked] = useState<boolean>(false);
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -102,43 +105,126 @@ export default function WebsitesPage() {
     return { api_key: prestashopApiKey };
   };
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      if (!wsId) throw new Error("No workspace selected");
-      if (maxSites > 0 && websites.length >= maxSites) {
-        throw new Error(`Your plan allows a maximum of ${maxSites} website(s). Please upgrade to add more.`);
-      }
-      if (!siteUrl || !siteType) throw new Error("Missing website info");
+  const updateStep = (key: string, status: StepStatus, detail?: string) => {
+    setProgressSteps((prev) =>
+      prev.map((s) => (s.key === key ? { ...s, status, detail: detail ?? s.detail } : s))
+    );
+  };
 
-      const finalUrl = siteType === "shopify" && shopDomain
-        ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
-        : siteUrl;
-
-      const { data, error } = await supabase.functions.invoke("save-website", {
-        body: {
-          name: siteName || (siteType === "shopify" ? shopDomain : new URL(finalUrl).hostname),
-          url: finalUrl,
-          type: siteType,
-          credentials: buildCredentials(),
-          workspace_id: wsId,
-          language: siteLanguage,
-          language_locked: languageLocked,
-        },
+  const runConnectFlow = async () => {
+    if (!wsId) {
+      toast({ title: "Error", description: "No workspace selected", variant: "destructive" });
+      return;
+    }
+    if (maxSites > 0 && websites.length >= maxSites) {
+      toast({
+        title: "Error",
+        description: `Your plan allows a maximum of ${maxSites} website(s). Please upgrade to add more.`,
+        variant: "destructive",
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: () => {
+      return;
+    }
+    if (!siteUrl && !(siteType === "shopify" && shopDomain)) {
+      toast({ title: "Error", description: "Missing website info", variant: "destructive" });
+      return;
+    }
+
+    const finalUrl = siteType === "shopify" && shopDomain
+      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : siteUrl;
+
+    // Initialize step list — three explicit phases the user asked to see.
+    const steps: ProgressStep[] = [
+      { key: "verify", label: "Verifying connection", description: "Reaching your site and authenticating credentials", status: "pending" },
+      { key: "save", label: "Saving credentials", description: "Storing the connection securely in your workspace", status: "pending" },
+      { key: "test", label: "Publishing test page", description: "Creating a hidden draft to confirm publishing works", status: "pending" },
+    ];
+    setProgressSteps(steps);
+    setIsConnecting(true);
+
+    try {
+      // ---- Step 1: Verify connection ----
+      updateStep("verify", "running");
+      try {
+        const { data: verifyData, error: verifyError } = await supabase.functions.invoke("test-connection", {
+          body: { url: finalUrl, type: siteType, credentials: buildCredentials() },
+        });
+        if (verifyError) throw verifyError;
+        if (verifyData?.error) throw new Error(verifyData.error);
+        updateStep("verify", "success", verifyData?.message || "Credentials accepted");
+      } catch (err: any) {
+        updateStep("verify", "error", err?.message || "Could not reach the site");
+        throw err;
+      }
+
+      // ---- Step 2: Save credentials ----
+      updateStep("save", "running");
+      let savedWebsiteId: string | null = null;
+      try {
+        const { data, error } = await supabase.functions.invoke("save-website", {
+          body: {
+            name: siteName || (siteType === "shopify" ? shopDomain : new URL(finalUrl).hostname),
+            url: finalUrl,
+            type: siteType,
+            credentials: buildCredentials(),
+            workspace_id: wsId,
+            language: siteLanguage,
+            language_locked: languageLocked,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        savedWebsiteId = data?.website?.id || data?.id || null;
+        updateStep("save", "success", "Connection saved to your workspace");
+      } catch (err: any) {
+        updateStep("save", "error", err?.message || "Failed to save credentials");
+        throw err;
+      }
+
+      // ---- Step 3: Publish test page (best-effort, non-fatal) ----
+      updateStep("test", "running");
+      try {
+        const { data: testData, error: testError } = await supabase.functions.invoke("test-connection", {
+          body: {
+            url: finalUrl,
+            type: siteType,
+            credentials: buildCredentials(),
+            publish_test_page: true,
+          },
+        });
+        if (testError) throw testError;
+        if (testData?.error) throw new Error(testData.error);
+        if (testData?.test_page_published || testData?.test_page_url) {
+          updateStep(
+            "test",
+            "success",
+            testData.test_page_url
+              ? `Draft created: ${testData.test_page_url}`
+              : "Test draft created successfully"
+          );
+        } else {
+          updateStep("test", "skipped", "Skipped — connector reachable but no test draft created");
+        }
+      } catch (err: any) {
+        // Non-fatal: site is connected even if test publish fails
+        updateStep("test", "skipped", err?.message || "Skipped — you can publish from the Pages tab");
+      }
+
+      // Done!
       queryClient.invalidateQueries({ queryKey: ["websites"] });
-      toast({ title: "Website connected", description: `Successfully connected to ${siteUrl}.` });
-      if (wsId) logAudit(wsId, "site_created", "website", null, { url: siteUrl, type: siteType });
-      resetForm();
-    },
-    onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
+      toast({ title: "Website connected", description: `Successfully connected to ${finalUrl}.` });
+      if (wsId) logAudit(wsId, "site_created", "website", savedWebsiteId, { url: finalUrl, type: siteType });
+
+      // Brief pause so user can see all green checks before the dialog closes
+      setTimeout(() => {
+        setIsConnecting(false);
+        resetForm();
+      }, 1200);
+    } catch (err: any) {
+      setIsConnecting(false);
+      toast({ title: "Connection failed", description: err?.message || "Unknown error", variant: "destructive" });
+    }
+  };
 
   const buildTestUrl = () =>
     siteType === "shopify" && shopDomain
@@ -226,6 +312,7 @@ export default function WebsitesPage() {
     setWpAuthMethod("application_password");
     setSiteLanguage(null);
     setLanguageLocked(false);
+    setProgressSteps([]);
   };
 
   return (
@@ -368,13 +455,17 @@ export default function WebsitesPage() {
                   </div>
                 )}
 
+                {progressSteps.length > 0 && (
+                  <ConnectionProgressSteps steps={progressSteps} />
+                )}
+
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                  <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">{t("common.cancel")}</Button>
+                  <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
                   <Button
                     variant="outline"
                     className="w-full sm:w-auto"
                     onClick={() => testConnectionMutation.mutate()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending || isConnecting}
                   >
                     {testConnectionMutation.isPending ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
@@ -382,8 +473,16 @@ export default function WebsitesPage() {
                       <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
                     )}
                   </Button>
-                  <Button className="w-full sm:w-auto" onClick={() => createMutation.mutate()} disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || createMutation.isPending}>
-                    {createMutation.isPending ? t("common.connecting") : t("common.connect")}
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={() => runConnectFlow()}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
+                  >
+                    {isConnecting ? (
+                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
+                    ) : (
+                      t("common.connect")
+                    )}
                   </Button>
                 </div>
               </div>
