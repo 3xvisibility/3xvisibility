@@ -148,7 +148,7 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!loading) { onOpenChange(v); setDone(false); setCustomInstruction(""); } }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!loading) { onOpenChange(v); if (!v) { setDone(false); setCustomInstruction(""); clearEnrichSnapshot(); } } }}>
       <DialogContent className="sm:max-w-md overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
