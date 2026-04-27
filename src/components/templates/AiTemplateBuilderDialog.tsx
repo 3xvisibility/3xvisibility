@@ -315,6 +315,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     setAiNiche("");
     setMode("builder");
     setStep("configure");
+    clearBuilderSnapshot();
     onOpenChange(false);
   };
 
