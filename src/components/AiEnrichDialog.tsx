@@ -50,6 +50,19 @@ export function AiEnrichDialog({ open, onOpenChange, page, onUpdated }: AiEnrich
   const [done, setDone] = useState(false);
   const { toast } = useToast();
 
+  // Persist mode + custom instruction per page so users can resume.
+  const enrichSnapshot = useMemo(() => ({ mode, customInstruction }), [mode, customInstruction]);
+  const clearEnrichSnapshot = usePersistedSnapshot(
+    `ai-enrich-dialog:${page?.id ?? "anon"}`,
+    enrichSnapshot,
+    (s: any) => {
+      if (!s || typeof s !== "object") return;
+      if (typeof s.mode === "string") setMode(s.mode);
+      if (typeof s.customInstruction === "string") setCustomInstruction(s.customInstruction);
+    },
+    { version: 1 },
+  );
+
   const handleEnrich = async () => {
     if (!page) return;
     setLoading(true);
