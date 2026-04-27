@@ -18,7 +18,7 @@ export const SITE_LANGUAGE_OPTIONS = [
   { value: "Polish", label: "Polski (Polish)" },
   { value: "Arabic", label: "العربية (Arabic)" },
   { value: "Hindi", label: "हिन्दी (Hindi)" },
-  { value: "Bengali", label: "বাংলা (Bengali)" },
+  { value: "Bengali", label: "Bengali" },
   { value: "Chinese", label: "中文 (Chinese)" },
   { value: "Japanese", label: "日本語 (Japanese)" },
   { value: "Korean", label: "한국어 (Korean)" },
