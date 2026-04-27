@@ -658,6 +658,35 @@ export function MappingStep({
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="h-8 text-xs gap-1 rounded-lg border-success/40 text-success hover:bg-success/10 disabled:opacity-50"
+                  onClick={handleAutoMap}
+                  disabled={csvHeaders.length === 0 || templateVars.length === 0}
+                >
+                  <Zap className="h-3 w-3" />
+                  Auto-Map
+                  {autoMapSuggestionCount > 0 && (
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] ml-0.5 bg-success/15 text-success border-0">
+                      {autoMapSuggestionCount}
+                    </Badge>
+                  )}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs text-xs">
+              {csvHeaders.length === 0
+                ? "Upload a CSV first to enable auto-mapping."
+                : autoMapSuggestionCount === 0
+                ? "All possible matches are already applied. Edit any mapping below if needed."
+                : `Auto-match ${autoMapSuggestionCount} CSV column${autoMapSuggestionCount === 1 ? "" : "s"} to template variables. You can edit any mapping after.`}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   className="h-8 text-xs gap-1 rounded-lg border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-50"
                   onClick={handleAiFill}
                   disabled={aiFilling || aiFillCandidates.length === 0 || !hasAiContext}
