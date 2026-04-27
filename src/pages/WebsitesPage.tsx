@@ -26,6 +26,7 @@ import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCred
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
+import { ConnectionProgressSteps, type ProgressStep, type StepStatus } from "@/components/websites/ConnectionProgressSteps";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
