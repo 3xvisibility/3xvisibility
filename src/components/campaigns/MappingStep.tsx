@@ -457,21 +457,66 @@ export function MappingStep({
 
   // ─── CMS mandatory validation ────────────────────────────────────
 
+  // Pick the best already-mapped variable to assign as a target field (title / slug / price).
+  // Prefers variables whose name OR resolved CSV column matches the target's synonyms.
+  const pickBestVariableFor = (target: "title" | "slug" | "price"): string | null => {
+    const synonyms = SYNONYMS[target] || [target];
+    const candidates = resolvedMapping.filter(m => m.column || m.customValue);
+    // 1. Variable name matches synonym
+    const byName = candidates.find(m => synonyms.includes(norm(m.variable)));
+    if (byName) return byName.variable;
+    // 2. Mapped CSV column matches synonym
+    const byColumn = candidates.find(m => m.column && synonyms.includes(norm(m.column)));
+    if (byColumn) return byColumn.variable;
+    // 3. Fallback: first content-ish variable
+    if (target === "title") return candidates[0]?.variable || null;
+    return null;
+  };
+
+  const applyTargetFix = (variable: string, targetKey: string, label: string) => {
+    setTargetFieldMappings(prev => ({ ...prev, [variable]: targetKey }));
+    toast({ title: "Fixed", description: `"${variable}" is now mapped to ${label}.` });
+  };
+
   const mandatoryWarnings = useMemo(() => {
-    const warnings: string[] = [];
+    const warnings: { message: string; fix?: () => void; fixLabel?: string }[] = [];
     const mappedTargets = new Set(Object.values(targetFieldMappings).filter(Boolean));
-    const hasTitle = resolvedMapping.some(m => (m.column || m.customValue) && ["title", "name", "h1", "page_title"].includes(m.variable.toLowerCase()));
-    if (!hasTitle) warnings.push("No title/name variable is mapped — pages may have generic titles.");
+    const hasTitleVar = resolvedMapping.some(m => (m.column || m.customValue) && ["title", "name", "h1", "page_title"].includes(m.variable.toLowerCase()));
+    const hasTitleTarget = mappedTargets.has("title") || mappedTargets.has("name");
+    if (!hasTitleVar && !hasTitleTarget) {
+      const candidate = pickBestVariableFor("title");
+      warnings.push({
+        message: "No title/name variable is mapped — pages may have generic titles.",
+        fixLabel: candidate ? `Use {${candidate}} as title` : undefined,
+        fix: candidate ? () => applyTargetFix(candidate, "title", "Page Title") : undefined,
+      });
+    }
 
     if (websiteType === "wordpress") {
-      if (!mappedTargets.has("slug") && !resolvedMapping.some(m => (m.column || m.customValue) && m.variable.toLowerCase() === "slug"))
-        warnings.push("WordPress: Slug mapping recommended for clean URLs.");
+      const hasSlug = mappedTargets.has("slug")
+        || resolvedMapping.some(m => (m.column || m.customValue) && m.variable.toLowerCase() === "slug");
+      if (!hasSlug) {
+        const candidate = pickBestVariableFor("slug") || pickBestVariableFor("title");
+        warnings.push({
+          message: "WordPress: Slug mapping recommended for clean URLs.",
+          fixLabel: candidate ? `Use {${candidate}} as slug` : undefined,
+          fix: candidate ? () => applyTargetFix(candidate, "slug", "URL Slug") : undefined,
+        });
+      }
     }
     if (websiteType === "shopify") {
       const hasPrice = resolvedMapping.some(m => (m.column || m.customValue) && m.variable.toLowerCase().includes("price"));
-      if (!hasPrice) warnings.push("Shopify: Price variable recommended for product pages.");
+      if (!hasPrice) {
+        const candidate = pickBestVariableFor("price");
+        warnings.push({
+          message: "Shopify: Price variable recommended for product pages.",
+          fixLabel: candidate ? `Use {${candidate}} as price` : undefined,
+          fix: candidate ? () => applyTargetFix(candidate, "price", "Price") : undefined,
+        });
+      }
     }
     return warnings;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedMapping, targetFieldMappings, websiteType]);
 
   // ─── Filter by category ──────────────────────────────────────────
@@ -750,7 +795,19 @@ export function MappingStep({
           {mandatoryWarnings.map((w, i) => (
             <div key={i} className="flex items-start gap-2 text-xs text-warning bg-warning/5 border border-warning/20 rounded-lg p-2.5">
               <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>{w}</span>
+              <span className="flex-1">{w.message}</span>
+              {w.fix && w.fixLabel && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[11px] shrink-0"
+                  onClick={w.fix}
+                >
+                  <Wand2 className="h-3 w-3 mr-1" />
+                  {w.fixLabel}
+                </Button>
+              )}
             </div>
           ))}
         </div>
