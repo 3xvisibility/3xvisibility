@@ -6,15 +6,31 @@ import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "
  * Publishes pages via /wp-json/wp/v2/pages and maps SEO metadata
  * to Yoast SEO fields when available.
  */
+function stripImagesWithPlaceholderSrc(html: string): string {
+  const IMG_TAG = /<img\b(?:\s+[a-zA-Z_:][-a-zA-Z0-9_:.]*(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*\s*\/?>/gi;
+  return html.replace(IMG_TAG, (tag) => {
+    const srcMatch = tag.match(/\b(?:src|srcset|poster)\s*=\s*("([^"]*)"|'([^']*)')/i);
+    const srcVal = srcMatch ? (srcMatch[2] ?? srcMatch[3] ?? "") : "";
+    if (!srcMatch) return "";
+    if (!srcVal.trim()) return "";
+    if (/\{[^}]*\}/.test(srcVal)) return "";
+    return tag;
+  });
+}
+
 function sanitizeWordPressContent(content?: string): string | undefined {
   if (typeof content !== "string") return content;
 
-  const sanitized = content
+  let sanitized = content
     .replace(/<!--[\s\S]*?-->/g, "")
     .replace(/<meta\b[^>]*>/gi, "")
     .replace(/<link\b[^>]*>/gi, "")
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<img\b(?=[^>]*\b(?:src|srcset|poster)\s*=\s*["'][^"']*\{)[^>]*>/gi, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  sanitized = stripImagesWithPlaceholderSrc(sanitized);
+
+  sanitized = sanitized
+    .replace(/^\s*["']?\s*(?:alt|src|srcset|style|width|height|class|loading|decoding|sizes|title)\s*=\s*["'][^"']*["'][^<>]*\/?>/gim, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
