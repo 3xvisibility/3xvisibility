@@ -59,7 +59,7 @@ export function ShopifyCredentialFields({
         ) : domainOk ? (
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
-            ডোমেইন ফরম্যাট ঠিক আছে
+            Domain format looks good
           </p>
         ) : (
           <p className="text-[11px] text-muted-foreground mt-1">
