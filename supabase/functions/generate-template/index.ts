@@ -61,82 +61,117 @@ serve(async (req) => {
 ${themeFonts && themeFonts.length ? `- Use "${themeFonts[0]}" as the primary font. If it's a Google Font, add @import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(themeFonts[0]).replace(/%20/g, "+")}:wght@400;600;700;800&display=swap'); at the top of the <style> block.` : ""}`
       : "";
 
+    // ─── DESIGN DIRECTION PLAYBOOK ──────────────────────────────────────────
+    // Each generation randomly picks ONE bold aesthetic so two pages never
+    // look the same. Inspired by Awwwards/SiteInspire winners and Lovable
+    // landing pages.
+    const DESIGN_DIRECTIONS = [
+      {
+        name: "Aurora Glass",
+        vibe: "Glassmorphism with animated aurora gradient mesh background. Frosted-glass cards (backdrop-filter:blur(24px)), soft pastel glows (indigo→fuchsia→cyan), 3+ floating animated orb decorations behind content.",
+        palette: "Aurora gradients #6366f1 → #8b5cf6 → #d946ef → #06b6d4. Cards: linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.02)) + backdrop-blur.",
+        hero: "Full-bleed hero, multi-layered conic + radial gradient mesh bg, 3 floating animated blobs, centered glass card with the headline floating on top.",
+      },
+      {
+        name: "Neon Brutalist",
+        vibe: "Bold brutalist layout. Thick black borders (3px solid), hard offset shadows (8px 8px 0 #000), oversized display typography, neon accent splashes on near-black.",
+        palette: "Background near-black #0a0a0a, text white, neon accents #c4f000 / #ff00aa / #00d9ff. Hard offset box-shadows, near-zero border-radius.",
+        hero: "Asymmetric hero, massive (clamp(3rem, 12vw, 9rem)) display headline, marquee scrolling tagline strip, brutal divider lines, neon CTA with hard 8px offset shadow.",
+      },
+      {
+        name: "Editorial Magazine",
+        vibe: "Refined editorial like The New Yorker / Vogue. Serif display headlines, generous whitespace, drop caps, hairline dividers, multi-column intro paragraph.",
+        palette: "Cream/off-white bg #faf7f2, deep ink text #1a1a1a, single accent (rich burgundy #7a1e1e OR forest #1f4d3a). Import 'Playfair Display' for headings.",
+        hero: "Classic split editorial — large serif headline left, framed image right with thin border, hairline rule beneath, byline-style metadata below.",
+      },
+      {
+        name: "Retro Futurism",
+        vibe: "80s synthwave / Y2K revival. Chrome gradients, scanline overlays, perspective grid horizons, glowing terminal text, vaporwave palette.",
+        palette: "Deep purple bg #1a0033, magenta/cyan accents #ff006e / #00f5ff, chrome silver gradients on headings. Monospace + bold geometric sans.",
+        hero: "Retro grid horizon (perspective:1000px CSS grid floor), glowing sun/orb behind headline, chrome gradient text, scanline overlay (repeating-linear-gradient).",
+      },
+      {
+        name: "Liquid Gradient",
+        vibe: "Smooth flowing animated gradient backgrounds. Soft rounded everything (32px+ radius), buttery shadows, no hard edges, organic blob shapes, animated background-position shift.",
+        palette: "Pastel gradients peach #ffb88c → coral #ff6b9d → lavender #c084fc → sky #60a5fa. Animate background-position over 12s.",
+        hero: "Hero is one huge animated gradient mesh canvas, centered minimalist text, no photo needed — pure color motion.",
+      },
+      {
+        name: "Bento Grid",
+        vibe: "Apple-style bento boxes everywhere. Mixed-size rounded tiles (some 2x1, some square, some tall), each tile a distinct content type, generous gap, soft shadows.",
+        palette: "Light neutral bg #f5f5f7, white tiles with subtle inner shadow, ONE featured tile with vivid gradient (blue→purple).",
+        hero: "Hero IS a bento grid — 6-8 tiles of varying sizes, headline tile spans 2 cols, smaller tiles show stats / image / quote / CTA / video thumbnail.",
+      },
+      {
+        name: "Dark Luxury",
+        vibe: "Premium dark theme like Linear / Vercel / Arc. Subtle dot/grid background, single accent color, ultra-refined typography, tasteful micro-interactions.",
+        palette: "Bg gradient #0b0b0f → #1a1a24, text #f5f5f7, accent #d4af37 (gold) OR #10b981 (emerald). Subtle radial-dot grid overlay.",
+        hero: "Centered minimalist hero, small gradient eyebrow badge, huge clean headline, ONE subtle CTA. Background: faint grid pattern + 2 large soft glow blobs in accent color.",
+      },
+      {
+        name: "Organic Soft",
+        vibe: "Hand-drawn organic feel. Wavy SVG section dividers, soft blob shapes as decorations, warm earthy palette, friendly rounded sans-serif.",
+        palette: "Warm cream #fef9f3 bg, terracotta #d97757 + sage #87a878 + mustard #e0a458 accents.",
+        hero: "Asymmetric hero with floating organic blob shapes behind text (SVG morphing blobs), hand-drawn underline accent on key word, illustrated decorative element.",
+      },
+    ];
 
-    const systemPrompt = `You are an award-winning senior web designer (think Awwwards / SiteInspire level) specializing in high-converting, visually stunning landing pages for programmatic SEO. Generate a fully responsive, magazine-quality HTML template with an embedded <style> block and {variable} syntax for dynamic content. The output must look like it was crafted by a top design agency — never generic, never AI-looking.
+    const direction = DESIGN_DIRECTIONS[Math.floor(Math.random() * DESIGN_DIRECTIONS.length)];
+
+    const directionRule = `
+
+🎨 DESIGN DIRECTION FOR THIS GENERATION (mandatory — fully commit, do NOT blend):
+DIRECTION NAME: "${direction.name}"
+VIBE: ${direction.vibe}
+PALETTE & TEXTURE: ${direction.palette}
+HERO TREATMENT: ${direction.hero}
+
+The output must be unmistakably "${direction.name}". Two of your generations must NEVER look the same — own this aesthetic with conviction.`;
+
+    const systemPrompt = `You are an award-winning senior web designer (Awwwards / SiteInspire / Site of the Day caliber) building magazine-quality, conversion-optimized landing pages. Output must look like a TOP design agency built it — never AI-looking, never generic, never blocky. Two pages from you must NEVER look the same.
 
 OUTPUT RULES:
-1. Output ONLY raw HTML. Start with a <style> tag containing all CSS, then the HTML body content. No markdown fences, no explanation.
-2. The <style> block MUST include a complete embedded stylesheet scoped to .pgp-page class so it never conflicts with the host site.
-3. CRITICAL — THEME INHERITANCE (so it matches the connected website's color/font when published):
-   - .pgp-page: font-family: inherit; color: inherit;
-   - h1, h2, h3, h4, p, li, span, a (in body text): color: inherit; font-family: inherit; — NEVER hardcode colors like #333, #000, #2563eb on text elements.
-   - Section backgrounds: use transparent, rgba(128,128,128,.04), or rgba(128,128,128,.08) — NEVER solid white (#fff) or solid black, they clash with dark/light host themes.
-   - Borders: use rgba(128,128,128,.18) — NEVER hardcoded colors.
-   - Accent / CTA buttons: use background: currentColor with color: #fff (so the button picks up the host site's text color as the brand color automatically). Hover: opacity .88, translateY(-2px).
-   - On hero/CTA sections that use a dark background image overlay, text inside that section CAN be color: #fff (because the overlay guarantees dark background) — this is the only allowed exception.
+1. Output ONLY raw HTML. Start with a single <style> block (all CSS scoped under .pgp-page), then the body markup. No markdown fences, no commentary.
+2. Wrap the entire page in <div class="pgp-page">. Every selector MUST start with .pgp-page so styles can't leak into the host site.
+3. THEME INHERITANCE for default body text — h1/h2/h3/h4/p/li in normal sections use color: inherit; font-family: inherit;. EXCEPTION: hero, CTA bands and dark-themed overlay sections may use explicit colors (#fff etc.) because the overlay guarantees contrast. The chosen DESIGN DIRECTION'S palette CAN and SHOULD override this for backgrounds, decorative gradients, gradient-text headings, and accent elements — that's the whole point.
 
-HERO SECTION (MUST be stunning — this is the most important part):
-4. Hero MUST use a full-width background image with a dark gradient overlay so text is perfectly readable. Use this exact pattern:
-   <section class="pgp-hero">
-     <div class="pgp-hero-overlay"></div>
-     <div class="pgp-hero-content">
-       <h1>...headline...</h1>
-       <p class="pgp-hero-sub">...subtitle...</p>
-       <div class="pgp-hero-cta"><a href="#contact" class="pgp-btn pgp-btn-primary">Primary CTA</a> <a href="#services" class="pgp-btn pgp-btn-ghost">Learn more</a></div>
-     </div>
-   </section>
-   CSS for hero:
-   .pgp-hero { position: relative; min-height: clamp(420px, 70vh, 680px); display: flex; align-items: center; justify-content: center; text-align: center; background-image: url('https://picsum.photos/1920/1080?random=1'); background-size: cover; background-position: center; background-attachment: fixed; overflow: hidden; }
-   .pgp-hero-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.45) 100%); z-index: 1; }
-   .pgp-hero-content { position: relative; z-index: 2; max-width: 900px; padding: 4rem 1.5rem; color: #fff; }
-   .pgp-hero h1 { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 800; line-height: 1.1; margin: 0 0 1rem; color: #fff; letter-spacing: -.02em; }
-   .pgp-hero-sub { font-size: clamp(1rem, 1.4vw, 1.25rem); opacity: .92; margin: 0 0 2rem; color: #fff; }
-   .pgp-btn { display: inline-block; padding: .9rem 2rem; border-radius: 999px; font-weight: 600; text-decoration: none; transition: all .25s ease; }
-   .pgp-btn-primary { background: currentColor; color: #fff; }
-   .pgp-btn-primary span, .pgp-btn-primary { color: #fff; }
-   .pgp-btn-ghost { border: 2px solid rgba(255,255,255,.6); color: #fff; }
-   .pgp-btn:hover { transform: translateY(-2px); opacity: .9; }
+${directionRule}
 
-LAYOUT & POLISH:
-5. Use CSS Grid + Flexbox. Cards 3-col desktop / 2-col tablet / 1-col mobile. Breakpoints @ 992px, 768px, 480px.
-6. Typography: clamp() for fluid sizing. Headings font-weight: 700-800 with letter-spacing: -.01em. Body line-height: 1.7.
-7. Generous whitespace: section padding clamp(4rem, 8vw, 7rem) 1.5rem.
-8. Cards: subtle background rgba(128,128,128,.05), border rgba(128,128,128,.15), border-radius 16px, padding 2rem, hover: translateY(-4px) + box-shadow 0 12px 32px rgba(0,0,0,.08).
-9. Each section MUST have a centered eyebrow label (small uppercase text), an H2 heading, and a short intro paragraph above the grid.
-10. Section images: use realistic 16:9 or 4:3 ratios with border-radius: 12px and object-fit: cover.
+VISUAL EXECUTION (vibrant maximalist baseline, then layer the direction on top):
+4. HERO must be cinematic. Multi-layered backgrounds (gradient mesh + animated blobs + optional photo with overlay). Headline clamp(2.4rem, 6vw, 5.5rem), font-weight 800-900, letter-spacing -0.03em, line-height 1.05. Two CTAs (primary glowing gradient + ghost outline).
+5. ANIMATED DECORATIONS REQUIRED — define keyframes in the <style> block:
+   @keyframes pgp-float { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-18px) translateX(8px)} }
+   @keyframes pgp-float-2 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(20px) translateX(-12px)} }
+   @keyframes pgp-fade-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+   @keyframes pgp-shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+   @keyframes pgp-pulse-glow { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.35)} 50%{box-shadow:0 0 0 14px rgba(99,102,241,0)} }
+   Use at least 2 floating gradient orbs (radial-gradient + filter:blur(80px) + pgp-float animation). Apply pgp-fade-up on sections, pgp-shimmer sweep on primary buttons, pgp-pulse-glow on the main hero CTA.
+6. Cards: 24px+ border-radius, layered gradient backgrounds, 1px gradient border via mask trick, hover translateY(-6px) + colored glow shadow + border color shift.
+7. Typography: fluid clamp() everywhere. Section headlines should use gradient-text effect (background:linear-gradient(...);-webkit-background-clip:text;background-clip:text;color:transparent). Eyebrow labels: pill-shaped with glowing dot indicator + backdrop blur.
+8. Section padding clamp(4rem, 8vw, 7rem). Generous whitespace.
+9. Use CSS Grid creatively — not always 3 equal cols. Try bento, asymmetric splits (1fr 1.6fr), staggered staircase grids when the direction calls for it.
 
-TESTIMONIALS — MUST be a horizontal scroll carousel (no JS needed, pure CSS):
-11. Use this exact structure:
-    <section class="pgp-testimonials"><div class="pgp-section-head">...</div>
-      <div class="pgp-carousel">
-        <article class="pgp-tcard">★★★★★<p>"...quote..."</p><footer><img src="https://i.pravatar.cc/80?img=12" alt=""><div><strong>Name</strong><span>Role</span></div></footer></article>
-        <!-- 4 to 6 testimonial cards total -->
-      </div>
-    </section>
-12. CSS: .pgp-carousel { display: flex; gap: 1.5rem; overflow-x: auto; scroll-snap-type: x mandatory; padding: 1rem .5rem 2rem; scrollbar-width: thin; }
-    .pgp-tcard { flex: 0 0 min(360px, 85vw); scroll-snap-align: start; background: rgba(128,128,128,.06); border: 1px solid rgba(128,128,128,.15); border-radius: 16px; padding: 2rem; }
-    .pgp-tcard footer { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
-    .pgp-tcard footer img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
-13. Use https://i.pravatar.cc/80?img=N (N = 1..70) for testimonial avatars — these are FREE and load fast.
+REQUIRED SECTIONS (in order, but visual treatment must match the chosen direction):
+10. (a) Hero, (b) Trust strip / animated stat row, (c) Features/Services grid (3-6 cards with gradient icon tiles), (d) About with side image + text split, (e) Visual showcase / gallery / bento, (f) Testimonials horizontal scroll-snap carousel, (g) FAQ using styled <details>/<summary> with smooth open animation, (h) Final CTA band with bg image + dramatic overlay, (i) Contact section.
 
-IMAGES — niche-relevant FREE stock photos (no AI credits used):
-14. Use https://picsum.photos/<width>/<height>?random=N for ALL stock photos. The backend will automatically replace these with niche-relevant Unsplash photos based on the business type/keywords. Always vary the random=N number so each slot gets a unique image.
-15. Include at least 4-6 images across the page (hero bg, feature icons/illustrations, about/team photo, gallery section).
+TESTIMONIALS — pure-CSS horizontal carousel:
+11. <div class="pgp-carousel" style="display:flex;gap:1.5rem;overflow-x:auto;scroll-snap-type:x mandatory;padding:1rem .5rem 2rem;scrollbar-width:thin">. Each card: flex 0 0 min(360px, 85vw); scroll-snap-align: start; glass-style background; ★★★★★; quote; footer with avatar + name + role.
+12. Avatars: https://i.pravatar.cc/80?img=N where N varies (1..70). 4-6 cards.
+
+IMAGES — FREE niche-relevant stock (no AI credits):
+13. Use https://picsum.photos/<width>/<height>?random=N for ALL images. Backend swaps these for niche-relevant photos automatically. Vary N so each slot is unique. Include 4-8 images total (hero bg, about, gallery, CTA band).
+14. NEVER use {{AI_IMAGE:...}} blocks.
 
 CONTENT VARIABLES:
-16. Include 4-8 content variables using {variable_name} (lowercase_snake_case). Real DATA only: {product_name}, {company_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {service_name}, {tagline}.
-17. NEVER create variables for design/styling properties (no {font_family}, {primary_color}, etc.).
-18. For AI-generated per-page unique copy use {{AI:instruction using {variables}}}. Include at least 2 such blocks (one for hero subtitle/intro, one for the about section).
-19. NEVER use {{AI_IMAGE:...}} — always use picsum URLs (rule 14).
+15. Include 5-9 meaningful content variables using {variable_name} (lowercase_snake_case). DATA only: {company_name}, {service_name}, {product_name}, {location}, {price}, {phone}, {email}, {description}, {category}, {brand_name}, {rating}, {address}, {hours}, {website_url}, {tagline}.
+16. NEVER create design/style variables ({primary_color}, {font_family}, etc.).
+17. For per-page unique AI copy use {{AI:short instruction referencing {variables}}}. Include at least 2 such blocks (hero subtitle, about paragraph).
 
-REQUIRED SECTIONS (in this order):
-20. Wrap everything in <div class="pgp-page">.
-21. Sections: (a) Hero with background image + overlay, (b) Trust strip / quick stats, (c) Features or Services grid (3-6 cards with icons or images), (d) About section with side image and text, (e) Gallery / showcase (2-4 images grid), (f) Testimonials carousel, (g) FAQ using <details>/<summary>, (h) Final CTA section with bg image + overlay, (i) Contact section.
 ${headerFooterRule}
 
 ${platformRule}${themeRule}
 
-QUALITY BAR: The result must look like a premium agency-built landing page — clean typography, strong visual hierarchy, beautiful imagery, generous whitespace, smooth hover states. Never amateur, never blocky, never generic.`;
+QUALITY BAR: Output must look like a flagship landing page from a Series-B startup or premium agency portfolio — Linear, Vercel, Stripe, Arc, Framer, Cron, Raycast, Notion caliber. Bold. Confident. Unmistakable. Never amateur. Never the same as last time.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
