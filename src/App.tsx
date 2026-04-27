@@ -50,7 +50,14 @@ import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+  },
+});
 
 function ProtectedRoute({ children, session }: { children: React.ReactNode; session: Session | null }) {
   if (!session) return <Navigate to="/auth" replace />;
