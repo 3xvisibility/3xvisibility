@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { handleApiError } from "@/lib/handle-api-error";
 import {
   Sparkles,
