@@ -100,11 +100,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchWorkspaces();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event) => {
-      // Reset loading so downstream components wait for fresh data
-      if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT' || _event === 'TOKEN_REFRESHED') {
+      // Only refetch on actual sign-in/out — NOT on TOKEN_REFRESHED (fires on tab focus
+      // and would cause forms to unmount and lose user input).
+      if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT') {
         setIsLoading(true);
+        fetchWorkspaces();
       }
-      fetchWorkspaces();
     });
     return () => subscription.unsubscribe();
   }, [fetchWorkspaces]);
