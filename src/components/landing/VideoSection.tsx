@@ -1,12 +1,39 @@
 import { ScrollReveal } from "./ScrollReveal";
 import { Play } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
+
+const DEFAULT_VIDEO = "/pagegen-demo.mp4";
 
 export function VideoSection() {
   const [playing, setPlaying] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  // Try /pagegen-demo-{lang}.mp4; fall back to default if not present.
+  const candidate = useMemo(
+    () => (language && language !== "en" ? `/pagegen-demo-${language}.mp4` : DEFAULT_VIDEO),
+    [language]
+  );
+  const [videoSrc, setVideoSrc] = useState<string>(DEFAULT_VIDEO);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPlaying(false);
+    if (candidate === DEFAULT_VIDEO) {
+      setVideoSrc(DEFAULT_VIDEO);
+      return;
+    }
+    fetch(candidate, { method: "HEAD" })
+      .then((r) => {
+        if (cancelled) return;
+        setVideoSrc(r.ok ? candidate : DEFAULT_VIDEO);
+      })
+      .catch(() => !cancelled && setVideoSrc(DEFAULT_VIDEO));
+    return () => {
+      cancelled = true;
+    };
+  }, [candidate]);
 
   return (
     <section id="demo-video" className="py-20 md:py-28 relative overflow-hidden">
