@@ -395,13 +395,50 @@ const contactSection = (info: { icon: string; label: string; value: string }[]) 
   </div>
 </section>`;
 
+// ── Vibe accent palettes ──────────────────────────────────────────────────
+// Each template gets one of these flavors so the marketplace feels varied.
+type VibeAccent = "aurora" | "emerald" | "sunset" | "neon" | "royal" | "rose" | "ocean" | "amber";
+
+const VIBE_PALETTES: Record<VibeAccent, { c1: string; c2: string; c3: string; glow: string }> = {
+  aurora:  { c1: "#6366f1", c2: "#8b5cf6", c3: "#d946ef", glow: "99,102,241" },
+  emerald: { c1: "#059669", c2: "#10b981", c3: "#34d399", glow: "16,185,129" },
+  sunset:  { c1: "#f97316", c2: "#ef4444", c3: "#ec4899", glow: "239,68,68" },
+  neon:    { c1: "#06b6d4", c2: "#14b8a6", c3: "#84cc16", glow: "20,184,166" },
+  royal:   { c1: "#1e40af", c2: "#7c3aed", c3: "#9333ea", glow: "124,58,237" },
+  rose:    { c1: "#e11d48", c2: "#db2777", c3: "#a855f7", glow: "219,39,119" },
+  ocean:   { c1: "#0284c7", c2: "#06b6d4", c3: "#22d3ee", glow: "8,145,178" },
+  amber:   { c1: "#d97706", c2: "#f59e0b", c3: "#fbbf24", glow: "245,158,11" },
+};
+
+const vibeAccentStyles = (vibe: VibeAccent): string => {
+  const p = VIBE_PALETTES[vibe];
+  return `<style data-vibe="${vibe}">
+.pgp-page .pgp-eyebrow{background:linear-gradient(135deg,rgba(${p.glow},.18),rgba(${p.glow},.08))}
+.pgp-page .pgp-eyebrow::before{background:linear-gradient(135deg,${p.c1},${p.c3});box-shadow:0 0 10px rgba(${p.glow},.7)}
+.pgp-page .pgp-btn-primary{background:linear-gradient(135deg,${p.c1} 0%,${p.c2} 50%,${p.c3} 100%);box-shadow:0 12px 30px rgba(${p.glow},.45),inset 0 1px 0 rgba(255,255,255,.25)}
+.pgp-page .pgp-btn-primary:hover{box-shadow:0 18px 40px rgba(${p.glow},.6)}
+.pgp-page .pgp-card .pgp-icon{background:linear-gradient(135deg,rgba(${p.glow},.22),rgba(${p.glow},.1));border-color:rgba(${p.glow},.3);box-shadow:0 8px 20px rgba(${p.glow},.22)}
+.pgp-page .pgp-card:hover{box-shadow:0 24px 60px rgba(${p.glow},.22),0 8px 20px rgba(0,0,0,.08);border-color:rgba(${p.glow},.45)}
+.pgp-page .pgp-hero::before{background:radial-gradient(circle,rgba(${p.glow},.6),transparent 70%)}
+.pgp-page .pgp-hero::after{background:radial-gradient(circle,rgba(${p.glow},.45),transparent 70%)}
+.pgp-page .pgp-hero-overlay{background:linear-gradient(135deg,rgba(15,23,42,.78) 0%,rgba(${p.glow},.45) 50%,rgba(15,23,42,.7) 100%)}
+.pgp-page .pgp-section-head h2{background:linear-gradient(135deg,currentColor 0%,${p.c2} 100%);-webkit-background-clip:text;background-clip:text}
+</style>`;
+};
+
 // ── Page builder ───────────────────────────────────────────────────────────
-const page = (sections: string) => `${BASE_STYLES}
-<div class="pgp-page">
+// Auto-rotates vibe accent across templates so the gallery feels varied.
+const VIBE_ROTATION: VibeAccent[] = ["aurora", "sunset", "emerald", "royal", "ocean", "rose", "neon", "amber"];
+let _pageCallIdx = 0;
+const page = (sections: string, vibe?: VibeAccent) => {
+  const v = vibe ?? VIBE_ROTATION[_pageCallIdx++ % VIBE_ROTATION.length];
+  return `${BASE_STYLES}${vibeAccentStyles(v)}
+<div class="pgp-page" data-vibe="${v}">
   <div class="pgp-wrap">
     ${sections}
   </div>
 </div>`;
+};
 
 // ── Templates ──────────────────────────────────────────────────────────────
 export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
