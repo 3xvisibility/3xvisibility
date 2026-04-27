@@ -153,25 +153,16 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-sm leading-tight">{step.title}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">
-                        {step.titleBn}
-                      </p>
                     </div>
                   </div>
 
                   <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-                  <p className="text-[11px] text-muted-foreground/80 leading-relaxed mt-1 italic">
-                    {step.descBn}
-                  </p>
 
                   {step.tip && (
                     <div className="mt-2.5 pt-2.5 border-t border-dashed border-border flex gap-1.5">
                       <Lightbulb className="h-3 w-3 text-warning shrink-0 mt-0.5" />
                       <div>
                         <p className="text-[10px] text-foreground/80 leading-snug">{step.tip}</p>
-                        <p className="text-[10px] text-muted-foreground leading-snug italic">
-                          {step.tipBn}
-                        </p>
                       </div>
                     </div>
                   )}
