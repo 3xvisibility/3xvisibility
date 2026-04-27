@@ -822,6 +822,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setActivePresetId(null);
     setVibePalette(DEFAULT_VIBE.palette); setVibeTypography(DEFAULT_VIBE.typography); setVibeDensity(DEFAULT_VIBE.density);
     setVibeCustomVarsText(""); setVibeCustomCss(""); setVibeAdvancedOpen(false);
+    clearWizardSnapshot();
   };
 
   // --- AI preset helpers ---
