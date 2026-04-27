@@ -92,7 +92,6 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate">
               How a campaign works
-              <span className="text-muted-foreground font-normal"> · ক্যাম্পেইন কীভাবে কাজ করে</span>
             </p>
             <p className="text-[11px] text-muted-foreground truncate">
               4 simple steps — Data → Template → Website → Run
