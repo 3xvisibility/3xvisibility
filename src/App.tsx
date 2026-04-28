@@ -94,10 +94,10 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
       <Route path="pgp-keywords" element={wrap(<PgpKeywordsPage />)} />
-      <Route path="pgp-content" element={wrap(<PgpContentGroupsPage />)} />
+      <Route path="pgp-content" element={<Navigate to="../templates" replace />} />
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
       <Route path="pgp-terms" element={wrap(<PgpTermsPage />)} />
-      <Route path="pgp-logs" element={wrap(<PgpLogsPage />)} />
+      <Route path="pgp-logs" element={<Navigate to="../pages" replace />} />
       <Route path="template-mapping" element={wrap(<TemplateMappingPage />)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
