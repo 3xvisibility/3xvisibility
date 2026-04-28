@@ -100,9 +100,14 @@ export class WooCommerceConnector implements CmsConnector {
     }
 
     const metaData = buildSeoMetaDataEntries(payload);
-    if (payload.seo_description) {
-      body.short_description = payload.seo_description;
-    }
+    // WooCommerce short_description = brief teaser only. Never the full SEO meta
+    // or the entire product description, both of which look broken on the storefront.
+    const shortDesc = buildShortDescription({
+      excerpt: payload.excerpt,
+      seoDescription: payload.seo_description,
+      fullContent: payload.content,
+    });
+    if (shortDesc) body.short_description = shortDesc;
     if (metaData.length > 0) body.meta_data = metaData;
 
     const res = await fetch(
