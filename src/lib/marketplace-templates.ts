@@ -1257,4 +1257,69 @@ export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     seo_description_pattern: "{tagline}. {benefit_1}, {benefit_2}, {benefit_3}.",
     schema_type: "Product",
   },
+
+  // 30. Personal portfolio (WordPress / generic websites)
+  {
+    id: "wp-personal-portfolio",
+    name: "Personal Portfolio",
+    description: "Modern personal portfolio with hero, projects gallery, skills, testimonials and contact CTA. Works on WordPress or any generic website.",
+    content: page(
+      hero({
+        bgKeywords: "{profession} workspace creative portrait",
+        badge: "👋 Hi, I'm {full_name}",
+        title: "{headline}",
+        subtitle: "{tagline}",
+        primaryCta: "View my work",
+        secondaryCta: "Get in touch",
+        sig: 60,
+      }) +
+      trustStrip([
+        { num: "{years_experience}+", lbl: "Years experience" },
+        { num: "{projects_count}+", lbl: "Projects shipped" },
+        { num: "{clients_count}+", lbl: "Happy clients" },
+        { num: "{awards_count}", lbl: "Awards" },
+      ]) +
+      aboutSplit("About me", "Hi, I'm {full_name}", "{about_bio}", "{profession} portrait professional", 13) +
+      featureGrid("What I do", "Services & expertise", "I help brands and teams ship beautiful, high-impact work.", [
+        { icon: "🎨", title: "{service_1_name}", desc: "{service_1_desc}" },
+        { icon: "⚡", title: "{service_2_name}", desc: "{service_2_desc}" },
+        { icon: "🚀", title: "{service_3_name}", desc: "{service_3_desc}" },
+      ]) +
+      gallery("Selected work", "Recent projects", [
+        "{profession} project showcase",
+        "design portfolio piece",
+        "creative work mockup",
+        "branding case study",
+        "modern web design",
+        "creative portfolio image",
+      ]) +
+      defaultTestimonials +
+      faq([
+        { q: "What's your typical project timeline?", a: "Most projects ship in 2–6 weeks depending on scope. I'll give you a clear timeline after our first call." },
+        { q: "How do we get started?", a: "Drop me a message at {email} or book a call. I reply within 24 hours and we'll scope the project together." },
+        { q: "Do you work with clients outside {location}?", a: "Yes — I work remotely with clients worldwide and have shipped projects across {timezone_coverage}." },
+      ]) +
+      ctaBand({
+        bgKeywords: "creative collaboration meeting workspace",
+        title: "Let's build something great together",
+        subtitle: "Have a project in mind? I'd love to hear about it.",
+        cta: "✉️ {email}",
+        sig: 61,
+      })
+    ),
+    variables: [
+      "{full_name}", "{profession}", "{headline}", "{tagline}", "{about_bio}",
+      "{years_experience}", "{projects_count}", "{clients_count}", "{awards_count}",
+      "{service_1_name}", "{service_1_desc}",
+      "{service_2_name}", "{service_2_desc}",
+      "{service_3_name}", "{service_3_desc}",
+      "{email}", "{location}", "{timezone_coverage}",
+    ],
+    category: "wordpress",
+    tags: ["wordpress", "portfolio", "personal", "freelancer", "resume", "about-me"],
+    author: "Community", downloads: 1340, rating: 4.9,
+    seo_title_pattern: "{full_name} — {profession} | Portfolio",
+    seo_description_pattern: "{tagline} View selected work, services and contact details.",
+    schema_type: "Person",
+  },
 ];
