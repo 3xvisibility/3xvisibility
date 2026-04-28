@@ -268,7 +268,38 @@ export default function TemplatesPage() {
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
-  // ──── Actions ────
+  // Re-import a marketplace template at its current latest version. We always
+  // create a NEW snapshot row — never mutate the existing one — so previously
+  // generated campaigns remain locked to the version they were built against.
+  const reimportMarketplaceMutation = useMutation({
+    mutationFn: async (sourceMarketplaceId: string) => {
+      const tpl = COMMUNITY_TEMPLATES.find(t => t.id === sourceMarketplaceId);
+      if (!tpl) throw new Error("Marketplace template no longer exists");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !wsId) throw new Error("Not authenticated");
+      const version = computeMarketplaceVersion(tpl);
+      const { error } = await supabase.from("templates").insert({
+        name: `${tpl.name} (Marketplace · ${version})`,
+        content: tpl.content,
+        variables: tpl.variables,
+        user_id: user.id,
+        workspace_id: wsId,
+        seo_title_pattern: tpl.seo_title_pattern || "",
+        seo_description_pattern: tpl.seo_description_pattern || "",
+        schema_type: tpl.schema_type || "WebPage",
+        schema_config: {},
+        source_marketplace_id: tpl.id,
+        source_version: version,
+        source_imported_at: new Date().toISOString(),
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Latest version imported", description: "A new pinned snapshot was added. Existing campaigns keep their old version." });
+    },
+    onError: (err: Error) => toast({ title: "Re-import failed", description: err.message, variant: "destructive" }),
+  });
   const checkAndDelete = async (id: string) => {
     const { data: linked } = await supabase.from("campaigns").select("id, name").eq("template_id", id).limit(10);
     setDeleteTarget({ id, linkedCampaigns: linked ?? [] });
