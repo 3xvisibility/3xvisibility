@@ -1721,6 +1721,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         </SelectContent>
                       </Select>
                     )}
+                    {mpSteps && (
+                      <div className="mt-2">
+                        <MarketplaceImportProgress steps={mpSteps} errorMessage={mpImportError} />
+                      </div>
+                    )}
                   </div>
                   {/* Modern AI design — vibe controls hidden per user request.
                       AI auto-applies a clean, modern, Lovable/Bolt/Claude-style
