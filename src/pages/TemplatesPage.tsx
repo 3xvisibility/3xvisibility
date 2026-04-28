@@ -783,6 +783,7 @@ export default function TemplatesPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       {siteTypes && [...siteTypes].map(st => <Badge key={st} variant="outline" className="text-[10px] capitalize">{st}</Badge>)}
+                      <TemplateVersionBadge template={tpl as any} onReimport={(id) => reimportMarketplaceMutation.mutate(id)} />
                       <span className="text-[10px] text-muted-foreground">{contentVars.length} vars</span>
                       <span className="text-[10px] text-muted-foreground">{info?.count ?? 0} campaigns</span>
                     </div>
