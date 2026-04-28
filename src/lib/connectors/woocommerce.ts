@@ -4,6 +4,41 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+/** Brief teaser for the WooCommerce product short_description field (~160 chars, plain text). */
+function buildShortDescription(input: {
+  excerpt?: string | null;
+  seoDescription?: string | null;
+  fullContent?: string | null;
+}): string | undefined {
+  const MAX_LEN = 160;
+  const sources = [input.excerpt, input.seoDescription, input.fullContent];
+  let raw = "";
+  for (const s of sources) {
+    if (typeof s === "string" && s.trim().length > 0) { raw = s; break; }
+  }
+  if (!raw) return undefined;
+  const plain = raw
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!plain) return undefined;
+  let teaser = plain;
+  if (teaser.length > MAX_LEN) {
+    const cut = teaser.slice(0, MAX_LEN);
+    const lastSpace = cut.lastIndexOf(" ");
+    teaser = (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).replace(/[,;:\-–—]+$/, "").trim() + "…";
+  }
+  return `<p>${teaser}</p>`;
+}
+
 export class WooCommerceConnector implements CmsConnector {
   readonly type = "woocommerce";
   private baseUrl: string;
