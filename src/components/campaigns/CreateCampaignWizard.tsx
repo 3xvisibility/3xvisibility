@@ -1301,14 +1301,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </SelectContent>
                     </Select>
 
-                    {selectedTemplate && (
-                      <div className="space-y-1.5 pt-1">
-                        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <Info className="h-3 w-3" />
-                          {selectedTemplateVars.length > 0
-                            ? <>Each page needs values for these <strong className="text-foreground">{selectedTemplateVars.length}</strong> variables:</>
-                            : <>This template has no variables — every page will be identical.</>}
-                        </p>
+                    {mpSteps && (
+                      <MarketplaceImportProgress steps={mpSteps} errorMessage={mpImportError} />
+                    )}
+
                         {selectedTemplateVars.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {selectedTemplateVars.map(v => (
