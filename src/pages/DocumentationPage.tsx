@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Globe, Rocket, Layers, FileText, Store, Database,
-  KeyRound, Zap, Columns3, BarChart3, Activity, FlaskConical, CalendarDays,
+  KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
 } from "lucide-react";
@@ -174,11 +174,6 @@ const TOOLS: ToolDoc[] = [
     id: "performance", icon: Activity, group: "Analytics", name: "Page Performance",
     short: "Per-page SEO score, load time and core web vitals.",
     steps: ["Select a page.", "Read the score breakdown and improvement tips.", "Run an AI fix in one click."],
-  },
-  {
-    id: "ab-testing", icon: FlaskConical, group: "Analytics", name: "A/B Testing",
-    short: "Compare two variants of a page head-to-head.",
-    steps: ["Create variant A and B.", "Set the traffic split.", "The winner is auto-promoted."],
   },
   {
     id: "content-calendar", icon: CalendarDays, group: "Analytics", name: "Content Calendar",

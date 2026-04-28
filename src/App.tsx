@@ -28,7 +28,7 @@ import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
 import IndexingPage from "./pages/IndexingPage";
-import ABTestingPage from "./pages/ABTestingPage";
+
 import ContentCalendarPage from "./pages/ContentCalendarPage";
 import PagePerformancePage from "./pages/PagePerformancePage";
 import SeoAuditPage from "./pages/SeoAuditPage";
@@ -90,7 +90,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="workspace-settings" element={wrap(<FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate>)} />
       <Route path="data" element={wrap(<DataCsvPage />)} />
       <Route path="website-content" element={wrap(<WebsiteContentPage />)} />
-      <Route path="ab-testing" element={wrap(<ABTestingPage />)} />
+      
       <Route path="content-calendar" element={wrap(<ContentCalendarPage />)} />
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
@@ -186,7 +186,7 @@ const App = () => {
             <Route path="/workspace-settings" element={<ProtectedRoute session={session}><WorkspaceRedirect path="workspace-settings" /></ProtectedRoute>} />
             <Route path="/data" element={<ProtectedRoute session={session}><WorkspaceRedirect path="data" /></ProtectedRoute>} />
             <Route path="/website-content" element={<ProtectedRoute session={session}><WorkspaceRedirect path="website-content" /></ProtectedRoute>} />
-            <Route path="/ab-testing" element={<ProtectedRoute session={session}><WorkspaceRedirect path="ab-testing" /></ProtectedRoute>} />
+            
             <Route path="/content-calendar" element={<ProtectedRoute session={session}><WorkspaceRedirect path="content-calendar" /></ProtectedRoute>} />
             <Route path="/performance" element={<ProtectedRoute session={session}><WorkspaceRedirect path="performance" /></ProtectedRoute>} />
             <Route path="/seo-audit" element={<ProtectedRoute session={session}><WorkspaceRedirect path="seo-audit" /></ProtectedRoute>} />

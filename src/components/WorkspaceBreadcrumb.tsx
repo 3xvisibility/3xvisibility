@@ -27,7 +27,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   indexing: "Indexing",
   data: "Data / CSV",
   "website-content": "Website Content",
-  "ab-testing": "A/B Testing",
+  
   "content-calendar": "Content Calendar",
   performance: "Performance",
   "seo-audit": "SEO Audit",
@@ -54,7 +54,7 @@ export function WorkspaceBreadcrumb() {
     indexing: t("sidebar.indexing"),
     data: t("sidebar.dataCsv"),
     "website-content": t("sidebar.websiteContent"),
-    "ab-testing": t("sidebar.abTesting"),
+    
     "content-calendar": t("sidebar.contentCalendar"),
     performance: t("sidebar.performance"),
     "seo-audit": t("sidebar.seoAudit"),
