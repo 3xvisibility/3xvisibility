@@ -27,7 +27,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   indexing: "Indexing",
   data: "Data / CSV",
   "website-content": "Website Content",
-  "ab-testing": "A/B Testing",
+  
   "content-calendar": "Content Calendar",
   performance: "Performance",
   "seo-audit": "SEO Audit",
