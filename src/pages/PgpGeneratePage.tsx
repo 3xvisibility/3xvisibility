@@ -611,8 +611,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             {contentGroups.length === 0 && (
               <div className="flex items-center gap-2 text-xs">
                 <div className="h-5 w-5 rounded-full bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200 flex items-center justify-center text-[10px] font-bold">!</div>
-                <span className="text-amber-700 dark:text-amber-300">No content groups found.</span>
-                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/pgp-content`)}>Create content group →</button>
+                <span className="text-amber-700 dark:text-amber-300">No templates found.</span>
+                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/templates`)}>Create template →</button>
               </div>
             )}
           </div>

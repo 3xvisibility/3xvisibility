@@ -118,32 +118,19 @@ const TOOLS: ToolDoc[] = [
     ],
   },
   {
-    id: "pgp-content", icon: Layers, group: "PGP Suite", name: "Content Groups",
-    short: "Cluster related keywords into content groups.",
-    steps: [
-      "Create a group (for example: 'Plumbing Services').",
-      "Add relevant keywords into the group.",
-      "Generate bulk pages directly from the group.",
-    ],
-  },
-  {
     id: "pgp-generate", icon: Zap, group: "PGP Suite", name: "PGP Generate",
     short: "Spin up massive page sets from keyword combinations.",
     steps: [
-      "Pick a content group and a template.",
+      "Pick a template and a keyword set.",
       "Choose a generation method (all combos / sequential / random).",
       "Set the batch size and click 'Start' — live progress is shown.",
     ],
+    tips: ["Templates are managed under 'Templates' in the main menu — the old 'Content Groups' has been merged there."],
   },
   {
     id: "pgp-terms", icon: Database, group: "PGP Suite", name: "Terms",
     short: "A master library of variable terms (city, service, niche, etc.).",
     steps: ["Create a term type.", "Add values to it.", "Get auto-suggestions whenever the term is used in templates."],
-  },
-  {
-    id: "pgp-logs", icon: FileText, group: "PGP Suite", name: "Logs",
-    short: "Generation history with success/failure rate and error details.",
-    steps: ["Browse the list of recent jobs.", "Click any failed row to see the exact error.", "Retry failed rows or export the logs."],
   },
   {
     id: "website-content", icon: Layers, group: "Discovery", name: "Website Content",
