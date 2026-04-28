@@ -969,6 +969,16 @@ export default function TemplatesPage() {
         isSaving={createMutation.isPending || updateMutation.isPending}
       />
 
+      <TemplatePreviewDialog
+        open={!!previewTemplate}
+        onOpenChange={(v) => { if (!v) { setPreviewTemplate(null); setPreviewTemplateRow(null); } }}
+        template={previewTemplate}
+        primaryAction={previewTemplateRow ? {
+          label: "Edit template",
+          onClick: () => { const t = previewTemplateRow; setPreviewTemplate(null); setPreviewTemplateRow(null); openEditor(t); },
+        } : undefined}
+      />
+
       {/* CSV Dialog */}
       <Dialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen}>
         <DialogContent className="sm:max-w-md">
