@@ -31,6 +31,7 @@ import { friendlyError } from "@/lib/friendly-errors";
 import { htmlToBlocks } from "@/components/templates/TemplateVisualEditor";
 import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
+import { TemplatePreviewDialog, type PreviewableTemplate } from "@/components/templates/TemplatePreviewDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
@@ -49,6 +50,8 @@ export default function TemplatesPage() {
   const [aiOpen, setAiOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<PreviewableTemplate | null>(null);
+  const [previewTemplateRow, setPreviewTemplateRow] = useState<Template | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingKeywords, setPendingKeywords] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
