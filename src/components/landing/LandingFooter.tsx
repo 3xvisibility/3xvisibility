@@ -9,12 +9,13 @@ export function LandingFooter() {
       { label: t("footer.features"), href: "#features" },
       { label: t("footer.pricing"), href: "#pricing" },
       { label: t("footer.faq"), href: "#faq" },
+      { label: "Documentation", href: "/docs" },
       { label: t("footer.changelog"), href: "#" },
     ],
     [t("footer.integrations")]: [
       { label: t("footer.wordpress"), href: "#" },
       { label: t("footer.shopify"), href: "#" },
-      { label: t("footer.apiDocs"), href: "#" },
+      { label: t("footer.apiDocs"), href: "/docs" },
     ],
     [t("footer.company")]: [
       { label: t("footer.about"), href: "#" },
@@ -49,9 +50,15 @@ export function LandingFooter() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
-                      {link.label}
-                    </a>
+                    {link.href.startsWith("/") ? (
+                      <Link to={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a href={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
+                        {link.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
 import LandingPage from "./pages/LandingPage";
+import DocumentationPage from "./pages/DocumentationPage";
 import AuthPage from "./pages/AuthPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -160,6 +161,7 @@ const App = () => {
             <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/docs" element={<DocumentationPage />} />
 
             {/* Workspace-prefixed routes */}
             <Route path="/w/:workspaceSlug" element={<WorkspaceRouter />}>
