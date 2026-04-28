@@ -50,9 +50,15 @@ export function LandingFooter() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
-                      {link.label}
-                    </a>
+                    {link.href.startsWith("/") ? (
+                      <Link to={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <a href={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
+                        {link.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
