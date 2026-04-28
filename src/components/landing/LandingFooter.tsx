@@ -9,6 +9,7 @@ export function LandingFooter() {
       { label: t("footer.features"), href: "#features" },
       { label: t("footer.pricing"), href: "#pricing" },
       { label: t("footer.faq"), href: "#faq" },
+      { label: "Documentation", href: "/docs" },
       { label: t("footer.changelog"), href: "#" },
     ],
     [t("footer.integrations")]: [
