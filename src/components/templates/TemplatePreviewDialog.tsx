@@ -47,7 +47,7 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, primaryAct
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 gap-0 flex flex-col overflow-hidden">
+      <DialogContent className="max-w-none w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] p-0 gap-0 flex flex-col overflow-hidden">
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/15 to-fuchsia-500/15 border border-primary/20 shrink-0">
