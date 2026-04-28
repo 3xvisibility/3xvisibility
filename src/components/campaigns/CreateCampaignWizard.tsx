@@ -306,7 +306,60 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     },
   });
 
-  const { data: websites = [] } = useQuery({
+  // ── Marketplace templates the current plan is allowed to use ─────────────
+  // free / starter → none, pro → 2 of WP/Shopify/PrestaShop, agency → all
+  const { plan } = useSubscription();
+  const allowedMarketplace = useMemo(() => getMarketplaceTemplatesForPlan(plan), [plan]);
+  const marketplaceGroups = useMemo(() => groupByCategory(allowedMarketplace), [allowedMarketplace]);
+  const [importingMarketplace, setImportingMarketplace] = useState(false);
+
+  // Selecting a template id from the dropdown. Marketplace items use the
+  // `mp::<marketplace-id>` sentinel — we import them into the workspace then
+  // switch `selectedTemplate` to the newly-created database row id.
+  const handleTemplatePick = useCallback(async (value: string) => {
+    if (!value.startsWith(MARKETPLACE_VALUE_PREFIX)) {
+      setSelectedTemplate(value);
+      return;
+    }
+    const mpId = value.slice(MARKETPLACE_VALUE_PREFIX.length);
+    const tpl = allowedMarketplace.find(t => t.id === mpId);
+    if (!tpl) return;
+    if (!wsId) {
+      toast({ title: "No workspace selected", variant: "destructive" });
+      return;
+    }
+    try {
+      setImportingMarketplace(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { data: inserted, error } = await supabase
+        .from("templates")
+        .insert({
+          name: `${tpl.name} (Marketplace)`,
+          content: tpl.content,
+          variables: tpl.variables,
+          user_id: user.id,
+          workspace_id: wsId,
+          seo_title_pattern: tpl.seo_title_pattern || "",
+          seo_description_pattern: tpl.seo_description_pattern || "",
+          schema_type: tpl.schema_type || "WebPage",
+          schema_config: {},
+        } as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
+      setSelectedTemplate(inserted.id);
+      toast({ title: "Marketplace template added", description: `"${tpl.name}" imported into your templates.` });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to import template";
+      toast({ title: "Import failed", description: msg, variant: "destructive" });
+    } finally {
+      setImportingMarketplace(false);
+    }
+  }, [allowedMarketplace, wsId, queryClient, toast]);
+
+
     queryKey: ["websites", wsId],
     enabled: !!wsId,
     queryFn: async () => {
