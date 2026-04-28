@@ -23,8 +23,6 @@ import WebsitesPage from "./pages/WebsitesPage";
 import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
 import GeneratedPagesPage from "./pages/GeneratedPagesPage";
-import TemplateScannerPage from "./pages/TemplateScannerPage";
-import WebsiteDiscoveryPage from "./pages/WebsiteDiscoveryPage";
 import AdminPage from "./pages/AdminPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import TemplateMarketplacePage from "./pages/TemplateMarketplacePage";
