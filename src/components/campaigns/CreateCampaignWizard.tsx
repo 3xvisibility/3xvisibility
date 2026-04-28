@@ -2247,6 +2247,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           </div>
         </DialogContent>
       </Dialog>
+
+      <TemplatePreviewDialog
+        open={!!previewTpl}
+        onOpenChange={(v) => { if (!v) setPreviewTpl(null); }}
+        template={previewTpl}
+      />
     </>
   );
 }
