@@ -896,14 +896,7 @@ function balanceKeywordDensity(html: string, keyword: string, pack?: PhrasePack)
 
     // Build a natural-sounding paragraph that includes the keyword `needed` times.
     const sentences: string[] = [];
-    const templates = [
-      `Our ${keyword} team focuses on real results that customers actually notice.`,
-      `When you choose our ${keyword}, you get clear pricing and friendly support from start to finish.`,
-      `We make ${keyword} simple, so you spend less time worrying and more time enjoying the outcome.`,
-      `Every ${keyword} project follows a proven process built around quality and care.`,
-      `If you have questions about ${keyword}, our specialists are happy to walk you through every step.`,
-      `Booking ${keyword} with us is fast, transparent and designed around your schedule.`,
-    ];
+    const templates = phrasePack.densityTemplates(keyword);
     for (let i = 0; i < needed; i += 1) {
       sentences.push(templates[i % templates.length]);
     }
