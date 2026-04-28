@@ -359,7 +359,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     }
   }, [allowedMarketplace, wsId, queryClient, toast]);
 
-
+  const { data: websites = [] } = useQuery({
     queryKey: ["websites", wsId],
     enabled: !!wsId,
     queryFn: async () => {
