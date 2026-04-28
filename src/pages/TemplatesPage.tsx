@@ -914,8 +914,9 @@ export default function TemplatesPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                     {siteTypes && [...siteTypes].map(st => <Badge key={st} variant="outline" className="text-[10px] capitalize">{st}</Badge>)}
+                    <TemplateVersionBadge template={tpl as any} onReimport={(id) => reimportMarketplaceMutation.mutate(id)} />
                     {contentVars.slice(0, 4).map(v => <Badge key={v} variant="secondary" className="text-[10px] font-mono">{v}</Badge>)}
                     {contentVars.length > 4 && <Badge variant="secondary" className="text-[10px]">+{contentVars.length - 4}</Badge>}
                   </div>
