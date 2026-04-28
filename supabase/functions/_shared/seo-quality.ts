@@ -848,7 +848,7 @@ export function autoRepairContent(
   //     This is the single biggest reason "Keyword density" check fails: too many mentions
   //     (stuffing) on short pages, too few on long pages.
   if (keyword) {
-    html = balanceKeywordDensity(html, keyword);
+    html = balanceKeywordDensity(html, keyword, pack);
   }
 
   return html;
