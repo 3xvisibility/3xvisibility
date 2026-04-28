@@ -601,6 +601,8 @@ export default function TemplatesPage() {
       source: (tpl as any).source_marketplace_id ? "Marketplace snapshot" : "Workspace template",
     });
   };
+
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType; platform?: "wordpress" | "shopify" | "prestashop" | "generic" }) => {
     setPendingKeywords(config.selectedKeywords);
     setPickerOpen(false);
 
