@@ -34,6 +34,7 @@ import {
 import { validateVibeForTemplate, computeSafestVibe, type VibeWarning } from "@/lib/vibe-validator";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { getMarketplaceTemplatesForPlan, groupByCategory, MARKETPLACE_VALUE_PREFIX } from "@/lib/marketplace-access";
+import { MarketplaceImportProgress } from "@/components/campaigns/MarketplaceImportProgress";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
