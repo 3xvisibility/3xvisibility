@@ -35,6 +35,7 @@ import { validateVibeForTemplate, computeSafestVibe, type VibeWarning } from "@/
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { getMarketplaceTemplatesForPlan, groupByCategory, MARKETPLACE_VALUE_PREFIX } from "@/lib/marketplace-access";
 import { useSubscription } from "@/hooks/use-subscription";
+import { PLAN_FEATURES } from "@/lib/plan-features";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
@@ -1194,6 +1195,40 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     <div className="flex items-center gap-2">
                       <Layers className="h-4 w-4 text-primary" />
                       <Label className="text-sm font-semibold">Choose Template</Label>
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant={plan === "free" || plan === "starter" ? "outline" : "secondary"}
+                              className={cn(
+                                "text-[9px] px-1.5 py-0 h-4 cursor-help capitalize",
+                                plan === "agency" && "bg-gradient-to-r from-amber-500/20 to-pink-500/20 border-amber-500/40 text-amber-700 dark:text-amber-300",
+                                plan === "pro" && "bg-primary/15 border-primary/30 text-primary",
+                              )}
+                            >
+                              {plan === "free" || plan === "starter" ? "🔒" : "✨"} {PLAN_FEATURES[plan].label}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs">
+                            {plan === "free" || plan === "starter" ? (
+                              <>
+                                <p className="font-semibold mb-1">Marketplace templates locked</p>
+                                <p className="text-muted-foreground">Upgrade to <strong>Pro</strong> to unlock 6 marketplace templates (2 each for WordPress, Shopify, PrestaShop), or <strong>Agency</strong> for the full library.</p>
+                              </>
+                            ) : plan === "pro" ? (
+                              <>
+                                <p className="font-semibold mb-1">Pro plan access</p>
+                                <p className="text-muted-foreground">You can use all your own templates plus <strong>2 marketplace templates each</strong> for WordPress, Shopify, and PrestaShop. Upgrade to Agency for the full library.</p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="font-semibold mb-1">Agency plan access</p>
+                                <p className="text-muted-foreground">Full access to all your templates and the <strong>complete marketplace library</strong> across every platform.</p>
+                              </>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                       <span className="text-[10px] text-muted-foreground ml-auto">required</span>
                     </div>
                     <Select value={selectedTemplate} onValueChange={handleTemplatePick} disabled={importingMarketplace}>
