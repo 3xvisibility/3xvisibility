@@ -33,6 +33,9 @@ import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilde
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
 import { downloadStarterCsv } from "@/lib/csv-starter";
+import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
+import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
+import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import {
   type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
   HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
