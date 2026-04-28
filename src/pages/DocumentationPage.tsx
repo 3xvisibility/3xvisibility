@@ -176,11 +176,6 @@ const TOOLS: ToolDoc[] = [
     steps: ["Select a page.", "Read the score breakdown and improvement tips.", "Run an AI fix in one click."],
   },
   {
-    id: "ab-testing", icon: FlaskConical, group: "Analytics", name: "A/B Testing",
-    short: "Compare two variants of a page head-to-head.",
-    steps: ["Create variant A and B.", "Set the traffic split.", "The winner is auto-promoted."],
-  },
-  {
     id: "content-calendar", icon: CalendarDays, group: "Analytics", name: "Content Calendar",
     short: "Schedule and plan future publishes.",
     steps: ["Pick a date.", "Drag a page or campaign onto the date.", "It auto-publishes at the scheduled time."],
