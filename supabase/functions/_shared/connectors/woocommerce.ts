@@ -200,8 +200,15 @@ export class WooCommerceConnector implements CmsConnector {
       body.slug = slugify(payload.product_data?.handle || payload.slug || externalId);
     }
     if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
-    if (payload.excerpt) body.short_description = payload.excerpt;
-    if (!body.short_description && payload.seo_description) body.short_description = payload.seo_description;
+    // Always normalise short_description into a brief teaser. Without this, an
+    // excerpt that contains the full optimized HTML (or a long meta description)
+    // ends up duplicated under the price on the product page.
+    const shortDesc = buildShortDescription({
+      excerpt: payload.excerpt,
+      seoDescription: payload.seo_description,
+      fullContent: payload.content,
+    });
+    if (shortDesc) body.short_description = shortDesc;
     if (payload.product_data?.price) body.regular_price = String(payload.product_data.price);
     if (!preserveDesign && payload.product_data?.images?.length) {
       body.images = payload.product_data.images
