@@ -399,29 +399,58 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       // future marketplace edits never mutate this row (campaigns stay stable).
       updateMpStep("import", "running");
       const version = computeMarketplaceVersion(tpl);
-      const { data: inserted, error } = await supabase
+
+      // Duplicate-import guard: if the same marketplace template at the same
+      // version already exists in this workspace, reuse it instead of inserting
+      // a second copy. Falls back to the most recently imported snapshot of the
+      // same marketplace id when versions don't match (user can still re-import
+      // explicitly via the Update badge on the templates page).
+      const { data: existingRows } = await supabase
         .from("templates")
-        .insert({
-          name: `${tpl.name} (Marketplace)`,
-          content: tpl.content,
-          variables: tpl.variables,
-          user_id: user.id,
-          workspace_id: wsId,
-          seo_title_pattern: tpl.seo_title_pattern || "",
-          seo_description_pattern: tpl.seo_description_pattern || "",
-          schema_type: tpl.schema_type || "WebPage",
-          schema_config: {},
-          source_marketplace_id: tpl.id,
-          source_version: version,
-          source_imported_at: new Date().toISOString(),
-        } as any)
-        .select("id")
-        .single();
-      if (error) {
-        updateMpStep("import", "error", error.message);
-        throw error;
+        .select("id, source_version, source_imported_at")
+        .eq("workspace_id", wsId)
+        .eq("source_marketplace_id", tpl.id)
+        .order("source_imported_at", { ascending: false, nullsFirst: false });
+
+      const exactMatch = (existingRows || []).find(r => r.source_version === version);
+      const reuse = exactMatch || (existingRows || [])[0];
+
+      let insertedId: string;
+      if (reuse) {
+        insertedId = reuse.id;
+        updateMpStep(
+          "import",
+          "success",
+          exactMatch
+            ? `Reusing existing snapshot · ${version}`
+            : `Reusing existing import (older version available)`
+        );
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("templates")
+          .insert({
+            name: `${tpl.name} (Marketplace)`,
+            content: tpl.content,
+            variables: tpl.variables,
+            user_id: user.id,
+            workspace_id: wsId,
+            seo_title_pattern: tpl.seo_title_pattern || "",
+            seo_description_pattern: tpl.seo_description_pattern || "",
+            schema_type: tpl.schema_type || "WebPage",
+            schema_config: {},
+            source_marketplace_id: tpl.id,
+            source_version: version,
+            source_imported_at: new Date().toISOString(),
+          } as any)
+          .select("id")
+          .single();
+        if (error) {
+          updateMpStep("import", "error", error.message);
+          throw error;
+        }
+        insertedId = inserted.id;
+        updateMpStep("import", "success", `Saved snapshot · ${version}`);
       }
-      updateMpStep("import", "success", `Saved snapshot · ${version}`);
 
       // Step 3: select for this campaign
       updateMpStep("select", "running");
