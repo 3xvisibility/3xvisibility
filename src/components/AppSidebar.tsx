@@ -81,7 +81,7 @@ const toolsNav: NavItem[] = [
   { titleKey: "Variable Mapping", path: "template-mapping", icon: Columns3 },
   { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
   { titleKey: "sidebar.performance", path: "performance", icon: Activity },
-  { titleKey: "sidebar.abTesting", path: "ab-testing", icon: FlaskConical },
+  
   { titleKey: "sidebar.contentCalendar", path: "content-calendar", icon: CalendarDays },
   { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
   { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
