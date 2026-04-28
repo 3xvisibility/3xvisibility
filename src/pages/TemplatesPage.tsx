@@ -33,6 +33,9 @@ import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilde
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
 import { downloadStarterCsv } from "@/lib/csv-starter";
+import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
+import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
+import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import {
   type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
   HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
@@ -263,6 +266,39 @@ export default function TemplatesPage() {
       toast({ title: "Template duplicated" });
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  // Re-import a marketplace template at its current latest version. We always
+  // create a NEW snapshot row — never mutate the existing one — so previously
+  // generated campaigns remain locked to the version they were built against.
+  const reimportMarketplaceMutation = useMutation({
+    mutationFn: async (sourceMarketplaceId: string) => {
+      const tpl = COMMUNITY_TEMPLATES.find(t => t.id === sourceMarketplaceId);
+      if (!tpl) throw new Error("Marketplace template no longer exists");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !wsId) throw new Error("Not authenticated");
+      const version = computeMarketplaceVersion(tpl);
+      const { error } = await supabase.from("templates").insert({
+        name: `${tpl.name} (Marketplace · ${version})`,
+        content: tpl.content,
+        variables: tpl.variables,
+        user_id: user.id,
+        workspace_id: wsId,
+        seo_title_pattern: tpl.seo_title_pattern || "",
+        seo_description_pattern: tpl.seo_description_pattern || "",
+        schema_type: tpl.schema_type || "WebPage",
+        schema_config: {},
+        source_marketplace_id: tpl.id,
+        source_version: version,
+        source_imported_at: new Date().toISOString(),
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast({ title: "Latest version imported", description: "A new pinned snapshot was added. Existing campaigns keep their old version." });
+    },
+    onError: (err: Error) => toast({ title: "Re-import failed", description: err.message, variant: "destructive" }),
   });
 
   // ──── Actions ────
@@ -747,6 +783,7 @@ export default function TemplatesPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       {siteTypes && [...siteTypes].map(st => <Badge key={st} variant="outline" className="text-[10px] capitalize">{st}</Badge>)}
+                      <TemplateVersionBadge template={tpl as any} onReimport={(id) => reimportMarketplaceMutation.mutate(id)} />
                       <span className="text-[10px] text-muted-foreground">{contentVars.length} vars</span>
                       <span className="text-[10px] text-muted-foreground">{info?.count ?? 0} campaigns</span>
                     </div>
@@ -792,9 +829,10 @@ export default function TemplatesPage() {
                     <TableRow key={tpl.id} className={selectedIds.has(tpl.id) ? "bg-primary/5" : ""}>
                       <TableCell><Checkbox checked={selectedIds.has(tpl.id)} onCheckedChange={() => toggleSelect(tpl.id)} /></TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <FileText className="h-4 w-4 text-primary shrink-0" />
                           <span className="font-medium truncate cursor-pointer hover:text-primary" onClick={() => openEditor(tpl)}>{tpl.name}</span>
+                          <TemplateVersionBadge template={tpl as any} onReimport={(id) => reimportMarketplaceMutation.mutate(id)} />
                         </div>
                       </TableCell>
                       <TableCell>
@@ -876,8 +914,9 @@ export default function TemplatesPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                     {siteTypes && [...siteTypes].map(st => <Badge key={st} variant="outline" className="text-[10px] capitalize">{st}</Badge>)}
+                    <TemplateVersionBadge template={tpl as any} onReimport={(id) => reimportMarketplaceMutation.mutate(id)} />
                     {contentVars.slice(0, 4).map(v => <Badge key={v} variant="secondary" className="text-[10px] font-mono">{v}</Badge>)}
                     {contentVars.length > 4 && <Badge variant="secondary" className="text-[10px]">+{contentVars.length - 4}</Badge>}
                   </div>

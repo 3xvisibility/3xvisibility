@@ -1755,6 +1755,9 @@ export type Database = {
           schema_type: string | null
           seo_description_pattern: string | null
           seo_title_pattern: string | null
+          source_imported_at: string | null
+          source_marketplace_id: string | null
+          source_version: string | null
           updated_at: string
           user_id: string
           variables: string[] | null
@@ -1770,6 +1773,9 @@ export type Database = {
           schema_type?: string | null
           seo_description_pattern?: string | null
           seo_title_pattern?: string | null
+          source_imported_at?: string | null
+          source_marketplace_id?: string | null
+          source_version?: string | null
           updated_at?: string
           user_id: string
           variables?: string[] | null
@@ -1785,6 +1791,9 @@ export type Database = {
           schema_type?: string | null
           seo_description_pattern?: string | null
           seo_title_pattern?: string | null
+          source_imported_at?: string | null
+          source_marketplace_id?: string | null
+          source_version?: string | null
           updated_at?: string
           user_id?: string
           variables?: string[] | null

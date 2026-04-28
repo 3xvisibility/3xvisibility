@@ -34,6 +34,7 @@ import {
 import { validateVibeForTemplate, computeSafestVibe, type VibeWarning } from "@/lib/vibe-validator";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { getMarketplaceTemplatesForPlan, groupByCategory, MARKETPLACE_VALUE_PREFIX } from "@/lib/marketplace-access";
+import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import { MarketplaceImportProgress } from "@/components/campaigns/MarketplaceImportProgress";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES } from "@/lib/plan-features";
@@ -363,8 +364,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       }
       updateMpStep("verify", "success", `${PLAN_FEATURES[plan].label} plan · ${tpl.category}`);
 
-      // Step 2: import into workspace
+      // Step 2: import into workspace — snapshot pinned by version hash so
+      // future marketplace edits never mutate this row (campaigns stay stable).
       updateMpStep("import", "running");
+      const version = computeMarketplaceVersion(tpl);
       const { data: inserted, error } = await supabase
         .from("templates")
         .insert({
@@ -377,6 +380,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           seo_description_pattern: tpl.seo_description_pattern || "",
           schema_type: tpl.schema_type || "WebPage",
           schema_config: {},
+          source_marketplace_id: tpl.id,
+          source_version: version,
+          source_imported_at: new Date().toISOString(),
         } as any)
         .select("id")
         .single();
@@ -384,7 +390,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         updateMpStep("import", "error", error.message);
         throw error;
       }
-      updateMpStep("import", "success", `Saved as "${tpl.name} (Marketplace)"`);
+      updateMpStep("import", "success", `Saved snapshot · ${version}`);
 
       // Step 3: select for this campaign
       updateMpStep("select", "running");
