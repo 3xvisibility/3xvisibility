@@ -300,6 +300,8 @@ export default function TemplatesPage() {
     },
     onError: (err: Error) => toast({ title: "Re-import failed", description: err.message, variant: "destructive" }),
   });
+
+  // ──── Actions ────
   const checkAndDelete = async (id: string) => {
     const { data: linked } = await supabase.from("campaigns").select("id, name").eq("template_id", id).limit(10);
     setDeleteTarget({ id, linkedCampaigns: linked ?? [] });
