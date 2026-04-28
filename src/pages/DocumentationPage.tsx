@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Globe, Rocket, Layers, FileText, Store, Database,
-  KeyRound, Zap, Columns3, BarChart3, Activity, FlaskConical, CalendarDays,
+  KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
   ClipboardCheck, Search, Gift, CreditCard, Settings, Users,
   ArrowRight, BookOpen, CheckCircle2, Lightbulb, AlertCircle,
 } from "lucide-react";
