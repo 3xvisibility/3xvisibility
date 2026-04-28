@@ -1315,28 +1315,63 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </TooltipProvider>
                       <span className="text-[10px] text-muted-foreground ml-auto">required</span>
                     </div>
-                    <Select value={selectedTemplate} onValueChange={handleTemplatePick} disabled={importingMarketplace}>
-                      <SelectTrigger className="rounded-xl h-10 bg-background"><SelectValue placeholder={importingMarketplace ? "Importing marketplace template…" : "Pick the template these pages will use"} /></SelectTrigger>
-                      <SelectContent>
-                        {templates.length > 0 && (
-                          <>
-                            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your templates</div>
-                            {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                          </>
-                        )}
-                        {Object.entries(marketplaceGroups).map(([cat, items]) => (
-                          <div key={cat}>
-                            <div className="px-2 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-t">✨ Marketplace · {cat}</div>
-                            {items.map(t => (
-                              <SelectItem key={t.id} value={`${MARKETPLACE_VALUE_PREFIX}${t.id}`}>{t.name}</SelectItem>
-                            ))}
-                          </div>
+                    <div className="flex gap-2">
+                      <Select value={selectedTemplate} onValueChange={handleTemplatePick} disabled={importingMarketplace}>
+                        <SelectTrigger className="rounded-xl h-10 bg-background flex-1"><SelectValue placeholder={importingMarketplace ? "Importing marketplace template…" : "Pick the template these pages will use"} /></SelectTrigger>
+                        <SelectContent>
+                          {templates.length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your templates</div>
+                              {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                            </>
+                          )}
+                          {Object.entries(marketplaceGroups).map(([cat, items]) => (
+                            <div key={cat}>
+                              <div className="px-2 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-t">✨ Marketplace · {cat}</div>
+                              {items.map(t => (
+                                <SelectItem key={t.id} value={`${MARKETPLACE_VALUE_PREFIX}${t.id}`}>{t.name}</SelectItem>
+                              ))}
+                            </div>
+                          ))}
+                          {templates.length === 0 && allowedMarketplace.length === 0 && (
+                            <div className="px-2 py-3 text-xs text-muted-foreground text-center">No templates available. Create one or upgrade to access marketplace.</div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-10 w-10 shrink-0 rounded-xl"
+                              disabled={!selectedTemplate}
+                              onClick={() => openTemplatePreview(selectedTemplate)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Preview the selected template with variables highlighted</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    {allowedMarketplace.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 -mt-1">
+                        <span className="text-[10px] text-muted-foreground self-center mr-1">Quick previews:</span>
+                        {allowedMarketplace.slice(0, 6).map(t => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => openTemplatePreview(`${MARKETPLACE_VALUE_PREFIX}${t.id}`)}
+                            className="text-[10px] px-2 py-0.5 rounded-md border border-border/60 bg-muted/40 hover:bg-muted hover:border-primary/40 transition flex items-center gap-1"
+                          >
+                            <Eye className="h-2.5 w-2.5 opacity-60" />
+                            {t.name}
+                          </button>
                         ))}
-                        {templates.length === 0 && allowedMarketplace.length === 0 && (
-                          <div className="px-2 py-3 text-xs text-muted-foreground text-center">No templates available. Create one or upgrade to access marketplace.</div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    )}
 
                     {mpSteps && (
                       <MarketplaceImportProgress steps={mpSteps} errorMessage={mpImportError} />
