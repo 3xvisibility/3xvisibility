@@ -590,7 +590,17 @@ export default function TemplatesPage() {
     setEditorOpen(true);
   };
 
-  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType; platform?: "wordpress" | "shopify" | "prestashop" | "generic" }) => {
+  const openPreview = (tpl: Template) => {
+    setPreviewTemplateRow(tpl);
+    setPreviewTemplate({
+      name: tpl.name,
+      content: tpl.content,
+      variables: (tpl.variables as string[]) || [],
+      seo_title_pattern: (tpl as any).seo_title_pattern || "",
+      seo_description_pattern: (tpl as any).seo_description_pattern || "",
+      source: (tpl as any).source_marketplace_id ? "Marketplace snapshot" : "Workspace template",
+    });
+  };
     setPendingKeywords(config.selectedKeywords);
     setPickerOpen(false);
 
