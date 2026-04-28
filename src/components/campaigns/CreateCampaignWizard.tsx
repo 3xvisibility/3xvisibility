@@ -33,6 +33,8 @@ import {
 } from "@/lib/vibe-theme";
 import { validateVibeForTemplate, computeSafestVibe, type VibeWarning } from "@/lib/vibe-validator";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
+import { getMarketplaceTemplatesForPlan, groupByCategory, MARKETPLACE_VALUE_PREFIX } from "@/lib/marketplace-access";
+import { useSubscription } from "@/hooks/use-subscription";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { renderPage, type RenderResult, type TemplateConfig, type RenderContext } from "@/lib/renderer";
 import { useToast } from "@/hooks/use-toast";
@@ -303,6 +305,59 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       return data;
     },
   });
+
+  // ── Marketplace templates the current plan is allowed to use ─────────────
+  // free / starter → none, pro → 2 of WP/Shopify/PrestaShop, agency → all
+  const { plan } = useSubscription();
+  const allowedMarketplace = useMemo(() => getMarketplaceTemplatesForPlan(plan), [plan]);
+  const marketplaceGroups = useMemo(() => groupByCategory(allowedMarketplace), [allowedMarketplace]);
+  const [importingMarketplace, setImportingMarketplace] = useState(false);
+
+  // Selecting a template id from the dropdown. Marketplace items use the
+  // `mp::<marketplace-id>` sentinel — we import them into the workspace then
+  // switch `selectedTemplate` to the newly-created database row id.
+  const handleTemplatePick = useCallback(async (value: string) => {
+    if (!value.startsWith(MARKETPLACE_VALUE_PREFIX)) {
+      setSelectedTemplate(value);
+      return;
+    }
+    const mpId = value.slice(MARKETPLACE_VALUE_PREFIX.length);
+    const tpl = allowedMarketplace.find(t => t.id === mpId);
+    if (!tpl) return;
+    if (!wsId) {
+      toast({ title: "No workspace selected", variant: "destructive" });
+      return;
+    }
+    try {
+      setImportingMarketplace(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { data: inserted, error } = await supabase
+        .from("templates")
+        .insert({
+          name: `${tpl.name} (Marketplace)`,
+          content: tpl.content,
+          variables: tpl.variables,
+          user_id: user.id,
+          workspace_id: wsId,
+          seo_title_pattern: tpl.seo_title_pattern || "",
+          seo_description_pattern: tpl.seo_description_pattern || "",
+          schema_type: tpl.schema_type || "WebPage",
+          schema_config: {},
+        } as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
+      setSelectedTemplate(inserted.id);
+      toast({ title: "Marketplace template added", description: `"${tpl.name}" imported into your templates.` });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to import template";
+      toast({ title: "Import failed", description: msg, variant: "destructive" });
+    } finally {
+      setImportingMarketplace(false);
+    }
+  }, [allowedMarketplace, wsId, queryClient, toast]);
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites", wsId],
@@ -1141,9 +1196,27 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <Label className="text-sm font-semibold">Choose Template</Label>
                       <span className="text-[10px] text-muted-foreground ml-auto">required</span>
                     </div>
-                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                      <SelectTrigger className="rounded-xl h-10 bg-background"><SelectValue placeholder="Pick the template these pages will use" /></SelectTrigger>
-                      <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                    <Select value={selectedTemplate} onValueChange={handleTemplatePick} disabled={importingMarketplace}>
+                      <SelectTrigger className="rounded-xl h-10 bg-background"><SelectValue placeholder={importingMarketplace ? "Importing marketplace template…" : "Pick the template these pages will use"} /></SelectTrigger>
+                      <SelectContent>
+                        {templates.length > 0 && (
+                          <>
+                            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your templates</div>
+                            {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                          </>
+                        )}
+                        {Object.entries(marketplaceGroups).map(([cat, items]) => (
+                          <div key={cat}>
+                            <div className="px-2 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-t">✨ Marketplace · {cat}</div>
+                            {items.map(t => (
+                              <SelectItem key={t.id} value={`${MARKETPLACE_VALUE_PREFIX}${t.id}`}>{t.name}</SelectItem>
+                            ))}
+                          </div>
+                        ))}
+                        {templates.length === 0 && allowedMarketplace.length === 0 && (
+                          <div className="px-2 py-3 text-xs text-muted-foreground text-center">No templates available. Create one or upgrade to access marketplace.</div>
+                        )}
+                      </SelectContent>
                     </Select>
 
                     {selectedTemplate && (
@@ -1535,16 +1608,31 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                 <>
                   <div>
                     <Label className="text-sm font-semibold mb-2 block">Template</Label>
-                    {templates.length === 0 ? (
+                    {templates.length === 0 && allowedMarketplace.length === 0 ? (
                       <div className="rounded-xl border-2 border-dashed border-border p-6 text-center">
                         <Layers className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
                         <p className="text-sm text-muted-foreground">No templates yet</p>
-                        <p className="text-xs text-muted-foreground/60 mt-1">Create a template first from the Templates page</p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">Create a template first from the Templates page{plan === "free" || plan === "starter" ? " or upgrade to Pro for marketplace templates" : ""}</p>
                       </div>
                     ) : (
-                      <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                        <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select template" /></SelectTrigger>
-                        <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                      <Select value={selectedTemplate} onValueChange={handleTemplatePick} disabled={importingMarketplace}>
+                        <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder={importingMarketplace ? "Importing…" : "Select template"} /></SelectTrigger>
+                        <SelectContent>
+                          {templates.length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your templates</div>
+                              {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                            </>
+                          )}
+                          {Object.entries(marketplaceGroups).map(([cat, items]) => (
+                            <div key={cat}>
+                              <div className="px-2 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-t">✨ Marketplace · {cat}</div>
+                              {items.map(t => (
+                                <SelectItem key={t.id} value={`${MARKETPLACE_VALUE_PREFIX}${t.id}`}>{t.name}</SelectItem>
+                              ))}
+                            </div>
+                          ))}
+                        </SelectContent>
                       </Select>
                     )}
                   </div>
