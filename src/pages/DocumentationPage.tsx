@@ -24,205 +24,205 @@ interface ToolDoc {
 const TOOLS: ToolDoc[] = [
   {
     id: "dashboard", icon: LayoutDashboard, group: "Core", name: "Dashboard",
-    short: "Workspace এর সব activity, recent campaigns, quick stats এক জায়গায় দেখুন।",
+    short: "All workspace activity, recent campaigns and quick stats in one place.",
     steps: [
-      "Login করার পর প্রথমেই Dashboard এ আসবেন।",
-      "Top cards এ আপনার total campaigns, generated pages, websites এর count দেখা যাবে।",
-      "Recent campaigns থেকে এক click এ যেকোনো campaign এ ঢুকতে পারবেন।",
-      "Quick action buttons দিয়ে নতুন campaign বা template বানাতে পারবেন।",
+      "After login you land on the Dashboard by default.",
+      "Top cards show total campaigns, generated pages and connected websites.",
+      "Click any recent campaign card to jump straight into its detail view.",
+      "Quick action buttons let you create a new campaign or template.",
     ],
-    tips: ["প্রথম দিন এ এখান থেকেই 'Connect Website' দিয়ে শুরু করুন।"],
+    tips: ["On day one, start with 'Connect Website' from here."],
   },
   {
     id: "websites", icon: Globe, group: "Core", name: "Websites",
-    short: "WordPress, WooCommerce, Shopify, PrestaShop সাইট connect করুন।",
+    short: "Connect WordPress, WooCommerce, Shopify and PrestaShop sites.",
     steps: [
-      "'+ Add Website' button এ click করুন।",
-      "Platform select করুন (WordPress / Shopify / WooCommerce / PrestaShop)।",
-      "Site URL এবং credentials (App Password / API key) দিন।",
-      "'Test Connection' দিয়ে verify করুন — green tick এলে save করুন।",
-      "Connected site থেকে content automatically pull হবে।",
+      "Click the '+ Add Website' button.",
+      "Pick your platform (WordPress / Shopify / WooCommerce / PrestaShop).",
+      "Enter the site URL and credentials (App Password / API key).",
+      "Hit 'Test Connection' — a green tick means you can save.",
+      "Content from the connected site will be pulled in automatically.",
     ],
     tips: [
-      "WordPress এর জন্য Application Password ব্যবহার করুন (regular password নয়)।",
-      "SSL error এলে site URL এ www আছে কিনা check করুন।",
+      "For WordPress, always use an Application Password — never the regular password.",
+      "If you see an SSL error, check whether the URL needs www or not.",
     ],
   },
   {
     id: "campaigns", icon: Rocket, group: "Core", name: "Campaigns",
-    short: "Bulk page generation এর জন্য campaign তৈরি ও manage করুন।",
+    short: "Create and manage campaigns for bulk page generation.",
     steps: [
-      "'Create Campaign' click করুন।",
-      "Wizard step-by-step গাইড করবে: name → template → data → mapping → publish।",
-      "Template select করুন (নিজের, AI-generated, বা Marketplace থেকে)।",
-      "CSV upload বা AI দিয়ে rows generate করুন।",
-      "Variable mapping check করুন (auto-suggest থাকবে)।",
-      "Publish mode (Draft/Live) ও target website বেছে 'Generate' করুন।",
+      "Click 'Create Campaign'.",
+      "The wizard walks you step-by-step: name → template → data → mapping → publish.",
+      "Pick a template (your own, AI-generated, or from the Marketplace).",
+      "Upload a CSV or generate rows with AI.",
+      "Review variable mapping (auto-suggestions are provided).",
+      "Choose publish mode (Draft/Live), pick the target website and click 'Generate'.",
     ],
     tips: [
-      "Marketplace template select করলে duplicate import হয় না — পুরোনো snapshot reuse হবে।",
-      "AI Campaign Assistant দিয়ে name, mapping, readiness check করুন।",
+      "Re-selecting a marketplace template never duplicates — it reuses the existing snapshot.",
+      "Use the AI Campaign Assistant for naming, mapping and readiness checks.",
     ],
   },
   {
     id: "pages", icon: Layers, group: "Core", name: "Generated Pages",
-    short: "Generate হওয়া সব page এক জায়গায় — search, filter, bulk actions।",
+    short: "Every generated page in one place — search, filter and bulk actions.",
     steps: [
-      "Sidebar থেকে 'Pages' এ যান।",
-      "Filter দিয়ে campaign / status / website অনুযায়ী খুঁজুন।",
-      "Page এর row এ click করে preview, edit, বা CMS এ open করুন।",
-      "Bulk select করে republish, delete, বা export করতে পারবেন।",
-      "Duplicate detector চালিয়ে similar content খুঁজে বের করুন।",
+      "Open 'Pages' from the sidebar.",
+      "Filter by campaign, status or website.",
+      "Click a row to preview, edit or open it on the live CMS.",
+      "Bulk select rows to republish, delete or export.",
+      "Run the duplicate detector to surface near-identical content.",
     ],
   },
   {
     id: "templates", icon: FileText, group: "Core", name: "Templates",
-    short: "নিজের template বানান, AI দিয়ে generate করুন, বা scan করুন।",
+    short: "Build your own templates, generate them with AI, or scan from a URL.",
     steps: [
-      "'New Template' এ ৪টা option পাবেন: Manual, AI Generate, Scan from URL, Import।",
-      "AI Generate দিলে business + niche + service লিখলেই design সহ template তৈরি হবে।",
-      "Scan দিলে যেকোনো live page থেকে design + variables auto-extract হবে।",
-      "Variables লিখুন `{variable_name}` format এ — lowercase_snake_case।",
-      "Live preview এ instantly result দেখুন।",
+      "'New Template' offers 4 options: Manual, AI Generate, Scan from URL, Import.",
+      "AI Generate only needs business + niche + service — design and structure are auto-built.",
+      "Scan extracts design and variables from any live page.",
+      "Write variables in `{variable_name}` format using lowercase_snake_case.",
+      "See results instantly in the live preview.",
     ],
-    tips: ["Variables এর জন্য CSV starter download করুন — ready-made columns পাবেন।"],
+    tips: ["Download the CSV starter for any template — it comes pre-filled with the right columns."],
   },
   {
     id: "marketplace", icon: Store, group: "Core", name: "Template Marketplace",
-    short: "Community templates browse করুন, এক click এ import করুন।",
+    short: "Browse community templates and import them with one click.",
     steps: [
-      "Category (WordPress / Shopify / Personal Portfolio ইত্যাদি) filter করুন।",
-      "Card এ hover দিলে preview ও plan badge দেখা যাবে।",
-      "'Use Template' click করলে progress দেখাবে: download → adapt → save।",
-      "Already imported থাকলে existing copy reuse হবে — duplicate তৈরি হবে না।",
-      "Version pinning থাকায় marketplace update হলেও আপনার copy unchanged থাকবে।",
+      "Filter by category (WordPress / Shopify / Personal Portfolio etc.).",
+      "Hover any card to see the preview and plan badge.",
+      "Click 'Use Template' — progress shows download → adapt → save.",
+      "If you have already imported it, the existing copy is reused (no duplicates).",
+      "Version pinning keeps your copy stable even if the marketplace template updates.",
     ],
   },
   {
     id: "data", icon: Database, group: "Core", name: "Data CSV",
-    short: "Variables এর জন্য CSV data manage ও AI-fill করুন।",
+    short: "Manage CSV data for variables and use AI to fill the gaps.",
     steps: [
-      "CSV upload বা scratch থেকে rows বানান।",
-      "Empty cells এ AI দিয়ে auto-fill করুন।",
-      "Multi-value columns এ pipe (|) দিয়ে variations দিন।",
-      "Save করে campaign এ সরাসরি use করুন।",
+      "Upload a CSV or build rows from scratch.",
+      "Use AI to auto-fill empty cells.",
+      "Add multi-value cells using a pipe (|) for variations.",
+      "Save and use the dataset directly in any campaign.",
     ],
   },
   {
     id: "pgp-keywords", icon: KeyRound, group: "PGP Suite", name: "Keywords",
-    short: "Programmatic SEO এর জন্য keyword set manage করুন।",
+    short: "Manage keyword sets for programmatic SEO.",
     steps: [
-      "Keywords manually add করুন বা CSV import করুন।",
-      "Source URL দিয়ে auto-extract করুন।",
-      "Keywords কে content groups এ assign করুন।",
+      "Add keywords manually or import a CSV.",
+      "Auto-extract keywords from a source URL.",
+      "Assign keywords to content groups.",
     ],
   },
   {
     id: "pgp-content", icon: Layers, group: "PGP Suite", name: "Content Groups",
-    short: "Related keywords একসাথে গুছিয়ে content cluster বানান।",
+    short: "Cluster related keywords into content groups.",
     steps: [
-      "Group তৈরি করুন (যেমন: 'Plumbing Services')।",
-      "সেই group এ relevant keywords add করুন।",
-      "Group থেকে directly bulk pages generate করতে পারবেন।",
+      "Create a group (for example: 'Plumbing Services').",
+      "Add relevant keywords into the group.",
+      "Generate bulk pages directly from the group.",
     ],
   },
   {
     id: "pgp-generate", icon: Zap, group: "PGP Suite", name: "PGP Generate",
-    short: "Keyword combinations থেকে বিপুল pages তৈরি করুন।",
+    short: "Spin up massive page sets from keyword combinations.",
     steps: [
-      "Content group + template select করুন।",
-      "Generation method (all combos / sequential / random) বেছে নিন।",
-      "Batch size set করে 'Start' করুন — live progress দেখাবে।",
+      "Pick a content group and a template.",
+      "Choose a generation method (all combos / sequential / random).",
+      "Set the batch size and click 'Start' — live progress is shown.",
     ],
   },
   {
     id: "pgp-terms", icon: Database, group: "PGP Suite", name: "Terms",
-    short: "Variable terms (city, service, niche ইত্যাদি) এর master library।",
-    steps: ["Term type create করুন।", "Values add করুন।", "Template এ ব্যবহার হলে auto-suggest পাবেন।"],
+    short: "A master library of variable terms (city, service, niche, etc.).",
+    steps: ["Create a term type.", "Add values to it.", "Get auto-suggestions whenever the term is used in templates."],
   },
   {
     id: "pgp-logs", icon: FileText, group: "PGP Suite", name: "Logs",
-    short: "Generation history, success/failure rate, error details।",
-    steps: ["Recent jobs এর list দেখুন।", "Failed rows এ click করে exact error দেখুন।", "Retry বা export logs করতে পারবেন।"],
+    short: "Generation history with success/failure rate and error details.",
+    steps: ["Browse the list of recent jobs.", "Click any failed row to see the exact error.", "Retry failed rows or export the logs."],
   },
   {
     id: "website-content", icon: Layers, group: "Discovery", name: "Website Content",
-    short: "Connected site এর সব pages/products discover, scan ও SEO optimize করুন।",
+    short: "Discover, scan and SEO-optimize all pages and products on a connected site.",
     steps: [
-      "Site select করুন।",
-      "'Scan' দিলে existing content + design auto-extract হবে।",
-      "Pages থেকে directly SEO optimize, retranslate, বা rewrite করতে পারবেন।",
-      "AI দিয়ে missing meta tags পূর্ণ করুন।",
+      "Select the website.",
+      "Click 'Scan' — existing content and design are extracted automatically.",
+      "From any page row you can SEO-optimize, retranslate or rewrite content.",
+      "Use AI to fill in missing meta tags.",
     ],
-    tips: ["এটাই আগের 'Scanner' + 'Discovery' — দুটোই এখানে merged।"],
+    tips: ["This replaces the old 'Scanner' and 'Discovery' tools — both are merged here."],
   },
   {
     id: "template-mapping", icon: Columns3, group: "Discovery", name: "Variable Mapping",
-    short: "Template variables কে CSV columns বা CMS fields এর সাথে map করুন।",
+    short: "Map template variables to CSV columns or CMS fields.",
     steps: [
-      "Template + data source select করুন।",
-      "Auto-mapping suggestion accept করুন বা manually adjust করুন।",
-      "Confidence indicator (high/medium/low) দেখে decide করুন।",
+      "Pick a template and a data source.",
+      "Accept the auto-mapping suggestion or adjust manually.",
+      "Use the confidence indicator (high/medium/low) to make decisions.",
     ],
   },
   {
     id: "analytics", icon: BarChart3, group: "Analytics", name: "Analytics",
-    short: "Pages, traffic, conversion এর overview।",
-    steps: ["Date range select করুন।", "Top performing pages দেখুন।", "CSV export নিতে পারবেন।"],
+    short: "Overview of pages, traffic and conversions.",
+    steps: ["Pick a date range.", "Review your top performing pages.", "Export to CSV when you need raw data."],
   },
   {
     id: "performance", icon: Activity, group: "Analytics", name: "Page Performance",
-    short: "Per-page SEO score, load time, core web vitals।",
-    steps: ["Page select করুন।", "Score breakdown ও improvement tips দেখুন।", "এক click এ AI fix চালান।"],
+    short: "Per-page SEO score, load time and core web vitals.",
+    steps: ["Select a page.", "Read the score breakdown and improvement tips.", "Run an AI fix in one click."],
   },
   {
     id: "ab-testing", icon: FlaskConical, group: "Analytics", name: "A/B Testing",
-    short: "Two variants এর pages compare করুন।",
-    steps: ["Variant A + B তৈরি করুন।", "Traffic split set করুন।", "Winner auto-promote হবে।"],
+    short: "Compare two variants of a page head-to-head.",
+    steps: ["Create variant A and B.", "Set the traffic split.", "The winner is auto-promoted."],
   },
   {
     id: "content-calendar", icon: CalendarDays, group: "Analytics", name: "Content Calendar",
-    short: "Future publishes schedule ও plan করুন।",
-    steps: ["Date select করুন।", "Page/campaign drag করে date এ rakhun।", "Auto-publish হবে scheduled time এ।"],
+    short: "Schedule and plan future publishes.",
+    steps: ["Pick a date.", "Drag a page or campaign onto the date.", "It auto-publishes at the scheduled time."],
   },
   {
     id: "seo-audit", icon: ClipboardCheck, group: "Analytics", name: "SEO Audit",
-    short: "Site-wide SEO health check — duplicate content, missing meta, broken links।",
-    steps: ["Site select করুন।", "'Run Audit' দিন।", "Issues priority অনুযায়ী fix করুন।"],
+    short: "Site-wide SEO health check — duplicate content, missing meta, broken links.",
+    steps: ["Pick a site.", "Click 'Run Audit'.", "Fix issues in priority order."],
   },
   {
     id: "indexing", icon: Search, group: "Analytics", name: "Google Indexing",
-    short: "Generate করা pages directly Google এ submit করুন।",
-    steps: ["Google Search Console connect করুন।", "Pages select করে 'Submit for indexing' দিন।"],
+    short: "Submit generated pages directly to Google.",
+    steps: ["Connect Google Search Console.", "Select pages and click 'Submit for indexing'."],
   },
   {
     id: "affiliate", icon: Gift, group: "Account", name: "Affiliate",
-    short: "Referral link share করে commission earn করুন।",
-    steps: ["আপনার unique link copy করুন।", "Friends/clients কে share করুন।", "Earnings dashboard এ track করুন।"],
+    short: "Share your referral link and earn commission.",
+    steps: ["Copy your unique link.", "Share it with friends or clients.", "Track earnings on the dashboard."],
   },
   {
     id: "billing", icon: CreditCard, group: "Account", name: "Billing",
-    short: "Plan upgrade, invoice, payment method।",
-    steps: ["Current plan দেখুন।", "Upgrade/downgrade করুন।", "Stripe portal দিয়ে invoices download করুন।"],
+    short: "Plan upgrades, invoices and payment methods.",
+    steps: ["Review your current plan.", "Upgrade or downgrade.", "Use the Stripe portal to download invoices."],
   },
   {
     id: "settings", icon: Settings, group: "Account", name: "Settings",
-    short: "Profile, language, theme, notifications।",
-    steps: ["Profile info update করুন।", "Language switch করুন (29 languages)।", "Notification preferences set করুন।"],
+    short: "Profile, language, theme and notifications.",
+    steps: ["Update profile info.", "Switch language (29 supported).", "Set notification preferences."],
   },
   {
     id: "workspace-settings", icon: Users, group: "Account", name: "Workspace Settings",
-    short: "Team members invite ও role manage করুন (Pro/Agency only)।",
-    steps: ["'Invite Member' এ click করুন।", "Email + role (admin/editor/viewer) set করুন।", "Audit log এ সব activity দেখুন।"],
+    short: "Invite team members and manage roles (Pro/Agency only).",
+    steps: ["Click 'Invite Member'.", "Set the email and role (admin/editor/viewer).", "Review every action in the audit log."],
   },
 ];
 
 const GROUPS = ["Core", "PGP Suite", "Discovery", "Analytics", "Account"] as const;
 const QUICK_FLOW = [
-  { step: 1, title: "Website connect করুন", desc: "Sidebar → Websites → Add → credentials দিন।" },
-  { step: 2, title: "Template বানান বা import করুন", desc: "Templates / Marketplace থেকে ready design নিন।" },
-  { step: 3, title: "Data দিন", desc: "CSV upload করুন বা AI দিয়ে rows generate করুন।" },
-  { step: 4, title: "Campaign চালান", desc: "Variables map করে 'Generate' এ click — pages site এ চলে যাবে।" },
+  { step: 1, title: "Connect a website", desc: "Sidebar → Websites → Add → enter credentials." },
+  { step: 2, title: "Build or import a template", desc: "Pick a ready design from Templates or the Marketplace." },
+  { step: 3, title: "Add data", desc: "Upload a CSV or generate rows with AI." },
+  { step: 4, title: "Run the campaign", desc: "Map variables and click 'Generate' — pages go straight to your site." },
 ];
 
 export default function DocumentationPage() {
@@ -231,7 +231,7 @@ export default function DocumentationPage() {
   useEffect(() => {
     document.title = "Documentation — PageGen";
     const m = document.querySelector('meta[name="description"]');
-    if (m) m.setAttribute("content", "Complete guide to PageGen tools — শিখুন কিভাবে campaigns, templates, websites, AI features ব্যবহার করবেন।");
+    if (m) m.setAttribute("content", "Complete guide to PageGen tools — learn how to use campaigns, templates, websites and AI features.");
   }, []);
 
   return (
@@ -245,10 +245,10 @@ export default function DocumentationPage() {
             <BookOpen className="h-3 w-3 mr-1" /> Documentation
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Tools এর সম্পূর্ণ ব্যবহার গাইড
+            Complete guide to every tool
           </h1>
           <p className="text-base md:text-lg text-muted-foreground">
-            প্রতিটা tool কীভাবে use করবেন — step-by-step Bengali + English এ।
+            Step-by-step instructions for every feature in your workspace.
           </p>
         </header>
 
@@ -279,10 +279,10 @@ export default function DocumentationPage() {
             {/* Getting Started */}
             <section id="getting-started" className="scroll-mt-24">
               <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-                <Rocket className="h-6 w-6 text-primary" /> Getting Started — ৪ ধাপে শুরু
+                <Rocket className="h-6 w-6 text-primary" /> Getting Started — 4 quick steps
               </h2>
               <p className="text-muted-foreground mb-6">
-                নতুন user হলে এই sequence এ এগোন — ১০ মিনিটে আপনার first batch pages live হয়ে যাবে।
+                New here? Follow this sequence and your first batch of pages will be live in about 10 minutes.
               </p>
               <ol className="space-y-3">
                 {QUICK_FLOW.map((s) => (
@@ -320,7 +320,7 @@ export default function DocumentationPage() {
 
                         <div className="ml-0 md:ml-13">
                           <h4 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 mt-4">
-                            কীভাবে ব্যবহার করবেন
+                            How to use it
                           </h4>
                           <ol className="space-y-1.5">
                             {tool.steps.map((s, i) => (
@@ -356,11 +356,11 @@ export default function DocumentationPage() {
               </h2>
               <div className="space-y-4">
                 {[
-                  { q: "AI credits কিভাবে save হয়?", a: "আমরা সব light tasks এ Gemini Flash Lite (সবচেয়ে cheap model) ব্যবহার করি। Images এর জন্য Unsplash, translations এ LibreTranslate fallback আছে।" },
-                  { q: "Marketplace template update হলে আমার pages কি বদলাবে?", a: "না। Version pinning এর কারণে আপনার copy snapshot হিসেবে save হয় — marketplace update affect করে না।" },
-                  { q: "WordPress connect এ SSL error আসছে?", a: "Site URL এ www আছে কিনা দেখুন। SNI mismatch হলে hosting provider এর সাথে check করুন।" },
-                  { q: "Plan upgrade কোথায়?", a: "Sidebar → Billing → Upgrade plan। Pro/Agency এ extra templates, credits, team features পাবেন।" },
-                  { q: "Bulk delete হলে undo যায়?", a: "না — bulk delete permanent। তাই confirm dialog এ মন দিয়ে check করুন।" },
+                  { q: "How are AI credits kept low?", a: "Light tasks always use Gemini Flash Lite (the cheapest model). Images fall back to Unsplash and translations to LibreTranslate whenever possible." },
+                  { q: "If a marketplace template is updated, do my pages change?", a: "No. Version pinning saves your copy as a snapshot — marketplace updates do not affect it." },
+                  { q: "Getting an SSL error when connecting WordPress?", a: "Check whether the site URL needs the www prefix. If it is an SNI mismatch, contact your hosting provider." },
+                  { q: "Where do I upgrade my plan?", a: "Sidebar → Billing → Upgrade plan. Pro/Agency unlock more templates, credits and team features." },
+                  { q: "Can a bulk delete be undone?", a: "No — bulk delete is permanent. Always read the confirmation dialog carefully." },
                 ].map((f, i) => (
                   <details key={i} className="rounded-lg border border-border bg-card p-4 group">
                     <summary className="font-medium cursor-pointer list-none flex items-center justify-between">
@@ -375,10 +375,10 @@ export default function DocumentationPage() {
 
             {/* CTA */}
             <section className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-6 md:p-8 text-center">
-              <h2 className="text-xl font-bold mb-2">এখনো প্রশ্ন আছে?</h2>
-              <p className="text-sm text-muted-foreground mb-4">App এ ঢুকে directly try করুন — প্রতিটা page এ contextual help থাকবে।</p>
+              <h2 className="text-xl font-bold mb-2">Still have questions?</h2>
+              <p className="text-sm text-muted-foreground mb-4">Open the app and try it directly — every page has contextual help built in.</p>
               <Button asChild>
-                <Link to="/dashboard">App এ যান <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                <Link to="/dashboard">Go to the app <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
             </section>
           </div>
