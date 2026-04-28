@@ -829,9 +829,10 @@ export default function TemplatesPage() {
                     <TableRow key={tpl.id} className={selectedIds.has(tpl.id) ? "bg-primary/5" : ""}>
                       <TableCell><Checkbox checked={selectedIds.has(tpl.id)} onCheckedChange={() => toggleSelect(tpl.id)} /></TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <FileText className="h-4 w-4 text-primary shrink-0" />
                           <span className="font-medium truncate cursor-pointer hover:text-primary" onClick={() => openEditor(tpl)}>{tpl.name}</span>
+                          <TemplateVersionBadge template={tpl as any} onReimport={(id) => reimportMarketplaceMutation.mutate(id)} />
                         </div>
                       </TableCell>
                       <TableCell>
