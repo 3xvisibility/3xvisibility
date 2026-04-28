@@ -10,6 +10,59 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
+/**
+ * Build a clean WooCommerce product short_description.
+ * WooCommerce expects this to be a SHORT teaser (the small text under the
+ * price/title), NOT the full description nor the full SEO meta. We:
+ *   1. Prefer an explicitly provided excerpt (already short)
+ *   2. Otherwise fall back to seo_description / first text from content
+ *   3. Strip HTML, collapse whitespace, truncate at a word boundary (~160 chars)
+ *   4. Wrap in a <p> so WordPress renders it cleanly.
+ */
+function buildShortDescription(input: {
+  excerpt?: string | null;
+  seoDescription?: string | null;
+  fullContent?: string | null;
+}): string | undefined {
+  const MAX_LEN = 160;
+  const sources: (string | null | undefined)[] = [
+    input.excerpt,
+    input.seoDescription,
+    input.fullContent,
+  ];
+  let raw = "";
+  for (const s of sources) {
+    if (typeof s === "string" && s.trim().length > 0) {
+      raw = s;
+      break;
+    }
+  }
+  if (!raw) return undefined;
+
+  // Strip HTML tags + decode common entities + collapse whitespace.
+  const plain = raw
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!plain) return undefined;
+
+  let teaser = plain;
+  if (teaser.length > MAX_LEN) {
+    const cut = teaser.slice(0, MAX_LEN);
+    const lastSpace = cut.lastIndexOf(" ");
+    teaser = (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).replace(/[,;:\-–—]+$/, "").trim() + "…";
+  }
+  return `<p>${teaser}</p>`;
+}
+
 export class WooCommerceConnector implements CmsConnector {
   readonly type = "woocommerce";
   private baseUrl: string;
@@ -47,9 +100,14 @@ export class WooCommerceConnector implements CmsConnector {
     }
 
     const metaData = buildSeoMetaDataEntries(payload);
-    if (payload.seo_description) {
-      body.short_description = payload.seo_description;
-    }
+    // WooCommerce short_description = brief teaser only. Never the full SEO meta
+    // or the entire product description, both of which look broken on the storefront.
+    const shortDesc = buildShortDescription({
+      excerpt: payload.excerpt,
+      seoDescription: payload.seo_description,
+      fullContent: payload.content,
+    });
+    if (shortDesc) body.short_description = shortDesc;
     if (metaData.length > 0) body.meta_data = metaData;
 
     const res = await fetch(
@@ -142,8 +200,15 @@ export class WooCommerceConnector implements CmsConnector {
       body.slug = slugify(payload.product_data?.handle || payload.slug || externalId);
     }
     if (payload.status) body.status = payload.status === "publish" ? "publish" : "draft";
-    if (payload.excerpt) body.short_description = payload.excerpt;
-    if (!body.short_description && payload.seo_description) body.short_description = payload.seo_description;
+    // Always normalise short_description into a brief teaser. Without this, an
+    // excerpt that contains the full optimized HTML (or a long meta description)
+    // ends up duplicated under the price on the product page.
+    const shortDesc = buildShortDescription({
+      excerpt: payload.excerpt,
+      seoDescription: payload.seo_description,
+      fullContent: payload.content,
+    });
+    if (shortDesc) body.short_description = shortDesc;
     if (payload.product_data?.price) body.regular_price = String(payload.product_data.price);
     if (!preserveDesign && payload.product_data?.images?.length) {
       body.images = payload.product_data.images
