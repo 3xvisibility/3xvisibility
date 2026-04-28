@@ -1803,6 +1803,7 @@ Deno.serve(async (req) => {
           pageContent = autoRepairContent(pageContent, {
             title: Object.values(row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${processedCount + 1}`,
             primaryKeyword: repairKeyword,
+            language: resolvedLanguage,
           });
 
           const h1Match = pageContent.match(/<h1[^>]*>(.*?)<\/h1>/i);
