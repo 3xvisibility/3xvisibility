@@ -1196,9 +1196,27 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <Label className="text-sm font-semibold">Choose Template</Label>
                       <span className="text-[10px] text-muted-foreground ml-auto">required</span>
                     </div>
-                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                      <SelectTrigger className="rounded-xl h-10 bg-background"><SelectValue placeholder="Pick the template these pages will use" /></SelectTrigger>
-                      <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                    <Select value={selectedTemplate} onValueChange={handleTemplatePick} disabled={importingMarketplace}>
+                      <SelectTrigger className="rounded-xl h-10 bg-background"><SelectValue placeholder={importingMarketplace ? "Importing marketplace template…" : "Pick the template these pages will use"} /></SelectTrigger>
+                      <SelectContent>
+                        {templates.length > 0 && (
+                          <>
+                            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your templates</div>
+                            {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                          </>
+                        )}
+                        {Object.entries(marketplaceGroups).map(([cat, items]) => (
+                          <div key={cat}>
+                            <div className="px-2 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-t">✨ Marketplace · {cat}</div>
+                            {items.map(t => (
+                              <SelectItem key={t.id} value={`${MARKETPLACE_VALUE_PREFIX}${t.id}`}>{t.name}</SelectItem>
+                            ))}
+                          </div>
+                        ))}
+                        {templates.length === 0 && allowedMarketplace.length === 0 && (
+                          <div className="px-2 py-3 text-xs text-muted-foreground text-center">No templates available. Create one or upgrade to access marketplace.</div>
+                        )}
+                      </SelectContent>
                     </Select>
 
                     {selectedTemplate && (
