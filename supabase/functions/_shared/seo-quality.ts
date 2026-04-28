@@ -863,7 +863,8 @@ export function autoRepairContent(
  * - If density is too HIGH: replace surplus exact-match occurrences inside <p> bodies
  *   with neutral pronouns ("our service", "this", "it") until density falls back into range.
  */
-function balanceKeywordDensity(html: string, keyword: string): string {
+function balanceKeywordDensity(html: string, keyword: string, pack?: PhrasePack): string {
+  const phrasePack = pack ?? resolvePhrasePack(null);
   const TARGET_MIN = 0.8;
   const TARGET_MAX = 2.0;
   const TARGET_IDEAL = 1.4;
