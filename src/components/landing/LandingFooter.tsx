@@ -15,7 +15,7 @@ export function LandingFooter() {
     [t("footer.integrations")]: [
       { label: t("footer.wordpress"), href: "#" },
       { label: t("footer.shopify"), href: "#" },
-      { label: t("footer.apiDocs"), href: "#" },
+      { label: t("footer.apiDocs"), href: "/docs" },
     ],
     [t("footer.company")]: [
       { label: t("footer.about"), href: "#" },
