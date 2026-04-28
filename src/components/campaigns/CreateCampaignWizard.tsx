@@ -455,7 +455,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       // Step 3: select for this campaign
       updateMpStep("select", "running");
       await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
-      setSelectedTemplate(inserted.id);
+      setSelectedTemplate(insertedId);
       updateMpStep("select", "success", `${(tpl.variables || []).length} variables ready to map`);
 
       toast({ title: "Marketplace template added", description: `"${tpl.name}" imported into your templates.` });
