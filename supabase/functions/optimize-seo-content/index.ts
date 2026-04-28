@@ -773,6 +773,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         seoTitle: result.seo_title || effectiveSeoTitle,
         primaryKeyword: qualityReport.primaryKeyword,
         slug: page_slug,
+        language: effectiveLanguage,
       });
     }
 
