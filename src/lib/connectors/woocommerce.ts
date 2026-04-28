@@ -77,10 +77,13 @@ export class WooCommerceConnector implements CmsConnector {
 
     const metaData: { key: string; value: string }[] = [];
     if (payload.seo_title) metaData.push({ key: "_yoast_wpseo_title", value: payload.seo_title });
-    if (payload.seo_description) {
-      body.short_description = payload.seo_description;
-      metaData.push({ key: "_yoast_wpseo_metadesc", value: payload.seo_description });
-    }
+    if (payload.seo_description) metaData.push({ key: "_yoast_wpseo_metadesc", value: payload.seo_description });
+    const shortDesc = buildShortDescription({
+      excerpt: (payload as Partial<PagePayload> & { excerpt?: string }).excerpt,
+      seoDescription: payload.seo_description,
+      fullContent: payload.content,
+    });
+    if (shortDesc) body.short_description = shortDesc;
     if (metaData.length > 0) body.meta_data = metaData;
 
     const res = await fetch(
