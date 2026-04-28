@@ -1608,16 +1608,31 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                 <>
                   <div>
                     <Label className="text-sm font-semibold mb-2 block">Template</Label>
-                    {templates.length === 0 ? (
+                    {templates.length === 0 && allowedMarketplace.length === 0 ? (
                       <div className="rounded-xl border-2 border-dashed border-border p-6 text-center">
                         <Layers className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
                         <p className="text-sm text-muted-foreground">No templates yet</p>
-                        <p className="text-xs text-muted-foreground/60 mt-1">Create a template first from the Templates page</p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">Create a template first from the Templates page{plan === "free" || plan === "starter" ? " or upgrade to Pro for marketplace templates" : ""}</p>
                       </div>
                     ) : (
-                      <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                        <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Select template" /></SelectTrigger>
-                        <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                      <Select value={selectedTemplate} onValueChange={handleTemplatePick} disabled={importingMarketplace}>
+                        <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder={importingMarketplace ? "Importing…" : "Select template"} /></SelectTrigger>
+                        <SelectContent>
+                          {templates.length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your templates</div>
+                              {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                            </>
+                          )}
+                          {Object.entries(marketplaceGroups).map(([cat, items]) => (
+                            <div key={cat}>
+                              <div className="px-2 py-1.5 mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-t">✨ Marketplace · {cat}</div>
+                              {items.map(t => (
+                                <SelectItem key={t.id} value={`${MARKETPLACE_VALUE_PREFIX}${t.id}`}>{t.name}</SelectItem>
+                              ))}
+                            </div>
+                          ))}
+                        </SelectContent>
                       </Select>
                     )}
                   </div>
