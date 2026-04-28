@@ -922,7 +922,7 @@ function balanceKeywordDensity(html: string, keyword: string, pack?: PhrasePack)
     let surplus = occurrences - targetOccurrences;
     if (surplus <= 0) return html;
 
-    const substitutes = ["our service", "this service", "the service", "our work", "our team's work"];
+    const substitutes = phrasePack.densitySubstitutes;
     let subIdx = 0;
 
     // Only mutate text inside <p>...</p> blocks to keep headings, titles, alts intact.
