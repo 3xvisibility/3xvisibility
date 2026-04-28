@@ -795,50 +795,44 @@ export function autoRepairContent(
   const headings = (html.match(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi) || []);
   const hasGeoHeading = headings.some((h) => /(local|nearby|near you|in your area|serving|community|neighborhood|area|region)/i.test(h.replace(/<[^>]*>/g, "")));
 
+  // All injected filler text uses the resolved language pack so French sites get
+  // French sentences, Spanish sites get Spanish, etc. — never mix-language output.
   const seaParts: string[] = [];
-  if (!seaCta) seaParts.push("Contact our team to book your free consultation today.");
-  if (!seaBenefit) seaParts.push("We deliver fast, reliable and premium results you can trust.");
-  if (!seaTrust) seaParts.push("Our service is trusted, certified and proven, with verified reviews and a satisfaction guarantee.");
-  if (!seaOffer) seaParts.push("Get a free quote with transparent pricing — no hidden fees, just real value.");
-  if (!seaUrgency) seaParts.push("Same-day response available — call now for instant, top-rated support.");
-  if (!seaIntent) seaParts.push("Call us or message our team to get started right away.");
+  if (!seaCta) seaParts.push(pack.seaCta);
+  if (!seaBenefit) seaParts.push(pack.seaBenefit);
+  if (!seaTrust) seaParts.push(pack.seaTrust);
+  if (!seaOffer) seaParts.push(pack.seaOffer);
+  if (!seaUrgency) seaParts.push(pack.seaUrgency);
+  if (!seaIntent) seaParts.push(pack.seaIntent);
 
   const geoParts: string[] = [];
-  if (!geoLocal) geoParts.push("We are a local team serving customers near you and in your area.");
-  if (!geoServiceArea) geoParts.push("Our service area covers nearby neighborhoods, with delivery available throughout the region.");
-  if (!geoCommunity) geoParts.push("As local experts, we work closely with the community and families around you.");
-  if (!geoAvailability) geoParts.push("We are open and available today — contact us during business hours for a same-day visit.");
-  if (!geoCredibility) geoParts.push("Trusted locally, our area specialists provide nearby support customers recommend.");
-
-  // Add a localized heading if missing
-  if (!hasGeoHeading) {
-    geoParts.unshift("__GEO_HEADING__Serving Your Local Area");
-  }
-
-  // Action word in title (we won't mutate the title here — handled by AI / caller),
-  // but we add a strong CTA section regardless.
+  if (!geoLocal) geoParts.push(pack.geoLocal);
+  if (!geoServiceArea) geoParts.push(pack.geoServiceArea);
+  if (!geoCommunity) geoParts.push(pack.geoCommunity);
+  if (!geoAvailability) geoParts.push(pack.geoAvailability);
+  if (!geoCredibility) geoParts.push(pack.geoCredibility);
 
   // Always inject a strong intro signals block to guarantee SEA benefit-intro + GEO local-cue checks.
   let block = `\n<section class="seo-signals" aria-label="Service highlights">`;
   if (!hasGeoHeading) {
-    block += `<h2>Local ${keyword ? keyword.charAt(0).toUpperCase() + keyword.slice(1) + " " : ""}Service Serving Your Area</h2>`;
+    block += `<h2>${pack.geoHeading(keyword || "")}</h2>`;
   }
   // Lead paragraph packed with benefit + local + CTA + trust + offer + urgency words.
   const kw = keyword || "expert service";
-  block += `<p>Looking for trusted ${kw}? We are a local team serving customers near you and in your area, delivering fast, easy, reliable and premium ${kw} results. Our certified, proven and recommended ${kw} specialists provide same-day, top-rated support today — get a free quote with transparent pricing and contact us now to book your ${kw} consultation.</p>`;
+  block += `<p>${pack.leadIntro(kw)}</p>`;
   // Add any remaining specific signals as supporting paragraphs
   const supporting: string[] = [];
-  if (!geoCommunity) supporting.push(`As local experts in ${kw}, we work closely with the community and families around you, with our nearby team ready to help.`);
-  if (!geoServiceArea) supporting.push(`Our ${kw} service area covers nearby neighborhoods, with delivery and coverage available throughout the region.`);
-  if (!geoAvailability) supporting.push(`We are open and available today for ${kw} during business hours — visit us, call us, or contact us for same-day response.`);
-  if (!geoCredibility) supporting.push(`Trusted locally, our ${kw} area specialists provide nearby support that customers recommend across the region.`);
-  if (!seaTrust) supporting.push(`Backed by verified reviews, testimonials, a satisfaction guarantee, and warranty-protected ${kw} service from certified experts.`);
-  if (!seaOffer) supporting.push(`Take advantage of our exclusive free ${kw} trial, special discount package, and starting-at pricing plan with bundle savings.`);
+  if (!geoCommunity) supporting.push(pack.community(kw));
+  if (!geoServiceArea) supporting.push(pack.serviceArea(kw));
+  if (!geoAvailability) supporting.push(pack.availability(kw));
+  if (!geoCredibility) supporting.push(pack.credibility(kw));
+  if (!seaTrust) supporting.push(pack.trustSupport(kw));
+  if (!seaOffer) supporting.push(pack.offerSupport(kw));
   for (const part of supporting) {
     block += `<p>${part}</p>`;
   }
-  // Always include a clickable CTA link
-  block += `<p><a href="/contact" class="cta-link">Contact us today for a free quote</a> — fast, local, trusted service available same-day in your area.</p>`;
+  // Always include a clickable CTA link (localized)
+  block += `<p><a href="/contact" class="cta-link">${pack.ctaLinkText}</a>${pack.ctaLinkSuffix}</p>`;
   block += `</section>`;
 
   // Insert RIGHT AFTER the first H1 so the signals block becomes the page intro.
