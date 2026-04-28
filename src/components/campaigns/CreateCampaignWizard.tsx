@@ -36,6 +36,7 @@ import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { getMarketplaceTemplatesForPlan, groupByCategory, MARKETPLACE_VALUE_PREFIX } from "@/lib/marketplace-access";
 import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import { MarketplaceImportProgress } from "@/components/campaigns/MarketplaceImportProgress";
+import { TemplatePreviewDialog, type PreviewableTemplate } from "@/components/templates/TemplatePreviewDialog";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLAN_FEATURES } from "@/lib/plan-features";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -322,6 +323,36 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   type MpStep = { key: "verify" | "import" | "select"; label: string; status: MpStepStatus; detail?: string };
   const [mpSteps, setMpSteps] = useState<MpStep[] | null>(null);
   const [mpImportError, setMpImportError] = useState<string | null>(null);
+  const [previewTpl, setPreviewTpl] = useState<PreviewableTemplate | null>(null);
+
+  // Open the universal preview modal for either a saved template (by id) or
+  // a marketplace catalog entry (sentinel string `mp::<id>`). Lets users see
+  // the design + variable list before committing to an import or selection.
+  const openTemplatePreview = useCallback((value: string) => {
+    if (value.startsWith(MARKETPLACE_VALUE_PREFIX)) {
+      const id = value.slice(MARKETPLACE_VALUE_PREFIX.length);
+      const tpl = allowedMarketplace.find(t => t.id === id);
+      if (tpl) setPreviewTpl({
+        name: tpl.name,
+        content: tpl.content,
+        variables: tpl.variables,
+        description: tpl.description,
+        seo_title_pattern: tpl.seo_title_pattern,
+        seo_description_pattern: tpl.seo_description_pattern,
+        source: `Marketplace · ${tpl.category}`,
+      });
+      return;
+    }
+    const tpl = templates.find(t => t.id === value);
+    if (tpl) setPreviewTpl({
+      name: tpl.name,
+      content: (tpl as any).content || "",
+      variables: ((tpl as any).variables as string[]) || [],
+      seo_title_pattern: (tpl as any).seo_title_pattern,
+      seo_description_pattern: (tpl as any).seo_description_pattern,
+      source: "Your workspace",
+    });
+  }, [allowedMarketplace, templates]);
 
   const updateMpStep = useCallback((key: MpStep["key"], status: MpStepStatus, detail?: string) => {
     setMpSteps(prev => prev ? prev.map(s => s.key === key ? { ...s, status, detail } : s) : prev);
