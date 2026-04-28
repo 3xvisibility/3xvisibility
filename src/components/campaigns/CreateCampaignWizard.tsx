@@ -314,12 +314,25 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const marketplaceGroups = useMemo(() => groupByCategory(allowedMarketplace), [allowedMarketplace]);
   const [importingMarketplace, setImportingMarketplace] = useState(false);
 
+  // Step-by-step progress for marketplace template auto-import.
+  // Surfaced inline under the picker so the user sees exactly what's happening.
+  type MpStepStatus = "pending" | "running" | "success" | "error";
+  type MpStep = { key: "verify" | "import" | "select"; label: string; status: MpStepStatus; detail?: string };
+  const [mpSteps, setMpSteps] = useState<MpStep[] | null>(null);
+  const [mpImportError, setMpImportError] = useState<string | null>(null);
+
+  const updateMpStep = useCallback((key: MpStep["key"], status: MpStepStatus, detail?: string) => {
+    setMpSteps(prev => prev ? prev.map(s => s.key === key ? { ...s, status, detail } : s) : prev);
+  }, []);
+
   // Selecting a template id from the dropdown. Marketplace items use the
   // `mp::<marketplace-id>` sentinel — we import them into the workspace then
   // switch `selectedTemplate` to the newly-created database row id.
   const handleTemplatePick = useCallback(async (value: string) => {
     if (!value.startsWith(MARKETPLACE_VALUE_PREFIX)) {
       setSelectedTemplate(value);
+      setMpSteps(null);
+      setMpImportError(null);
       return;
     }
     const mpId = value.slice(MARKETPLACE_VALUE_PREFIX.length);
@@ -329,10 +342,28 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       toast({ title: "No workspace selected", variant: "destructive" });
       return;
     }
+
+    // Initialize step tracker
+    setMpImportError(null);
+    setMpSteps([
+      { key: "verify", label: "Verifying plan access", status: "running" },
+      { key: "import", label: "Importing template into your workspace", status: "pending" },
+      { key: "select", label: "Selecting template for this campaign", status: "pending" },
+    ]);
+
     try {
       setImportingMarketplace(true);
+
+      // Step 1: verify plan access
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        updateMpStep("verify", "error", "Not authenticated");
+        throw new Error("Not authenticated");
+      }
+      updateMpStep("verify", "success", `${PLAN_FEATURES[plan].label} plan · ${tpl.category}`);
+
+      // Step 2: import into workspace
+      updateMpStep("import", "running");
       const { data: inserted, error } = await supabase
         .from("templates")
         .insert({
@@ -348,17 +379,32 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         } as any)
         .select("id")
         .single();
-      if (error) throw error;
+      if (error) {
+        updateMpStep("import", "error", error.message);
+        throw error;
+      }
+      updateMpStep("import", "success", `Saved as "${tpl.name} (Marketplace)"`);
+
+      // Step 3: select for this campaign
+      updateMpStep("select", "running");
       await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
       setSelectedTemplate(inserted.id);
+      updateMpStep("select", "success", `${(tpl.variables || []).length} variables ready to map`);
+
       toast({ title: "Marketplace template added", description: `"${tpl.name}" imported into your templates.` });
+
+      // Auto-collapse the success panel after a short pause
+      setTimeout(() => setMpSteps(null), 2500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to import template";
+      setMpImportError(msg);
       toast({ title: "Import failed", description: msg, variant: "destructive" });
     } finally {
       setImportingMarketplace(false);
     }
-  }, [allowedMarketplace, wsId, queryClient, toast]);
+  }, [allowedMarketplace, wsId, queryClient, toast, plan, updateMpStep]);
+
+
 
   const { data: websites = [] } = useQuery({
     queryKey: ["websites", wsId],
