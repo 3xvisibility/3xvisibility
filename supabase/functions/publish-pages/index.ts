@@ -193,8 +193,8 @@ function buildPayload(
       product_type: ed.product_type ? String(ed.product_type) : undefined,
       tags: (ed.tags as string | string[] | undefined) || undefined,
       product_status: (ed.product_status as "active" | "draft" | "archived" | undefined) || undefined,
-      variant: (ed.variant as PagePayload["product_data"]!["variant"]) || undefined,
-      metafields: (ed.metafields as PagePayload["product_data"]!["metafields"]) || undefined,
+      variant: (ed.variant as NonNullable<PagePayload["product_data"]>["variant"]) || undefined,
+      metafields: (ed.metafields as NonNullable<PagePayload["product_data"]>["metafields"]) || undefined,
       images: (ed.images as { src: string; alt?: string }[] | undefined)
         || (ed.image ? [{ src: String(ed.image) }] : undefined),
     };
