@@ -1129,6 +1129,27 @@ export default function CampaignDetailPage() {
               csvData={(campaign.csv_data as Record<string, string>[]) || []}
             />
           )}
+          {campaign.website_id && (campaign.websites as { type?: string } | null)?.type === "shopify" && (
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-semibold">Shopify field mapping (campaign override)</h3>
+                  <p className="text-xs text-muted-foreground">
+                    These mappings apply only to this campaign and override the store-default mapping.
+                  </p>
+                </div>
+              </div>
+              <ShopifyFieldMappingEditor
+                workspaceId={campaign.workspace_id as string}
+                websiteId={campaign.website_id as string}
+                campaignId={campaign.id as string}
+                availableVariables={
+                  ((campaign.templates as { variables?: string[] } | null)?.variables) ||
+                  Object.keys(((campaign.csv_data as Record<string, string>[] | null) || [])[0] || {})
+                }
+              />
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="logs" className="space-y-4">
