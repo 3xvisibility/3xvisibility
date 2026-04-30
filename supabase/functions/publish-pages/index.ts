@@ -469,12 +469,72 @@ Deno.serve(async (req) => {
           }
         }
 
+        // Resolve Shopify field mapping (campaign override → website default)
+        let shopifyExtraData: Record<string, unknown> | undefined;
+        if (resolvedPublishType === "product" && (page.websites as { type?: string }).type === "shopify") {
+          try {
+            const wsId = page.website_id;
+            let mapRow: { field_map?: Record<string, string>; variant_map?: Record<string, string>; metafields?: { namespace: string; key: string; type: string; value: string }[] } | null = null;
+            if (page.campaign_id) {
+              const { data } = await supabase.from("shopify_field_mappings" as never).select("field_map,variant_map,metafields").eq("website_id", wsId).eq("campaign_id", page.campaign_id).maybeSingle();
+              mapRow = (data as typeof mapRow) || null;
+            }
+            if (!mapRow && wsId) {
+              const { data } = await supabase.from("shopify_field_mappings" as never).select("field_map,variant_map,metafields").eq("website_id", wsId).is("campaign_id", null).maybeSingle();
+              mapRow = (data as typeof mapRow) || null;
+            }
+            if (mapRow) {
+              // Pull row data from the campaign CSV by page slug/title
+              let row: Record<string, string> = {};
+              if (page.campaign_id) {
+                const { data: c } = await supabase.from("campaigns").select("csv_data").eq("id", page.campaign_id).maybeSingle();
+                const rows = (c?.csv_data as Record<string, string>[] | null) || [];
+                row = rows.find((r) => r.slug === page.slug || r.title === page.title) || rows[0] || {};
+              }
+              const interp = (v: unknown): string | undefined => {
+                if (v == null) return undefined;
+                const s = String(v);
+                return s.replace(/\{([a-z0-9_]+)\}/gi, (_m, k) => (row[k] != null ? String(row[k]) : ""));
+              };
+              const fm = mapRow.field_map || {};
+              const vm = mapRow.variant_map || {};
+              shopifyExtraData = {
+                price: interp(fm.price),
+                sku: interp(fm.sku),
+                handle: interp(fm.handle),
+                body_html: interp(fm.body_html),
+                vendor: interp(fm.vendor),
+                product_type: interp(fm.product_type),
+                tags: interp(fm.tags),
+                product_status: interp(fm.status) as "active" | "draft" | "archived" | undefined,
+                images: interp(fm.images)?.split(",").map((s) => s.trim()).filter(Boolean).map((src) => ({ src })),
+                variant: {
+                  option1: interp(vm.option1),
+                  option2: interp(vm.option2),
+                  option3: interp(vm.option3),
+                  compare_at_price: interp(vm.compare_at_price),
+                  inventory_quantity: vm.inventory_quantity ? parseInt(interp(vm.inventory_quantity) || "0", 10) : undefined,
+                  weight: vm.weight ? parseFloat(interp(vm.weight) || "0") : undefined,
+                  weight_unit: interp(vm.weight_unit) as "g" | "kg" | "oz" | "lb" | undefined,
+                  barcode: interp(vm.barcode),
+                },
+                metafields: (mapRow.metafields || []).map((m) => ({ ...m, value: interp(m.value) || "" })),
+              };
+              // Apply mapped title/seo at payload level too
+              if (fm.title) page.title = interp(fm.title) || page.title;
+              if (fm.seo_title) page.seo_title = interp(fm.seo_title) || page.seo_title;
+              if (fm.seo_description) page.seo_description = interp(fm.seo_description) || page.seo_description;
+            }
+          } catch (e) {
+            console.warn("[publish-pages] shopify mapping resolve failed", e);
+          }
+        }
+
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           resolvedPublishType,
           elementorMeta,
-          resolvedPublishType === "product" ? {} : undefined,
-          // For non-Elementor sites on first publish, still forward the detected site template.
+          resolvedPublishType === "product" ? (shopifyExtraData || {}) : undefined,
           (resolvedPublishType === "page" && !elementorMeta && !preserveDesign)
             ? elementorCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
