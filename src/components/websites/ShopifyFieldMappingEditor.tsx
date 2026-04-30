@@ -134,6 +134,27 @@ export function ShopifyFieldMappingEditor({
   const [variantMap, setVariantMap] = useState<ShopifyVariantMap>({});
   const [metafields, setMetafields] = useState<ShopifyMetafieldMap[]>([]);
 
+  const SAMPLE_JSON = JSON.stringify(
+    {
+      product_title: "Classic Cotton Tee",
+      product_description: "<p>Soft 100% organic cotton t-shirt.</p>",
+      product_handle: "classic-cotton-tee",
+      product_brand: "Acme",
+      product_type: "Apparel",
+      product_tags: "cotton, summer, unisex",
+      product_price: "29.99",
+      product_sku: "ACME-TEE-001",
+      product_image: "https://cdn.example.com/tee.jpg",
+      product_size: "M",
+      product_color: "Navy",
+      product_inventory: "120",
+      product_weight: "180",
+    },
+    null,
+    2,
+  );
+  const [previewJson, setPreviewJson] = useState<string>(SAMPLE_JSON);
+
   // Sync from controlled or from server
   useEffect(() => {
     if (controlled) {
