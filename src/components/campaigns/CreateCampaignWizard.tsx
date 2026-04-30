@@ -952,6 +952,26 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
             }));
           if (mappingRows.length > 0) await supabase.from("mappings").insert(mappingRows);
         }
+
+        // Persist Shopify per-campaign field-mapping override (if enabled)
+        const targetSite = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+        if (shopifyOverride.enabled && targetSite?.type === "shopify") {
+          try {
+            await (supabase as unknown as { from: (t: string) => { insert: (r: unknown) => Promise<unknown> } })
+              .from("shopify_field_mappings")
+              .insert({
+                workspace_id: wsId,
+                website_id: targetSite.id,
+                campaign_id: campaignId,
+                user_id: user.id,
+                field_map: shopifyOverride.field_map,
+                variant_map: shopifyOverride.variant_map,
+                metafields: shopifyOverride.metafields,
+              });
+          } catch (e) {
+            console.warn("[wizard] failed to save shopify override", e);
+          }
+        }
       }
       // Auto-trigger generation if scheduled for "now" (not later/recurring)
       const shouldRunNow = scheduleMode === "now" && campaignId;
