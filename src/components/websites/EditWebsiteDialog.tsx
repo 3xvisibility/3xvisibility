@@ -15,6 +15,7 @@ import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
+import { ShopifyFieldMappingEditor } from "./ShopifyFieldMappingEditor";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
@@ -147,14 +148,15 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className={`${site.type === "shopify" ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[85vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle>Edit Website</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="general" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${site.type === "shopify" ? "grid-cols-3" : "grid-cols-2"}`}>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="credentials">Credentials</TabsTrigger>
+            {site.type === "shopify" && <TabsTrigger value="mapping">Field Mapping</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="general" className="space-y-4 mt-4">
@@ -263,6 +265,20 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               );
             })()}
           </TabsContent>
+
+          {site.type === "shopify" && site.workspace_id && (
+            <TabsContent value="mapping" className="space-y-3 mt-4">
+              <p className="text-xs text-muted-foreground">
+                These mappings are the <strong>store default</strong> for this Shopify site. Each
+                campaign can override them on its own Mapping step.
+              </p>
+              <ShopifyFieldMappingEditor
+                workspaceId={site.workspace_id}
+                websiteId={site.id}
+                campaignId={null}
+              />
+            </TabsContent>
+          )}
         </Tabs>
 
         <div className="flex justify-end gap-2 pt-2">

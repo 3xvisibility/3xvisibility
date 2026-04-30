@@ -1522,6 +1522,45 @@ export type Database = {
           },
         ]
       }
+      shopify_field_mappings: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          field_map: Json
+          id: string
+          metafields: Json
+          updated_at: string
+          user_id: string
+          variant_map: Json
+          website_id: string
+          workspace_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          field_map?: Json
+          id?: string
+          metafields?: Json
+          updated_at?: string
+          user_id: string
+          variant_map?: Json
+          website_id: string
+          workspace_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          field_map?: Json
+          id?: string
+          metafields?: Json
+          updated_at?: string
+          user_id?: string
+          variant_map?: Json
+          website_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       sitemaps: {
         Row: {
           content: string

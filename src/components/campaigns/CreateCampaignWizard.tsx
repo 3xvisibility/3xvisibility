@@ -17,6 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { ShopifyFieldMappingEditor } from "../websites/ShopifyFieldMappingEditor";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { LocationDatabaseDialog } from "@/components/campaigns/LocationDatabaseDialog";
@@ -121,6 +123,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [targetFieldMappings, setTargetFieldMappings] = useState<Record<string, string>>({});
   const [faqPairs, setFaqPairs] = useState<import("./FaqMappingPanel").FaqPair[]>([]);
   const [fillRules, setFillRules] = useState<Record<string, import("./FillRulesPanel").FillRule>>({});
+  // Shopify per-campaign override of the website's default product field mapping.
+  // When `enabled` is false, publishing falls back to the website-level default.
+  const [shopifyOverride, setShopifyOverride] = useState<{
+    enabled: boolean;
+    field_map: import("../websites/ShopifyFieldMappingEditor").ShopifyFieldMap;
+    variant_map: import("../websites/ShopifyFieldMappingEditor").ShopifyVariantMap;
+    metafields: import("../websites/ShopifyFieldMappingEditor").ShopifyMetafieldMap[];
+  }>({ enabled: false, field_map: {}, variant_map: {}, metafields: [] });
   const [aiFillMode, setAiFillMode] = useState<"per_campaign" | "per_row">("per_campaign");
   // AI vibe theme — palette + typography + density override applied at
   // generation time so a single template can adopt many distinct looks.
@@ -941,6 +951,26 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               sort_order: i, is_required: true,
             }));
           if (mappingRows.length > 0) await supabase.from("mappings").insert(mappingRows);
+        }
+
+        // Persist Shopify per-campaign field-mapping override (if enabled)
+        const targetSite = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+        if (shopifyOverride.enabled && targetSite?.type === "shopify") {
+          try {
+            await (supabase as unknown as { from: (t: string) => { insert: (r: unknown) => Promise<unknown> } })
+              .from("shopify_field_mappings")
+              .insert({
+                workspace_id: wsId,
+                website_id: targetSite.id,
+                campaign_id: campaignId,
+                user_id: user.id,
+                field_map: shopifyOverride.field_map,
+                variant_map: shopifyOverride.variant_map,
+                metafields: shopifyOverride.metafields,
+              });
+          } catch (e) {
+            console.warn("[wizard] failed to save shopify override", e);
+          }
         }
       }
       // Auto-trigger generation if scheduled for "now" (not later/recurring)
@@ -2007,6 +2037,44 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           || "en"
                         }
                       />
+
+                      {(() => {
+                        const targetSite = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+                        if (targetSite?.type !== "shopify") return null;
+                        const ShopifyEditor = ShopifyFieldMappingEditor;
+                        return (
+                          <div className="mt-4 rounded-xl border border-border p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Label className="text-sm font-semibold">Shopify field mapping (override)</Label>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Off = use the website&apos;s default mapping. On = override just for this campaign.
+                                </p>
+                              </div>
+                              <Switch
+                                checked={shopifyOverride.enabled}
+                                onCheckedChange={(v) => setShopifyOverride(s => ({ ...s, enabled: v }))}
+                              />
+                            </div>
+                            {shopifyOverride.enabled && wsId && targetSite && (
+                              <ShopifyEditor
+                                workspaceId={wsId}
+                                websiteId={targetSite.id}
+                                availableVariables={selectedTemplateVars}
+                                controlled={{
+                                  value: {
+                                    field_map: shopifyOverride.field_map,
+                                    variant_map: shopifyOverride.variant_map,
+                                    metafields: shopifyOverride.metafields,
+                                  },
+                                  onChange: (next: { field_map: typeof shopifyOverride.field_map; variant_map: typeof shopifyOverride.variant_map; metafields: typeof shopifyOverride.metafields }) =>
+                                    setShopifyOverride(s => ({ ...s, ...next })),
+                                }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()}
                     </>
                   )}
                 </>
