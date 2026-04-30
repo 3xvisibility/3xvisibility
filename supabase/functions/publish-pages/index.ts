@@ -526,30 +526,68 @@ Deno.serve(async (req) => {
               };
               const fm = mapRow.field_map || {};
               const vm = mapRow.variant_map || {};
-              shopifyExtraData = {
-                price: interp(fm.price),
-                sku: interp(fm.sku),
-                handle: interp(fm.handle),
-                body_html: interp(fm.body_html),
-                vendor: interp(fm.vendor),
-                product_type: interp(fm.product_type),
-                tags: interp(fm.tags),
-                product_status: interp(fm.status) as "active" | "draft" | "archived" | undefined,
-                images: interp(fm.images)?.split(",").map((s) => s.trim()).filter(Boolean).map((src) => ({ src })),
-                variant: {
-                  option1: interp(vm.option1),
-                  option2: interp(vm.option2),
-                  option3: interp(vm.option3),
-                  compare_at_price: interp(vm.compare_at_price),
-                  inventory_quantity: vm.inventory_quantity ? parseInt(interp(vm.inventory_quantity) || "0", 10) : undefined,
-                  weight: vm.weight ? parseFloat(interp(vm.weight) || "0") : undefined,
-                  weight_unit: interp(vm.weight_unit) as "g" | "kg" | "oz" | "lb" | undefined,
-                  barcode: interp(vm.barcode),
-                },
-                metafields: (mapRow.metafields || []).map((m) => ({ ...m, value: interp(m.value) || "" })),
+              const blank = (s: string | undefined) => (s == null || s.trim() === "" ? undefined : s);
+              const variantRaw = {
+                option1: blank(interp(vm.option1)),
+                option2: blank(interp(vm.option2)),
+                option3: blank(interp(vm.option3)),
+                compare_at_price: blank(interp(vm.compare_at_price)),
+                inventory_quantity: vm.inventory_quantity ? parseInt(interp(vm.inventory_quantity) || "0", 10) : undefined,
+                weight: vm.weight ? parseFloat(interp(vm.weight) || "0") : undefined,
+                weight_unit: blank(interp(vm.weight_unit)) as "g" | "kg" | "oz" | "lb" | undefined,
+                barcode: blank(interp(vm.barcode)),
               };
-              // Apply mapped title/seo at payload level too
-              if (fm.title) page.title = interp(fm.title) || page.title;
+              // Numeric guards: drop NaN
+              if (variantRaw.inventory_quantity != null && Number.isNaN(variantRaw.inventory_quantity)) variantRaw.inventory_quantity = undefined;
+              if (variantRaw.weight != null && Number.isNaN(variantRaw.weight)) variantRaw.weight = undefined;
+              const hasAnyVariant = Object.values(variantRaw).some((v) => v !== undefined);
+
+              const metafieldsResolved = (mapRow.metafields || [])
+                .map((m) => ({ ...m, value: interp(m.value) || "" }))
+                .filter((m) => m.namespace?.trim() && m.key?.trim() && m.value.trim() !== "");
+
+              const imagesResolved = interp(fm.images)
+                ?.split(",").map((s) => s.trim()).filter(Boolean)
+                .filter((src) => /^https?:\/\//i.test(src))
+                .map((src) => ({ src }));
+
+              const priceResolved = blank(interp(fm.price));
+              if (priceResolved && Number.isNaN(parseFloat(priceResolved))) {
+                const msg = `Shopify field mapping invalid: price resolved to non-numeric value "${priceResolved}"`;
+                console.error("[publish-pages]", msg, { pageId: page.id });
+                await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+                results.push({ id: page.id, status: "failed", error: msg });
+                continue;
+              }
+
+              shopifyExtraData = {
+                price: priceResolved,
+                sku: blank(interp(fm.sku)),
+                handle: blank(interp(fm.handle)),
+                body_html: blank(interp(fm.body_html)),
+                vendor: blank(interp(fm.vendor)),
+                product_type: blank(interp(fm.product_type)),
+                tags: blank(interp(fm.tags)),
+                product_status: blank(interp(fm.status)) as "active" | "draft" | "archived" | undefined,
+                images: imagesResolved && imagesResolved.length > 0 ? imagesResolved : undefined,
+                variant: hasAnyVariant ? variantRaw : undefined,
+                metafields: metafieldsResolved.length > 0 ? metafieldsResolved : undefined,
+              };
+              // Strip top-level undefined keys so connector never sees junk
+              for (const k of Object.keys(shopifyExtraData)) {
+                if ((shopifyExtraData as Record<string, unknown>)[k] === undefined) delete (shopifyExtraData as Record<string, unknown>)[k];
+              }
+
+              // Final guard: title is mandatory for Shopify products
+              const resolvedTitle = fm.title ? interp(fm.title) : page.title;
+              if (!resolvedTitle || resolvedTitle.trim() === "") {
+                const msg = "Shopify field mapping invalid: product title resolved to empty string";
+                console.error("[publish-pages]", msg, { pageId: page.id });
+                await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+                results.push({ id: page.id, status: "failed", error: msg });
+                continue;
+              }
+              if (fm.title) page.title = resolvedTitle;
               if (fm.seo_title) page.seo_title = interp(fm.seo_title) || page.seo_title;
               if (fm.seo_description) page.seo_description = interp(fm.seo_description) || page.seo_description;
             }
