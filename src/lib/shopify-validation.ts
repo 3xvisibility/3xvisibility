@@ -32,14 +32,20 @@ export function validateShopifyToken(raw: string): string | null {
   const value = (raw || "").trim();
   if (!value) return "Enter the Admin API access token";
 
-  if (!value.startsWith("shpat_")) {
-    return "Token must start with shpat_ (Admin API access token)";
+  if (/\s/.test(value)) {
+    return "Token cannot contain spaces or newlines";
   }
   if (value.length < 20) {
     return "Token looks too short — did you copy the full token?";
   }
-  if (/\s/.test(value)) {
-    return "Token cannot contain spaces or newlines";
+  // Accept tokens from BOTH sources:
+  //  - Shopify Admin custom apps  -> shpat_...
+  //  - Shopify Partners dashboard (custom distribution / public apps) -> shpua_..., shpca_..., shppa_...
+  //  - Some legacy / private apps just expose a 32-char hex secret
+  const knownPrefix = /^(shpat_|shpua_|shpca_|shppa_|shpss_)/i.test(value);
+  const looksLikeHexSecret = /^[a-f0-9]{32,64}$/i.test(value);
+  if (!knownPrefix && !looksLikeHexSecret) {
+    return "This does not look like a valid Shopify Admin API token. Paste the token from your Admin custom app or your Partners developer dashboard app.";
   }
   return null;
 }
