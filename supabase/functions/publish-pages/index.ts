@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
+import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
  * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
