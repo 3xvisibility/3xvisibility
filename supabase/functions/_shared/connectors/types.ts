@@ -42,6 +42,27 @@ export interface PagePayload {
     body_html?: string;
     handle?: string;
     images?: { src: string; alt?: string }[];
+    /** Optional vendor / brand mapped from a Shopify field mapping */
+    vendor?: string;
+    /** Optional Shopify product type taxonomy value */
+    product_type?: string;
+    /** Comma-separated tags string OR array */
+    tags?: string | string[];
+    /** Status override: active | draft | archived */
+    product_status?: "active" | "draft" | "archived";
+    /** Per-variant fields applied to the default/first variant */
+    variant?: {
+      option1?: string;
+      option2?: string;
+      option3?: string;
+      compare_at_price?: string;
+      inventory_quantity?: number;
+      weight?: number;
+      weight_unit?: "g" | "kg" | "oz" | "lb";
+      barcode?: string;
+    };
+    /** Shopify metafields to attach on create/update */
+    metafields?: { namespace: string; key: string; type: string; value: string }[];
   };
 }
 
