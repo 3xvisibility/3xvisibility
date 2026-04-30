@@ -51,6 +51,7 @@ import {
   Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
 } from "lucide-react";
 import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv, exportDataFile } from "@/lib/export-csv";
+import { ShopifyFieldMappingEditor } from "@/components/websites/ShopifyFieldMappingEditor";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
@@ -107,7 +108,7 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("*, templates(name), websites(name, url, language, language_locked)")
+        .select("*, templates(name, variables), websites(name, url, type, language, language_locked)")
         .eq("id", id!)
         .single();
       if (error) throw error;
@@ -1127,6 +1128,27 @@ export default function CampaignDetailPage() {
               templateContent={templateContent}
               csvData={(campaign.csv_data as Record<string, string>[]) || []}
             />
+          )}
+          {campaign.website_id && (campaign.websites as { type?: string } | null)?.type === "shopify" && (
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-semibold">Shopify field mapping (campaign override)</h3>
+                  <p className="text-xs text-muted-foreground">
+                    These mappings apply only to this campaign and override the store-default mapping.
+                  </p>
+                </div>
+              </div>
+              <ShopifyFieldMappingEditor
+                workspaceId={campaign.workspace_id as string}
+                websiteId={campaign.website_id as string}
+                campaignId={campaign.id as string}
+                availableVariables={
+                  ((campaign.templates as { variables?: string[] } | null)?.variables) ||
+                  Object.keys(((campaign.csv_data as Record<string, string>[] | null) || [])[0] || {})
+                }
+              />
+            </Card>
           )}
         </TabsContent>
 
