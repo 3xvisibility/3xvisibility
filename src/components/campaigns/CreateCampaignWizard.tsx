@@ -2021,7 +2021,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       {(() => {
                         const targetSite = websites.find(w => w.id === (selectedWebsite || websiteForPages));
                         if (targetSite?.type !== "shopify") return null;
-                        const ShopifyEditor = require("../websites/ShopifyFieldMappingEditor").ShopifyFieldMappingEditor;
+                        const ShopifyEditor = ShopifyFieldMappingEditor;
                         return (
                           <div className="mt-4 rounded-xl border border-border p-3 space-y-2">
                             <div className="flex items-center justify-between">
