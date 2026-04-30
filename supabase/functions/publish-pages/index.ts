@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
+import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
  * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
@@ -491,6 +492,33 @@ Deno.serve(async (req) => {
                 const rows = (c?.csv_data as Record<string, string>[] | null) || [];
                 row = rows.find((r) => r.slug === page.slug || r.title === page.title) || rows[0] || {};
               }
+
+              // Hard-validate mapping + resolved values BEFORE touching Shopify so we
+              // fail with a clear error instead of a cryptic Shopify API rejection.
+              const defIssues = validateMapping({
+                fieldMap: mapRow.field_map || {},
+                variantMap: mapRow.variant_map || {},
+                metafields: mapRow.metafields || [],
+                knownVariables: Object.keys(row),
+              }).filter((i) => i.severity === "error");
+              const resolvedIssues = validateResolved({
+                fieldMap: mapRow.field_map || {},
+                variantMap: mapRow.variant_map || {},
+                metafields: mapRow.metafields || [],
+                row,
+              }).filter((i) => i.severity === "error");
+              const allErrors = [...defIssues, ...resolvedIssues];
+              if (allErrors.length > 0) {
+                const msg = `Shopify field mapping invalid: ${allErrors.map((e) => `${e.field} — ${e.message}`).join("; ")}`;
+                console.error("[publish-pages]", msg, { pageId: page.id });
+                await supabase.from("generated_pages").update({
+                  status: "failed",
+                  error_message: msg.slice(0, 1000),
+                }).eq("id", page.id);
+                results.push({ id: page.id, status: "failed", error: msg });
+                continue;
+              }
+
               const interp = (v: unknown): string | undefined => {
                 if (v == null) return undefined;
                 const s = String(v);

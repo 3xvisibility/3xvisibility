@@ -4,12 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Info, Eye } from "lucide-react";
+import { Loader2, Plus, Trash2, Info, Eye, AlertCircle, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { validateMapping, type MappingIssue } from "@/lib/shopify-mapping-validation";
 
 /**
  * Shape stored in `shopify_field_mappings.field_map`.
@@ -253,6 +254,19 @@ export function ShopifyFieldMappingEditor({
       .slice(0, 24);
   }, [availableVariables]);
 
+  const issues: MappingIssue[] = useMemo(
+    () =>
+      validateMapping({
+        fieldMap,
+        variantMap,
+        metafields,
+        knownVariables: availableVariables,
+      }),
+    [fieldMap, variantMap, metafields, availableVariables],
+  );
+  const errors = issues.filter((i) => i.severity === "error");
+  const warnings = issues.filter((i) => i.severity === "warning");
+
   const insertToken = (target: HTMLInputElement | null, token: string) => {
     if (!target) return;
     const start = target.selectionStart ?? target.value.length;
@@ -301,6 +315,30 @@ export function ShopifyFieldMappingEditor({
             </Badge>
           ))}
         </div>
+      )}
+
+      {(errors.length > 0 || warnings.length > 0) && (
+        <Alert variant={errors.length > 0 ? "destructive" : "default"} className="py-2">
+          {errors.length > 0 ? <AlertCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+          <AlertDescription className="text-xs">
+            <p className="font-semibold mb-1">
+              {errors.length > 0
+                ? `${errors.length} error${errors.length === 1 ? "" : "s"} must be fixed before saving`
+                : `${warnings.length} warning${warnings.length === 1 ? "" : "s"}`}
+              {errors.length > 0 && warnings.length > 0 && ` · ${warnings.length} warning${warnings.length === 1 ? "" : "s"}`}
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5 max-h-28 overflow-y-auto">
+              {[...errors, ...warnings].slice(0, 8).map((i, idx) => (
+                <li key={idx}>
+                  <code className="text-[10px]">{i.field}</code>: {i.message}
+                </li>
+              ))}
+              {errors.length + warnings.length > 8 && (
+                <li className="italic">…and {errors.length + warnings.length - 8} more</li>
+              )}
+            </ul>
+          </AlertDescription>
+        </Alert>
       )}
 
       <Tabs defaultValue="core" className="w-full">
@@ -416,7 +454,12 @@ export function ShopifyFieldMappingEditor({
 
       {!controlled && (
         <div className="flex justify-end pt-2">
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} size="sm">
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || errors.length > 0}
+            size="sm"
+            title={errors.length > 0 ? "Fix validation errors before saving" : undefined}
+          >
             {saveMutation.isPending ? (
               <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Saving…</>
             ) : (
