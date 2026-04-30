@@ -182,10 +182,20 @@ function buildPayload(
   }
 
   if (publishType === "product" && extraData) {
+    const ed = extraData as Record<string, unknown>;
     payload.product_data = {
-      price: extraData.price ? String(extraData.price) : undefined,
-      images: (extraData.images as { src: string }[] | undefined)
-        || (extraData.image ? [{ src: String(extraData.image) }] : undefined),
+      price: ed.price != null ? String(ed.price) : undefined,
+      sku: ed.sku ? String(ed.sku) : undefined,
+      handle: ed.handle ? String(ed.handle) : undefined,
+      body_html: ed.body_html ? String(ed.body_html) : undefined,
+      vendor: ed.vendor ? String(ed.vendor) : undefined,
+      product_type: ed.product_type ? String(ed.product_type) : undefined,
+      tags: (ed.tags as string | string[] | undefined) || undefined,
+      product_status: (ed.product_status as "active" | "draft" | "archived" | undefined) || undefined,
+      variant: (ed.variant as PagePayload["product_data"]!["variant"]) || undefined,
+      metafields: (ed.metafields as PagePayload["product_data"]!["metafields"]) || undefined,
+      images: (ed.images as { src: string; alt?: string }[] | undefined)
+        || (ed.image ? [{ src: String(ed.image) }] : undefined),
     };
   }
 
