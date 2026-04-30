@@ -51,6 +51,7 @@ import {
   Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
 } from "lucide-react";
 import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv, exportDataFile } from "@/lib/export-csv";
+import { ShopifyFieldMappingEditor } from "@/components/websites/ShopifyFieldMappingEditor";
 
 const statusColors: Record<string, string> = {
   pending: "hsl(var(--muted-foreground))",
