@@ -15,6 +15,7 @@ import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
+import { ShopifyFieldMappingEditor } from "./ShopifyFieldMappingEditor";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 
 type Website = Tables<"websites">;
