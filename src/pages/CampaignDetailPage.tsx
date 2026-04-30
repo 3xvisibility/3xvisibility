@@ -330,6 +330,44 @@ export default function CampaignDetailPage() {
     },
   });
 
+  const bulkRepublishMutation = useMutation({
+    mutationFn: async (pageIds: string[]) => {
+      // Reset to pending so publish-pages re-processes them
+      const { error: resetErr } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending", error_message: null })
+        .in("id", pageIds);
+      if (resetErr) throw resetErr;
+
+      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: {
+          page_ids: pageIds,
+          publish_type: pubType,
+          website_id: campaign?.website_id,
+          use_latest_mapping: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      setSelectedPageIds(new Set());
+      const ok = data?.published ?? ids.length;
+      const failed = data?.failed ?? 0;
+      toast({
+        title: "Republish complete",
+        description: `${ok} page${ok !== 1 ? "s" : ""} updated with latest field mapping${failed ? `, ${failed} failed` : ""}.`,
+      });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      toast({ title: "Republish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handlePublishPage = (pageId: string) => {
     // Check if campaign or page has a website
     const page = pages?.find((p: any) => p.id === pageId);
@@ -692,6 +730,28 @@ export default function CampaignDetailPage() {
                         disabled={bulkStatusMutation.isPending}
                       >
                         <Check className="h-2.5 w-2.5 mr-1" /> Set Published
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-[10px] px-2 text-primary"
+                        onClick={() => {
+                          const ids = [...selectedPageIds];
+                          const publishedIds = (pages || [])
+                            .filter((p: any) => ids.includes(p.id) && (p.status === "published" || p.external_url))
+                            .map((p: any) => p.id);
+                          if (publishedIds.length === 0) {
+                            toast({ title: "No published pages selected", description: "Select pages that have already been published.", variant: "destructive" });
+                            return;
+                          }
+                          if (window.confirm(`Republish ${publishedIds.length} published page${publishedIds.length !== 1 ? "s" : ""} using the latest Shopify field mapping?`)) {
+                            bulkRepublishMutation.mutate(publishedIds);
+                          }
+                        }}
+                        disabled={bulkRepublishMutation.isPending}
+                        title="Re-push selected published pages using the most recent field mapping"
+                      >
+                        <RefreshCw className={`h-2.5 w-2.5 mr-1 ${bulkRepublishMutation.isPending ? "animate-spin" : ""}`} /> Republish (latest mapping)
                       </Button>
                       <Button
                         size="sm"
