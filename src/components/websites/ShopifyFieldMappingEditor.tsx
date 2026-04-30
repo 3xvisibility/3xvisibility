@@ -254,6 +254,19 @@ export function ShopifyFieldMappingEditor({
       .slice(0, 24);
   }, [availableVariables]);
 
+  const issues: MappingIssue[] = useMemo(
+    () =>
+      validateMapping({
+        fieldMap,
+        variantMap,
+        metafields,
+        knownVariables: availableVariables,
+      }),
+    [fieldMap, variantMap, metafields, availableVariables],
+  );
+  const errors = issues.filter((i) => i.severity === "error");
+  const warnings = issues.filter((i) => i.severity === "warning");
+
   const insertToken = (target: HTMLInputElement | null, token: string) => {
     if (!target) return;
     const start = target.selectionStart ?? target.value.length;
