@@ -202,20 +202,19 @@ export function ShopifyFieldMappingEditor({
       };
 
       // Manual upsert (the unique partial indexes don't play with .upsert onConflict)
-      const existingQuery = isCampaign
-        ? supabase.from("shopify_field_mappings" as never).select("id").eq("website_id", websiteId).eq("campaign_id", campaignId!)
-        : supabase.from("shopify_field_mappings" as never).select("id").eq("website_id", websiteId).is("campaign_id", null);
-      const { data: existing, error: selErr } = await (existingQuery as ReturnType<typeof existingQuery.maybeSingle>).maybeSingle();
+      const baseSel = sb.from("shopify_field_mappings").select("id").eq("website_id", websiteId);
+      const existingQuery = isCampaign ? baseSel.eq("campaign_id", campaignId!) : baseSel.is("campaign_id", null);
+      const { data: existing, error: selErr } = await existingQuery.maybeSingle();
       if (selErr) throw selErr;
 
       if (existing && (existing as { id: string }).id) {
-        const { error } = await supabase
-          .from("shopify_field_mappings" as never)
+        const { error } = await sb
+          .from("shopify_field_mappings")
           .update(payload)
           .eq("id", (existing as { id: string }).id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("shopify_field_mappings" as never).insert(payload as never);
+        const { error } = await sb.from("shopify_field_mappings").insert(payload);
         if (error) throw error;
       }
     },
