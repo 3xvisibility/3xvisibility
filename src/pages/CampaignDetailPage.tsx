@@ -107,7 +107,7 @@ export default function CampaignDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select("*, templates(name), websites(name, url, language, language_locked)")
+        .select("*, templates(name, variables), websites(name, url, type, language, language_locked)")
         .eq("id", id!)
         .single();
       if (error) throw error;
