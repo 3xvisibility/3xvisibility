@@ -105,18 +105,24 @@ export function ShopifyFieldMappingEditor({
 
   // Server-backed mode (used in EditWebsiteDialog or when campaignId already exists)
   const queryEnabled = !controlled && !!websiteId;
+  // The new shopify_field_mappings table isn't in the generated types yet; cast the
+  // client surface to a permissive any so we can read/write it without TS errors.
+  const sb = supabase as unknown as {
+    from: (t: string) => {
+      select: (cols: string) => any;
+      insert: (row: unknown) => Promise<{ error: { message: string } | null }>;
+      update: (row: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
+    };
+  };
   const { data: row, isLoading } = useQuery({
     enabled: queryEnabled,
     queryKey: ["shopify_field_mapping", websiteId, campaignId ?? null],
     queryFn: async () => {
-      let q = supabase
-        .from("shopify_field_mappings" as never)
-        .select("*")
-        .eq("website_id", websiteId);
+      let q = sb.from("shopify_field_mappings").select("*").eq("website_id", websiteId);
       q = isCampaign ? q.eq("campaign_id", campaignId!) : q.is("campaign_id", null);
-      const { data, error } = await (q as ReturnType<typeof q.maybeSingle>).maybeSingle();
+      const { data, error } = await q.maybeSingle();
       if (error) throw error;
-      return data as null | {
+      return (data ?? null) as null | {
         field_map: ShopifyFieldMap;
         variant_map: ShopifyVariantMap;
         metafields: ShopifyMetafieldMap[];
