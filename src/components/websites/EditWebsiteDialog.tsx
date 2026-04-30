@@ -134,7 +134,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url, type: site.type, credentials: buildCredentials() },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Connection test failed"));
       if (data?.error) throw new Error(data.error);
       return data;
     },

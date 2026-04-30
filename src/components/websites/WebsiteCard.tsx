@@ -48,7 +48,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url: site.url, type: site.type, credentials: site.credentials },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Connection test failed"));
       if (data?.error) throw new Error(data.error);
       return data;
     },
