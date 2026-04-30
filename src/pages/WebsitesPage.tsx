@@ -173,7 +173,7 @@ export default function WebsitesPage() {
             language_locked: languageLocked,
           },
         });
-        if (error) throw error;
+        if (error) throw new Error(await extractEdgeError(error, "Failed to save credentials"));
         if (data?.error) throw new Error(data.error);
         savedWebsiteId = data?.website?.id || data?.id || null;
         updateStep("save", "success", "Connection saved to your workspace");
