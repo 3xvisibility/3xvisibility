@@ -75,12 +75,29 @@ export class ShopifyConnector implements CmsConnector {
     const pd = payload.product_data!;
     const productBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: payload.content,
+      body_html: pd.body_html || payload.content,
       handle: slugify(pd.handle || payload.slug || payload.title),
-      status: "active",
+      status: pd.product_status || "active",
     };
 
-    if (pd.price) productBody.variants = [{ price: String(pd.price) }];
+    if (pd.vendor) productBody.vendor = pd.vendor;
+    if (pd.product_type) productBody.product_type = pd.product_type;
+    if (pd.tags) productBody.tags = Array.isArray(pd.tags) ? pd.tags.join(", ") : pd.tags;
+
+    // Build default variant with price + sku + variant-level fields
+    const v: Record<string, unknown> = {};
+    if (pd.price) v.price = String(pd.price);
+    if (pd.sku) v.sku = pd.sku;
+    if (pd.variant?.option1) v.option1 = pd.variant.option1;
+    if (pd.variant?.option2) v.option2 = pd.variant.option2;
+    if (pd.variant?.option3) v.option3 = pd.variant.option3;
+    if (pd.variant?.compare_at_price) v.compare_at_price = String(pd.variant.compare_at_price);
+    if (pd.variant?.inventory_quantity != null) v.inventory_quantity = pd.variant.inventory_quantity;
+    if (pd.variant?.weight != null) v.weight = pd.variant.weight;
+    if (pd.variant?.weight_unit) v.weight_unit = pd.variant.weight_unit;
+    if (pd.variant?.barcode) v.barcode = pd.variant.barcode;
+    if (Object.keys(v).length) productBody.variants = [v];
+
     if (pd.images?.length) {
       productBody.images = pd.images
         .filter((img) => img.src && !img.src.startsWith("data:"))
@@ -88,6 +105,13 @@ export class ShopifyConnector implements CmsConnector {
     }
     if (payload.seo_title) productBody.metafields_global_title_tag = payload.seo_title;
     if (payload.seo_description) productBody.metafields_global_description_tag = payload.seo_description;
+
+    // Custom metafields
+    if (pd.metafields?.length) {
+      productBody.metafields = pd.metafields
+        .filter((m) => m.namespace && m.key)
+        .map((m) => ({ namespace: m.namespace, key: m.key, type: m.type || "single_line_text_field", value: m.value ?? "" }));
+    }
 
     const res = await shopifyFetch(`${this.apiBase}/products.json`, {
       method: "POST",
