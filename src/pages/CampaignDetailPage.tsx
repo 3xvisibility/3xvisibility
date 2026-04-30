@@ -734,6 +734,28 @@ export default function CampaignDetailPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="h-6 text-[10px] px-2 text-primary"
+                        onClick={() => {
+                          const ids = [...selectedPageIds];
+                          const publishedIds = (pages || [])
+                            .filter((p: any) => ids.includes(p.id) && (p.status === "published" || p.external_url))
+                            .map((p: any) => p.id);
+                          if (publishedIds.length === 0) {
+                            toast({ title: "No published pages selected", description: "Select pages that have already been published.", variant: "destructive" });
+                            return;
+                          }
+                          if (window.confirm(`Republish ${publishedIds.length} published page${publishedIds.length !== 1 ? "s" : ""} using the latest Shopify field mapping?`)) {
+                            bulkRepublishMutation.mutate(publishedIds);
+                          }
+                        }}
+                        disabled={bulkRepublishMutation.isPending}
+                        title="Re-push selected published pages using the most recent field mapping"
+                      >
+                        <RefreshCw className={`h-2.5 w-2.5 mr-1 ${bulkRepublishMutation.isPending ? "animate-spin" : ""}`} /> Republish (latest mapping)
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="h-6 text-[10px] px-2 text-destructive"
                         onClick={() => {
                           if (window.confirm(`Delete ${selectedPageIds.size} selected pages? This cannot be undone.`)) {
