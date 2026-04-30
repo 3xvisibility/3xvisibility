@@ -17,6 +17,7 @@ import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
 import { ShopifyFieldMappingEditor } from "./ShopifyFieldMappingEditor";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
+import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Website = Tables<"websites">;
 

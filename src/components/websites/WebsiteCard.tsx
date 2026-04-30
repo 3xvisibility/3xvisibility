@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
+import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Website = Tables<"websites">;
 
