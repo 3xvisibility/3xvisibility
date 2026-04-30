@@ -17,6 +17,7 @@ import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
 import { ShopifyFieldMappingEditor } from "./ShopifyFieldMappingEditor";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
+import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Website = Tables<"websites">;
 
@@ -134,7 +135,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url, type: site.type, credentials: buildCredentials() },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Connection test failed"));
       if (data?.error) throw new Error(data.error);
       return data;
     },

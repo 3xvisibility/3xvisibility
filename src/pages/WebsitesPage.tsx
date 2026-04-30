@@ -27,6 +27,7 @@ import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide
 import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
 import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
 import { ConnectionProgressSteps, type ProgressStep, type StepStatus } from "@/components/websites/ConnectionProgressSteps";
+import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
@@ -149,7 +150,7 @@ export default function WebsitesPage() {
         const { data: verifyData, error: verifyError } = await supabase.functions.invoke("test-connection", {
           body: { url: finalUrl, type: siteType, credentials: buildCredentials() },
         });
-        if (verifyError) throw verifyError;
+        if (verifyError) throw new Error(await extractEdgeError(verifyError, "Could not reach the site"));
         if (verifyData?.error) throw new Error(verifyData.error);
         updateStep("verify", "success", verifyData?.message || "Credentials accepted");
       } catch (err: any) {
@@ -172,7 +173,7 @@ export default function WebsitesPage() {
             language_locked: languageLocked,
           },
         });
-        if (error) throw error;
+        if (error) throw new Error(await extractEdgeError(error, "Failed to save credentials"));
         if (data?.error) throw new Error(data.error);
         savedWebsiteId = data?.website?.id || data?.id || null;
         updateStep("save", "success", "Connection saved to your workspace");
@@ -192,7 +193,7 @@ export default function WebsitesPage() {
             publish_test_page: true,
           },
         });
-        if (testError) throw testError;
+        if (testError) throw new Error(await extractEdgeError(testError, "Test publish failed"));
         if (testData?.error) throw new Error(testData.error);
         if (testData?.test_page_published || testData?.test_page_url) {
           updateStep(
@@ -267,7 +268,7 @@ export default function WebsitesPage() {
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url: buildTestUrl(), type: siteType, credentials: buildCredentials() },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Connection test failed"));
       if (data?.error) throw new Error(data.error);
       return data;
     },

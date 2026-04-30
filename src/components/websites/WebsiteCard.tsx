@@ -9,6 +9,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { EditWebsiteDialog } from "./EditWebsiteDialog";
 import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
+import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Website = Tables<"websites">;
 
@@ -48,7 +49,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url: site.url, type: site.type, credentials: site.credentials },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "Connection test failed"));
       if (data?.error) throw new Error(data.error);
       return data;
     },
