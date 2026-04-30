@@ -428,3 +428,188 @@ export function ShopifyFieldMappingEditor({
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* Preview Panel — resolves the mapping against a sample product JSON */
+/* ------------------------------------------------------------------ */
+
+function interpolate(template: string | undefined, vars: Record<string, unknown>): string {
+  if (!template) return "";
+  return template.replace(/\{([a-zA-Z0-9_.]+)\}/g, (_m, key) => {
+    const path = String(key).split(".");
+    let cur: unknown = vars;
+    for (const p of path) {
+      if (cur && typeof cur === "object" && p in (cur as Record<string, unknown>)) {
+        cur = (cur as Record<string, unknown>)[p];
+      } else {
+        return "";
+      }
+    }
+    return cur == null ? "" : String(cur);
+  });
+}
+
+interface PreviewPanelProps {
+  previewJson: string;
+  setPreviewJson: (s: string) => void;
+  fieldMap: ShopifyFieldMap;
+  variantMap: ShopifyVariantMap;
+  metafields: ShopifyMetafieldMap[];
+  sampleDefault: string;
+}
+
+function PreviewPanel({
+  previewJson,
+  setPreviewJson,
+  fieldMap,
+  variantMap,
+  metafields,
+  sampleDefault,
+}: PreviewPanelProps) {
+  const { parsed, parseError } = useMemo(() => {
+    try {
+      return { parsed: JSON.parse(previewJson) as Record<string, unknown>, parseError: null as string | null };
+    } catch (e) {
+      return { parsed: {} as Record<string, unknown>, parseError: (e as Error).message };
+    }
+  }, [previewJson]);
+
+  const resolvedCore = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const f of CORE_FIELDS) {
+      const tpl = fieldMap[f.key];
+      if (tpl) out[f.key] = interpolate(tpl, parsed);
+    }
+    return out;
+  }, [fieldMap, parsed]);
+
+  const resolvedVariant = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const f of VARIANT_FIELDS) {
+      const tpl = variantMap[f.key];
+      if (tpl) out[f.key] = interpolate(tpl, parsed);
+    }
+    return out;
+  }, [variantMap, parsed]);
+
+  const resolvedMeta = useMemo(
+    () =>
+      metafields.map((m) => ({
+        ...m,
+        resolvedValue: interpolate(m.value, parsed),
+      })),
+    [metafields, parsed],
+  );
+
+  const shopifyPayload = useMemo(() => {
+    const product: Record<string, unknown> = {
+      ...resolvedCore,
+    };
+    if (resolvedCore.tags) product.tags = String(resolvedCore.tags).split(",").map((t) => t.trim()).filter(Boolean);
+    if (resolvedCore.images) {
+      product.images = String(resolvedCore.images)
+        .split(",")
+        .map((u) => u.trim())
+        .filter(Boolean)
+        .map((src) => ({ src }));
+    }
+    const variant: Record<string, unknown> = { ...resolvedVariant };
+    if (resolvedCore.price) variant.price = resolvedCore.price;
+    if (resolvedCore.sku) variant.sku = resolvedCore.sku;
+    if (Object.keys(variant).length > 0) product.variants = [variant];
+    if (resolvedMeta.length > 0) {
+      product.metafields = resolvedMeta
+        .filter((m) => m.namespace && m.key)
+        .map((m) => ({
+          namespace: m.namespace,
+          key: m.key,
+          type: m.type,
+          value: m.resolvedValue,
+        }));
+    }
+    return { product };
+  }, [resolvedCore, resolvedVariant, resolvedMeta]);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Sample product JSON</Label>
+          <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setPreviewJson(sampleDefault)}>
+            Reset sample
+          </Button>
+        </div>
+        <textarea
+          value={previewJson}
+          onChange={(e) => setPreviewJson(e.target.value)}
+          spellCheck={false}
+          className="w-full h-[360px] rounded-md border bg-background p-2 text-[11px] font-mono"
+        />
+        {parseError && (
+          <p className="text-[10px] text-destructive">JSON parse error: {parseError}</p>
+        )}
+        <p className="text-[10px] text-muted-foreground">
+          Edit the values above (or paste a real Shopify product) to see how your mapping resolves.
+          Tokens like <code>{"{product_title}"}</code> in the field tabs read from these keys.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs">Resolved Shopify product</Label>
+        <ScrollArea className="h-[360px] rounded-md border bg-muted/30 p-2">
+          <div className="space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Core</p>
+              {Object.keys(resolvedCore).length === 0 ? (
+                <p className="text-[11px] text-muted-foreground italic">No core fields mapped yet.</p>
+              ) : (
+                <div className="space-y-1">
+                  {Object.entries(resolvedCore).map(([k, v]) => (
+                    <div key={k} className="grid grid-cols-[110px_1fr] gap-2 text-[11px]">
+                      <span className="font-mono text-muted-foreground">{k}</span>
+                      <span className="font-mono break-words">{v || <em className="text-muted-foreground">empty</em>}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {Object.keys(resolvedVariant).length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Variant</p>
+                <div className="space-y-1">
+                  {Object.entries(resolvedVariant).map(([k, v]) => (
+                    <div key={k} className="grid grid-cols-[110px_1fr] gap-2 text-[11px]">
+                      <span className="font-mono text-muted-foreground">{k}</span>
+                      <span className="font-mono break-words">{v || <em className="text-muted-foreground">empty</em>}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {resolvedMeta.length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Metafields</p>
+                <div className="space-y-1">
+                  {resolvedMeta.map((m, i) => (
+                    <div key={i} className="text-[11px] font-mono">
+                      <span className="text-muted-foreground">{m.namespace}.{m.key}</span> = {m.resolvedValue || <em className="text-muted-foreground">empty</em>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Final API payload</p>
+              <pre className="text-[10px] font-mono bg-background rounded p-2 overflow-x-auto whitespace-pre-wrap">
+                {JSON.stringify(shopifyPayload, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+}
