@@ -86,7 +86,7 @@ export function ShopifyCredentialFields({
         <Input
           id="shopify-token"
           type="password"
-          placeholder="shpat_xxxxx"
+          placeholder="shpat_… or shpua_… or shpca_…"
           value={accessToken}
           onChange={(e) => onAccessTokenChange(e.target.value)}
           aria-invalid={!!tokenError}
