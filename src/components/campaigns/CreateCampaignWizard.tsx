@@ -121,6 +121,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [targetFieldMappings, setTargetFieldMappings] = useState<Record<string, string>>({});
   const [faqPairs, setFaqPairs] = useState<import("./FaqMappingPanel").FaqPair[]>([]);
   const [fillRules, setFillRules] = useState<Record<string, import("./FillRulesPanel").FillRule>>({});
+  // Shopify per-campaign override of the website's default product field mapping.
+  // When `enabled` is false, publishing falls back to the website-level default.
+  const [shopifyOverride, setShopifyOverride] = useState<{
+    enabled: boolean;
+    field_map: import("../websites/ShopifyFieldMappingEditor").ShopifyFieldMap;
+    variant_map: import("../websites/ShopifyFieldMappingEditor").ShopifyVariantMap;
+    metafields: import("../websites/ShopifyFieldMappingEditor").ShopifyMetafieldMap[];
+  }>({ enabled: false, field_map: {}, variant_map: {}, metafields: [] });
   const [aiFillMode, setAiFillMode] = useState<"per_campaign" | "per_row">("per_campaign");
   // AI vibe theme — palette + typography + density override applied at
   // generation time so a single template can adopt many distinct looks.
