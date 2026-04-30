@@ -2015,6 +2015,44 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           || "en"
                         }
                       />
+
+                      {(() => {
+                        const targetSite = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+                        if (targetSite?.type !== "shopify") return null;
+                        const ShopifyEditor = require("../websites/ShopifyFieldMappingEditor").ShopifyFieldMappingEditor;
+                        return (
+                          <div className="mt-4 rounded-xl border border-border p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <Label className="text-sm font-semibold">Shopify field mapping (override)</Label>
+                                <p className="text-[11px] text-muted-foreground">
+                                  Off = use the website&apos;s default mapping. On = override just for this campaign.
+                                </p>
+                              </div>
+                              <Switch
+                                checked={shopifyOverride.enabled}
+                                onCheckedChange={(v) => setShopifyOverride(s => ({ ...s, enabled: v }))}
+                              />
+                            </div>
+                            {shopifyOverride.enabled && wsId && targetSite && (
+                              <ShopifyEditor
+                                workspaceId={wsId}
+                                websiteId={targetSite.id}
+                                availableVariables={selectedTemplateVars}
+                                controlled={{
+                                  value: {
+                                    field_map: shopifyOverride.field_map,
+                                    variant_map: shopifyOverride.variant_map,
+                                    metafields: shopifyOverride.metafields,
+                                  },
+                                  onChange: (next: { field_map: typeof shopifyOverride.field_map; variant_map: typeof shopifyOverride.variant_map; metafields: typeof shopifyOverride.metafields }) =>
+                                    setShopifyOverride(s => ({ ...s, ...next })),
+                                }}
+                              />
+                            )}
+                          </div>
+                        );
+                      })()}
                     </>
                   )}
                 </>
