@@ -4,12 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Trash2, Info, Eye } from "lucide-react";
+import { Loader2, Plus, Trash2, Info, Eye, AlertCircle, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { validateMapping, type MappingIssue } from "@/lib/shopify-mapping-validation";
 
 /**
  * Shape stored in `shopify_field_mappings.field_map`.
