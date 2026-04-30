@@ -317,6 +317,30 @@ export function ShopifyFieldMappingEditor({
         </div>
       )}
 
+      {(errors.length > 0 || warnings.length > 0) && (
+        <Alert variant={errors.length > 0 ? "destructive" : "default"} className="py-2">
+          {errors.length > 0 ? <AlertCircle className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+          <AlertDescription className="text-xs">
+            <p className="font-semibold mb-1">
+              {errors.length > 0
+                ? `${errors.length} error${errors.length === 1 ? "" : "s"} must be fixed before saving`
+                : `${warnings.length} warning${warnings.length === 1 ? "" : "s"}`}
+              {errors.length > 0 && warnings.length > 0 && ` · ${warnings.length} warning${warnings.length === 1 ? "" : "s"}`}
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5 max-h-28 overflow-y-auto">
+              {[...errors, ...warnings].slice(0, 8).map((i, idx) => (
+                <li key={idx}>
+                  <code className="text-[10px]">{i.field}</code>: {i.message}
+                </li>
+              ))}
+              {errors.length + warnings.length > 8 && (
+                <li className="italic">…and {errors.length + warnings.length - 8} more</li>
+              )}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Tabs defaultValue="core" className="w-full">
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="core">Core</TabsTrigger>
