@@ -402,6 +402,16 @@ export function ShopifyFieldMappingEditor({
             </p>
           </div>
         </TabsContent>
+        <TabsContent value="preview" className="mt-3">
+          <PreviewPanel
+            previewJson={previewJson}
+            setPreviewJson={setPreviewJson}
+            fieldMap={fieldMap}
+            variantMap={variantMap}
+            metafields={metafields}
+            sampleDefault={SAMPLE_JSON}
+          />
+        </TabsContent>
       </Tabs>
 
       {!controlled && (
