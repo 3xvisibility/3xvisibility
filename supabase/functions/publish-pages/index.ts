@@ -184,20 +184,99 @@ function buildPayload(
 
   if (publishType === "product" && extraData) {
     const ed = extraData as Record<string, unknown>;
-    payload.product_data = {
-      price: ed.price != null ? String(ed.price) : undefined,
-      sku: ed.sku ? String(ed.sku) : undefined,
-      handle: ed.handle ? String(ed.handle) : undefined,
-      body_html: ed.body_html ? String(ed.body_html) : undefined,
-      vendor: ed.vendor ? String(ed.vendor) : undefined,
-      product_type: ed.product_type ? String(ed.product_type) : undefined,
-      tags: (ed.tags as string | string[] | undefined) || undefined,
-      product_status: (ed.product_status as "active" | "draft" | "archived" | undefined) || undefined,
-      variant: (ed.variant as NonNullable<PagePayload["product_data"]>["variant"]) || undefined,
-      metafields: (ed.metafields as NonNullable<PagePayload["product_data"]>["metafields"]) || undefined,
-      images: (ed.images as { src: string; alt?: string }[] | undefined)
-        || (ed.image ? [{ src: String(ed.image) }] : undefined),
+
+    const isObj = (v: unknown): v is Record<string, unknown> =>
+      typeof v === "object" && v !== null && !Array.isArray(v);
+    const asStr = (v: unknown): string | undefined =>
+      v == null || v === "" ? undefined : String(v);
+    const asNum = (v: unknown): number | undefined => {
+      if (v == null || v === "") return undefined;
+      const n = typeof v === "number" ? v : parseFloat(String(v));
+      return Number.isFinite(n) ? n : undefined;
     };
+    const asInt = (v: unknown): number | undefined => {
+      if (v == null || v === "") return undefined;
+      const n = typeof v === "number" ? Math.trunc(v) : parseInt(String(v), 10);
+      return Number.isFinite(n) ? n : undefined;
+    };
+    const asEnum = <T extends string>(v: unknown, allowed: readonly T[]): T | undefined => {
+      const s = asStr(v);
+      return s && (allowed as readonly string[]).includes(s) ? (s as T) : undefined;
+    };
+
+    // Tags: accept string or string[]; coerce arrays of unknown into clean string[]
+    let tags: string | string[] | undefined;
+    if (Array.isArray(ed.tags)) {
+      const arr = ed.tags.map((t) => asStr(t)).filter((t): t is string => !!t);
+      tags = arr.length > 0 ? arr : undefined;
+    } else {
+      tags = asStr(ed.tags);
+    }
+
+    // Variant: build only from validated primitive fields
+    let variant: NonNullable<PagePayload["product_data"]>["variant"] | undefined;
+    if (isObj(ed.variant)) {
+      const v = ed.variant;
+      const built = {
+        option1: asStr(v.option1),
+        option2: asStr(v.option2),
+        option3: asStr(v.option3),
+        compare_at_price: asStr(v.compare_at_price),
+        inventory_quantity: asInt(v.inventory_quantity),
+        weight: asNum(v.weight),
+        weight_unit: asEnum(v.weight_unit, ["g", "kg", "oz", "lb"] as const),
+        barcode: asStr(v.barcode),
+      };
+      if (Object.values(built).some((x) => x !== undefined)) variant = built;
+    }
+
+    // Metafields: keep only entries with non-empty namespace, key, type, value
+    let metafields: NonNullable<PagePayload["product_data"]>["metafields"] | undefined;
+    if (Array.isArray(ed.metafields)) {
+      const cleaned = ed.metafields
+        .filter(isObj)
+        .map((m) => ({
+          namespace: asStr(m.namespace) ?? "",
+          key: asStr(m.key) ?? "",
+          type: asStr(m.type) ?? "single_line_text_field",
+          value: asStr(m.value) ?? "",
+        }))
+        .filter((m) => m.namespace && m.key && m.value !== "");
+      if (cleaned.length > 0) metafields = cleaned;
+    }
+
+    // Images: array of {src, alt?} with http(s) src; or single fallback `image`
+    let images: { src: string; alt?: string }[] | undefined;
+    if (Array.isArray(ed.images)) {
+      const cleaned = ed.images
+        .filter(isObj)
+        .map((img) => ({ src: asStr(img.src) ?? "", alt: asStr(img.alt) }))
+        .filter((img) => /^https?:\/\//i.test(img.src));
+      if (cleaned.length > 0) images = cleaned;
+    } else {
+      const single = asStr(ed.image);
+      if (single && /^https?:\/\//i.test(single)) images = [{ src: single }];
+    }
+
+    payload.product_data = {
+      price: asStr(ed.price),
+      sku: asStr(ed.sku),
+      handle: asStr(ed.handle),
+      body_html: asStr(ed.body_html),
+      vendor: asStr(ed.vendor),
+      product_type: asStr(ed.product_type),
+      tags,
+      product_status: asEnum(ed.product_status, ["active", "draft", "archived"] as const),
+      variant,
+      metafields,
+      images,
+    };
+
+    // Strip undefined keys so connectors only see populated fields
+    for (const k of Object.keys(payload.product_data)) {
+      const rec = payload.product_data as Record<string, unknown>;
+      if (rec[k] === undefined) delete rec[k];
+    }
   }
 
   return payload;
