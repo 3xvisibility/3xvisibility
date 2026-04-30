@@ -283,10 +283,11 @@ export function ShopifyFieldMappingEditor({
       )}
 
       <Tabs defaultValue="core" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="core">Core</TabsTrigger>
           <TabsTrigger value="variant">Variant</TabsTrigger>
           <TabsTrigger value="meta">Metafields</TabsTrigger>
+          <TabsTrigger value="preview"><Eye className="h-3 w-3 mr-1" />Preview</TabsTrigger>
         </TabsList>
 
         <TabsContent value="core" className="mt-3">
