@@ -148,14 +148,15 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className={`${site.type === "shopify" ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[85vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle>Edit Website</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="general" className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className={`grid w-full ${site.type === "shopify" ? "grid-cols-3" : "grid-cols-2"}`}>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="credentials">Credentials</TabsTrigger>
+            {site.type === "shopify" && <TabsTrigger value="mapping">Field Mapping</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="general" className="space-y-4 mt-4">
