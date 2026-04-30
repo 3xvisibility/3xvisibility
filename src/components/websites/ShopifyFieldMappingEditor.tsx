@@ -454,7 +454,12 @@ export function ShopifyFieldMappingEditor({
 
       {!controlled && (
         <div className="flex justify-end pt-2">
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} size="sm">
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || errors.length > 0}
+            size="sm"
+            title={errors.length > 0 ? "Fix validation errors before saving" : undefined}
+          >
             {saveMutation.isPending ? (
               <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Saving…</>
             ) : (
