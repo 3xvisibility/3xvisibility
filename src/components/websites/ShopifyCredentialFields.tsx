@@ -28,13 +28,26 @@ export function ShopifyCredentialFields({
       <Alert className="bg-muted/50 border-muted">
         <Info className="h-4 w-4" />
         <AlertDescription className="text-xs leading-relaxed">
-          <strong>Shopify prerequisites:</strong>
-          <ul className="list-disc pl-4 mt-1 space-y-0.5">
-            <li>Create a custom app in Shopify Admin → Settings → Apps and sales channels → Develop apps</li>
-            <li>Grant the app <strong>write_content</strong> (for pages) and/or <strong>write_products</strong> scopes</li>
-            <li>Install the app and copy the Admin API access token</li>
-            <li>The token starts with <code className="text-[10px]">shpat_</code></li>
-          </ul>
+          <strong>Two ways to get your Admin API access token:</strong>
+          <div className="mt-1.5">
+            <strong className="text-foreground">Option A — Shopify Admin (custom app):</strong>
+            <ul className="list-disc pl-4 mt-0.5 space-y-0.5">
+              <li>Shopify Admin → Settings → Apps and sales channels → Develop apps</li>
+              <li>Create app → grant <strong>write_content</strong> and/or <strong>write_products</strong> scopes</li>
+              <li>Install the app and copy the Admin API access token (starts with <code className="text-[10px]">shpat_</code>)</li>
+            </ul>
+          </div>
+          <div className="mt-2">
+            <strong className="text-foreground">Option B — Partners developer dashboard:</strong>
+            <ul className="list-disc pl-4 mt-0.5 space-y-0.5">
+              <li>partners.shopify.com → Apps → create app (custom distribution)</li>
+              <li>Configure the same scopes (<strong>write_content</strong>, <strong>write_products</strong>)</li>
+              <li>Install on your store using the install link, then copy the Admin API access token (<code className="text-[10px]">shpat_</code>, <code className="text-[10px]">shpua_</code>, or <code className="text-[10px]">shpca_</code>)</li>
+            </ul>
+          </div>
+          <div className="mt-2 text-muted-foreground">
+            Either token works here — paste the one your dashboard provides.
+          </div>
         </AlertDescription>
       </Alert>
 
