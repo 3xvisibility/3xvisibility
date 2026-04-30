@@ -265,6 +265,20 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               );
             })()}
           </TabsContent>
+
+          {site.type === "shopify" && site.workspace_id && (
+            <TabsContent value="mapping" className="space-y-3 mt-4">
+              <p className="text-xs text-muted-foreground">
+                These mappings are the <strong>store default</strong> for this Shopify site. Each
+                campaign can override them on its own Mapping step.
+              </p>
+              <ShopifyFieldMappingEditor
+                workspaceId={site.workspace_id}
+                websiteId={site.id}
+                campaignId={null}
+              />
+            </TabsContent>
+          )}
         </Tabs>
 
         <div className="flex justify-end gap-2 pt-2">
