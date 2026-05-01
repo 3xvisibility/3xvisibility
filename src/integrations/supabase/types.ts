@@ -1603,6 +1603,45 @@ export type Database = {
         }
         Relationships: []
       }
+      shopify_sync_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          product_title: string | null
+          shopify_product_id: number
+          synced_at: string
+          user_id: string
+          website_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          product_title?: string | null
+          shopify_product_id: number
+          synced_at?: string
+          user_id: string
+          website_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          product_title?: string | null
+          shopify_product_id?: number
+          synced_at?: string
+          user_id?: string
+          website_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       sitemaps: {
         Row: {
           content: string
