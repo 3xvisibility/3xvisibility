@@ -11,7 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Package, Pencil, Search, Loader2, Save, ArrowLeft, Sparkles,
-  ChevronRight, ChevronLeft, ExternalLink, Tag, X,
+  ChevronRight, ChevronLeft, ExternalLink, Tag, X, RefreshCw, Bell, BellOff,
+  CheckCircle2, AlertCircle, Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
