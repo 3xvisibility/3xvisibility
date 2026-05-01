@@ -150,6 +150,17 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
               <Languages className="h-3 w-3 mr-1" />
               Re-translate to {site.language || "site language"}
             </Button>
+            {site.type === "shopify" && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-7 text-xs gap-1"
+                onClick={() => setProductsOpen(true)}
+              >
+                <Package className="h-3 w-3" />
+                Manage Products
+              </Button>
+            )}
           </div>
 
           {/* Sitemap Section */}
