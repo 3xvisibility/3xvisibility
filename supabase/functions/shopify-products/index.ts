@@ -110,6 +110,39 @@ Deno.serve(async (req) => {
       return json({ product: data.product });
     }
 
+    // ---- GET PRODUCT METAFIELDS (SEO) ----
+    if (action === "get_product_metafields") {
+      const { product_ids } = body; // array of product IDs
+      if (!Array.isArray(product_ids) || !product_ids.length) return json({ error: "product_ids array required" }, 400);
+
+      const results: Record<string, { seo_title: string; seo_description: string }> = {};
+
+      for (const pid of product_ids) {
+        try {
+          const res = await shopifyFetch(
+            `${apiBase}/products/${pid}/metafields.json?namespace=global`,
+            { headers },
+          );
+          let seoTitle = "";
+          let seoDesc = "";
+
+          if (res.ok) {
+            const data = await res.json();
+            const mfs = data.metafields || [];
+            for (const mf of mfs) {
+              if (mf.key === "title_tag") seoTitle = mf.value || "";
+              if (mf.key === "description_tag") seoDesc = mf.value || "";
+            }
+          }
+          results[String(pid)] = { seo_title: seoTitle, seo_description: seoDesc };
+        } catch {
+          results[String(pid)] = { seo_title: "", seo_description: "" };
+        }
+      }
+
+      return json({ metafields: results });
+    }
+
     // ---- UPDATE PRODUCT ----
     if (action === "update_product") {
       const { product_id, updates } = body;

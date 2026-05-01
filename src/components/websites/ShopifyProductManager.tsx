@@ -126,14 +126,35 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
 
   // Bulk SEO state
   const [bulkSeoData, setBulkSeoData] = useState<Record<number, { seo_title: string; seo_description: string }>>({});
+  const [currentMeta, setCurrentMeta] = useState<Record<string, { seo_title: string; seo_description: string }>>({});
+  const [loadingMeta, setLoadingMeta] = useState(false);
 
-  const openBulkSeo = () => {
+  const openBulkSeo = async () => {
     const initial: typeof bulkSeoData = {};
     selectedIds.forEach((id) => {
       initial[id] = { seo_title: "", seo_description: "" };
     });
     setBulkSeoData(initial);
     setView("bulk-seo");
+
+    // Fetch current metafields for selected products
+    setLoadingMeta(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-products", {
+        body: {
+          action: "get_product_metafields",
+          website_id: website.id,
+          product_ids: Array.from(selectedIds),
+        },
+      });
+      if (!error && data?.metafields) {
+        setCurrentMeta(data.metafields);
+      }
+    } catch {
+      // Non-fatal — just won't show current values
+    } finally {
+      setLoadingMeta(false);
+    }
   };
 
   const bulkSeoMutation = useMutation({
@@ -390,18 +411,32 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
             <div className="space-y-4 pr-3">
               <p className="text-sm text-muted-foreground">
                 Set SEO title and description for {Object.keys(bulkSeoData).length} selected products.
+                {loadingMeta && <span className="ml-1 text-xs">(loading current SEO data…)</span>}
               </p>
               {Object.entries(bulkSeoData).map(([idStr, seo]) => {
                 const id = Number(idStr);
                 const product = products.find((p) => p.id === id);
+                const current = currentMeta[idStr] || { seo_title: "", seo_description: "" };
+                const previewTitle = seo.seo_title || current.seo_title || product?.title || "";
+                const previewDesc = seo.seo_description || current.seo_description || "";
+
                 return (
-                  <div key={id} className="border border-border rounded-lg p-3 space-y-2">
+                  <div key={id} className="border border-border rounded-lg p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="font-medium text-sm truncate">{product?.title || `Product #${id}`}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {product?.images?.[0] ? (
+                          <img src={product.images[0].src} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                        ) : (
+                          <div className="h-8 w-8 rounded bg-muted flex items-center justify-center shrink-0">
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <p className="font-medium text-sm truncate">{product?.title || `Product #${id}`}</p>
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-6 w-6 shrink-0"
                         onClick={() => {
                           const next = { ...bulkSeoData };
                           delete next[id];
@@ -415,27 +450,88 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
                         <X className="h-3 w-3" />
                       </Button>
                     </div>
-                    <Input
-                      placeholder="SEO Title"
-                      value={seo.seo_title}
-                      onChange={(e) =>
-                        setBulkSeoData((prev) => ({
-                          ...prev,
-                          [id]: { ...prev[id], seo_title: e.target.value },
-                        }))
-                      }
-                    />
-                    <Textarea
-                      placeholder="SEO Description"
-                      rows={2}
-                      value={seo.seo_description}
-                      onChange={(e) =>
-                        setBulkSeoData((prev) => ({
-                          ...prev,
-                          [id]: { ...prev[id], seo_description: e.target.value },
-                        }))
-                      }
-                    />
+
+                    {/* Current SEO values */}
+                    {(current.seo_title || current.seo_description) && (
+                      <div className="bg-muted/40 rounded-md p-2.5 space-y-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Current</p>
+                        <p className="text-xs">
+                          <span className="text-muted-foreground">Title: </span>
+                          <span className={cn(!current.seo_title && "italic text-muted-foreground")}>
+                            {current.seo_title || "(not set)"}
+                          </span>
+                        </p>
+                        <p className="text-xs">
+                          <span className="text-muted-foreground">Description: </span>
+                          <span className={cn(!current.seo_description && "italic text-muted-foreground")}>
+                            {current.seo_description || "(not set)"}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                    {loadingMeta && !current.seo_title && !current.seo_description && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Loading current SEO…
+                      </div>
+                    )}
+
+                    {/* New SEO inputs */}
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-xs">New SEO Title</Label>
+                        <Input
+                          placeholder={current.seo_title || "Enter new meta title…"}
+                          value={seo.seo_title}
+                          onChange={(e) =>
+                            setBulkSeoData((prev) => ({
+                              ...prev,
+                              [id]: { ...prev[id], seo_title: e.target.value },
+                            }))
+                          }
+                        />
+                        {seo.seo_title && (
+                          <p className={cn("text-[11px] mt-0.5", seo.seo_title.length > 60 ? "text-destructive" : "text-muted-foreground")}>
+                            {seo.seo_title.length}/60 characters
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <Label className="text-xs">New SEO Description</Label>
+                        <Textarea
+                          placeholder={current.seo_description || "Enter new meta description…"}
+                          rows={2}
+                          value={seo.seo_description}
+                          onChange={(e) =>
+                            setBulkSeoData((prev) => ({
+                              ...prev,
+                              [id]: { ...prev[id], seo_description: e.target.value },
+                            }))
+                          }
+                        />
+                        {seo.seo_description && (
+                          <p className={cn("text-[11px] mt-0.5", seo.seo_description.length > 160 ? "text-destructive" : "text-muted-foreground")}>
+                            {seo.seo_description.length}/160 characters
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* SERP Preview */}
+                    {(seo.seo_title || seo.seo_description) && (
+                      <div className="border border-primary/20 bg-primary/5 rounded-md p-2.5 space-y-0.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">Preview after update</p>
+                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium truncate leading-snug">
+                          {previewTitle}
+                        </p>
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 truncate">
+                          {`https://${domain}/products/${product?.handle || "..."}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                          {previewDesc || "No description set"}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 );
               })}
