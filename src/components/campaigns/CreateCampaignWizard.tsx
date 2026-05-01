@@ -123,6 +123,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [targetFieldMappings, setTargetFieldMappings] = useState<Record<string, string>>({});
   const [faqPairs, setFaqPairs] = useState<import("./FaqMappingPanel").FaqPair[]>([]);
   const [fillRules, setFillRules] = useState<Record<string, import("./FillRulesPanel").FillRule>>({});
+  const [unmappedVars, setUnmappedVars] = useState<string[]>([]);
   // Shopify per-campaign override of the website's default product field mapping.
   // When `enabled` is false, publishing falls back to the website-level default.
   const [shopifyOverride, setShopifyOverride] = useState<{
