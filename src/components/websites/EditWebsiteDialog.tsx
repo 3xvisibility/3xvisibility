@@ -210,10 +210,6 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
             )}
             {site.type === "shopify" && (
               <>
-                <ConnectionSetupGuide
-                  provider="shopify"
-                  siteHint={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
-                />
                 <ShopifyCredentialFields
                   shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
                   onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
