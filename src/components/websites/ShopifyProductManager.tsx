@@ -360,9 +360,31 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
               )}
             </ScrollArea>
 
-            <p className="text-[11px] text-muted-foreground text-center">
-              {products.length} product{products.length !== 1 ? "s" : ""} loaded from {domain}
-            </p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-[11px] text-muted-foreground">
+                Page {currentPage} · {products.length} product{products.length !== 1 ? "s" : ""} loaded from {domain}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs gap-1"
+                  disabled={currentPage <= 1}
+                  onClick={goPrevPage}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" /> Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs gap-1"
+                  disabled={!productsData?.next_page_info}
+                  onClick={goNextPage}
+                >
+                  Next <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
