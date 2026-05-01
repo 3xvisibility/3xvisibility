@@ -47,7 +47,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
-  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward,
+  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward, Send,
   Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
 } from "lucide-react";
 import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv, exportDataFile } from "@/lib/export-csv";
