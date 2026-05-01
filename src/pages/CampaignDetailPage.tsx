@@ -423,6 +423,16 @@ export default function CampaignDetailPage() {
     }
   };
 
+  const handleBulkPublish = () => {
+    const ids = [...selectedPageIds];
+    if (!campaign?.website_id) {
+      setPendingBulkPublishIds(ids);
+      setShowWebsiteSelector(true);
+    } else {
+      bulkPublishMutation.mutate({ pageIds: ids });
+    }
+  };
+
   const bulkStatusMutation = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
       const { error } = await supabase.from("generated_pages").update({ status: status as any }).in("id", ids);
