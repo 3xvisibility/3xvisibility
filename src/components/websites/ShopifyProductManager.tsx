@@ -126,14 +126,35 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
 
   // Bulk SEO state
   const [bulkSeoData, setBulkSeoData] = useState<Record<number, { seo_title: string; seo_description: string }>>({});
+  const [currentMeta, setCurrentMeta] = useState<Record<string, { seo_title: string; seo_description: string }>>({});
+  const [loadingMeta, setLoadingMeta] = useState(false);
 
-  const openBulkSeo = () => {
+  const openBulkSeo = async () => {
     const initial: typeof bulkSeoData = {};
     selectedIds.forEach((id) => {
       initial[id] = { seo_title: "", seo_description: "" };
     });
     setBulkSeoData(initial);
     setView("bulk-seo");
+
+    // Fetch current metafields for selected products
+    setLoadingMeta(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-products", {
+        body: {
+          action: "get_product_metafields",
+          website_id: website.id,
+          product_ids: Array.from(selectedIds),
+        },
+      });
+      if (!error && data?.metafields) {
+        setCurrentMeta(data.metafields);
+      }
+    } catch {
+      // Non-fatal — just won't show current values
+    } finally {
+      setLoadingMeta(false);
+    }
   };
 
   const bulkSeoMutation = useMutation({
