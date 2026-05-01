@@ -1561,6 +1561,48 @@ export type Database = {
         }
         Relationships: []
       }
+      shopify_oauth_states: {
+        Row: {
+          client_id: string
+          client_secret: string
+          created_at: string
+          expires_at: string
+          id: string
+          language: string | null
+          shop_domain: string
+          site_name: string | null
+          state: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          client_id: string
+          client_secret: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          language?: string | null
+          shop_domain: string
+          site_name?: string | null
+          state: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          language?: string | null
+          shop_domain?: string
+          site_name?: string | null
+          state?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       sitemaps: {
         Row: {
           content: string

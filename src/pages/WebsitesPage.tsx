@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { UsageLimitDialog } from "@/components/UsageLimitDialog";
@@ -48,6 +49,9 @@ export default function WebsitesPage() {
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
+  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<"manual" | "oauth">("oauth");
+  const [shopifyClientId, setShopifyClientId] = useState("");
+  const [shopifyClientSecret, setShopifyClientSecret] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -61,6 +65,24 @@ export default function WebsitesPage() {
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle OAuth callback redirect
+  useEffect(() => {
+    const oauthStatus = searchParams.get("shopify_oauth");
+    if (oauthStatus === "success") {
+      toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth." });
+      queryClient.invalidateQueries({ queryKey: ["websites"] });
+      searchParams.delete("shopify_oauth");
+      setSearchParams(searchParams, { replace: true });
+    } else if (oauthStatus === "error") {
+      const msg = searchParams.get("message") || "OAuth connection failed";
+      toast({ title: "Shopify OAuth failed", description: msg, variant: "destructive" });
+      searchParams.delete("shopify_oauth");
+      searchParams.delete("message");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams]);
 
   const { data: websites = [], isLoading } = useQuery({
     queryKey: ["websites", wsId],
@@ -90,10 +112,15 @@ export default function WebsitesPage() {
   const maxSites = features.websites;
   const filteredWebsites = filterType === "all" ? websites : websites.filter((s) => s.type === filterType);
 
-  // Shopify-specific frontend validation (Bengali warnings shown inline in fields).
+  // Shopify-specific frontend validation
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
-  const shopifyTokenError = siteType === "shopify" ? validateShopifyToken(shopifyToken) : null;
-  const shopifyInvalid = siteType === "shopify" && (!!shopifyDomainError || !!shopifyTokenError);
+  const shopifyTokenError = siteType === "shopify" && shopifyAuthMethod === "manual" ? validateShopifyToken(shopifyToken) : null;
+  const shopifyOAuthMissing = siteType === "shopify" && shopifyAuthMethod === "oauth" && (!shopifyClientId || !shopifyClientSecret);
+  const shopifyInvalid = siteType === "shopify" && (
+    !!shopifyDomainError ||
+    (shopifyAuthMethod === "manual" && !!shopifyTokenError) ||
+    (shopifyAuthMethod === "oauth" && shopifyOAuthMissing)
+  );
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
@@ -128,6 +155,34 @@ export default function WebsitesPage() {
     if (!siteUrl && !(siteType === "shopify" && shopDomain)) {
       toast({ title: "Error", description: "Missing website info", variant: "destructive" });
       return;
+    }
+
+    // ---- Shopify OAuth redirect flow ----
+    if (siteType === "shopify" && shopifyAuthMethod === "oauth") {
+      setIsConnecting(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+          body: {
+            shop_domain: shopDomain,
+            client_id: shopifyClientId,
+            client_secret: shopifyClientSecret,
+            workspace_id: wsId,
+            site_name: siteName || shopDomain,
+            language: siteLanguage,
+          },
+        });
+        if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
+        if (data?.error) throw new Error(data.error);
+        if (!data?.auth_url) throw new Error("No auth URL returned");
+
+        // Redirect to Shopify for authorization
+        window.location.href = data.auth_url;
+        return;
+      } catch (err: any) {
+        setIsConnecting(false);
+        toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
+        return;
+      }
     }
 
     const finalUrl = siteType === "shopify" && shopDomain
@@ -306,6 +361,9 @@ export default function WebsitesPage() {
     setJwtToken("");
     setShopifyToken("");
     setShopDomain("");
+    setShopifyClientId("");
+    setShopifyClientSecret("");
+    setShopifyAuthMethod("oauth");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
@@ -390,6 +448,12 @@ export default function WebsitesPage() {
                       onShopDomainChange={setShopDomain}
                       accessToken={shopifyToken}
                       onAccessTokenChange={setShopifyToken}
+                      clientId={shopifyClientId}
+                      onClientIdChange={setShopifyClientId}
+                      clientSecret={shopifyClientSecret}
+                      onClientSecretChange={setShopifyClientSecret}
+                      authMethod={shopifyAuthMethod}
+                      onAuthMethodChange={setShopifyAuthMethod}
                     />
                   </>
                 )}
