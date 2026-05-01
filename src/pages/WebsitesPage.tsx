@@ -573,13 +573,16 @@ export default function WebsitesPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredWebsites.map((site) => (
+          {filteredWebsites.map((site, idx) => (
             <WebsiteCard
               key={site.id}
               site={site}
               sitemap={getSitemap(site.id)}
               onDelete={(id) => deleteMutation.mutate(id)}
               isDeleting={deleteMutation.isPending}
+              autoOpenProducts={
+                autoOpenShopifyProducts && site.type === "shopify" && idx === 0
+              }
             />
           ))}
         </div>
