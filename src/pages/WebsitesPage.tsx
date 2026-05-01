@@ -361,6 +361,9 @@ export default function WebsitesPage() {
     setJwtToken("");
     setShopifyToken("");
     setShopDomain("");
+    setShopifyClientId("");
+    setShopifyClientSecret("");
+    setShopifyAuthMethod("oauth");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
