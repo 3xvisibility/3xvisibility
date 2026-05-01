@@ -1,0 +1,185 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+async function shopifyFetch(url: string, init: RequestInit, retries = 3): Promise<Response> {
+  for (let i = 0; i <= retries; i++) {
+    const res = await fetch(url, init);
+    if (res.status === 429) {
+      const delay = Math.min(parseFloat(res.headers.get("Retry-After") || "2") * 1000, 10000);
+      await new Promise(r => setTimeout(r, delay));
+      continue;
+    }
+    return res;
+  }
+  throw new Error("Shopify rate limit exceeded after retries");
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return json({ error: "Missing authorization" }, 401);
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) return json({ error: "Unauthorized" }, 401);
+
+    const body = await req.json();
+    const { action, website_id } = body;
+
+    if (!website_id || !action) return json({ error: "website_id and action are required" }, 400);
+
+    // Fetch website with credentials
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: website, error: wsError } = await supabase
+      .from("websites")
+      .select("*")
+      .eq("id", website_id)
+      .eq("user_id", user.id)
+      .eq("type", "shopify")
+      .maybeSingle();
+
+    if (wsError || !website) return json({ error: "Shopify website not found" }, 404);
+
+    const creds = website.credentials as Record<string, string>;
+    const domain = creds?.shop_domain || website.url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    const token = creds?.admin_api_token;
+
+    if (!token) return json({ error: "No access token configured for this site" }, 400);
+
+    const apiBase = `https://${domain}/admin/api/2024-01`;
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": token,
+    };
+
+    // ---- LIST PRODUCTS ----
+    if (action === "list_products") {
+      const limit = body.limit || 50;
+      const pageInfo = body.page_info || "";
+      let url = `${apiBase}/products.json?limit=${limit}`;
+      if (pageInfo) url = `${apiBase}/products.json?limit=${limit}&page_info=${pageInfo}`;
+
+      const res = await shopifyFetch(url, { headers });
+      if (!res.ok) {
+        const err = await res.text();
+        return json({ error: `Shopify API error (${res.status}): ${err}` }, res.status);
+      }
+
+      const data = await res.json();
+      const linkHeader = res.headers.get("Link");
+      const nextMatch = linkHeader?.match(/<[^>]+page_info=([^&>]+)[^>]*>;\s*rel="next"/);
+      const nextPageInfo = nextMatch ? nextMatch[1] : null;
+
+      return json({
+        products: data.products,
+        next_page_info: nextPageInfo,
+        total: data.products?.length || 0,
+      });
+    }
+
+    // ---- GET PRODUCT ----
+    if (action === "get_product") {
+      const { product_id } = body;
+      if (!product_id) return json({ error: "product_id required" }, 400);
+
+      const res = await shopifyFetch(`${apiBase}/products/${product_id}.json`, { headers });
+      if (!res.ok) {
+        const err = await res.text();
+        return json({ error: `Shopify API error (${res.status}): ${err}` }, res.status);
+      }
+
+      const data = await res.json();
+      return json({ product: data.product });
+    }
+
+    // ---- UPDATE PRODUCT ----
+    if (action === "update_product") {
+      const { product_id, updates } = body;
+      if (!product_id || !updates) return json({ error: "product_id and updates required" }, 400);
+
+      const productBody: Record<string, unknown> = {};
+      if (updates.title !== undefined) productBody.title = updates.title;
+      if (updates.body_html !== undefined) productBody.body_html = updates.body_html;
+      if (updates.vendor !== undefined) productBody.vendor = updates.vendor;
+      if (updates.product_type !== undefined) productBody.product_type = updates.product_type;
+      if (updates.tags !== undefined) productBody.tags = Array.isArray(updates.tags) ? updates.tags.join(", ") : updates.tags;
+      if (updates.status !== undefined) productBody.status = updates.status;
+      if (updates.handle !== undefined) productBody.handle = updates.handle;
+
+      // SEO metafields
+      if (updates.seo_title !== undefined) productBody.metafields_global_title_tag = updates.seo_title;
+      if (updates.seo_description !== undefined) productBody.metafields_global_description_tag = updates.seo_description;
+
+      const res = await shopifyFetch(`${apiBase}/products/${product_id}.json`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ product: productBody }),
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        return json({ error: `Shopify update error (${res.status}): ${err}` }, res.status);
+      }
+
+      const data = await res.json();
+      return json({ product: data.product });
+    }
+
+    // ---- BULK SEO UPDATE ----
+    if (action === "bulk_seo_update") {
+      const { products } = body; // Array of { product_id, seo_title, seo_description }
+      if (!Array.isArray(products) || !products.length) return json({ error: "products array required" }, 400);
+
+      const results: Array<{ product_id: string; success: boolean; error?: string }> = [];
+
+      for (const p of products) {
+        try {
+          const seoBody: Record<string, unknown> = {};
+          if (p.seo_title) seoBody.metafields_global_title_tag = p.seo_title;
+          if (p.seo_description) seoBody.metafields_global_description_tag = p.seo_description;
+
+          const res = await shopifyFetch(`${apiBase}/products/${p.product_id}.json`, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify({ product: seoBody }),
+          });
+
+          if (!res.ok) {
+            const err = await res.text();
+            results.push({ product_id: p.product_id, success: false, error: `${res.status}: ${err}` });
+          } else {
+            results.push({ product_id: p.product_id, success: true });
+          }
+        } catch (e: any) {
+          results.push({ product_id: p.product_id, success: false, error: e.message });
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      return json({ results, success_count: successCount, total: results.length });
+    }
+
+    return json({ error: `Unknown action: ${action}` }, 400);
+  } catch (err: any) {
+    console.error("shopify-products error:", err);
+    return json({ error: err.message || "Internal error" }, 500);
+  }
+});
