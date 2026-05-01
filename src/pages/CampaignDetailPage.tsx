@@ -901,21 +901,50 @@ export default function CampaignDetailPage() {
                             <td className="p-3 text-xs text-muted-foreground tabular-nums">{new Date(page.created_at).toLocaleDateString()}</td>
                             <td className="p-3 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                {page.external_url && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                                    <a href={page.external_url} target="_blank" rel="noopener noreferrer">
-                                      <ExternalLink className="h-3.5 w-3.5" />
-                                    </a>
-                                  </Button>
-                                )}
-                                {page.status === "failed" && (
+                                {page.content && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7"
-                                    onClick={() => handlePublishPage(page.id)}
+                                    title="Preview page"
+                                    onClick={() => setPreviewPage(page)}
                                   >
-                                    <RefreshCw className="h-3.5 w-3.5" />
+                                    <Eye className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                                {page.external_url && (
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                                    <a href={page.external_url} target="_blank" rel="noopener noreferrer" title="Open published page">
+                                      <ExternalLink className="h-3.5 w-3.5" />
+                                    </a>
+                                  </Button>
+                                )}
+                                {(page.status === "pending" || page.status === "failed") && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-primary"
+                                    title={page.status === "failed" ? "Retry publish" : "Publish page"}
+                                    onClick={() => handlePublishPage(page.id)}
+                                    disabled={republishMutation.isPending}
+                                  >
+                                    {page.status === "failed" ? (
+                                      <RefreshCw className={`h-3.5 w-3.5 ${republishMutation.isPending ? "animate-spin" : ""}`} />
+                                    ) : (
+                                      <Send className="h-3.5 w-3.5" />
+                                    )}
+                                  </Button>
+                                )}
+                                {page.status === "published" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    title="Republish with latest mapping"
+                                    onClick={() => handlePublishPage(page.id)}
+                                    disabled={republishMutation.isPending}
+                                  >
+                                    <RefreshCw className={`h-3.5 w-3.5 ${republishMutation.isPending ? "animate-spin" : ""}`} />
                                   </Button>
                                 )}
                               </div>
