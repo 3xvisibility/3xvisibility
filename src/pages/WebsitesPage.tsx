@@ -448,6 +448,12 @@ export default function WebsitesPage() {
                       onShopDomainChange={setShopDomain}
                       accessToken={shopifyToken}
                       onAccessTokenChange={setShopifyToken}
+                      clientId={shopifyClientId}
+                      onClientIdChange={setShopifyClientId}
+                      clientSecret={shopifyClientSecret}
+                      onClientSecretChange={setShopifyClientSecret}
+                      authMethod={shopifyAuthMethod}
+                      onAuthMethodChange={setShopifyAuthMethod}
                     />
                   </>
                 )}
