@@ -53,31 +53,21 @@ function getShopifySteps(siteHint?: string): Step[] {
   const adminBase = domain ? `https://${domain}/admin` : "https://admin.shopify.com";
   return [
     {
-      title: "Open Shopify Admin → Settings → Apps and sales channels.",
+      title: "Open Shopify Admin → Settings → Apps and sales channels → Develop apps.",
       link: {
         label: domain ? "Open Apps & Sales Channels" : "Open Shopify Admin",
         url: `${adminBase}/settings/apps/development`,
       },
     },
     {
-      title: "Click 'Develop apps' → 'Create an app' and name it (e.g. Lovable Connector).",
+      title: "Click 'Create an app', name it (e.g. Lovable Connector), then open its Configuration tab.",
     },
     {
-      title: "In the Configuration tab, enable these Admin API scopes:",
+      title: "Grant these Admin API access scopes, then save:",
       copyValue: "read_content, write_content, read_products, write_products",
     },
     {
-      title: "Click 'Install app', open the API credentials tab, then 'Reveal token once' to copy the Admin API access token (starts with shpat_).",
-    },
-    {
-      title: "Paste the shop domain (e.g. my-store.myshopify.com) and access token below, then click Test Connection.",
-    },
-    {
-      title: "If this is a development store: open the store in Shopify Partners → 'Transfer ownership' or 'Select plan' to release/launch it for live selling.",
-      link: {
-        label: "Open Shopify Partners",
-        url: "https://partners.shopify.com/current/stores",
-      },
+      title: "Click 'Install app'. Then choose a connection method below — OAuth (copies API key + secret) or Manual Token (reveals the access token once).",
     },
   ];
 }
