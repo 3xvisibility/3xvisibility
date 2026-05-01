@@ -65,6 +65,24 @@ export default function WebsitesPage() {
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle OAuth callback redirect
+  useEffect(() => {
+    const oauthStatus = searchParams.get("shopify_oauth");
+    if (oauthStatus === "success") {
+      toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth." });
+      queryClient.invalidateQueries({ queryKey: ["websites"] });
+      searchParams.delete("shopify_oauth");
+      setSearchParams(searchParams, { replace: true });
+    } else if (oauthStatus === "error") {
+      const msg = searchParams.get("message") || "OAuth connection failed";
+      toast({ title: "Shopify OAuth failed", description: msg, variant: "destructive" });
+      searchParams.delete("shopify_oauth");
+      searchParams.delete("message");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams]);
 
   const { data: websites = [], isLoading } = useQuery({
     queryKey: ["websites", wsId],
