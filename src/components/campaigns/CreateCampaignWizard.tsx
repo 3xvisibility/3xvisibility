@@ -2037,6 +2037,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           || campaignLanguage
                           || "en"
                         }
+                        onValidationChange={setUnmappedVars}
                       />
 
                       {(() => {
