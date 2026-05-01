@@ -225,6 +225,13 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCard
         websiteName={site.name}
         siteLanguage={site.language}
       />
+      {site.type === "shopify" && (
+        <ShopifyProductManager
+          open={productsOpen}
+          onOpenChange={setProductsOpen}
+          website={site}
+        />
+      )}
     </>
   );
 }
