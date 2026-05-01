@@ -226,6 +226,7 @@ export function MappingStep({
   setFaqPairs,
   aiContext,
   aiLanguage,
+  onValidationChange,
 }: MappingStepProps) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [saveProfileName, setSaveProfileName] = useState("");
