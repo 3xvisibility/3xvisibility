@@ -11,7 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Package, Pencil, Search, Loader2, Save, ArrowLeft, Sparkles,
-  ChevronRight, ChevronLeft, ExternalLink, Tag, X,
+  ChevronRight, ChevronLeft, ExternalLink, Tag, X, RefreshCw, Bell, BellOff,
+  CheckCircle2, AlertCircle, Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,7 @@ interface ShopifyProduct {
 }
 
 export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyProductManagerProps) {
-  const [view, setView] = useState<"list" | "edit" | "bulk-seo">("list");
+  const [view, setView] = useState<"list" | "edit" | "bulk-seo" | "sync">("list");
   const [editingProduct, setEditingProduct] = useState<ShopifyProduct | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -86,6 +87,43 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
     setCurrentPage((p) => p - 1);
     setSelectedIds(new Set());
   };
+
+  // Sync events query
+  const { data: syncData, isLoading: syncLoading } = useQuery({
+    queryKey: ["shopify-sync-events", website.id],
+    enabled: open,
+    refetchInterval: view === "sync" ? 15000 : false,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("shopify-products", {
+        body: { action: "get_sync_events", website_id: website.id, sync_limit: 30 },
+      });
+      if (error) throw error;
+      return (data?.events || []) as Array<{
+        id: string; event_type: string; product_title: string;
+        shopify_product_id: number; details: Record<string, any>; created_at: string;
+      }>;
+    },
+  });
+
+  const syncEvents = syncData || [];
+
+  // Register webhooks
+  const registerWebhooksMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("shopify-products", {
+        body: { action: "register_webhooks", website_id: website.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ title: "Webhooks registered", description: `${data.registered} webhook(s) configured.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Webhook registration failed", description: err.message, variant: "destructive" });
+    },
+  });
 
   const products = productsData?.products || [];
   const filtered = searchQuery
@@ -233,7 +271,25 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            {view === "list" && "Shopify Products"}
+            {view === "list" && (
+              <span className="flex items-center gap-2 flex-1">
+                Shopify Products
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-7 gap-1.5 text-xs relative"
+                  onClick={() => setView("sync")}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Sync
+                  {syncEvents.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-bold flex items-center justify-center text-primary-foreground">
+                      {syncEvents.length > 9 ? "9+" : syncEvents.length}
+                    </span>
+                  )}
+                </Button>
+              </span>
+            )}
             {view === "edit" && (
               <span className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setView("list")}>
@@ -248,6 +304,14 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 Bulk SEO Optimization
+              </span>
+            )}
+            {view === "sync" && (
+              <span className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setView("list")}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                Sync Status
               </span>
             )}
           </DialogTitle>
