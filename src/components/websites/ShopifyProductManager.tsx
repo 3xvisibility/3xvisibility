@@ -271,7 +271,25 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-primary" />
-            {view === "list" && "Shopify Products"}
+            {view === "list" && (
+              <span className="flex items-center gap-2 flex-1">
+                Shopify Products
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-7 gap-1.5 text-xs relative"
+                  onClick={() => setView("sync")}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Sync
+                  {syncEvents.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-bold flex items-center justify-center text-primary-foreground">
+                      {syncEvents.length > 9 ? "9+" : syncEvents.length}
+                    </span>
+                  )}
+                </Button>
+              </span>
+            )}
             {view === "edit" && (
               <span className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setView("list")}>
@@ -286,6 +304,14 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 Bulk SEO Optimization
+              </span>
+            )}
+            {view === "sync" && (
+              <span className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setView("list")}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                Sync Status
               </span>
             )}
           </DialogTitle>
