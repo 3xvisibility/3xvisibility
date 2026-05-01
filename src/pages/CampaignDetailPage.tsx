@@ -788,6 +788,16 @@ export default function CampaignDetailPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="h-6 text-[10px] px-2 text-emerald-600"
+                        onClick={handleBulkPublish}
+                        disabled={bulkPublishMutation.isPending}
+                        title="Publish selected pages to the connected website"
+                      >
+                        <Send className={`h-2.5 w-2.5 mr-1 ${bulkPublishMutation.isPending ? "animate-pulse" : ""}`} /> Publish Selected
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="h-6 text-[10px] px-2 text-primary"
                         onClick={() => {
                           const ids = [...selectedPageIds];
