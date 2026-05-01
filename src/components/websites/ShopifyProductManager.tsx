@@ -41,7 +41,7 @@ interface ShopifyProduct {
 }
 
 export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyProductManagerProps) {
-  const [view, setView] = useState<"list" | "edit" | "bulk-seo">("list");
+  const [view, setView] = useState<"list" | "edit" | "bulk-seo" | "sync">("list");
   const [editingProduct, setEditingProduct] = useState<ShopifyProduct | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
