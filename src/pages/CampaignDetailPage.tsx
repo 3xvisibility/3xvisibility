@@ -94,6 +94,8 @@ export default function CampaignDetailPage() {
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishPageId, setPendingPublishPageId] = useState<string | null>(null);
+  const [pendingBulkPublishIds, setPendingBulkPublishIds] = useState<string[]>([]);
+  const [previewPage, setPreviewPage] = useState<any>(null);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
     content: true,
