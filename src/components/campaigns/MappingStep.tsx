@@ -202,6 +202,8 @@ interface MappingStepProps {
   aiContext?: { business?: string; niche?: string; service?: string };
   /** Target language for AI-generated values (e.g. "fr"). Defaults to English. */
   aiLanguage?: string;
+  /** Callback fired whenever the unmapped variable count changes. */
+  onValidationChange?: (unmappedVars: string[]) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────
