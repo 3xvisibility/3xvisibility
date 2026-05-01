@@ -103,7 +103,7 @@ export function ConnectionSetupGuide({ provider, siteHint }: ConnectionSetupGuid
   const steps = provider === "shopify" ? getShopifySteps(siteHint) : getPrestashopSteps(siteHint);
   const Icon = provider === "shopify" ? ShoppingBag : Store;
   const title = provider === "shopify" ? "Shopify setup" : "PrestaShop setup";
-  const subtitle = provider === "shopify" ? "6 quick steps" : "5 quick steps";
+  const subtitle = provider === "shopify" ? "4 quick steps" : "5 quick steps";
 
   const handleCopy = async (value: string, idx: number) => {
     try {
