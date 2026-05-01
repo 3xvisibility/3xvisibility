@@ -112,10 +112,15 @@ export default function WebsitesPage() {
   const maxSites = features.websites;
   const filteredWebsites = filterType === "all" ? websites : websites.filter((s) => s.type === filterType);
 
-  // Shopify-specific frontend validation (Bengali warnings shown inline in fields).
+  // Shopify-specific frontend validation
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
-  const shopifyTokenError = siteType === "shopify" ? validateShopifyToken(shopifyToken) : null;
-  const shopifyInvalid = siteType === "shopify" && (!!shopifyDomainError || !!shopifyTokenError);
+  const shopifyTokenError = siteType === "shopify" && shopifyAuthMethod === "manual" ? validateShopifyToken(shopifyToken) : null;
+  const shopifyOAuthMissing = siteType === "shopify" && shopifyAuthMethod === "oauth" && (!shopifyClientId || !shopifyClientSecret);
+  const shopifyInvalid = siteType === "shopify" && (
+    !!shopifyDomainError ||
+    (shopifyAuthMethod === "manual" && !!shopifyTokenError) ||
+    (shopifyAuthMethod === "oauth" && shopifyOAuthMissing)
+  );
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
