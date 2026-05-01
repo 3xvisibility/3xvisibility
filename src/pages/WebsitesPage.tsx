@@ -157,6 +157,34 @@ export default function WebsitesPage() {
       return;
     }
 
+    // ---- Shopify OAuth redirect flow ----
+    if (siteType === "shopify" && shopifyAuthMethod === "oauth") {
+      setIsConnecting(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+          body: {
+            shop_domain: shopDomain,
+            client_id: shopifyClientId,
+            client_secret: shopifyClientSecret,
+            workspace_id: wsId,
+            site_name: siteName || shopDomain,
+            language: siteLanguage,
+          },
+        });
+        if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
+        if (data?.error) throw new Error(data.error);
+        if (!data?.auth_url) throw new Error("No auth URL returned");
+
+        // Redirect to Shopify for authorization
+        window.location.href = data.auth_url;
+        return;
+      } catch (err: any) {
+        setIsConnecting(false);
+        toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
+        return;
+      }
+    }
+
     const finalUrl = siteType === "shopify" && shopDomain
       ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
       : siteUrl;
