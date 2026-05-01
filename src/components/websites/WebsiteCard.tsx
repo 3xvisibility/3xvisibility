@@ -19,12 +19,13 @@ interface WebsiteCardProps {
   sitemap: any;
   onDelete: (id: string) => void;
   isDeleting: boolean;
+  autoOpenProducts?: boolean;
 }
 
-export function WebsiteCard({ site, sitemap, onDelete, isDeleting }: WebsiteCardProps) {
+export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProducts }: WebsiteCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [retransOpen, setRetransOpen] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(() => !!autoOpenProducts);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

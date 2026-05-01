@@ -59,6 +59,7 @@ export default function WebsitesPage() {
   const [languageLocked, setLanguageLocked] = useState<boolean>(false);
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -71,8 +72,9 @@ export default function WebsitesPage() {
   useEffect(() => {
     const oauthStatus = searchParams.get("shopify_oauth");
     if (oauthStatus === "success") {
-      toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth." });
+      toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth. Loading products…" });
       queryClient.invalidateQueries({ queryKey: ["websites"] });
+      setAutoOpenShopifyProducts(true);
       searchParams.delete("shopify_oauth");
       setSearchParams(searchParams, { replace: true });
     } else if (oauthStatus === "error") {
@@ -571,13 +573,16 @@ export default function WebsitesPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredWebsites.map((site) => (
+          {filteredWebsites.map((site, idx) => (
             <WebsiteCard
               key={site.id}
               site={site}
               sitemap={getSitemap(site.id)}
               onDelete={(id) => deleteMutation.mutate(id)}
               isDeleting={deleteMutation.isPending}
+              autoOpenProducts={
+                autoOpenShopifyProducts && site.type === "shopify" && idx === 0
+              }
             />
           ))}
         </div>
