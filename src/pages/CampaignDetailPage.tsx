@@ -47,7 +47,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import {
   ArrowLeft, Play, Pause, RotateCcw, ExternalLink, Eye, AlertTriangle,
-  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward,
+  Check, Clock, XCircle, FileText, Layers, RefreshCw, Download, ScrollText, SkipForward, Send,
   Settings, FolderTree, Image, MapPin, BookOpen, Star, Users, CalendarClock, Code,
 } from "lucide-react";
 import { exportPagesCsv, exportPagesJson, exportLogsCsv, exportExecutionHistoryCsv, exportErrorsCsv, exportDataFile } from "@/lib/export-csv";
@@ -94,6 +94,8 @@ export default function CampaignDetailPage() {
   const [selectedPageIds, setSelectedPageIds] = useState<Set<string>>(new Set());
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishPageId, setPendingPublishPageId] = useState<string | null>(null);
+  const [pendingBulkPublishIds, setPendingBulkPublishIds] = useState<string[]>([]);
+  const [previewPage, setPreviewPage] = useState<any>(null);
   const [overwriteFields, setOverwriteFields] = useState({
     title: true,
     content: true,
@@ -369,14 +371,65 @@ export default function CampaignDetailPage() {
     },
   });
 
+  const bulkPublishMutation = useMutation({
+    mutationFn: async ({ pageIds, websiteId }: { pageIds: string[]; websiteId?: string }) => {
+      const { error: resetErr } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending", error_message: null })
+        .in("id", pageIds);
+      if (resetErr) throw resetErr;
+
+      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: {
+          page_ids: pageIds,
+          publish_type: pubType,
+          website_id: websiteId || campaign?.website_id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.failed && !data?.published) {
+        throw new Error(getPublishFailureMessage(data, "All selected pages failed to publish."));
+      }
+      return data;
+    },
+    onSuccess: (data, { pageIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      setSelectedPageIds(new Set());
+      setPendingBulkPublishIds([]);
+      const ok = data?.published ?? pageIds.length;
+      const failed = data?.failed ?? 0;
+      toast({
+        title: "Publish complete",
+        description: `${ok} page${ok !== 1 ? "s" : ""} published${failed ? `, ${failed} failed` : ""}.`,
+      });
+      if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: pageIds.length, published: ok });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      setPendingBulkPublishIds([]);
+      toast({ title: "Publish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handlePublishPage = (pageId: string) => {
-    // Check if campaign or page has a website
     const page = pages?.find((p: any) => p.id === pageId);
     if (!campaign?.website_id && !page?.website_id) {
       setPendingPublishPageId(pageId);
       setShowWebsiteSelector(true);
     } else {
       republishMutation.mutate({ pageId });
+    }
+  };
+
+  const handleBulkPublish = () => {
+    const ids = [...selectedPageIds];
+    if (!campaign?.website_id) {
+      setPendingBulkPublishIds(ids);
+      setShowWebsiteSelector(true);
+    } else {
+      bulkPublishMutation.mutate({ pageIds: ids });
     }
   };
 
@@ -735,6 +788,16 @@ export default function CampaignDetailPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="h-6 text-[10px] px-2 text-emerald-600"
+                        onClick={handleBulkPublish}
+                        disabled={bulkPublishMutation.isPending}
+                        title="Publish selected pages to the connected website"
+                      >
+                        <Send className={`h-2.5 w-2.5 mr-1 ${bulkPublishMutation.isPending ? "animate-pulse" : ""}`} /> Publish Selected
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="h-6 text-[10px] px-2 text-primary"
                         onClick={() => {
                           const ids = [...selectedPageIds];
@@ -848,21 +911,50 @@ export default function CampaignDetailPage() {
                             <td className="p-3 text-xs text-muted-foreground tabular-nums">{new Date(page.created_at).toLocaleDateString()}</td>
                             <td className="p-3 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                {page.external_url && (
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
-                                    <a href={page.external_url} target="_blank" rel="noopener noreferrer">
-                                      <ExternalLink className="h-3.5 w-3.5" />
-                                    </a>
-                                  </Button>
-                                )}
-                                {page.status === "failed" && (
+                                {page.content && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7"
-                                    onClick={() => handlePublishPage(page.id)}
+                                    title="Preview page"
+                                    onClick={() => setPreviewPage(page)}
                                   >
-                                    <RefreshCw className="h-3.5 w-3.5" />
+                                    <Eye className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                                {page.external_url && (
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                                    <a href={page.external_url} target="_blank" rel="noopener noreferrer" title="Open published page">
+                                      <ExternalLink className="h-3.5 w-3.5" />
+                                    </a>
+                                  </Button>
+                                )}
+                                {(page.status === "pending" || page.status === "failed") && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-primary"
+                                    title={page.status === "failed" ? "Retry publish" : "Publish page"}
+                                    onClick={() => handlePublishPage(page.id)}
+                                    disabled={republishMutation.isPending}
+                                  >
+                                    {page.status === "failed" ? (
+                                      <RefreshCw className={`h-3.5 w-3.5 ${republishMutation.isPending ? "animate-spin" : ""}`} />
+                                    ) : (
+                                      <Send className="h-3.5 w-3.5" />
+                                    )}
+                                  </Button>
+                                )}
+                                {page.status === "published" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    title="Republish with latest mapping"
+                                    onClick={() => handlePublishPage(page.id)}
+                                    disabled={republishMutation.isPending}
+                                  >
+                                    <RefreshCw className={`h-3.5 w-3.5 ${republishMutation.isPending ? "animate-spin" : ""}`} />
                                   </Button>
                                 )}
                               </div>
@@ -1442,15 +1534,74 @@ export default function CampaignDetailPage() {
         open={showWebsiteSelector}
         onOpenChange={(open) => {
           setShowWebsiteSelector(open);
-          if (!open) setPendingPublishPageId(null);
+          if (!open) {
+            setPendingPublishPageId(null);
+            setPendingBulkPublishIds([]);
+          }
         }}
-        isPending={republishMutation.isPending}
+        isPending={republishMutation.isPending || bulkPublishMutation.isPending}
+        pageCount={pendingBulkPublishIds.length || 1}
         onConfirm={(websiteId) => {
-          if (pendingPublishPageId) {
+          if (pendingBulkPublishIds.length > 0) {
+            bulkPublishMutation.mutate({ pageIds: pendingBulkPublishIds, websiteId });
+          } else if (pendingPublishPageId) {
             republishMutation.mutate({ pageId: pendingPublishPageId, websiteId });
           }
         }}
       />
+
+      {/* Page Preview Dialog */}
+      <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Eye className="h-4 w-4 text-primary" />
+              {previewPage?.title || "Page Preview"}
+            </DialogTitle>
+            {previewPage?.slug && (
+              <DialogDescription className="text-xs font-mono">/{previewPage.slug}</DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-white">
+            {previewPage?.content ? (
+              <iframe
+                srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;padding:16px;font-family:system-ui,-apple-system,sans-serif;color:#1a1a1a;font-size:14px;line-height:1.6}img{max-width:100%;height:auto}</style></head><body>${previewPage.content}</body></html>`}
+                className="w-full h-[60vh] border-0"
+                sandbox="allow-same-origin"
+                title="Page Preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
+                No content available for preview
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            {previewPage?.external_url && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={previewPage.external_url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Open Live
+                </a>
+              </Button>
+            )}
+            {previewPage && (previewPage.status === "pending" || previewPage.status === "failed") && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  const pageId = previewPage.id;
+                  setPreviewPage(null);
+                  handlePublishPage(pageId);
+                }}
+                disabled={republishMutation.isPending}
+                className="bg-gradient-primary hover:brightness-110"
+              >
+                <Send className="h-3.5 w-3.5 mr-1.5" /> Publish
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setPreviewPage(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
