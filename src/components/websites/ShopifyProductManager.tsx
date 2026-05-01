@@ -88,6 +88,43 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
     setSelectedIds(new Set());
   };
 
+  // Sync events query
+  const { data: syncData, isLoading: syncLoading } = useQuery({
+    queryKey: ["shopify-sync-events", website.id],
+    enabled: open,
+    refetchInterval: view === "sync" ? 15000 : false,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("shopify-products", {
+        body: { action: "get_sync_events", website_id: website.id, sync_limit: 30 },
+      });
+      if (error) throw error;
+      return (data?.events || []) as Array<{
+        id: string; event_type: string; product_title: string;
+        shopify_product_id: number; details: Record<string, any>; created_at: string;
+      }>;
+    },
+  });
+
+  const syncEvents = syncData || [];
+
+  // Register webhooks
+  const registerWebhooksMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("shopify-products", {
+        body: { action: "register_webhooks", website_id: website.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ title: "Webhooks registered", description: `${data.registered} webhook(s) configured.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Webhook registration failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const products = productsData?.products || [];
   const filtered = searchQuery
     ? products.filter((p) =>
