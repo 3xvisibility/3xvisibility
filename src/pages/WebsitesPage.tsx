@@ -49,6 +49,9 @@ export default function WebsitesPage() {
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
   const [shopifyToken, setShopifyToken] = useState("");
+  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<"manual" | "oauth">("oauth");
+  const [shopifyClientId, setShopifyClientId] = useState("");
+  const [shopifyClientSecret, setShopifyClientSecret] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
