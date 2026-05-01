@@ -371,8 +371,49 @@ export default function CampaignDetailPage() {
     },
   });
 
+  const bulkPublishMutation = useMutation({
+    mutationFn: async ({ pageIds, websiteId }: { pageIds: string[]; websiteId?: string }) => {
+      const { error: resetErr } = await supabase
+        .from("generated_pages")
+        .update({ status: "pending", error_message: null })
+        .in("id", pageIds);
+      if (resetErr) throw resetErr;
+
+      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
+      const { data, error } = await supabase.functions.invoke("publish-pages", {
+        body: {
+          page_ids: pageIds,
+          publish_type: pubType,
+          website_id: websiteId || campaign?.website_id,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.failed && !data?.published) {
+        throw new Error(getPublishFailureMessage(data, "All selected pages failed to publish."));
+      }
+      return data;
+    },
+    onSuccess: (data, { pageIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      setSelectedPageIds(new Set());
+      setPendingBulkPublishIds([]);
+      const ok = data?.published ?? pageIds.length;
+      const failed = data?.failed ?? 0;
+      toast({
+        title: "Publish complete",
+        description: `${ok} page${ok !== 1 ? "s" : ""} published${failed ? `, ${failed} failed` : ""}.`,
+      });
+      if (wsId) logAudit(wsId, "pages_bulk_published", "page", null, { count: pageIds.length, published: ok });
+    },
+    onError: (err: Error) => {
+      queryClient.invalidateQueries({ queryKey: ["campaign-pages", id] });
+      setPendingBulkPublishIds([]);
+      toast({ title: "Publish failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const handlePublishPage = (pageId: string) => {
-    // Check if campaign or page has a website
     const page = pages?.find((p: any) => p.id === pageId);
     if (!campaign?.website_id && !page?.website_id) {
       setPendingPublishPageId(pageId);
