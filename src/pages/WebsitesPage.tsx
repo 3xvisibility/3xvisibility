@@ -72,8 +72,9 @@ export default function WebsitesPage() {
   useEffect(() => {
     const oauthStatus = searchParams.get("shopify_oauth");
     if (oauthStatus === "success") {
-      toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth." });
+      toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth. Loading products…" });
       queryClient.invalidateQueries({ queryKey: ["websites"] });
+      setAutoOpenShopifyProducts(true);
       searchParams.delete("shopify_oauth");
       setSearchParams(searchParams, { replace: true });
     } else if (oauthStatus === "error") {
