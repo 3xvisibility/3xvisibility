@@ -1534,15 +1534,74 @@ export default function CampaignDetailPage() {
         open={showWebsiteSelector}
         onOpenChange={(open) => {
           setShowWebsiteSelector(open);
-          if (!open) setPendingPublishPageId(null);
+          if (!open) {
+            setPendingPublishPageId(null);
+            setPendingBulkPublishIds([]);
+          }
         }}
-        isPending={republishMutation.isPending}
+        isPending={republishMutation.isPending || bulkPublishMutation.isPending}
+        pageCount={pendingBulkPublishIds.length || 1}
         onConfirm={(websiteId) => {
-          if (pendingPublishPageId) {
+          if (pendingBulkPublishIds.length > 0) {
+            bulkPublishMutation.mutate({ pageIds: pendingBulkPublishIds, websiteId });
+          } else if (pendingPublishPageId) {
             republishMutation.mutate({ pageId: pendingPublishPageId, websiteId });
           }
         }}
       />
+
+      {/* Page Preview Dialog */}
+      <Dialog open={!!previewPage} onOpenChange={(open) => !open && setPreviewPage(null)}>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Eye className="h-4 w-4 text-primary" />
+              {previewPage?.title || "Page Preview"}
+            </DialogTitle>
+            {previewPage?.slug && (
+              <DialogDescription className="text-xs font-mono">/{previewPage.slug}</DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-white">
+            {previewPage?.content ? (
+              <iframe
+                srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;padding:16px;font-family:system-ui,-apple-system,sans-serif;color:#1a1a1a;font-size:14px;line-height:1.6}img{max-width:100%;height:auto}</style></head><body>${previewPage.content}</body></html>`}
+                className="w-full h-[60vh] border-0"
+                sandbox="allow-same-origin"
+                title="Page Preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
+                No content available for preview
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            {previewPage?.external_url && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={previewPage.external_url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> Open Live
+                </a>
+              </Button>
+            )}
+            {previewPage && (previewPage.status === "pending" || previewPage.status === "failed") && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  const pageId = previewPage.id;
+                  setPreviewPage(null);
+                  handlePublishPage(pageId);
+                }}
+                disabled={republishMutation.isPending}
+                className="bg-gradient-primary hover:brightness-110"
+              >
+                <Send className="h-3.5 w-3.5 mr-1.5" /> Publish
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setPreviewPage(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
