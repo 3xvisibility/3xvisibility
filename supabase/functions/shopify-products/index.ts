@@ -210,6 +210,65 @@ Deno.serve(async (req) => {
       return json({ results, success_count: successCount, total: results.length });
     }
 
+    // ---- REGISTER WEBHOOKS ----
+    if (action === "register_webhooks") {
+      const webhookUrl = `${supabaseUrl}/functions/v1/shopify-webhooks`;
+      const topics = ["products/create", "products/update", "products/delete"];
+      const results: Array<{ topic: string; success: boolean; error?: string }> = [];
+
+      for (const topic of topics) {
+        try {
+          const res = await shopifyFetch(`${apiBase}/webhooks.json`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              webhook: { topic, address: webhookUrl, format: "json" },
+            }),
+          });
+          if (res.ok) {
+            results.push({ topic, success: true });
+          } else {
+            const err = await res.text();
+            // 422 usually means already registered
+            if (res.status === 422) {
+              results.push({ topic, success: true, error: "already registered" });
+            } else {
+              results.push({ topic, success: false, error: `${res.status}: ${err}` });
+            }
+          }
+        } catch (e: any) {
+          results.push({ topic, success: false, error: e.message });
+        }
+      }
+
+      return json({ results, registered: results.filter(r => r.success).length });
+    }
+
+    // ---- LIST WEBHOOKS ----
+    if (action === "list_webhooks") {
+      const res = await shopifyFetch(`${apiBase}/webhooks.json`, { headers });
+      if (!res.ok) {
+        const err = await res.text();
+        return json({ error: `Shopify API error (${res.status}): ${err}` }, res.status);
+      }
+      const data = await res.json();
+      return json({ webhooks: data.webhooks || [] });
+    }
+
+    // ---- GET SYNC EVENTS ----
+    if (action === "get_sync_events") {
+      const limit = body.sync_limit || 20;
+      const { data: events, error: evErr } = await supabase
+        .from("shopify_sync_events")
+        .select("*")
+        .eq("website_id", website_id)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (evErr) return json({ error: evErr.message }, 500);
+      return json({ events: events || [] });
+    }
+
     return json({ error: `Unknown action: ${action}` }, 400);
   } catch (err: any) {
     console.error("shopify-products error:", err);
