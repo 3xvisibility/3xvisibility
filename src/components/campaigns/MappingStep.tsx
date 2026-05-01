@@ -813,6 +813,44 @@ export function MappingStep({
         </div>
       )}
 
+      {/* ─── Unmapped required variables alert ─────────────────────── */}
+      {unmatchedCount > 0 && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="text-xs font-semibold text-destructive">
+                {unmatchedCount} variable{unmatchedCount !== 1 ? "s" : ""} missing a data source
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                These template variables have no CSV column or custom value assigned.
+                Pages generated with missing variables will show raw <code className="font-mono text-[10px]">{`{variable}`}</code> placeholders instead of real content.
+              </p>
+              <div className="flex flex-wrap gap-1 pt-1">
+                {resolvedMapping
+                  .filter(m => !m.column && !m.customValue && !isSpecialVar(m.variable))
+                  .map(m => (
+                    <Badge
+                      key={m.variable}
+                      variant="outline"
+                      className="text-[10px] gap-1 bg-destructive/10 border-destructive/30 text-destructive font-mono"
+                    >
+                      <X className="h-2.5 w-2.5" />
+                      {`{${m.variable}}`}
+                    </Badge>
+                  ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground pt-1">
+                <strong>Fix:</strong> Select a CSV column from the dropdown below, or type a custom value for each.
+                {csvHeaders.length > 0 && autoMapSuggestionCount > 0 && (
+                  <> Or click <strong>Auto-Map</strong> above to let the system suggest matches.</>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mapping rows — Two-column layout */}
       <div className="space-y-2.5">
         {/* Column headers */}
