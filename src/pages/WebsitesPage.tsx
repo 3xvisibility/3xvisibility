@@ -59,6 +59,7 @@ export default function WebsitesPage() {
   const [languageLocked, setLanguageLocked] = useState<boolean>(false);
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
