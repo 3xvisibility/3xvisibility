@@ -2291,7 +2291,20 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                 </Button>
               )}
               {step < totalSteps ? (
-                <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110">
+                <Button
+                  onClick={() => {
+                    if (step === 3 && unmappedVars.length > 0) {
+                      toast({
+                        title: `${unmappedVars.length} variable${unmappedVars.length !== 1 ? "s" : ""} still unmapped`,
+                        description: `Missing: ${unmappedVars.slice(0, 5).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 5 ? ` +${unmappedVars.length - 5} more` : ""}. Pages will show raw placeholders for these.`,
+                        variant: "destructive",
+                      });
+                    }
+                    setStep(step + 1);
+                  }}
+                  disabled={!canProceed()}
+                  className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
+                >
                   Continue <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               ) : (
