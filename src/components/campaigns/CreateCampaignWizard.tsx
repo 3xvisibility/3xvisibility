@@ -123,6 +123,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [targetFieldMappings, setTargetFieldMappings] = useState<Record<string, string>>({});
   const [faqPairs, setFaqPairs] = useState<import("./FaqMappingPanel").FaqPair[]>([]);
   const [fillRules, setFillRules] = useState<Record<string, import("./FillRulesPanel").FillRule>>({});
+  const [unmappedVars, setUnmappedVars] = useState<string[]>([]);
   // Shopify per-campaign override of the website's default product field mapping.
   // When `enabled` is false, publishing falls back to the website-level default.
   const [shopifyOverride, setShopifyOverride] = useState<{
@@ -2036,6 +2037,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           || campaignLanguage
                           || "en"
                         }
+                        onValidationChange={setUnmappedVars}
                       />
 
                       {(() => {
@@ -2289,7 +2291,20 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                 </Button>
               )}
               {step < totalSteps ? (
-                <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110">
+                <Button
+                  onClick={() => {
+                    if (step === 3 && unmappedVars.length > 0) {
+                      toast({
+                        title: `${unmappedVars.length} variable${unmappedVars.length !== 1 ? "s" : ""} still unmapped`,
+                        description: `Missing: ${unmappedVars.slice(0, 5).map(v => `{${v}}`).join(", ")}${unmappedVars.length > 5 ? ` +${unmappedVars.length - 5} more` : ""}. Pages will show raw placeholders for these.`,
+                        variant: "destructive",
+                      });
+                    }
+                    setStep(step + 1);
+                  }}
+                  disabled={!canProceed()}
+                  className="rounded-xl h-9 px-5 text-sm bg-gradient-primary hover:brightness-110"
+                >
                   Continue <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                 </Button>
               ) : (
