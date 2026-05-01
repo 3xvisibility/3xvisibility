@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Package, Pencil, Search, Loader2, Save, ArrowLeft, Sparkles,
-  ChevronRight, ExternalLink, Tag, X,
+  ChevronRight, ChevronLeft, ExternalLink, Tag, X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -44,22 +44,48 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
   const [editingProduct, setEditingProduct] = useState<ShopifyProduct | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [pageInfo, setPageInfo] = useState<string | null>(null);
+  const [pageHistory, setPageHistory] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch products
+  // Fetch products with cursor-based pagination
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ["shopify-products", website.id],
+    queryKey: ["shopify-products", website.id, pageInfo],
     enabled: open,
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("shopify-products", {
-        body: { action: "list_products", website_id: website.id, limit: 50 },
+        body: {
+          action: "list_products",
+          website_id: website.id,
+          limit: 50,
+          ...(pageInfo ? { page_info: pageInfo } : {}),
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data as { products: ShopifyProduct[]; next_page_info: string | null };
     },
   });
+
+  const goNextPage = () => {
+    if (!productsData?.next_page_info) return;
+    setPageHistory((prev) => [...prev, pageInfo || ""]);
+    setPageInfo(productsData.next_page_info);
+    setCurrentPage((p) => p + 1);
+    setSelectedIds(new Set());
+  };
+
+  const goPrevPage = () => {
+    if (pageHistory.length === 0) return;
+    const prev = [...pageHistory];
+    const prevCursor = prev.pop()!;
+    setPageHistory(prev);
+    setPageInfo(prevCursor || null);
+    setCurrentPage((p) => p - 1);
+    setSelectedIds(new Set());
+  };
 
   const products = productsData?.products || [];
   const filtered = searchQuery
@@ -334,9 +360,31 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
               )}
             </ScrollArea>
 
-            <p className="text-[11px] text-muted-foreground text-center">
-              {products.length} product{products.length !== 1 ? "s" : ""} loaded from {domain}
-            </p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-[11px] text-muted-foreground">
+                Page {currentPage} · {products.length} product{products.length !== 1 ? "s" : ""} loaded from {domain}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs gap-1"
+                  disabled={currentPage <= 1}
+                  onClick={goPrevPage}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" /> Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs gap-1"
+                  disabled={!productsData?.next_page_info}
+                  onClick={goNextPage}
+                >
+                  Next <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
