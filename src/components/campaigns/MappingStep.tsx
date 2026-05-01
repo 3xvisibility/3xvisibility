@@ -445,7 +445,16 @@ export function MappingStep({
   const allMatched = resolvedMapping.every(m => m.column || m.customValue || isSpecialVar(m.variable));
   const unmatchedColumns = csvHeaders.filter(h => !resolvedMapping.some(m => m.column === h));
   const autoMappedCount = resolvedMapping.filter(m => m.column && !manualMappings[m.variable] && !customValues[m.variable]).length;
-  const unmatchedCount = resolvedMapping.filter(m => !m.column && !m.customValue && !isSpecialVar(m.variable)).length;
+  const unmappedVarsList = useMemo(() =>
+    resolvedMapping.filter(m => !m.column && !m.customValue && !isSpecialVar(m.variable)).map(m => m.variable),
+    [resolvedMapping]
+  );
+  const unmatchedCount = unmappedVarsList.length;
+
+  // Notify parent of validation state changes
+  useEffect(() => {
+    onValidationChange?.(unmappedVarsList);
+  }, [unmappedVarsList, onValidationChange]);
 
   // ─── Filtered target fields by campaign type ─────────────────────
 
