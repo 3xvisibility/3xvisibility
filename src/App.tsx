@@ -47,6 +47,29 @@ import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
 
+const getAuthStorageKey = () => {
+  try {
+    return `sb-${new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
+  } catch {
+    return "";
+  }
+};
+
+const clearExpiredLocalAuthSession = () => {
+  const key = getAuthStorageKey();
+  if (!key) return;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    const session = JSON.parse(raw);
+    if (session?.expires_at && session.expires_at * 1000 <= Date.now()) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    localStorage.removeItem(key);
+  }
+};
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -109,14 +132,27 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    clearExpiredLocalAuthSession();
+    if (window.location.pathname === "/auth") {
+      const key = getAuthStorageKey();
+      if (key) localStorage.removeItem(key);
+      setSession(null);
+      setLoading(false);
+    }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
     });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setSession(session);
+        setLoading(false);
+      })
+      .catch(() => {
+        clearExpiredLocalAuthSession();
+        setSession(null);
+        setLoading(false);
+      });
 
     const handleUnload = () => {
       if (localStorage.getItem("sessionEphemeral") === "true") {
