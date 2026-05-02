@@ -30,7 +30,8 @@ export interface AiGenerateOptions {
   response_format?: any;
   temperature?: number;
   // Credit system fields — pass these to enable credit deduction
-  userId?: string;               // auth user id — if omitted, credits are NOT checked
+  userId?: string;               // auth user id — if omitted, resolved from authToken
+  authToken?: string;            // JWT token — used to resolve userId if not provided
   promptType?: string;           // maps to CREDIT_COSTS (e.g. "seo_optimization")
   skipCredits?: boolean;         // explicitly skip credit check (e.g. internal/system calls)
 }
