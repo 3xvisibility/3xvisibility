@@ -492,7 +492,36 @@ Deno.serve(async (req) => {
     // Cache Elementor detection per website to avoid redundant checks
     const elementorCache = new Map<string, { usesElementor: boolean; pageTemplate?: string }>();
 
+    const publishStartTime = Date.now();
+    let pageIndex = 0;
     for (const page of pages) {
+      // Timeout guard — self-chain remaining pages
+      if (Date.now() - publishStartTime > PUBLISH_TIMEOUT_MS) {
+        console.log(`[PUBLISH] Timeout after ${pageIndex} pages, self-chaining remaining`);
+        const unprocessedIds = pages.slice(pageIndex).map((p: any) => p.id);
+        const allRemaining = [...unprocessedIds, ...remainingIds];
+        if (allRemaining.length > 0) {
+          fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+            method: "POST",
+            headers: { Authorization: authHeader, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
+              overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+            }),
+          }).catch(() => {});
+        }
+        const allResults = [...priorResults, ...results];
+        const published = allResults.filter((r) => r.status === "published").length;
+        const failed = allResults.filter((r) => r.status === "failed").length;
+        return new Response(
+          JSON.stringify({ success: true, published, failed, results: allResults, remaining: allRemaining.length, partial: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Small delay between publishes to reduce DB I/O spikes
+      if (pageIndex > 0) await sleep(INTER_PUBLISH_DELAY_MS);
+      pageIndex++;
       // Resolve website if not directly joined
       if (!page.websites) {
         const originalWebsiteId = page.website_id || null;
