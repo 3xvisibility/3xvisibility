@@ -23,6 +23,11 @@ const SIGNUP_PW_RULES = [
   { key: "special", test: (p: string) => /[^A-Za-z0-9]/.test(p), label: "auth.pwRuleSpecial" },
 ];
 
+const LOGIN_RETRY_DELAYS_MS = [0, 1_500];
+const LOGIN_COOLDOWN_MS = 8_000;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const AI_LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
   { value: "es", label: "Español" },
@@ -39,6 +44,7 @@ const AI_LANGUAGE_OPTIONS = [
 
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
+  const [loginCooldownUntil, setLoginCooldownUntil] = useState(0);
   const [email, setEmail] = useState(() => localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -83,6 +89,12 @@ export default function AuthPage() {
 
   const mapAuthError = (errorMessage: string): { title: string; description: string } => {
     const msg = errorMessage.toLowerCase();
+    if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
+      return {
+        title: t("auth.loginFailed"),
+        description: "Login service is currently overloaded or unreachable. Please wait a few seconds and try again.",
+      };
+    }
     if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
       return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
     }
@@ -100,6 +112,11 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (Date.now() < loginCooldownUntil) {
+      const seconds = Math.ceil((loginCooldownUntil - Date.now()) / 1000);
+      toast({ title: t("auth.rateLimited"), description: `Please wait ${seconds}s before trying again.`, variant: "destructive" });
+      return;
+    }
     setLoading(true);
     // Persist remember-me preference
     localStorage.setItem("rememberMe", String(rememberMe));
@@ -108,9 +125,18 @@ export default function AuthPage() {
     } else {
       localStorage.removeItem("rememberedEmail");
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    let error: Error | null = null;
+    for (let attempt = 0; attempt < LOGIN_RETRY_DELAYS_MS.length; attempt += 1) {
+      if (LOGIN_RETRY_DELAYS_MS[attempt] > 0) await wait(LOGIN_RETRY_DELAYS_MS[attempt]);
+      const result = await supabase.auth.signInWithPassword({ email, password });
+      error = result.error;
+      if (!error || !/failed to fetch|network|timeout/i.test(error.message)) break;
+    }
     setLoading(false);
     if (error) {
+      if (/failed to fetch|network|timeout/i.test(error.message)) {
+        setLoginCooldownUntil(Date.now() + LOGIN_COOLDOWN_MS);
+      }
       const mapped = mapAuthError(error.message);
       toast({ title: mapped.title, description: mapped.description, variant: "destructive" });
     } else {
