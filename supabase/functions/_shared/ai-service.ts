@@ -29,6 +29,77 @@ export interface AiGenerateOptions {
   tool_choice?: any;
   response_format?: any;
   temperature?: number;
+  // Credit system fields — pass these to enable credit deduction
+  userId?: string;               // auth user id — if omitted, credits are NOT checked
+  promptType?: string;           // maps to CREDIT_COSTS (e.g. "seo_optimization")
+  skipCredits?: boolean;         // explicitly skip credit check (e.g. internal/system calls)
+}
+
+// ── Credit costs (mirrors ai-credits edge function) ──────────────────────────
+
+const CREDIT_COSTS: Record<string, number> = {
+  short_content: 1,
+  medium_content: 2,
+  full_page: 4,
+  seo_optimization: 2,
+  rewrite: 1,
+  translation: 2,
+  social_caption: 1,
+  product_description: 2,
+  template_scan: 2,
+  default: 1,
+};
+
+// ── Credit helpers ───────────────────────────────────────────────────────────
+
+function getServiceClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
+async function checkAndDeductCredits(
+  userId: string,
+  promptType: string,
+  model?: string,
+): Promise<{ allowed: boolean; remaining?: number; error?: string }> {
+  try {
+    const sb = getServiceClient();
+    if (!sb) {
+      console.warn("[ai-service] No service client — skipping credit check");
+      return { allowed: true };
+    }
+
+    const cost = CREDIT_COSTS[promptType] ?? CREDIT_COSTS.default;
+
+    const { data, error } = await sb.rpc("deduct_ai_credits", {
+      p_user_id: userId,
+      p_credits: cost,
+      p_prompt_type: promptType,
+      p_model: model || null,
+      p_metadata: {},
+    });
+
+    if (error) {
+      // If the table doesn't exist yet, allow the request gracefully
+      if (error.message?.includes("does not exist") || error.message?.includes("could not find")) {
+        console.warn("[ai-service] ai_credits table not found — allowing request");
+        return { allowed: true };
+      }
+      console.error("[ai-service] credit deduction error:", error.message);
+      return { allowed: true }; // fail-open so existing features don't break
+    }
+
+    if (data && typeof data === "object" && data.success === false) {
+      return { allowed: false, remaining: data.remaining, error: "insufficient_credits" };
+    }
+
+    return { allowed: true, remaining: data?.remaining };
+  } catch (err) {
+    console.warn("[ai-service] credit check exception — allowing request:", err);
+    return { allowed: true }; // fail-open
+  }
 }
 
 export interface AiResult {
