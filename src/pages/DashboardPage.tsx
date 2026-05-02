@@ -45,6 +45,7 @@ import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitationsBanner";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { AiCreditsWidget } from "@/components/dashboard/AiCreditsWidget";
 
 const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
@@ -390,6 +391,9 @@ export default function DashboardPage() {
       <PendingInvitationsBanner />
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
       <UsageLimitBanner type="ai" used={subAiUsed} limit={subAiLimit} />
+
+      {/* AI Credits */}
+      <AiCreditsWidget />
 
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-glow to-secondary p-6 sm:p-8 text-primary-foreground">
