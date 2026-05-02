@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
 
     let styleBlock: string;
     try {
-      styleBlock = await generateDesignCss(niche, services, business, vibe);
+      styleBlock = await generateDesignCss(niche, services, business, vibe, extractAuthToken(req));
     } catch (e) {
       if (e instanceof Response) return e;
       throw e;
