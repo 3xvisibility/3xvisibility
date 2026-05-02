@@ -235,19 +235,18 @@ export function getActiveProvider(): AiProvider {
 
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   // ── Credit gate ──────────────────────────────────────────────────────────
-  if (opts.userId && !opts.skipCredits) {
-    const credit = await checkAndDeductCredits(
-      opts.userId,
-      opts.promptType || "default",
-      opts.model,
-    );
-    if (!credit.allowed) {
-      return {
-        success: false,
-        content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
-        provider: "lovable",
-        fallback_used: false,
-      };
+  if (!opts.skipCredits) {
+    const uid = await resolveUserId(opts);
+    if (uid) {
+      const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
+      if (!credit.allowed) {
+        return {
+          success: false,
+          content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
+          provider: "lovable",
+          fallback_used: false,
+        };
+      }
     }
   }
 
