@@ -458,6 +458,8 @@ Deno.serve(async (req) => {
 
     // ═══════════════════════════════════════════════════════════
     // Standard mode – publish generated_pages by IDs
+    // Batched: processes up to PUBLISH_BATCH_SIZE pages per
+    // invocation, then self-chains for the remainder.
     // ═══════════════════════════════════════════════════════════
     if (!page_ids || !Array.isArray(page_ids) || page_ids.length === 0) {
       return new Response(JSON.stringify({ error: "page_ids array is required" }), {
@@ -466,10 +468,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Split into current batch and remainder for self-chaining
+    const currentBatchIds = page_ids.slice(0, PUBLISH_BATCH_SIZE);
+    const remainingIds = page_ids.slice(PUBLISH_BATCH_SIZE);
+    // Accumulate results from prior batches (passed via self-chain)
+    const priorResults: { id: string; status: string; external_url?: string; error?: string }[] = body._prior_results || [];
+
     const { data: pages, error: pagesError } = await supabase
       .from("generated_pages")
       .select("*, websites(url, type, credentials)")
-      .in("id", page_ids)
+      .in("id", currentBatchIds)
       .eq("user_id", user.id);
 
     if (pagesError || !pages) {
