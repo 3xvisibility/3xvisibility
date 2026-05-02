@@ -1,13 +1,16 @@
 /**
  * Centralized AI Service — multi-provider router with Lovable AI fallback.
+ * Now includes automatic credit check & deduction on every AI request.
  *
  * Usage from any edge function:
  *   import { aiGenerate } from "../_shared/ai-service.ts";
- *   const result = await aiGenerate({ messages, model?, stream? });
+ *   const result = await aiGenerate({ messages, model?, userId?, promptType? });
  *
  * Provider is selected via the AI_PROVIDER secret (default: "lovable").
  * If the chosen external provider fails, automatically falls back to Lovable AI.
  */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
