@@ -291,9 +291,27 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   provider: AiProvider;
   fallback_used: boolean;
 }> {
+  // ── Credit gate ──────────────────────────────────────────────────────────
+  if (opts.userId && !opts.skipCredits) {
+    const credit = await checkAndDeductCredits(
+      opts.userId,
+      opts.promptType || "default",
+      opts.model,
+    );
+    if (!credit.allowed) {
+      return {
+        response: new Response(
+          JSON.stringify({ error: "insufficient_credits", remaining: credit.remaining ?? 0 }),
+          { status: 402, headers: { "Content-Type": "application/json" } },
+        ),
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+  }
+
   const streamOpts = { ...opts, stream: true };
   const provider = getActiveProvider();
-  let fallbackUsed = false;
 
   if (provider === "lovable") {
     return { response: await callLovable(streamOpts), provider, fallback_used: false };
