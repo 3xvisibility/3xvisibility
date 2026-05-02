@@ -100,6 +100,8 @@ Deno.serve(async (req) => {
       tool_choice: body.tool_choice,
       response_format: body.response_format,
       temperature: body.temperature,
+      userId,
+      promptType,
     });
 
     const status = result.success ? 200 : 500;
