@@ -38,8 +38,24 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── Extract user for credit deduction ──────────────────────────────────
+    let userId: string | undefined;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      try {
+        const sb = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        );
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await sb.auth.getUser(token);
+        userId = user?.id;
+      } catch (_) { /* proceed without credits */ }
+    }
+
     const body = await req.json();
     const messages: AiMessage[] = body.messages;
+    const promptType = body.prompt_type || "default";
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(
@@ -58,6 +74,8 @@ Deno.serve(async (req) => {
         tools: body.tools,
         tool_choice: body.tool_choice,
         temperature: body.temperature,
+        userId,
+        promptType,
       });
 
       if (!response.ok) {
