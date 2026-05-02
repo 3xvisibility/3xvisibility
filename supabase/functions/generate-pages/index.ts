@@ -1443,6 +1443,8 @@ Deno.serve(async (req) => {
     }
 
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
+      // Small delay between batches to reduce disk I/O pressure on the DB
+      if (batchIdx > 0) await new Promise((r) => setTimeout(r, 150));
       // Timeout guard — save progress and return partial results
       if (Date.now() - startTime > TIMEOUT_MS) {
         timedOut = true;
