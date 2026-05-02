@@ -1,5 +1,5 @@
 // Edge function: AI-generate CSV-like rows for a template's variables.
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

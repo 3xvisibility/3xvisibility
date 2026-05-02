@@ -14,7 +14,7 @@
 // Response: { content: string, summary: string }
 
 import { applyVariantsToTemplate, type SectionVariants } from "../_shared/section-variants.ts";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
