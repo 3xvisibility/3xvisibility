@@ -70,6 +70,8 @@ Generate the <style> block now.`;
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
+    authToken,
+    promptType: "template_scan",
   });
 
   if (!result.success) {
