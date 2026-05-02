@@ -208,6 +208,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* AI Provider Selection */}
+      <AiProviderSettings />
+
       {/* AI Content Settings */}
       <Card className="shadow-surface">
         <CardHeader>
