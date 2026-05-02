@@ -21,6 +21,7 @@ serve(async (req) => {
     if (type === "batch_pages" && prompt) {
       const result = await aiGenerate({
       authToken: extractAuthToken(req),
+      promptType: "seo_optimization",
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: "You are a professional SEO page generator. Return only a valid JSON array. No markdown fences." },
@@ -98,6 +99,7 @@ ${platform === "prestashop" ? "PLATFORM: PrestaShop — use Bootstrap container/
 
     const result = await aiGenerate({
       authToken: extractAuthToken(req),
+      promptType: "seo_optimization",
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },

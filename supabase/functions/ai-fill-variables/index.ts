@@ -56,6 +56,7 @@ Return ONLY a JSON object, no prose, no code fences. Example:
 
   const result = await aiGenerate({
       authToken: extractAuthToken(req),
+      promptType: "short_content",
     model: "google/gemini-2.5-flash-lite",
     messages: [
       { role: "system", content: systemPrompt },

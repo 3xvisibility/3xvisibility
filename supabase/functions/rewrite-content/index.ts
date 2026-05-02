@@ -100,6 +100,7 @@ CRITICAL RULES - You MUST follow these exactly:
 
     const result = await aiGenerate({
       authToken: extractAuthToken(req),
+      promptType: "rewrite",
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
