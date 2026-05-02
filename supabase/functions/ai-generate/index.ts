@@ -24,6 +24,7 @@ import {
   aiGenerateStream,
   type AiMessage,
 } from "../_shared/ai-service.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
