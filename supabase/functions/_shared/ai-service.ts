@@ -103,6 +103,19 @@ async function checkAndDeductCredits(
   }
 }
 
+async function resolveUserId(opts: AiGenerateOptions): Promise<string | undefined> {
+  if (opts.userId) return opts.userId;
+  if (!opts.authToken) return undefined;
+  try {
+    const sb = getServiceClient();
+    if (!sb) return undefined;
+    const { data: { user } } = await sb.auth.getUser(opts.authToken);
+    return user?.id;
+  } catch (_) {
+    return undefined;
+  }
+}
+
 export interface AiResult {
   success: boolean;
   content: string;
