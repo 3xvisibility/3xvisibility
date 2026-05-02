@@ -769,11 +769,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    const published = results.filter((r) => r.status === "published").length;
-    const failed = results.filter((r) => r.status === "failed").length;
+    // Self-chain remaining pages if there are more to process
+    if (remainingIds.length > 0) {
+      console.log(`[PUBLISH] Batch done (${results.length} pages). Self-chaining ${remainingIds.length} remaining pages.`);
+      fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+        method: "POST",
+        headers: { Authorization: authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
+          overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+        }),
+      }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
+    }
+
+    const allResults = remainingIds.length > 0 ? results : [...priorResults, ...results];
+    const published = allResults.filter((r) => r.status === "published").length;
+    const failed = allResults.filter((r) => r.status === "failed").length;
 
     return new Response(
-      JSON.stringify({ success: true, published, failed, results }),
+      JSON.stringify({
+        success: true, published, failed, results: allResults,
+        ...(remainingIds.length > 0 ? { remaining: remainingIds.length, partial: true } : {}),
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
