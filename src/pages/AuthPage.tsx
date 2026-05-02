@@ -28,6 +28,15 @@ const LOGIN_COOLDOWN_MS = 8_000;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const clearLocalAuthSession = () => {
+  try {
+    const key = `sb-${new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore storage cleanup failures; login can still continue.
+  }
+};
+
 const AI_LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
   { value: "es", label: "Español" },
@@ -112,6 +121,7 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearLocalAuthSession();
     if (Date.now() < loginCooldownUntil) {
       const seconds = Math.ceil((loginCooldownUntil - Date.now()) / 1000);
       toast({ title: t("auth.rateLimited"), description: `Please wait ${seconds}s before trying again.`, variant: "destructive" });
