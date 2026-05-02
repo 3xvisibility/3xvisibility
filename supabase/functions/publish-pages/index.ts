@@ -294,6 +294,17 @@ function inferPublishType(
   return "page";
 }
 
+// Max pages to publish in a single invocation before self-chaining
+const PUBLISH_BATCH_SIZE = 10;
+// Small delay (ms) between individual page publishes to reduce DB I/O pressure
+const INTER_PUBLISH_DELAY_MS = 200;
+// Edge function soft timeout — leave headroom for the self-chain call
+const PUBLISH_TIMEOUT_MS = 110_000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
