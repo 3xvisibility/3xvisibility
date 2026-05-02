@@ -45,6 +45,7 @@ import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitationsBanner";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { AiCreditsWidget } from "@/components/dashboard/AiCreditsWidget";
 
 const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
