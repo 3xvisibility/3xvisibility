@@ -1,16 +1,9 @@
 // On-demand AI fill for unmapped template variables.
 // Called from the Variable Mapping step — generates one default value per
 // variable using the campaign's business / niche / services context.
-//
-// Request body:
-//   {
-//     variables: string[],                       // variable names to fill
-//     context: { business?, niche?, service? },  // niche / services context
-//     settings?: { tone?, contentLength?, language? },
-//   }
-// Response: { values: Record<string,string>, count: number }
 
 import { resolveLanguageName } from "../_shared/languages.ts";
+import { aiGenerate } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,7 +27,6 @@ async function generateAiVarDefaults(
   variables: string[],
   context: FillContext,
   settings: Required<FillSettings>,
-  apiKey: string,
 ): Promise<Record<string, string>> {
   if (variables.length === 0) return {};
   const langName = resolveLanguageName(settings.language);
@@ -62,49 +54,40 @@ Variables: ${variables.join(", ")}
 Return ONLY a JSON object, no prose, no code fences. Example:
 {"variable_name": "value in ${langName}", "another": "value in ${langName}"}`;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
-  try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      const t = await response.text();
-      console.error("[AI-FILL] gateway error", response.status, t);
-      const status = response.status === 429 || response.status === 402 ? response.status : 500;
+  const result = await aiGenerate({
+    model: "google/gemini-2.5-flash-lite",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    response_format: { type: "json_object" },
+  });
+
+  if (!result.success) {
+    if (result.content.includes("429") || result.content.includes("Rate limit")) {
       throw new Response(JSON.stringify({
-        error: response.status === 429
-          ? "Rate limit exceeded — please try again in a moment."
-          : response.status === 402
-          ? "AI credits exhausted — top up your workspace usage to continue."
-          : "AI gateway error",
-      }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        error: "Rate limit exceeded — please try again in a moment.",
+      }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const data = await response.json();
-    const raw = data.choices?.[0]?.message?.content || "{}";
-    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-    let parsed: Record<string, unknown> = {};
-    try { parsed = JSON.parse(cleaned); } catch { parsed = {}; }
-    const out: Record<string, string> = {};
-    for (const v of variables) {
-      const val = parsed[v] ?? parsed[v.toLowerCase()];
-      if (typeof val === "string" && val.trim()) out[v] = val.trim();
-      else if (typeof val === "number" || typeof val === "boolean") out[v] = String(val);
+    if (result.content.includes("402") || result.content.includes("credits")) {
+      throw new Response(JSON.stringify({
+        error: "AI credits exhausted — top up your workspace usage to continue.",
+      }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    return out;
-  } finally {
-    clearTimeout(timeout);
+    console.error("[AI-FILL] generation failed:", result.content);
+    return {};
   }
+
+  const cleaned = result.content.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  let parsed: Record<string, unknown> = {};
+  try { parsed = JSON.parse(cleaned); } catch { parsed = {}; }
+  const out: Record<string, string> = {};
+  for (const v of variables) {
+    const val = parsed[v] ?? parsed[v.toLowerCase()];
+    if (typeof val === "string" && val.trim()) out[v] = val.trim();
+    else if (typeof val === "number" || typeof val === "boolean") out[v] = String(val);
+  }
+  return out;
 }
 
 Deno.serve(async (req) => {
@@ -113,13 +96,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI service not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = await req.json() as {
       variables?: string[];
       context?: FillContext;
@@ -148,12 +124,11 @@ Deno.serve(async (req) => {
     };
 
     try {
-      const values = await generateAiVarDefaults(variables, ctx, settings, LOVABLE_API_KEY);
+      const values = await generateAiVarDefaults(variables, ctx, settings);
       return new Response(JSON.stringify({ values, count: Object.keys(values).length }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (e) {
-      // Re-throw Response from rate-limit / payment paths
       if (e instanceof Response) return e;
       throw e;
     }

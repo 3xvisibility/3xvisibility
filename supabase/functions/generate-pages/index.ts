@@ -4,6 +4,7 @@ import { buildMultiEngineMeta, buildAutoFaq, buildExtraJsonLd } from "../_shared
 import { validateJsonLdInHtml, summarizeValidation } from "../_shared/jsonld-validator.ts";
 import { resolveLanguageName } from "../_shared/languages.ts";
 import { buildVibeOverrideStyles, type VibeTheme } from "../_shared/vibe-theme.ts";
+import { aiGenerate } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

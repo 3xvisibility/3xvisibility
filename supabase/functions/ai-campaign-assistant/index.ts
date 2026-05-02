@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { aiGenerate } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,13 +14,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const { action, context } = await req.json() as {
       action: Action;
       context: Record<string, any>;
@@ -62,42 +55,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        // Cheap model — assistant tips/suggestions don't need a heavy model
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          { role: "system", content: prompt.system },
-          { role: "user", content: prompt.user },
-        ],
-      }),
+    const result = await aiGenerate({
+      model: "google/gemini-2.5-flash-lite",
+      messages: [
+        { role: "system", content: prompt.system },
+        { role: "user", content: prompt.user },
+      ],
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const text = await response.text();
-      console.error("AI gateway error:", response.status, text);
-      return new Response(JSON.stringify({ error: "AI generation failed" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!result.success) {
+      const statusCode = result.content.includes("429") ? 429 : result.content.includes("402") ? 402 : 500;
+      return new Response(JSON.stringify({ error: result.content }), {
+        status: statusCode, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const aiResult = await response.json();
-    let content = aiResult.choices?.[0]?.message?.content ?? "";
+    let content = result.content;
     content = content.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
     return new Response(
