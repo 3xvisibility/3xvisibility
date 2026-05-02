@@ -55,6 +55,7 @@ Return ONLY a JSON object, no prose, no code fences. Example:
 {"variable_name": "value in ${langName}", "another": "value in ${langName}"}`;
 
   const result = await aiGenerate({
+      authToken: extractAuthToken(req),
     model: "google/gemini-2.5-flash-lite",
     messages: [
       { role: "system", content: systemPrompt },

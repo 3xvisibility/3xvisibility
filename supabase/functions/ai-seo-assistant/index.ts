@@ -112,6 +112,7 @@ Deno.serve(async (req) => {
     const prompt = prompts[action];
 
     const result = await aiGenerate({
+      authToken: extractAuthToken(req),
       model: action === "full_rewrite" || action === "rewrite" as any
         ? "google/gemini-3-flash-preview"
         : "google/gemini-2.5-flash-lite",

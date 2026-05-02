@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await aiGenerate({
+      authToken: extractAuthToken(req),
       model: "google/gemini-2.5-flash-lite",
       messages: [
         { role: "system", content: prompt.system },
