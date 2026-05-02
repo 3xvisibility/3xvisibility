@@ -220,6 +220,24 @@ export function getActiveProvider(): AiProvider {
 // ── Main entry: generate (non-streaming) ─────────────────────────────────────
 
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
+  // ── Credit gate ──────────────────────────────────────────────────────────
+  if (opts.userId && !opts.skipCredits) {
+    const credit = await checkAndDeductCredits(
+      opts.userId,
+      opts.promptType || "default",
+      opts.model,
+    );
+    if (!credit.allowed) {
+      return {
+        success: false,
+        content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+  }
+
+  // ── Provider routing ─────────────────────────────────────────────────────
   const provider = getActiveProvider();
   let fallbackUsed = false;
   let response: Response;
