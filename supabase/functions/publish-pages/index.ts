@@ -294,6 +294,17 @@ function inferPublishType(
   return "page";
 }
 
+// Max pages to publish in a single invocation before self-chaining
+const PUBLISH_BATCH_SIZE = 10;
+// Small delay (ms) between individual page publishes to reduce DB I/O pressure
+const INTER_PUBLISH_DELAY_MS = 200;
+// Edge function soft timeout — leave headroom for the self-chain call
+const PUBLISH_TIMEOUT_MS = 110_000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -447,6 +458,8 @@ Deno.serve(async (req) => {
 
     // ═══════════════════════════════════════════════════════════
     // Standard mode – publish generated_pages by IDs
+    // Batched: processes up to PUBLISH_BATCH_SIZE pages per
+    // invocation, then self-chains for the remainder.
     // ═══════════════════════════════════════════════════════════
     if (!page_ids || !Array.isArray(page_ids) || page_ids.length === 0) {
       return new Response(JSON.stringify({ error: "page_ids array is required" }), {
@@ -455,10 +468,16 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Split into current batch and remainder for self-chaining
+    const currentBatchIds = page_ids.slice(0, PUBLISH_BATCH_SIZE);
+    const remainingIds = page_ids.slice(PUBLISH_BATCH_SIZE);
+    // Accumulate results from prior batches (passed via self-chain)
+    const priorResults: { id: string; status: string; external_url?: string; error?: string }[] = body._prior_results || [];
+
     const { data: pages, error: pagesError } = await supabase
       .from("generated_pages")
       .select("*, websites(url, type, credentials)")
-      .in("id", page_ids)
+      .in("id", currentBatchIds)
       .eq("user_id", user.id);
 
     if (pagesError || !pages) {
@@ -473,7 +492,36 @@ Deno.serve(async (req) => {
     // Cache Elementor detection per website to avoid redundant checks
     const elementorCache = new Map<string, { usesElementor: boolean; pageTemplate?: string }>();
 
+    const publishStartTime = Date.now();
+    let pageIndex = 0;
     for (const page of pages) {
+      // Timeout guard — self-chain remaining pages
+      if (Date.now() - publishStartTime > PUBLISH_TIMEOUT_MS) {
+        console.log(`[PUBLISH] Timeout after ${pageIndex} pages, self-chaining remaining`);
+        const unprocessedIds = pages.slice(pageIndex).map((p: any) => p.id);
+        const allRemaining = [...unprocessedIds, ...remainingIds];
+        if (allRemaining.length > 0) {
+          fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+            method: "POST",
+            headers: { Authorization: authHeader, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
+              overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+            }),
+          }).catch(() => {});
+        }
+        const allResults = [...priorResults, ...results];
+        const published = allResults.filter((r) => r.status === "published").length;
+        const failed = allResults.filter((r) => r.status === "failed").length;
+        return new Response(
+          JSON.stringify({ success: true, published, failed, results: allResults, remaining: allRemaining.length, partial: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Small delay between publishes to reduce DB I/O spikes
+      if (pageIndex > 0) await sleep(INTER_PUBLISH_DELAY_MS);
+      pageIndex++;
       // Resolve website if not directly joined
       if (!page.websites) {
         const originalWebsiteId = page.website_id || null;
@@ -721,11 +769,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    const published = results.filter((r) => r.status === "published").length;
-    const failed = results.filter((r) => r.status === "failed").length;
+    // Self-chain remaining pages if there are more to process
+    if (remainingIds.length > 0) {
+      console.log(`[PUBLISH] Batch done (${results.length} pages). Self-chaining ${remainingIds.length} remaining pages.`);
+      fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+        method: "POST",
+        headers: { Authorization: authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
+          overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+        }),
+      }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
+    }
+
+    const allResults = remainingIds.length > 0 ? results : [...priorResults, ...results];
+    const published = allResults.filter((r) => r.status === "published").length;
+    const failed = allResults.filter((r) => r.status === "failed").length;
 
     return new Response(
-      JSON.stringify({ success: true, published, failed, results }),
+      JSON.stringify({
+        success: true, published, failed, results: allResults,
+        ...(remainingIds.length > 0 ? { remaining: remainingIds.length, partial: true } : {}),
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
