@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { injectNicheImages } from "../_shared/niche-images.ts";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +20,8 @@ serve(async (req) => {
     // AI Batch Pages mode
     if (type === "batch_pages" && prompt) {
       const result = await aiGenerate({
+      authToken: extractAuthToken(req),
+      promptType: "seo_optimization",
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: "You are a professional SEO page generator. Return only a valid JSON array. No markdown fences." },
@@ -96,6 +98,8 @@ ${platform === "shopify" ? "PLATFORM: Shopify — use clean Online Store 2.0 com
 ${platform === "prestashop" ? "PLATFORM: PrestaShop — use Bootstrap container/row/col-md classes, no inline scripts." : ""}`;
 
     const result = await aiGenerate({
+      authToken: extractAuthToken(req),
+      promptType: "seo_optimization",
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },

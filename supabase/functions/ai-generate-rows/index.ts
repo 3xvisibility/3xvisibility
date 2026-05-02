@@ -1,5 +1,5 @@
 // Edge function: AI-generate CSV-like rows for a template's variables.
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +85,8 @@ Make every row meaningfully different so each generated page is unique.`;
     };
 
     const result = await aiGenerate({
+      authToken: extractAuthToken(req),
+      promptType: "medium_content",
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },

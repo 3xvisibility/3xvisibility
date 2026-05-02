@@ -14,7 +14,7 @@
 // Response: { content: string, summary: string }
 
 import { applyVariantsToTemplate, type SectionVariants } from "../_shared/section-variants.ts";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,6 +39,7 @@ async function generateDesignCss(
   services: string,
   business: string,
   vibe: VibeHint,
+  authToken?: string,
 ): Promise<string> {
   const vibeLine = [
     vibe.palette && `Color palette mood: ${vibe.palette}`,
@@ -69,6 +70,8 @@ Generate the <style> block now.`;
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
+    authToken,
+    promptType: "template_scan",
   });
 
   if (!result.success) {
@@ -138,7 +141,7 @@ Deno.serve(async (req) => {
 
     let styleBlock: string;
     try {
-      styleBlock = await generateDesignCss(niche, services, business, vibe);
+      styleBlock = await generateDesignCss(niche, services, business, vibe, extractAuthToken(req));
     } catch (e) {
       if (e instanceof Response) return e;
       throw e;

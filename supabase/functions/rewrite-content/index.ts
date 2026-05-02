@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,6 +99,8 @@ CRITICAL RULES - You MUST follow these exactly:
 - If the content has classes like "pgp-page", "elementor-*", "wp-*", "shopify-*", preserve them exactly${languageInstruction}`;
 
     const result = await aiGenerate({
+      authToken: extractAuthToken(req),
+      promptType: "rewrite",
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },

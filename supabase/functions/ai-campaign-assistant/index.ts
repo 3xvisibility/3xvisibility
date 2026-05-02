@@ -1,4 +1,4 @@
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +56,8 @@ Deno.serve(async (req) => {
     }
 
     const result = await aiGenerate({
+      authToken: extractAuthToken(req),
+      promptType: "short_content",
       model: "google/gemini-2.5-flash-lite",
       messages: [
         { role: "system", content: prompt.system },

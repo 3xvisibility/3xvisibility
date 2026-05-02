@@ -1,13 +1,16 @@
 /**
  * Centralized AI Service — multi-provider router with Lovable AI fallback.
+ * Now includes automatic credit check & deduction on every AI request.
  *
  * Usage from any edge function:
  *   import { aiGenerate } from "../_shared/ai-service.ts";
- *   const result = await aiGenerate({ messages, model?, stream? });
+ *   const result = await aiGenerate({ messages, model?, userId?, promptType? });
  *
  * Provider is selected via the AI_PROVIDER secret (default: "lovable").
  * If the chosen external provider fails, automatically falls back to Lovable AI.
  */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +29,97 @@ export interface AiGenerateOptions {
   tool_choice?: any;
   response_format?: any;
   temperature?: number;
+  // Credit system fields — pass these to enable credit deduction
+  userId?: string;               // auth user id — if omitted, resolved from authToken
+  authToken?: string;            // JWT token — used to resolve userId if not provided
+  promptType?: string;           // maps to CREDIT_COSTS (e.g. "seo_optimization")
+  skipCredits?: boolean;         // explicitly skip credit check (e.g. internal/system calls)
+}
+
+// ── Credit costs (mirrors ai-credits edge function) ──────────────────────────
+
+const CREDIT_COSTS: Record<string, number> = {
+  short_content: 1,
+  medium_content: 2,
+  full_page: 4,
+  seo_optimization: 2,
+  rewrite: 1,
+  translation: 2,
+  social_caption: 1,
+  product_description: 2,
+  template_scan: 2,
+  default: 1,
+};
+
+// ── Credit helpers ───────────────────────────────────────────────────────────
+
+function getServiceClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
+
+async function checkAndDeductCredits(
+  userId: string,
+  promptType: string,
+  model?: string,
+): Promise<{ allowed: boolean; remaining?: number; error?: string }> {
+  try {
+    const sb = getServiceClient();
+    if (!sb) {
+      console.warn("[ai-service] No service client — skipping credit check");
+      return { allowed: true };
+    }
+
+    const cost = CREDIT_COSTS[promptType] ?? CREDIT_COSTS.default;
+
+    const { data, error } = await sb.rpc("deduct_ai_credits", {
+      p_user_id: userId,
+      p_credits: cost,
+      p_prompt_type: promptType,
+      p_model: model || null,
+      p_metadata: {},
+    });
+
+    if (error) {
+      // If the table doesn't exist yet, allow the request gracefully
+      if (error.message?.includes("does not exist") || error.message?.includes("could not find")) {
+        console.warn("[ai-service] ai_credits table not found — allowing request");
+        return { allowed: true };
+      }
+      console.error("[ai-service] credit deduction error:", error.message);
+      return { allowed: true }; // fail-open so existing features don't break
+    }
+
+    if (data && typeof data === "object" && data.success === false) {
+      return { allowed: false, remaining: data.remaining, error: "insufficient_credits" };
+    }
+
+    return { allowed: true, remaining: data?.remaining };
+  } catch (err) {
+    console.warn("[ai-service] credit check exception — allowing request:", err);
+    return { allowed: true }; // fail-open
+  }
+}
+
+async function resolveUserId(opts: AiGenerateOptions): Promise<string | undefined> {
+  if (opts.userId) return opts.userId;
+  if (!opts.authToken) return undefined;
+  try {
+    const sb = getServiceClient();
+    if (!sb) return undefined;
+    const { data: { user } } = await sb.auth.getUser(opts.authToken);
+    return user?.id;
+  } catch (_) {
+    return undefined;
+  }
+}
+
+/** Extract bearer token from a Request for passing as authToken to aiGenerate */
+export function extractAuthToken(req: Request): string | undefined {
+  const h = req.headers.get("Authorization");
+  return h ? h.replace("Bearer ", "") : undefined;
 }
 
 export interface AiResult {
@@ -146,6 +240,23 @@ export function getActiveProvider(): AiProvider {
 // ── Main entry: generate (non-streaming) ─────────────────────────────────────
 
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
+  // ── Credit gate ──────────────────────────────────────────────────────────
+  if (!opts.skipCredits) {
+    const uid = await resolveUserId(opts);
+    if (uid) {
+      const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
+      if (!credit.allowed) {
+        return {
+          success: false,
+          content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
+          provider: "lovable",
+          fallback_used: false,
+        };
+      }
+    }
+  }
+
+  // ── Provider routing ─────────────────────────────────────────────────────
   const provider = getActiveProvider();
   let fallbackUsed = false;
   let response: Response;
@@ -199,9 +310,26 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   provider: AiProvider;
   fallback_used: boolean;
 }> {
+  // ── Credit gate ──────────────────────────────────────────────────────────
+  if (!opts.skipCredits) {
+    const uid = await resolveUserId(opts);
+    if (uid) {
+      const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
+      if (!credit.allowed) {
+        return {
+          response: new Response(
+            JSON.stringify({ error: "insufficient_credits", remaining: credit.remaining ?? 0 }),
+            { status: 402, headers: { "Content-Type": "application/json" } },
+          ),
+          provider: "lovable",
+          fallback_used: false,
+        };
+      }
+    }
+  }
+
   const streamOpts = { ...opts, stream: true };
   const provider = getActiveProvider();
-  let fallbackUsed = false;
 
   if (provider === "lovable") {
     return { response: await callLovable(streamOpts), provider, fallback_used: false };

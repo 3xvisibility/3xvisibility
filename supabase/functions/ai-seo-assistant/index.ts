@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -112,6 +112,8 @@ Deno.serve(async (req) => {
     const prompt = prompts[action];
 
     const result = await aiGenerate({
+      authToken: extractAuthToken(req),
+      promptType: "seo_optimization",
       model: action === "full_rewrite" || action === "rewrite" as any
         ? "google/gemini-3-flash-preview"
         : "google/gemini-2.5-flash-lite",
