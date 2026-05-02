@@ -39,6 +39,7 @@ async function generateDesignCss(
   services: string,
   business: string,
   vibe: VibeHint,
+  authToken?: string,
 ): Promise<string> {
   const vibeLine = [
     vibe.palette && `Color palette mood: ${vibe.palette}`,
