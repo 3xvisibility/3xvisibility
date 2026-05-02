@@ -133,6 +133,12 @@ const App = () => {
 
   useEffect(() => {
     clearExpiredLocalAuthSession();
+    if (window.location.pathname === "/auth") {
+      const key = getAuthStorageKey();
+      if (key) localStorage.removeItem(key);
+      setSession(null);
+      setLoading(false);
+    }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
