@@ -116,6 +116,12 @@ async function resolveUserId(opts: AiGenerateOptions): Promise<string | undefine
   }
 }
 
+/** Extract bearer token from a Request for passing as authToken to aiGenerate */
+export function extractAuthToken(req: Request): string | undefined {
+  const h = req.headers.get("Authorization");
+  return h ? h.replace("Bearer ", "") : undefined;
+}
+
 export interface AiResult {
   success: boolean;
   content: string;
