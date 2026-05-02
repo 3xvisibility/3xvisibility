@@ -29,8 +29,6 @@ interface VibeHint {
 }
 
 function stripExistingStyles(html: string): { stripped: string; hadStyle: boolean } {
-  // Remove leading <style>...</style> block(s) so we can prepend a fresh one.
-  // We only strip <style> tags — never touch element styles or HTML.
   const re = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
   const hadStyle = re.test(html);
   return { stripped: html.replace(re, "").trim(), hadStyle };
@@ -41,7 +39,6 @@ async function generateDesignCss(
   services: string,
   business: string,
   vibe: VibeHint,
-  apiKey: string,
 ): Promise<string> {
   const vibeLine = [
     vibe.palette && `Color palette mood: ${vibe.palette}`,
@@ -66,44 +63,31 @@ ${vibeLine}
 
 Generate the <style> block now.`;
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45_000);
-  try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      const t = await response.text();
-      console.error("[REGEN-DESIGN] gateway error", response.status, t);
-      const status = response.status === 429 || response.status === 402 ? response.status : 500;
-      throw new Response(JSON.stringify({
-        error: response.status === 429
-          ? "Rate limit exceeded — please try again in a moment."
-          : response.status === 402
-          ? "AI credits exhausted — top up your workspace usage to continue."
-          : "AI gateway error",
-      }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    const data = await response.json();
-    let raw: string = data.choices?.[0]?.message?.content || "";
-    raw = raw.replace(/^```(?:html|css)?/i, "").replace(/```$/, "").trim();
-    // Extract first <style>...</style>; if missing, wrap the raw CSS.
-    const m = raw.match(/<style\b[^>]*>[\s\S]*?<\/style>/i);
-    if (m) return m[0];
-    if (raw) return `<style>${raw}</style>`;
-    throw new Error("AI returned empty design");
-  } finally {
-    clearTimeout(timeout);
+  const result = await aiGenerate({
+    model: "google/gemini-2.5-flash",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  });
+
+  if (!result.success) {
+    const status = result.content.includes("429") ? 429 : result.content.includes("402") ? 402 : 500;
+    throw new Response(JSON.stringify({
+      error: status === 429
+        ? "Rate limit exceeded — please try again in a moment."
+        : status === 402
+        ? "AI credits exhausted — top up your workspace usage to continue."
+        : "AI gateway error",
+    }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
+
+  let raw = result.content;
+  raw = raw.replace(/^```(?:html|css)?/i, "").replace(/```$/, "").trim();
+  const m = raw.match(/<style\b[^>]*>[\s\S]*?<\/style>/i);
+  if (m) return m[0];
+  if (raw) return `<style>${raw}</style>`;
+  throw new Error("AI returned empty design");
 }
 
 Deno.serve(async (req) => {
@@ -112,13 +96,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI service not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = await req.json() as {
       content?: string;
       niche?: string;
@@ -126,7 +103,7 @@ Deno.serve(async (req) => {
       business?: string;
       vibe?: VibeHint;
       variants?: SectionVariants;
-      mode?: "full" | "variants-only"; // variants-only skips AI (free + instant)
+      mode?: "full" | "variants-only";
     };
 
     const content = (body.content || "").toString();
@@ -143,7 +120,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── Variants-only mode: just re-apply the layout variant CSS, no AI call.
     if (mode === "variants-only") {
       const newContent = applyVariantsToTemplate(content, variants);
       const summary = `Applied layout variants — ${
@@ -154,7 +130,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── Full regenerate: niche required, run AI, then layer variants on top.
     if (!niche) {
       return new Response(JSON.stringify({ error: "A target niche is required to regenerate the design." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -163,7 +138,7 @@ Deno.serve(async (req) => {
 
     let styleBlock: string;
     try {
-      styleBlock = await generateDesignCss(niche, services, business, vibe, LOVABLE_API_KEY);
+      styleBlock = await generateDesignCss(niche, services, business, vibe);
     } catch (e) {
       if (e instanceof Response) return e;
       throw e;
@@ -171,7 +146,6 @@ Deno.serve(async (req) => {
 
     const { stripped, hadStyle } = stripExistingStyles(content);
     let newContent = `${styleBlock}\n${stripped}`.trim();
-    // Re-apply variants if user picked any
     if (Object.values(variants).some(Boolean)) {
       newContent = applyVariantsToTemplate(newContent, variants);
     }
