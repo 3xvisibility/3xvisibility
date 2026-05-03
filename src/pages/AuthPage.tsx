@@ -100,14 +100,14 @@ export default function AuthPage() {
     const msg = errorMessage.toLowerCase();
     if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
       return {
-        title: "Network / Connectivity Error",
-        description: "Could not reach the login service. This is a browser-level network failure (DNS, firewall, VPN, ad-blocker, or CORS). Check DevTools → Network tab for blocked requests.",
+        title: "Connection Failed",
+        description: "Your browser could not connect to the login server. Common causes: unstable internet, VPN, firewall, or ad-blocker blocking the request. Try disabling your VPN/ad-blocker or switching to a different network.",
       };
     }
     if (msg.includes("cors") || msg.includes("access-control")) {
       return {
-        title: "CORS Error",
-        description: "The auth endpoint blocked the request due to CORS policy. This usually means the Supabase URL is misconfigured or a proxy is interfering.",
+        title: "Request Blocked (CORS)",
+        description: "The login server rejected the request due to a cross-origin policy. A browser extension, proxy, or misconfigured URL may be the cause.",
       };
     }
     if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
@@ -123,7 +123,7 @@ export default function AuthPage() {
       return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
     }
     // Auth endpoint returned an error we didn't map — show raw
-    return { title: "Auth Error (server responded)", description: errorMessage };
+    return { title: t("auth.loginFailed"), description: errorMessage };
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -152,8 +152,8 @@ export default function AuthPage() {
       if (probe instanceof Error) {
         console.error("[Auth Debug] Raw probe FAILED:", probe.message);
         toast({
-          title: "Diagnostic: Auth endpoint unreachable",
-          description: `Raw fetch to ${new URL(authUrl).hostname} failed: "${probe.message}". This is a network/CORS issue — the server never responded. Check VPN, ad-blocker, or try a different network.`,
+          title: "Login Server Unreachable",
+          description: `Could not connect to the login server (${new URL(authUrl).hostname}). Please check your internet connection, disable any VPN or ad-blocker, and try again.`,
           variant: "destructive",
         });
         setLoading(false);
