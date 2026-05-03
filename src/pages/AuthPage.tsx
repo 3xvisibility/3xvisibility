@@ -152,8 +152,8 @@ export default function AuthPage() {
       if (probe instanceof Error) {
         console.error("[Auth Debug] Raw probe FAILED:", probe.message);
         toast({
-          title: "Diagnostic: Auth endpoint unreachable",
-          description: `Raw fetch to ${new URL(authUrl).hostname} failed: "${probe.message}". This is a network/CORS issue — the server never responded. Check VPN, ad-blocker, or try a different network.`,
+          title: "Login Server Unreachable",
+          description: `Could not connect to the login server (${new URL(authUrl).hostname}). Please check your internet connection, disable any VPN or ad-blocker, and try again.`,
           variant: "destructive",
         });
         setLoading(false);
