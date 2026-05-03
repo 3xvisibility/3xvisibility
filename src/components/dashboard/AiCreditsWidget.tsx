@@ -3,8 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Zap, FileText, Search, Globe, PenLine, Languages, Image, Bot, Sparkles } from "lucide-react";
+import { Zap, FileText, Search, Globe, PenLine, Languages, Image, Bot, Sparkles, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const PROMPT_TYPE_META: Record<string, { label: string; icon: React.ElementType }> = {
   short_content: { label: "Short Content", icon: FileText },
@@ -25,7 +28,14 @@ interface UsageEntry {
   created_at: string;
 }
 
-export function AiCreditsWidget() {
+interface AiCreditsWidgetProps {
+  /** Percentage threshold (0–100) below which the upgrade prompt appears. Default: 10 */
+  lowThreshold?: number;
+}
+
+export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
+  const navigate = useNavigate();
+  const { basePath } = useWorkspace();
   const { data: credits, isLoading: creditsLoading } = useQuery({
     queryKey: ["ai-credits"],
     queryFn: async () => {
@@ -83,10 +93,22 @@ export function AiCreditsWidget() {
             <Progress value={pct} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{remaining.toLocaleString()} / {total.toLocaleString()} remaining</span>
-              <span className={pct <= 10 ? "text-destructive font-medium" : ""}>{used.toLocaleString()} used</span>
+              <span className={pct <= lowThreshold ? "text-destructive font-medium" : ""}>{used.toLocaleString()} used</span>
             </div>
-            {pct <= 10 && (
-              <p className="text-xs text-destructive">Credits running low. Please upgrade your plan.</p>
+            {pct <= lowThreshold && (
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
+                <p className="text-xs text-destructive flex-1">
+                  Credits running low. Upgrade to continue generating.
+                </p>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="shrink-0 gap-1 h-7 text-xs"
+                  onClick={() => navigate(`${basePath}/billing`)}
+                >
+                  Upgrade <ArrowRight className="h-3 w-3" />
+                </Button>
+              </div>
             )}
 
             {sortedBreakdown.length > 0 && (
