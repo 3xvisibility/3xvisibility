@@ -103,6 +103,69 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
   });
 
+  // Map common Shopify OAuth errors to user-friendly messages with retry guidance
+  const mapReconnectError = (msg: string): { title: string; description: string } => {
+    const lower = msg.toLowerCase();
+    if (lower.includes("not configured on this platform") || lower.includes("shopify oauth is not configured")) {
+      return {
+        title: "Shopify not configured",
+        description: "The platform's Shopify integration hasn't been set up yet. Please contact support.",
+      };
+    }
+    if (lower.includes("unauthorized") || lower.includes("missing authorization")) {
+      return {
+        title: "Session expired",
+        description: "Your session has expired. Please log in again and retry.",
+      };
+    }
+    if (lower.includes("myshopify.com") || lower.includes("shop domain")) {
+      return {
+        title: "Invalid store domain",
+        description: "The store domain must end with .myshopify.com. Please edit the site and correct it.",
+      };
+    }
+    if (lower.includes("failed to initiate") || lower.includes("failed to store")) {
+      return {
+        title: "Connection setup failed",
+        description: "Could not start the authorization process. Please wait a moment and try again.",
+      };
+    }
+    if (lower.includes("token exchange failed")) {
+      return {
+        title: "Authorization rejected",
+        description: "Shopify rejected the connection. Ensure you approved the permissions on Shopify's screen, then try again.",
+      };
+    }
+    if (lower.includes("expired") || lower.includes("invalid or expired")) {
+      return {
+        title: "Session timed out",
+        description: "The authorization window expired. Click Reconnect to start a fresh session.",
+      };
+    }
+    if (lower.includes("signature verification") || lower.includes("hmac")) {
+      return {
+        title: "Security check failed",
+        description: "The authorization response couldn't be verified. Please try reconnecting.",
+      };
+    }
+    if (lower.includes("domain mismatch") || lower.includes("tampering")) {
+      return {
+        title: "Domain mismatch",
+        description: "The store that responded doesn't match the one you connected. Verify your store domain and reconnect.",
+      };
+    }
+    if (lower.includes("networkerror") || lower.includes("failed to fetch") || lower.includes("load failed")) {
+      return {
+        title: "Network error",
+        description: "Couldn't reach the server. Check your internet connection and try again.",
+      };
+    }
+    return {
+      title: "Reconnect failed",
+      description: msg || "An unexpected error occurred. Please try again in a few moments.",
+    };
+  };
+
   // Shopify reconnect (re-initiate OAuth)
   const reconnectMutation = useMutation({
     mutationFn: async () => {
@@ -123,7 +186,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
       window.location.href = data.auth_url;
     },
     onError: (err: Error) => {
-      toast({ title: "Reconnect failed", description: err.message, variant: "destructive" });
+      const { title, description } = mapReconnectError(err.message);
+      toast({ title, description, variant: "destructive" });
     },
   });
 
