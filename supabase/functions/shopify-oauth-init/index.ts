@@ -8,8 +8,8 @@ const corsHeaders = {
 
 /**
  * Generates a Shopify OAuth authorization URL.
- * Each user provides their own Shopify App Client ID.
- * The client_secret is stored temporarily so the callback can use it.
+ * Platform-managed: client_id & client_secret come from env secrets,
+ * NOT from the user request.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,6 +28,16 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    // Platform-level credentials
+    const clientId = Deno.env.get("SHOPIFY_CLIENT_ID");
+    const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
+    if (!clientId || !clientSecret) {
+      return new Response(JSON.stringify({ error: "Shopify OAuth is not configured on this platform" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -39,10 +49,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { shop_domain, client_id, client_secret, workspace_id, site_name, language } = await req.json();
+    const { shop_domain, workspace_id, site_name, language } = await req.json();
 
-    if (!shop_domain || !client_id || !client_secret || !workspace_id) {
-      return new Response(JSON.stringify({ error: "shop_domain, client_id, client_secret, and workspace_id are required" }), {
+    if (!shop_domain || !workspace_id) {
+      return new Response(JSON.stringify({ error: "shop_domain and workspace_id are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -69,11 +79,11 @@ Deno.serve(async (req) => {
       user_id: user.id,
       workspace_id,
       shop_domain: domain,
-      client_id,
-      client_secret,
+      client_id: clientId,
+      client_secret: clientSecret,
       site_name: site_name || domain,
       language: language || null,
-      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 min expiry
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });
 
     if (insertError) {
@@ -86,7 +96,7 @@ Deno.serve(async (req) => {
 
     const scopes = "read_products,write_products,read_inventory,write_inventory,read_content,write_content";
     const callbackUrl = `${supabaseUrl}/functions/v1/shopify-oauth-callback`;
-    const authUrl = `https://${domain}/admin/oauth/authorize?client_id=${encodeURIComponent(client_id)}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
+    const authUrl = `https://${domain}/admin/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
 
     return new Response(JSON.stringify({ auth_url: authUrl, state }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

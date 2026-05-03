@@ -26,7 +26,7 @@ import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredential
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
-import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
+import { validateShopifyDomain } from "@/lib/shopify-validation";
 import { ConnectionProgressSteps, type ProgressStep, type StepStatus } from "@/components/websites/ConnectionProgressSteps";
 import { extractEdgeError } from "@/lib/edge-function-error";
 
@@ -48,10 +48,6 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
-  const [shopifyToken, setShopifyToken] = useState("");
-  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<"manual" | "oauth">("oauth");
-  const [shopifyClientId, setShopifyClientId] = useState("");
-  const [shopifyClientSecret, setShopifyClientSecret] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -116,13 +112,7 @@ export default function WebsitesPage() {
 
   // Shopify-specific frontend validation
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
-  const shopifyTokenError = siteType === "shopify" && shopifyAuthMethod === "manual" ? validateShopifyToken(shopifyToken) : null;
-  const shopifyOAuthMissing = siteType === "shopify" && shopifyAuthMethod === "oauth" && (!shopifyClientId || !shopifyClientSecret);
-  const shopifyInvalid = siteType === "shopify" && (
-    !!shopifyDomainError ||
-    (shopifyAuthMethod === "manual" && !!shopifyTokenError) ||
-    (shopifyAuthMethod === "oauth" && shopifyOAuthMissing)
-  );
+  const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
@@ -130,7 +120,7 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return { admin_api_token: shopifyToken, shop_domain: shopDomain };
+    if (siteType === "shopify") return { shop_domain: shopDomain };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
@@ -160,14 +150,12 @@ export default function WebsitesPage() {
     }
 
     // ---- Shopify OAuth redirect flow ----
-    if (siteType === "shopify" && shopifyAuthMethod === "oauth") {
+    if (siteType === "shopify") {
       setIsConnecting(true);
       try {
         const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
           body: {
             shop_domain: shopDomain,
-            client_id: shopifyClientId,
-            client_secret: shopifyClientSecret,
             workspace_id: wsId,
             site_name: siteName || shopDomain,
             language: siteLanguage,
@@ -187,9 +175,7 @@ export default function WebsitesPage() {
       }
     }
 
-    const finalUrl = siteType === "shopify" && shopDomain
-      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
-      : siteUrl;
+    const finalUrl = siteUrl;
 
     // Initialize step list — three explicit phases the user asked to see.
     const steps: ProgressStep[] = [
@@ -221,7 +207,7 @@ export default function WebsitesPage() {
       try {
         const { data, error } = await supabase.functions.invoke("save-website", {
           body: {
-            name: siteName || (siteType === "shopify" ? shopDomain : new URL(finalUrl).hostname),
+            name: siteName || new URL(finalUrl).hostname,
             url: finalUrl,
             type: siteType,
             credentials: buildCredentials(),
@@ -319,8 +305,7 @@ export default function WebsitesPage() {
     mutationFn: async () => {
       if (siteType === "shopify") {
         const dErr = validateShopifyDomain(shopDomain);
-        const tErr = validateShopifyToken(shopifyToken);
-        if (dErr || tErr) throw new Error(dErr || tErr || "Invalid Shopify credentials");
+        if (dErr) throw new Error(dErr || "Invalid Shopify domain");
       }
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url: buildTestUrl(), type: siteType, credentials: buildCredentials() },
@@ -361,11 +346,7 @@ export default function WebsitesPage() {
     setUsername("");
     setAppPassword("");
     setJwtToken("");
-    setShopifyToken("");
     setShopDomain("");
-    setShopifyClientId("");
-    setShopifyClientSecret("");
-    setShopifyAuthMethod("oauth");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
@@ -448,14 +429,6 @@ export default function WebsitesPage() {
                     <ShopifyCredentialFields
                       shopDomain={shopDomain}
                       onShopDomainChange={setShopDomain}
-                      accessToken={shopifyToken}
-                      onAccessTokenChange={setShopifyToken}
-                      clientId={shopifyClientId}
-                      onClientIdChange={setShopifyClientId}
-                      clientSecret={shopifyClientSecret}
-                      onClientSecretChange={setShopifyClientSecret}
-                      authMethod={shopifyAuthMethod}
-                      onAuthMethodChange={setShopifyAuthMethod}
                     />
                   </>
                 )}
