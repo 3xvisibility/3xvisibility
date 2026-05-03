@@ -212,6 +212,9 @@ export default function SettingsPage() {
       {/* AI Provider Selection */}
       <AiProviderSettings />
 
+      {/* Environment Configuration (dynamic overrides) */}
+      <EnvironmentConfigSettings />
+
       {/* AI Content Settings */}
       <Card className="shadow-surface">
         <CardHeader>
