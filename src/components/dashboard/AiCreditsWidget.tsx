@@ -28,7 +28,14 @@ interface UsageEntry {
   created_at: string;
 }
 
-export function AiCreditsWidget() {
+interface AiCreditsWidgetProps {
+  /** Percentage threshold (0–100) below which the upgrade prompt appears. Default: 10 */
+  lowThreshold?: number;
+}
+
+export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
+  const navigate = useNavigate();
+  const { basePath } = useWorkspace();
   const { data: credits, isLoading: creditsLoading } = useQuery({
     queryKey: ["ai-credits"],
     queryFn: async () => {
