@@ -93,7 +93,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
             <Progress value={pct} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{remaining.toLocaleString()} / {total.toLocaleString()} remaining</span>
-              <span className={pct <= 10 ? "text-destructive font-medium" : ""}>{used.toLocaleString()} used</span>
+              <span className={pct <= lowThreshold ? "text-destructive font-medium" : ""}>{used.toLocaleString()} used</span>
             </div>
             {pct <= lowThreshold && (
               <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
