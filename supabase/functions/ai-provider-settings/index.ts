@@ -38,7 +38,8 @@ Deno.serve(async (req) => {
   try {
     // GET — return current provider + available providers
     if (req.method === "GET") {
-      const current = (Deno.env.get("AI_PROVIDER") || "lovable").toLowerCase();
+      const { edgeConfig: ec } = await import("../_shared/config.ts");
+      const current = ec.ai.provider;
       const providers = VALID_PROVIDERS.map((p) => ({
         id: p,
         name: PROVIDER_INFO[p].name,
