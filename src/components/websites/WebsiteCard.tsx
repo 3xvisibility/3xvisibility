@@ -103,6 +103,48 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
   });
 
+  // Shopify reconnect (re-initiate OAuth)
+  const reconnectMutation = useMutation({
+    mutationFn: async () => {
+      const creds = site.credentials as Record<string, string> | null;
+      const shopDomain = creds?.shop_domain || site.url?.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      if (!shopDomain) throw new Error("Missing shop domain");
+      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+        body: {
+          shop_domain: shopDomain,
+          workspace_id: site.workspace_id,
+          site_name: site.name,
+          language: site.language,
+        },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
+      if (data?.error) throw new Error(data.error);
+      if (!data?.auth_url) throw new Error("No auth URL returned");
+      window.location.href = data.auth_url;
+    },
+    onError: (err: Error) => {
+      toast({ title: "Reconnect failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Shopify disconnect (set status to disconnected, clear token)
+  const disconnectMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("websites")
+        .update({ status: "disconnected" as any })
+        .eq("id", site.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["websites"] });
+      toast({ title: "Disconnected", description: `${site.name} has been disconnected.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Disconnect failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const isGenerating = generateSitemapMutation.isPending;
 
   const handleDownloadSitemap = () => {
