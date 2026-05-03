@@ -74,8 +74,26 @@ export default function WebsitesPage() {
       searchParams.delete("shopify_oauth");
       setSearchParams(searchParams, { replace: true });
     } else if (oauthStatus === "error") {
-      const msg = searchParams.get("message") || "OAuth connection failed";
-      toast({ title: "Shopify OAuth failed", description: msg, variant: "destructive" });
+      const rawMsg = (searchParams.get("message") || "OAuth connection failed").toLowerCase();
+      let friendlyTitle = "Shopify connection failed";
+      let friendlyDesc = searchParams.get("message") || "OAuth connection failed. Please try again.";
+      if (rawMsg.includes("expired")) {
+        friendlyTitle = "Session timed out";
+        friendlyDesc = "The authorization window expired. Please click Connect again to retry.";
+      } else if (rawMsg.includes("signature") || rawMsg.includes("hmac") || rawMsg.includes("tamper")) {
+        friendlyTitle = "Security check failed";
+        friendlyDesc = "The response from Shopify couldn't be verified. Please try connecting again.";
+      } else if (rawMsg.includes("domain mismatch")) {
+        friendlyTitle = "Store mismatch";
+        friendlyDesc = "The responding store doesn't match. Verify your store domain and reconnect.";
+      } else if (rawMsg.includes("token exchange")) {
+        friendlyTitle = "Authorization rejected";
+        friendlyDesc = "Shopify rejected the connection. Make sure you approved the permissions, then retry.";
+      } else if (rawMsg.includes("missing code") || rawMsg.includes("missing state")) {
+        friendlyTitle = "Incomplete authorization";
+        friendlyDesc = "The authorization wasn't completed. Please try connecting again.";
+      }
+      toast({ title: friendlyTitle, description: friendlyDesc, variant: "destructive" });
       searchParams.delete("shopify_oauth");
       searchParams.delete("message");
       setSearchParams(searchParams, { replace: true });
