@@ -31,9 +31,16 @@ export function registerQueryClient(qc: QueryClient) {
   _qc = qc;
 }
 
+let _creditInvalidationTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Debounced invalidation – collapses rapid successive calls into one refetch. */
 function invalidateCredits() {
-  _qc?.invalidateQueries({ queryKey: ["ai-credits"] });
-  _qc?.invalidateQueries({ queryKey: ["ai-credits-usage"] });
+  if (_creditInvalidationTimer) clearTimeout(_creditInvalidationTimer);
+  _creditInvalidationTimer = setTimeout(() => {
+    _creditInvalidationTimer = null;
+    _qc?.invalidateQueries({ queryKey: ["ai-credits"] });
+    _qc?.invalidateQueries({ queryKey: ["ai-credits-usage"] });
+  }, 800);
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
