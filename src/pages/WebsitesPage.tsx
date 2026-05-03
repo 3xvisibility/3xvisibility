@@ -207,7 +207,7 @@ export default function WebsitesPage() {
       try {
         const { data, error } = await supabase.functions.invoke("save-website", {
           body: {
-            name: siteName || (siteType === "shopify" ? shopDomain : new URL(finalUrl).hostname),
+            name: siteName || new URL(finalUrl).hostname,
             url: finalUrl,
             type: siteType,
             credentials: buildCredentials(),
