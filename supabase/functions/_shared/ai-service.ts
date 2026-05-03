@@ -68,8 +68,8 @@ async function checkAndDeductCredits(
   try {
     const sb = getServiceClient();
     if (!sb) {
-      console.warn("[ai-service] No service client — skipping credit check");
-      return { allowed: true };
+      console.error("[ai-service] No service client — blocking AI request (fail-closed)");
+      return { allowed: false, remaining: 0, error: "credit_system_unavailable" };
     }
 
     const cost = CREDIT_COSTS[promptType] ?? CREDIT_COSTS.default;
@@ -83,13 +83,8 @@ async function checkAndDeductCredits(
     });
 
     if (error) {
-      // If the table doesn't exist yet, allow the request gracefully
-      if (error.message?.includes("does not exist") || error.message?.includes("could not find")) {
-        console.warn("[ai-service] ai_credits table not found — allowing request");
-        return { allowed: true };
-      }
       console.error("[ai-service] credit deduction error:", error.message);
-      return { allowed: true }; // fail-open so existing features don't break
+      return { allowed: false, remaining: 0, error: "credit_check_failed" };
     }
 
     if (data && typeof data === "object" && data.success === false) {
@@ -98,8 +93,8 @@ async function checkAndDeductCredits(
 
     return { allowed: true, remaining: data?.remaining };
   } catch (err) {
-    console.warn("[ai-service] credit check exception — allowing request:", err);
-    return { allowed: true }; // fail-open
+    console.error("[ai-service] credit check exception — blocking request (fail-closed):", err);
+    return { allowed: false, remaining: 0, error: "credit_check_failed" };
   }
 }
 
@@ -243,16 +238,22 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   // ── Credit gate ──────────────────────────────────────────────────────────
   if (!opts.skipCredits) {
     const uid = await resolveUserId(opts);
-    if (uid) {
-      const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
-      if (!credit.allowed) {
-        return {
-          success: false,
-          content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
-          provider: "lovable",
-          fallback_used: false,
-        };
-      }
+    if (!uid) {
+      return {
+        success: false,
+        content: "Authentication required. Please sign in to use AI features.",
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
+    if (!credit.allowed) {
+      return {
+        success: false,
+        content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
+        provider: "lovable",
+        fallback_used: false,
+      };
     }
   }
 
@@ -313,18 +314,26 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   // ── Credit gate ──────────────────────────────────────────────────────────
   if (!opts.skipCredits) {
     const uid = await resolveUserId(opts);
-    if (uid) {
-      const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
-      if (!credit.allowed) {
-        return {
-          response: new Response(
-            JSON.stringify({ error: "insufficient_credits", remaining: credit.remaining ?? 0 }),
-            { status: 402, headers: { "Content-Type": "application/json" } },
-          ),
-          provider: "lovable",
-          fallback_used: false,
-        };
-      }
+    if (!uid) {
+      return {
+        response: new Response(
+          JSON.stringify({ error: "auth_required", message: "Authentication required for AI features." }),
+          { status: 401, headers: { "Content-Type": "application/json" } },
+        ),
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
+    if (!credit.allowed) {
+      return {
+        response: new Response(
+          JSON.stringify({ error: "insufficient_credits", remaining: credit.remaining ?? 0 }),
+          { status: 402, headers: { "Content-Type": "application/json" } },
+        ),
+        provider: "lovable",
+        fallback_used: false,
+      };
     }
   }
 
