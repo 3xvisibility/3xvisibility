@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download,
   ExternalLink, Loader2, Zap, Pencil, Languages, Lock, Package,
-  Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle,
+  Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle, Unplug, RotateCcw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
