@@ -101,7 +101,7 @@ export default function AuthPage() {
     if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
       return {
         title: t("auth.loginFailed"),
-        description: "Login service is currently overloaded or unreachable. Please wait a few seconds and try again.",
+        description: "Could not reach the secure login service from this browser. Check your internet/VPN/ad blocker, then try again in a few seconds.",
       };
     }
     if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
