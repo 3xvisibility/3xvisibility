@@ -20,6 +20,21 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { handleApiError } from "@/lib/handle-api-error";
+import { QueryClient } from "@tanstack/react-query";
+
+// ── Shared query-client reference for invalidation ───────────────────────────
+
+let _qc: QueryClient | null = null;
+
+/** Register the app's QueryClient so AI calls can invalidate credit queries. */
+export function registerQueryClient(qc: QueryClient) {
+  _qc = qc;
+}
+
+function invalidateCredits() {
+  _qc?.invalidateQueries({ queryKey: ["ai-credits"] });
+  _qc?.invalidateQueries({ queryKey: ["ai-credits-usage"] });
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,11 +74,14 @@ export async function callAI(opts: CallAIOptions): Promise<AiResponse> {
     });
 
     if (error) {
+      invalidateCredits();
       return {
         success: false,
         content: error.message || "AI request failed",
       };
     }
+
+    invalidateCredits();
 
     // The edge function already returns { success, content, provider, ... }
     if (data && typeof data.success === "boolean") {
@@ -76,6 +94,7 @@ export async function callAI(opts: CallAIOptions): Promise<AiResponse> {
       content: typeof data === "string" ? data : JSON.stringify(data),
     };
   } catch (err: any) {
+    invalidateCredits();
     return {
       success: false,
       content: err?.message || "Network error",
@@ -108,15 +127,19 @@ export async function callAIFunction<T = any>(
     const { data, error } = await supabase.functions.invoke(name, { body });
 
     if (error) {
+      invalidateCredits();
       if (!opts?.silent) handleApiError(error);
       return { success: false, content: error.message || "Request failed", data: null };
     }
 
     // Edge function returned an error in the body
     if (data?.error) {
+      invalidateCredits();
       if (!opts?.silent) handleApiError(data.error);
       return { success: false, content: data.error, data: null };
     }
+
+    invalidateCredits();
 
     // Normalise: extract the "result" or "content" field if present
     const contentField = data?.result ?? data?.content ?? null;
@@ -128,6 +151,7 @@ export async function callAIFunction<T = any>(
 
     return { success: true, content, data: data as T };
   } catch (err: any) {
+    invalidateCredits();
     if (!opts?.silent) handleApiError(err);
     return { success: false, content: err?.message || "Network error", data: null };
   }

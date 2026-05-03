@@ -70,6 +70,8 @@ const clearExpiredLocalAuthSession = () => {
   }
 };
 
+import { registerQueryClient } from "@/lib/ai-client";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -78,6 +80,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+registerQueryClient(queryClient);
 
 function ProtectedRoute({ children, session }: { children: React.ReactNode; session: Session | null }) {
   if (!session) return <Navigate to="/auth" replace />;
