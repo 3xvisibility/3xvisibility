@@ -106,8 +106,8 @@ export default function AuthPage() {
     }
     if (msg.includes("cors") || msg.includes("access-control")) {
       return {
-        title: "CORS Error",
-        description: "The auth endpoint blocked the request due to CORS policy. This usually means the Supabase URL is misconfigured or a proxy is interfering.",
+        title: "Request Blocked (CORS)",
+        description: "The login server rejected the request due to a cross-origin policy. A browser extension, proxy, or misconfigured URL may be the cause.",
       };
     }
     if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
