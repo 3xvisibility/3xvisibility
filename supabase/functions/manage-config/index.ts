@@ -168,7 +168,9 @@ Deno.serve(async (req) => {
         );
       }
 
-      if (!ALLOWED_KEYS.includes(key)) {
+      const forbidden = await requireAdmin(workspace_id);
+      if (forbidden) return forbidden;
+
         return new Response(
           JSON.stringify({ error: `Invalid config key. Allowed: ${ALLOWED_KEYS.join(", ")}` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
