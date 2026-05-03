@@ -228,7 +228,7 @@ async function callExternal(
 // ── Resolve active provider ──────────────────────────────────────────────────
 
 export function getActiveProvider(): AiProvider {
-  const raw = (Deno.env.get("AI_PROVIDER") || "lovable").toLowerCase().trim();
+  const raw = edgeConfig.ai.provider;
   const valid: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
   return valid.includes(raw as AiProvider) ? (raw as AiProvider) : "lovable";
 }
