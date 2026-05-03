@@ -169,7 +169,7 @@ const PROVIDERS: Record<Exclude<AiProvider, "lovable">, ProviderConfig> = {
 async function callLovable(
   opts: AiGenerateOptions,
 ): Promise<Response> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = edgeConfig.ai.keys.lovable;
   if (!key) throw new Error("LOVABLE_API_KEY not configured");
 
   const body: any = {
