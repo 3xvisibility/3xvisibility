@@ -123,7 +123,7 @@ export default function AuthPage() {
       return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
     }
     // Auth endpoint returned an error we didn't map — show raw
-    return { title: "Auth Error (server responded)", description: errorMessage };
+    return { title: t("auth.loginFailed"), description: errorMessage };
   };
 
   const handleLogin = async (e: React.FormEvent) => {
