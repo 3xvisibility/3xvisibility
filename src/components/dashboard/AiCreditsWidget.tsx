@@ -95,8 +95,20 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
               <span>{remaining.toLocaleString()} / {total.toLocaleString()} remaining</span>
               <span className={pct <= 10 ? "text-destructive font-medium" : ""}>{used.toLocaleString()} used</span>
             </div>
-            {pct <= 10 && (
-              <p className="text-xs text-destructive">Credits running low. Please upgrade your plan.</p>
+            {pct <= lowThreshold && (
+              <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
+                <p className="text-xs text-destructive flex-1">
+                  Credits running low. Upgrade to continue generating.
+                </p>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="shrink-0 gap-1 h-7 text-xs"
+                  onClick={() => navigate(`${basePath}/billing`)}
+                >
+                  Upgrade <ArrowRight className="h-3 w-3" />
+                </Button>
+              </div>
             )}
 
             {sortedBreakdown.length > 0 && (
