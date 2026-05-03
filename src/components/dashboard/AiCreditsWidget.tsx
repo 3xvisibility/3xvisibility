@@ -99,6 +99,12 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
           </div>
         ) : (
           <>
+            {hasError && (
+              <div className="flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-warning">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>Couldn't refresh credits — showing last known balance.</span>
+              </div>
+            )}
             <Progress value={pct} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{remaining.toLocaleString()} / {total.toLocaleString()} remaining</span>
