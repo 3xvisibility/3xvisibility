@@ -504,6 +504,30 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           website={site}
         />
       )}
+
+      <AlertDialog open={reconnectConfirmOpen} onOpenChange={setReconnectConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Re-authorize Shopify store?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will be redirected to Shopify to re-authorize <span className="font-medium">{site.name}</span>. 
+              This will refresh the connection and permissions for your store.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setReconnectConfirmOpen(false);
+                reconnectMutation.mutate();
+              }}
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Re-authorize
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
