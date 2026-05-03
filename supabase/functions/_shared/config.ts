@@ -5,14 +5,62 @@
  * funneled through this module. To migrate or redeploy, update the
  * environment variables in Lovable Cloud secrets — no code changes needed.
  *
+ * Runtime overrides: admin users can set overrides in the `app_config`
+ * table (per workspace). Call `loadConfigOverrides(workspaceId)` to
+ * activate them for the current request. Values from the DB take priority
+ * over environment variables.
+ *
  * Import:
- *   import { edgeConfig } from "../_shared/config.ts";
+ *   import { edgeConfig, loadConfigOverrides } from "../_shared/config.ts";
  */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+
+// ── override cache ───────────────────────────────────────────────────────────
+
+let _overrides: Record<string, string> = {};
+
+/**
+ * Load config overrides from the app_config table for a workspace.
+ * Call once at the start of a request when workspace_id is known.
+ * Fails silently if the table doesn't exist yet.
+ */
+export async function loadConfigOverrides(workspaceId: string): Promise<void> {
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return;
+
+    const sb = createClient(url, key);
+    const { data, error } = await sb
+      .from("app_config")
+      .select("config_key, config_value")
+      .eq("workspace_id", workspaceId);
+
+    if (error) {
+      console.warn("[edgeConfig] Failed to load overrides:", error.message);
+      return;
+    }
+
+    _overrides = {};
+    for (const row of data ?? []) {
+      _overrides[row.config_key] = row.config_value;
+    }
+  } catch (e) {
+    console.warn("[edgeConfig] Override load error:", e);
+  }
+}
+
+/** Clear any loaded overrides (useful between requests in long-lived workers). */
+export function clearConfigOverrides(): void {
+  _overrides = {};
+}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+/** Get a config value: DB override → env var → fallback. */
 function env(key: string, fallback?: string): string {
-  return Deno.env.get(key) ?? fallback ?? "";
+  return _overrides[key] ?? Deno.env.get(key) ?? fallback ?? "";
 }
 
 function requireEnv(key: string): string {
@@ -63,14 +111,16 @@ export const AI_PROVIDERS: Record<string, AiProviderInfo> = {
 
 export const edgeConfig = {
   supabase: {
-    url: requireEnv("SUPABASE_URL"),
-    anonKey: requireEnv("SUPABASE_ANON_KEY"),
-    serviceRoleKey: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    get url() { return requireEnv("SUPABASE_URL"); },
+    get anonKey() { return requireEnv("SUPABASE_ANON_KEY"); },
+    get serviceRoleKey() { return requireEnv("SUPABASE_SERVICE_ROLE_KEY"); },
   },
 
   ai: {
     /** Active provider name (lowercase). Defaults to "lovable". */
-    provider: (env("AI_PROVIDER", "lovable")).toLowerCase().trim(),
+    get provider() {
+      return (env("AI_PROVIDER", "lovable")).toLowerCase().trim();
+    },
 
     /** Shortcut: API key for the active provider. */
     get activeKey(): string {
@@ -85,22 +135,26 @@ export const edgeConfig = {
     },
 
     /** Individual keys — use when you need a specific provider regardless of active. */
-    keys: {
-      lovable: env("LOVABLE_API_KEY"),
-      openai: env("OPENAI_API_KEY"),
-      gemini: env("GEMINI_API_KEY"),
-      groq: env("GROQ_API_KEY"),
-      deepseek: env("DEEPSEEK_API_KEY"),
+    get keys() {
+      return {
+        lovable: env("LOVABLE_API_KEY"),
+        openai: env("OPENAI_API_KEY"),
+        gemini: env("GEMINI_API_KEY"),
+        groq: env("GROQ_API_KEY"),
+        deepseek: env("DEEPSEEK_API_KEY"),
+      };
     },
   },
 
   stripe: {
-    secretKey: env("STRIPE_SECRET_KEY"),
+    get secretKey() { return env("STRIPE_SECRET_KEY"); },
   },
 
   /** Application base URL for links in emails, webhooks, etc. */
-  appUrl: env("APP_URL", env("SUPABASE_URL").replace(".supabase.co", "")),
-} as const;
+  get appUrl() {
+    return env("APP_URL", env("SUPABASE_URL").replace(".supabase.co", ""));
+  },
+};
 
 // ── validation helper (call in entry-point if strict checks are wanted) ──────
 
