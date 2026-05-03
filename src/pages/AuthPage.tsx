@@ -100,8 +100,8 @@ export default function AuthPage() {
     const msg = errorMessage.toLowerCase();
     if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
       return {
-        title: "Network / Connectivity Error",
-        description: "Could not reach the login service. This is a browser-level network failure (DNS, firewall, VPN, ad-blocker, or CORS). Check DevTools → Network tab for blocked requests.",
+        title: "Connection Failed",
+        description: "Your browser could not connect to the login server. Common causes: unstable internet, VPN, firewall, or ad-blocker blocking the request. Try disabling your VPN/ad-blocker or switching to a different network.",
       };
     }
     if (msg.includes("cors") || msg.includes("access-control")) {
