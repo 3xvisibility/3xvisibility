@@ -55,8 +55,8 @@ const CREDIT_COSTS: Record<string, number> = {
 // ── Credit helpers ───────────────────────────────────────────────────────────
 
 function getServiceClient() {
-  const url = Deno.env.get("SUPABASE_URL");
-  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const url = edgeConfig.supabase.url;
+  const key = edgeConfig.supabase.serviceRoleKey;
   if (!url || !key) return null;
   return createClient(url, key);
 }
