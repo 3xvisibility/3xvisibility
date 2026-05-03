@@ -67,6 +67,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Helper: verify caller is workspace owner or admin ────────────────
+    async function requireAdmin(workspaceId: string): Promise<Response | null> {
+      const { data: role } = await sb.rpc("get_workspace_role", {
+        _user_id: user!.id,
+        _workspace_id: workspaceId,
+      });
+      if (!role || !["owner", "admin"].includes(role)) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: must be workspace owner or admin" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      return null;
+    }
+
     // ── GET ─────────────────────────────────────────────────────────────────
     if (req.method === "GET") {
       const url = new URL(req.url);
@@ -77,6 +92,9 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      const forbidden = await requireAdmin(workspaceId);
+      if (forbidden) return forbidden;
 
       const { data: rows, error } = await sb
         .from("app_config")
@@ -150,7 +168,9 @@ Deno.serve(async (req) => {
         );
       }
 
-      if (!ALLOWED_KEYS.includes(key)) {
+      const forbidden = await requireAdmin(workspace_id);
+      if (forbidden) return forbidden;
+
         return new Response(
           JSON.stringify({ error: `Invalid config key. Allowed: ${ALLOWED_KEYS.join(", ")}` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -206,9 +226,9 @@ Deno.serve(async (req) => {
         );
       }
 
-      const { error } = await sb
-        .from("app_config")
-        .delete()
+      const forbidden = await requireAdmin(workspace_id);
+      if (forbidden) return forbidden;
+
         .eq("workspace_id", workspace_id)
         .eq("config_key", key);
 
