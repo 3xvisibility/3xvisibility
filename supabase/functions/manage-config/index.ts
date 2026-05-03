@@ -226,9 +226,9 @@ Deno.serve(async (req) => {
         );
       }
 
-      const { error } = await sb
-        .from("app_config")
-        .delete()
+      const forbidden = await requireAdmin(workspace_id);
+      if (forbidden) return forbidden;
+
         .eq("workspace_id", workspace_id)
         .eq("config_key", key);
 
