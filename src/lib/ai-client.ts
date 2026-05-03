@@ -127,15 +127,19 @@ export async function callAIFunction<T = any>(
     const { data, error } = await supabase.functions.invoke(name, { body });
 
     if (error) {
+      invalidateCredits();
       if (!opts?.silent) handleApiError(error);
       return { success: false, content: error.message || "Request failed", data: null };
     }
 
     // Edge function returned an error in the body
     if (data?.error) {
+      invalidateCredits();
       if (!opts?.silent) handleApiError(data.error);
       return { success: false, content: data.error, data: null };
     }
+
+    invalidateCredits();
 
     // Normalise: extract the "result" or "content" field if present
     const contentField = data?.result ?? data?.content ?? null;
@@ -147,6 +151,7 @@ export async function callAIFunction<T = any>(
 
     return { success: true, content, data: data as T };
   } catch (err: any) {
+    invalidateCredits();
     if (!opts?.silent) handleApiError(err);
     return { success: false, content: err?.message || "Network error", data: null };
   }
