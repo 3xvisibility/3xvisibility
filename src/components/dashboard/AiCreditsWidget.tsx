@@ -5,9 +5,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Zap, FileText, Search, Globe, PenLine, Languages, Image, Bot, Sparkles, ArrowRight } from "lucide-react";
+import { Zap, FileText, Search, Globe, PenLine, Languages, Image, Bot, Sparkles, ArrowRight, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { toast } from "sonner";
 
 const PROMPT_TYPE_META: Record<string, { label: string; icon: React.ElementType }> = {
   short_content: { label: "Short Content", icon: FileText },
@@ -36,25 +37,33 @@ interface AiCreditsWidgetProps {
 export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
-  const { data: credits, isLoading: creditsLoading } = useQuery({
+  const { data: credits, isLoading: creditsLoading, isError: creditsError } = useQuery({
     queryKey: ["ai-credits"],
     queryFn: async () => {
       const res = await supabase.functions.invoke("ai-credits?action=check", {});
-      if (res.error) return null;
+      if (res.error) throw new Error("Failed to fetch credits");
       return res.data?.credits;
     },
     refetchInterval: 60000,
+    placeholderData: (prev) => prev,
+    retry: 1,
+    meta: { errorToast: "credits" },
   });
 
-  const { data: usageData, isLoading: usageLoading } = useQuery({
+  const { data: usageData, isLoading: usageLoading, isError: usageError } = useQuery({
     queryKey: ["ai-credits-usage"],
     queryFn: async () => {
       const res = await supabase.functions.invoke("ai-credits?action=usage", {});
-      if (res.error) return [];
+      if (res.error) throw new Error("Failed to fetch usage");
       return (res.data?.usage ?? []) as UsageEntry[];
     },
     refetchInterval: 60000,
+    placeholderData: (prev) => prev,
+    retry: 1,
+    meta: { errorToast: "usage" },
   });
+
+  const hasError = creditsError || usageError;
 
   const remaining = credits?.remaining_credits ?? 0;
   const total = credits?.total_credits ?? 100;
@@ -90,6 +99,12 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
           </div>
         ) : (
           <>
+            {hasError && (
+              <div className="flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-warning">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>Couldn't refresh credits — showing last known balance.</span>
+              </div>
+            )}
             <Progress value={pct} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{remaining.toLocaleString()} / {total.toLocaleString()} remaining</span>
