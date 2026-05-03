@@ -3,6 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download,
   ExternalLink, Loader2, Zap, Pencil, Languages, Lock, Package,
   Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle, Unplug, RotateCcw,
