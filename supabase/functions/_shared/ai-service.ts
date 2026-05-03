@@ -11,6 +11,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { edgeConfig } from "./config.ts";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -54,8 +55,8 @@ const CREDIT_COSTS: Record<string, number> = {
 // ── Credit helpers ───────────────────────────────────────────────────────────
 
 function getServiceClient() {
-  const url = Deno.env.get("SUPABASE_URL");
-  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const url = edgeConfig.supabase.url;
+  const key = edgeConfig.supabase.serviceRoleKey;
   if (!url || !key) return null;
   return createClient(url, key);
 }
@@ -168,7 +169,7 @@ const PROVIDERS: Record<Exclude<AiProvider, "lovable">, ProviderConfig> = {
 async function callLovable(
   opts: AiGenerateOptions,
 ): Promise<Response> {
-  const key = Deno.env.get("LOVABLE_API_KEY");
+  const key = edgeConfig.ai.keys.lovable;
   if (!key) throw new Error("LOVABLE_API_KEY not configured");
 
   const body: any = {
@@ -198,7 +199,7 @@ async function callExternal(
   opts: AiGenerateOptions,
 ): Promise<Response> {
   const cfg = PROVIDERS[provider];
-  const key = Deno.env.get(cfg.keyEnv);
+  const key = Deno.env.get(cfg.keyEnv); // stays dynamic — provider-specific key lookup
   if (!key) throw new Error(`${cfg.keyEnv} not configured for provider "${provider}"`);
 
   const body: any = {
@@ -227,7 +228,7 @@ async function callExternal(
 // ── Resolve active provider ──────────────────────────────────────────────────
 
 export function getActiveProvider(): AiProvider {
-  const raw = (Deno.env.get("AI_PROVIDER") || "lovable").toLowerCase().trim();
+  const raw = edgeConfig.ai.provider;
   const valid: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
   return valid.includes(raw as AiProvider) ? (raw as AiProvider) : "lovable";
 }

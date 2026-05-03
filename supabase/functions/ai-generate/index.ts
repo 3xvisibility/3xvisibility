@@ -25,6 +25,7 @@ import {
   type AiMessage,
 } from "../_shared/ai-service.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { edgeConfig } from "../_shared/config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,8 +45,8 @@ Deno.serve(async (req) => {
     if (authHeader) {
       try {
         const sb = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+          edgeConfig.supabase.url,
+          edgeConfig.supabase.serviceRoleKey,
         );
         const token = authHeader.replace("Bearer ", "");
         const { data: { user } } = await sb.auth.getUser(token);

@@ -34,12 +34,11 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const { edgeConfig } = await import("../_shared/config.ts");
+    const { url: supabaseUrl, serviceRoleKey, anonKey } = edgeConfig.supabase;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     const authHeader = req.headers.get("Authorization")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
