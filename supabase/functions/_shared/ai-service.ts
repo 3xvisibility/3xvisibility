@@ -238,16 +238,22 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   // ── Credit gate ──────────────────────────────────────────────────────────
   if (!opts.skipCredits) {
     const uid = await resolveUserId(opts);
-    if (uid) {
-      const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
-      if (!credit.allowed) {
-        return {
-          success: false,
-          content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
-          provider: "lovable",
-          fallback_used: false,
-        };
-      }
+    if (!uid) {
+      return {
+        success: false,
+        content: "Authentication required. Please sign in to use AI features.",
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
+    if (!credit.allowed) {
+      return {
+        success: false,
+        content: `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`,
+        provider: "lovable",
+        fallback_used: false,
+      };
     }
   }
 
