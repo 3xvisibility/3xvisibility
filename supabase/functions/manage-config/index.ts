@@ -93,6 +93,9 @@ Deno.serve(async (req) => {
         });
       }
 
+      const forbidden = await requireAdmin(workspaceId);
+      if (forbidden) return forbidden;
+
       const { data: rows, error } = await sb
         .from("app_config")
         .select("config_key, config_value, is_secret, updated_at")
