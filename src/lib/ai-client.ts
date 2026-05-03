@@ -20,6 +20,21 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { handleApiError } from "@/lib/handle-api-error";
+import { QueryClient } from "@tanstack/react-query";
+
+// ── Shared query-client reference for invalidation ───────────────────────────
+
+let _qc: QueryClient | null = null;
+
+/** Register the app's QueryClient so AI calls can invalidate credit queries. */
+export function registerQueryClient(qc: QueryClient) {
+  _qc = qc;
+}
+
+function invalidateCredits() {
+  _qc?.invalidateQueries({ queryKey: ["ai-credits"] });
+  _qc?.invalidateQueries({ queryKey: ["ai-credits-usage"] });
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
