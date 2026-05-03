@@ -26,7 +26,7 @@ import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredential
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
-import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
+import { validateShopifyDomain } from "@/lib/shopify-validation";
 import { ConnectionProgressSteps, type ProgressStep, type StepStatus } from "@/components/websites/ConnectionProgressSteps";
 import { extractEdgeError } from "@/lib/edge-function-error";
 
