@@ -199,7 +199,7 @@ async function callExternal(
   opts: AiGenerateOptions,
 ): Promise<Response> {
   const cfg = PROVIDERS[provider];
-  const key = Deno.env.get(cfg.keyEnv);
+  const key = Deno.env.get(cfg.keyEnv); // stays dynamic — provider-specific key lookup
   if (!key) throw new Error(`${cfg.keyEnv} not configured for provider "${provider}"`);
 
   const body: any = {
