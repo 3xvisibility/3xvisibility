@@ -193,7 +193,7 @@ export default function EnvironmentConfigSettings() {
                   <div className="flex items-center gap-2">
                     {isProvider ? (
                       <Select
-                        value={editVal ?? (cfg.has_override ? cfg.value : "") || "lovable"}
+                        value={editVal ?? ((cfg.has_override ? cfg.value : "") || "lovable")}
                         onValueChange={(v) =>
                           setEditValues((prev) => ({ ...prev, [cfg.key]: v }))
                         }
