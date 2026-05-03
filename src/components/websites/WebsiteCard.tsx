@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download,
   ExternalLink, Loader2, Zap, Pencil, Languages, Lock, Package,
-  Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle,
+  Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle, Unplug, RotateCcw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -100,6 +100,48 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
     onError: (err: Error) => {
       toast({ title: "Connection failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Shopify reconnect (re-initiate OAuth)
+  const reconnectMutation = useMutation({
+    mutationFn: async () => {
+      const creds = site.credentials as Record<string, string> | null;
+      const shopDomain = creds?.shop_domain || site.url?.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      if (!shopDomain) throw new Error("Missing shop domain");
+      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+        body: {
+          shop_domain: shopDomain,
+          workspace_id: site.workspace_id,
+          site_name: site.name,
+          language: site.language,
+        },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
+      if (data?.error) throw new Error(data.error);
+      if (!data?.auth_url) throw new Error("No auth URL returned");
+      window.location.href = data.auth_url;
+    },
+    onError: (err: Error) => {
+      toast({ title: "Reconnect failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Shopify disconnect (set status to disconnected, clear token)
+  const disconnectMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("websites")
+        .update({ status: "disconnected" as any })
+        .eq("id", site.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["websites"] });
+      toast({ title: "Disconnected", description: `${site.name} has been disconnected.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Disconnect failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -266,15 +308,43 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               Re-translate to {site.language || "site language"}
             </Button>
             {isShopify && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="h-7 text-xs gap-1"
-                onClick={() => setProductsOpen(true)}
-              >
-                <Package className="h-3 w-3" />
-                Manage Products
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => setProductsOpen(true)}
+                >
+                  <Package className="h-3 w-3" />
+                  Manage Products
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs gap-1"
+                  disabled={reconnectMutation.isPending}
+                  onClick={() => reconnectMutation.mutate()}
+                >
+                  {reconnectMutation.isPending ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Reconnecting…</>
+                  ) : (
+                    <><RotateCcw className="h-3 w-3" /> Reconnect</>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+                  disabled={disconnectMutation.isPending || site.status !== "connected"}
+                  onClick={() => disconnectMutation.mutate()}
+                >
+                  {disconnectMutation.isPending ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Disconnecting…</>
+                  ) : (
+                    <><Unplug className="h-3 w-3" /> Disconnect</>
+                  )}
+                </Button>
+              </>
             )}
           </div>
 
