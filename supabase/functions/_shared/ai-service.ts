@@ -93,8 +93,8 @@ async function checkAndDeductCredits(
 
     return { allowed: true, remaining: data?.remaining };
   } catch (err) {
-    console.warn("[ai-service] credit check exception — allowing request:", err);
-    return { allowed: true }; // fail-open
+    console.error("[ai-service] credit check exception — blocking request (fail-closed):", err);
+    return { allowed: false, remaining: 0, error: "credit_check_failed" };
   }
 }
 
