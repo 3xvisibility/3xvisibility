@@ -308,15 +308,43 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               Re-translate to {site.language || "site language"}
             </Button>
             {isShopify && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="h-7 text-xs gap-1"
-                onClick={() => setProductsOpen(true)}
-              >
-                <Package className="h-3 w-3" />
-                Manage Products
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => setProductsOpen(true)}
+                >
+                  <Package className="h-3 w-3" />
+                  Manage Products
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs gap-1"
+                  disabled={reconnectMutation.isPending}
+                  onClick={() => reconnectMutation.mutate()}
+                >
+                  {reconnectMutation.isPending ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Reconnecting…</>
+                  ) : (
+                    <><RotateCcw className="h-3 w-3" /> Reconnect</>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+                  disabled={disconnectMutation.isPending || site.status !== "connected"}
+                  onClick={() => disconnectMutation.mutate()}
+                >
+                  {disconnectMutation.isPending ? (
+                    <><Loader2 className="h-3 w-3 animate-spin" /> Disconnecting…</>
+                  ) : (
+                    <><Unplug className="h-3 w-3" /> Disconnect</>
+                  )}
+                </Button>
+              </>
             )}
           </div>
 
