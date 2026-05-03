@@ -100,8 +100,14 @@ export default function AuthPage() {
     const msg = errorMessage.toLowerCase();
     if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("timeout")) {
       return {
-        title: t("auth.loginFailed"),
-        description: "Could not reach the secure login service from this browser. Check your internet/VPN/ad blocker, then try again in a few seconds.",
+        title: "Network / Connectivity Error",
+        description: "Could not reach the login service. This is a browser-level network failure (DNS, firewall, VPN, ad-blocker, or CORS). Check DevTools → Network tab for blocked requests.",
+      };
+    }
+    if (msg.includes("cors") || msg.includes("access-control")) {
+      return {
+        title: "CORS Error",
+        description: "The auth endpoint blocked the request due to CORS policy. This usually means the Supabase URL is misconfigured or a proxy is interfering.",
       };
     }
     if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials")) {
@@ -116,7 +122,8 @@ export default function AuthPage() {
     if (msg.includes("user not found")) {
       return { title: t("auth.loginFailed"), description: t("auth.errorInvalidCredentials") };
     }
-    return { title: t("auth.loginFailed"), description: errorMessage };
+    // Auth endpoint returned an error we didn't map — show raw
+    return { title: "Auth Error (server responded)", description: errorMessage };
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -135,11 +142,40 @@ export default function AuthPage() {
     } else {
       localStorage.removeItem("rememberedEmail");
     }
+
+    const authUrl = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/token?grant_type=password`;
+    console.log("[Auth Debug] Attempting login to:", authUrl);
+
+    // Step 1: Raw fetch diagnostic before Supabase SDK
+    try {
+      const probe = await fetch(authUrl, { method: "HEAD", mode: "cors" }).catch((fetchErr) => fetchErr);
+      if (probe instanceof Error) {
+        console.error("[Auth Debug] Raw probe FAILED:", probe.message);
+        toast({
+          title: "Diagnostic: Auth endpoint unreachable",
+          description: `Raw fetch to ${new URL(authUrl).hostname} failed: "${probe.message}". This is a network/CORS issue — the server never responded. Check VPN, ad-blocker, or try a different network.`,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      console.log("[Auth Debug] Raw probe status:", probe.status);
+    } catch (probeErr: any) {
+      console.error("[Auth Debug] Probe exception:", probeErr);
+    }
+
+    // Step 2: Actual login via SDK with retries
     let error: Error | null = null;
     for (let attempt = 0; attempt < LOGIN_RETRY_DELAYS_MS.length; attempt += 1) {
       if (LOGIN_RETRY_DELAYS_MS[attempt] > 0) await wait(LOGIN_RETRY_DELAYS_MS[attempt]);
+      console.log(`[Auth Debug] Login attempt ${attempt + 1}/${LOGIN_RETRY_DELAYS_MS.length}`);
       const result = await supabase.auth.signInWithPassword({ email, password });
       error = result.error;
+      if (error) {
+        console.error(`[Auth Debug] Attempt ${attempt + 1} error:`, error.message, (error as any).status, (error as any).__isAuthError);
+      } else {
+        console.log("[Auth Debug] Login succeeded on attempt", attempt + 1);
+      }
       if (!error || !/failed to fetch|network|timeout/i.test(error.message)) break;
     }
     setLoading(false);
