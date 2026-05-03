@@ -68,8 +68,8 @@ async function checkAndDeductCredits(
   try {
     const sb = getServiceClient();
     if (!sb) {
-      console.warn("[ai-service] No service client — skipping credit check");
-      return { allowed: true };
+      console.error("[ai-service] No service client — blocking AI request (fail-closed)");
+      return { allowed: false, remaining: 0, error: "credit_system_unavailable" };
     }
 
     const cost = CREDIT_COSTS[promptType] ?? CREDIT_COSTS.default;
@@ -83,13 +83,8 @@ async function checkAndDeductCredits(
     });
 
     if (error) {
-      // If the table doesn't exist yet, allow the request gracefully
-      if (error.message?.includes("does not exist") || error.message?.includes("could not find")) {
-        console.warn("[ai-service] ai_credits table not found — allowing request");
-        return { allowed: true };
-      }
       console.error("[ai-service] credit deduction error:", error.message);
-      return { allowed: true }; // fail-open so existing features don't break
+      return { allowed: false, remaining: 0, error: "credit_check_failed" };
     }
 
     if (data && typeof data === "object" && data.success === false) {
