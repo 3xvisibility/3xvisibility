@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
     if (authHeader) {
       try {
         const sb = createClient(
-          Deno.env.get("SUPABASE_URL")!,
-          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+          edgeConfig.supabase.url,
+          edgeConfig.supabase.serviceRoleKey,
         );
         const token = authHeader.replace("Bearer ", "");
         const { data: { user } } = await sb.auth.getUser(token);
