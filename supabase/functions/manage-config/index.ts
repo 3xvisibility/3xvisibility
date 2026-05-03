@@ -67,6 +67,21 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Helper: verify caller is workspace owner or admin ────────────────
+    async function requireAdmin(workspaceId: string): Promise<Response | null> {
+      const { data: role } = await sb.rpc("get_workspace_role", {
+        _user_id: user!.id,
+        _workspace_id: workspaceId,
+      });
+      if (!role || !["owner", "admin"].includes(role)) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: must be workspace owner or admin" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      return null;
+    }
+
     // ── GET ─────────────────────────────────────────────────────────────────
     if (req.method === "GET") {
       const url = new URL(req.url);
