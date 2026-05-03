@@ -3,6 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download,
   ExternalLink, Loader2, Zap, Pencil, Languages, Lock, Package,
   Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle, Unplug, RotateCcw,
@@ -31,6 +35,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   const [editOpen, setEditOpen] = useState(false);
   const [retransOpen, setRetransOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(() => !!autoOpenProducts);
+  const [reconnectConfirmOpen, setReconnectConfirmOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -405,7 +410,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   variant="outline"
                   className="h-7 text-xs gap-1"
                   disabled={reconnectMutation.isPending}
-                  onClick={() => reconnectMutation.mutate()}
+                  onClick={() => setReconnectConfirmOpen(true)}
                 >
                   {reconnectMutation.isPending ? (
                     <><Loader2 className="h-3 w-3 animate-spin" /> Reconnecting…</>
@@ -499,6 +504,30 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           website={site}
         />
       )}
+
+      <AlertDialog open={reconnectConfirmOpen} onOpenChange={setReconnectConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Re-authorize Shopify store?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will be redirected to Shopify to re-authorize <span className="font-medium">{site.name}</span>. 
+              This will refresh the connection and permissions for your store.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setReconnectConfirmOpen(false);
+                reconnectMutation.mutate();
+              }}
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Re-authorize
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
