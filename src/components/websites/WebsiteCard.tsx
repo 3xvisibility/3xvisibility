@@ -410,7 +410,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   variant="outline"
                   className="h-7 text-xs gap-1"
                   disabled={reconnectMutation.isPending}
-                  onClick={() => reconnectMutation.mutate()}
+                  onClick={() => setReconnectConfirmOpen(true)}
                 >
                   {reconnectMutation.isPending ? (
                     <><Loader2 className="h-3 w-3 animate-spin" /> Reconnecting…</>
