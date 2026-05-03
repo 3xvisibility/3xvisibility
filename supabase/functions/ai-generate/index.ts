@@ -25,6 +25,7 @@ import {
   type AiMessage,
 } from "../_shared/ai-service.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { edgeConfig } from "../_shared/config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
