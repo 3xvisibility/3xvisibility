@@ -3,8 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Zap, FileText, Search, Globe, PenLine, Languages, Image, Bot, Sparkles } from "lucide-react";
+import { Zap, FileText, Search, Globe, PenLine, Languages, Image, Bot, Sparkles, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const PROMPT_TYPE_META: Record<string, { label: string; icon: React.ElementType }> = {
   short_content: { label: "Short Content", icon: FileText },
