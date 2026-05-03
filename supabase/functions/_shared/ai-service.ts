@@ -314,18 +314,26 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   // ── Credit gate ──────────────────────────────────────────────────────────
   if (!opts.skipCredits) {
     const uid = await resolveUserId(opts);
-    if (uid) {
-      const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
-      if (!credit.allowed) {
-        return {
-          response: new Response(
-            JSON.stringify({ error: "insufficient_credits", remaining: credit.remaining ?? 0 }),
-            { status: 402, headers: { "Content-Type": "application/json" } },
-          ),
-          provider: "lovable",
-          fallback_used: false,
-        };
-      }
+    if (!uid) {
+      return {
+        response: new Response(
+          JSON.stringify({ error: "auth_required", message: "Authentication required for AI features." }),
+          { status: 401, headers: { "Content-Type": "application/json" } },
+        ),
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
+    if (!credit.allowed) {
+      return {
+        response: new Response(
+          JSON.stringify({ error: "insufficient_credits", remaining: credit.remaining ?? 0 }),
+          { status: 402, headers: { "Content-Type": "application/json" } },
+        ),
+        provider: "lovable",
+        fallback_used: false,
+      };
     }
   }
 
