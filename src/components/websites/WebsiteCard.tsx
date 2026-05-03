@@ -211,6 +211,24 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           {/* Shopify live status panel */}
           {isShopify && site.status === "connected" && (
             <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              {/* Store details */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium">{site.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{(site.credentials as Record<string, string> | null)?.shop_domain || site.url}</span>
+                </div>
+                {site.created_at && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Connected: {new Date(site.created_at).toLocaleDateString()}</span>
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-border pt-2" />
               {/* Health indicator */}
               <div className="flex items-center gap-2">
                 {healthLoading ? (
