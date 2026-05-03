@@ -74,11 +74,14 @@ export async function callAI(opts: CallAIOptions): Promise<AiResponse> {
     });
 
     if (error) {
+      invalidateCredits();
       return {
         success: false,
         content: error.message || "AI request failed",
       };
     }
+
+    invalidateCredits();
 
     // The edge function already returns { success, content, provider, ... }
     if (data && typeof data.success === "boolean") {
@@ -91,6 +94,7 @@ export async function callAI(opts: CallAIOptions): Promise<AiResponse> {
       content: typeof data === "string" ? data : JSON.stringify(data),
     };
   } catch (err: any) {
+    invalidateCredits();
     return {
       success: false,
       content: err?.message || "Network error",
