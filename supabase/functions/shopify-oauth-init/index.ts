@@ -8,8 +8,8 @@ const corsHeaders = {
 
 /**
  * Generates a Shopify OAuth authorization URL.
- * Platform-managed: client_id & client_secret come from env secrets,
- * NOT from the user request.
+ * Per-user: client_id & client_secret are provided by each SaaS user
+ * from their own Shopify custom app.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
