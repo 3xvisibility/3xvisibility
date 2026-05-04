@@ -68,44 +68,48 @@ export function ShopifyCredentialFields({
         )}
       </div>
 
-      <div>
-        <Label htmlFor="shopify-client-id">API Key (Client ID)</Label>
-        <Input
-          id="shopify-client-id"
-          placeholder="e.g. 1a2b3c4d5e6f..."
-          value={clientId}
-          onChange={(e) => onClientIdChange(e.target.value)}
-        />
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Found in your Shopify custom app → API credentials → Client ID
-        </p>
-      </div>
-
-      <div>
-        <Label htmlFor="shopify-client-secret">API Secret Key (Client Secret)</Label>
-        <div className="relative">
+      {onClientIdChange && (
+        <div>
+          <Label htmlFor="shopify-client-id">API Key (Client ID)</Label>
           <Input
-            id="shopify-client-secret"
-            type={showSecret ? "text" : "password"}
-            placeholder="shpss_..."
-            value={clientSecret}
-            onChange={(e) => onClientSecretChange(e.target.value)}
-            className="pr-10"
+            id="shopify-client-id"
+            placeholder="e.g. 1a2b3c4d5e6f..."
+            value={clientId || ""}
+            onChange={(e) => onClientIdChange(e.target.value)}
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-            onClick={() => setShowSecret(!showSecret)}
-          >
-            {showSecret ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-          </Button>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Found in your Shopify custom app → API credentials → Client ID
+          </p>
         </div>
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Found in your Shopify custom app → API credentials → Client secret
-        </p>
-      </div>
+      )}
+
+      {onClientSecretChange && (
+        <div>
+          <Label htmlFor="shopify-client-secret">API Secret Key (Client Secret)</Label>
+          <div className="relative">
+            <Input
+              id="shopify-client-secret"
+              type={showSecret ? "text" : "password"}
+              placeholder="shpss_..."
+              value={clientSecret || ""}
+              onChange={(e) => onClientSecretChange(e.target.value)}
+              className="pr-10"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+              onClick={() => setShowSecret(!showSecret)}
+            >
+              {showSecret ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Found in your Shopify custom app → API credentials → Client secret
+          </p>
+        </div>
+      )}
     </div>
   );
 }
