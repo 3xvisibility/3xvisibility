@@ -1,29 +1,40 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle2, Shield } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Shield, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateShopifyDomain } from "@/lib/shopify-validation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface ShopifyCredentialFieldsProps {
   shopDomain: string;
   onShopDomainChange: (v: string) => void;
+  clientId?: string;
+  onClientIdChange?: (v: string) => void;
+  clientSecret?: string;
+  onClientSecretChange?: (v: string) => void;
 }
 
 export function ShopifyCredentialFields({
   shopDomain,
   onShopDomainChange,
+  clientId,
+  onClientIdChange,
+  clientSecret,
+  onClientSecretChange,
 }: ShopifyCredentialFieldsProps) {
   const domainError = shopDomain ? validateShopifyDomain(shopDomain) : null;
   const domainOk = !!shopDomain && !domainError;
+  const [showSecret, setShowSecret] = useState(false);
 
   return (
     <div className="space-y-4">
       <Alert className="bg-primary/5 border-primary/20">
         <Shield className="h-4 w-4 text-primary" />
         <AlertDescription className="text-xs leading-relaxed">
-          <strong>Secure OAuth connection</strong> — Enter your store domain and click Connect.
-          Shopify will ask you to authorize specific permissions. Your credentials stay safe.
+          <strong>Per-app OAuth connection</strong> — Enter your Shopify custom app's API key &amp; secret along with your store domain.
+          Shopify will ask you to authorize specific permissions.
         </AlertDescription>
       </Alert>
 
@@ -56,6 +67,49 @@ export function ShopifyCredentialFields({
           </p>
         )}
       </div>
+
+      {onClientIdChange && (
+        <div>
+          <Label htmlFor="shopify-client-id">API Key (Client ID)</Label>
+          <Input
+            id="shopify-client-id"
+            placeholder="e.g. 1a2b3c4d5e6f..."
+            value={clientId || ""}
+            onChange={(e) => onClientIdChange(e.target.value)}
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Found in your Shopify custom app → API credentials → Client ID
+          </p>
+        </div>
+      )}
+
+      {onClientSecretChange && (
+        <div>
+          <Label htmlFor="shopify-client-secret">API Secret Key (Client Secret)</Label>
+          <div className="relative">
+            <Input
+              id="shopify-client-secret"
+              type={showSecret ? "text" : "password"}
+              placeholder="shpss_..."
+              value={clientSecret || ""}
+              onChange={(e) => onClientSecretChange(e.target.value)}
+              className="pr-10"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+              onClick={() => setShowSecret(!showSecret)}
+            >
+              {showSecret ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Found in your Shopify custom app → API credentials → Client secret
+          </p>
+        </div>
+      )}
     </div>
   );
 }

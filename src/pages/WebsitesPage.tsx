@@ -48,6 +48,8 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
+  const [shopifyClientId, setShopifyClientId] = useState("");
+  const [shopifyClientSecret, setShopifyClientSecret] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -130,7 +132,7 @@ export default function WebsitesPage() {
 
   // Shopify-specific frontend validation
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
-  const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
+  const shopifyInvalid = siteType === "shopify" && (!!shopifyDomainError || !shopifyClientId.trim() || !shopifyClientSecret.trim());
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
@@ -177,6 +179,8 @@ export default function WebsitesPage() {
             workspace_id: wsId,
             site_name: siteName || shopDomain,
             language: siteLanguage,
+            client_id: shopifyClientId.trim(),
+            client_secret: shopifyClientSecret.trim(),
           },
         });
         if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
@@ -447,6 +451,10 @@ export default function WebsitesPage() {
                     <ShopifyCredentialFields
                       shopDomain={shopDomain}
                       onShopDomainChange={setShopDomain}
+                      clientId={shopifyClientId}
+                      onClientIdChange={setShopifyClientId}
+                      clientSecret={shopifyClientSecret}
+                      onClientSecretChange={setShopifyClientSecret}
                     />
                   </>
                 )}
