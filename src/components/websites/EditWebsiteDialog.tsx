@@ -213,6 +213,8 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
                 <ShopifyCredentialFields
                    shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
                    onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
+                   accessToken={shopifyToken}
+                   onAccessTokenChange={setShopifyToken}
                  />
               </>
             )}
