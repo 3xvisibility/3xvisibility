@@ -3556,7 +3556,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "toast.sitemapGenerated": "Sitemap generiert",
     "toast.sitemapGeneratedDesc": "{count} Seiten in der Sitemap enthalten.",
     "toast.templateImported": "Vorlage importiert!",
-    "toast.templateImportedDesc": "",
+    "toast.templateImportedDesc": "\"{name}\" zu Ihren Vorlagen hinzugefügt.",
     "toast.templateShared": "Vorlage geteilt!",
     "toast.templateSharedDesc": "Ihre Vorlage ist jetzt auf dem Community-Marktplatz verfügbar.",
     "toast.websiteUpdated": "Website aktualisiert",
