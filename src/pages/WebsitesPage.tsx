@@ -48,6 +48,7 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
+  const [shopifyAccessToken, setShopifyAccessToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -138,7 +139,7 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return { shop_domain: shopDomain };
+    if (siteType === "shopify") return { shop_domain: shopDomain, access_token: shopifyAccessToken };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
@@ -167,42 +168,15 @@ export default function WebsitesPage() {
       return;
     }
 
-    // ---- Shopify OAuth redirect flow ----
-    if (siteType === "shopify") {
-      setIsConnecting(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
-          body: {
-            shop_domain: shopDomain,
-            workspace_id: wsId,
-            site_name: siteName || shopDomain,
-            language: siteLanguage,
-          },
-        });
-        if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
-        if (data?.setup_required) {
-          toast({
-            title: "Shopify OAuth setup required",
-            description: data.message || "Platform Shopify credentials are missing. Please configure them once as backend secrets.",
-            variant: "destructive",
-          });
-          setIsConnecting(false);
-          return;
-        }
-        if (data?.error) throw new Error(data.error);
-        if (!data?.auth_url) throw new Error("No auth URL returned");
-
-        // Redirect to Shopify for authorization
-        window.location.href = data.auth_url;
-        return;
-      } catch (err: any) {
-        setIsConnecting(false);
-        toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
-        return;
-      }
+    // Shopify: use direct access token flow (same as WordPress)
+    if (siteType === "shopify" && !shopifyAccessToken) {
+      toast({ title: "Error", description: "Admin API Access Token is required", variant: "destructive" });
+      return;
     }
 
-    const finalUrl = siteUrl;
+    const finalUrl = siteType === "shopify" && shopDomain
+      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : siteUrl;
 
     // Initialize step list — three explicit phases the user asked to see.
     const steps: ProgressStep[] = [
@@ -454,6 +428,8 @@ export default function WebsitesPage() {
                   <ShopifyCredentialFields
                     shopDomain={shopDomain}
                     onShopDomainChange={setShopDomain}
+                    accessToken={shopifyAccessToken}
+                    onAccessTokenChange={setShopifyAccessToken}
                   />
                 )}
                 {siteType === "prestashop" && (
@@ -525,7 +501,7 @@ export default function WebsitesPage() {
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
-                  {siteType !== "shopify" && (
+                  {(
                     <Button
                       variant="outline"
                       className="w-full sm:w-auto"
