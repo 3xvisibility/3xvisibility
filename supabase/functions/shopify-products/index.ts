@@ -281,19 +281,6 @@ Deno.serve(async (req) => {
       return json({ webhooks: data.webhooks || [] });
     }
 
-    // ---- GET SYNC EVENTS ----
-    if (action === "get_sync_events") {
-      const limit = body.sync_limit || 20;
-      const { data: events, error: evErr } = await supabase
-        .from("shopify_sync_events")
-        .select("*")
-        .eq("website_id", website_id)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-
-      if (evErr) return json({ error: evErr.message }, 500);
-      return json({ events: events || [] });
-    }
 
     return json({ error: `Unknown action: ${action}` }, 400);
   } catch (err: any) {
