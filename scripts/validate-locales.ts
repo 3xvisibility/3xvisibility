@@ -77,9 +77,10 @@ function checkFile(filePath: string) {
       }
 
       // ── Rule 4: Broken escaped quotes ──
-      const escapedQuotes = (value.match(/\\"/g) || []).length;
-      if (escapedQuotes % 2 !== 0) {
-        addIssue(label, lineNo, key, "UNBALANCED_QUOTES", `Odd number of escaped quotes (${escapedQuotes}) — likely broken`);
+      // ── Rule 4: Broken escaped quotes — detect \" immediately before end of value ──
+      // A value like:  \"  (nothing else) indicates truncation
+      if (/^\\"$/.test(value) || /[^\\]\\"$/.test(value)) {
+        addIssue(label, lineNo, key, "TRUNCATED_QUOTE", `Value appears truncated at an escaped quote`);
       }
 
       // ── Rule 5: Empty value on long key ──
