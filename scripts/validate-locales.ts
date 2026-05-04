@@ -42,27 +42,18 @@ function checkFile(filePath: string) {
     const lineNo = i + 1;
 
     // Skip lines that aren't key-value pairs
-    if (!/^\s*"/.test(line)) continue;
+    if (!/"\s*:/.test(line)) continue;
 
-    // Detect lines that look like KV but can't be parsed
-    const looksLikeKV = /^\s*"[^"]+"\s*:/.test(line);
+    // Extract all KV pairs from the line (supports multiple per line)
+    const kvRegex = /"([^"]+)"\s*:\s*"((?:[^"\\]|\\.)*)("?)/g;
+    let kvMatch: RegExpExecArray | null;
+    let foundAny = false;
 
-    // Match key-value pairs: "key": "value",
-    const kvMatch = line.match(/^\s*"([^"]+)"\s*:\s*"((?:[^"\\]|\\.)*)("?)\s*,?\s*$/);
-
-    if (looksLikeKV && !kvMatch) {
-      // Line looks like a translation entry but regex couldn't parse it — likely corrupted
-      const keyGuess = line.match(/"([^"]+)"/)?.[1] || "???";
-      addIssue(label, lineNo, keyGuess, "CORRUPT", "Line looks like a translation entry but cannot be parsed");
-      continue;
-    }
-
-    if (!kvMatch) continue;
-
-    const key = kvMatch[1];
-    const value = kvMatch[2];
-    const closingQuote = kvMatch[3];
-
+    while ((kvMatch = kvRegex.exec(line)) !== null) {
+      foundAny = true;
+      const key = kvMatch[1];
+      const value = kvMatch[2];
+      const closingQuote = kvMatch[3];
     // ── Rule 1: Unterminated string literal ──
     if (!closingQuote) {
       addIssue(label, lineNo, key, "UNTERMINATED", "Missing closing quote — unterminated string literal");
