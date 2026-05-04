@@ -442,13 +442,10 @@ export default function WebsitesPage() {
                   />
                 )}
                 {siteType === "shopify" && (
-                  <>
-                    <ConnectionSetupGuide provider="shopify" siteHint={shopDomain} />
-                    <ShopifyCredentialFields
-                      shopDomain={shopDomain}
-                      onShopDomainChange={setShopDomain}
-                    />
-                  </>
+                  <ShopifyCredentialFields
+                    shopDomain={shopDomain}
+                    onShopDomainChange={setShopDomain}
+                  />
                 )}
                 {siteType === "prestashop" && (
                   <>
