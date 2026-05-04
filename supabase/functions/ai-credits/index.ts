@@ -44,7 +44,17 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "check";
+    let action = url.searchParams.get("action");
+
+    // Also support action from JSON body (supabase.functions.invoke sends POST with body)
+    let bodyData: Record<string, unknown> = {};
+    if (req.method === "POST") {
+      try {
+        bodyData = await req.json();
+        if (!action && bodyData.action) action = String(bodyData.action);
+      } catch { /* no body */ }
+    }
+    if (!action) action = "check";
 
     if (action === "check" && req.method === "GET") {
       // Return current credits
