@@ -8,8 +8,8 @@ const corsHeaders = {
 
 /**
  * Generates a Shopify OAuth authorization URL.
- * Per-user: client_id & client_secret are provided by each SaaS user
- * from their own Shopify custom app.
+ * Admin-managed: client_id & client_secret come from platform env secrets.
+ * Users only provide their shop domain.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,12 +28,12 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // User-provided credentials (per-user Shopify app)
-    const { shop_domain, workspace_id, site_name, language, client_id: clientId, client_secret: clientSecret } = await req.json();
-
+    // Platform-level credentials (set by admin)
+    const clientId = Deno.env.get("SHOPIFY_CLIENT_ID");
+    const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
     if (!clientId || !clientSecret) {
-      return new Response(JSON.stringify({ error: "Shopify API key and secret are required. Create a custom app in Shopify Admin and provide the credentials." }), {
-        status: 400,
+      return new Response(JSON.stringify({ error: "Shopify OAuth is not configured. Please contact your administrator." }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    
+    const { shop_domain, workspace_id, site_name, language } = await req.json();
 
     if (!shop_domain || !workspace_id) {
       return new Response(JSON.stringify({ error: "shop_domain and workspace_id are required" }), {
