@@ -94,6 +94,7 @@ function checkFile(filePath: string) {
         addIssue(label, lineNo, key, "UNBALANCED_BRACES", `{=${opens} }=${closes} — broken placeholder variable`);
       }
     }
+  }
 }
 
 // ── Run ─────────────────────────────────────────────────────────────────
