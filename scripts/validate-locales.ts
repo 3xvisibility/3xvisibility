@@ -54,49 +54,46 @@ function checkFile(filePath: string) {
       const key = kvMatch[1];
       const value = kvMatch[2];
       const closingQuote = kvMatch[3];
-    // ── Rule 1: Unterminated string literal ──
-    if (!closingQuote) {
-      addIssue(label, lineNo, key, "UNTERMINATED", "Missing closing quote — unterminated string literal");
-      continue;
-    }
+      // ── Rule 1: Unterminated string literal ──
+      if (!closingQuote) {
+        addIssue(label, lineNo, key, "UNTERMINATED", "Missing closing quote — unterminated string literal");
+        continue;
+      }
 
-    // ── Rule 2: Truncated trailing escape ──
-    // Value ends with odd number of backslashes
-    const trailingBackslashes = value.match(/\\+$/);
-    if (trailingBackslashes && trailingBackslashes[0].length % 2 !== 0) {
-      addIssue(label, lineNo, key, "TRAILING_ESCAPE", `Value ends with a lone backslash: "…${value.slice(-10)}"`);
-    }
+      // ── Rule 2: Truncated trailing escape ──
+      const trailingBackslashes = value.match(/\\+$/);
+      if (trailingBackslashes && trailingBackslashes[0].length % 2 !== 0) {
+        addIssue(label, lineNo, key, "TRAILING_ESCAPE", `Value ends with a lone backslash: "…${value.slice(-10)}"`);
+      }
 
-    // ── Rule 3: Stray backslashes (invalid escape sequences) ──
-    const escapeMatches = [...value.matchAll(/\\(.)/g)];
-    for (const m of escapeMatches) {
-      const char = m[1];
-      // Allow \uXXXX, \xXX
-      if (char === "u" || char === "x") continue;
-      if (!VALID_ESCAPES.has(char)) {
-        addIssue(label, lineNo, key, "STRAY_BACKSLASH", `Invalid escape sequence \\${char} at position ${m.index}`);
+      // ── Rule 3: Stray backslashes (invalid escape sequences) ──
+      const escapeMatches = [...value.matchAll(/\\(.)/g)];
+      for (const m of escapeMatches) {
+        const char = m[1];
+        if (char === "u" || char === "x") continue;
+        if (!VALID_ESCAPES.has(char)) {
+          addIssue(label, lineNo, key, "STRAY_BACKSLASH", `Invalid escape sequence \\${char} at position ${m.index}`);
+        }
+      }
+
+      // ── Rule 4: Broken escaped quotes ──
+      const escapedQuotes = (value.match(/\\"/g) || []).length;
+      if (escapedQuotes % 2 !== 0) {
+        addIssue(label, lineNo, key, "UNBALANCED_QUOTES", `Odd number of escaped quotes (${escapedQuotes}) — likely broken`);
+      }
+
+      // ── Rule 5: Empty value on long key ──
+      if (value === "" && key.length > 10) {
+        addIssue(label, lineNo, key, "EMPTY_VALUE", "Empty value for a descriptive key — likely truncated");
+      }
+
+      // ── Rule 6: Unbalanced curly braces ──
+      const opens = (value.match(/\{/g) || []).length;
+      const closes = (value.match(/\}/g) || []).length;
+      if (opens !== closes) {
+        addIssue(label, lineNo, key, "UNBALANCED_BRACES", `{=${opens} }=${closes} — broken placeholder variable`);
       }
     }
-
-    // ── Rule 4: Broken escaped quotes ──
-    // Count escaped quotes — they should always be in matched pairs within the value
-    const escapedQuotes = (value.match(/\\"/g) || []).length;
-    if (escapedQuotes % 2 !== 0) {
-      addIssue(label, lineNo, key, "UNBALANCED_QUOTES", `Odd number of escaped quotes (${escapedQuotes}) — likely broken`);
-    }
-
-    // ── Rule 5: Empty value on long key ──
-    if (value === "" && key.length > 10) {
-      addIssue(label, lineNo, key, "EMPTY_VALUE", "Empty value for a descriptive key — likely truncated");
-    }
-
-    // ── Rule 6: Unbalanced curly braces ──
-    const opens = (value.match(/\{/g) || []).length;
-    const closes = (value.match(/\}/g) || []).length;
-    if (opens !== closes) {
-      addIssue(label, lineNo, key, "UNBALANCED_BRACES", `{=${opens} }=${closes} — broken placeholder variable`);
-    }
-  }
 }
 
 // ── Run ─────────────────────────────────────────────────────────────────
