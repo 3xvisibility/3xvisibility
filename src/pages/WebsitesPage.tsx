@@ -525,7 +525,7 @@ export default function WebsitesPage() {
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
-                  {(
+                  {siteType !== "shopify" && (
                     <Button
                       variant="outline"
                       className="w-full sm:w-auto"
