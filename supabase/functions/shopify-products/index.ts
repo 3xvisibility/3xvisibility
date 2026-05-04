@@ -59,6 +59,20 @@ Deno.serve(async (req) => {
 
     if (wsError || !website) return json({ error: "Shopify website not found" }, 404);
 
+    // ---- DB-only actions (no Shopify token needed) ----
+    if (action === "get_sync_events") {
+      const limit = body.sync_limit || 20;
+      const { data: events, error: evErr } = await supabase
+        .from("shopify_sync_events")
+        .select("*")
+        .eq("website_id", website_id)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (evErr) return json({ error: evErr.message }, 500);
+      return json({ events: events || [] });
+    }
+
     const creds = await decryptCredentials((website.credentials || {}) as Record<string, string>);
     const domain = creds?.shop_domain || website.url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
     const token = creds?.admin_api_token;
@@ -267,19 +281,6 @@ Deno.serve(async (req) => {
       return json({ webhooks: data.webhooks || [] });
     }
 
-    // ---- GET SYNC EVENTS ----
-    if (action === "get_sync_events") {
-      const limit = body.sync_limit || 20;
-      const { data: events, error: evErr } = await supabase
-        .from("shopify_sync_events")
-        .select("*")
-        .eq("website_id", website_id)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-
-      if (evErr) return json({ error: evErr.message }, 500);
-      return json({ events: events || [] });
-    }
 
     return json({ error: `Unknown action: ${action}` }, 400);
   } catch (err: any) {
