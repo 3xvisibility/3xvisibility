@@ -77,10 +77,9 @@ function checkFile(filePath: string) {
       }
 
       // ── Rule 4: Broken escaped quotes ──
-      // ── Rule 4: Broken escaped quotes — detect \" immediately before end of value ──
-      // A value like:  \"  (nothing else) indicates truncation
-      if (/^\\"$/.test(value) || /[^\\]\\"$/.test(value)) {
-        addIssue(label, lineNo, key, "TRUNCATED_QUOTE", `Value appears truncated at an escaped quote`);
+      // ── Rule 4: Value is ONLY an escaped quote (truncation artifact) ──
+      if (value === '\\"') {
+        addIssue(label, lineNo, key, "TRUNCATED_QUOTE", "Value is just an escaped quote — likely truncated");
       }
 
       // ── Rule 5: Empty value on long key ──
