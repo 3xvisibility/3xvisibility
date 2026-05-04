@@ -179,6 +179,8 @@ export default function WebsitesPage() {
             workspace_id: wsId,
             site_name: siteName || shopDomain,
             language: siteLanguage,
+            client_id: shopifyClientId.trim(),
+            client_secret: shopifyClientSecret.trim(),
           },
         });
         if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
