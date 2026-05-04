@@ -447,10 +447,6 @@ export default function WebsitesPage() {
                     <ShopifyCredentialFields
                       shopDomain={shopDomain}
                       onShopDomainChange={setShopDomain}
-                      clientId={shopifyClientId}
-                      onClientIdChange={setShopifyClientId}
-                      clientSecret={shopifyClientSecret}
-                      onClientSecretChange={setShopifyClientSecret}
                     />
                   </>
                 )}
