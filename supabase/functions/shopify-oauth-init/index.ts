@@ -28,12 +28,12 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Platform-level credentials
-    const clientId = Deno.env.get("SHOPIFY_CLIENT_ID");
-    const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
+    // User-provided credentials (per-user Shopify app)
+    const { shop_domain, workspace_id, site_name, language, client_id: clientId, client_secret: clientSecret } = await req.json();
+
     if (!clientId || !clientSecret) {
-      return new Response(JSON.stringify({ error: "Shopify OAuth is not configured on this platform" }), {
-        status: 500,
+      return new Response(JSON.stringify({ error: "Shopify API key and secret are required. Create a custom app in Shopify Admin and provide the credentials." }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
