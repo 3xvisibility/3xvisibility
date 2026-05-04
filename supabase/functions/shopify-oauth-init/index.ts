@@ -33,8 +33,11 @@ Deno.serve(async (req) => {
     const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
 
     if (!clientId || !clientSecret) {
-      return new Response(JSON.stringify({ error: "Shopify OAuth is not configured on this platform. Contact the administrator." }), {
-        status: 500,
+      return new Response(JSON.stringify({
+        setup_required: true,
+        message: "Shopify OAuth is not configured yet. Platform admin must add SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET as backend secrets.",
+      }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
