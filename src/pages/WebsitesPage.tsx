@@ -132,7 +132,7 @@ export default function WebsitesPage() {
 
   // Shopify-specific frontend validation
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
-  const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
+  const shopifyInvalid = siteType === "shopify" && (!!shopifyDomainError || !shopifyClientId.trim() || !shopifyClientSecret.trim());
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
