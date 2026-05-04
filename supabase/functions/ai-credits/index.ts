@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     }
     if (!action) action = "check";
 
-    if (action === "check" && req.method === "GET") {
+    if (action === "check") {
       // Return current credits
       const { data: credits } = await supabase.from("ai_credits").select("*").eq("user_id", user.id).maybeSingle();
 
