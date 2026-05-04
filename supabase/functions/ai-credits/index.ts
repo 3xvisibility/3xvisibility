@@ -83,9 +83,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, credits }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (action === "deduct" && req.method === "POST") {
-      const body = await req.json();
-      const promptType = body.prompt_type || "default";
+    if (action === "deduct") {
+      const body = bodyData.prompt_type ? bodyData : await req.json().catch(() => ({}));
+      const promptType = (body.prompt_type as string) || "default";
       const creditsNeeded = body.credits || CREDIT_COSTS[promptType] || CREDIT_COSTS.default;
 
       // Use the DB function for atomic deduction
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, remaining: result.remaining }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (action === "usage" && req.method === "GET") {
+    if (action === "usage") {
       const { data: usage } = await supabase.from("ai_usage_log").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50);
       return new Response(JSON.stringify({ success: true, usage: usage || [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
