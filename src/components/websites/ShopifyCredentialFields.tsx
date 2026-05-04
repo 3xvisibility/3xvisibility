@@ -74,7 +74,7 @@ export function ShopifyCredentialFields({
               id="shopify-client-id"
               placeholder="Shopify custom app API key"
               value={clientId || ""}
-              onChange={(e) => onClientIdChange(e.target.value)}
+              onChange={(e) => onClientIdChange?.(e.target.value)}
             />
           </div>
 
@@ -85,7 +85,7 @@ export function ShopifyCredentialFields({
               type="password"
               placeholder="Shopify custom app API secret"
               value={clientSecret || ""}
-              onChange={(e) => onClientSecretChange(e.target.value)}
+              onChange={(e) => onClientSecretChange?.(e.target.value)}
             />
             <p className="text-[11px] text-muted-foreground mt-1">
               Found in Shopify Admin → Apps → App and sales channel settings → Develop apps.
