@@ -209,14 +209,10 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               />
             )}
             {site.type === "shopify" && (
-              <>
-                <ShopifyCredentialFields
-                   shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
-                   onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
-                   accessToken={shopifyToken}
-                   onAccessTokenChange={setShopifyToken}
-                 />
-              </>
+              <ShopifyCredentialFields
+                shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
+                onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
+              />
             )}
             {site.type === "prestashop" && (
               <>

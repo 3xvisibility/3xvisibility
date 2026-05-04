@@ -1,38 +1,29 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateShopifyDomain } from "@/lib/shopify-validation";
 
 interface ShopifyCredentialFieldsProps {
   shopDomain: string;
   onShopDomainChange: (v: string) => void;
-  accessToken: string;
-  onAccessTokenChange: (v: string) => void;
 }
 
 export function ShopifyCredentialFields({
   shopDomain,
   onShopDomainChange,
-  accessToken,
-  onAccessTokenChange,
 }: ShopifyCredentialFieldsProps) {
   const domainError = shopDomain ? validateShopifyDomain(shopDomain) : null;
   const domainOk = !!shopDomain && !domainError;
 
   return (
     <div className="space-y-4">
-      <Alert className="bg-muted/50 border-muted">
-        <Info className="h-4 w-4" />
+      <Alert className="bg-primary/5 border-primary/20">
+        <Shield className="h-4 w-4 text-primary" />
         <AlertDescription className="text-xs leading-relaxed">
-          <strong>Shopify prerequisites:</strong>
-          <ul className="list-disc pl-4 mt-1 space-y-0.5">
-            <li>Go to Shopify Admin → Settings → Apps and sales channels → Develop apps</li>
-            <li>Create a custom app (or use an existing one)</li>
-            <li>Configure Admin API scopes: <code>read_products, write_products, read_content, write_content</code></li>
-            <li>Install the app and copy the <strong>Admin API access token</strong></li>
-          </ul>
+          <strong>Secure OAuth connection</strong> — Enter your store domain, then click Connect.
+          Shopify will ask you to authorize access. No API keys needed.
         </AlertDescription>
       </Alert>
 
@@ -64,20 +55,6 @@ export function ShopifyCredentialFields({
             Your <code>.myshopify.com</code> domain (found in Shopify Admin → Settings → Domains)
           </p>
         )}
-      </div>
-
-      <div>
-        <Label htmlFor="shopify-token">Admin API Access Token</Label>
-        <Input
-          id="shopify-token"
-          type="password"
-          placeholder="shpat_xxxxxxxxxxxxxxxxxxxxx"
-          value={accessToken}
-          onChange={(e) => onAccessTokenChange(e.target.value)}
-        />
-        <p className="text-[11px] text-muted-foreground mt-1">
-          Found in Shopify Admin → Settings → Apps → Your app → API credentials → Admin API access token
-        </p>
       </div>
     </div>
   );
