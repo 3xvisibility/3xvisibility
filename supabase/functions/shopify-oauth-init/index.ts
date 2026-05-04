@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { shop_domain, workspace_id, site_name, language } = await req.json();
+    
 
     if (!shop_domain || !workspace_id) {
       return new Response(JSON.stringify({ error: "shop_domain and workspace_id are required" }), {
