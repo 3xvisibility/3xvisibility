@@ -48,8 +48,6 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
-  const [shopifyClientId, setShopifyClientId] = useState("");
-  const [shopifyClientSecret, setShopifyClientSecret] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -171,17 +169,11 @@ export default function WebsitesPage() {
 
     // ---- Shopify OAuth redirect flow ----
     if (siteType === "shopify") {
-      if (!shopifyClientId.trim() || !shopifyClientSecret.trim()) {
-        toast({ title: "Error", description: "Shopify API Key and API Secret Key are required", variant: "destructive" });
-        return;
-      }
       setIsConnecting(true);
       try {
         const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
           body: {
             shop_domain: shopDomain,
-            client_id: shopifyClientId.trim(),
-            client_secret: shopifyClientSecret.trim(),
             workspace_id: wsId,
             site_name: siteName || shopDomain,
             language: siteLanguage,
@@ -373,8 +365,6 @@ export default function WebsitesPage() {
     setAppPassword("");
     setJwtToken("");
     setShopDomain("");
-    setShopifyClientId("");
-    setShopifyClientSecret("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
@@ -457,10 +447,6 @@ export default function WebsitesPage() {
                     <ShopifyCredentialFields
                       shopDomain={shopDomain}
                       onShopDomainChange={setShopDomain}
-                      clientId={shopifyClientId}
-                      onClientIdChange={setShopifyClientId}
-                      clientSecret={shopifyClientSecret}
-                      onClientSecretChange={setShopifyClientSecret}
                     />
                   </>
                 )}
@@ -550,7 +536,7 @@ export default function WebsitesPage() {
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain && shopifyClientId && shopifyClientSecret : siteUrl) || !siteType || shopifyInvalid || isConnecting}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
                   >
                     {isConnecting ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
