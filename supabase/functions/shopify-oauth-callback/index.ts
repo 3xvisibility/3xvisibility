@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { encryptCredentials } from "../_shared/crypto.ts";
 
 /**
  * Shopify OAuth callback handler — hardened.
@@ -138,6 +139,14 @@ Deno.serve(async (req) => {
     }
 
     // ── 6. Save the website connection (scoped to the authenticated user) ──
+    const encryptedCredentials = await encryptCredentials({
+      admin_api_token: accessToken,
+      shop_domain: domain,
+      oauth_client_id: oauthState.client_id,
+      auth_method: "oauth",
+      scopes: tokenData.scope || "",
+    });
+
     const { error: insertError } = await supabase.from("websites").insert({
       name: oauthState.site_name || domain,
       url: `https://${domain}`,
@@ -146,13 +155,7 @@ Deno.serve(async (req) => {
       user_id: oauthState.user_id,
       workspace_id: oauthState.workspace_id,
       language: oauthState.language,
-      credentials: {
-        admin_api_token: accessToken,
-        shop_domain: domain,
-        oauth_client_id: oauthState.client_id,
-        auth_method: "oauth",
-        scopes: tokenData.scope || "",
-      },
+      credentials: encryptedCredentials,
     });
 
     if (insertError) {

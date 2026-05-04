@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { decryptCredentials } from "../_shared/crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,11 +59,22 @@ Deno.serve(async (req) => {
 
     if (wsError || !website) return json({ error: "Shopify website not found" }, 404);
 
-    const creds = website.credentials as Record<string, string>;
+    const creds = await decryptCredentials((website.credentials || {}) as Record<string, string>);
     const domain = creds?.shop_domain || website.url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
     const token = creds?.admin_api_token;
 
-    if (!token) return json({ error: "No access token configured for this site" }, 400);
+    if (!token) {
+      if (action === "list_products") {
+        return json({
+          products: [],
+          next_page_info: null,
+          total: 0,
+          setup_required: true,
+          message: "Reconnect this Shopify store with OAuth to load products.",
+        });
+      }
+      return json({ error: "Reconnect this Shopify store with OAuth before using Shopify products." }, 400);
+    }
 
     const apiBase = `https://${domain}/admin/api/2024-01`;
     const headers: HeadersInit = {
