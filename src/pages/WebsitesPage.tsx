@@ -180,6 +180,15 @@ export default function WebsitesPage() {
           },
         });
         if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
+        if (data?.setup_required) {
+          toast({
+            title: "Shopify OAuth setup required",
+            description: data.message || "Platform Shopify credentials are missing. Please configure them once as backend secrets.",
+            variant: "destructive",
+          });
+          setIsConnecting(false);
+          return;
+        }
         if (data?.error) throw new Error(data.error);
         if (!data?.auth_url) throw new Error("No auth URL returned");
 
