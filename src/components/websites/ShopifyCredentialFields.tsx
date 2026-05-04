@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 interface ShopifyCredentialFieldsProps {
   shopDomain: string;
   onShopDomainChange: (v: string) => void;
-  clientId: string;
-  onClientIdChange: (v: string) => void;
-  clientSecret: string;
-  onClientSecretChange: (v: string) => void;
+  clientId?: string;
+  onClientIdChange?: (v: string) => void;
+  clientSecret?: string;
+  onClientSecretChange?: (v: string) => void;
 }
 
 export function ShopifyCredentialFields({
