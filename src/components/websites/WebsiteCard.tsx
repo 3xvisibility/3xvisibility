@@ -285,18 +285,39 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           </div>
 
           {/* Shopify live status panel */}
-          {isShopify && site.status === "connected" && (
+          {isShopify && site.status === "connected" && (() => {
+            const shopDetails = (site as unknown as { shop_details?: Record<string, string | null> }).shop_details;
+            return (
             <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-              {/* Store details */}
+              {/* Store details from Shopify API */}
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Globe className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium">{site.name}</span>
+                  <Store className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium">{shopDetails?.shop_name || site.name}</span>
                 </div>
+                {shopDetails?.domain && (
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                    <a href={`https://${shopDetails.domain}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                      {shopDetails.domain}
+                    </a>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">{(site.credentials as Record<string, string> | null)?.shop_domain || site.url}</span>
+                  <span className="text-xs text-muted-foreground">{shopDetails?.myshopify_domain || (site.credentials as Record<string, string> | null)?.shop_domain || site.url}</span>
                 </div>
+                {shopDetails?.plan_display_name && (
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Plan: <span className="font-medium capitalize">{shopDetails.plan_display_name}</span></span>
+                  </div>
+                )}
+                {shopDetails?.currency && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground ml-5">Currency: {shopDetails.currency}{shopDetails.country_name ? ` · ${shopDetails.country_name}` : ""}</span>
+                  </div>
+                )}
                 {site.created_at && (
                   <div className="flex items-center gap-2">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
