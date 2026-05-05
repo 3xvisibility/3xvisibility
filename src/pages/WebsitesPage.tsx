@@ -48,6 +48,8 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
+  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<ShopifyAuthMethod>("api_key");
+  const [shopifyAccessToken, setShopifyAccessToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
