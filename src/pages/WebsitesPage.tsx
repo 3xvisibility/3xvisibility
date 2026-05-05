@@ -196,8 +196,17 @@ export default function WebsitesPage() {
         if (data?.error) throw new Error(data.error);
         if (!data?.auth_url) throw new Error("No auth URL returned");
 
-        // Open Shopify authorization in a new tab (iframe can't load Shopify due to X-Frame-Options)
-        window.open(data.auth_url, "_blank", "noopener,noreferrer");
+        // Try opening in a new tab; detect popup blockers
+        const popup = window.open(data.auth_url, "_blank", "noopener,noreferrer");
+        if (!popup || popup.closed || typeof popup.closed === "undefined") {
+          // Popup was blocked — show fallback with the URL
+          setBlockedAuthUrl(data.auth_url);
+          setIsConnecting(false);
+          toast({
+            title: "Popup blocked",
+            description: "Please use the link below to authorize Shopify, or allow popups for this site.",
+          });
+        }
         return;
       } catch (err: any) {
         setIsConnecting(false);
