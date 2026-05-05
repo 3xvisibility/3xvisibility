@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
       return redirectError("Failed to save connection");
     }
 
-    // ── 7. Redirect back to the correct workspace ──
+    // ── 9. Redirect back to the correct workspace ──
     const { data: ws } = await supabase
       .from("workspaces")
       .select("slug")
