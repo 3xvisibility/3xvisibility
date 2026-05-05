@@ -463,14 +463,19 @@ export default function WebsitesPage() {
                   />
                 )}
                 {siteType === "shopify" && (
-                  <ShopifyCredentialFields
-                    shopDomain={shopDomain}
-                    onShopDomainChange={setShopDomain}
-                    authMethod={shopifyAuthMethod}
-                    onAuthMethodChange={setShopifyAuthMethod}
-                    accessToken={shopifyAccessToken}
-                    onAccessTokenChange={setShopifyAccessToken}
-                  />
+                  <>
+                    {shopifyAuthMethod === "api_key" && (
+                      <ConnectionSetupGuide provider="shopify" siteHint={shopDomain} />
+                    )}
+                    <ShopifyCredentialFields
+                      shopDomain={shopDomain}
+                      onShopDomainChange={setShopDomain}
+                      authMethod={shopifyAuthMethod}
+                      onAuthMethodChange={setShopifyAuthMethod}
+                      accessToken={shopifyAccessToken}
+                      onAccessTokenChange={setShopifyAccessToken}
+                    />
+                  </>
                 )}
                 {siteType === "prestashop" && (
                   <>
