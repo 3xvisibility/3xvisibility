@@ -45,6 +45,9 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
+  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<ShopifyAuthMethod>(
+    creds.auth_method === "api_key" ? "api_key" : "oauth"
+  );
   const [shopifyToken, setShopifyToken] = useState("");
   // PrestaShop
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
