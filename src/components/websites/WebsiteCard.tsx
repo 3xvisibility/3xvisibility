@@ -36,6 +36,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   const [retransOpen, setRetransOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(() => !!autoOpenProducts);
   const [reconnectConfirmOpen, setReconnectConfirmOpen] = useState(false);
+  const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -196,18 +197,24 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
   });
 
-  // Shopify disconnect (set status to disconnected, clear token)
+  // Shopify disconnect — revokes token via edge function then marks as disconnected
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("websites")
-        .update({ status: "disconnected" as any })
-        .eq("id", site.id);
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("shopify-disconnect", {
+        body: { website_id: site.id },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "Disconnect failed"));
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
-      toast({ title: "Disconnected", description: `${site.name} has been disconnected.` });
+      toast({
+        title: "Shopify disconnected",
+        description: data?.token_revoked
+          ? `${site.name} has been disconnected and the access token has been revoked.`
+          : `${site.name} has been disconnected. The token may have already been invalid.`,
+      });
     },
     onError: (err: Error) => {
       toast({ title: "Disconnect failed", description: err.message, variant: "destructive" });
@@ -423,7 +430,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   variant="outline"
                   className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
                   disabled={disconnectMutation.isPending || site.status !== "connected"}
-                  onClick={() => disconnectMutation.mutate()}
+                  onClick={() => setDisconnectConfirmOpen(true)}
                 >
                   {disconnectMutation.isPending ? (
                     <><Loader2 className="h-3 w-3 animate-spin" /> Disconnecting…</>
@@ -524,6 +531,31 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
             >
               <RotateCcw className="h-4 w-4 mr-1" />
               Re-authorize
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={disconnectConfirmOpen} onOpenChange={setDisconnectConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Shopify store?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will revoke the access token for <span className="font-medium">{site.name}</span> and 
+              mark the store as disconnected. You can reconnect later by clicking Reconnect.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setDisconnectConfirmOpen(false);
+                disconnectMutation.mutate();
+              }}
+            >
+              <Unplug className="h-4 w-4 mr-1" />
+              Disconnect
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
