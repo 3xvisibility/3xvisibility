@@ -174,8 +174,8 @@ export default function WebsitesPage() {
       return;
     }
 
-    // ---- Shopify OAuth redirect flow ----
-    if (siteType === "shopify") {
+    // ---- Shopify OAuth redirect flow (only for oauth method) ----
+    if (siteType === "shopify" && shopifyAuthMethod === "oauth") {
       setIsConnecting(true);
       try {
         const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
