@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Loader2, Zap, Languages, Lock, ExternalLink, Copy } from "lucide-react";
+import { Plus, Loader2, Zap, Languages, Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -58,7 +58,6 @@ export default function WebsitesPage() {
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
-  const [blockedAuthUrl, setBlockedAuthUrl] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
