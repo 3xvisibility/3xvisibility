@@ -362,7 +362,7 @@ export default function WebsitesPage() {
     setSiteLanguage(null);
     setLanguageLocked(false);
     setProgressSteps([]);
-    setBlockedAuthUrl(null);
+    setShopifyAccessToken("");
   };
 
   return (
