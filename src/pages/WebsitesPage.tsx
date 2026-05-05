@@ -433,7 +433,6 @@ export default function WebsitesPage() {
                   />
                 )}
                  {siteType === "shopify" && (
-                   <>
                       <ShopifyCredentialFields
                         shopDomain={shopDomain}
                         onShopDomainChange={setShopDomain}
