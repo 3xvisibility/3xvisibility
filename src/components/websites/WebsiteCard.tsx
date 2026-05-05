@@ -36,6 +36,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   const [retransOpen, setRetransOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(() => !!autoOpenProducts);
   const [reconnectConfirmOpen, setReconnectConfirmOpen] = useState(false);
+  const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
