@@ -2009,6 +2009,7 @@ export type Database = {
           language_locked: boolean
           last_sync: string | null
           name: string
+          shop_details: Json | null
           status: Database["public"]["Enums"]["website_status"]
           type: Database["public"]["Enums"]["website_type"]
           updated_at: string
@@ -2026,6 +2027,7 @@ export type Database = {
           language_locked?: boolean
           last_sync?: string | null
           name: string
+          shop_details?: Json | null
           status?: Database["public"]["Enums"]["website_status"]
           type: Database["public"]["Enums"]["website_type"]
           updated_at?: string
@@ -2043,6 +2045,7 @@ export type Database = {
           language_locked?: boolean
           last_sync?: string | null
           name?: string
+          shop_details?: Json | null
           status?: Database["public"]["Enums"]["website_status"]
           type?: Database["public"]["Enums"]["website_type"]
           updated_at?: string
