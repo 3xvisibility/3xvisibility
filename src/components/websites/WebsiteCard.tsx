@@ -430,7 +430,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   variant="outline"
                   className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
                   disabled={disconnectMutation.isPending || site.status !== "connected"}
-                  onClick={() => disconnectMutation.mutate()}
+                  onClick={() => setDisconnectConfirmOpen(true)}
                 >
                   {disconnectMutation.isPending ? (
                     <><Loader2 className="h-3 w-3 animate-spin" /> Disconnecting…</>
