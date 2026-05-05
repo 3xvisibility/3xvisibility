@@ -22,7 +22,7 @@ import { WebsiteCard } from "@/components/websites/WebsiteCard";
 import { SiteTypeFilter } from "@/components/websites/SiteTypeFilter";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
-import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
+import { ShopifyCredentialFields, type ShopifyAuthMethod } from "@/components/websites/ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
