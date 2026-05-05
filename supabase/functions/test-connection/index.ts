@@ -44,6 +44,11 @@ Deno.serve(async (req) => {
     }
 
     const website: WebsiteRecord = { url, type, credentials: credentials || {} };
+    console.log(`[test-connection] type=${type} url=${url} cred_keys=${Object.keys(credentials || {}).join(",")}`);
+    if (type === "shopify") {
+      const token = credentials?.admin_api_token || credentials?.access_token || "";
+      console.log(`[test-connection] shopify domain=${url} token_len=${token.length} token_prefix=${token.substring(0, 8)}...`);
+    }
     const connector = await createConnector(website);
     let ok = false;
     try {
