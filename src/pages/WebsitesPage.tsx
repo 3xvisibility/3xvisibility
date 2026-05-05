@@ -555,7 +555,7 @@ export default function WebsitesPage() {
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
+                    disabled={!(siteType === "shopify" ? (shopDomain && (shopifyAuthMethod === "oauth" || shopifyAccessToken)) : siteUrl) || !siteType || shopifyInvalid || isConnecting}
                   >
                     {isConnecting ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
