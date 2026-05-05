@@ -209,7 +209,9 @@ export default function WebsitesPage() {
       }
     }
 
-    const finalUrl = siteUrl;
+    const finalUrl = siteType === "shopify"
+      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : siteUrl;
 
     // Initialize step list — three explicit phases the user asked to see.
     const steps: ProgressStep[] = [
