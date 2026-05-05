@@ -1769,4 +1769,5 @@ const pl: Record<string, string> = {
   "workspaceSettings.workspaceName": "Nazwa obszaru roboczego",
 
 };
+  "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Słowa kluczowe", "sidebar.pgpGenerate": "Generuj", "sidebar.pgpTerms": "Warunki",
 export default pl;

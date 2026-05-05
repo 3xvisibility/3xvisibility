@@ -1135,4 +1135,5 @@ const es: Record<string, string> = {
   "sidebar.affiliate": "Afiliado",
 
 };
+  "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Palabras clave", "sidebar.pgpGenerate": "Generar", "sidebar.pgpTerms": "Términos",
 export default es;

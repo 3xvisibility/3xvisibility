@@ -1077,4 +1077,5 @@ const fr: Record<string, string> = {
   "startGeneration.starting": "Commencer...",
   "startGeneration.startGeneration": "Démarrer la génération",
 };
+  "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Keywords", "sidebar.pgpGenerate": "Generate", "sidebar.pgpTerms": "Terms",
 export default fr;
