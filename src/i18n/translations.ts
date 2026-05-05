@@ -487,6 +487,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.dataCsv": "Data / CSV",
     "sidebar.contentCalendar": "Content Calendar",
     "sidebar.seoAudit": "SEO Audit",
+    "sidebar.pgpSection": "Page Generator Pro",
+    "sidebar.pgpKeywords": "Keywords",
+    "sidebar.pgpGenerate": "Generate",
+    "sidebar.pgpTerms": "Terms",
 
     // Auth
     "auth.home": "Home",
@@ -1651,6 +1655,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.dataCsv": "Données / CSV",
     "sidebar.contentCalendar": "Calendrier de contenu",
     "sidebar.seoAudit": "Audit SEO",
+    "sidebar.pgpSection": "Page Generator Pro",
+    "sidebar.pgpKeywords": "Mots-clés",
+    "sidebar.pgpGenerate": "Générer",
+    "sidebar.pgpTerms": "Termes",
 
     // Auth
     "auth.home": "Accueil",
@@ -2843,6 +2851,10 @@ export const translations: Record<Language, Record<string, string>> = {
     "sidebar.dataCsv": "Daten / CSV",
     "sidebar.contentCalendar": "Inhaltskalender",
     "sidebar.seoAudit": "SEO-Audit",
+    "sidebar.pgpSection": "Page Generator Pro",
+    "sidebar.pgpKeywords": "Schlüsselwörter",
+    "sidebar.pgpGenerate": "Generieren",
+    "sidebar.pgpTerms": "Begriffe",
 
     // Auth
     "auth.home": "Startseite",
