@@ -384,7 +384,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* Non-Shopify last sync */}
           {!isShopify && site.last_sync && (
