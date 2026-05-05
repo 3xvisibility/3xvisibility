@@ -1767,7 +1767,6 @@ const pl: Record<string, string> = {
   "workspaceSettings.workspaceDetails": "Szczegóły obszaru roboczego",
   "workspaceSettings.workspaceDetailsDesc": "Zaktualizuj nazwę swojego obszaru roboczego. Tylko właściciele obszaru roboczego mogą zmieniać nazwy.",
   "workspaceSettings.workspaceName": "Nazwa obszaru roboczego",
-
-};
   "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Słowa kluczowe", "sidebar.pgpGenerate": "Generuj", "sidebar.pgpTerms": "Warunki",
+};
 export default pl;

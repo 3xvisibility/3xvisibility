@@ -1133,7 +1133,6 @@ const nl: Record<string, string> = {
   "faq.q7": "Hebben jullie een affiliateprogramma?",
   "nav.affiliate": "Affiliate",
   "sidebar.affiliate": "Affiliate",
-
-};
   "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Trefwoorden", "sidebar.pgpGenerate": "Genereren", "sidebar.pgpTerms": "Termen",
+};
 export default nl;

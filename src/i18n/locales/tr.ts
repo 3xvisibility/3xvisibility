@@ -4,6 +4,6 @@ const tr: Record<string, string> = {
   "dashboard.search": "Ara...", "dashboard.settings": "Ayarlar", "dashboard.billing": "Faturalama", "dashboard.logout": "Çıkış",
   "sidebar.main": "Ana Menü", "sidebar.tools": "Araçlar", "sidebar.account": "Hesap", "sidebar.dashboard": "Panel", "sidebar.campaigns": "Kampanyalar", "sidebar.generatedPages": "Oluşturulan sayfalar", "sidebar.templates": "Şablonlar", "sidebar.websites": "Web siteleri", "sidebar.billing": "Faturalama", "sidebar.settings": "Ayarlar", "sidebar.logout": "Çıkış",
   "auth.signIn": "Giriş Yap", "auth.signUp": "Kayıt Ol", "auth.welcomeBack": "Tekrar hoş geldiniz", "auth.email": "E-posta", "auth.password": "Şifre", "auth.forgotPassword": "Şifrenizi mi unuttunuz?",
-};
   "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Anahtar Kelimeler", "sidebar.pgpGenerate": "Oluştur", "sidebar.pgpTerms": "Terimler",
+};
 export default tr;
