@@ -56,13 +56,19 @@ export function ShopifyCredentialFields({
           <Alert className="bg-emerald-500/5 border-emerald-500/20">
             <Key className="h-4 w-4 text-emerald-500" />
             <AlertDescription className="text-xs leading-relaxed">
-              <strong>Direct API key</strong> — Enter your store domain and Admin API access token.
-              Found in Shopify Admin → Settings → Apps → Develop apps → your app → API credentials.
+              <strong>Direct API key</strong> — Admin API access token দিয়ে কানেক্ট করুন।
+              <ol className="list-decimal list-inside mt-1 space-y-0.5">
+                <li>Shopify Admin → Settings → Apps → <strong>Develop apps</strong></li>
+                <li>আপনার app সিলেক্ট করুন (না থাকলে Create an app)</li>
+                <li><strong>"Install app"</strong> বাটনে ক্লিক করুন</li>
+                <li>API credentials ট্যাবে <strong>Admin API access token</strong> কপি করুন</li>
+              </ol>
+              <p className="mt-1 text-amber-400/90">⚠️ <code>shpss_</code> টোকেন কাজ করবে না — শুধু <code>shpat_</code> টোকেন ব্যবহার করুন।</p>
             </AlertDescription>
           </Alert>
 
           <div>
-            <Label htmlFor="shopify-access-token">Admin API Access Token</Label>
+            <Label htmlFor="shopify-access-token">Admin API Access Token (shpat_...)</Label>
             <Input
               id="shopify-access-token"
               type="password"
