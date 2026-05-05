@@ -197,18 +197,24 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
   });
 
-  // Shopify disconnect (set status to disconnected, clear token)
+  // Shopify disconnect — revokes token via edge function then marks as disconnected
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from("websites")
-        .update({ status: "disconnected" as any })
-        .eq("id", site.id);
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("shopify-disconnect", {
+        body: { website_id: site.id },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "Disconnect failed"));
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
-      toast({ title: "Disconnected", description: `${site.name} has been disconnected.` });
+      toast({
+        title: "Shopify disconnected",
+        description: data?.token_revoked
+          ? `${site.name} has been disconnected and the access token has been revoked.`
+          : `${site.name} has been disconnected. The token may have already been invalid.`,
+      });
     },
     onError: (err: Error) => {
       toast({ title: "Disconnect failed", description: err.message, variant: "destructive" });
