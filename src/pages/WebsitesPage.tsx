@@ -22,7 +22,7 @@ import { WebsiteCard } from "@/components/websites/WebsiteCard";
 import { SiteTypeFilter } from "@/components/websites/SiteTypeFilter";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { WordPressCredentialFields, type WpAuthMethod } from "@/components/websites/WordPressCredentialFields";
-import { ShopifyCredentialFields } from "@/components/websites/ShopifyCredentialFields";
+import { ShopifyCredentialFields, type ShopifyAuthMethod } from "@/components/websites/ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "@/components/websites/PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "@/components/websites/ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "@/components/websites/WebsiteLanguageSelect";
@@ -48,6 +48,8 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
+  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<ShopifyAuthMethod>("api_key");
+  const [shopifyAccessToken, setShopifyAccessToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -138,7 +140,12 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return { shop_domain: shopDomain };
+    if (siteType === "shopify") {
+      if (shopifyAuthMethod === "api_key") {
+        return { shop_domain: shopDomain, admin_api_token: shopifyAccessToken, auth_method: "api_key" };
+      }
+      return { shop_domain: shopDomain };
+    }
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
@@ -167,8 +174,8 @@ export default function WebsitesPage() {
       return;
     }
 
-    // ---- Shopify OAuth redirect flow ----
-    if (siteType === "shopify") {
+    // ---- Shopify OAuth redirect flow (only for oauth method) ----
+    if (siteType === "shopify" && shopifyAuthMethod === "oauth") {
       setIsConnecting(true);
       try {
         const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
@@ -202,7 +209,9 @@ export default function WebsitesPage() {
       }
     }
 
-    const finalUrl = siteUrl;
+    const finalUrl = siteType === "shopify"
+      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : siteUrl;
 
     // Initialize step list — three explicit phases the user asked to see.
     const steps: ProgressStep[] = [
@@ -241,6 +250,7 @@ export default function WebsitesPage() {
             workspace_id: wsId,
             language: siteLanguage,
             language_locked: languageLocked,
+            ...(siteType === "shopify" && shopifyAuthMethod === "api_key" ? { status: "connected" } : {}),
           },
         });
         if (error) throw new Error(await extractEdgeError(error, "Failed to save credentials"));
@@ -374,6 +384,8 @@ export default function WebsitesPage() {
     setAppPassword("");
     setJwtToken("");
     setShopDomain("");
+    setShopifyAuthMethod("api_key");
+    setShopifyAccessToken("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
@@ -451,10 +463,19 @@ export default function WebsitesPage() {
                   />
                 )}
                 {siteType === "shopify" && (
-                  <ShopifyCredentialFields
-                    shopDomain={shopDomain}
-                    onShopDomainChange={setShopDomain}
-                  />
+                  <>
+                    {shopifyAuthMethod === "api_key" && (
+                      <ConnectionSetupGuide provider="shopify" siteHint={shopDomain} />
+                    )}
+                    <ShopifyCredentialFields
+                      shopDomain={shopDomain}
+                      onShopDomainChange={setShopDomain}
+                      authMethod={shopifyAuthMethod}
+                      onAuthMethodChange={setShopifyAuthMethod}
+                      accessToken={shopifyAccessToken}
+                      onAccessTokenChange={setShopifyAccessToken}
+                    />
+                  </>
                 )}
                 {siteType === "prestashop" && (
                   <>
@@ -525,12 +546,12 @@ export default function WebsitesPage() {
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
-                  {siteType !== "shopify" && (
+                  {(siteType !== "shopify" || shopifyAuthMethod === "api_key") && (
                     <Button
                       variant="outline"
                       className="w-full sm:w-auto"
                       onClick={() => testConnectionMutation.mutate()}
-                      disabled={!siteUrl || !siteType || testConnectionMutation.isPending || isConnecting}
+                      disabled={!(siteType === "shopify" ? shopDomain && shopifyAccessToken : siteUrl) || !siteType || testConnectionMutation.isPending || isConnecting}
                     >
                       {testConnectionMutation.isPending ? (
                         <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
@@ -542,7 +563,7 @@ export default function WebsitesPage() {
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
+                    disabled={!(siteType === "shopify" ? (shopDomain && (shopifyAuthMethod === "oauth" || shopifyAccessToken)) : siteUrl) || !siteType || shopifyInvalid || isConnecting}
                   >
                     {isConnecting ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>

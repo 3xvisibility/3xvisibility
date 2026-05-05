@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
-import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
+import { ShopifyCredentialFields, type ShopifyAuthMethod } from "./ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
@@ -45,6 +45,9 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
+  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<ShopifyAuthMethod>(
+    creds.auth_method === "api_key" ? "api_key" : "oauth"
+  );
   const [shopifyToken, setShopifyToken] = useState("");
   // PrestaShop
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
@@ -212,6 +215,10 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               <ShopifyCredentialFields
                 shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
                 onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
+                authMethod={shopifyAuthMethod}
+                onAuthMethodChange={setShopifyAuthMethod}
+                accessToken={shopifyToken}
+                onAccessTokenChange={setShopifyToken}
               />
             )}
             {site.type === "prestashop" && (
