@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       });
     } else {
       // Insert new website
-      const { data, error } = await serviceClient.from("websites").insert({
+      const insertPayload: Record<string, unknown> = {
         name: name || new URL(url).hostname,
         url,
         type,
@@ -89,7 +89,10 @@ Deno.serve(async (req) => {
         language_locked: normalizedLanguageLocked,
         user_id: user.id,
         workspace_id,
-      }).select("id").single();
+      };
+      if (status) insertPayload.status = status;
+
+      const { data, error } = await serviceClient.from("websites").insert(insertPayload).select("id").single();
 
       if (error) throw error;
 
