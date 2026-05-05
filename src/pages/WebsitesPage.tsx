@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Loader2, Zap, Languages, Lock } from "lucide-react";
+import { Plus, Loader2, Zap, Languages, Lock, ExternalLink, Copy } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,6 +57,7 @@ export default function WebsitesPage() {
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
+  const [blockedAuthUrl, setBlockedAuthUrl] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -194,8 +196,17 @@ export default function WebsitesPage() {
         if (data?.error) throw new Error(data.error);
         if (!data?.auth_url) throw new Error("No auth URL returned");
 
-        // Open Shopify authorization in a new tab (iframe can't load Shopify due to X-Frame-Options)
-        window.open(data.auth_url, "_blank", "noopener,noreferrer");
+        // Try opening in a new tab; detect popup blockers
+        const popup = window.open(data.auth_url, "_blank", "noopener,noreferrer");
+        if (!popup || popup.closed || typeof popup.closed === "undefined") {
+          // Popup was blocked — show fallback with the URL
+          setBlockedAuthUrl(data.auth_url);
+          setIsConnecting(false);
+          toast({
+            title: "Popup blocked",
+            description: "Please use the link below to authorize Shopify, or allow popups for this site.",
+          });
+        }
         return;
       } catch (err: any) {
         setIsConnecting(false);
@@ -385,6 +396,7 @@ export default function WebsitesPage() {
     setSiteLanguage(null);
     setLanguageLocked(false);
     setProgressSteps([]);
+    setBlockedAuthUrl(null);
   };
 
   return (
@@ -453,12 +465,44 @@ export default function WebsitesPage() {
                     onJwtTokenChange={setJwtToken}
                   />
                 )}
-                {siteType === "shopify" && (
-                  <ShopifyCredentialFields
-                    shopDomain={shopDomain}
-                    onShopDomainChange={setShopDomain}
-                  />
-                )}
+                 {siteType === "shopify" && (
+                   <>
+                     <ShopifyCredentialFields
+                       shopDomain={shopDomain}
+                       onShopDomainChange={(v) => { setShopDomain(v); setBlockedAuthUrl(null); }}
+                     />
+                     {blockedAuthUrl && (
+                       <Alert className="bg-amber-500/10 border-amber-500/30">
+                         <ExternalLink className="h-4 w-4 text-amber-500" />
+                         <AlertDescription className="text-xs space-y-2">
+                           <p className="font-medium text-amber-400">Popup blocked — open manually:</p>
+                           <div className="flex items-center gap-2">
+                             <a
+                               href={blockedAuthUrl}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="text-primary underline underline-offset-2 break-all text-[11px] flex-1 line-clamp-2"
+                             >
+                               Open Shopify Authorization
+                             </a>
+                             <Button
+                               type="button"
+                               variant="outline"
+                               size="sm"
+                               className="shrink-0 h-7 px-2"
+                               onClick={() => {
+                                 navigator.clipboard.writeText(blockedAuthUrl);
+                                 toast({ title: "Copied!", description: "Auth URL copied to clipboard." });
+                               }}
+                             >
+                               <Copy className="h-3 w-3 mr-1" /> Copy
+                             </Button>
+                           </div>
+                         </AlertDescription>
+                       </Alert>
+                     )}
+                   </>
+                 )}
                 {siteType === "prestashop" && (
                   <>
                     <ConnectionSetupGuide provider="prestashop" siteHint={siteUrl} />
