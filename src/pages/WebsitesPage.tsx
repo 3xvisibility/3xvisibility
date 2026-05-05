@@ -463,6 +463,10 @@ export default function WebsitesPage() {
                   <ShopifyCredentialFields
                     shopDomain={shopDomain}
                     onShopDomainChange={setShopDomain}
+                    authMethod={shopifyAuthMethod}
+                    onAuthMethodChange={setShopifyAuthMethod}
+                    accessToken={shopifyAccessToken}
+                    onAccessTokenChange={setShopifyAccessToken}
                   />
                 )}
                 {siteType === "prestashop" && (
