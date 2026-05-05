@@ -464,12 +464,44 @@ export default function WebsitesPage() {
                     onJwtTokenChange={setJwtToken}
                   />
                 )}
-                {siteType === "shopify" && (
-                  <ShopifyCredentialFields
-                    shopDomain={shopDomain}
-                    onShopDomainChange={setShopDomain}
-                  />
-                )}
+                 {siteType === "shopify" && (
+                   <>
+                     <ShopifyCredentialFields
+                       shopDomain={shopDomain}
+                       onShopDomainChange={(v) => { setShopDomain(v); setBlockedAuthUrl(null); }}
+                     />
+                     {blockedAuthUrl && (
+                       <Alert className="bg-amber-500/10 border-amber-500/30">
+                         <ExternalLink className="h-4 w-4 text-amber-500" />
+                         <AlertDescription className="text-xs space-y-2">
+                           <p className="font-medium text-amber-400">Popup blocked — open manually:</p>
+                           <div className="flex items-center gap-2">
+                             <a
+                               href={blockedAuthUrl}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="text-primary underline underline-offset-2 break-all text-[11px] flex-1 line-clamp-2"
+                             >
+                               Open Shopify Authorization
+                             </a>
+                             <Button
+                               type="button"
+                               variant="outline"
+                               size="sm"
+                               className="shrink-0 h-7 px-2"
+                               onClick={() => {
+                                 navigator.clipboard.writeText(blockedAuthUrl);
+                                 toast({ title: "Copied!", description: "Auth URL copied to clipboard." });
+                               }}
+                             >
+                               <Copy className="h-3 w-3 mr-1" /> Copy
+                             </Button>
+                           </div>
+                         </AlertDescription>
+                       </Alert>
+                     )}
+                   </>
+                 )}
                 {siteType === "prestashop" && (
                   <>
                     <ConnectionSetupGuide provider="prestashop" siteHint={siteUrl} />
