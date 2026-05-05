@@ -4,6 +4,6 @@ const hi: Record<string, string> = {
   "dashboard.search": "खोजें...", "dashboard.settings": "सेटिंग्स", "dashboard.billing": "बिलिंग", "dashboard.logout": "लॉगआउट",
   "sidebar.main": "मुख्य", "sidebar.tools": "उपकरण", "sidebar.dashboard": "डैशबोर्ड", "sidebar.campaigns": "अभियान", "sidebar.templates": "टेम्पलेट", "sidebar.websites": "वेबसाइटें", "sidebar.settings": "सेटिंग्स", "sidebar.logout": "लॉगआउट",
   "auth.signIn": "लॉगिन", "auth.signUp": "पंजीकरण", "auth.email": "ईमेल", "auth.password": "पासवर्ड",
-};
   "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "कीवर्ड", "sidebar.pgpGenerate": "जनरेट", "sidebar.pgpTerms": "शर्तें",
+};
 export default hi;

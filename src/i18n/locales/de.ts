@@ -1076,6 +1076,6 @@ const de: Record<string, string> = {
   "startGeneration.scheduling": "Terminplanung...",
   "startGeneration.starting": "Beginnt...",
   "startGeneration.startGeneration": "Generierung starten",
-};
   "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Keywords", "sidebar.pgpGenerate": "Generate", "sidebar.pgpTerms": "Terms",
+};
 export default de;

@@ -1133,7 +1133,6 @@ const it: Record<string, string> = {
   "faq.q7": "Avete un programma di affiliazione?",
   "nav.affiliate": "Affiliato",
   "sidebar.affiliate": "Affiliato",
-
-};
   "sidebar.pgpSection": "Page Generator Pro", "sidebar.pgpKeywords": "Parole chiave", "sidebar.pgpGenerate": "Genera", "sidebar.pgpTerms": "Termini",
+};
 export default it;
