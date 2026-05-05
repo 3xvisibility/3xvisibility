@@ -9,7 +9,7 @@ import {
 import {
   Globe, CheckCircle, XCircle, Trash2, Map, RefreshCw, Download,
   ExternalLink, Loader2, Zap, Pencil, Languages, Lock, Package,
-  Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle, Unplug, RotateCcw, CreditCard, Store,
+  Wifi, WifiOff, ShoppingBag, Clock, AlertTriangle, Unplug, RotateCcw, CreditCard, Store, ShieldCheck, ShieldX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -284,104 +284,166 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
             )}
           </div>
 
-          {/* Shopify live status panel */}
-          {isShopify && site.status === "connected" && (() => {
+          {/* Shopify status panel — shown for both connected & disconnected */}
+          {isShopify && (() => {
             const shopDetails = (site as unknown as { shop_details?: Record<string, string | null> }).shop_details;
+            const isConnected = site.status === "connected";
+            const isDisconnected = site.status === "disconnected";
+
             return (
-            <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-              {/* Store details from Shopify API */}
-              <div className="space-y-1">
+            <div className={cn(
+              "mt-3 rounded-lg border p-3 space-y-2",
+              isConnected && "border-success/30 bg-success/5",
+              isDisconnected && "border-destructive/30 bg-destructive/5",
+              !isConnected && !isDisconnected && "border-border bg-muted/30",
+            )}>
+              {/* Connection status header */}
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Store className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium">{shopDetails?.shop_name || site.name}</span>
+                  {isConnected ? (
+                    <ShieldCheck className="h-4 w-4 text-success" />
+                  ) : (
+                    <ShieldX className="h-4 w-4 text-destructive" />
+                  )}
+                  <span className={cn(
+                    "text-xs font-semibold",
+                    isConnected ? "text-success" : "text-destructive",
+                  )}>
+                    {isConnected ? "Authorized & Connected" : "Disconnected"}
+                  </span>
                 </div>
-                {shopDetails?.domain && (
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                    <a href={`https://${shopDetails.domain}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                      {shopDetails.domain}
-                    </a>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">{shopDetails?.myshopify_domain || (site.credentials as Record<string, string> | null)?.shop_domain || site.url}</span>
-                </div>
-                {shopDetails?.plan_display_name && (
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Plan: <span className="font-medium capitalize">{shopDetails.plan_display_name}</span></span>
-                  </div>
-                )}
-                {shopDetails?.currency && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground ml-5">Currency: {shopDetails.currency}{shopDetails.country_name ? ` · ${shopDetails.country_name}` : ""}</span>
-                  </div>
-                )}
-                {site.created_at && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Connected: {new Date(site.created_at).toLocaleDateString()}</span>
-                  </div>
-                )}
-              </div>
-              <div className="border-t border-border pt-2" />
-              {/* Health indicator */}
-              <div className="flex items-center gap-2">
-                {healthLoading ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Checking store health…</span>
-                  </>
-                ) : healthError ? (
-                  <>
-                    <WifiOff className="h-3.5 w-3.5 text-destructive" />
-                    <span className="text-xs text-destructive font-medium">Store unreachable — check credentials</span>
-                  </>
-                ) : (
-                  <>
-                    <Wifi className="h-3.5 w-3.5 text-success" />
-                    <span className="text-xs text-success font-medium">Store connected & responsive</span>
-                  </>
+                {site.updated_at && (
+                  <span className="text-[10px] text-muted-foreground tabular-nums">
+                    {isConnected ? "Authorized" : "Disconnected"}: {timeAgo(site.updated_at)}
+                  </span>
                 )}
               </div>
 
-              {/* Product count */}
-              {healthData && !healthError && (
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {healthData.productCount > 0
-                      ? `${healthData.productCount}+ product${healthData.productCount !== 1 ? "s" : ""} available`
-                      : "No products found"}
-                  </span>
+              {/* Disconnected error/info banner */}
+              {isDisconnected && (
+                <div className="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 p-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
+                  <div className="text-xs text-destructive/90 space-y-0.5">
+                    <p className="font-medium">Store access has been revoked</p>
+                    <p className="text-destructive/70">Click <span className="font-medium">Reconnect</span> to re-authorize via Shopify OAuth.</p>
+                  </div>
                 </div>
               )}
 
-              {/* Last sync event */}
-              {latestSync && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    Last sync: <span className="font-medium">{latestSync.event_type?.replace("products/", "")}</span>
-                    {" — "}
-                    {latestSync.product_title && (
-                      <span className="italic">{latestSync.product_title}</span>
+              {/* Store details (shown for both states if available) */}
+              {(shopDetails || isConnected) && (
+                <>
+                  <div className="border-t border-border/50 pt-2" />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Store className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-medium">{shopDetails?.shop_name || site.name}</span>
+                    </div>
+                    {shopDetails?.domain && (
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                        <a href={`https://${shopDetails.domain}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                          {shopDetails.domain}
+                        </a>
+                      </div>
                     )}
-                    {" · "}
-                    {timeAgo(latestSync.created_at)}
-                  </span>
-                </div>
+                    <div className="flex items-center gap-2">
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{shopDetails?.myshopify_domain || (site.credentials as Record<string, string> | null)?.shop_domain || site.url}</span>
+                    </div>
+                    {shopDetails?.plan_display_name && (
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Plan: <span className="font-medium capitalize">{shopDetails.plan_display_name}</span></span>
+                      </div>
+                    )}
+                    {shopDetails?.currency && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground ml-5">Currency: {shopDetails.currency}{shopDetails.country_name ? ` · ${shopDetails.country_name}` : ""}</span>
+                      </div>
+                    )}
+                    {site.created_at && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Connected: {new Date(site.created_at).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
-              {/* Last sync from DB */}
-              {site.last_sync && !latestSync && (
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    Last sync: {timeAgo(site.last_sync)}
-                  </span>
-                </div>
+              {/* Live health check — only when connected */}
+              {isConnected && (
+                <>
+                  <div className="border-t border-border/50 pt-2" />
+                  <div className="flex items-center gap-2">
+                    {healthLoading ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Checking store health…</span>
+                      </>
+                    ) : healthError ? (
+                      <>
+                        <WifiOff className="h-3.5 w-3.5 text-destructive" />
+                        <span className="text-xs text-destructive font-medium">Store unreachable — token may be expired</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wifi className="h-3.5 w-3.5 text-success" />
+                        <span className="text-xs text-success font-medium">Store connected & responsive</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Auth error warning */}
+                  {healthError && (
+                    <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 p-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                      <div className="text-xs text-amber-600 dark:text-amber-400 space-y-0.5">
+                        <p className="font-medium">Authorization may have expired</p>
+                        <p className="text-amber-500/80">Try <span className="font-medium">Reconnect</span> to refresh the OAuth token, or check if the app was uninstalled from Shopify.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Product count */}
+                  {healthData && !healthError && (
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {healthData.productCount > 0
+                          ? `${healthData.productCount}+ product${healthData.productCount !== 1 ? "s" : ""} available`
+                          : "No products found"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Last sync event */}
+                  {latestSync && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        Last sync: <span className="font-medium">{latestSync.event_type?.replace("products/", "")}</span>
+                        {" — "}
+                        {latestSync.product_title && (
+                          <span className="italic">{latestSync.product_title}</span>
+                        )}
+                        {" · "}
+                        {timeAgo(latestSync.created_at)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Last sync from DB */}
+                  {site.last_sync && !latestSync && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        Last sync: {timeAgo(site.last_sync)}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
             );
