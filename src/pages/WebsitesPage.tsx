@@ -140,7 +140,12 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return { shop_domain: shopDomain };
+    if (siteType === "shopify") {
+      if (shopifyAuthMethod === "api_key") {
+        return { shop_domain: shopDomain, admin_api_token: shopifyAccessToken, auth_method: "api_key" };
+      }
+      return { shop_domain: shopDomain };
+    }
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
