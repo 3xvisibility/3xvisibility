@@ -138,7 +138,36 @@ Deno.serve(async (req) => {
       return redirectError("No access token received from Shopify");
     }
 
-    // ── 6. Save the website connection (scoped to the authenticated user) ──
+    // ── 6. Fetch shop details from Shopify ──
+    let shopDetails: Record<string, unknown> = {};
+    try {
+      const shopRes = await fetch(`https://${domain}/admin/api/2024-01/shop.json`, {
+        headers: { "X-Shopify-Access-Token": accessToken },
+      });
+      if (shopRes.ok) {
+        const shopData = await shopRes.json();
+        const s = shopData.shop || {};
+        shopDetails = {
+          shop_name: s.name || null,
+          email: s.email || null,
+          shop_owner: s.shop_owner || null,
+          plan_name: s.plan_name || null,
+          plan_display_name: s.plan_display_name || null,
+          domain: s.domain || null,
+          myshopify_domain: s.myshopify_domain || null,
+          currency: s.currency || null,
+          country_name: s.country_name || null,
+          timezone: s.iana_timezone || s.timezone || null,
+          created_at: s.created_at || null,
+        };
+      } else {
+        console.warn("Could not fetch shop details:", shopRes.status);
+      }
+    } catch (shopErr) {
+      console.warn("Shop details fetch failed:", shopErr);
+    }
+
+    // ── 7. Save the website connection (scoped to the authenticated user) ──
     const encryptedCredentials = await encryptCredentials({
       admin_api_token: accessToken,
       shop_domain: domain,
@@ -147,8 +176,11 @@ Deno.serve(async (req) => {
       scopes: tokenData.scope || "",
     });
 
+    // Use shop name from Shopify if available, fallback to user-provided name
+    const siteName = shopDetails.shop_name || oauthState.site_name || domain;
+
     const { error: insertError } = await supabase.from("websites").insert({
-      name: oauthState.site_name || domain,
+      name: siteName as string,
       url: `https://${domain}`,
       type: "shopify",
       status: "connected",
@@ -156,6 +188,7 @@ Deno.serve(async (req) => {
       workspace_id: oauthState.workspace_id,
       language: oauthState.language,
       credentials: encryptedCredentials,
+      shop_details: shopDetails,
     });
 
     if (insertError) {
@@ -163,7 +196,7 @@ Deno.serve(async (req) => {
       return redirectError("Failed to save connection");
     }
 
-    // ── 7. Redirect back to the correct workspace ──
+    // ── 9. Redirect back to the correct workspace ──
     const { data: ws } = await supabase
       .from("workspaces")
       .select("slug")
