@@ -535,6 +535,31 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={disconnectConfirmOpen} onOpenChange={setDisconnectConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Shopify store?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will revoke the access token for <span className="font-medium">{site.name}</span> and 
+              mark the store as disconnected. You can reconnect later by clicking Reconnect.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setDisconnectConfirmOpen(false);
+                disconnectMutation.mutate();
+              }}
+            >
+              <Unplug className="h-4 w-4 mr-1" />
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
