@@ -383,6 +383,8 @@ export default function WebsitesPage() {
     setAppPassword("");
     setJwtToken("");
     setShopDomain("");
+    setShopifyAuthMethod("api_key");
+    setShopifyAccessToken("");
     setPrestashopApiKey("");
     setWooConsumerKey("");
     setWooConsumerSecret("");
