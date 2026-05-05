@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
-import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
+import { ShopifyCredentialFields, type ShopifyAuthMethod } from "./ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
