@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { id, name, url, type, credentials, workspace_id, language, language_locked } = await req.json();
+    const { id, name, url, type, credentials, workspace_id, language, language_locked, status } = await req.json();
 
     if (!url || !type || !workspace_id) {
       return new Response(JSON.stringify({ error: "url, type, and workspace_id are required" }), {
