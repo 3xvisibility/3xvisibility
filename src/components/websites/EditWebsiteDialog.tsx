@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { WordPressCredentialFields, type WpAuthMethod } from "./WordPressCredentialFields";
-import { ShopifyCredentialFields, type ShopifyAuthMethod } from "./ShopifyCredentialFields";
+import { ShopifyCredentialFields } from "./ShopifyCredentialFields";
 import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
@@ -44,10 +44,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
-  // Shopify
-  const [shopifyAuthMethod, setShopifyAuthMethod] = useState<ShopifyAuthMethod>(
-    creds.auth_method === "api_key" ? "api_key" : "oauth"
-  );
+  // Shopify — OAuth only, token field for re-auth not needed
   const [shopifyToken, setShopifyToken] = useState("");
   // PrestaShop
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
