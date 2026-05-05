@@ -215,6 +215,10 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
               <ShopifyCredentialFields
                 shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
                 onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
+                authMethod={shopifyAuthMethod}
+                onAuthMethodChange={setShopifyAuthMethod}
+                accessToken={shopifyToken}
+                onAccessTokenChange={setShopifyToken}
               />
             )}
             {site.type === "prestashop" && (
