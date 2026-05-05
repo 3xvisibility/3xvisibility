@@ -538,12 +538,12 @@ export default function WebsitesPage() {
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
-                  {siteType !== "shopify" && (
+                  {(siteType !== "shopify" || shopifyAuthMethod === "api_key") && (
                     <Button
                       variant="outline"
                       className="w-full sm:w-auto"
                       onClick={() => testConnectionMutation.mutate()}
-                      disabled={!siteUrl || !siteType || testConnectionMutation.isPending || isConnecting}
+                      disabled={!(siteType === "shopify" ? shopDomain && shopifyAccessToken : siteUrl) || !siteType || testConnectionMutation.isPending || isConnecting}
                     >
                       {testConnectionMutation.isPending ? (
                         <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
