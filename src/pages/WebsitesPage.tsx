@@ -250,6 +250,7 @@ export default function WebsitesPage() {
             workspace_id: wsId,
             language: siteLanguage,
             language_locked: languageLocked,
+            ...(siteType === "shopify" && shopifyAuthMethod === "api_key" ? { status: "connected" } : {}),
           },
         });
         if (error) throw new Error(await extractEdgeError(error, "Failed to save credentials"));
