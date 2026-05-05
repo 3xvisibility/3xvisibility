@@ -49,6 +49,7 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
+  const [shopifyAccessToken, setShopifyAccessToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -141,7 +142,7 @@ export default function WebsitesPage() {
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
     if (siteType === "shopify") {
-      return { shop_domain: shopDomain };
+      return { shop_domain: shopDomain, admin_api_token: shopifyAccessToken };
     }
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
@@ -171,48 +172,14 @@ export default function WebsitesPage() {
       return;
     }
 
-    // ---- Shopify OAuth redirect flow ----
-    if (siteType === "shopify") {
-      setIsConnecting(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
-          body: {
-            shop_domain: shopDomain,
-            workspace_id: wsId,
-            site_name: siteName || shopDomain,
-            language: siteLanguage,
-          },
-        });
-        if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
-        if (data?.setup_required) {
-          toast({
-            title: "Shopify OAuth not configured",
-            description: "Platform admin must configure Shopify credentials. Contact support.",
-            variant: "destructive",
-          });
-          setIsConnecting(false);
-          return;
-        }
-        if (data?.error) throw new Error(data.error);
-        if (!data?.auth_url) throw new Error("No auth URL returned");
-
-        // Try opening in a new tab; detect popup blockers
-        const popup = window.open(data.auth_url, "_blank", "noopener,noreferrer");
-        if (!popup || popup.closed || typeof popup.closed === "undefined") {
-          // Popup was blocked — show fallback with the URL
-          setBlockedAuthUrl(data.auth_url);
-          setIsConnecting(false);
-          toast({
-            title: "Popup blocked",
-            description: "Please use the link below to authorize Shopify, or allow popups for this site.",
-          });
-        }
-        return;
-      } catch (err: any) {
-        setIsConnecting(false);
-        toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
-        return;
-      }
+    // Shopify: use the same verify → save → test flow as other platforms
+    if (siteType === "shopify" && !shopDomain) {
+      toast({ title: "Error", description: "Please enter your shop domain", variant: "destructive" });
+      return;
+    }
+    if (siteType === "shopify" && !shopifyAccessToken) {
+      toast({ title: "Error", description: "Please enter your Admin API access token", variant: "destructive" });
+      return;
     }
 
     const finalUrl = siteUrl;
@@ -467,41 +434,12 @@ export default function WebsitesPage() {
                 )}
                  {siteType === "shopify" && (
                    <>
-                     <ShopifyCredentialFields
-                       shopDomain={shopDomain}
-                       onShopDomainChange={(v) => { setShopDomain(v); setBlockedAuthUrl(null); }}
-                     />
-                     {blockedAuthUrl && (
-                       <Alert className="bg-amber-500/10 border-amber-500/30">
-                         <ExternalLink className="h-4 w-4 text-amber-500" />
-                         <AlertDescription className="text-xs space-y-2">
-                           <p className="font-medium text-amber-400">Popup blocked — open manually:</p>
-                           <div className="flex items-center gap-2">
-                             <a
-                               href={blockedAuthUrl}
-                               target="_blank"
-                               rel="noopener noreferrer"
-                               className="text-primary underline underline-offset-2 break-all text-[11px] flex-1 line-clamp-2"
-                             >
-                               Open Shopify Authorization
-                             </a>
-                             <Button
-                               type="button"
-                               variant="outline"
-                               size="sm"
-                               className="shrink-0 h-7 px-2"
-                               onClick={() => {
-                                 navigator.clipboard.writeText(blockedAuthUrl);
-                                 toast({ title: "Copied!", description: "Auth URL copied to clipboard." });
-                               }}
-                             >
-                               <Copy className="h-3 w-3 mr-1" /> Copy
-                             </Button>
-                           </div>
-                         </AlertDescription>
-                       </Alert>
-                     )}
-                   </>
+                      <ShopifyCredentialFields
+                        shopDomain={shopDomain}
+                        onShopDomainChange={setShopDomain}
+                        accessToken={shopifyAccessToken}
+                        onAccessTokenChange={setShopifyAccessToken}
+                      />
                  )}
                 {siteType === "prestashop" && (
                   <>
