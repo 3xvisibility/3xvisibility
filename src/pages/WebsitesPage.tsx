@@ -194,8 +194,8 @@ export default function WebsitesPage() {
         if (data?.error) throw new Error(data.error);
         if (!data?.auth_url) throw new Error("No auth URL returned");
 
-        // Redirect to Shopify for authorization
-        window.location.href = data.auth_url;
+        // Open Shopify authorization in a new tab (iframe can't load Shopify due to X-Frame-Options)
+        window.open(data.auth_url, "_blank", "noopener,noreferrer");
         return;
       } catch (err: any) {
         setIsConnecting(false);
