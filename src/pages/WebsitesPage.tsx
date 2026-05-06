@@ -154,6 +154,20 @@ export default function WebsitesPage() {
 
   // Shopify 1-click OAuth connect
   const [shopifyOAuthLoading, setShopifyOAuthLoading] = useState(false);
+  const openShopifyOAuthUrl = useCallback((authUrl: string) => {
+    const launchUrl = `/shopify/oauth-launch?auth_url=${encodeURIComponent(authUrl)}`;
+    const popup = window.open(launchUrl, "_blank");
+    if (!popup) {
+      setPopupBlockedUrl(launchUrl);
+      return;
+    }
+    popup.opener = null;
+    toast({
+      title: "Shopify authorization opened",
+      description: "Continue in the new tab. If Shopify still looks blocked, use the manual button shown there.",
+    });
+  }, [toast]);
+
   const startShopifyOAuth = useCallback(async () => {
     if (!wsId || !shopDomain) return;
     const dErr = validateShopifyDomain(shopDomain);
@@ -181,12 +195,7 @@ export default function WebsitesPage() {
         return;
       }
       if (data?.auth_url) {
-        // Open in new tab to avoid iframe restrictions from Shopify login
-        const w = window.open(data.auth_url, "_blank");
-        if (!w) {
-          // Popup was blocked — show a modal with the link instead of silently navigating away
-          setPopupBlockedUrl(data.auth_url);
-        }
+        openShopifyOAuthUrl(data.auth_url);
       } else {
         throw new Error("No authorization URL returned");
       }
@@ -195,7 +204,7 @@ export default function WebsitesPage() {
     } finally {
       setShopifyOAuthLoading(false);
     }
-  }, [wsId, shopDomain, siteName, siteLanguage, toast]);
+  }, [wsId, shopDomain, siteName, siteLanguage, toast, openShopifyOAuthUrl]);
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
