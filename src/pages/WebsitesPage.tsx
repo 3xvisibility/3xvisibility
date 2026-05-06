@@ -627,6 +627,37 @@ export default function WebsitesPage() {
           ))}
         </div>
       )}
+
+      {/* Popup-blocked fallback dialog */}
+      <Dialog open={!!popupBlockedUrl} onOpenChange={(v) => { if (!v) setPopupBlockedUrl(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-5 w-5 text-primary" />
+              Popup blocked
+            </DialogTitle>
+            <DialogDescription>
+              Your browser blocked the Shopify authorization window. Click the button below to open it manually.
+            </DialogDescription>
+          </DialogHeader>
+          <Alert className="bg-muted/50 border-border">
+            <AlertDescription className="text-xs break-all font-mono select-all">
+              {popupBlockedUrl}
+            </AlertDescription>
+          </Alert>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button asChild>
+              <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Shopify Authorization
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
