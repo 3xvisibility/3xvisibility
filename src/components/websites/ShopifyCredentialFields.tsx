@@ -1,10 +1,10 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle2, ShoppingBag } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateShopifyDomain } from "@/lib/shopify-validation";
-
+import { useLanguage } from "@/i18n/LanguageContext";
 interface ShopifyCredentialFieldsProps {
   shopDomain: string;
   onShopDomainChange: (v: string) => void;
