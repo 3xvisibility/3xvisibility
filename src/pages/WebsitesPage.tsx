@@ -164,7 +164,12 @@ export default function WebsitesPage() {
         return;
       }
       if (data?.auth_url) {
-        window.location.href = data.auth_url;
+        // Open in new tab to avoid iframe restrictions from Shopify login
+        const w = window.open(data.auth_url, "_blank");
+        if (!w) {
+          // Fallback: try top-level navigation if popup blocked
+          window.top ? (window.top.location.href = data.auth_url) : (window.location.href = data.auth_url);
+        }
       } else {
         throw new Error("No authorization URL returned");
       }
