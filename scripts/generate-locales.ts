@@ -20,7 +20,6 @@ const JSON_DIR = path.join(ROOT, "src/i18n/locales-json");
 const TS_DIR = path.join(ROOT, "src/i18n/locales");
 const TRANSLATIONS_PATH = path.join(ROOT, "src/i18n/translations.ts");
 
-// ── Configuration ──────────────────────────────────────────────
 // Primary languages shown in the language switcher
 const PRIMARY_LANGUAGES: { code: string; label: string; flag: string }[] = [
   { code: "en", label: "English", flag: "🇬🇧" },
@@ -35,23 +34,22 @@ const PRIMARY_LANGUAGES: { code: string; label: string; flag: string }[] = [
 
 const PRIMARY_CODES = PRIMARY_LANGUAGES.map((l) => l.code);
 
-// ── Helpers ────────────────────────────────────────────────────
 function readJson(filePath: string): Record<string, string> {
   return JSON.parse(fs.readFileSync(filePath, "utf-8"));
 }
 
 function toTsObjectLiteral(obj: Record<string, string>, indent = 2): string {
   const pad = " ".repeat(indent);
-  const entries = Object.entries(obj)
+  return Object.entries(obj)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => {
       const escaped = v.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
       return `${pad}"${k}": "${escaped}",`;
-    });
-  return entries.join("\n");
+    })
+    .join("\n");
 }
 
-// ── 1. Generate individual locale .ts files ────────────────────
+// ── 1. Generate individual locale .ts files ──
 fs.mkdirSync(TS_DIR, { recursive: true });
 
 const jsonFiles = fs.readdirSync(JSON_DIR).filter((f) => f.endsWith(".json"));
@@ -61,12 +59,11 @@ for (const file of jsonFiles) {
   const code = file.replace(".json", "");
   allCodes.push(code);
   const data = readJson(path.join(JSON_DIR, file));
-  const body = toTsObjectLiteral(data);
 
   const ts = [
     `// Auto-generated from locales-json/${code}.json — DO NOT EDIT BY HAND`,
     `const ${code}: Record<string, string> = {`,
-    body,
+    toTsObjectLiteral(data),
     `};`,
     ``,
     `export default ${code};`,
@@ -78,7 +75,7 @@ for (const file of jsonFiles) {
 
 console.log(`✓ Generated ${allCodes.length} locale .ts files`);
 
-// ── 2. Generate translations.ts ────────────────────────────────
+// ── 2. Generate translations.ts ──
 const imports = PRIMARY_CODES
   .map((c) => `import ${c}Locale from "./locales/${c}";`)
   .join("\n");
@@ -110,7 +107,7 @@ ${translationsEntries}
 fs.writeFileSync(TRANSLATIONS_PATH, translationsTs);
 console.log(`✓ Generated translations.ts (${PRIMARY_CODES.length} languages)`);
 
-// ── 3. Validate: check all primary locales have at least the same keys as en ──
+// ── 3. Validate key coverage ──
 const enKeys = new Set(Object.keys(readJson(path.join(JSON_DIR, "en.json"))));
 let missingCount = 0;
 for (const code of PRIMARY_CODES) {
@@ -135,7 +132,3 @@ if (missingCount === 0) {
 }
 
 console.log("\nDone!");
-`;
-
-fs.writeFileSync(TRANSLATIONS_PATH, translationsTs);
-console.log(`✓ Generated translations.ts (${PRIMARY_CODES.length} languages)`);
