@@ -687,18 +687,30 @@ export default function WebsitesPage() {
                {popupBlockedUrl}
              </AlertDescription>
            </Alert>
-           <div className="flex flex-col gap-2 pt-2">
-             <Button asChild>
-               <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
-                 <ExternalLink className="h-4 w-4 mr-2" />
-                 Open Shopify Authorization
-               </a>
-             </Button>
-             <CopyAuthUrlButton url={popupBlockedUrl} />
-             <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
-               Cancel
-             </Button>
-           </div>
+            <div className="flex flex-col gap-2 pt-2">
+              <Button asChild>
+                <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Shopify Authorization
+                </a>
+              </Button>
+              <CopyAuthUrlButton url={popupBlockedUrl} />
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={shopifyOAuthLoading}
+                onClick={async () => {
+                  setPopupBlockedUrl(null);
+                  await startShopifyOAuth();
+                }}
+              >
+                {shopifyOAuthLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Retry with fresh link
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
+                Cancel
+              </Button>
+            </div>
          </DialogContent>
        </Dialog>
     </div>
