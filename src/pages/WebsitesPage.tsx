@@ -113,6 +113,13 @@ export default function WebsitesPage() {
     }
   }, [searchParams]);
 
+  // Refresh websites when window regains focus (user returns from Shopify OAuth tab)
+  useEffect(() => {
+    const onFocus = () => queryClient.invalidateQueries({ queryKey: ["websites"] });
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [queryClient]);
+
   const { data: websites = [], isLoading } = useQuery({
     queryKey: ["websites", wsId],
     enabled: !!wsId,
