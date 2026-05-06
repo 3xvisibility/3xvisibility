@@ -5,7 +5,7 @@ import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { UsageLimitDialog } from "@/components/UsageLimitDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Copy, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,24 @@ import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
+
+function CopyAuthUrlButton({ url }: { url: string | null }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore */ }
+  };
+  return (
+    <Button variant="secondary" size="sm" onClick={handleCopy} disabled={!url}>
+      {copied ? <CheckCheck className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+      {copied ? "Copied!" : "Copy Link"}
+    </Button>
+  );
+}
 
 export default function WebsitesPage() {
   const [open, setOpen] = useState(false);
@@ -652,36 +670,37 @@ export default function WebsitesPage() {
         </div>
       )}
 
-      {/* Popup-blocked fallback dialog */}
-      <Dialog open={!!popupBlockedUrl} onOpenChange={(v) => { if (!v) setPopupBlockedUrl(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ExternalLink className="h-5 w-5 text-primary" />
-              Popup blocked
-            </DialogTitle>
-            <DialogDescription>
-              Your browser blocked the Shopify authorization window. Click the button below to open it manually.
-            </DialogDescription>
-          </DialogHeader>
-          <Alert className="bg-muted/50 border-border">
-            <AlertDescription className="text-xs break-all font-mono select-all">
-              {popupBlockedUrl}
-            </AlertDescription>
-          </Alert>
-          <div className="flex flex-col gap-2 pt-2">
-            <Button asChild>
-              <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open Shopify Authorization
-              </a>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
-              Cancel
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+       {/* Popup-blocked fallback dialog */}
+       <Dialog open={!!popupBlockedUrl} onOpenChange={(v) => { if (!v) setPopupBlockedUrl(null); }}>
+         <DialogContent className="sm:max-w-md">
+           <DialogHeader>
+             <DialogTitle className="flex items-center gap-2">
+               <ExternalLink className="h-5 w-5 text-primary" />
+               Popup Blocked
+             </DialogTitle>
+             <DialogDescription>
+               Your browser blocked the Shopify authorization popup. Copy the link or open it manually to continue.
+             </DialogDescription>
+           </DialogHeader>
+           <Alert className="bg-muted/50 border-border">
+             <AlertDescription className="text-xs break-all font-mono select-all">
+               {popupBlockedUrl}
+             </AlertDescription>
+           </Alert>
+           <div className="flex flex-col gap-2 pt-2">
+             <Button asChild>
+               <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
+                 <ExternalLink className="h-4 w-4 mr-2" />
+                 Open Shopify Authorization
+               </a>
+             </Button>
+             <CopyAuthUrlButton url={popupBlockedUrl} />
+             <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
+               Cancel
+             </Button>
+           </div>
+         </DialogContent>
+       </Dialog>
     </div>
   );
 }
