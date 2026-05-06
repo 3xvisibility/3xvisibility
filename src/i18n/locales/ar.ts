@@ -74,6 +74,7 @@ const ar: Record<string, string> = {
   "auth.updatePassword": "تحديث كلمة المرور",
   "auth.updating": "جارٍ التحديث...",
   "auth.welcomeBack": "مرحباً بعودتك",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "انضم إلى أكثر من 2,000 فريق SEO يولّدون آلاف الصفحات بالفعل.",
   "cta.getStarted": "ابدأ مجاناً",
   "cta.title": "مستعد لنشر المحتوى على نطاق واسع؟",

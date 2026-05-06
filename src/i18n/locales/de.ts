@@ -372,6 +372,7 @@ const de: Record<string, string> = {
   "credentials.shopDomainHint": "Ihre .myshopify.com-Domain (zu finden im Shopify Admin → Einstellungen → Domains)",
   "credentials.shopifyCreateApp": "Erstellen Sie eine benutzerdefinierte App im Shopify Admin → Einstellungen → Apps und Vertriebskanäle → Apps entwickeln",
   "credentials.shopifyInstall": "Installieren Sie die App und kopieren Sie das Admin API-Zugriffstoken",
+  "credentials.shopifyOAuthNotice": "Ein neuer Tab öffnet sich für die Shopify-Autorisierung. Nach der Genehmigung kehren Sie automatisch hierher zurück.",
   "credentials.shopifyPrefix": "Das Token beginnt mit shpat_",
   "credentials.shopifyPrerequisites": "Shopify-Voraussetzungen:",
   "credentials.shopifyScopes": "Erteilen Sie der App die Berechtigungen write_content (für Seiten) und/oder write_products",

@@ -74,6 +74,7 @@ const ko: Record<string, string> = {
   "auth.updatePassword": "비밀번호 업데이트",
   "auth.updating": "업데이트 중...",
   "auth.welcomeBack": "다시 오신 것을 환영합니다",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "이미 수천 페이지를 생성하는 2,000개 이상의 SEO 팀에 합류하세요.",
   "cta.getStarted": "무료로 시작",
   "cta.title": "대규모 콘텐츠 배포 준비가 되셨나요?",

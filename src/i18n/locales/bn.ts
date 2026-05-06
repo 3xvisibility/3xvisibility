@@ -74,6 +74,7 @@ const bn: Record<string, string> = {
   "auth.updatePassword": "পাসওয়ার্ড আপডেট করুন",
   "auth.updating": "আপডেট হচ্ছে...",
   "auth.welcomeBack": "স্বাগতম ফিরে",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "২,০০০+ SEO টিমে যোগ দিন।",
   "cta.getStarted": "বিনামূল্যে শুরু করুন",
   "cta.title": "বড় স্কেলে কন্টেন্ট ডিপ্লয় করতে প্রস্তুত?",

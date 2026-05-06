@@ -6,6 +6,7 @@ const tr: Record<string, string> = {
   "auth.signIn": "Giriş Yap",
   "auth.signUp": "Kayıt Ol",
   "auth.welcomeBack": "Tekrar hoş geldiniz",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "dashboard.billing": "Faturalama",
   "dashboard.logout": "Çıkış",
   "dashboard.search": "Ara...",

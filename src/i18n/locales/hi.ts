@@ -4,6 +4,7 @@ const hi: Record<string, string> = {
   "auth.password": "पासवर्ड",
   "auth.signIn": "लॉगिन",
   "auth.signUp": "पंजीकरण",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "dashboard.billing": "बिलिंग",
   "dashboard.logout": "लॉगआउट",
   "dashboard.search": "खोजें...",

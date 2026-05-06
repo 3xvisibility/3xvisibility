@@ -372,6 +372,7 @@ const nl: Record<string, string> = {
   "credentials.shopDomainHint": "Uw .myshopify.com-domein (te vinden in Shopify Beheerder → Instellingen → Domeinen)",
   "credentials.shopifyCreateApp": "Maak een app op maat in Shopify Beheerder → Instellingen → Apps en verkoopkanalen → Apps ontwikkelen",
   "credentials.shopifyInstall": "Installeer de app en kopieer het beheerderstoegangstoken API",
+  "credentials.shopifyOAuthNotice": "Er opent een nieuw tabblad voor Shopify-autorisatie. Na goedkeuring keer je automatisch hier terug.",
   "credentials.shopifyPrefix": "Het token begint met shpat_",
   "credentials.shopifyPrerequisites": "Shopify vereisten:",
   "credentials.shopifyScopes": "Verleen de app write_content (voor pagina's) en/of write_products bereiken",

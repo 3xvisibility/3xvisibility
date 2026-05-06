@@ -74,6 +74,7 @@ const hu: Record<string, string> = {
   "auth.updatePassword": "Jelszó frissítése",
   "auth.updating": "Frissítés...",
   "auth.welcomeBack": "Üdv újra",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Csatlakozzon 2000+ SEO csapathoz.",
   "cta.getStarted": "Ingyenes kezdés",
   "cta.title": "Készen áll tartalom nagy léptékű telepítésére?",

@@ -74,6 +74,7 @@ const el: Record<string, string> = {
   "auth.updatePassword": "Ενημέρωση κωδικού",
   "auth.updating": "Ενημέρωση...",
   "auth.welcomeBack": "Καλώς ήρθατε ξανά",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Ελάτε στις 2.000+ ομάδες SEO.",
   "cta.getStarted": "Ξεκινήστε δωρεάν",
   "cta.title": "Έτοιμοι να αναπτύξετε περιεχόμενο σε κλίμακα;",

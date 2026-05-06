@@ -561,6 +561,7 @@ const pl: Record<string, string> = {
   "credentials.shopDomainHint": "Twoja domena .myshopify.com (znajduje się w panelu administracyjnym Shopify → Ustawienia → Domeny)",
   "credentials.shopifyCreateApp": "Utwórz niestandardową aplikację w panelu administracyjnym Shopify → Ustawienia → Aplikacje i kanały sprzedaży → Rozwijanie aplikacji",
   "credentials.shopifyInstall": "Zainstaluj aplikację i skopiuj token dostępu do API administratora",
+  "credentials.shopifyOAuthNotice": "Otworzy się nowa karta autoryzacji Shopify. Po zatwierdzeniu automatycznie wrócisz tutaj.",
   "credentials.shopifyPrefix": "Token zaczyna się od shpat_",
   "credentials.shopifyPrerequisites": "Wymagania wstępne Shopify:",
   "credentials.shopifyScopes": "Przyznaj aplikacji zakresy write_content (dla stron) i/lub write_products",

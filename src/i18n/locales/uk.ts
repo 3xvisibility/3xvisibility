@@ -74,6 +74,7 @@ const uk: Record<string, string> = {
   "auth.updatePassword": "Оновити пароль",
   "auth.updating": "Оновлення...",
   "auth.welcomeBack": "З поверненням",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Приєднуйтесь до 2 000+ SEO команд.",
   "cta.getStarted": "Почати безкоштовно",
   "cta.title": "Готові розгорнути контент у великому масштабі?",
