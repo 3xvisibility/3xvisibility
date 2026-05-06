@@ -36,6 +36,24 @@ import { extractEdgeError } from "@/lib/edge-function-error";
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
 
+function CopyAuthUrlButton({ url }: { url: string | null }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore */ }
+  };
+  return (
+    <Button variant="secondary" size="sm" onClick={handleCopy} disabled={!url}>
+      {copied ? <CheckCheck className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+      {copied ? "Copied!" : "Copy Link"}
+    </Button>
+  );
+}
+
 export default function WebsitesPage() {
   const [open, setOpen] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
