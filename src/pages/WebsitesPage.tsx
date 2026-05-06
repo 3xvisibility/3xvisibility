@@ -135,6 +135,46 @@ export default function WebsitesPage() {
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
   const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
 
+  // Shopify 1-click OAuth connect
+  const [shopifyOAuthLoading, setShopifyOAuthLoading] = useState(false);
+  const startShopifyOAuth = useCallback(async () => {
+    if (!wsId || !shopDomain) return;
+    const dErr = validateShopifyDomain(shopDomain);
+    if (dErr) {
+      toast({ title: "Invalid domain", description: dErr, variant: "destructive" });
+      return;
+    }
+    setShopifyOAuthLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+        body: {
+          shop_domain: shopDomain,
+          workspace_id: wsId,
+          site_name: siteName || shopDomain,
+          language: siteLanguage,
+        },
+      });
+      if (error) throw new Error("Failed to start Shopify OAuth");
+      if (data?.setup_required) {
+        toast({
+          title: "OAuth not configured",
+          description: data.message || "Platform admin must configure Shopify OAuth credentials.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (data?.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        throw new Error("No authorization URL returned");
+      }
+    } catch (err: any) {
+      toast({ title: "Shopify OAuth failed", description: err?.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setShopifyOAuthLoading(false);
+    }
+  }, [wsId, shopDomain, siteName, siteLanguage, toast]);
+
   const buildCredentials = () => {
     if (siteType === "wordpress") {
       return wpAuthMethod === "application_password"
