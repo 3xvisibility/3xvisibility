@@ -1,6 +1,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { encryptCredentials } from "../_shared/crypto.ts";
 
+const DEFAULT_APP_URL = "https://page-generator-project.lovable.app";
+
+function getAppBase(): string {
+  const configured = Deno.env.get("APP_URL")?.trim().replace(/\/+$/, "");
+  if (!configured) return DEFAULT_APP_URL;
+
+  try {
+    const { hostname } = new URL(configured);
+    if (hostname.endsWith(".supabase.co") || hostname === "localhost") {
+      return DEFAULT_APP_URL;
+    }
+    return configured;
+  } catch {
+    return DEFAULT_APP_URL;
+  }
+}
+
 /**
  * Shopify OAuth callback handler — hardened.
  *
@@ -60,7 +77,7 @@ Deno.serve(async (req) => {
   const state = url.searchParams.get("state");
   const shopParam = url.searchParams.get("shop");
 
-  const appBase = Deno.env.get("APP_URL") || "https://page-generator-project.lovable.app";
+  const appBase = getAppBase();
   const redirectError = (msg: string) =>
     Response.redirect(`${appBase}/w/default/websites?shopify_oauth=error&message=${encodeURIComponent(msg)}`, 302);
 
