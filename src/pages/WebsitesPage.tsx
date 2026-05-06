@@ -169,8 +169,8 @@ export default function WebsitesPage() {
         // Open in new tab to avoid iframe restrictions from Shopify login
         const w = window.open(data.auth_url, "_blank");
         if (!w) {
-          // Fallback: try top-level navigation if popup blocked
-          window.top ? (window.top.location.href = data.auth_url) : (window.location.href = data.auth_url);
+          // Popup was blocked — show a modal with the link instead of silently navigating away
+          setPopupBlockedUrl(data.auth_url);
         }
       } else {
         throw new Error("No authorization URL returned");
