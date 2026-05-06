@@ -74,10 +74,18 @@ export default function WebsitesPage() {
     const oauthStatus = searchParams.get("shopify_oauth");
     if (oauthStatus === "success") {
       toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth. Loading products…" });
+      // Immediately invalidate + poll a few times to catch the new website row
       queryClient.invalidateQueries({ queryKey: ["websites"] });
+      let polls = 0;
+      const poller = setInterval(() => {
+        polls++;
+        queryClient.invalidateQueries({ queryKey: ["websites"] });
+        if (polls >= 5) clearInterval(poller);
+      }, 2000);
       setAutoOpenShopifyProducts(true);
       searchParams.delete("shopify_oauth");
       setSearchParams(searchParams, { replace: true });
+      return () => clearInterval(poller);
     } else if (oauthStatus === "error") {
       const rawMsg = (searchParams.get("message") || "OAuth connection failed").toLowerCase();
       let friendlyTitle = "Shopify connection failed";
@@ -104,6 +112,13 @@ export default function WebsitesPage() {
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams]);
+
+  // Refresh websites when window regains focus (user returns from Shopify OAuth tab)
+  useEffect(() => {
+    const onFocus = () => queryClient.invalidateQueries({ queryKey: ["websites"] });
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [queryClient]);
 
   const { data: websites = [], isLoading } = useQuery({
     queryKey: ["websites", wsId],
