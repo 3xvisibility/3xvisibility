@@ -565,17 +565,31 @@ export default function WebsitesPage() {
                       )}
                     </Button>
                   )}
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
-                  >
-                    {isConnecting ? (
-                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
-                    ) : (
-                      t("common.connect")
-                    )}
-                  </Button>
+                  {siteType === "shopify" ? (
+                    <Button
+                      className="w-full sm:w-auto"
+                      onClick={() => startShopifyOAuth()}
+                      disabled={!shopDomain || shopifyInvalid || shopifyOAuthLoading}
+                    >
+                      {shopifyOAuthLoading ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Redirecting to Shopify…</>
+                      ) : (
+                        <><ExternalLink className="h-4 w-4 mr-1" /> Connect with Shopify</>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full sm:w-auto"
+                      onClick={() => runConnectFlow()}
+                      disabled={!siteUrl || !siteType || isConnecting}
+                    >
+                      {isConnecting ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
+                      ) : (
+                        t("common.connect")
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </DialogContent>
