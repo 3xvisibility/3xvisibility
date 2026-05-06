@@ -74,6 +74,7 @@ const fi: Record<string, string> = {
   "auth.updatePassword": "Päivitä salasana",
   "auth.updating": "Päivitetään...",
   "auth.welcomeBack": "Tervetuloa takaisin",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Liity 2 000+ SEO-tiimiin.",
   "cta.getStarted": "Aloita ilmaiseksi",
   "cta.title": "Valmis julkaisemaan sisältöä suuressa mittakaavassa?",

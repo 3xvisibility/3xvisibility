@@ -1770,5 +1770,6 @@
   "workspaceSettings.viewer": "Widz",
   "workspaceSettings.workspaceDetails": "Szczegóły obszaru roboczego",
   "workspaceSettings.workspaceDetailsDesc": "Zaktualizuj nazwę swojego obszaru roboczego. Tylko właściciele obszaru roboczego mogą zmieniać nazwy.",
-  "workspaceSettings.workspaceName": "Nazwa obszaru roboczego"
+  "workspaceSettings.workspaceName": "Nazwa obszaru roboczego",
+  "credentials.shopifyOAuthNotice": "Otworzy się nowa karta autoryzacji Shopify. Po zatwierdzeniu automatycznie wrócisz tutaj."
 }

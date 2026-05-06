@@ -372,6 +372,7 @@ const fr: Record<string, string> = {
   "credentials.shopDomainHint": "Votre domaine .myshopify.com (visible dans Shopify Admin → Settings → Domains)",
   "credentials.shopifyCreateApp": "Créez une application personnalisée dans Shopify Admin → Settings → Apps and sales channels → Develop apps",
   "credentials.shopifyInstall": "Installez l'application puis copiez le jeton d'accès Admin API",
+  "credentials.shopifyOAuthNotice": "Un nouvel onglet s'ouvrira pour l'autorisation Shopify. Après approbation, vous reviendrez ici automatiquement.",
   "credentials.shopifyPrefix": "Le jeton commence par shpat_",
   "credentials.shopifyPrerequisites": "Prérequis Shopify :",
   "credentials.shopifyScopes": "Accordez à l'application les scopes write_content (pages) et/ou write_products",

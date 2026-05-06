@@ -261,5 +261,6 @@
   "video.setupTime": "เวลาตั้งค่า",
   "video.title": "ดูการทำงานจริง",
   "video.uptimeSLA": "SLA Uptime",
-  "video.watchDemo": "ดูเดโม 2 นาที"
+  "video.watchDemo": "ดูเดโม 2 นาที",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

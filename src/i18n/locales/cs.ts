@@ -74,6 +74,7 @@ const cs: Record<string, string> = {
   "auth.updatePassword": "Aktualizovat heslo",
   "auth.updating": "Aktualizace...",
   "auth.welcomeBack": "Vítejte zpět",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Přidejte se k 2 000+ SEO týmům.",
   "cta.getStarted": "Začít zdarma",
   "cta.title": "Připraveni nasadit obsah ve velkém měřítku?",

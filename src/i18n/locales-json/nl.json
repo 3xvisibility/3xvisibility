@@ -1136,5 +1136,6 @@
   "workspaceSettings.viewer": "Kijker",
   "workspaceSettings.workspaceDetails": "Details van de werkruimte",
   "workspaceSettings.workspaceDetailsDesc": "Update de naam van uw werkruimte. Alleen eigenaren van werkruimten kunnen de naam wijzigen.",
-  "workspaceSettings.workspaceName": "Naam werkruimte"
+  "workspaceSettings.workspaceName": "Naam werkruimte",
+  "credentials.shopifyOAuthNotice": "Er opent een nieuw tabblad voor Shopify-autorisatie. Na goedkeuring keer je automatisch hier terug."
 }

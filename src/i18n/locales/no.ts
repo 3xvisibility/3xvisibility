@@ -74,6 +74,7 @@ const no: Record<string, string> = {
   "auth.updatePassword": "Oppdater passord",
   "auth.updating": "Oppdaterer...",
   "auth.welcomeBack": "Velkommen tilbake",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Bli med 2 000+ SEO-team.",
   "cta.getStarted": "Start gratis",
   "cta.title": "Klar til å deploye innhold i stor skala?",

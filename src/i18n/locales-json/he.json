@@ -261,5 +261,6 @@
   "video.setupTime": "זמן הגדרה",
   "video.title": "ראה בפעולה",
   "video.uptimeSLA": "SLA Uptime",
-  "video.watchDemo": "צפה בדמו של 2 דקות"
+  "video.watchDemo": "צפה בדמו של 2 דקות",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

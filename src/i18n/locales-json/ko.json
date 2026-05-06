@@ -261,5 +261,6 @@
   "video.setupTime": "설정 시간",
   "video.title": "실제 동작 보기",
   "video.uptimeSLA": "업타임 SLA",
-  "video.watchDemo": "2분 데모 보기"
+  "video.watchDemo": "2분 데모 보기",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

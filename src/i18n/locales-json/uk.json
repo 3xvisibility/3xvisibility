@@ -261,5 +261,6 @@
   "video.setupTime": "Час налаштування",
   "video.title": "Подивіться в дії",
   "video.uptimeSLA": "SLA Uptime",
-  "video.watchDemo": "Дивитись 2-хвилинне демо"
+  "video.watchDemo": "Дивитись 2-хвилинне демо",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

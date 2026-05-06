@@ -74,6 +74,7 @@ const th: Record<string, string> = {
   "auth.updatePassword": "อัปเดตรหัสผ่าน",
   "auth.updating": "กำลังอัปเดต...",
   "auth.welcomeBack": "ยินดีต้อนรับกลับ",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "เข้าร่วม 2,000+ ทีม SEO",
   "cta.getStarted": "เริ่มฟรี",
   "cta.title": "พร้อมที่จะเผยแพร่เนื้อหาในขนาดใหญ่?",

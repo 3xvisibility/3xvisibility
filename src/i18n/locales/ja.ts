@@ -74,6 +74,7 @@ const ja: Record<string, string> = {
   "auth.updatePassword": "パスワードを更新",
   "auth.updating": "更新中...",
   "auth.welcomeBack": "おかえりなさい",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "2,000以上のSEOチームに参加しましょう。",
   "cta.getStarted": "無料で始める",
   "cta.title": "大規模なコンテンツ展開の準備はできましたか？",

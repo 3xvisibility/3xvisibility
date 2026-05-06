@@ -74,6 +74,7 @@ const vi: Record<string, string> = {
   "auth.updatePassword": "Cập nhật mật khẩu",
   "auth.updating": "Đang cập nhật...",
   "auth.welcomeBack": "Chào mừng trở lại",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Tham gia 2.000+ đội SEO.",
   "cta.getStarted": "Bắt đầu miễn phí",
   "cta.title": "Sẵn sàng triển khai nội dung quy mô lớn?",

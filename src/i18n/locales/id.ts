@@ -74,6 +74,7 @@ const id: Record<string, string> = {
   "auth.updatePassword": "Perbarui kata sandi",
   "auth.updating": "Memperbarui...",
   "auth.welcomeBack": "Selamat datang kembali",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Bergabung dengan 2.000+ tim SEO.",
   "cta.getStarted": "Mulai gratis",
   "cta.title": "Siap deploy konten dalam skala besar?",

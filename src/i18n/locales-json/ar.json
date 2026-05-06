@@ -261,5 +261,6 @@
   "video.setupTime": "وقت الإعداد",
   "video.title": "شاهده أثناء العمل",
   "video.uptimeSLA": "SLA وقت التشغيل",
-  "video.watchDemo": "شاهد العرض التوضيحي لمدة دقيقتين"
+  "video.watchDemo": "شاهد العرض التوضيحي لمدة دقيقتين",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

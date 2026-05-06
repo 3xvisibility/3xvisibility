@@ -27,5 +27,6 @@
   "sidebar.settings": "सेटिंग्स",
   "sidebar.templates": "टेम्पलेट",
   "sidebar.tools": "उपकरण",
-  "sidebar.websites": "वेबसाइटें"
+  "sidebar.websites": "वेबसाइटें",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

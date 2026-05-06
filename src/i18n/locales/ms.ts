@@ -74,6 +74,7 @@ const ms: Record<string, string> = {
   "auth.updatePassword": "Kemas kini kata laluan",
   "auth.updating": "Mengemas kini...",
   "auth.welcomeBack": "Selamat kembali",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Sertai 2,000+ pasukan SEO.",
   "cta.getStarted": "Mula percuma",
   "cta.title": "Sedia untuk deploy kandungan dalam skala besar?",

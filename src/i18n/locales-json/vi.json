@@ -261,5 +261,6 @@
   "video.setupTime": "Thời gian cài đặt",
   "video.title": "Xem hoạt động thực tế",
   "video.uptimeSLA": "SLA Uptime",
-  "video.watchDemo": "Xem demo 2 phút"
+  "video.watchDemo": "Xem demo 2 phút",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

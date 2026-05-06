@@ -74,6 +74,7 @@ const zh: Record<string, string> = {
   "auth.updatePassword": "更新密码",
   "auth.updating": "更新中...",
   "auth.welcomeBack": "欢迎回来",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "加入2,000多个已经生成数千页面的SEO团队。",
   "cta.getStarted": "免费开始",
   "cta.title": "准备好大规模部署内容了吗？",

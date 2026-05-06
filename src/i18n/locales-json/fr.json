@@ -1136,5 +1136,6 @@
   "workspaceSettings.viewer": "Spectateur",
   "workspaceSettings.workspaceDetails": "Détails de l'espace de travail",
   "workspaceSettings.workspaceDetailsDesc": "Mettez à jour le nom de votre espace de travail. Seuls les propriétaires de l'espace de travail peuvent le renommer.",
-  "workspaceSettings.workspaceName": "Nom de l'espace de travail"
+  "workspaceSettings.workspaceName": "Nom de l'espace de travail",
+  "credentials.shopifyOAuthNotice": "Un nouvel onglet s'ouvrira pour l'autorisation Shopify. Après approbation, vous reviendrez ici automatiquement."
 }

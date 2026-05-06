@@ -74,6 +74,7 @@ const he: Record<string, string> = {
   "auth.updatePassword": "עדכן סיסמה",
   "auth.updating": "מעדכן...",
   "auth.welcomeBack": "ברוך שובך",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "הצטרפו ל-2,000+ צוותי SEO.",
   "cta.getStarted": "התחל בחינם",
   "cta.title": "מוכנים לפרוס תוכן בקנה מידה?",

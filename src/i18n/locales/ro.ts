@@ -74,6 +74,7 @@ const ro: Record<string, string> = {
   "auth.updatePassword": "Actualizează parola",
   "auth.updating": "Se actualizează...",
   "auth.welcomeBack": "Bine ai revenit",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically.",
   "cta.description": "Alătură-te la 2.000+ echipe SEO.",
   "cta.getStarted": "Începe gratuit",
   "cta.title": "Gata să implementezi conținut la scară mare?",
