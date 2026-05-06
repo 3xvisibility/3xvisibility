@@ -5,6 +5,7 @@ import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { UsageLimitDialog } from "@/components/UsageLimitDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,6 +135,46 @@ export default function WebsitesPage() {
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
   const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
 
+  // Shopify 1-click OAuth connect
+  const [shopifyOAuthLoading, setShopifyOAuthLoading] = useState(false);
+  const startShopifyOAuth = useCallback(async () => {
+    if (!wsId || !shopDomain) return;
+    const dErr = validateShopifyDomain(shopDomain);
+    if (dErr) {
+      toast({ title: "Invalid domain", description: dErr, variant: "destructive" });
+      return;
+    }
+    setShopifyOAuthLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+        body: {
+          shop_domain: shopDomain,
+          workspace_id: wsId,
+          site_name: siteName || shopDomain,
+          language: siteLanguage,
+        },
+      });
+      if (error) throw new Error("Failed to start Shopify OAuth");
+      if (data?.setup_required) {
+        toast({
+          title: "OAuth not configured",
+          description: data.message || "Platform admin must configure Shopify OAuth credentials.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (data?.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        throw new Error("No authorization URL returned");
+      }
+    } catch (err: any) {
+      toast({ title: "Shopify OAuth failed", description: err?.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setShopifyOAuthLoading(false);
+    }
+  }, [wsId, shopDomain, siteName, siteLanguage, toast]);
+
   const buildCredentials = () => {
     if (siteType === "wordpress") {
       return wpAuthMethod === "application_password"
@@ -176,11 +217,6 @@ export default function WebsitesPage() {
       toast({ title: "Error", description: "Please enter your shop domain", variant: "destructive" });
       return;
     }
-    if (siteType === "shopify" && !shopifyAccessToken) {
-      toast({ title: "Error", description: "Please enter your Admin API access token", variant: "destructive" });
-      return;
-    }
-
     const finalUrl = siteType === "shopify"
       ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
       : siteUrl;
@@ -437,8 +473,6 @@ export default function WebsitesPage() {
                       <ShopifyCredentialFields
                         shopDomain={shopDomain}
                         onShopDomainChange={setShopDomain}
-                        accessToken={shopifyAccessToken}
-                        onAccessTokenChange={setShopifyAccessToken}
                       />
                  )}
                 {siteType === "prestashop" && (
@@ -524,17 +558,31 @@ export default function WebsitesPage() {
                       )}
                     </Button>
                   )}
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
-                  >
-                    {isConnecting ? (
-                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
-                    ) : (
-                      t("common.connect")
-                    )}
-                  </Button>
+                  {siteType === "shopify" ? (
+                    <Button
+                      className="w-full sm:w-auto"
+                      onClick={() => startShopifyOAuth()}
+                      disabled={!shopDomain || shopifyInvalid || shopifyOAuthLoading}
+                    >
+                      {shopifyOAuthLoading ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Redirecting to Shopify…</>
+                      ) : (
+                        <><ExternalLink className="h-4 w-4 mr-1" /> Connect with Shopify</>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full sm:w-auto"
+                      onClick={() => runConnectFlow()}
+                      disabled={!siteUrl || !siteType || isConnecting}
+                    >
+                      {isConnecting ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
+                      ) : (
+                        t("common.connect")
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </DialogContent>
