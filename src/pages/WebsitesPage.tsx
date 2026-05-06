@@ -217,11 +217,6 @@ export default function WebsitesPage() {
       toast({ title: "Error", description: "Please enter your shop domain", variant: "destructive" });
       return;
     }
-    if (siteType === "shopify" && !shopifyAccessToken) {
-      toast({ title: "Error", description: "Please enter your Admin API access token", variant: "destructive" });
-      return;
-    }
-
     const finalUrl = siteType === "shopify"
       ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
       : siteUrl;
