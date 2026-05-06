@@ -17,6 +17,7 @@ export function ShopifyCredentialFields({
   shopDomain,
   onShopDomainChange,
 }: ShopifyCredentialFieldsProps) {
+  const { t } = useLanguage();
   const domainError = shopDomain ? validateShopifyDomain(shopDomain) : null;
   const domainOk = !!shopDomain && !domainError;
 
@@ -25,8 +26,7 @@ export function ShopifyCredentialFields({
       <Alert className="bg-primary/5 border-primary/20">
         <ShoppingBag className="h-4 w-4 text-primary" />
         <AlertDescription className="text-xs leading-relaxed">
-          Enter your Shopify store domain and click <strong>Connect</strong>. You'll be redirected
-          to Shopify to authorize access — no API token needed.
+          {t("credentials.shopifyOAuthNotice")}
         </AlertDescription>
       </Alert>
 
