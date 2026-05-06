@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Loader2, Zap, Languages, Lock } from "lucide-react";
 
@@ -59,6 +60,7 @@ export default function WebsitesPage() {
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
+  const [popupBlockedUrl, setPopupBlockedUrl] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -167,8 +169,8 @@ export default function WebsitesPage() {
         // Open in new tab to avoid iframe restrictions from Shopify login
         const w = window.open(data.auth_url, "_blank");
         if (!w) {
-          // Fallback: try top-level navigation if popup blocked
-          window.top ? (window.top.location.href = data.auth_url) : (window.location.href = data.auth_url);
+          // Popup was blocked — show a modal with the link instead of silently navigating away
+          setPopupBlockedUrl(data.auth_url);
         }
       } else {
         throw new Error("No authorization URL returned");
@@ -625,6 +627,37 @@ export default function WebsitesPage() {
           ))}
         </div>
       )}
+
+      {/* Popup-blocked fallback dialog */}
+      <Dialog open={!!popupBlockedUrl} onOpenChange={(v) => { if (!v) setPopupBlockedUrl(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-5 w-5 text-primary" />
+              Popup blocked
+            </DialogTitle>
+            <DialogDescription>
+              Your browser blocked the Shopify authorization window. Click the button below to open it manually.
+            </DialogDescription>
+          </DialogHeader>
+          <Alert className="bg-muted/50 border-border">
+            <AlertDescription className="text-xs break-all font-mono select-all">
+              {popupBlockedUrl}
+            </AlertDescription>
+          </Alert>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button asChild>
+              <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Shopify Authorization
+              </a>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
