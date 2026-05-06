@@ -261,5 +261,6 @@
   "video.setupTime": "সেটআপ সময়",
   "video.title": "কার্যকরী দেখুন",
   "video.uptimeSLA": "আপটাইম SLA",
-  "video.watchDemo": "২ মিনিটের ডেমো দেখুন"
+  "video.watchDemo": "২ মিনিটের ডেমো দেখুন",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

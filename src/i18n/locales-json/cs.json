@@ -261,5 +261,6 @@
   "video.setupTime": "Doba nastavení",
   "video.title": "Podívejte se v akci",
   "video.uptimeSLA": "SLA Uptime",
-  "video.watchDemo": "Sledovat 2minutové demo"
+  "video.watchDemo": "Sledovat 2minutové demo",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

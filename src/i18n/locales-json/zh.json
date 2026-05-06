@@ -261,5 +261,6 @@
   "video.setupTime": "设置时间",
   "video.title": "查看实际效果",
   "video.uptimeSLA": "正常运行时间SLA",
-  "video.watchDemo": "观看2分钟演示"
+  "video.watchDemo": "观看2分钟演示",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

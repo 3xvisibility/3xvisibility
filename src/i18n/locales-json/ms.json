@@ -261,5 +261,6 @@
   "video.setupTime": "Masa persediaan",
   "video.title": "Lihat dalam tindakan",
   "video.uptimeSLA": "SLA Uptime",
-  "video.watchDemo": "Tonton demo 2 minit"
+  "video.watchDemo": "Tonton demo 2 minit",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

@@ -36,5 +36,6 @@
   "sidebar.settings": "Ayarlar",
   "sidebar.templates": "Şablonlar",
   "sidebar.tools": "Araçlar",
-  "sidebar.websites": "Web siteleri"
+  "sidebar.websites": "Web siteleri",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

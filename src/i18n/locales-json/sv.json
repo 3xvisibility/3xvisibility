@@ -261,5 +261,6 @@
   "video.setupTime": "Installationstid",
   "video.title": "Se det i aktion",
   "video.uptimeSLA": "Uptime SLA",
-  "video.watchDemo": "Se 2-minutersdemo"
+  "video.watchDemo": "Se 2-minutersdemo",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

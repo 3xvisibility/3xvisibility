@@ -261,5 +261,6 @@
   "video.setupTime": "Asennusaika",
   "video.title": "Katso toiminnassa",
   "video.uptimeSLA": "Uptime SLA",
-  "video.watchDemo": "Katso 2 minuutin demo"
+  "video.watchDemo": "Katso 2 minuutin demo",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

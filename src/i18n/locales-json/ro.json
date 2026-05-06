@@ -261,5 +261,6 @@
   "video.setupTime": "Timp configurare",
   "video.title": "Vezi în acțiune",
   "video.uptimeSLA": "SLA Uptime",
-  "video.watchDemo": "Vezi demo-ul de 2 minute"
+  "video.watchDemo": "Vezi demo-ul de 2 minute",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

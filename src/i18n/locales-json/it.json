@@ -1136,5 +1136,6 @@
   "workspaceSettings.viewer": "Visualizzatore",
   "workspaceSettings.workspaceDetails": "Dettagli dell'area di lavoro",
   "workspaceSettings.workspaceDetailsDesc": "Aggiorna il nome dell'area di lavoro. Solo i proprietari dell'area di lavoro possono rinominare.",
-  "workspaceSettings.workspaceName": "Nome dell'area di lavoro"
+  "workspaceSettings.workspaceName": "Nome dell'area di lavoro",
+  "credentials.shopifyOAuthNotice": "Si aprirà una nuova scheda per l'autorizzazione Shopify. Dopo l'approvazione, tornerai qui automaticamente."
 }

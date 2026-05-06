@@ -261,5 +261,6 @@
   "video.setupTime": "Beállítási idő",
   "video.title": "Lássa működés közben",
   "video.uptimeSLA": "Uptime SLA",
-  "video.watchDemo": "2 perces demo megtekintése"
+  "video.watchDemo": "2 perces demo megtekintése",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

@@ -1137,5 +1137,6 @@
   "workspaceSettings.viewer": "Betrachter",
   "workspaceSettings.workspaceDetails": "Arbeitsbereichsdetails",
   "workspaceSettings.workspaceDetailsDesc": "Aktualisieren Sie den Namen Ihres Arbeitsbereichs. Nur Arbeitsbereichs-Inhaber können den Namen ändern.",
-  "workspaceSettings.workspaceName": "Workspace-Name"
+  "workspaceSettings.workspaceName": "Workspace-Name",
+  "credentials.shopifyOAuthNotice": "Ein neuer Tab öffnet sich für die Shopify-Autorisierung. Nach der Genehmigung kehren Sie automatisch hierher zurück."
 }

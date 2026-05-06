@@ -1136,5 +1136,6 @@
   "workspaceSettings.viewer": "Viewer",
   "workspaceSettings.workspaceDetails": "Workspace Details",
   "workspaceSettings.workspaceDetailsDesc": "Update your workspace name. Only workspace owners can rename.",
-  "workspaceSettings.workspaceName": "Workspace Name"
+  "workspaceSettings.workspaceName": "Workspace Name",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

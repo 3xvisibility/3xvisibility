@@ -261,5 +261,6 @@
   "video.setupTime": "セットアップ時間",
   "video.title": "実際の動作を見る",
   "video.uptimeSLA": "アップタイムSLA",
-  "video.watchDemo": "2分間のデモを見る"
+  "video.watchDemo": "2分間のデモを見る",
+  "credentials.shopifyOAuthNotice": "A new tab will open for Shopify authorization. After you approve, you'll return here automatically."
 }

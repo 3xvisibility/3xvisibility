@@ -1136,5 +1136,6 @@
   "workspaceSettings.viewer": "Visor",
   "workspaceSettings.workspaceDetails": "Detalles del espacio de trabajo",
   "workspaceSettings.workspaceDetailsDesc": "Actualice el nombre de su espacio de trabajo. Sólo los propietarios del espacio de trabajo pueden cambiar el nombre.",
-  "workspaceSettings.workspaceName": "Nombre del espacio de trabajo"
+  "workspaceSettings.workspaceName": "Nombre del espacio de trabajo",
+  "credentials.shopifyOAuthNotice": "Se abrirá una nueva pestaña para la autorización de Shopify. Después de aprobar, regresarás aquí automáticamente."
 }
