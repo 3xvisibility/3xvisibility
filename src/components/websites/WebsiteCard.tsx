@@ -301,8 +301,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           {/* Shopify status panel — shown for both connected & disconnected */}
           {isShopify && (() => {
             const shopDetails = (site as unknown as { shop_details?: Record<string, string | null> }).shop_details;
-            const isConnected = site.status === "connected";
-            const isDisconnected = site.status === "disconnected";
+            const isConnected = shopifyTokenPresent;
+            const isDisconnected = !shopifyTokenPresent;
 
             return (
             <div className={cn(
