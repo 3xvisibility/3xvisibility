@@ -195,7 +195,8 @@ Deno.serve(async (req) => {
       websiteId = inserted.id;
     }
 
-    // ── 7. Upsert into shopify_connections (per-user per-shop token) ──
+    // ── 7. Upsert into shopify_connections (per-user per-shop token, encrypted) ──
+    const encryptedToken = await encrypt(accessToken);
     const { error: connError } = await supabase
       .from("shopify_connections")
       .upsert(
@@ -204,7 +205,7 @@ Deno.serve(async (req) => {
           workspace_id: oauthState.workspace_id,
           website_id: websiteId,
           shop_domain: domain,
-          access_token: accessToken,
+          access_token: encryptedToken,
           scopes: tokenData.scope || "",
         },
         { onConflict: "user_id,shop_domain" },
