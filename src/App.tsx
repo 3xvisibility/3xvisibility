@@ -204,6 +204,7 @@ const App = () => {
             <Route path="/docs" element={<DocumentationPage />} />
             <Route path="/shopify/oauth-launch" element={<ShopifyOAuthLaunchPage />} />
             <Route path="/shopify/callback" element={<ShopifyCallbackPage />} />
+            <Route path="/api/shopify/callback" element={<ShopifyCallbackPage />} />
 
             {/* Workspace-prefixed routes */}
             <Route path="/w/:workspaceSlug" element={<WorkspaceRouter />}>
