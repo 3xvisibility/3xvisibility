@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { encryptCredentials } from "../_shared/crypto.ts";
+import { encrypt } from "../_shared/crypto.ts";
 
 const APP_BASE = "https://page-generator-project.lovable.app";
 
