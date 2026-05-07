@@ -39,6 +39,8 @@ const KEY_LABELS: Record<string, string> = {
   DEEPSEEK_API_KEY: "DeepSeek API Key",
   OPENROUTER_API_KEY: "OpenRouter API Key",
   APP_URL: "Application URL",
+  ENVIRONMENT: "Environment (development / production)",
+  SHOPIFY_REDIRECT_URI: "Shopify OAuth Redirect URI",
 };
 
 export default function EnvironmentConfigSettings() {
