@@ -23,3 +23,20 @@ export function navigateToShopifyAuth(value: string): void {
 
   window.top!.location.href = value;
 }
+
+export function launchShopifyOAuthInTopWindow(params: {
+  shopDomain: string;
+  workspaceId: string;
+  siteName?: string | null;
+  language?: string | null;
+}): void {
+  const search = new URLSearchParams({
+    shop_domain: params.shopDomain,
+    workspace_id: params.workspaceId,
+  });
+
+  if (params.siteName) search.set("site_name", params.siteName);
+  if (params.language) search.set("language", params.language);
+
+  window.top!.location.href = `${window.location.origin}/shopify/oauth-launch?${search.toString()}`;
+}

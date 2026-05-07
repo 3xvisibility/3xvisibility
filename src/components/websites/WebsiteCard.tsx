@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
+import { launchShopifyOAuthInTopWindow } from "@/lib/shopify-auth-url";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -179,18 +179,12 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
       const creds = site.credentials as Record<string, string> | null;
       const shopDomain = creds?.shop_domain || site.url?.replace(/^https?:\/\//, "").replace(/\/+$/, "");
       if (!shopDomain) throw new Error("Missing shop domain");
-      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
-        body: {
-          shop_domain: shopDomain,
-          workspace_id: site.workspace_id,
-          site_name: site.name,
-          language: site.language,
-        },
+      launchShopifyOAuthInTopWindow({
+        shopDomain,
+        workspaceId: site.workspace_id,
+        siteName: site.name,
+        language: site.language,
       });
-      if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
-      if (data?.error) throw new Error(data.error);
-      if (!data?.auth_url) throw new Error("No auth URL returned");
-      navigateToShopifyAuth(data.auth_url);
     },
     onError: (err: Error) => {
       const { title, description } = mapReconnectError(err.message);

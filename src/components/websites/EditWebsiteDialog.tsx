@@ -18,7 +18,7 @@ import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
 import { ShopifyFieldMappingEditor } from "./ShopifyFieldMappingEditor";
 import { validateShopifyDomain } from "@/lib/shopify-validation";
 import { extractEdgeError } from "@/lib/edge-function-error";
-import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
+import { launchShopifyOAuthInTopWindow } from "@/lib/shopify-auth-url";
 
 type Website = Tables<"websites">;
 
@@ -147,18 +147,12 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       const shopDomain = (url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
       const dErr = validateShopifyDomain(shopDomain);
       if (dErr) throw new Error(dErr);
-      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
-        body: {
-          shop_domain: shopDomain,
-          workspace_id: site.workspace_id,
-          site_name: name || shopDomain,
-          language,
-        },
+      launchShopifyOAuthInTopWindow({
+        shopDomain,
+        workspaceId: site.workspace_id,
+        siteName: name || shopDomain,
+        language,
       });
-      if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
-      if (data?.error) throw new Error(data.error);
-      if (!data?.auth_url) throw new Error("No auth URL returned");
-      navigateToShopifyAuth(data.auth_url);
     },
     onError: (err: Error) => {
       toast({ title: "Reconnect failed", description: err.message, variant: "destructive" });
