@@ -78,6 +78,7 @@ export default function WebsitesPage() {
   const [languageLocked, setLanguageLocked] = useState<boolean>(false);
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [shopifyOAuthLoading, setShopifyOAuthLoading] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
   const [popupBlockedUrl, setPopupBlockedUrl] = useState<string | null>(null);
 
@@ -168,8 +169,56 @@ export default function WebsitesPage() {
   const filteredWebsites = filterType === "all" ? websites : websites.filter((s) => s.type === filterType);
 
   // Shopify-specific frontend validation
+  const normalizedShopDomain = shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
   const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
+
+  const startShopifyOAuth = useCallback(async () => {
+    if (!wsId) {
+      toast({ title: "Error", description: "No workspace selected", variant: "destructive" });
+      return;
+    }
+    const domain = normalizedShopDomain;
+    const dErr = validateShopifyDomain(domain);
+    if (dErr) {
+      toast({ title: "Invalid Shopify domain", description: dErr, variant: "destructive" });
+      return;
+    }
+
+    setShopifyOAuthLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+        body: {
+          shop_domain: domain,
+          workspace_id: wsId,
+          site_name: siteName || domain,
+          language: siteLanguage,
+        },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
+      if (data?.error) throw new Error(data.error);
+      if (!data?.auth_url) throw new Error("No auth URL returned");
+      if (!isSafeShopifyAuthUrl(data.auth_url, domain)) {
+        throw new Error("Received an invalid Shopify authorization URL");
+      }
+
+      const popup = window.open(data.auth_url, "_blank", "noopener,noreferrer");
+      if (!popup) {
+        setPopupBlockedUrl(data.auth_url);
+        toast({
+          title: "Popup blocked",
+          description: "Authorization link generated. Open it manually to continue.",
+          variant: "destructive",
+        });
+      } else {
+        popup.focus();
+      }
+    } catch (err: any) {
+      toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
+    } finally {
+      setShopifyOAuthLoading(false);
+    }
+  }, [wsId, normalizedShopDomain, siteName, siteLanguage, toast]);
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
@@ -208,28 +257,8 @@ export default function WebsitesPage() {
 
     // ---- Shopify OAuth redirect flow ----
     if (siteType === "shopify") {
-      setIsConnecting(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
-          body: {
-            shop_domain: shopDomain,
-            workspace_id: wsId,
-            site_name: siteName || shopDomain,
-            language: siteLanguage,
-          },
-        });
-        if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
-        if (data?.error) throw new Error(data.error);
-        if (!data?.auth_url) throw new Error("No auth URL returned");
-
-        // Redirect to Shopify for authorization
-        window.location.href = data.auth_url;
-        return;
-      } catch (err: any) {
-        setIsConnecting(false);
-        toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
-        return;
-      }
+      await startShopifyOAuth();
+      return;
     }
     const finalUrl = siteType === "shopify"
       ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
@@ -574,9 +603,9 @@ export default function WebsitesPage() {
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading}
                   >
-                    {isConnecting ? (
+                    {isConnecting || shopifyOAuthLoading ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
                     ) : (
                       t("common.connect")
