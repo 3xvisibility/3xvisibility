@@ -1522,6 +1522,42 @@ export type Database = {
           },
         ]
       }
+      shopify_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          scopes: string | null
+          shop_domain: string
+          updated_at: string
+          user_id: string
+          website_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          id?: string
+          scopes?: string | null
+          shop_domain: string
+          updated_at?: string
+          user_id: string
+          website_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          scopes?: string | null
+          shop_domain?: string
+          updated_at?: string
+          user_id?: string
+          website_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       shopify_field_mappings: {
         Row: {
           campaign_id: string | null
