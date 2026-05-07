@@ -43,10 +43,29 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
 
   const isShopify = site.type === "shopify";
 
+  // Check shopify_connections for active token
+  const { data: shopifyConn } = useQuery({
+    queryKey: ["shopify-connection", site.id],
+    enabled: isShopify,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shopify_connections")
+        .select("id, shop_domain, scopes, created_at, updated_at")
+        .eq("website_id", site.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Derive connected status from shopify_connections presence
+  const shopifyTokenPresent = !!shopifyConn?.id;
+
   // Live health check for Shopify — fetches 1 product to verify token works
   const { data: healthData, isLoading: healthLoading, isError: healthError } = useQuery({
     queryKey: ["shopify-health", site.id],
-    enabled: isShopify && site.status === "connected",
+    enabled: isShopify && shopifyTokenPresent,
     staleTime: 5 * 60 * 1000, // 5 min
     retry: 1,
     queryFn: async () => {
