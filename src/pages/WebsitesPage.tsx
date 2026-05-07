@@ -94,6 +94,7 @@ export default function WebsitesPage() {
   useEffect(() => {
     const oauthStatus = searchParams.get("shopify_oauth");
     if (oauthStatus === "success") {
+      setOauthError(null);
       toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth. Loading products…" });
       // Immediately invalidate + poll a few times to catch the new website row
       queryClient.invalidateQueries({ queryKey: ["websites"] });
