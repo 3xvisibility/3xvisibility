@@ -53,7 +53,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
         .from("shopify_connections_safe" as any)
         .select("id, shop_domain, scopes, created_at, updated_at")
         .eq("website_id", site.id)
-        .maybeSingle();
+        .maybeSingle() as { data: { id: string; shop_domain: string; scopes: string; created_at: string; updated_at: string } | null; error: any };
       if (error) throw error;
       return data;
     },
