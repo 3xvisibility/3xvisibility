@@ -81,7 +81,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   // Latest sync event
   const { data: latestSync } = useQuery({
     queryKey: ["shopify-latest-sync", site.id],
-    enabled: isShopify && site.status === "connected",
+    enabled: isShopify && shopifyTokenPresent,
     staleTime: 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("shopify-products", {
