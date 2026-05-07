@@ -462,6 +462,41 @@ export default function WebsitesPage() {
       <UsageLimitBanner type="sites" used={sitesConnected} limit={sitesLimit} />
       <UsageLimitDialog open={limitDialogOpen} onOpenChange={setLimitDialogOpen} type="sites" used={sitesConnected} limit={sitesLimit === -1 ? sitesConnected : sitesLimit} />
 
+      {/* Persistent Shopify OAuth error banner */}
+      {oauthError && (
+        <Alert variant="destructive" className="relative border-destructive/40 bg-destructive/10">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="font-semibold text-sm">{oauthError.title}</p>
+              <p className="text-xs mt-0.5 opacity-90">{oauthError.description}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs gap-1 border-destructive/30 hover:bg-destructive/10"
+                onClick={() => {
+                  setOauthError(null);
+                  setOpen(true);
+                }}
+              >
+                <RefreshCw className="h-3 w-3" />
+                Try Again
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive/70 hover:text-destructive"
+                onClick={() => setOauthError(null)}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-display">{t("websites.title")}</h1>
