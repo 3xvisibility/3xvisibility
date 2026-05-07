@@ -2216,9 +2216,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      shopify_connections_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          scopes: string | null
+          shop_domain: string | null
+          updated_at: string | null
+          user_id: string | null
+          website_id: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          scopes?: string | null
+          shop_domain?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_id?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          scopes?: string | null
+          shop_domain?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          website_id?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_shopify_access_token: {
+        Args: { _website_id: string }
+        Returns: string
+      }
       get_workspace_role: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: Database["public"]["Enums"]["workspace_role"]

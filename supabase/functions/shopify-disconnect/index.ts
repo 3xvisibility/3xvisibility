@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
+import { decrypt } from "../_shared/crypto.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -93,12 +93,19 @@ Deno.serve(async (req) => {
 
     if (conn?.access_token && shopDomain) {
       try {
+        let plainToken: string;
+        try {
+          plainToken = await decrypt(conn.access_token);
+        } catch {
+          plainToken = conn.access_token; // legacy unencrypted
+        }
+
         const revokeRes = await fetch(
           `https://${shopDomain}/admin/api_permissions/current.json`,
           {
             method: "DELETE",
             headers: {
-              "X-Shopify-Access-Token": conn.access_token,
+              "X-Shopify-Access-Token": plainToken,
               "Content-Type": "application/json",
             },
           },
