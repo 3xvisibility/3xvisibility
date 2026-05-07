@@ -197,10 +197,8 @@ export default function WebsitesPage() {
         throw new Error("Received an invalid Shopify authorization URL");
       }
 
-      toast({ title: "Redirecting to Shopify", description: "Complete authorization there, then you'll return automatically." });
-      // Use top-level navigation to escape iframe (Shopify blocks embedded frames)
-      const target = window.top || window;
-      target.location.href = data.auth_url;
+      toast({ title: "Opening Shopify", description: "Complete authorization in the new tab, then return here." });
+      window.open(data.auth_url, "_blank");
     } catch (err: any) {
       toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
     } finally {
