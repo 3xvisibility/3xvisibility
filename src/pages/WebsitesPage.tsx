@@ -210,7 +210,7 @@ export default function WebsitesPage() {
       if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
       if (data?.error) throw new Error(data.error);
       if (!data?.auth_url) throw new Error("No auth URL returned");
-      if (!isSafeShopifyAuthUrl(data.auth_url, domain)) {
+      if (!isSafeShopifyAuthUrl(data.auth_url)) {
         throw new Error("Received an invalid Shopify authorization URL");
       }
 
@@ -272,9 +272,7 @@ export default function WebsitesPage() {
       await startShopifyOAuth();
       return;
     }
-    const finalUrl = siteType === "shopify"
-      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
-      : siteUrl;
+    const finalUrl = siteUrl;
 
     // Initialize step list — three explicit phases the user asked to see.
     const steps: ProgressStep[] = [
@@ -599,7 +597,7 @@ export default function WebsitesPage() {
                       onClick={() => detectLanguageMutation.mutate()}
                       disabled={
                         siteType === "shopify" ||
-                        !(siteType === "shopify" ? shopDomain : siteUrl) ||
+                        !siteUrl ||
                         detectLanguageMutation.isPending
                       }
                     >
