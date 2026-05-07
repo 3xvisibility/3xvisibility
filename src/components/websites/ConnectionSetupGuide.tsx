@@ -50,7 +50,7 @@ function normalizeUrl(raw?: string): string | null {
 
 function getShopifySteps(siteHint?: string): Step[] {
   const domain = normalizeShopifyDomain(siteHint);
-  const adminBase = domain ? `https://${domain}/admin` : "https://admin.shopify.com";
+  const adminBase = domain ? `https://${domain}/admin` : null;
   return [
     {
       title: "Open Shopify Admin → Settings → Apps and sales channels → Develop apps.",
