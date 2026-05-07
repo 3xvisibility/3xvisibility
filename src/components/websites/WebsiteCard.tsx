@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { isSafeShopifyAuthUrl } from "@/lib/shopify-auth-url";
+import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -190,8 +190,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
       if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
       if (data?.error) throw new Error(data.error);
       if (!data?.auth_url) throw new Error("No auth URL returned");
-      if (!isSafeShopifyAuthUrl(data.auth_url)) throw new Error("Authorization URL failed domain validation");
-      window.location.href = data.auth_url;
+      navigateToShopifyAuth(data.auth_url);
     },
     onError: (err: Error) => {
       const { title, description } = mapReconnectError(err.message);

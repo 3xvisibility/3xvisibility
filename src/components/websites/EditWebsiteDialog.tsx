@@ -18,6 +18,7 @@ import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
 import { ShopifyFieldMappingEditor } from "./ShopifyFieldMappingEditor";
 import { validateShopifyDomain } from "@/lib/shopify-validation";
 import { extractEdgeError } from "@/lib/edge-function-error";
+import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
 
 type Website = Tables<"websites">;
 
@@ -157,7 +158,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
       if (data?.error) throw new Error(data.error);
       if (!data?.auth_url) throw new Error("No auth URL returned");
-      window.location.href = data.auth_url;
+      navigateToShopifyAuth(data.auth_url);
     },
     onError: (err: Error) => {
       toast({ title: "Reconnect failed", description: err.message, variant: "destructive" });

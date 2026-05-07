@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { isSafeShopifyAuthUrl } from "@/lib/shopify-auth-url";
+import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
 import { useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
@@ -193,12 +193,9 @@ export default function WebsitesPage() {
       if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
       if (data?.error) throw new Error(data.error);
       if (!data?.auth_url) throw new Error("No auth URL returned");
-      if (!isSafeShopifyAuthUrl(data.auth_url)) {
-        throw new Error("Received an invalid Shopify authorization URL");
-      }
 
       toast({ title: "Redirecting to Shopify", description: "Complete authorization there, then you'll return automatically." });
-      window.location.href = data.auth_url;
+      navigateToShopifyAuth(data.auth_url);
     } catch (err: any) {
       toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
     } finally {

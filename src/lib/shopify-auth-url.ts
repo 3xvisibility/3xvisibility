@@ -15,3 +15,18 @@ export function isSafeShopifyAuthUrl(value: string | null | undefined): boolean 
     return false;
   }
 }
+
+export function navigateToShopifyAuth(value: string): void {
+  if (!isSafeShopifyAuthUrl(value)) {
+    throw new Error("Received an invalid Shopify authorization URL");
+  }
+
+  const link = document.createElement("a");
+  link.href = value;
+  link.target = "_top";
+  link.rel = "noopener noreferrer";
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
