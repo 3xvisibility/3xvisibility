@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Loader2, Zap, Languages, Lock } from "lucide-react";
+import { Plus, Loader2, Zap, Languages, Lock, AlertTriangle, X } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
