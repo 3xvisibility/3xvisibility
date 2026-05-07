@@ -528,7 +528,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
-                  disabled={disconnectMutation.isPending || site.status !== "connected"}
+                  disabled={disconnectMutation.isPending || !shopifyTokenPresent}
                   onClick={() => setDisconnectConfirmOpen(true)}
                 >
                   {disconnectMutation.isPending ? (
