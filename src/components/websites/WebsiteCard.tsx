@@ -223,6 +223,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
+      queryClient.invalidateQueries({ queryKey: ["shopify-connection", site.id] });
       toast({
         title: "Shopify disconnected",
         description: data?.token_revoked
