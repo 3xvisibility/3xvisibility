@@ -101,8 +101,7 @@ Deno.serve(async (req) => {
     }
 
     const scopes = "read_products,write_products,read_inventory,write_inventory,read_content,write_content";
-    const callbackUrl = getOauthCallbackUrl();
-    const authUrl = `https://${domain}/admin/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
+    const authUrl = `https://${domain}/admin/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${state}`;
 
     return new Response(JSON.stringify({ auth_url: authUrl, state }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
