@@ -54,10 +54,12 @@ function getShopifySteps(siteHint?: string): Step[] {
   return [
     {
       title: "Open Shopify Admin → Settings → Apps and sales channels → Develop apps.",
-      link: {
-        label: domain ? "Open Apps & Sales Channels" : "Open Shopify Admin",
-        url: `${adminBase}/settings/apps/development`,
-      },
+      ...(adminBase ? {
+        link: {
+          label: "Open Apps & Sales Channels",
+          url: `${adminBase}/settings/apps/development`,
+        },
+      } : {}),
     },
     {
       title: "Click 'Create an app', name it (e.g. Lovable Connector), then open its Configuration tab.",
