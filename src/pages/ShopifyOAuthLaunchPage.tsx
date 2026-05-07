@@ -1,86 +1,102 @@
-import { ExternalLink, Loader2, ShieldAlert } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { isSafeShopifyAuthUrl, navigateToShopifyAuth } from "@/lib/shopify-auth-url";
+import { Loader2, ShieldAlert } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeError } from "@/lib/edge-function-error";
 
+/**
+ * First-party launcher page for Shopify OAuth.
+ *
+ * Flow:
+ * 1. The app navigates the top window here with query params
+ *    (shop_domain, workspace_id, etc.)
+ * 2. This page calls the `shopify-oauth-init` edge function to get the
+ *    Shopify authorization URL.
+ * 3. It then redirects the current window to Shopify.
+ *
+ * Because this page runs at the top level (not inside an iframe),
+ * `window.location.href` works without cross-origin issues.
+ */
 const ShopifyOAuthLaunchPage = () => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const authUrl = params.get("auth_url");
   const shopDomain = params.get("shop_domain");
   const workspaceId = params.get("workspace_id");
   const siteName = params.get("site_name");
   const language = params.get("language");
-  const safe = authUrl ? isSafeShopifyAuthUrl(authUrl) : !!shopDomain && !!workspaceId;
+
+  const [error, setError] = useState<string | null>(null);
+  const valid = !!shopDomain && !!workspaceId;
 
   useEffect(() => {
-    if (!safe) return;
+    if (!valid) return;
 
     const startOAuth = async () => {
       try {
-        if (authUrl) {
-          navigateToShopifyAuth(authUrl);
-          return;
-        }
-
-        const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
-          body: {
-            shop_domain: shopDomain,
-            workspace_id: workspaceId,
-            site_name: siteName || shopDomain,
-            language,
+        const { data, error: fnError } = await supabase.functions.invoke(
+          "shopify-oauth-init",
+          {
+            body: {
+              shop_domain: shopDomain,
+              workspace_id: workspaceId,
+              site_name: siteName || shopDomain,
+              language,
+            },
           },
-        });
+        );
 
-        if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
+        if (fnError) throw new Error(await extractEdgeError(fnError, "OAuth init failed"));
         if (data?.error) throw new Error(data.error);
+        if (data?.setup_required) throw new Error(data.message || "Shopify OAuth not configured");
         if (!data?.auth_url) throw new Error("No auth URL returned");
 
+        // We're already at the top level — just redirect.
         navigateToShopifyAuth(data.auth_url);
       } catch (err: any) {
-        const message = encodeURIComponent(err?.message || "Could not start Shopify OAuth");
-        window.location.replace(`/websites?shopify_oauth=error&message=${message}`);
+        console.error("ShopifyOAuthLaunchPage error:", err);
+        setError(err?.message || "Could not start Shopify OAuth");
       }
     };
 
     void startOAuth();
-  }, [authUrl, language, safe, shopDomain, siteName, workspaceId]);
-
-  const openShopify = () => {
-    if (safe && authUrl) navigateToShopifyAuth(authUrl);
-  };
+  }, [valid, shopDomain, workspaceId, siteName, language]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <div className="w-full max-w-md space-y-4 rounded-lg border border-border bg-card p-6 shadow-lg">
         <div className="space-y-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-            {safe ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldAlert className="h-5 w-5" />}
+            {error || !valid ? (
+              <ShieldAlert className="h-5 w-5" />
+            ) : (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            )}
           </div>
+
           <h1 className="text-xl font-semibold text-foreground">
-            {safe ? "Opening Shopify authorization" : "Invalid Shopify authorization link"}
+            {error
+              ? "Shopify connection failed"
+              : !valid
+                ? "Invalid authorization link"
+                : "Redirecting to Shopify…"}
           </h1>
+
           <p className="text-sm text-muted-foreground">
-            {safe
-              ? "A new top-level Shopify authorization page is opening now. If it does not open automatically, continue manually."
-              : "The authorization link could not be verified. Please return to the app and start the Shopify connection again."}
+            {error
+              ? error
+              : !valid
+                ? "Missing required parameters. Please go back and try connecting again."
+                : "You will be redirected to Shopify to authorize your store. This may take a moment."}
           </p>
         </div>
 
-        {safe && authUrl && (
-          <>
-            <Alert className="bg-muted/50 border-border">
-              <AlertDescription className="text-xs leading-relaxed">
-                Shopify blocks embedded authorization pages, so this page redirects outside the app preview.
-              </AlertDescription>
-            </Alert>
-            <Button type="button" className="w-full" onClick={openShopify}>
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Continue to Shopify
-            </Button>
-          </>
+        {(error || !valid) && (
+          <button
+            type="button"
+            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            onClick={() => window.history.back()}
+          >
+            Go Back
+          </button>
         )}
       </div>
     </div>
