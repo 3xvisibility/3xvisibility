@@ -1,21 +1,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { encryptCredentials } from "../_shared/crypto.ts";
 
-const DEFAULT_APP_URL = "https://page-generator-project.lovable.app";
+const DEV_APP_URL = "http://localhost:8080";
+const PROD_APP_URL = "https://page-generator-project.lovable.app";
 
+/**
+ * Resolves the frontend app base URL for post-OAuth redirects.
+ * Priority: APP_URL env > auto-detect dev/prod.
+ */
 function getAppBase(): string {
   const configured = Deno.env.get("APP_URL")?.trim().replace(/\/+$/, "");
-  if (!configured) return DEFAULT_APP_URL;
-
-  try {
-    const { hostname } = new URL(configured);
-    if (hostname.endsWith(".supabase.co") || hostname === "localhost") {
-      return DEFAULT_APP_URL;
-    }
-    return configured;
-  } catch {
-    return DEFAULT_APP_URL;
+  if (configured) {
+    try {
+      const { hostname } = new URL(configured);
+      if (!hostname.endsWith(".supabase.co")) return configured;
+    } catch { /* fall through */ }
   }
+  const isLocal = Deno.env.get("ENVIRONMENT") === "development"
+    || Deno.env.get("NODE_ENV") === "development";
+  return isLocal ? DEV_APP_URL : PROD_APP_URL;
 }
 
 /**
