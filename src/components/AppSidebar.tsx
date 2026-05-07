@@ -69,9 +69,9 @@ const mainNav: NavItem[] = [
 ];
 
 const pgpNav: NavItem[] = [
-  { titleKey: "Keywords", path: "pgp-keywords", icon: KeyRound },
-  { titleKey: "Generate", path: "pgp-generate", icon: Zap },
-  { titleKey: "Terms", path: "pgp-terms", icon: Database },
+  { titleKey: "sidebar.pgpKeywords", path: "pgp-keywords", icon: KeyRound },
+  { titleKey: "sidebar.pgpGenerate", path: "pgp-generate", icon: Zap },
+  { titleKey: "sidebar.pgpTerms", path: "pgp-terms", icon: Database },
 ];
 
 const toolsNav: NavItem[] = [
@@ -226,7 +226,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-3 mb-1">
-              Page Generator Pro
+              {t("sidebar.pgpSection")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>

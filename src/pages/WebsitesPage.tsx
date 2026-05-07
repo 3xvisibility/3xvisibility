@@ -1,17 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { isSafeShopifyAuthUrl } from "@/lib/shopify-auth-url";
 import { useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
 import { UsageLimitDialog } from "@/components/UsageLimitDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
+import { ExternalLink, Copy, CheckCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Loader2, Zap, Languages, Lock } from "lucide-react";
+
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +37,24 @@ import { extractEdgeError } from "@/lib/edge-function-error";
 type Website = Tables<"websites">;
 type WebsiteType = Database["public"]["Enums"]["website_type"];
 
+function CopyAuthUrlButton({ url }: { url: string | null }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore */ }
+  };
+  return (
+    <Button variant="secondary" size="sm" onClick={handleCopy} disabled={!url}>
+      {copied ? <CheckCheck className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+      {copied ? "Copied!" : "Copy Link"}
+    </Button>
+  );
+}
+
 export default function WebsitesPage() {
   const [open, setOpen] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
@@ -48,6 +70,7 @@ export default function WebsitesPage() {
   const [jwtToken, setJwtToken] = useState("");
   // Shopify
   const [shopDomain, setShopDomain] = useState("");
+  const [shopifyAccessToken, setShopifyAccessToken] = useState("");
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   const [wooConsumerKey, setWooConsumerKey] = useState("");
   const [wooConsumerSecret, setWooConsumerSecret] = useState("");
@@ -56,6 +79,7 @@ export default function WebsitesPage() {
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([]);
   const [isConnecting, setIsConnecting] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
+  const [popupBlockedUrl, setPopupBlockedUrl] = useState<string | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -69,10 +93,18 @@ export default function WebsitesPage() {
     const oauthStatus = searchParams.get("shopify_oauth");
     if (oauthStatus === "success") {
       toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth. Loading products…" });
+      // Immediately invalidate + poll a few times to catch the new website row
       queryClient.invalidateQueries({ queryKey: ["websites"] });
+      let polls = 0;
+      const poller = setInterval(() => {
+        polls++;
+        queryClient.invalidateQueries({ queryKey: ["websites"] });
+        if (polls >= 5) clearInterval(poller);
+      }, 2000);
       setAutoOpenShopifyProducts(true);
       searchParams.delete("shopify_oauth");
       setSearchParams(searchParams, { replace: true });
+      return () => clearInterval(poller);
     } else if (oauthStatus === "error") {
       const rawMsg = (searchParams.get("message") || "OAuth connection failed").toLowerCase();
       let friendlyTitle = "Shopify connection failed";
@@ -99,6 +131,13 @@ export default function WebsitesPage() {
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams]);
+
+  // Refresh websites when window regains focus (user returns from Shopify OAuth tab)
+  useEffect(() => {
+    const onFocus = () => queryClient.invalidateQueries({ queryKey: ["websites"] });
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [queryClient]);
 
   const { data: websites = [], isLoading } = useQuery({
     queryKey: ["websites", wsId],
@@ -131,7 +170,6 @@ export default function WebsitesPage() {
   // Shopify-specific frontend validation
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
   const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
-  const normalizedShopDomain = shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
@@ -139,7 +177,7 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return {};
+    if (siteType === "shopify") return { shop_domain: shopDomain };
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
@@ -172,12 +210,11 @@ export default function WebsitesPage() {
     if (siteType === "shopify") {
       setIsConnecting(true);
       try {
-        if (shopifyDomainError) throw new Error(shopifyDomainError);
         const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
           body: {
-            shop_domain: normalizedShopDomain,
+            shop_domain: shopDomain,
             workspace_id: wsId,
-            site_name: siteName || normalizedShopDomain,
+            site_name: siteName || shopDomain,
             language: siteLanguage,
           },
         });
@@ -194,8 +231,9 @@ export default function WebsitesPage() {
         return;
       }
     }
-
-    const finalUrl = siteUrl;
+    const finalUrl = siteType === "shopify"
+      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      : siteUrl;
 
     // Initialize step list — three explicit phases the user asked to see.
     const steps: ProgressStep[] = [
@@ -234,6 +272,7 @@ export default function WebsitesPage() {
             workspace_id: wsId,
             language: siteLanguage,
             language_locked: languageLocked,
+            
           },
         });
         if (error) throw new Error(await extractEdgeError(error, "Failed to save credentials"));
@@ -375,6 +414,7 @@ export default function WebsitesPage() {
     setSiteLanguage(null);
     setLanguageLocked(false);
     setProgressSteps([]);
+    setShopifyAccessToken("");
   };
 
   return (
@@ -443,15 +483,12 @@ export default function WebsitesPage() {
                     onJwtTokenChange={setJwtToken}
                   />
                 )}
-                {siteType === "shopify" && (
-                  <>
-                    <ConnectionSetupGuide provider="shopify" siteHint={shopDomain} />
-                    <ShopifyCredentialFields
-                      shopDomain={shopDomain}
-                      onShopDomainChange={setShopDomain}
-                    />
-                  </>
-                )}
+                 {siteType === "shopify" && (
+                      <ShopifyCredentialFields
+                        shopDomain={shopDomain}
+                        onShopDomainChange={setShopDomain}
+                      />
+                 )}
                 {siteType === "prestashop" && (
                   <>
                     <ConnectionSetupGuide provider="prestashop" siteHint={siteUrl} />
@@ -522,20 +559,18 @@ export default function WebsitesPage() {
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
-                  {siteType !== "shopify" && (
-                    <Button
-                      variant="outline"
-                      className="w-full sm:w-auto"
-                      onClick={() => testConnectionMutation.mutate()}
-                      disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending || isConnecting}
-                    >
-                      {testConnectionMutation.isPending ? (
-                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
-                      ) : (
-                        <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
-                      )}
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={() => testConnectionMutation.mutate()}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending || isConnecting}
+                  >
+                    {testConnectionMutation.isPending ? (
+                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
+                    ) : (
+                      <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
+                    )}
+                  </Button>
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
@@ -544,7 +579,7 @@ export default function WebsitesPage() {
                     {isConnecting ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
                     ) : (
-                      siteType === "shopify" ? "Connect with Shopify" : t("common.connect")
+                      t("common.connect")
                     )}
                   </Button>
                 </div>
@@ -584,6 +619,50 @@ export default function WebsitesPage() {
           ))}
         </div>
       )}
+
+       {/* Popup-blocked fallback dialog */}
+       <Dialog open={!!popupBlockedUrl} onOpenChange={(v) => { if (!v) setPopupBlockedUrl(null); }}>
+         <DialogContent className="sm:max-w-md">
+           <DialogHeader>
+             <DialogTitle className="flex items-center gap-2">
+               <ExternalLink className="h-5 w-5 text-primary" />
+               Popup Blocked
+             </DialogTitle>
+             <DialogDescription>
+               Your browser blocked the Shopify authorization popup. Copy the link or open it manually to continue.
+             </DialogDescription>
+           </DialogHeader>
+           <Alert className="bg-muted/50 border-border">
+             <AlertDescription className="text-xs break-all font-mono select-all">
+               {popupBlockedUrl}
+             </AlertDescription>
+           </Alert>
+            <div className="flex flex-col gap-2 pt-2">
+              <Button asChild>
+                <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Shopify Authorization
+                </a>
+              </Button>
+              <CopyAuthUrlButton url={popupBlockedUrl} />
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={shopifyOAuthLoading}
+                onClick={async () => {
+                  setPopupBlockedUrl(null);
+                  await startShopifyOAuth();
+                }}
+              >
+                {shopifyOAuthLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Retry with fresh link
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
+                Cancel
+              </Button>
+            </div>
+         </DialogContent>
+       </Dialog>
     </div>
   );
 }

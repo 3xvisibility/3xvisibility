@@ -66,7 +66,7 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as { products: ShopifyProduct[]; next_page_info: string | null };
+      return data as { products: ShopifyProduct[]; next_page_info: string | null; setup_required?: boolean; message?: string };
     },
   });
 
@@ -126,6 +126,7 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
   });
 
   const products = productsData?.products || [];
+  const setupRequired = !!productsData?.setup_required;
   const filtered = searchQuery
     ? products.filter((p) =>
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -350,6 +351,11 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
                       </div>
                     </div>
                   ))}
+                </div>
+              ) : setupRequired ? (
+                <div className="flex flex-col items-center gap-2 py-10 text-center text-sm text-muted-foreground">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <p>{productsData?.message || "Reconnect this Shopify store with OAuth to load products."}</p>
                 </div>
               ) : filtered.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground text-sm">

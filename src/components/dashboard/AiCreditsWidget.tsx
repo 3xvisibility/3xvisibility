@@ -40,7 +40,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
   const { data: credits, isLoading: creditsLoading, isError: creditsError } = useQuery({
     queryKey: ["ai-credits"],
     queryFn: async () => {
-      const res = await supabase.functions.invoke("ai-credits?action=check", {});
+      const res = await supabase.functions.invoke("ai-credits", { body: { action: "check" } });
       if (res.error) throw new Error("Failed to fetch credits");
       return res.data?.credits;
     },
@@ -53,7 +53,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
   const { data: usageData, isLoading: usageLoading, isError: usageError } = useQuery({
     queryKey: ["ai-credits-usage"],
     queryFn: async () => {
-      const res = await supabase.functions.invoke("ai-credits?action=usage", {});
+      const res = await supabase.functions.invoke("ai-credits", { body: { action: "usage" } });
       if (res.error) throw new Error("Failed to fetch usage");
       return (res.data?.usage ?? []) as UsageEntry[];
     },

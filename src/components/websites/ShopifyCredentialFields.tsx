@@ -1,29 +1,32 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, CheckCircle2, Shield } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { validateShopifyDomain } from "@/lib/shopify-validation";
-
+import { useLanguage } from "@/i18n/LanguageContext";
 interface ShopifyCredentialFieldsProps {
   shopDomain: string;
   onShopDomainChange: (v: string) => void;
+  /** Legacy — kept for backward compat but no longer rendered */
+  accessToken?: string;
+  onAccessTokenChange?: (v: string) => void;
 }
 
 export function ShopifyCredentialFields({
   shopDomain,
   onShopDomainChange,
 }: ShopifyCredentialFieldsProps) {
+  const { t } = useLanguage();
   const domainError = shopDomain ? validateShopifyDomain(shopDomain) : null;
   const domainOk = !!shopDomain && !domainError;
 
   return (
     <div className="space-y-4">
       <Alert className="bg-primary/5 border-primary/20">
-        <Shield className="h-4 w-4 text-primary" />
+        <ShoppingBag className="h-4 w-4 text-primary" />
         <AlertDescription className="text-xs leading-relaxed">
-          <strong>Secure OAuth connection</strong> — Enter your store domain and click Connect.
-          Shopify will ask you to authorize specific permissions. Your credentials stay safe.
+          {t("credentials.shopifyOAuthNotice")}
         </AlertDescription>
       </Alert>
 

@@ -44,6 +44,8 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
+  // Shopify — OAuth only, token field for re-auth not needed
+  const [shopifyToken, setShopifyToken] = useState("");
   // PrestaShop
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   // WooCommerce
@@ -229,19 +231,6 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
                    shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
                    onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
                  />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => reconnectShopifyMutation.mutate()}
-                  disabled={reconnectShopifyMutation.isPending}
-                >
-                  {reconnectShopifyMutation.isPending ? (
-                    <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Redirecting to Shopify...</>
-                  ) : (
-                    "Reconnect with Shopify OAuth"
-                  )}
-                </Button>
               </>
             )}
             {site.type === "prestashop" && (

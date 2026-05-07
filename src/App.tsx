@@ -42,6 +42,8 @@ import PgpGeneratePage from "./pages/PgpGeneratePage";
 import PgpTermsPage from "./pages/PgpTermsPage";
 import TemplateMappingPage from "./pages/TemplateMappingPage";
 import NotFound from "./pages/NotFound";
+import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
+import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import { BrandingProvider } from "./contexts/BrandingContext";
@@ -200,6 +202,8 @@ const App = () => {
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
+            <Route path="/shopify/oauth-launch" element={<ShopifyOAuthLaunchPage />} />
+            <Route path="/shopify/callback" element={<ShopifyCallbackPage />} />
 
             {/* Workspace-prefixed routes */}
             <Route path="/w/:workspaceSlug" element={<WorkspaceRouter />}>

@@ -6,10 +6,27 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const DEFAULT_APP_URL = "https://page-generator-project.lovable.app";
+
+function getAppBase(): string {
+  const configured = Deno.env.get("APP_URL")?.trim().replace(/\/+$/, "");
+  if (!configured) return DEFAULT_APP_URL;
+
+  try {
+    const { hostname } = new URL(configured);
+    if (hostname.endsWith(".supabase.co") || hostname === "localhost") {
+      return DEFAULT_APP_URL;
+    }
+    return configured;
+  } catch {
+    return DEFAULT_APP_URL;
+  }
+}
+
 /**
  * Generates a Shopify OAuth authorization URL.
- * Platform-managed: client_id & client_secret come from env secrets,
- * NOT from the user request.
+ * Uses platform-level SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET env vars.
+ * Users only provide their store domain.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,12 +45,16 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Platform-level credentials
+    // Platform-level Shopify app credentials
     const clientId = Deno.env.get("SHOPIFY_CLIENT_ID");
     const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
+
     if (!clientId || !clientSecret) {
-      return new Response(JSON.stringify({ error: "Shopify OAuth is not configured on this platform" }), {
-        status: 500,
+      return new Response(JSON.stringify({
+        setup_required: true,
+        message: "Shopify OAuth is not configured yet. Platform admin must add SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET as backend secrets.",
+      }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -95,7 +116,8 @@ Deno.serve(async (req) => {
     }
 
     const scopes = "read_products,write_products,read_inventory,write_inventory,read_content,write_content";
-    const callbackUrl = `${supabaseUrl}/functions/v1/shopify-oauth-callback`;
+    const appBase = getAppBase();
+    const callbackUrl = `${appBase}/shopify/callback`;
     const authUrl = `https://${domain}/admin/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
 
     return new Response(JSON.stringify({ auth_url: authUrl, state }), {

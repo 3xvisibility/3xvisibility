@@ -1,0 +1,1 @@
+ALTER TABLE public.websites ADD COLUMN shop_details jsonb DEFAULT '{}'::jsonb;
