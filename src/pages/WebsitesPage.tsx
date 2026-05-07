@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { isSafeShopifyAuthUrl } from "@/lib/shopify-auth-url";
 import { useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
@@ -213,6 +214,9 @@ export default function WebsitesPage() {
         return;
       }
       if (data?.auth_url) {
+        if (!isSafeShopifyAuthUrl(data.auth_url)) {
+          throw new Error("Returned authorization URL failed domain validation");
+        }
         openShopifyOAuthUrl(data.auth_url);
       } else {
         throw new Error("No authorization URL returned");
