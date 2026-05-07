@@ -50,7 +50,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("shopify_connections")
+        .from("shopify_connections_safe" as any)
         .select("id, shop_domain, scopes, created_at, updated_at")
         .eq("website_id", site.id)
         .maybeSingle();
