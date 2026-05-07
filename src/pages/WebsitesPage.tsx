@@ -110,10 +110,10 @@ export default function WebsitesPage() {
     } else if (oauthStatus === "error") {
       const rawMsg = (searchParams.get("message") || "OAuth connection failed").toLowerCase();
       let friendlyTitle = "Shopify connection failed";
-      let friendlyDesc = searchParams.get("message") || "OAuth connection failed. Please try again.";
+      let friendlyDesc = "OAuth connection failed. Please try again.";
       if (rawMsg.includes("expired")) {
         friendlyTitle = "Session timed out";
-        friendlyDesc = "The authorization window expired. Please click Connect again to retry.";
+        friendlyDesc = "The authorization window expired. Please click 'Try Again' to retry.";
       } else if (rawMsg.includes("signature") || rawMsg.includes("hmac") || rawMsg.includes("tamper")) {
         friendlyTitle = "Security check failed";
         friendlyDesc = "The response from Shopify couldn't be verified. Please try connecting again.";
@@ -122,11 +122,21 @@ export default function WebsitesPage() {
         friendlyDesc = "The responding store doesn't match. Verify your store domain and reconnect.";
       } else if (rawMsg.includes("token exchange")) {
         friendlyTitle = "Authorization rejected";
-        friendlyDesc = "Shopify rejected the connection. Make sure you approved the permissions, then retry.";
+        friendlyDesc = "Shopify rejected the connection. Make sure you approved the permissions on the Shopify screen, then try again.";
       } else if (rawMsg.includes("missing code") || rawMsg.includes("missing state")) {
         friendlyTitle = "Incomplete authorization";
         friendlyDesc = "The authorization wasn't completed. Please try connecting again.";
+      } else if (rawMsg.includes("not configured")) {
+        friendlyTitle = "Shopify not configured";
+        friendlyDesc = "The platform's Shopify integration hasn't been set up yet. Please contact support.";
+      } else if (rawMsg.includes("no access token")) {
+        friendlyTitle = "Token not received";
+        friendlyDesc = "Shopify did not return an access token. Please try connecting again.";
+      } else if (rawMsg.includes("failed to save")) {
+        friendlyTitle = "Connection save failed";
+        friendlyDesc = "The OAuth was successful but the connection couldn't be saved. Please try again.";
       }
+      setOauthError({ title: friendlyTitle, description: friendlyDesc });
       toast({ title: friendlyTitle, description: friendlyDesc, variant: "destructive" });
       searchParams.delete("shopify_oauth");
       searchParams.delete("message");
