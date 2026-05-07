@@ -210,7 +210,7 @@ export default function WebsitesPage() {
       if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
       if (data?.error) throw new Error(data.error);
       if (!data?.auth_url) throw new Error("No auth URL returned");
-      if (!isSafeShopifyAuthUrl(data.auth_url, domain)) {
+      if (!isSafeShopifyAuthUrl(data.auth_url)) {
         throw new Error("Received an invalid Shopify authorization URL");
       }
 
