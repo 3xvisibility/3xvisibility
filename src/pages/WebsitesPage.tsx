@@ -197,8 +197,8 @@ export default function WebsitesPage() {
         throw new Error("Received an invalid Shopify authorization URL");
       }
 
-      toast({ title: "Opening Shopify", description: "Complete authorization in the new tab, then return here." });
-      window.open(data.auth_url, "_blank");
+      toast({ title: "Redirecting to Shopify", description: "Complete authorization there, then you'll return automatically." });
+      window.location.href = data.auth_url;
     } catch (err: any) {
       toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
     } finally {
@@ -607,18 +607,20 @@ export default function WebsitesPage() {
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
-                  <Button
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                    onClick={() => testConnectionMutation.mutate()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending || isConnecting}
-                  >
-                    {testConnectionMutation.isPending ? (
-                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
-                    ) : (
-                      <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
-                    )}
-                  </Button>
+                  {siteType !== "shopify" && (
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => testConnectionMutation.mutate()}
+                      disabled={!siteUrl || !siteType || testConnectionMutation.isPending || isConnecting}
+                    >
+                      {testConnectionMutation.isPending ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
+                      ) : (
+                        <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
+                      )}
+                    </Button>
+                  )}
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
@@ -627,7 +629,7 @@ export default function WebsitesPage() {
                     {isConnecting || shopifyOAuthLoading ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
                     ) : (
-                      t("common.connect")
+                      siteType === "shopify" ? "Connect with Shopify" : t("common.connect")
                     )}
                   </Button>
                 </div>
