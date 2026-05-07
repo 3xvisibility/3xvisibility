@@ -131,6 +131,7 @@ export default function WebsitesPage() {
   // Shopify-specific frontend validation
   const shopifyDomainError = siteType === "shopify" ? validateShopifyDomain(shopDomain) : null;
   const shopifyInvalid = siteType === "shopify" && !!shopifyDomainError;
+  const normalizedShopDomain = shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
   const buildCredentials = () => {
     if (siteType === "wordpress") {
@@ -138,7 +139,7 @@ export default function WebsitesPage() {
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (siteType === "shopify") return { shop_domain: shopDomain };
+    if (siteType === "shopify") return {};
     if (siteType === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
@@ -171,11 +172,12 @@ export default function WebsitesPage() {
     if (siteType === "shopify") {
       setIsConnecting(true);
       try {
+        if (shopifyDomainError) throw new Error(shopifyDomainError);
         const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
           body: {
-            shop_domain: shopDomain,
+            shop_domain: normalizedShopDomain,
             workspace_id: wsId,
-            site_name: siteName || shopDomain,
+            site_name: siteName || normalizedShopDomain,
             language: siteLanguage,
           },
         });
@@ -290,7 +292,7 @@ export default function WebsitesPage() {
 
   const buildTestUrl = () =>
     siteType === "shopify" && shopDomain
-      ? `https://${shopDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "")}`
+      ? `https://${normalizedShopDomain}`
       : siteUrl;
 
   const detectLanguageMutation = useMutation({
@@ -483,6 +485,7 @@ export default function WebsitesPage() {
                       className="h-8 px-2 text-xs"
                       onClick={() => detectLanguageMutation.mutate()}
                       disabled={
+                        siteType === "shopify" ||
                         !(siteType === "shopify" ? shopDomain : siteUrl) ||
                         detectLanguageMutation.isPending
                       }
@@ -519,18 +522,20 @@ export default function WebsitesPage() {
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={isConnecting} className="w-full sm:w-auto">{t("common.cancel")}</Button>
-                  <Button
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                    onClick={() => testConnectionMutation.mutate()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending || isConnecting}
-                  >
-                    {testConnectionMutation.isPending ? (
-                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
-                    ) : (
-                      <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
-                    )}
-                  </Button>
+                  {siteType !== "shopify" && (
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                      onClick={() => testConnectionMutation.mutate()}
+                      disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || testConnectionMutation.isPending || isConnecting}
+                    >
+                      {testConnectionMutation.isPending ? (
+                        <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.testing")}</>
+                      ) : (
+                        <><Zap className="h-4 w-4 mr-1" /> {t("common.test")}</>
+                      )}
+                    </Button>
+                  )}
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
@@ -539,7 +544,7 @@ export default function WebsitesPage() {
                     {isConnecting ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
                     ) : (
-                      t("common.connect")
+                      siteType === "shopify" ? "Connect with Shopify" : t("common.connect")
                     )}
                   </Button>
                 </div>

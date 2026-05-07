@@ -137,10 +137,11 @@ Deno.serve(async (req) => {
       return redirectError("No access token received from Shopify");
     }
 
-    // ── 6. Save the website connection (scoped to the authenticated user) ──
-    const { error: insertError } = await supabase.from("websites").insert({
+    // ── 6. Save or refresh the website connection (scoped to the authenticated user) ──
+    const canonicalUrl = `https://${domain}`;
+    const websitePayload = {
       name: oauthState.site_name || domain,
-      url: `https://${domain}`,
+      url: canonicalUrl,
       type: "shopify",
       status: "connected",
       user_id: oauthState.user_id,
@@ -153,11 +154,36 @@ Deno.serve(async (req) => {
         auth_method: "oauth",
         scopes: tokenData.scope || "",
       },
-    });
+    };
 
-    if (insertError) {
-      console.error("Failed to save website:", insertError);
+    const { data: existingWebsite, error: existingWebsiteError } = await supabase
+      .from("websites")
+      .select("id")
+      .eq("workspace_id", oauthState.workspace_id)
+      .eq("type", "shopify")
+      .eq("url", canonicalUrl)
+      .maybeSingle();
+
+    if (existingWebsiteError) {
+      console.error("Failed to check existing Shopify website:", existingWebsiteError);
       return redirectError("Failed to save connection");
+    }
+
+    if (existingWebsite?.id) {
+      const { error: updateError } = await supabase
+        .from("websites")
+        .update(websitePayload)
+        .eq("id", existingWebsite.id);
+      if (updateError) {
+        console.error("Failed to refresh website connection:", updateError);
+        return redirectError("Failed to save connection");
+      }
+    } else {
+      const { error: insertError } = await supabase.from("websites").insert(websitePayload);
+      if (insertError) {
+        console.error("Failed to save website:", insertError);
+        return redirectError("Failed to save connection");
+      }
     }
 
     // ── 7. Redirect back to the correct workspace ──

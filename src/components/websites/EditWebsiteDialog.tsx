@@ -16,7 +16,7 @@ import { PrestaShopCredentialFields } from "./PrestaShopCredentialFields";
 import { ConnectionSetupGuide } from "./ConnectionSetupGuide";
 import { WebsiteLanguageSelect } from "./WebsiteLanguageSelect";
 import { ShopifyFieldMappingEditor } from "./ShopifyFieldMappingEditor";
-import { validateShopifyDomain, validateShopifyToken } from "@/lib/shopify-validation";
+import { validateShopifyDomain } from "@/lib/shopify-validation";
 import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Website = Tables<"websites">;
@@ -44,8 +44,6 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const [username, setUsername] = useState("");
   const [appPassword, setAppPassword] = useState("");
   const [jwtToken, setJwtToken] = useState("");
-  // Shopify
-  const [shopifyToken, setShopifyToken] = useState("");
   // PrestaShop
   const [prestashopApiKey, setPrestashopApiKey] = useState("");
   // WooCommerce
@@ -65,7 +63,6 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       setUsername("");
       setAppPassword("");
       setJwtToken("");
-      setShopifyToken("");
       setPrestashopApiKey("");
       setWooConsumerKey("");
       setWooConsumerSecret("");
@@ -80,7 +77,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
         ? { username, app_password: appPassword, auth_method: "application_password" }
         : { jwt_token: jwtToken, auth_method: "jwt" };
     }
-    if (site.type === "shopify") return { admin_api_token: shopifyToken };
+    if (site.type === "shopify") return {};
     if (site.type === "woocommerce") return { consumer_key: wooConsumerKey, consumer_secret: wooConsumerSecret };
     return { api_key: prestashopApiKey };
   };
@@ -89,7 +86,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
     if (site.type === "wordpress") {
       return wpAuthMethod === "application_password" ? !!(username && appPassword) : !!jwtToken;
     }
-    if (site.type === "shopify") return !!shopifyToken;
+    if (site.type === "shopify") return false;
     if (site.type === "woocommerce") return !!(wooConsumerKey && wooConsumerSecret);
     return !!prestashopApiKey;
   };
@@ -126,12 +123,6 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
   const testMutation = useMutation({
     mutationFn: async () => {
       if (!hasCredentialInput()) throw new Error("Enter new credentials to test");
-      if (site.type === "shopify") {
-        const shopDomain = (url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
-        const dErr = validateShopifyDomain(shopDomain);
-        const tErr = validateShopifyToken(shopifyToken);
-        if (dErr || tErr) throw new Error(dErr || tErr || "Invalid Shopify credentials");
-      }
       const { data, error } = await supabase.functions.invoke("test-connection", {
         body: { url, type: site.type, credentials: buildCredentials() },
       });
@@ -144,6 +135,30 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
     },
     onError: (err: Error) => {
       toast({ title: "Connection failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const reconnectShopifyMutation = useMutation({
+    mutationFn: async () => {
+      if (site.type !== "shopify") return;
+      const shopDomain = (url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
+      const dErr = validateShopifyDomain(shopDomain);
+      if (dErr) throw new Error(dErr);
+      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
+        body: {
+          shop_domain: shopDomain,
+          workspace_id: site.workspace_id,
+          site_name: name || shopDomain,
+          language,
+        },
+      });
+      if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
+      if (data?.error) throw new Error(data.error);
+      if (!data?.auth_url) throw new Error("No auth URL returned");
+      window.location.href = data.auth_url;
+    },
+    onError: (err: Error) => {
+      toast({ title: "Reconnect failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -214,6 +229,19 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
                    shopDomain={(url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}
                    onShopDomainChange={(v) => setUrl(`https://${(v || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")}`)}
                  />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => reconnectShopifyMutation.mutate()}
+                  disabled={reconnectShopifyMutation.isPending}
+                >
+                  {reconnectShopifyMutation.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Redirecting to Shopify...</>
+                  ) : (
+                    "Reconnect with Shopify OAuth"
+                  )}
+                </Button>
               </>
             )}
             {site.type === "prestashop" && (
@@ -239,17 +267,13 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
             )}
 
             {hasCredentialInput() && (() => {
-              const shopifyInvalid = site.type === "shopify" && (
-                !!validateShopifyDomain((url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "")) ||
-                !!validateShopifyToken(shopifyToken)
-              );
               return (
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
                   onClick={() => testMutation.mutate()}
-                  disabled={testMutation.isPending || shopifyInvalid}
+                  disabled={testMutation.isPending}
                 >
                   {testMutation.isPending ? (
                     <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Testing...</>
