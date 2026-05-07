@@ -84,7 +84,12 @@ Deno.serve(async (req) => {
       .eq("website_id", website_id)
       .maybeSingle();
     if (conn?.access_token) {
-      token = conn.access_token;
+      try {
+        token = await decrypt(conn.access_token);
+      } catch {
+        // May be a legacy unencrypted value
+        token = conn.access_token;
+      }
     } else {
       // Legacy fallback — decrypt from websites.credentials
       try {
