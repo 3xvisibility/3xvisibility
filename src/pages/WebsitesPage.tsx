@@ -80,7 +80,7 @@ export default function WebsitesPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [shopifyOAuthLoading, setShopifyOAuthLoading] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
-  const [popupBlockedUrl, setPopupBlockedUrl] = useState<string | null>(null);
+  
   const [oauthError, setOauthError] = useState<{ title: string; description: string } | null>(null);
 
   const { toast } = useToast();
@@ -685,49 +685,6 @@ export default function WebsitesPage() {
         </div>
       )}
 
-       {/* Popup-blocked fallback dialog */}
-       <Dialog open={!!popupBlockedUrl} onOpenChange={(v) => { if (!v) setPopupBlockedUrl(null); }}>
-         <DialogContent className="sm:max-w-md">
-           <DialogHeader>
-             <DialogTitle className="flex items-center gap-2">
-               <ExternalLink className="h-5 w-5 text-primary" />
-               Popup Blocked
-             </DialogTitle>
-             <DialogDescription>
-               Your browser blocked the Shopify authorization popup. Copy the link or open it manually to continue.
-             </DialogDescription>
-           </DialogHeader>
-           <Alert className="bg-muted/50 border-border">
-             <AlertDescription className="text-xs break-all font-mono select-all">
-               {popupBlockedUrl}
-             </AlertDescription>
-           </Alert>
-            <div className="flex flex-col gap-2 pt-2">
-              <Button asChild>
-                <a href={popupBlockedUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={() => setPopupBlockedUrl(null)}>
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Open Shopify Authorization
-                </a>
-              </Button>
-              <CopyAuthUrlButton url={popupBlockedUrl} />
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={shopifyOAuthLoading}
-                onClick={async () => {
-                  setPopupBlockedUrl(null);
-                  await startShopifyOAuth();
-                }}
-              >
-                {shopifyOAuthLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                Retry with fresh link
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setPopupBlockedUrl(null)}>
-                Cancel
-              </Button>
-            </div>
-         </DialogContent>
-       </Dialog>
     </div>
   );
 }
