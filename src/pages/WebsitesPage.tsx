@@ -198,7 +198,7 @@ export default function WebsitesPage() {
       }
 
       toast({ title: "Redirecting to Shopify", description: "Complete authorization there, then you'll return automatically." });
-      window.location.assign(data.auth_url);
+      window.location.href = data.auth_url;
     } catch (err: any) {
       toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
     } finally {
