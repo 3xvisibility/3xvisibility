@@ -155,8 +155,8 @@ Deno.serve(async (req) => {
       return redirectError("No access token received from Shopify");
     }
 
-    // ── 6. Save the website connection (scoped to the authenticated user) ──
-    const { error: insertError } = await supabase.from("websites").insert({
+    // ── 6. Save or refresh the website connection (scoped to the user/workspace) ──
+    const websitePayload = {
       name: oauthState.site_name || domain,
       url: `https://${domain}`,
       type: "shopify",
@@ -171,7 +171,15 @@ Deno.serve(async (req) => {
         auth_method: "oauth",
         scopes: tokenData.scope || "",
       },
-    });
+    };
+
+    const { data: existingWebsite, error: existingWebsiteError } = await supabase
+      .from("websites")
+      .select("id")
+      .eq("workspace_id", oauthState.workspace_id)
+      .eq("type", "shopify")
+      .eq("url", websitePayload.url)
+      .maybeSingle();
 
     if (existingWebsiteError) {
       console.error("Failed to check existing Shopify website:", existingWebsiteError);

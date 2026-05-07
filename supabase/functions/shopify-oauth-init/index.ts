@@ -6,21 +6,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const DEFAULT_APP_URL = "https://page-generator-project.lovable.app";
-
-function getAppBase(): string {
-  const configured = Deno.env.get("APP_URL")?.trim().replace(/\/+$/, "");
-  if (!configured) return DEFAULT_APP_URL;
-
-  try {
-    const { hostname } = new URL(configured);
-    if (hostname.endsWith(".supabase.co") || hostname === "localhost") {
-      return DEFAULT_APP_URL;
-    }
-    return configured;
-  } catch {
-    return DEFAULT_APP_URL;
-  }
+function getOauthCallbackUrl(supabaseUrl: string): string {
+  const configured = Deno.env.get("SHOPIFY_OAUTH_CALLBACK_URL")?.trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  return `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/shopify-oauth-callback`;
 }
 
 /**
@@ -116,8 +105,7 @@ Deno.serve(async (req) => {
     }
 
     const scopes = "read_products,write_products,read_inventory,write_inventory,read_content,write_content";
-    const appBase = getAppBase();
-    const callbackUrl = `${appBase}/shopify/callback`;
+    const callbackUrl = getOauthCallbackUrl(supabaseUrl);
     const authUrl = `https://${domain}/admin/oauth/authorize?client_id=${encodeURIComponent(clientId)}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(callbackUrl)}&state=${state}`;
 
     return new Response(JSON.stringify({ auth_url: authUrl, state }), {
