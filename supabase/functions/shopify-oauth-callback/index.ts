@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
   const state = url.searchParams.get("state");
   const shopParam = url.searchParams.get("shop");
 
-  const appBase = getAppBase();
+  const appBase = APP_BASE;
   const redirectError = (msg: string) =>
     Response.redirect(`${appBase}/w/default/websites?shopify_oauth=error&message=${encodeURIComponent(msg)}`, 302);
 
