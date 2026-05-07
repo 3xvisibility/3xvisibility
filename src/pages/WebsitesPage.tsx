@@ -81,6 +81,7 @@ export default function WebsitesPage() {
   const [shopifyOAuthLoading, setShopifyOAuthLoading] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
   const [popupBlockedUrl, setPopupBlockedUrl] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<{ title: string; description: string } | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
