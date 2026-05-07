@@ -2,20 +2,7 @@ import { ExternalLink, ShieldAlert } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-
-const isSafeShopifyAuthUrl = (value: string | null) => {
-  if (!value) return false;
-  try {
-    const url = new URL(value);
-    return (
-      url.protocol === "https:" &&
-      /\.myshopify\.com$/i.test(url.hostname) &&
-      url.pathname.startsWith("/admin/oauth/authorize")
-    );
-  } catch {
-    return false;
-  }
-};
+import { isSafeShopifyAuthUrl } from "@/lib/shopify-auth-url";
 
 const ShopifyOAuthLaunchPage = () => {
   const authUrl = useMemo(() => new URLSearchParams(window.location.search).get("auth_url"), []);
