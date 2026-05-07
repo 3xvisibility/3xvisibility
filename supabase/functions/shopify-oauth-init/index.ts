@@ -6,10 +6,36 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function getOauthCallbackUrl(supabaseUrl: string): string {
-  const configured = Deno.env.get("SHOPIFY_OAUTH_CALLBACK_URL")?.trim();
-  if (configured) return configured.replace(/\/+$/, "");
-  return `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/shopify-oauth-callback`;
+const DEV_APP_URL = "http://localhost:8080";
+const PROD_APP_URL = "https://page-generator-project.lovable.app";
+const CALLBACK_PATH = "/api/shopify/callback";
+
+/**
+ * Resolves the OAuth redirect_uri based on environment.
+ * Priority: SHOPIFY_REDIRECT_URI (exact override) > APP_URL + path > auto-detect.
+ */
+function getOauthCallbackUrl(): string {
+  // 1. Exact override — allows whitelisting a specific URL in Shopify app settings
+  const exactOverride = Deno.env.get("SHOPIFY_REDIRECT_URI")?.trim();
+  if (exactOverride) return exactOverride.replace(/\/+$/, "");
+
+  // 2. APP_URL-based — respects per-environment config
+  const appUrl = Deno.env.get("APP_URL")?.trim().replace(/\/+$/, "");
+  if (appUrl) {
+    try {
+      const { hostname } = new URL(appUrl);
+      // Ignore Supabase URLs — they are not the frontend
+      if (!hostname.endsWith(".supabase.co")) {
+        return `${appUrl}${CALLBACK_PATH}`;
+      }
+    } catch { /* fall through */ }
+  }
+
+  // 3. Auto-detect: check if running locally (Deno.env or convention)
+  const isLocal = Deno.env.get("ENVIRONMENT") === "development"
+    || Deno.env.get("NODE_ENV") === "development";
+  const base = isLocal ? DEV_APP_URL : PROD_APP_URL;
+  return `${base}${CALLBACK_PATH}`;
 }
 
 /**
