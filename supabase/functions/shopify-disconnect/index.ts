@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { decryptCredentials } from "../_shared/crypto.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,9 +8,10 @@ const corsHeaders = {
 
 /**
  * Disconnects a Shopify store:
- * 1. Decrypts stored credentials to get the access token
+ * 1. Reads the access token from shopify_connections
  * 2. Revokes the token via Shopify's REST API
- * 3. Clears credentials and marks the website as "disconnected"
+ * 3. Deletes the shopify_connections row
+ * 4. Marks the website as "disconnected" and clears credentials
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -79,53 +79,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Decrypt credentials to get the access token and shop domain
-    const creds = site.credentials as Record<string, string> | null;
+    // Look up access token from shopify_connections
+    const shopDomain = (site.credentials as Record<string, string> | null)?.shop_domain
+      || site.url?.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+
     let revokeSuccess = false;
 
-    if (creds) {
+    const { data: conn } = await supabase
+      .from("shopify_connections")
+      .select("id, access_token")
+      .eq("website_id", website_id)
+      .maybeSingle();
+
+    if (conn?.access_token && shopDomain) {
       try {
-        const decrypted = await decryptCredentials(creds);
-        const accessToken = decrypted.admin_api_token;
-        const shopDomain = decrypted.shop_domain || site.url?.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-
-        if (accessToken && shopDomain) {
-          // Revoke token via Shopify API
-          // DELETE /admin/api_permissions/current.json removes the app's access
-          const revokeRes = await fetch(
-            `https://${shopDomain}/admin/api_permissions/current.json`,
-            {
-              method: "DELETE",
-              headers: {
-                "X-Shopify-Access-Token": accessToken,
-                "Content-Type": "application/json",
-              },
+        const revokeRes = await fetch(
+          `https://${shopDomain}/admin/api_permissions/current.json`,
+          {
+            method: "DELETE",
+            headers: {
+              "X-Shopify-Access-Token": conn.access_token,
+              "Content-Type": "application/json",
             },
-          );
-
-          if (revokeRes.ok || revokeRes.status === 204) {
-            revokeSuccess = true;
-            console.log(`Token revoked for ${shopDomain}`);
-          } else {
-            const errText = await revokeRes.text();
-            console.warn(`Token revocation returned ${revokeRes.status}: ${errText}`);
-            // Still proceed with disconnect even if revocation fails
-            // (token may already be invalid)
-            revokeSuccess = false;
-          }
+          },
+        );
+        revokeSuccess = revokeRes.ok || revokeRes.status === 204;
+        if (!revokeSuccess) {
+          const errText = await revokeRes.text();
+          console.warn(`Token revocation returned ${revokeRes.status}: ${errText}`);
         }
       } catch (err) {
-        console.warn("Could not decrypt/revoke token:", err);
+        console.warn("Could not revoke token:", err);
       }
+    }
+
+    // Delete the shopify_connections row
+    if (conn?.id) {
+      await supabase.from("shopify_connections").delete().eq("id", conn.id);
     }
 
     // Mark website as disconnected and clear credentials
     const { error: updateError } = await supabase
       .from("websites")
-      .update({
-        status: "disconnected",
-        credentials: {},
-      })
+      .update({ status: "disconnected", credentials: {} })
       .eq("id", website_id);
 
     if (updateError) {
@@ -142,7 +138,7 @@ Deno.serve(async (req) => {
         token_revoked: revokeSuccess,
         message: revokeSuccess
           ? "Store disconnected and access token revoked."
-          : "Store disconnected. Token revocation was skipped or failed (credentials may have already been invalid).",
+          : "Store disconnected. Token revocation was skipped or failed.",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
