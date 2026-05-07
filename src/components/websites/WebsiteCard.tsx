@@ -43,10 +43,29 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
 
   const isShopify = site.type === "shopify";
 
+  // Check shopify_connections for active token
+  const { data: shopifyConn } = useQuery({
+    queryKey: ["shopify-connection", site.id],
+    enabled: isShopify,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shopify_connections")
+        .select("id, shop_domain, scopes, created_at, updated_at")
+        .eq("website_id", site.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Derive connected status from shopify_connections presence
+  const shopifyTokenPresent = !!shopifyConn?.id;
+
   // Live health check for Shopify — fetches 1 product to verify token works
   const { data: healthData, isLoading: healthLoading, isError: healthError } = useQuery({
     queryKey: ["shopify-health", site.id],
-    enabled: isShopify && site.status === "connected",
+    enabled: isShopify && shopifyTokenPresent,
     staleTime: 5 * 60 * 1000, // 5 min
     retry: 1,
     queryFn: async () => {
@@ -62,7 +81,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   // Latest sync event
   const { data: latestSync } = useQuery({
     queryKey: ["shopify-latest-sync", site.id],
-    enabled: isShopify && site.status === "connected",
+    enabled: isShopify && shopifyTokenPresent,
     staleTime: 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("shopify-products", {
@@ -204,6 +223,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["websites"] });
+      queryClient.invalidateQueries({ queryKey: ["shopify-connection", site.id] });
       toast({
         title: "Shopify disconnected",
         description: data?.token_revoked
@@ -282,8 +302,8 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           {/* Shopify status panel — shown for both connected & disconnected */}
           {isShopify && (() => {
             const shopDetails = (site as unknown as { shop_details?: Record<string, string | null> }).shop_details;
-            const isConnected = site.status === "connected";
-            const isDisconnected = site.status === "disconnected";
+            const isConnected = shopifyTokenPresent;
+            const isDisconnected = !shopifyTokenPresent;
 
             return (
             <div className={cn(
@@ -508,7 +528,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
-                  disabled={disconnectMutation.isPending || site.status !== "connected"}
+                  disabled={disconnectMutation.isPending || !shopifyTokenPresent}
                   onClick={() => setDisconnectConfirmOpen(true)}
                 >
                   {disconnectMutation.isPending ? (

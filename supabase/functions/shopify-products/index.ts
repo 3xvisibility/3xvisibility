@@ -73,9 +73,25 @@ Deno.serve(async (req) => {
       return json({ events: events || [] });
     }
 
-    const creds = await decryptCredentials((website.credentials || {}) as Record<string, string>);
-    const domain = creds?.shop_domain || website.url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
-    const token = creds?.admin_api_token;
+    // Read token from shopify_connections (preferred) or fall back to legacy credentials
+    const wsCreds = (website.credentials || {}) as Record<string, string>;
+    const domain = wsCreds?.shop_domain || website.url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+
+    let token: string | undefined;
+    const { data: conn } = await supabase
+      .from("shopify_connections")
+      .select("access_token")
+      .eq("website_id", website_id)
+      .maybeSingle();
+    if (conn?.access_token) {
+      token = conn.access_token;
+    } else {
+      // Legacy fallback — decrypt from websites.credentials
+      try {
+        const decrypted = await decryptCredentials(wsCreds);
+        token = decrypted?.admin_api_token;
+      } catch { /* no legacy token */ }
+    }
 
     if (!token) {
       if (action === "list_products") {
