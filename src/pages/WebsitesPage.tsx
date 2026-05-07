@@ -597,7 +597,7 @@ export default function WebsitesPage() {
                       onClick={() => detectLanguageMutation.mutate()}
                       disabled={
                         siteType === "shopify" ||
-                        !(siteType === "shopify" ? shopDomain : siteUrl) ||
+                        !siteUrl ||
                         detectLanguageMutation.isPending
                       }
                     >
