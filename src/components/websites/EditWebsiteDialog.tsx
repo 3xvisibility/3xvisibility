@@ -157,7 +157,8 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       if (error) throw new Error(await extractEdgeError(error, "Reconnect failed"));
       if (data?.error) throw new Error(data.error);
       if (!data?.auth_url) throw new Error("No auth URL returned");
-      window.location.href = data.auth_url;
+      const target = window.top || window;
+      target.location.href = data.auth_url;
     },
     onError: (err: Error) => {
       toast({ title: "Reconnect failed", description: err.message, variant: "destructive" });
