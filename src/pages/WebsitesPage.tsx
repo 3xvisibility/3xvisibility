@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Loader2, Zap, Languages, Lock } from "lucide-react";
+import { Plus, Loader2, Zap, Languages, Lock, AlertTriangle, X } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -81,6 +81,7 @@ export default function WebsitesPage() {
   const [shopifyOAuthLoading, setShopifyOAuthLoading] = useState(false);
   const [autoOpenShopifyProducts, setAutoOpenShopifyProducts] = useState(false);
   const [popupBlockedUrl, setPopupBlockedUrl] = useState<string | null>(null);
+  const [oauthError, setOauthError] = useState<{ title: string; description: string } | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -93,6 +94,7 @@ export default function WebsitesPage() {
   useEffect(() => {
     const oauthStatus = searchParams.get("shopify_oauth");
     if (oauthStatus === "success") {
+      setOauthError(null);
       toast({ title: "Shopify connected!", description: "Your Shopify store has been connected via OAuth. Loading products…" });
       // Immediately invalidate + poll a few times to catch the new website row
       queryClient.invalidateQueries({ queryKey: ["websites"] });
@@ -109,10 +111,10 @@ export default function WebsitesPage() {
     } else if (oauthStatus === "error") {
       const rawMsg = (searchParams.get("message") || "OAuth connection failed").toLowerCase();
       let friendlyTitle = "Shopify connection failed";
-      let friendlyDesc = searchParams.get("message") || "OAuth connection failed. Please try again.";
+      let friendlyDesc = "OAuth connection failed. Please try again.";
       if (rawMsg.includes("expired")) {
         friendlyTitle = "Session timed out";
-        friendlyDesc = "The authorization window expired. Please click Connect again to retry.";
+        friendlyDesc = "The authorization window expired. Please click 'Try Again' to retry.";
       } else if (rawMsg.includes("signature") || rawMsg.includes("hmac") || rawMsg.includes("tamper")) {
         friendlyTitle = "Security check failed";
         friendlyDesc = "The response from Shopify couldn't be verified. Please try connecting again.";
@@ -121,11 +123,21 @@ export default function WebsitesPage() {
         friendlyDesc = "The responding store doesn't match. Verify your store domain and reconnect.";
       } else if (rawMsg.includes("token exchange")) {
         friendlyTitle = "Authorization rejected";
-        friendlyDesc = "Shopify rejected the connection. Make sure you approved the permissions, then retry.";
+        friendlyDesc = "Shopify rejected the connection. Make sure you approved the permissions on the Shopify screen, then try again.";
       } else if (rawMsg.includes("missing code") || rawMsg.includes("missing state")) {
         friendlyTitle = "Incomplete authorization";
         friendlyDesc = "The authorization wasn't completed. Please try connecting again.";
+      } else if (rawMsg.includes("not configured")) {
+        friendlyTitle = "Shopify not configured";
+        friendlyDesc = "The platform's Shopify integration hasn't been set up yet. Please contact support.";
+      } else if (rawMsg.includes("no access token")) {
+        friendlyTitle = "Token not received";
+        friendlyDesc = "Shopify did not return an access token. Please try connecting again.";
+      } else if (rawMsg.includes("failed to save")) {
+        friendlyTitle = "Connection save failed";
+        friendlyDesc = "The OAuth was successful but the connection couldn't be saved. Please try again.";
       }
+      setOauthError({ title: friendlyTitle, description: friendlyDesc });
       toast({ title: friendlyTitle, description: friendlyDesc, variant: "destructive" });
       searchParams.delete("shopify_oauth");
       searchParams.delete("message");
@@ -450,6 +462,41 @@ export default function WebsitesPage() {
     <div className="space-y-6">
       <UsageLimitBanner type="sites" used={sitesConnected} limit={sitesLimit} />
       <UsageLimitDialog open={limitDialogOpen} onOpenChange={setLimitDialogOpen} type="sites" used={sitesConnected} limit={sitesLimit === -1 ? sitesConnected : sitesLimit} />
+
+      {/* Persistent Shopify OAuth error banner */}
+      {oauthError && (
+        <Alert variant="destructive" className="relative border-destructive/40 bg-destructive/10">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="font-semibold text-sm">{oauthError.title}</p>
+              <p className="text-xs mt-0.5 opacity-90">{oauthError.description}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs gap-1 border-destructive/30 hover:bg-destructive/10"
+                onClick={() => {
+                  setOauthError(null);
+                  setOpen(true);
+                }}
+              >
+                <RefreshCw className="h-3 w-3" />
+                Try Again
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-destructive/70 hover:text-destructive"
+                onClick={() => setOauthError(null)}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
