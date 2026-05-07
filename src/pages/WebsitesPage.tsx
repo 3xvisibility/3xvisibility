@@ -214,17 +214,8 @@ export default function WebsitesPage() {
         throw new Error("Received an invalid Shopify authorization URL");
       }
 
-      const popup = window.open(data.auth_url, "_blank", "noopener,noreferrer");
-      if (!popup) {
-        setPopupBlockedUrl(data.auth_url);
-        toast({
-          title: "Popup blocked",
-          description: "Authorization link generated. Open it manually to continue.",
-          variant: "destructive",
-        });
-      } else {
-        popup.focus();
-      }
+      toast({ title: "Redirecting to Shopify", description: "Complete authorization there, then you'll return automatically." });
+      window.location.assign(data.auth_url);
     } catch (err: any) {
       toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
     } finally {
