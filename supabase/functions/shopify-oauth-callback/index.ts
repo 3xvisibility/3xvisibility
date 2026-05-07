@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
       return redirectError("No access token received from Shopify");
     }
 
-    // ── 6. Save or refresh the website connection (scoped to the user/workspace) ──
+    // ── 6. Save or refresh the website row ──
     const websitePayload = {
       name: oauthState.site_name || domain,
       url: `https://${domain}`,
@@ -150,7 +150,6 @@ Deno.serve(async (req) => {
       workspace_id: oauthState.workspace_id,
       language: oauthState.language,
       credentials: {
-        admin_api_token: accessToken,
         shop_domain: domain,
         oauth_client_id: oauthState.client_id,
         auth_method: "oauth",
@@ -171,7 +170,10 @@ Deno.serve(async (req) => {
       return redirectError("Failed to save connection");
     }
 
+    let websiteId: string;
+
     if (existingWebsite?.id) {
+      websiteId = existingWebsite.id;
       const { error: updateError } = await supabase
         .from("websites")
         .update(websitePayload)
@@ -181,11 +183,36 @@ Deno.serve(async (req) => {
         return redirectError("Failed to save connection");
       }
     } else {
-      const { error: insertError } = await supabase.from("websites").insert(websitePayload);
-      if (insertError) {
+      const { data: inserted, error: insertError } = await supabase
+        .from("websites")
+        .insert(websitePayload)
+        .select("id")
+        .single();
+      if (insertError || !inserted) {
         console.error("Failed to save website:", insertError);
         return redirectError("Failed to save connection");
       }
+      websiteId = inserted.id;
+    }
+
+    // ── 7. Upsert into shopify_connections (per-user per-shop token) ──
+    const { error: connError } = await supabase
+      .from("shopify_connections")
+      .upsert(
+        {
+          user_id: oauthState.user_id,
+          workspace_id: oauthState.workspace_id,
+          website_id: websiteId,
+          shop_domain: domain,
+          access_token: accessToken,
+          scopes: tokenData.scope || "",
+        },
+        { onConflict: "user_id,shop_domain" },
+      );
+
+    if (connError) {
+      console.error("Failed to save shopify_connections:", connError);
+      return redirectError("Failed to save access token");
     }
 
     // ── 9. Redirect back to the correct workspace ──
