@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
+import { launchShopifyOAuthInTopWindow } from "@/lib/shopify-auth-url";
 import { useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
@@ -182,20 +182,12 @@ export default function WebsitesPage() {
 
     setShopifyOAuthLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("shopify-oauth-init", {
-        body: {
-          shop_domain: domain,
-          workspace_id: wsId,
-          site_name: siteName || domain,
-          language: siteLanguage,
-        },
+      launchShopifyOAuthInTopWindow({
+        shopDomain: domain,
+        workspaceId: wsId,
+        siteName: siteName || domain,
+        language: siteLanguage,
       });
-      if (error) throw new Error(await extractEdgeError(error, "OAuth init failed"));
-      if (data?.error) throw new Error(data.error);
-      if (!data?.auth_url) throw new Error("No auth URL returned");
-
-      toast({ title: "Redirecting to Shopify", description: "Complete authorization there, then you'll return automatically." });
-      navigateToShopifyAuth(data.auth_url);
     } catch (err: any) {
       toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
     } finally {
