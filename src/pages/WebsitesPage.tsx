@@ -198,7 +198,9 @@ export default function WebsitesPage() {
       }
 
       toast({ title: "Redirecting to Shopify", description: "Complete authorization there, then you'll return automatically." });
-      window.location.href = data.auth_url;
+      // Use top-level navigation to escape iframe (Shopify blocks embedded frames)
+      const target = window.top || window;
+      target.location.href = data.auth_url;
     } catch (err: any) {
       toast({ title: "OAuth failed", description: err?.message || "Could not start OAuth", variant: "destructive" });
     } finally {
