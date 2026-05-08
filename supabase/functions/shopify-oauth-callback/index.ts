@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
       console.error("Token exchange failed:", errText);
-      return redirectError(`Token exchange failed (${tokenRes.status})`);
+      return redirectError(`Token exchange failed (${tokenRes.status})`, "token_exchange_failed");
     }
 
     const tokenData = await tokenRes.json();
