@@ -46,6 +46,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitationsBanner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { AiCreditsWidget } from "@/components/dashboard/AiCreditsWidget";
+import { ShopifyConnectionsWidget } from "@/components/dashboard/ShopifyConnectionsWidget";
 
 const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
@@ -394,6 +395,9 @@ export default function DashboardPage() {
 
       {/* AI Credits */}
       <AiCreditsWidget />
+
+      {/* Shopify connections */}
+      <ShopifyConnectionsWidget />
 
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-glow to-secondary p-6 sm:p-8 text-primary-foreground">
