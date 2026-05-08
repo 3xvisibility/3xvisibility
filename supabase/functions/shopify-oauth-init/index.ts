@@ -44,8 +44,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
     const { data: { user }, error: userError } = await userClient.auth.getUser(token);
     if (userError || !user) {
       console.error("auth.getUser failed:", userError);
