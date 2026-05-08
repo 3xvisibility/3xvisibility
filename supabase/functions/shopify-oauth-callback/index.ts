@@ -112,18 +112,15 @@ Deno.serve(async (req) => {
 
     // ── 2. Expiry check ──
     if (new Date(oauthState.expires_at) < new Date()) {
-      return redirectError("OAuth session expired. Please try again.");
+      return redirectError("OAuth session expired. Please try again.", "expired");
     }
 
-    // ── 3. Shop domain cross-check ──
-    // Shopify sends the actual shop domain; verify it matches what we stored.
+    // ── 3. Shop domain cross-check (mandatory) ──
     const storedDomain = oauthState.shop_domain.toLowerCase();
-    if (shopParam) {
-      const callbackShop = shopParam.toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      if (callbackShop !== storedDomain) {
-        console.error(`Shop domain mismatch: expected ${storedDomain}, got ${callbackShop}`);
-        return redirectError("Shop domain mismatch — possible tampering");
-      }
+    const callbackShop = shopParam!.toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    if (callbackShop !== storedDomain) {
+      console.error(`Shop domain mismatch: expected ${storedDomain}, got ${callbackShop}`);
+      return redirectError("Shop domain mismatch — possible tampering", "domain_mismatch");
     }
 
     // ── 4. HMAC signature verification ──
