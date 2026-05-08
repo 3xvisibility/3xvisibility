@@ -64,9 +64,9 @@ const ShopifyOAuthLaunchPage = () => {
 
         // We're already at the top level — just redirect.
         navigateToShopifyAuth(data.auth_url);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("ShopifyOAuthLaunchPage error:", err);
-        setError(err?.message || "Could not start Shopify OAuth");
+        setError(err instanceof Error ? err.message : "Could not start Shopify OAuth");
       }
     };
 
