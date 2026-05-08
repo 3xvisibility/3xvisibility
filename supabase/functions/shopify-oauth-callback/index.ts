@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       message: msg,
     });
     if (errorCode) params.set("error_code", errorCode);
-    return Response.redirect(`${appBase}/w/default/websites?${params.toString()}`, 302);
+    return Response.redirect(`${appBase}/shopify/callback?${params.toString()}`, 302);
   };
 
   // ── 0. Require all three params — reject forged callbacks missing any one ──
@@ -231,15 +231,21 @@ Deno.serve(async (req) => {
       return redirectError("Failed to save access token");
     }
 
-    // ── 9. Redirect back to the correct workspace ──
+    // ── 9. Redirect back to the in-app callback page (which toasts + routes to dashboard) ──
     const { data: ws } = await supabase
       .from("workspaces")
       .select("slug")
       .eq("id", oauthState.workspace_id)
       .maybeSingle();
 
+    const successParams = new URLSearchParams({
+      shopify_oauth: "success",
+      shop: domain,
+    });
+    if (ws?.slug) successParams.set("workspace", ws.slug);
+
     return Response.redirect(
-      `${appBase}/w/${ws?.slug || "default"}/websites?shopify_oauth=success`,
+      `${appBase}/shopify/callback?${successParams.toString()}`,
       302,
     );
   } catch (err: any) {
