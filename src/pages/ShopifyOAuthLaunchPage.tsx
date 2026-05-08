@@ -2,7 +2,6 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { navigateToShopifyAuth } from "@/lib/shopify-auth-url";
 import { supabase } from "@/integrations/supabase/client";
-import { extractEdgeError } from "@/lib/edge-function-error";
 
 /**
  * First-party launcher page for Shopify OAuth.
@@ -32,28 +31,42 @@ const ShopifyOAuthLaunchPage = () => {
 
     const startOAuth = async () => {
       try {
-        const { data, error: fnError } = await supabase.functions.invoke(
-          "shopify-oauth-init",
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+
+        if (sessionError || !accessToken) {
+          throw new Error("Your session expired. Please sign in again before connecting Shopify.");
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/shopify-oauth-init`,
           {
-            body: {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({
               shop_domain: shopDomain,
               workspace_id: workspaceId,
               site_name: siteName || shopDomain,
               language,
-            },
+            }),
           },
         );
+        const data = await response.json().catch(() => null);
 
-        if (fnError) throw new Error(await extractEdgeError(fnError, "OAuth init failed"));
+        if (!response.ok) throw new Error(data?.message || data?.error || `OAuth init failed (${response.status})`);
         if (data?.error) throw new Error(data.error);
         if (data?.setup_required) throw new Error(data.message || "Shopify OAuth not configured");
         if (!data?.auth_url) throw new Error("No auth URL returned");
 
         // We're already at the top level — just redirect.
         navigateToShopifyAuth(data.auth_url);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("ShopifyOAuthLaunchPage error:", err);
-        setError(err?.message || "Could not start Shopify OAuth");
+        setError(err instanceof Error ? err.message : "Could not start Shopify OAuth");
       }
     };
 
