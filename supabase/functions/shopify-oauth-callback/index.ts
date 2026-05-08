@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 
     if (stateError || !oauthState) {
       console.error("OAuth state not found or already consumed:", stateError);
-      return redirectError("Invalid or expired OAuth state");
+      return redirectError("Invalid or expired OAuth state — it may have already been used", "invalid_state");
     }
 
     // Delete immediately — single-use token. Even if later steps fail the
