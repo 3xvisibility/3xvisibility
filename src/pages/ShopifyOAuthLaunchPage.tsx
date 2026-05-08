@@ -52,12 +52,11 @@ const ShopifyOAuthLaunchPage = () => {
               workspace_id: workspaceId,
               site_name: siteName || shopDomain,
               language,
-            }),
+            },
           },
         );
-        const data = await response.json().catch(() => null);
 
-        if (!response.ok) throw new Error(data?.message || data?.error || `OAuth init failed (${response.status})`);
+        if (fnError) throw new Error(fnError.message || "OAuth init failed");
         if (data?.error) throw new Error(data.error);
         if (data?.setup_required) throw new Error(data.message || "Shopify OAuth not configured");
         if (!data?.auth_url) throw new Error("No auth URL returned");
