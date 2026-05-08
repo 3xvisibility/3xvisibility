@@ -31,6 +31,7 @@ export function navigateToShopifyAuth(value: string): void {
   if (!isSafeShopifyAuthUrl(value)) {
     throw new Error("Received an invalid Shopify authorization URL");
   }
+  allowEphemeralSessionNavigationOnce();
   safeTopRedirect(value);
 }
 
@@ -53,6 +54,7 @@ export function launchShopifyOAuthInTopWindow(params: {
   if (params.language) search.set("language", params.language);
 
   const target = `${window.location.origin}/shopify/oauth-launch?${search.toString()}`;
+  allowEphemeralSessionNavigationOnce();
   safeTopRedirect(target);
 }
 
@@ -78,4 +80,12 @@ function safeTopRedirect(url: string): void {
   }
   // Either same window or cross-origin blocked: navigate current frame.
   window.location.href = url;
+}
+
+function allowEphemeralSessionNavigationOnce(): void {
+  try {
+    localStorage.setItem("allowEphemeralSessionNavigationOnce", "shopify-oauth");
+  } catch {
+    // Ignore storage failures; OAuth can still proceed for persistent sessions.
+  }
 }
