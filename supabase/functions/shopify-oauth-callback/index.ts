@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       message: msg,
     });
     if (errorCode) params.set("error_code", errorCode);
-    return Response.redirect(`${appBase}/w/default/websites?${params.toString()}`, 302);
+    return Response.redirect(`${appBase}/shopify/callback?${params.toString()}`, 302);
   };
 
   // ── 0. Require all three params — reject forged callbacks missing any one ──
