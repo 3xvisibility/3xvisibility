@@ -63,11 +63,29 @@ Deno.serve(async (req) => {
   const shopParam = url.searchParams.get("shop");
 
   const appBase = APP_BASE;
-  const redirectError = (msg: string) =>
-    Response.redirect(`${appBase}/w/default/websites?shopify_oauth=error&message=${encodeURIComponent(msg)}`, 302);
+  const redirectError = (msg: string, errorCode?: string) => {
+    const params = new URLSearchParams({
+      shopify_oauth: "error",
+      message: msg,
+    });
+    if (errorCode) params.set("error_code", errorCode);
+    return Response.redirect(`${appBase}/w/default/websites?${params.toString()}`, 302);
+  };
 
-  if (!code || !state) {
-    return redirectError("Missing code or state parameter");
+  // ── 0. Require all three params — reject forged callbacks missing any one ──
+  if (!code || !state || !shopParam) {
+    return redirectError(
+      !code ? "Missing authorization code" : !state ? "Missing state parameter" : "Missing shop parameter",
+      "missing_params",
+    );
+  }
+
+  // Basic format validation — state must be hex, shop must look like a domain
+  if (!/^[a-f0-9]{48}$/i.test(state)) {
+    return redirectError("Invalid state format", "invalid_state");
+  }
+  if (!/^[a-z0-9][a-z0-9\-]*\.myshopify\.com$/i.test(shopParam)) {
+    return redirectError("Invalid shop domain format", "invalid_shop");
   }
 
   try {
@@ -85,7 +103,7 @@ Deno.serve(async (req) => {
 
     if (stateError || !oauthState) {
       console.error("OAuth state not found or already consumed:", stateError);
-      return redirectError("Invalid or expired OAuth state");
+      return redirectError("Invalid or expired OAuth state — it may have already been used", "invalid_state");
     }
 
     // Delete immediately — single-use token. Even if later steps fail the
@@ -94,25 +112,22 @@ Deno.serve(async (req) => {
 
     // ── 2. Expiry check ──
     if (new Date(oauthState.expires_at) < new Date()) {
-      return redirectError("OAuth session expired. Please try again.");
+      return redirectError("OAuth session expired. Please try again.", "expired");
     }
 
-    // ── 3. Shop domain cross-check ──
-    // Shopify sends the actual shop domain; verify it matches what we stored.
+    // ── 3. Shop domain cross-check (mandatory) ──
     const storedDomain = oauthState.shop_domain.toLowerCase();
-    if (shopParam) {
-      const callbackShop = shopParam.toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
-      if (callbackShop !== storedDomain) {
-        console.error(`Shop domain mismatch: expected ${storedDomain}, got ${callbackShop}`);
-        return redirectError("Shop domain mismatch — possible tampering");
-      }
+    const callbackShop = shopParam!.toLowerCase().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    if (callbackShop !== storedDomain) {
+      console.error(`Shop domain mismatch: expected ${storedDomain}, got ${callbackShop}`);
+      return redirectError("Shop domain mismatch — possible tampering", "domain_mismatch");
     }
 
     // ── 4. HMAC signature verification ──
     const hmacValid = await verifyShopifyHmac(url.searchParams, oauthState.client_secret);
     if (!hmacValid) {
       console.error("HMAC verification failed for state", state);
-      return redirectError("Signature verification failed — request may have been tampered with");
+      return redirectError("Signature verification failed — request may have been tampered with", "hmac_failed");
     }
 
     // ── 5. Exchange code for access token ──
@@ -130,14 +145,14 @@ Deno.serve(async (req) => {
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
       console.error("Token exchange failed:", errText);
-      return redirectError(`Token exchange failed (${tokenRes.status})`);
+      return redirectError(`Token exchange failed (${tokenRes.status})`, "token_exchange_failed");
     }
 
     const tokenData = await tokenRes.json();
     const accessToken = tokenData.access_token;
 
     if (!accessToken) {
-      return redirectError("No access token received from Shopify");
+      return redirectError("No access token received from Shopify", "no_token");
     }
 
     // ── 6. Save or refresh the website row ──
