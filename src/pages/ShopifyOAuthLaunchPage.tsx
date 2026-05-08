@@ -23,6 +23,7 @@ const ShopifyOAuthLaunchPage = () => {
   const workspaceId = params.get("workspace_id");
   const siteName = params.get("site_name");
   const language = params.get("language");
+  const accessToken = params.get("access_token");
 
   const [error, setError] = useState<string | null>(null);
   const valid = !!shopDomain && !!workspaceId;
@@ -32,9 +33,21 @@ const ShopifyOAuthLaunchPage = () => {
 
     const startOAuth = async () => {
       try {
+        // Remove sensitive token from visible URL as soon as possible.
+        if (accessToken) {
+          const cleaned = new URL(window.location.href);
+          cleaned.searchParams.delete("access_token");
+          window.history.replaceState({}, "", `${cleaned.pathname}${cleaned.search}`);
+        }
+
+        const headers = accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : undefined;
+
         const { data, error: fnError } = await supabase.functions.invoke(
           "shopify-oauth-init",
           {
+            headers,
             body: {
               shop_domain: shopDomain,
               workspace_id: workspaceId,
@@ -58,7 +71,7 @@ const ShopifyOAuthLaunchPage = () => {
     };
 
     void startOAuth();
-  }, [valid, shopDomain, workspaceId, siteName, language]);
+  }, [valid, shopDomain, workspaceId, siteName, language, accessToken]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">

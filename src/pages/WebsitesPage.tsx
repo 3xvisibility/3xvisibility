@@ -182,7 +182,7 @@ export default function WebsitesPage() {
 
     setShopifyOAuthLoading(true);
     try {
-      launchShopifyOAuthInTopWindow({
+      await launchShopifyOAuthInTopWindow({
         shopDomain: domain,
         workspaceId: wsId,
         siteName: siteName || domain,

@@ -147,7 +147,7 @@ export function EditWebsiteDialog({ site, open, onOpenChange }: EditWebsiteDialo
       const shopDomain = (url || "").replace(/^https?:\/\//, "").replace(/\/+$/, "");
       const dErr = validateShopifyDomain(shopDomain);
       if (dErr) throw new Error(dErr);
-      launchShopifyOAuthInTopWindow({
+      await launchShopifyOAuthInTopWindow({
         shopDomain,
         workspaceId: site.workspace_id,
         siteName: name || shopDomain,

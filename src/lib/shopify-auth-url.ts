@@ -6,6 +6,7 @@
  * DOMException.  We try `window.top` first (works in production where
  * there is no iframe), then fall back to `window.location.href`.
  */
+import { supabase } from "@/integrations/supabase/client";
 
 /** Validates that a URL is a legitimate Shopify OAuth authorization URL. */
 export function isSafeShopifyAuthUrl(value: string | null | undefined): boolean {
@@ -39,15 +40,22 @@ export function navigateToShopifyAuth(value: string): void {
  * launcher page (`/shopify/oauth-launch`).  That page calls the
  * edge function and then redirects to Shopify.
  */
-export function launchShopifyOAuthInTopWindow(params: {
+export async function launchShopifyOAuthInTopWindow(params: {
   shopDomain: string;
   workspaceId: string;
   siteName?: string | null;
   language?: string | null;
-}): void {
+}): Promise<void> {
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token;
+  if (!accessToken) {
+    throw new Error("You are not authenticated. Please sign in and try again.");
+  }
+
   const search = new URLSearchParams({
     shop_domain: params.shopDomain,
     workspace_id: params.workspaceId,
+    access_token: accessToken,
   });
   if (params.siteName) search.set("site_name", params.siteName);
   if (params.language) search.set("language", params.language);

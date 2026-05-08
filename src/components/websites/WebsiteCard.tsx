@@ -198,7 +198,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
       const creds = site.credentials as Record<string, string> | null;
       const shopDomain = creds?.shop_domain || site.url?.replace(/^https?:\/\//, "").replace(/\/+$/, "");
       if (!shopDomain) throw new Error("Missing shop domain");
-      launchShopifyOAuthInTopWindow({
+      await launchShopifyOAuthInTopWindow({
         shopDomain,
         workspaceId: site.workspace_id,
         siteName: site.name,
