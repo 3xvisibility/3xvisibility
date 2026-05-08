@@ -27,6 +27,7 @@ const ShopifyCallbackPage = () => {
 
     // Phase 2 — edge function has finished and bounced us back here.
     if (status === "success" || status === "error") {
+      localStorage.removeItem("allowEphemeralSessionNavigationOnce");
       if (status === "success") {
         const shop = searchParams.get("shop");
         setPhase("success");
@@ -51,6 +52,7 @@ const ShopifyCallbackPage = () => {
     // Phase 1 — fresh callback from Shopify; forward to the edge function.
     const code = searchParams.get("code");
     const state = searchParams.get("state");
+    localStorage.removeItem("allowEphemeralSessionNavigationOnce");
     if (!code || !state) {
       setPhase("error");
       setErrorMsg("Missing OAuth parameters from Shopify");
