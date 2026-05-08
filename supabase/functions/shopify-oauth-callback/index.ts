@@ -231,15 +231,21 @@ Deno.serve(async (req) => {
       return redirectError("Failed to save access token");
     }
 
-    // ── 9. Redirect back to the correct workspace ──
+    // ── 9. Redirect back to the in-app callback page (which toasts + routes to dashboard) ──
     const { data: ws } = await supabase
       .from("workspaces")
       .select("slug")
       .eq("id", oauthState.workspace_id)
       .maybeSingle();
 
+    const successParams = new URLSearchParams({
+      shopify_oauth: "success",
+      shop: domain,
+    });
+    if (ws?.slug) successParams.set("workspace", ws.slug);
+
     return Response.redirect(
-      `${appBase}/w/${ws?.slug || "default"}/websites?shopify_oauth=success`,
+      `${appBase}/shopify/callback?${successParams.toString()}`,
       302,
     );
   } catch (err: any) {
