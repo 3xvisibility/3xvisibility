@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
     const accessToken = tokenData.access_token;
 
     if (!accessToken) {
-      return redirectError("No access token received from Shopify");
+      return redirectError("No access token received from Shopify", "no_token");
     }
 
     // ── 6. Save or refresh the website row ──
