@@ -63,11 +63,29 @@ Deno.serve(async (req) => {
   const shopParam = url.searchParams.get("shop");
 
   const appBase = APP_BASE;
-  const redirectError = (msg: string) =>
-    Response.redirect(`${appBase}/w/default/websites?shopify_oauth=error&message=${encodeURIComponent(msg)}`, 302);
+  const redirectError = (msg: string, errorCode?: string) => {
+    const params = new URLSearchParams({
+      shopify_oauth: "error",
+      message: msg,
+    });
+    if (errorCode) params.set("error_code", errorCode);
+    return Response.redirect(`${appBase}/w/default/websites?${params.toString()}`, 302);
+  };
 
-  if (!code || !state) {
-    return redirectError("Missing code or state parameter");
+  // ── 0. Require all three params — reject forged callbacks missing any one ──
+  if (!code || !state || !shopParam) {
+    return redirectError(
+      !code ? "Missing authorization code" : !state ? "Missing state parameter" : "Missing shop parameter",
+      "missing_params",
+    );
+  }
+
+  // Basic format validation — state must be hex, shop must look like a domain
+  if (!/^[a-f0-9]{48}$/i.test(state)) {
+    return redirectError("Invalid state format", "invalid_state");
+  }
+  if (!/^[a-z0-9][a-z0-9\-]*\.myshopify\.com$/i.test(shopParam)) {
+    return redirectError("Invalid shop domain format", "invalid_shop");
   }
 
   try {
