@@ -27,6 +27,7 @@ const ShopifyCallbackPage = () => {
 
     // Phase 2 — edge function has finished and bounced us back here.
     if (status === "success" || status === "error") {
+      localStorage.removeItem("allowEphemeralSessionNavigationOnce");
       if (status === "success") {
         const shop = searchParams.get("shop");
         setPhase("success");
@@ -52,6 +53,7 @@ const ShopifyCallbackPage = () => {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     if (!code || !state) {
+      localStorage.removeItem("allowEphemeralSessionNavigationOnce");
       setPhase("error");
       setErrorMsg("Missing OAuth parameters from Shopify");
       toast.error("Shopify connection failed", {
@@ -62,6 +64,7 @@ const ShopifyCallbackPage = () => {
     }
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    localStorage.setItem("allowEphemeralSessionNavigationOnce", "shopify-oauth");
     window.location.replace(
       `${supabaseUrl}/functions/v1/shopify-oauth-callback${window.location.search}`,
     );

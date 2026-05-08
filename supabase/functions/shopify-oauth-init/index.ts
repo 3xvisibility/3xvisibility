@@ -44,8 +44,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
     const { data: { user }, error: userError } = await userClient.auth.getUser(token);
     if (userError || !user) {
       console.error("auth.getUser failed:", userError);
@@ -106,9 +109,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ auth_url: authUrl, state }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("shopify-oauth-init error:", err);
-    return new Response(JSON.stringify({ error: err.message || "Internal error" }), {
+    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
