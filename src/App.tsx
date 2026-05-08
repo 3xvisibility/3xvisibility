@@ -162,6 +162,10 @@ const App = () => {
 
     const handleUnload = () => {
       if (localStorage.getItem("sessionEphemeral") === "true") {
+        if (localStorage.getItem("allowEphemeralSessionNavigationOnce") === "shopify-oauth") {
+          localStorage.removeItem("allowEphemeralSessionNavigationOnce");
+          return;
+        }
         supabase.auth.signOut();
         localStorage.removeItem("sessionEphemeral");
       }
