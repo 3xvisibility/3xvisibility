@@ -52,8 +52,8 @@ const ShopifyCallbackPage = () => {
     // Phase 1 — fresh callback from Shopify; forward to the edge function.
     const code = searchParams.get("code");
     const state = searchParams.get("state");
-    localStorage.removeItem("allowEphemeralSessionNavigationOnce");
     if (!code || !state) {
+      localStorage.removeItem("allowEphemeralSessionNavigationOnce");
       setPhase("error");
       setErrorMsg("Missing OAuth parameters from Shopify");
       toast.error("Shopify connection failed", {
@@ -64,6 +64,7 @@ const ShopifyCallbackPage = () => {
     }
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    localStorage.setItem("allowEphemeralSessionNavigationOnce", "shopify-oauth");
     window.location.replace(
       `${supabaseUrl}/functions/v1/shopify-oauth-callback${window.location.search}`,
     );
