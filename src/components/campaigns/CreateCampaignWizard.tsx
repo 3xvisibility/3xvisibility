@@ -2212,6 +2212,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
+                      <Label className="text-xs font-medium">Publish As</Label>
+                      <Select value={publishType} onValueChange={v => setPublishType(v as "page" | "product")}>
+                        <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="page">Page</SelectItem>
+                          <SelectItem value="product">Product</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
                       <Label className="text-xs font-medium">Method</Label>
                       <Select value={generationMethod} onValueChange={v => setGenerationMethod(v as any)}>
                         <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
@@ -2222,6 +2232,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Schedule</Label>
                       <Select value={scheduleMode} onValueChange={v => setScheduleMode(v as any)}>
@@ -2232,6 +2245,10 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                           <SelectItem value="recurring">Recurring</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">&nbsp;</Label>
+                      <div className="h-9" />
                     </div>
                   </div>
 
