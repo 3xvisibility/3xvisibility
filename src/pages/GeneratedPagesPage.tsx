@@ -35,8 +35,8 @@ import { logAudit } from "@/lib/audit";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 type GeneratedPage = Tables<"generated_pages"> & {
-  campaigns?: { name: string } | null;
-  websites?: { name: string } | null;
+  campaigns?: { name: string; publish_type?: string | null } | null;
+  websites?: { name: string; type?: string | null } | null;
 };
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
