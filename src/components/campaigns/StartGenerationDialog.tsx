@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages } from "lucide-react";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
+import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
 
 interface StartGenerationDialogProps {
   open: boolean;
