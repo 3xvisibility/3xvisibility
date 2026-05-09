@@ -350,7 +350,7 @@ Deno.serve(async (req) => {
     if (directPages && Array.isArray(directPages) && website_id) {
       const { data: website } = await supabase
         .from("websites")
-        .select("url, type, credentials, workspace_id")
+        .select("id, url, type, credentials, workspace_id")
         .eq("id", website_id)
         .eq("user_id", user.id)
         .maybeSingle();
