@@ -913,6 +913,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           },
         } as any,
         publish_mode: publishMode,
+        publish_type: publishType,
         generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
         scheduled_at: (scheduleMode === "later" || scheduleMode === "recurring") && scheduledDate ? scheduledDate.toISOString() : null,
