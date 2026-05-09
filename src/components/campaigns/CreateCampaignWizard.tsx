@@ -2282,6 +2282,93 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                   </div>
 
+                  {/* Shopify Theme Tuning — visible only when the publish target
+                      is a Shopify site. Lets the campaign opt into a full-bleed
+                      wrapper, override the container max-width to match the
+                      merchant's theme, and tweak heading scale / body line-height
+                      / section padding so generated pages slot in natively. */}
+                  {(() => {
+                    const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+                    const isShopify = (ws as { type?: string } | undefined)?.type === "shopify";
+                    if (!isShopify) return null;
+                    return (
+                      <div className="rounded-xl border border-border bg-card/50 p-4 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setShopifyTuneOpen(o => !o)}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <div>
+                            <h4 className="text-xs font-semibold uppercase tracking-wider">Shopify Theme Tuning</h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">Match your storefront's wrapper, margins, and type scale.</p>
+                          </div>
+                          <ChevronRight className={cn("h-4 w-4 transition-transform", shopifyTuneOpen && "rotate-90")} />
+                        </button>
+                        {shopifyTuneOpen && (
+                          <div className="space-y-3 pt-2 border-t border-border">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <Label className="text-xs font-medium">Full-bleed wrapper</Label>
+                                <p className="text-[11px] text-muted-foreground">Stretches content edge-to-edge inside theme sections.</p>
+                              </div>
+                              <Switch checked={shopifyFullBleed} onCheckedChange={setShopifyFullBleed} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Container max-width</Label>
+                                <Input
+                                  value={shopifyContainerMax}
+                                  onChange={e => setShopifyContainerMax(e.target.value)}
+                                  placeholder="e.g. 1200px"
+                                  disabled={shopifyFullBleed}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Horizontal padding</Label>
+                                <Input
+                                  value={shopifyHorizontalPad}
+                                  onChange={e => setShopifyHorizontalPad(e.target.value)}
+                                  placeholder="e.g. 1.5rem"
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Heading scale</Label>
+                                <Input
+                                  type="number" step="0.05" min="0.8" max="1.5"
+                                  value={shopifyHeadingScale}
+                                  onChange={e => setShopifyHeadingScale(parseFloat(e.target.value) || 1)}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Body line-height</Label>
+                                <Input
+                                  type="number" step="0.05" min="1.3" max="2"
+                                  value={shopifyBodyLineHeight}
+                                  onChange={e => setShopifyBodyLineHeight(parseFloat(e.target.value) || 1.6)}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Section padding ×</Label>
+                                <Input
+                                  type="number" step="0.05" min="0.5" max="1.5"
+                                  value={shopifySectionPadScale}
+                                  onChange={e => setShopifySectionPadScale(parseFloat(e.target.value) || 1)}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Method</Label>
