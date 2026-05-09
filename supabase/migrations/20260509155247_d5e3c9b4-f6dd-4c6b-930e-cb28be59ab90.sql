@@ -1,0 +1,2 @@
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS publish_type text NOT NULL DEFAULT 'page';
+ALTER TABLE public.campaigns ADD CONSTRAINT campaigns_publish_type_check CHECK (publish_type IN ('page','product'));
