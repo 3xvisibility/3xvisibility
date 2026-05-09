@@ -335,27 +335,46 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  // Resolve the effective publish_type for a batch of page IDs:
+  // - If every selected page belongs to a campaign with the same `publish_type`,
+  //   use the campaign value (so the wizard's "Publish As" selection wins).
+  // - Otherwise fall back to the local toolbar Select (`publishType`).
+  // This keeps the toolbar override intact while making campaign-level
+  // configuration the source of truth across publish/republish/retry.
+  const resolvePublishTypeFor = (ids: string[]): "page" | "product" => {
+    const types = new Set<string>();
+    for (const pid of ids) {
+      const p = pages.find((pg) => pg.id === pid);
+      const t = (p?.campaigns as any)?.publish_type;
+      if (t === "page" || t === "product") types.add(t);
+    }
+    if (types.size === 1) return Array.from(types)[0] as "page" | "product";
+    return publishType;
+  };
+
   // Helper: check if pages have website_id, if not show selector
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     const pagesWithoutSite = ids.filter((pid) => {
       const p = pages.find((pg) => pg.id === pid);
       return !p?.website_id;
     });
+    const effType = resolvePublishTypeFor(ids);
     if (pagesWithoutSite.length > 0) {
       setPendingPublishIds(ids);
       setPendingPublishAction(action);
       setShowWebsiteSelector(true);
     } else {
-      if (action === "retry") retryFailedMutation.mutate({ ids });
-      else if (action === "bulk") bulkPublishMutation.mutate({ ids });
-      else publishMutation.mutate({ pageIds: ids, type: publishType });
+      if (action === "retry") retryFailedMutation.mutate({ ids, type: effType });
+      else if (action === "bulk") bulkPublishMutation.mutate({ ids, type: effType });
+      else publishMutation.mutate({ pageIds: ids, type: effType });
     }
   };
 
   const handleWebsiteSelected = (websiteId: string) => {
-    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId });
-    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId });
-    else publishMutation.mutate({ pageIds: pendingPublishIds, type: publishType, websiteId });
+    const effType = resolvePublishTypeFor(pendingPublishIds);
+    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
+    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
+    else publishMutation.mutate({ pageIds: pendingPublishIds, type: effType, websiteId });
   };
 
 
