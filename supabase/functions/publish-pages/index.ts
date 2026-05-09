@@ -338,6 +338,45 @@ Deno.serve(async (req) => {
     const { page_ids, publish_type, website_id, pages: directPages, overwrite_design } = body;
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
+
+    // Optional Shopify template suffix overrides for this request (direct publish).
+    const directShopifySuffixes: { page?: string; product?: string } = {
+      page: typeof body.shopify_page_template_suffix === "string" ? body.shopify_page_template_suffix.trim() : undefined,
+      product: typeof body.shopify_product_template_suffix === "string" ? body.shopify_product_template_suffix.trim() : undefined,
+    };
+
+    // Per-campaign Shopify template suffix cache so we only query once per campaign.
+    const campaignSuffixCache = new Map<string, { page?: string; product?: string }>();
+    async function getCampaignShopifySuffixes(campaignId: string | null | undefined): Promise<{ page?: string; product?: string }> {
+      if (!campaignId) return {};
+      if (campaignSuffixCache.has(campaignId)) return campaignSuffixCache.get(campaignId)!;
+      const { data } = await supabase
+        .from("campaigns")
+        .select("shopify_page_template_suffix, shopify_product_template_suffix")
+        .eq("id", campaignId)
+        .maybeSingle();
+      const out = {
+        page: (data as any)?.shopify_page_template_suffix?.trim() || undefined,
+        product: (data as any)?.shopify_product_template_suffix?.trim() || undefined,
+      };
+      campaignSuffixCache.set(campaignId, out);
+      return out;
+    }
+
+    function applyShopifySuffix(payload: PagePayload, websiteType: string | undefined, suffixes: { page?: string; product?: string }, resolvedType: string) {
+      if (websiteType !== "shopify") return;
+      if (resolvedType === "product") {
+        const s = suffixes.product;
+        if (s) {
+          payload.product_data = payload.product_data || {};
+          payload.product_data.template_suffix = s;
+        }
+      } else {
+        const s = suffixes.page;
+        if (s) payload.shopify_page_template_suffix = s;
+      }
+    }
+
     // Default behavior: when republishing an existing CMS page, preserve its
     // design (Elementor layout, theme blocks, builder structure) and only push
     // metadata-level fields. Caller can opt out with `overwrite_design: true`
