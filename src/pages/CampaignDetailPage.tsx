@@ -1519,6 +1519,10 @@ export default function CampaignDetailPage() {
         isPending={executeMutation.isPending}
         siteLanguage={(campaign as any)?.websites?.language ?? null}
         siteLanguageLocked={!!(campaign as any)?.websites?.language_locked}
+        websiteId={campaign?.website_id ?? null}
+        websiteType={(campaign as any)?.websites?.type ?? null}
+        initialPageTemplateSuffix={(campaign as any)?.shopify_page_template_suffix ?? null}
+        initialProductTemplateSuffix={(campaign as any)?.shopify_product_template_suffix ?? null}
         languageSampleText={[
           templateContent || "",
           ...(((campaign?.csv_data as Record<string, string>[]) || [])
