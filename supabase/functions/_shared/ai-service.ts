@@ -84,8 +84,15 @@ async function checkAndDeductCredits(
     });
 
     if (error) {
+      // If the RPC isn't deployed yet, allow the request through instead of
+      // hard-blocking everyone. Credits will start enforcing once the function exists.
+      const msg = (error.message || "").toLowerCase();
+      if (msg.includes("could not find the function") || msg.includes("does not exist")) {
+        console.warn("[ai-service] deduct_ai_credits RPC missing — allowing request (fail-open)");
+        return { allowed: true };
+      }
       console.error("[ai-service] credit deduction error:", error.message);
-      return { allowed: false, remaining: 0, error: "credit_check_failed" };
+      return { allowed: true }; // fail-open on transient errors so AI keeps working
     }
 
     if (data && typeof data === "object" && data.success === false) {
@@ -94,8 +101,8 @@ async function checkAndDeductCredits(
 
     return { allowed: true, remaining: data?.remaining };
   } catch (err) {
-    console.error("[ai-service] credit check exception — blocking request (fail-closed):", err);
-    return { allowed: false, remaining: 0, error: "credit_check_failed" };
+    console.error("[ai-service] credit check exception — allowing request (fail-open):", err);
+    return { allowed: true };
   }
 }
 
