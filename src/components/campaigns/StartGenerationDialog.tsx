@@ -118,6 +118,12 @@ export function StartGenerationDialog({
     if (languageOverrideEnabled && languageOverride && !siteLanguageLocked) {
       options.language_override = languageOverride;
     }
+    if (websiteType === "shopify") {
+      const p = (shopifyPageSuffix || "").trim();
+      const pr = (shopifyProductSuffix || "").trim();
+      if (p) options.shopify_page_template_suffix = p;
+      if (pr) options.shopify_product_template_suffix = pr;
+    }
     onStart(options);
   };
 
