@@ -146,6 +146,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
+  // Publish As — controls whether generated pages are pushed to the CMS as a
+  // standard "page" (default) or a "product" (Shopify products, WooCommerce
+  // products, PrestaShop catalog). Persisted on the campaign and read by
+  // generate-pages, publish-pages, and republish flows so behavior stays
+  // identical everywhere.
+  const [publishAs, setPublishAs] = useState<"page" | "product">("page");
   const [maxRows, setMaxRows] = useState("");
   const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
