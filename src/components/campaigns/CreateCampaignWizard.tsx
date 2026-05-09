@@ -1084,6 +1084,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setActivePresetId(null);
     setVibePalette(DEFAULT_VIBE.palette); setVibeTypography(DEFAULT_VIBE.typography); setVibeDensity(DEFAULT_VIBE.density);
     setVibeCustomVarsText(""); setVibeCustomCss(""); setVibeAdvancedOpen(false);
+    setShopifyTuneOpen(false); setShopifyFullBleed(false); setShopifyContainerMax(""); setShopifyHorizontalPad("");
+    setShopifyHeadingScale(1); setShopifyBodyLineHeight(1.6); setShopifySectionPadScale(1);
     clearWizardSnapshot();
   };
 
