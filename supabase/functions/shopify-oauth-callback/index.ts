@@ -131,7 +131,11 @@ Deno.serve(async (req) => {
     }
 
     // ── 5. Exchange code for access token ──
-    const domain = oauthState.shop_domain;
+    // Resolve canonical shop_domain (lowercase, no protocol/trailing slash)
+    const domain = String(oauthState.shop_domain || "")
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/+$/, "");
     const tokenRes = await fetch(`https://${domain}/admin/oauth/access_token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
