@@ -69,6 +69,10 @@ export function StartGenerationDialog({
   siteLanguage,
   siteLanguageLocked = false,
   languageSampleText,
+  websiteId,
+  websiteType,
+  initialPageTemplateSuffix,
+  initialProductTemplateSuffix,
 }: StartGenerationDialogProps) {
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
@@ -78,6 +82,8 @@ export function StartGenerationDialog({
   const [retryFailedOnly, setRetryFailedOnly] = useState(false);
   const [languageOverrideEnabled, setLanguageOverrideEnabled] = useState(false);
   const [languageOverride, setLanguageOverride] = useState<string>("English");
+  const [shopifyPageSuffix, setShopifyPageSuffix] = useState<string>(initialPageTemplateSuffix || "");
+  const [shopifyProductSuffix, setShopifyProductSuffix] = useState<string>(initialProductTemplateSuffix || "");
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
