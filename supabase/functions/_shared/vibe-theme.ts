@@ -27,6 +27,31 @@ export interface VibeTheme {
    * specificity wins). Sanitized to strip `</style>` and HTML comments to
    * prevent breakouts. Authors should scope rules to `.pgp-page` themselves. */
   customCss?: string;
+  /** Shopify theme-alignment tuning. When the page is published into a
+   * Shopify theme, sections often live inside a `page-width` wrapper. These
+   * knobs let the campaign opt into a full-bleed wrapper, override the
+   * container max-width to match the merchant's theme, and fine-tune
+   * heading scale / body line-height / section padding so generated content
+   * feels native rather than transplanted. All fields are optional and
+   * skipped when unset. */
+  shopify?: {
+    /** When true, removes the inner max-width and lets `.pgp-page` stretch
+     * edge-to-edge (Shopify themes that already provide a full-bleed
+     * section wrapper). Defaults to false. */
+    fullBleed?: boolean;
+    /** Override the inner container max-width, e.g. `"1200px"`, `"72rem"`.
+     * Ignored when `fullBleed` is true. */
+    containerMaxWidth?: string;
+    /** Heading size multiplier (0.8 – 1.5). 1 = no change. Scales h1..h3. */
+    headingScale?: number;
+    /** Body line-height (1.3 – 2.0). Defaults to theme value when unset. */
+    bodyLineHeight?: number;
+    /** Section padding multiplier (0.5 – 1.5). 1 = density default. */
+    sectionPaddingScale?: number;
+    /** Horizontal page gutter (e.g. `"1.5rem"`, `"clamp(1rem,4vw,3rem)"`).
+     * Applied as left/right padding on the wrapper. */
+    horizontalPadding?: string;
+  };
 }
 
 /** Strip dangerous sequences from user-supplied CSS so it can't break out of
