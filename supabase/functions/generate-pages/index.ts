@@ -2460,7 +2460,7 @@ Deno.serve(async (req) => {
               },
               {
                 page_ids: chunk,
-                publish_type: "page",
+                publish_type: (campaign as { publish_type?: string }).publish_type || "page",
                 website_id: campaign.website_id,
               },
               "publish-pages"
