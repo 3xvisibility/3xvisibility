@@ -19,6 +19,12 @@ export interface PagePayload {
    * same theme/builder layout.
    */
   page_template?: string;
+  /**
+   * Shopify-specific: alternate page template suffix (e.g. "landing", "contact").
+   * When set, Shopify will render the page with templates/page.<suffix>.liquid|json
+   * instead of the default page template. Ignored by non-Shopify connectors.
+   */
+  shopify_page_template_suffix?: string;
   schema_json?: Record<string, unknown>;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
