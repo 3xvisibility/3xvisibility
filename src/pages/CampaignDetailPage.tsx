@@ -237,17 +237,21 @@ export default function CampaignDetailPage() {
           scheduled_at: opts.scheduled_at,
           publish_mode: opts.publish_mode || "draft",
           max_rows: opts.max_rows || null,
+          shopify_page_template_suffix: opts.shopify_page_template_suffix ?? null,
+          shopify_product_template_suffix: opts.shopify_product_template_suffix ?? null,
           status: "queued",
         } as any).eq("id", id!);
         if (schedErr) throw new Error(schedErr.message);
         return { scheduled: true, generated: 0 };
       }
 
-      // Update publish_mode and max_rows on campaign before running
+      // Update publish_mode, max_rows and Shopify template suffixes before running
       if (opts) {
         await supabase.from("campaigns").update({
           publish_mode: opts.publish_mode || "draft",
           max_rows: opts.max_rows || null,
+          shopify_page_template_suffix: opts.shopify_page_template_suffix ?? null,
+          shopify_product_template_suffix: opts.shopify_product_template_suffix ?? null,
         } as any).eq("id", id!);
       }
 
