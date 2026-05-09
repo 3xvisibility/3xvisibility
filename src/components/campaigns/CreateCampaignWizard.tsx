@@ -957,6 +957,19 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               return Object.keys(parsed).length ? parsed : undefined;
             })(),
             customCss: vibeCustomCss.trim() || undefined,
+            // Shopify-specific tuning. Only persisted when at least one
+            // knob differs from the default so the edge function can
+            // fast-path no-op themes. Surfaced in UI for Shopify sites only.
+            shopify: (() => {
+              const sh: Record<string, unknown> = {};
+              if (shopifyFullBleed) sh.fullBleed = true;
+              if (shopifyContainerMax.trim()) sh.containerMaxWidth = shopifyContainerMax.trim();
+              if (shopifyHorizontalPad.trim()) sh.horizontalPadding = shopifyHorizontalPad.trim();
+              if (shopifyHeadingScale !== 1) sh.headingScale = shopifyHeadingScale;
+              if (shopifyBodyLineHeight !== 1.6) sh.bodyLineHeight = shopifyBodyLineHeight;
+              if (shopifySectionPadScale !== 1) sh.sectionPaddingScale = shopifySectionPadScale;
+              return Object.keys(sh).length ? sh : undefined;
+            })(),
           },
         } as any,
         publish_mode: publishMode,
