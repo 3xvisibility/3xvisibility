@@ -313,7 +313,7 @@ export default function CampaignDetailPage() {
         .eq("id", pageId);
       if (resetError) throw resetError;
 
-      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
+      const pubType = ((campaign as any)?.publish_type === "product" ? "product" : "page");
 
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: { page_ids: [pageId], publish_type: pubType, website_id: websiteId || campaign?.website_id },
@@ -346,7 +346,7 @@ export default function CampaignDetailPage() {
         .in("id", pageIds);
       if (resetErr) throw resetErr;
 
-      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
+      const pubType = ((campaign as any)?.publish_type === "product" ? "product" : "page");
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           page_ids: pageIds,
@@ -383,7 +383,7 @@ export default function CampaignDetailPage() {
         .in("id", pageIds);
       if (resetErr) throw resetErr;
 
-      const pubType = campaign?.campaign_types?.includes("ecommerce") ? "product" : "page";
+      const pubType = ((campaign as any)?.publish_type === "product" ? "product" : "page");
       const { data, error } = await supabase.functions.invoke("publish-pages", {
         body: {
           page_ids: pageIds,
