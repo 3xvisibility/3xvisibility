@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
     if (manual_update) {
       const { data: website } = await supabase
         .from("websites")
-        .select("url, type, credentials, workspace_id")
+        .select("id, url, type, credentials, workspace_id")
         .eq("id", website_id)
         .maybeSingle();
 
@@ -789,7 +789,7 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
     // Fetch the website for CMS push
     const { data: website } = await supabase
       .from("websites")
-      .select("url, type, credentials, workspace_id")
+      .select("id, url, type, credentials, workspace_id")
       .eq("id", website_id)
       .maybeSingle();
 
