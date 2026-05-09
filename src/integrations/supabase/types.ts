@@ -568,6 +568,8 @@ export type Database = {
           publish_type: string
           recurring_schedule: Json | null
           scheduled_at: string | null
+          shopify_page_template_suffix: string | null
+          shopify_product_template_suffix: string | null
           status: Database["public"]["Enums"]["campaign_status"]
           template_id: string | null
           total_rows: number | null
@@ -605,6 +607,8 @@ export type Database = {
           publish_type?: string
           recurring_schedule?: Json | null
           scheduled_at?: string | null
+          shopify_page_template_suffix?: string | null
+          shopify_product_template_suffix?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
           total_rows?: number | null
@@ -642,6 +646,8 @@ export type Database = {
           publish_type?: string
           recurring_schedule?: Json | null
           scheduled_at?: string | null
+          shopify_page_template_suffix?: string | null
+          shopify_product_template_suffix?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
           total_rows?: number | null
