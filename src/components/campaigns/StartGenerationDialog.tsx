@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages } from "lucide-react";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
+import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
 
 interface StartGenerationDialogProps {
   open: boolean;
@@ -35,6 +36,14 @@ interface StartGenerationDialogProps {
    * the source content language doesn't match the connected site language.
    */
   languageSampleText?: string;
+  /** Connected website ID — used to fetch Shopify templates if applicable. */
+  websiteId?: string | null;
+  /** Website type (shopify | wordpress | etc.) — controls Shopify-only UI. */
+  websiteType?: string | null;
+  /** Persisted Shopify page template suffix from the campaign. */
+  initialPageTemplateSuffix?: string | null;
+  /** Persisted Shopify product template suffix from the campaign. */
+  initialProductTemplateSuffix?: string | null;
 }
 
 export interface GenerationOptions {
@@ -44,6 +53,10 @@ export interface GenerationOptions {
   retry_failed_only?: boolean;
   /** One-time override for this run only — does NOT persist to the website settings. */
   language_override?: string;
+  /** Shopify alternate page template suffix (templates/page.<suffix>). */
+  shopify_page_template_suffix?: string;
+  /** Shopify alternate product template suffix (templates/product.<suffix>). */
+  shopify_product_template_suffix?: string;
 }
 
 export function StartGenerationDialog({
@@ -56,6 +69,10 @@ export function StartGenerationDialog({
   siteLanguage,
   siteLanguageLocked = false,
   languageSampleText,
+  websiteId,
+  websiteType,
+  initialPageTemplateSuffix,
+  initialProductTemplateSuffix,
 }: StartGenerationDialogProps) {
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
@@ -65,6 +82,8 @@ export function StartGenerationDialog({
   const [retryFailedOnly, setRetryFailedOnly] = useState(false);
   const [languageOverrideEnabled, setLanguageOverrideEnabled] = useState(false);
   const [languageOverride, setLanguageOverride] = useState<string>("English");
+  const [shopifyPageSuffix, setShopifyPageSuffix] = useState<string>(initialPageTemplateSuffix || "");
+  const [shopifyProductSuffix, setShopifyProductSuffix] = useState<string>(initialProductTemplateSuffix || "");
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
@@ -98,6 +117,12 @@ export function StartGenerationDialog({
     }
     if (languageOverrideEnabled && languageOverride && !siteLanguageLocked) {
       options.language_override = languageOverride;
+    }
+    if (websiteType === "shopify") {
+      const p = (shopifyPageSuffix || "").trim();
+      const pr = (shopifyProductSuffix || "").trim();
+      if (p) options.shopify_page_template_suffix = p;
+      if (pr) options.shopify_product_template_suffix = pr;
     }
     onStart(options);
   };
@@ -254,6 +279,22 @@ export function StartGenerationDialog({
               </Select>
             )}
           </div>
+
+          {websiteType === "shopify" && websiteId && (
+            <>
+              <Separator />
+              <ShopifyTemplateSuffixPicker
+                websiteId={websiteId}
+                websiteType={websiteType}
+                pageValue={shopifyPageSuffix}
+                productValue={shopifyProductSuffix}
+                onChange={({ page, product }) => {
+                  setShopifyPageSuffix(page);
+                  setShopifyProductSuffix(product);
+                }}
+              />
+            </>
+          )}
 
           <Separator />
 

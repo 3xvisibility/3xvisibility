@@ -50,6 +50,10 @@ export class ShopifyConnector implements CmsConnector {
       published: payload.status === "publish",
     };
 
+    if (payload.shopify_page_template_suffix && payload.shopify_page_template_suffix.trim()) {
+      pageBody.template_suffix = payload.shopify_page_template_suffix.trim();
+    }
+
     if (payload.seo_title) pageBody.metafields_global_title_tag = payload.seo_title;
     if (payload.seo_description) pageBody.metafields_global_description_tag = payload.seo_description;
 
@@ -80,6 +84,9 @@ export class ShopifyConnector implements CmsConnector {
       status: pd.product_status || "active",
     };
 
+    if (pd.template_suffix && pd.template_suffix.trim()) {
+      productBody.template_suffix = pd.template_suffix.trim();
+    }
     if (pd.vendor) productBody.vendor = pd.vendor;
     if (pd.product_type) productBody.product_type = pd.product_type;
     if (pd.tags) productBody.tags = Array.isArray(pd.tags) ? pd.tags.join(", ") : pd.tags;
