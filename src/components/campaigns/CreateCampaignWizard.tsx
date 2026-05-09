@@ -519,6 +519,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setPublishAs(isShopify || isEcom ? "product" : "page");
   }, [selectedWebsite, websiteForPages, websites, campaignTypes]);
 
+  const { data: websitePages = [], isLoading: loadingWebPages } = useQuery({
     queryKey: ["site-content-for-campaign", websiteForPages, websiteContentType],
     enabled: !!websiteForPages && dataSource === "website",
     queryFn: async () => {
