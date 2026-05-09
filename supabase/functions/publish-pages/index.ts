@@ -779,6 +779,13 @@ Deno.serve(async (req) => {
           preserveDesign,
         );
 
+        // Apply Shopify template suffix overrides (campaign or request body)
+        const pageSuffixes = {
+          ...(await getCampaignShopifySuffixes(page.campaign_id)),
+          ...directShopifySuffixes,
+        };
+        applyShopifySuffix(payload, (page.websites as { type?: string })?.type, pageSuffixes, resolvedPublishType);
+
         // If page was previously published (has external_id), update instead of creating
         const result = page.external_id
           ? await connector.updatePage(page.external_id, payload)
