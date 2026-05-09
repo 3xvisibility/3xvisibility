@@ -50,6 +50,10 @@ export class ShopifyConnector implements CmsConnector {
       published: payload.status === "publish",
     };
 
+    if (payload.shopify_page_template_suffix && payload.shopify_page_template_suffix.trim()) {
+      pageBody.template_suffix = payload.shopify_page_template_suffix.trim();
+    }
+
     if (payload.seo_title) pageBody.metafields_global_title_tag = payload.seo_title;
     if (payload.seo_description) pageBody.metafields_global_description_tag = payload.seo_description;
 
