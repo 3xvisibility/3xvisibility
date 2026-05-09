@@ -411,7 +411,10 @@ Deno.serve(async (req) => {
 
       for (const dp of directPages) {
         try {
-          const cleanedContent = stripHeadTagsForCms(dp.content);
+          let cleanedContent = stripHeadTagsForCms(dp.content);
+          if (website.type === "shopify" && pubType !== "product") {
+            cleanedContent = wrapForFullBleed(cleanedContent, website.type);
+          }
           // Republish of an already-published page → preserve existing on-site design.
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
