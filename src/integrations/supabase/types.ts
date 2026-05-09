@@ -324,6 +324,72 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_credits: {
+        Row: {
+          created_at: string
+          credits_reset_at: string
+          id: string
+          plan: string
+          remaining_credits: number
+          total_credits: number
+          updated_at: string
+          used_credits: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_reset_at?: string
+          id?: string
+          plan?: string
+          remaining_credits?: number
+          total_credits?: number
+          updated_at?: string
+          used_credits?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_reset_at?: string
+          id?: string
+          plan?: string
+          remaining_credits?: number
+          total_credits?: number
+          updated_at?: string
+          used_credits?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_credits_usage: {
+        Row: {
+          created_at: string
+          credits_used: number
+          id: string
+          metadata: Json
+          model: string | null
+          prompt_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_used?: number
+          id?: string
+          metadata?: Json
+          model?: string | null
+          prompt_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_used?: number
+          id?: string
+          metadata?: Json
+          model?: string | null
+          prompt_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -2284,6 +2350,16 @@ export type Database = {
       }
     }
     Functions: {
+      deduct_ai_credits: {
+        Args: {
+          p_credits: number
+          p_metadata?: Json
+          p_model?: string
+          p_prompt_type: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       get_shopify_access_token: {
         Args: { _website_id: string }
         Returns: string
