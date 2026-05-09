@@ -476,7 +476,7 @@ Deno.serve(async (req) => {
 
     const { data: pages, error: pagesError } = await supabase
       .from("generated_pages")
-      .select("*, websites(url, type, credentials)")
+      .select("*, websites(id, url, type, credentials)")
       .in("id", currentBatchIds)
       .eq("user_id", user.id);
 
