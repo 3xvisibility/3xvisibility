@@ -235,6 +235,25 @@ Deno.serve(async (req) => {
       return redirectError("Failed to save access token");
     }
 
+    // ── 8. Log connection event to audit_logs (best-effort) ──
+    try {
+      await supabase.from("audit_logs").insert({
+        user_id: oauthState.user_id,
+        workspace_id: oauthState.workspace_id,
+        action: "shopify.connection.created",
+        entity_type: "shopify_connection",
+        entity_id: websiteId,
+        details: {
+          shop_domain: domain,
+          website_id: websiteId,
+          scopes: tokenData.scope || "",
+          auth_method: "oauth",
+        },
+      });
+    } catch (logErr) {
+      console.warn("audit_logs insert failed (non-fatal):", logErr);
+    }
+
     // ── 9. Redirect back to the in-app callback page (which toasts + routes to dashboard) ──
     const { data: ws } = await supabase
       .from("workspaces")
