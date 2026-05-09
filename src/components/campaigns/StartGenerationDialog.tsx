@@ -36,6 +36,14 @@ interface StartGenerationDialogProps {
    * the source content language doesn't match the connected site language.
    */
   languageSampleText?: string;
+  /** Connected website ID — used to fetch Shopify templates if applicable. */
+  websiteId?: string | null;
+  /** Website type (shopify | wordpress | etc.) — controls Shopify-only UI. */
+  websiteType?: string | null;
+  /** Persisted Shopify page template suffix from the campaign. */
+  initialPageTemplateSuffix?: string | null;
+  /** Persisted Shopify product template suffix from the campaign. */
+  initialProductTemplateSuffix?: string | null;
 }
 
 export interface GenerationOptions {
@@ -45,6 +53,10 @@ export interface GenerationOptions {
   retry_failed_only?: boolean;
   /** One-time override for this run only — does NOT persist to the website settings. */
   language_override?: string;
+  /** Shopify alternate page template suffix (templates/page.<suffix>). */
+  shopify_page_template_suffix?: string;
+  /** Shopify alternate product template suffix (templates/product.<suffix>). */
+  shopify_product_template_suffix?: string;
 }
 
 export function StartGenerationDialog({
