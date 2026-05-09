@@ -194,6 +194,7 @@ Deno.serve(async (req) => {
 
       try {
         const connector = await createConnector({
+          id: website.id,
           url: website.url,
           type: website.type,
           credentials: website.credentials as Record<string, string> | null,

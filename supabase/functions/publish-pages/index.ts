@@ -350,7 +350,7 @@ Deno.serve(async (req) => {
     if (directPages && Array.isArray(directPages) && website_id) {
       const { data: website } = await supabase
         .from("websites")
-        .select("url, type, credentials, workspace_id")
+        .select("id, url, type, credentials, workspace_id")
         .eq("id", website_id)
         .eq("user_id", user.id)
         .maybeSingle();
@@ -476,7 +476,7 @@ Deno.serve(async (req) => {
 
     const { data: pages, error: pagesError } = await supabase
       .from("generated_pages")
-      .select("*, websites(url, type, credentials)")
+      .select("*, websites(id, url, type, credentials)")
       .in("id", currentBatchIds)
       .eq("user_id", user.id);
 
@@ -545,7 +545,7 @@ Deno.serve(async (req) => {
         if (resolvedWebsiteId) {
           const { data: website } = await supabase
             .from("websites")
-            .select("url, type, credentials")
+            .select("id, url, type, credentials")
             .eq("id", resolvedWebsiteId)
             .maybeSingle();
 
