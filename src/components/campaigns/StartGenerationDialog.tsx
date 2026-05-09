@@ -280,6 +280,22 @@ export function StartGenerationDialog({
             )}
           </div>
 
+          {websiteType === "shopify" && websiteId && (
+            <>
+              <Separator />
+              <ShopifyTemplateSuffixPicker
+                websiteId={websiteId}
+                websiteType={websiteType}
+                pageValue={shopifyPageSuffix}
+                productValue={shopifyProductSuffix}
+                onChange={({ page, product }) => {
+                  setShopifyPageSuffix(page);
+                  setShopifyProductSuffix(product);
+                }}
+              />
+            </>
+          )}
+
           <Separator />
 
           {/* Schedule */}
