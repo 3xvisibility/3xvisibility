@@ -131,7 +131,11 @@ Deno.serve(async (req) => {
     }
 
     // ── 5. Exchange code for access token ──
-    const domain = oauthState.shop_domain;
+    // Resolve canonical shop_domain (lowercase, no protocol/trailing slash)
+    const domain = String(oauthState.shop_domain || "")
+      .toLowerCase()
+      .replace(/^https?:\/\//, "")
+      .replace(/\/+$/, "");
     const tokenRes = await fetch(`https://${domain}/admin/oauth/access_token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -229,6 +233,25 @@ Deno.serve(async (req) => {
     if (connError) {
       console.error("Failed to save shopify_connections:", connError);
       return redirectError("Failed to save access token");
+    }
+
+    // ── 8. Log connection event to audit_logs (best-effort) ──
+    try {
+      await supabase.from("audit_logs").insert({
+        user_id: oauthState.user_id,
+        workspace_id: oauthState.workspace_id,
+        action: "shopify.connection.created",
+        entity_type: "shopify_connection",
+        entity_id: websiteId,
+        details: {
+          shop_domain: domain,
+          website_id: websiteId,
+          scopes: tokenData.scope || "",
+          auth_method: "oauth",
+        },
+      });
+    } catch (logErr) {
+      console.warn("audit_logs insert failed (non-fatal):", logErr);
     }
 
     // ── 9. Redirect back to the in-app callback page (which toasts + routes to dashboard) ──
