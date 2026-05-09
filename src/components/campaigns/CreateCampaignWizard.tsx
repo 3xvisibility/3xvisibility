@@ -2211,6 +2211,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </RadioGroup>
                     </div>
                     <div className="space-y-2">
+                      <Label className="text-xs font-medium">Publish As</Label>
+                      <RadioGroup value={publishAs} onValueChange={v => setPublishAs(v as any)} className="flex gap-3">
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="page" id="w-as-page" /><Label htmlFor="w-as-page" className="text-xs cursor-pointer">Page</Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="product" id="w-as-product" /><Label htmlFor="w-as-product" className="text-xs cursor-pointer">Product</Label></div>
+                      </RadioGroup>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
                       <Label className="text-xs font-medium">Max Rows</Label>
                       <Input type="number" min="1" value={maxRows} onChange={e => setMaxRows(e.target.value)} placeholder={`All (${effectiveCsvData.length})`} className="rounded-xl h-9 text-sm" />
                     </div>
