@@ -117,6 +117,53 @@ Deno.serve(async (req) => {
       "X-Shopify-Access-Token": token,
     };
 
+    // ---- LIST TEMPLATE SUFFIXES ----
+    // Returns alternate page.* and product.* templates available in the store's
+    // active theme so users can pick one to use for AI-generated content.
+    if (action === "list_templates") {
+      try {
+        const themesRes = await shopifyFetch(`${apiBase}/themes.json`, { headers });
+        if (!themesRes.ok) {
+          const err = await themesRes.text();
+          return json({ error: `Shopify themes error (${themesRes.status}): ${err}` }, themesRes.status);
+        }
+        const themesData = await themesRes.json();
+        const mainTheme = (themesData.themes || []).find((t: any) => t.role === "main")
+          || (themesData.themes || [])[0];
+        if (!mainTheme) return json({ page_templates: [], product_templates: [] });
+
+        const assetsRes = await shopifyFetch(
+          `${apiBase}/themes/${mainTheme.id}/assets.json`,
+          { headers },
+        );
+        if (!assetsRes.ok) {
+          const err = await assetsRes.text();
+          return json({ error: `Shopify assets error (${assetsRes.status}): ${err}` }, assetsRes.status);
+        }
+        const assetsData = await assetsRes.json();
+        const keys: string[] = (assetsData.assets || []).map((a: any) => a.key);
+
+        // Match templates/page.<suffix>.liquid|json and templates/product.<suffix>.liquid|json
+        const suffixesFor = (prefix: string): string[] => {
+          const out = new Set<string>();
+          const re = new RegExp(`^templates/${prefix}\\.([^/.]+)\\.(liquid|json)$`);
+          for (const k of keys) {
+            const m = k.match(re);
+            if (m && m[1]) out.add(m[1]);
+          }
+          return Array.from(out).sort();
+        };
+
+        return json({
+          page_templates: suffixesFor("page"),
+          product_templates: suffixesFor("product"),
+          theme_name: mainTheme.name,
+        });
+      } catch (e) {
+        return json({ error: e instanceof Error ? e.message : "Failed to fetch templates" }, 500);
+      }
+    }
+
     // ---- LIST PRODUCTS ----
     if (action === "list_products") {
       const limit = body.limit || 50;
