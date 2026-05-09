@@ -239,6 +239,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     faqPairs, fillRules, aiFillMode,
     vibePalette, vibeTypography, vibeDensity,
     vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
+    shopifyTuneOpen, shopifyFullBleed, shopifyContainerMax, shopifyHorizontalPad,
+    shopifyHeadingScale, shopifyBodyLineHeight, shopifySectionPadScale,
     publishMode, publishAs, maxRows, generationMethod,
     scheduleMode,
     scheduledDate: scheduledDate ? scheduledDate.toISOString() : null,
