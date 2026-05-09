@@ -1015,7 +1015,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setStep(1);
     setCampaignName(""); setCampaignLanguage("en"); setCampaignCountry("US"); setCampaignTypes(["seo"]);
     setCsvRawText(""); setCsvFile(null); setCsvHeaders([]); setCsvData([]);
-    setSelectedTemplate(""); setSelectedWebsite(""); setPublishMode("draft");
+    setSelectedTemplate(""); setSelectedWebsite(""); setPublishMode("draft"); setPublishAs("page");
     setMaxRows(""); setScheduleMode("now"); setScheduledDate(undefined);
     setRecurringInterval("weekly"); setRecurringEndDate(undefined);
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
