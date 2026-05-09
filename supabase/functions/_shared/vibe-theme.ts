@@ -189,7 +189,8 @@ export function buildVibeOverrideStyles(theme?: VibeTheme | null): string {
 
   const customVarsBlock = formatCustomVars(theme.customVars);
   const customCssClean = sanitizeUserCss(theme.customCss || "");
-  const hasCustom = !!(customVarsBlock || customCssClean);
+  const shopifyBlock = formatShopifyTuning(theme.shopify);
+  const hasCustom = !!(customVarsBlock || customCssClean || shopifyBlock);
   const isDefault = palette === "lovable" && typography === "modern" && density === "comfortable";
 
   // Skip when fully default AND no custom overrides — saves bytes.
