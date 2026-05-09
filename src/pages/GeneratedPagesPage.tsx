@@ -499,6 +499,16 @@ export default function GeneratedPagesPage() {
 
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, siteFilter, campaignFilter, freshnessFilter, pageSize, sortBy]);
 
+  // Sync toolbar Publish-As default to the campaign's `publish_type` when
+  // a single campaign is filtered. Keeps tools/republish/retry visually
+  // aligned with whatever the wizard configured for that campaign.
+  useEffect(() => {
+    if (campaignFilter === "all" || campaignFilter === "direct") return;
+    const sample = pages.find((p) => p.campaign_id === campaignFilter);
+    const t = (sample?.campaigns as any)?.publish_type;
+    if (t === "page" || t === "product") setPublishType(t);
+  }, [campaignFilter, pages]);
+
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
