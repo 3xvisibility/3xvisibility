@@ -508,7 +508,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     },
   });
 
-  const { data: websitePages = [], isLoading: loadingWebPages } = useQuery({
+  // Auto-suggest publish target: Shopify sites & ecommerce campaigns default
+  // to "product"; non-ecommerce sites default to "page". Skipped once the
+  // user explicitly toggles the radio (tracked via publishAsTouchedRef).
+  useEffect(() => {
+    if (publishAsTouchedRef.current) return;
+    const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+    const isShopify = (ws as any)?.type === "shopify";
+    const isEcom = (campaignTypes as string[]).includes("ecommerce");
+    setPublishAs(isShopify || isEcom ? "product" : "page");
+  }, [selectedWebsite, websiteForPages, websites, campaignTypes]);
+
     queryKey: ["site-content-for-campaign", websiteForPages, websiteContentType],
     enabled: !!websiteForPages && dataSource === "website",
     queryFn: async () => {
