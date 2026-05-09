@@ -545,7 +545,7 @@ Deno.serve(async (req) => {
         if (resolvedWebsiteId) {
           const { data: website } = await supabase
             .from("websites")
-            .select("url, type, credentials")
+            .select("id, url, type, credentials")
             .eq("id", resolvedWebsiteId)
             .maybeSingle();
 
