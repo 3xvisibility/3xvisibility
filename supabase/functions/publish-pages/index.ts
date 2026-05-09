@@ -28,6 +28,42 @@ function stripHeadTagsForCms(content: string): string {
 }
 
 /**
+ * Wrap published content so it breaks out of the host theme's narrow content
+ * column (Shopify Pages, WordPress page templates, etc.) and renders edge-to-edge,
+ * matching the source design. Also resets host theme typography/spacing inside
+ * the wrapper so generated sections control their own styles.
+ */
+function wrapForFullBleed(content: string, websiteType: string): string {
+  // Avoid double-wrapping if content already starts with a full-bleed wrapper
+  if (/class\s*=\s*["'][^"']*pgp-fullbleed/i.test(content)) return content;
+
+  const wrapperCss = `
+<style id="pgp-fullbleed-css">
+  .pgp-fullbleed{
+    position:relative;
+    width:100vw;
+    left:50%;
+    right:50%;
+    margin-left:-50vw;
+    margin-right:-50vw;
+    max-width:100vw;
+    box-sizing:border-box;
+  }
+  .pgp-fullbleed *{box-sizing:border-box;}
+  .pgp-fullbleed img{max-width:100%;height:auto;display:block;}
+  .pgp-fullbleed h1,.pgp-fullbleed h2,.pgp-fullbleed h3,.pgp-fullbleed h4,.pgp-fullbleed h5,.pgp-fullbleed h6,
+  .pgp-fullbleed p,.pgp-fullbleed ul,.pgp-fullbleed ol,.pgp-fullbleed li{margin:0;padding:0;}
+  .pgp-fullbleed a{text-decoration:none;color:inherit;}
+  /* Shopify/Dawn/Horizon: neutralise default page-width container around our content */
+  .shopify-section .page-width:has(.pgp-fullbleed),
+  .shopify-section .page-width .pgp-fullbleed{max-width:100vw!important;padding:0!important;}
+</style>`.trim();
+
+  return `${wrapperCss}\n<div class="pgp-fullbleed">${content}</div>`;
+}
+
+
+/**
  * Convert HTML content into an Elementor JSON structure (text editor widget).
  * This ensures the page renders correctly in Elementor's visual builder.
  */
