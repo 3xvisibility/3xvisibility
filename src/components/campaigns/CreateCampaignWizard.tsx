@@ -310,6 +310,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (typeof s.vibeCustomVarsText === "string") setVibeCustomVarsText(s.vibeCustomVarsText);
         if (typeof s.vibeCustomCss === "string") setVibeCustomCss(s.vibeCustomCss);
         if (typeof s.vibeAdvancedOpen === "boolean") setVibeAdvancedOpen(s.vibeAdvancedOpen);
+        if (typeof s.shopifyTuneOpen === "boolean") setShopifyTuneOpen(s.shopifyTuneOpen);
+        if (typeof s.shopifyFullBleed === "boolean") setShopifyFullBleed(s.shopifyFullBleed);
+        if (typeof s.shopifyContainerMax === "string") setShopifyContainerMax(s.shopifyContainerMax);
+        if (typeof s.shopifyHorizontalPad === "string") setShopifyHorizontalPad(s.shopifyHorizontalPad);
+        if (typeof s.shopifyHeadingScale === "number") setShopifyHeadingScale(s.shopifyHeadingScale);
+        if (typeof s.shopifyBodyLineHeight === "number") setShopifyBodyLineHeight(s.shopifyBodyLineHeight);
+        if (typeof s.shopifySectionPadScale === "number") setShopifySectionPadScale(s.shopifySectionPadScale);
         if (typeof s.publishMode === "string") setPublishMode(s.publishMode);
         if (s.publishAs === "page" || s.publishAs === "product") { publishAsTouchedRef.current = true; setPublishAs(s.publishAs); }
         if (typeof s.maxRows === "string") setMaxRows(s.maxRows);
