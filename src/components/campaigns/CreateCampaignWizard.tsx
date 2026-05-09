@@ -146,6 +146,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
+  // Publish As — controls whether generated pages are pushed to the CMS as a
+  // standard "page" (default) or a "product" (Shopify products, WooCommerce
+  // products, PrestaShop catalog). Persisted on the campaign and read by
+  // generate-pages, publish-pages, and republish flows so behavior stays
+  // identical everywhere.
+  const [publishAs, setPublishAs] = useState<"page" | "product">("page");
   const [maxRows, setMaxRows] = useState("");
   const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
@@ -194,6 +200,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     });
   };
 
+  // publishAs auto-default flag — set in an effect declared after `websites`.
+  const publishAsTouchedRef = useRef(false);
+  const setPublishAsManual = (v: "page" | "product") => {
+    publishAsTouchedRef.current = true;
+    setPublishAs(v);
+  };
+
   // ----------------------------------------------------------------
   // Auto-save / auto-restore wizard progress to localStorage so users
   // never lose work when they switch tabs or navigate away.
@@ -214,7 +227,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     faqPairs, fillRules, aiFillMode,
     vibePalette, vibeTypography, vibeDensity,
     vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
-    publishMode, maxRows, generationMethod,
+    publishMode, publishAs, maxRows, generationMethod,
     scheduleMode,
     scheduledDate: scheduledDate ? scheduledDate.toISOString() : null,
     recurringInterval,
@@ -233,7 +246,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     faqPairs, fillRules, aiFillMode,
     vibePalette, vibeTypography, vibeDensity,
     vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
-    publishMode, maxRows, generationMethod,
+    publishMode, publishAs, maxRows, generationMethod,
     scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat,
     utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
     adCampaignId, adGroupId, seaDirectoryLevels,
@@ -282,6 +295,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (typeof s.vibeCustomCss === "string") setVibeCustomCss(s.vibeCustomCss);
         if (typeof s.vibeAdvancedOpen === "boolean") setVibeAdvancedOpen(s.vibeAdvancedOpen);
         if (typeof s.publishMode === "string") setPublishMode(s.publishMode);
+        if (s.publishAs === "page" || s.publishAs === "product") { publishAsTouchedRef.current = true; setPublishAs(s.publishAs); }
         if (typeof s.maxRows === "string") setMaxRows(s.maxRows);
         if (typeof s.generationMethod === "string") setGenerationMethod(s.generationMethod);
         if (typeof s.scheduleMode === "string") setScheduleMode(s.scheduleMode);
@@ -493,6 +507,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       return data;
     },
   });
+
+  // Auto-suggest publish target: Shopify sites & ecommerce campaigns default
+  // to "product"; non-ecommerce sites default to "page". Skipped once the
+  // user explicitly toggles the radio (tracked via publishAsTouchedRef).
+  useEffect(() => {
+    if (publishAsTouchedRef.current) return;
+    const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+    const isShopify = (ws as any)?.type === "shopify";
+    const isEcom = (campaignTypes as string[]).includes("ecommerce");
+    setPublishAs(isShopify || isEcom ? "product" : "page");
+  }, [selectedWebsite, websiteForPages, websites, campaignTypes]);
 
   const { data: websitePages = [], isLoading: loadingWebPages } = useQuery({
     queryKey: ["site-content-for-campaign", websiteForPages, websiteContentType],
@@ -912,6 +937,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           },
         } as any,
         publish_mode: publishMode,
+        publish_type: publishAs,
         generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
         scheduled_at: (scheduleMode === "later" || scheduleMode === "recurring") && scheduledDate ? scheduledDate.toISOString() : null,
@@ -1007,7 +1033,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setStep(1);
     setCampaignName(""); setCampaignLanguage("en"); setCampaignCountry("US"); setCampaignTypes(["seo"]);
     setCsvRawText(""); setCsvFile(null); setCsvHeaders([]); setCsvData([]);
-    setSelectedTemplate(""); setSelectedWebsite(""); setPublishMode("draft");
+    setSelectedTemplate(""); setSelectedWebsite(""); setPublishMode("draft"); setPublishAs("page");
     setMaxRows(""); setScheduleMode("now"); setScheduledDate(undefined);
     setRecurringInterval("weekly"); setRecurringEndDate(undefined);
     setUtmSource(""); setUtmMedium(""); setUtmCampaign(""); setUtmTerm(""); setUtmContent("");
@@ -2202,6 +2228,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="published" id="w-pub" /><Label htmlFor="w-pub" className="text-xs cursor-pointer">Published</Label></div>
                       </RadioGroup>
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Publish As</Label>
+                      <RadioGroup value={publishAs} onValueChange={v => setPublishAsManual(v as any)} className="flex gap-3">
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="page" id="w-as-page" /><Label htmlFor="w-as-page" className="text-xs cursor-pointer">Page</Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="product" id="w-as-product" /><Label htmlFor="w-as-product" className="text-xs cursor-pointer">Product</Label></div>
+                      </RadioGroup>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Max Rows</Label>
                       <Input type="number" min="1" value={maxRows} onChange={e => setMaxRows(e.target.value)} placeholder={`All (${effectiveCsvData.length})`} className="rounded-xl h-9 text-sm" />

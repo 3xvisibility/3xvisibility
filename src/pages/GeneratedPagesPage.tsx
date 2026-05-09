@@ -35,8 +35,8 @@ import { logAudit } from "@/lib/audit";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 type GeneratedPage = Tables<"generated_pages"> & {
-  campaigns?: { name: string } | null;
-  websites?: { name: string } | null;
+  campaigns?: { name: string; publish_type?: string | null } | null;
+  websites?: { name: string; type?: string | null } | null;
 };
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
@@ -97,7 +97,7 @@ export default function GeneratedPagesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("generated_pages")
-        .select("*, campaigns(name), websites(name)")
+        .select("*, campaigns(name, publish_type), websites(name, type)")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -271,9 +271,9 @@ export default function GeneratedPagesPage() {
   });
 
   const bulkPublishMutation = useMutation({
-    mutationFn: async ({ ids, websiteId }: { ids: string[]; websiteId?: string }) => {
+    mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: publishType, website_id: websiteId },
+        body: { page_ids: ids, publish_type: type ?? publishType, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -308,12 +308,12 @@ export default function GeneratedPagesPage() {
   });
 
   const retryFailedMutation = useMutation({
-    mutationFn: async ({ ids, websiteId }: { ids: string[]; websiteId?: string }) => {
+    mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
       const { error: resetErr } = await supabase.from("generated_pages")
         .update({ status: "pending" as any, error_message: null }).in("id", ids);
       if (resetErr) throw resetErr;
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: publishType, website_id: websiteId },
+        body: { page_ids: ids, publish_type: type ?? publishType, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -335,27 +335,46 @@ export default function GeneratedPagesPage() {
     },
   });
 
+  // Resolve the effective publish_type for a batch of page IDs:
+  // - If every selected page belongs to a campaign with the same `publish_type`,
+  //   use the campaign value (so the wizard's "Publish As" selection wins).
+  // - Otherwise fall back to the local toolbar Select (`publishType`).
+  // This keeps the toolbar override intact while making campaign-level
+  // configuration the source of truth across publish/republish/retry.
+  const resolvePublishTypeFor = (ids: string[]): "page" | "product" => {
+    const types = new Set<string>();
+    for (const pid of ids) {
+      const p = pages.find((pg) => pg.id === pid);
+      const t = (p?.campaigns as any)?.publish_type;
+      if (t === "page" || t === "product") types.add(t);
+    }
+    if (types.size === 1) return Array.from(types)[0] as "page" | "product";
+    return publishType;
+  };
+
   // Helper: check if pages have website_id, if not show selector
   const handlePublish = (ids: string[], action: "publish" | "bulk" | "retry") => {
     const pagesWithoutSite = ids.filter((pid) => {
       const p = pages.find((pg) => pg.id === pid);
       return !p?.website_id;
     });
+    const effType = resolvePublishTypeFor(ids);
     if (pagesWithoutSite.length > 0) {
       setPendingPublishIds(ids);
       setPendingPublishAction(action);
       setShowWebsiteSelector(true);
     } else {
-      if (action === "retry") retryFailedMutation.mutate({ ids });
-      else if (action === "bulk") bulkPublishMutation.mutate({ ids });
-      else publishMutation.mutate({ pageIds: ids, type: publishType });
+      if (action === "retry") retryFailedMutation.mutate({ ids, type: effType });
+      else if (action === "bulk") bulkPublishMutation.mutate({ ids, type: effType });
+      else publishMutation.mutate({ pageIds: ids, type: effType });
     }
   };
 
   const handleWebsiteSelected = (websiteId: string) => {
-    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId });
-    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId });
-    else publishMutation.mutate({ pageIds: pendingPublishIds, type: publishType, websiteId });
+    const effType = resolvePublishTypeFor(pendingPublishIds);
+    if (pendingPublishAction === "retry") retryFailedMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
+    else if (pendingPublishAction === "bulk") bulkPublishMutation.mutate({ ids: pendingPublishIds, websiteId, type: effType });
+    else publishMutation.mutate({ pageIds: pendingPublishIds, type: effType, websiteId });
   };
 
 
@@ -479,6 +498,16 @@ export default function GeneratedPagesPage() {
   );
 
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, siteFilter, campaignFilter, freshnessFilter, pageSize, sortBy]);
+
+  // Sync toolbar Publish-As default to the campaign's `publish_type` when
+  // a single campaign is filtered. Keeps tools/republish/retry visually
+  // aligned with whatever the wizard configured for that campaign.
+  useEffect(() => {
+    if (campaignFilter === "all" || campaignFilter === "direct") return;
+    const sample = pages.find((p) => p.campaign_id === campaignFilter);
+    const t = (sample?.campaigns as any)?.publish_type;
+    if (t === "page" || t === "product") setPublishType(t);
+  }, [campaignFilter, pages]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
