@@ -610,7 +610,10 @@ Deno.serve(async (req) => {
         const connector = resolvedPublishType === "product"
           ? await createProductConnector(page.websites as WebsiteRecord)
           : await createConnector(page.websites as WebsiteRecord);
-        const cleanedContent = stripHeadTagsForCms(page.content);
+        let cleanedContent = stripHeadTagsForCms(page.content);
+        if ((page.websites as { type?: string }).type === "shopify" && resolvedPublishType !== "product") {
+          cleanedContent = wrapForFullBleed(cleanedContent, "shopify");
+        }
         // Republish of an already-published CMS page → preserve existing on-site
         // design (Elementor layout, theme blocks, builder structure). Only
         // metadata (title, slug, SEO meta, canonical) flows through.
