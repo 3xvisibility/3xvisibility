@@ -61,16 +61,41 @@ function getServiceClient() {
   return createClient(url, key);
 }
 
+async function logGateEvent(
+  sb: any,
+  userId: string | null,
+  promptType: string,
+  model: string | undefined,
+  status: string,
+  reason: string,
+  details: Record<string, unknown> = {},
+) {
+  try {
+    if (!sb) return;
+    await sb.from("ai_credit_gate_logs").insert({
+      user_id: userId,
+      prompt_type: promptType,
+      model: model || null,
+      status,
+      reason,
+      details,
+    });
+  } catch (e) {
+    console.warn("[ai-service] failed to log gate event:", e);
+  }
+}
+
 async function checkAndDeductCredits(
   userId: string,
   promptType: string,
   model?: string,
 ): Promise<{ allowed: boolean; remaining?: number; error?: string }> {
+  const sb = getServiceClient();
   try {
-    const sb = getServiceClient();
     if (!sb) {
-      console.error("[ai-service] No service client — blocking AI request (fail-closed)");
-      return { allowed: false, remaining: 0, error: "credit_system_unavailable" };
+      console.error("[ai-service] No service client — fail-open");
+      // Can't log without service client
+      return { allowed: true, error: "credit_system_unavailable" };
     }
 
     const cost = CREDIT_COSTS[promptType] ?? CREDIT_COSTS.default;
@@ -84,24 +109,26 @@ async function checkAndDeductCredits(
     });
 
     if (error) {
-      // If the RPC isn't deployed yet, allow the request through instead of
-      // hard-blocking everyone. Credits will start enforcing once the function exists.
       const msg = (error.message || "").toLowerCase();
       if (msg.includes("could not find the function") || msg.includes("does not exist")) {
-        console.warn("[ai-service] deduct_ai_credits RPC missing — allowing request (fail-open)");
+        console.warn("[ai-service] deduct_ai_credits RPC missing — fail-open");
+        await logGateEvent(sb, userId, promptType, model, "fail_open", "rpc_missing", { message: error.message });
         return { allowed: true };
       }
       console.error("[ai-service] credit deduction error:", error.message);
-      return { allowed: true }; // fail-open on transient errors so AI keeps working
+      await logGateEvent(sb, userId, promptType, model, "fail_open", "rpc_error", { message: error.message });
+      return { allowed: true };
     }
 
     if (data && typeof data === "object" && data.success === false) {
+      await logGateEvent(sb, userId, promptType, model, "blocked", "insufficient_credits", { remaining: data.remaining });
       return { allowed: false, remaining: data.remaining, error: "insufficient_credits" };
     }
 
     return { allowed: true, remaining: data?.remaining };
-  } catch (err) {
-    console.error("[ai-service] credit check exception — allowing request (fail-open):", err);
+  } catch (err: any) {
+    console.error("[ai-service] credit check exception — fail-open:", err);
+    await logGateEvent(sb, userId, promptType, model, "fail_open", "exception", { message: String(err?.message ?? err) });
     return { allowed: true };
   }
 }

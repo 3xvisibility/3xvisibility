@@ -291,6 +291,39 @@ export type Database = {
           },
         ]
       }
+      ai_credit_gate_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          model: string | null
+          prompt_type: string | null
+          reason: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          model?: string | null
+          prompt_type?: string | null
+          reason?: string | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          model?: string | null
+          prompt_type?: string | null
+          reason?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string

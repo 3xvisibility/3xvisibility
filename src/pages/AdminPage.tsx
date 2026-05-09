@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 
 interface AdminUser {
   id: string;
@@ -364,7 +365,12 @@ export default function AdminPage() {
           <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
+          <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai-credits" className="space-y-4">
+          <AiCreditsAdminPanel />
+        </TabsContent>
 
         {/* Activity feed tab */}
         <TabsContent value="activity" className="space-y-4">
