@@ -443,6 +443,12 @@ Deno.serve(async (req) => {
             preserveDesign,
           );
 
+          // Apply Shopify template suffix overrides for direct publish
+          const dpSuffixes = campaignId
+            ? { ...(await getCampaignShopifySuffixes(campaignId)), ...directShopifySuffixes }
+            : directShopifySuffixes;
+          applyShopifySuffix(payload, website.type, dpSuffixes, pubType);
+
           // If an external_id is provided, update the existing page; otherwise create new
           const result = dp.external_id
             ? await connector.updatePage(dp.external_id, payload)
