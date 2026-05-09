@@ -271,9 +271,9 @@ export default function GeneratedPagesPage() {
   });
 
   const bulkPublishMutation = useMutation({
-    mutationFn: async ({ ids, websiteId }: { ids: string[]; websiteId?: string }) => {
+    mutationFn: async ({ ids, websiteId, type }: { ids: string[]; websiteId?: string; type?: "page" | "product" }) => {
       const { data, error } = await supabase.functions.invoke("publish-pages", {
-        body: { page_ids: ids, publish_type: publishType, website_id: websiteId },
+        body: { page_ids: ids, publish_type: type ?? publishType, website_id: websiteId },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
