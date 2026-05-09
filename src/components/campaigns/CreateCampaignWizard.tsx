@@ -146,6 +146,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
+  const [publishType, setPublishType] = useState<"page" | "product">("page");
   const [maxRows, setMaxRows] = useState("");
   const [generationMethod, setGenerationMethod] = useState<"all" | "sequential" | "random">("all");
   const [scheduleMode, setScheduleMode] = useState<"now" | "later" | "recurring">("now");
