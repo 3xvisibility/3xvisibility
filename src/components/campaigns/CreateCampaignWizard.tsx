@@ -239,7 +239,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     faqPairs, fillRules, aiFillMode,
     vibePalette, vibeTypography, vibeDensity,
     vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
-    publishMode, maxRows, generationMethod,
+    publishMode, publishAs, maxRows, generationMethod,
     scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat,
     utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
     adCampaignId, adGroupId, seaDirectoryLevels,
