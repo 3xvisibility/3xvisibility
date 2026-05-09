@@ -565,7 +565,6 @@ export type Database = {
           name: string
           processed_rows: number | null
           publish_mode: string
-          publish_type: string
           recurring_schedule: Json | null
           scheduled_at: string | null
           status: Database["public"]["Enums"]["campaign_status"]
@@ -602,7 +601,6 @@ export type Database = {
           name: string
           processed_rows?: number | null
           publish_mode?: string
-          publish_type?: string
           recurring_schedule?: Json | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
@@ -639,7 +637,6 @@ export type Database = {
           name?: string
           processed_rows?: number | null
           publish_mode?: string
-          publish_type?: string
           recurring_schedule?: Json | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["campaign_status"]
