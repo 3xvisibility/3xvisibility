@@ -69,6 +69,11 @@ export interface PagePayload {
     };
     /** Shopify metafields to attach on create/update */
     metafields?: { namespace: string; key: string; type: string; value: string }[];
+    /**
+     * Shopify-specific: alternate product template suffix (e.g. "custom").
+     * When set, Shopify will render the product with templates/product.<suffix>.
+     */
+    template_suffix?: string;
   };
 }
 
