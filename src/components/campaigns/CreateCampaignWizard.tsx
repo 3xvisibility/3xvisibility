@@ -200,17 +200,12 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     });
   };
 
-  // Auto-suggest publish target: Shopify sites & ecommerce campaigns lean
-  // toward "product" by default; users can still override the radio choice.
-  // Skips re-defaulting once the user has explicitly toggled the value.
+  // publishAs auto-default flag — set in an effect declared after `websites`.
   const publishAsTouchedRef = useRef(false);
-  useEffect(() => {
-    if (publishAsTouchedRef.current) return;
-    const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
-    const isShopify = ws?.type === "shopify";
-    const isEcom = (campaignTypes as string[]).includes("ecommerce");
-    setPublishAs(isShopify || isEcom ? "product" : "page");
-  }, [selectedWebsite, websiteForPages, websites, campaignTypes]);
+  const setPublishAsManual = (v: "page" | "product") => {
+    publishAsTouchedRef.current = true;
+    setPublishAs(v);
+  };
 
   // ----------------------------------------------------------------
   // Auto-save / auto-restore wizard progress to localStorage so users
