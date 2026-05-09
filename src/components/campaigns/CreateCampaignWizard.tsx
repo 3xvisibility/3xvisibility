@@ -52,7 +52,7 @@ import {
   Plus, Upload, ArrowRight, Check, AlertTriangle, Play, Loader2, Eye,
   MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon,
   Settings2, Globe, Database as DatabaseIcon, Sparkles, Wand2, Info,
-  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save,
+  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save, ChevronRight,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -144,6 +144,18 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [vibeCustomCss, setVibeCustomCss] = useState<string>("");
   const [vibeAdvancedOpen, setVibeAdvancedOpen] = useState<boolean>(false);
 
+  // Shopify theme-alignment tuning — surfaced only when the selected
+  // publish target is a Shopify site, so generated pages slot into the
+  // merchant's theme (full-bleed wrapper, container max-width override,
+  // heading/body scale, section padding) rather than feeling transplanted.
+  const [shopifyTuneOpen, setShopifyTuneOpen] = useState<boolean>(false);
+  const [shopifyFullBleed, setShopifyFullBleed] = useState<boolean>(false);
+  const [shopifyContainerMax, setShopifyContainerMax] = useState<string>("");
+  const [shopifyHorizontalPad, setShopifyHorizontalPad] = useState<string>("");
+  const [shopifyHeadingScale, setShopifyHeadingScale] = useState<number>(1);
+  const [shopifyBodyLineHeight, setShopifyBodyLineHeight] = useState<number>(1.6);
+  const [shopifySectionPadScale, setShopifySectionPadScale] = useState<number>(1);
+
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
   // Publish As — controls whether generated pages are pushed to the CMS as a
@@ -227,6 +239,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     faqPairs, fillRules, aiFillMode,
     vibePalette, vibeTypography, vibeDensity,
     vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
+    shopifyTuneOpen, shopifyFullBleed, shopifyContainerMax, shopifyHorizontalPad,
+    shopifyHeadingScale, shopifyBodyLineHeight, shopifySectionPadScale,
     publishMode, publishAs, maxRows, generationMethod,
     scheduleMode,
     scheduledDate: scheduledDate ? scheduledDate.toISOString() : null,
@@ -246,6 +260,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     faqPairs, fillRules, aiFillMode,
     vibePalette, vibeTypography, vibeDensity,
     vibeCustomVarsText, vibeCustomCss, vibeAdvancedOpen,
+    shopifyTuneOpen, shopifyFullBleed, shopifyContainerMax, shopifyHorizontalPad,
+    shopifyHeadingScale, shopifyBodyLineHeight, shopifySectionPadScale,
     publishMode, publishAs, maxRows, generationMethod,
     scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat,
     utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
@@ -294,6 +310,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (typeof s.vibeCustomVarsText === "string") setVibeCustomVarsText(s.vibeCustomVarsText);
         if (typeof s.vibeCustomCss === "string") setVibeCustomCss(s.vibeCustomCss);
         if (typeof s.vibeAdvancedOpen === "boolean") setVibeAdvancedOpen(s.vibeAdvancedOpen);
+        if (typeof s.shopifyTuneOpen === "boolean") setShopifyTuneOpen(s.shopifyTuneOpen);
+        if (typeof s.shopifyFullBleed === "boolean") setShopifyFullBleed(s.shopifyFullBleed);
+        if (typeof s.shopifyContainerMax === "string") setShopifyContainerMax(s.shopifyContainerMax);
+        if (typeof s.shopifyHorizontalPad === "string") setShopifyHorizontalPad(s.shopifyHorizontalPad);
+        if (typeof s.shopifyHeadingScale === "number") setShopifyHeadingScale(s.shopifyHeadingScale);
+        if (typeof s.shopifyBodyLineHeight === "number") setShopifyBodyLineHeight(s.shopifyBodyLineHeight);
+        if (typeof s.shopifySectionPadScale === "number") setShopifySectionPadScale(s.shopifySectionPadScale);
         if (typeof s.publishMode === "string") setPublishMode(s.publishMode);
         if (s.publishAs === "page" || s.publishAs === "product") { publishAsTouchedRef.current = true; setPublishAs(s.publishAs); }
         if (typeof s.maxRows === "string") setMaxRows(s.maxRows);
@@ -934,6 +957,19 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               return Object.keys(parsed).length ? parsed : undefined;
             })(),
             customCss: vibeCustomCss.trim() || undefined,
+            // Shopify-specific tuning. Only persisted when at least one
+            // knob differs from the default so the edge function can
+            // fast-path no-op themes. Surfaced in UI for Shopify sites only.
+            shopify: (() => {
+              const sh: Record<string, unknown> = {};
+              if (shopifyFullBleed) sh.fullBleed = true;
+              if (shopifyContainerMax.trim()) sh.containerMaxWidth = shopifyContainerMax.trim();
+              if (shopifyHorizontalPad.trim()) sh.horizontalPadding = shopifyHorizontalPad.trim();
+              if (shopifyHeadingScale !== 1) sh.headingScale = shopifyHeadingScale;
+              if (shopifyBodyLineHeight !== 1.6) sh.bodyLineHeight = shopifyBodyLineHeight;
+              if (shopifySectionPadScale !== 1) sh.sectionPaddingScale = shopifySectionPadScale;
+              return Object.keys(sh).length ? sh : undefined;
+            })(),
           },
         } as any,
         publish_mode: publishMode,
@@ -1048,6 +1084,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     setActivePresetId(null);
     setVibePalette(DEFAULT_VIBE.palette); setVibeTypography(DEFAULT_VIBE.typography); setVibeDensity(DEFAULT_VIBE.density);
     setVibeCustomVarsText(""); setVibeCustomCss(""); setVibeAdvancedOpen(false);
+    setShopifyTuneOpen(false); setShopifyFullBleed(false); setShopifyContainerMax(""); setShopifyHorizontalPad("");
+    setShopifyHeadingScale(1); setShopifyBodyLineHeight(1.6); setShopifySectionPadScale(1);
     clearWizardSnapshot();
   };
 
@@ -2243,6 +2281,93 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <Input type="number" min="1" value={maxRows} onChange={e => setMaxRows(e.target.value)} placeholder={`All (${effectiveCsvData.length})`} className="rounded-xl h-9 text-sm" />
                     </div>
                   </div>
+
+                  {/* Shopify Theme Tuning — visible only when the publish target
+                      is a Shopify site. Lets the campaign opt into a full-bleed
+                      wrapper, override the container max-width to match the
+                      merchant's theme, and tweak heading scale / body line-height
+                      / section padding so generated pages slot in natively. */}
+                  {(() => {
+                    const ws = websites.find(w => w.id === (selectedWebsite || websiteForPages));
+                    const isShopify = (ws as { type?: string } | undefined)?.type === "shopify";
+                    if (!isShopify) return null;
+                    return (
+                      <div className="rounded-xl border border-border bg-card/50 p-4 space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setShopifyTuneOpen(o => !o)}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <div>
+                            <h4 className="text-xs font-semibold uppercase tracking-wider">Shopify Theme Tuning</h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">Match your storefront's wrapper, margins, and type scale.</p>
+                          </div>
+                          <ChevronRight className={cn("h-4 w-4 transition-transform", shopifyTuneOpen && "rotate-90")} />
+                        </button>
+                        {shopifyTuneOpen && (
+                          <div className="space-y-3 pt-2 border-t border-border">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <Label className="text-xs font-medium">Full-bleed wrapper</Label>
+                                <p className="text-[11px] text-muted-foreground">Stretches content edge-to-edge inside theme sections.</p>
+                              </div>
+                              <Switch checked={shopifyFullBleed} onCheckedChange={setShopifyFullBleed} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Container max-width</Label>
+                                <Input
+                                  value={shopifyContainerMax}
+                                  onChange={e => setShopifyContainerMax(e.target.value)}
+                                  placeholder="e.g. 1200px"
+                                  disabled={shopifyFullBleed}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Horizontal padding</Label>
+                                <Input
+                                  value={shopifyHorizontalPad}
+                                  onChange={e => setShopifyHorizontalPad(e.target.value)}
+                                  placeholder="e.g. 1.5rem"
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Heading scale</Label>
+                                <Input
+                                  type="number" step="0.05" min="0.8" max="1.5"
+                                  value={shopifyHeadingScale}
+                                  onChange={e => setShopifyHeadingScale(parseFloat(e.target.value) || 1)}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Body line-height</Label>
+                                <Input
+                                  type="number" step="0.05" min="1.3" max="2"
+                                  value={shopifyBodyLineHeight}
+                                  onChange={e => setShopifyBodyLineHeight(parseFloat(e.target.value) || 1.6)}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-medium">Section padding ×</Label>
+                                <Input
+                                  type="number" step="0.05" min="0.5" max="1.5"
+                                  value={shopifySectionPadScale}
+                                  onChange={e => setShopifySectionPadScale(parseFloat(e.target.value) || 1)}
+                                  className="rounded-lg h-9 text-sm"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">

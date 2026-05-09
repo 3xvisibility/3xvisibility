@@ -27,6 +27,31 @@ export interface VibeTheme {
    * specificity wins). Sanitized to strip `</style>` and HTML comments to
    * prevent breakouts. Authors should scope rules to `.pgp-page` themselves. */
   customCss?: string;
+  /** Shopify theme-alignment tuning. When the page is published into a
+   * Shopify theme, sections often live inside a `page-width` wrapper. These
+   * knobs let the campaign opt into a full-bleed wrapper, override the
+   * container max-width to match the merchant's theme, and fine-tune
+   * heading scale / body line-height / section padding so generated content
+   * feels native rather than transplanted. All fields are optional and
+   * skipped when unset. */
+  shopify?: {
+    /** When true, removes the inner max-width and lets `.pgp-page` stretch
+     * edge-to-edge (Shopify themes that already provide a full-bleed
+     * section wrapper). Defaults to false. */
+    fullBleed?: boolean;
+    /** Override the inner container max-width, e.g. `"1200px"`, `"72rem"`.
+     * Ignored when `fullBleed` is true. */
+    containerMaxWidth?: string;
+    /** Heading size multiplier (0.8 – 1.5). 1 = no change. Scales h1..h3. */
+    headingScale?: number;
+    /** Body line-height (1.3 – 2.0). Defaults to theme value when unset. */
+    bodyLineHeight?: number;
+    /** Section padding multiplier (0.5 – 1.5). 1 = density default. */
+    sectionPaddingScale?: number;
+    /** Horizontal page gutter (e.g. `"1.5rem"`, `"clamp(1rem,4vw,3rem)"`).
+     * Applied as left/right padding on the wrapper. */
+    horizontalPadding?: string;
+  };
 }
 
 /** Strip dangerous sequences from user-supplied CSS so it can't break out of
@@ -53,6 +78,49 @@ function formatCustomVars(vars?: Record<string, string>): string {
     return `--${safeKey}:${safeVal}`;
   }).join(";");
   return `.pgp-page{${decls}}`;
+}
+
+/** Build a Shopify-tuning CSS block from `theme.shopify`. Returns an empty
+ * string when no fields are set. All values are clamped to safe ranges so
+ * a typo can't blow up the layout. Selectors are scoped to `.pgp-page`. */
+function formatShopifyTuning(s?: VibeTheme["shopify"]): string {
+  if (!s) return "";
+  const out: string[] = [];
+
+  // Wrapper: full-bleed OR custom container max-width (mutually exclusive).
+  if (s.fullBleed) {
+    out.push(`.pgp-page,.pgp-page .pgp-section>.pgp-container,.pgp-page .pgp-container{max-width:none!important;width:100%}`);
+  } else if (s.containerMaxWidth && /^[0-9.]+(px|rem|em|vw|%)$/.test(String(s.containerMaxWidth).trim())) {
+    const cw = String(s.containerMaxWidth).trim();
+    out.push(`.pgp-page,.pgp-page .pgp-container{max-width:${cw};margin-left:auto;margin-right:auto}`);
+  }
+
+  // Horizontal gutter — accept simple length tokens or a single clamp() call.
+  if (s.horizontalPadding) {
+    const raw = String(s.horizontalPadding).trim();
+    const safe = /^(clamp\([^()<>{};]{1,80}\)|[0-9.]+(px|rem|em|vw|%))$/.test(raw) ? raw : "";
+    if (safe) out.push(`.pgp-page{padding-left:${safe};padding-right:${safe}}`);
+  }
+
+  // Heading scale — clamp to 0.8–1.5 to avoid layout breakage.
+  if (typeof s.headingScale === "number" && isFinite(s.headingScale)) {
+    const k = Math.max(0.8, Math.min(1.5, s.headingScale));
+    out.push(`.pgp-page h1{font-size:calc(2.6rem * ${k})}.pgp-page h2{font-size:calc(2rem * ${k})}.pgp-page h3{font-size:calc(1.5rem * ${k})}`);
+  }
+
+  // Body line-height.
+  if (typeof s.bodyLineHeight === "number" && isFinite(s.bodyLineHeight)) {
+    const lh = Math.max(1.3, Math.min(2.0, s.bodyLineHeight));
+    out.push(`.pgp-page,.pgp-page p,.pgp-page li{line-height:${lh}}`);
+  }
+
+  // Section padding scale — overrides the density default.
+  if (typeof s.sectionPaddingScale === "number" && isFinite(s.sectionPaddingScale)) {
+    const sp = Math.max(0.5, Math.min(1.5, s.sectionPaddingScale));
+    out.push(`.pgp-page .pgp-section{padding-top:calc(clamp(3.5rem,8vw,7rem) * ${sp});padding-bottom:calc(clamp(3.5rem,8vw,7rem) * ${sp})}`);
+  }
+
+  return out.join("");
 }
 
 interface PaletteSpec {
@@ -121,7 +189,8 @@ export function buildVibeOverrideStyles(theme?: VibeTheme | null): string {
 
   const customVarsBlock = formatCustomVars(theme.customVars);
   const customCssClean = sanitizeUserCss(theme.customCss || "");
-  const hasCustom = !!(customVarsBlock || customCssClean);
+  const shopifyBlock = formatShopifyTuning(theme.shopify);
+  const hasCustom = !!(customVarsBlock || customCssClean || shopifyBlock);
   const isDefault = palette === "lovable" && typography === "modern" && density === "comfortable";
 
   // Skip when fully default AND no custom overrides — saves bytes.
@@ -173,6 +242,7 @@ export function buildVibeOverrideStyles(theme?: VibeTheme | null): string {
   // Custom vars + raw CSS appear LAST so they win the cascade.
   const customBlock = [
     customVarsBlock,
+    shopifyBlock,
     customCssClean,
   ].filter(Boolean).join("\n");
 

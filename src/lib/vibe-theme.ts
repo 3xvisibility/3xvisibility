@@ -20,6 +20,17 @@ export interface VibeTheme {
   /** Per-campaign raw CSS appended after the preset block. Sanitized server
    * side; authors should scope rules to `.pgp-page`. */
   customCss?: string;
+  /** Shopify theme-alignment tuning — see edge `vibe-theme.ts` for full
+   * docs. Only emitted when at least one field is set; safe defaults
+   * apply when omitted. Ignored by non-Shopify outputs. */
+  shopify?: {
+    fullBleed?: boolean;
+    containerMaxWidth?: string;
+    headingScale?: number;
+    bodyLineHeight?: number;
+    sectionPaddingScale?: number;
+    horizontalPadding?: string;
+  };
 }
 
 /** Parse a textarea where each line is `key: value` or `key=value` (lines
