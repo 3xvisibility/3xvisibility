@@ -142,6 +142,37 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "get-ai-stats") {
+      const { data: logs } = await serviceClient
+        .from("ai_credit_gate_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      const { data: authUsers } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
+      const userMap = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
+
+      const enriched = (logs || []).map((l: any) => ({
+        ...l,
+        user_email: l.user_id ? userMap.get(l.user_id) || null : null,
+      }));
+
+      // Aggregate by status & reason
+      const byStatus: Record<string, number> = {};
+      const byReason: Record<string, number> = {};
+      const byPromptType: Record<string, number> = {};
+      for (const l of enriched) {
+        byStatus[l.status] = (byStatus[l.status] || 0) + 1;
+        if (l.reason) byReason[l.reason] = (byReason[l.reason] || 0) + 1;
+        if (l.prompt_type) byPromptType[l.prompt_type] = (byPromptType[l.prompt_type] || 0) + 1;
+      }
+
+      return new Response(
+        JSON.stringify({ logs: enriched, byStatus, byReason, byPromptType, total: enriched.length }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (action === "update-subscription") {
       const { subscription_id, user_id, plan, pages_limit, pages_used } = body;
 
