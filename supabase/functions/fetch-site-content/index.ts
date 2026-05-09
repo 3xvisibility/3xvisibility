@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
 
     try {
       const record: WebsiteRecord = {
+        id: website.id,
         url: baseUrl,
         type: website.type,
         credentials: website.credentials as Record<string, string> | null,
