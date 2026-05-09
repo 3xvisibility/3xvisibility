@@ -295,7 +295,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (typeof s.vibeCustomCss === "string") setVibeCustomCss(s.vibeCustomCss);
         if (typeof s.vibeAdvancedOpen === "boolean") setVibeAdvancedOpen(s.vibeAdvancedOpen);
         if (typeof s.publishMode === "string") setPublishMode(s.publishMode);
-        if (s.publishAs === "page" || s.publishAs === "product") setPublishAs(s.publishAs);
+        if (s.publishAs === "page" || s.publishAs === "product") { publishAsTouchedRef.current = true; setPublishAs(s.publishAs); }
         if (typeof s.maxRows === "string") setMaxRows(s.maxRows);
         if (typeof s.generationMethod === "string") setGenerationMethod(s.generationMethod);
         if (typeof s.scheduleMode === "string") setScheduleMode(s.scheduleMode);
