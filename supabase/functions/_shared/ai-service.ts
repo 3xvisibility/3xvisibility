@@ -93,8 +93,9 @@ async function checkAndDeductCredits(
   const sb = getServiceClient();
   try {
     if (!sb) {
+      // Infrastructure misconfig — not an auth issue, but we can't verify credits.
+      // Fail-open so AI keeps working; admins will see the log entry.
       console.error("[ai-service] No service client — fail-open");
-      // Can't log without service client
       return { allowed: true, error: "credit_system_unavailable" };
     }
 
@@ -110,13 +111,40 @@ async function checkAndDeductCredits(
 
     if (error) {
       const msg = (error.message || "").toLowerCase();
-      if (msg.includes("could not find the function") || msg.includes("does not exist")) {
+      const code = (error as any).code || "";
+
+      // Real authorization / permission failures → fail-closed.
+      // These indicate the caller is not allowed to deduct credits, which is a
+      // security signal we should not silently bypass.
+      const isAuthError =
+        code === "42501" ||                           // insufficient_privilege
+        code === "PGRST301" || code === "PGRST302" || // PostgREST JWT errors
+        msg.includes("permission denied") ||
+        msg.includes("not authorized") ||
+        msg.includes("unauthorized") ||
+        msg.includes("rls") ||
+        msg.includes("row-level security") ||
+        msg.includes("row level security") ||
+        msg.includes("jwt") ||
+        msg.includes("invalid token") ||
+        msg.includes("forbidden");
+
+      if (isAuthError) {
+        console.error("[ai-service] credit gate auth error — fail-closed:", error.message);
+        await logGateEvent(sb, userId, promptType, model, "blocked", "auth_error", { message: error.message, code });
+        return { allowed: false, remaining: 0, error: "unauthorized" };
+      }
+
+      // RPC missing → transient (function not yet deployed). Fail-open.
+      if (msg.includes("could not find the function") || msg.includes("does not exist") || code === "42883") {
         console.warn("[ai-service] deduct_ai_credits RPC missing — fail-open");
         await logGateEvent(sb, userId, promptType, model, "fail_open", "rpc_missing", { message: error.message });
         return { allowed: true };
       }
-      console.error("[ai-service] credit deduction error:", error.message);
-      await logGateEvent(sb, userId, promptType, model, "fail_open", "rpc_error", { message: error.message });
+
+      // Other transient DB errors → fail-open so AI keeps working.
+      console.error("[ai-service] credit deduction error — fail-open:", error.message);
+      await logGateEvent(sb, userId, promptType, model, "fail_open", "rpc_error", { message: error.message, code });
       return { allowed: true };
     }
 
@@ -127,6 +155,7 @@ async function checkAndDeductCredits(
 
     return { allowed: true, remaining: data?.remaining };
   } catch (err: any) {
+    // Network / runtime exceptions — transient. Fail-open.
     console.error("[ai-service] credit check exception — fail-open:", err);
     await logGateEvent(sb, userId, promptType, model, "fail_open", "exception", { message: String(err?.message ?? err) });
     return { allowed: true };

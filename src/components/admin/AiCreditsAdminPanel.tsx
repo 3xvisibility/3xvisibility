@@ -29,7 +29,8 @@ interface AiStatsResponse {
 
 const REASON_LABELS: Record<string, string> = {
   rpc_missing: "Credits RPC not deployed",
-  rpc_error: "RPC returned an error",
+  rpc_error: "RPC returned a transient error",
+  auth_error: "Authorization denied (RLS / JWT)",
   exception: "Unhandled exception in gate",
   insufficient_credits: "User out of credits",
 };
