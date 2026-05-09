@@ -144,6 +144,18 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [vibeCustomCss, setVibeCustomCss] = useState<string>("");
   const [vibeAdvancedOpen, setVibeAdvancedOpen] = useState<boolean>(false);
 
+  // Shopify theme-alignment tuning — surfaced only when the selected
+  // publish target is a Shopify site, so generated pages slot into the
+  // merchant's theme (full-bleed wrapper, container max-width override,
+  // heading/body scale, section padding) rather than feeling transplanted.
+  const [shopifyTuneOpen, setShopifyTuneOpen] = useState<boolean>(false);
+  const [shopifyFullBleed, setShopifyFullBleed] = useState<boolean>(false);
+  const [shopifyContainerMax, setShopifyContainerMax] = useState<string>("");
+  const [shopifyHorizontalPad, setShopifyHorizontalPad] = useState<string>("");
+  const [shopifyHeadingScale, setShopifyHeadingScale] = useState<number>(1);
+  const [shopifyBodyLineHeight, setShopifyBodyLineHeight] = useState<number>(1.6);
+  const [shopifySectionPadScale, setShopifySectionPadScale] = useState<number>(1);
+
   // Settings
   const [publishMode, setPublishMode] = useState<"draft" | "published">("draft");
   // Publish As — controls whether generated pages are pushed to the CMS as a
