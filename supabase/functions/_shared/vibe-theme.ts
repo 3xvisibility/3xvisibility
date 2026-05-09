@@ -242,6 +242,7 @@ export function buildVibeOverrideStyles(theme?: VibeTheme | null): string {
   // Custom vars + raw CSS appear LAST so they win the cascade.
   const customBlock = [
     customVarsBlock,
+    shopifyBlock,
     customCssClean,
   ].filter(Boolean).join("\n");
 
