@@ -2230,7 +2230,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Publish As</Label>
-                      <RadioGroup value={publishAs} onValueChange={v => setPublishAs(v as any)} className="flex gap-3">
+                      <RadioGroup value={publishAs} onValueChange={v => setPublishAsManual(v as any)} className="flex gap-3">
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="page" id="w-as-page" /><Label htmlFor="w-as-page" className="text-xs cursor-pointer">Page</Label></div>
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="product" id="w-as-product" /><Label htmlFor="w-as-product" className="text-xs cursor-pointer">Product</Label></div>
                       </RadioGroup>
