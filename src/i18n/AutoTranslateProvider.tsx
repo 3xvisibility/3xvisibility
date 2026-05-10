@@ -60,16 +60,16 @@ function setCached(lang: string, text: string, translation: string) {
   }
 }
 
-interface PendingNode {
-  node: Text;
-  original: string;
-}
+type TextTarget = { kind: "text"; node: Text; original: string };
+type AttrTarget = { kind: "attr"; el: Element; attr: string; original: string };
+type Target = TextTarget | AttrTarget;
+
+const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
   const { language } = useLanguage();
   const langRef = useRef(language);
   const scanScheduledRef = useRef(false);
-  // Map original text -> nodes that need it translated
   const inFlightRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -83,8 +83,17 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     let debounceTimer: number | null = null;
     let cancelled = false;
 
-    const collectTextNodes = (root: Node): PendingNode[] => {
-      const out: PendingNode[] = [];
+    const isSkippedAncestor = (el: Element | null): boolean => {
+      if (!el) return true;
+      if (SKIP_TAGS.has(el.tagName) && el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && el.tagName !== "SELECT") {
+        return true;
+      }
+      if (el.closest("[data-no-translate]")) return true;
+      return false;
+    };
+
+    const collectTextTargets = (root: Node): TextTarget[] => {
+      const out: TextTarget[] = [];
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
         acceptNode: (n) => {
           const parent = n.parentElement;
@@ -94,7 +103,6 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
           const text = n.nodeValue || "";
           if (SHOULD_SKIP_TEXT(text)) return NodeFilter.FILTER_REJECT;
-          // Already translated (marked)
           if ((n as any).__autoTrLang === langRef.current) return NodeFilter.FILTER_REJECT;
           return NodeFilter.FILTER_ACCEPT;
         },
@@ -102,19 +110,45 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       let node: Node | null;
       while ((node = walker.nextNode())) {
         const t = node as Text;
-        out.push({ node: t, original: (t.nodeValue || "").trim() });
+        out.push({ kind: "text", node: t, original: (t.nodeValue || "").trim() });
       }
       return out;
     };
 
-    const applyTranslation = (n: Text, original: string, translated: string) => {
-      // Preserve surrounding whitespace
-      const raw = n.nodeValue || "";
-      const leading = raw.match(/^\s*/)?.[0] ?? "";
-      const trailing = raw.match(/\s*$/)?.[0] ?? "";
-      n.nodeValue = `${leading}${translated}${trailing}`;
-      (n as any).__autoTrLang = langRef.current;
-      (n as any).__autoTrOriginal = original;
+    const collectAttrTargets = (root: ParentNode): AttrTarget[] => {
+      const out: AttrTarget[] = [];
+      const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
+      const elements = root.querySelectorAll(selector);
+      const lang = langRef.current;
+      elements.forEach((el) => {
+        if (isSkippedAncestor(el)) return;
+        for (const attr of TRANSLATABLE_ATTRS) {
+          const value = el.getAttribute(attr);
+          if (!value) continue;
+          if (SHOULD_SKIP_TEXT(value)) continue;
+          // Already translated to current language?
+          const cacheTag = `__autoTr_${attr}_lang`;
+          if ((el as any)[cacheTag] === lang) continue;
+          out.push({ kind: "attr", el, attr, original: value.trim() });
+        }
+      });
+      return out;
+    };
+
+    const applyTranslation = (target: Target, original: string, translated: string) => {
+      const lang = langRef.current;
+      if (target.kind === "text") {
+        const raw = target.node.nodeValue || "";
+        const leading = raw.match(/^\s*/)?.[0] ?? "";
+        const trailing = raw.match(/\s*$/)?.[0] ?? "";
+        target.node.nodeValue = `${leading}${translated}${trailing}`;
+        (target.node as any).__autoTrLang = lang;
+        (target.node as any).__autoTrOriginal = original;
+      } else {
+        target.el.setAttribute(target.attr, translated);
+        (target.el as any)[`__autoTr_${target.attr}_lang`] = lang;
+        (target.el as any)[`__autoTr_${target.attr}_orig`] = original;
+      }
     };
 
     const translateBatch = async (originals: string[]): Promise<Record<string, string>> => {
@@ -143,21 +177,24 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     const processPending = async () => {
       if (cancelled) return;
       const lang = langRef.current;
-      const pending = collectTextNodes(document.body);
-      if (pending.length === 0) return;
+      const targets: Target[] = [
+        ...collectTextTargets(document.body),
+        ...collectAttrTargets(document.body),
+      ];
+      if (targets.length === 0) return;
 
-      // Group by original text → list of nodes
-      const groups = new Map<string, Text[]>();
-      for (const p of pending) {
-        if (!groups.has(p.original)) groups.set(p.original, []);
-        groups.get(p.original)!.push(p.node);
+      // Group by original
+      const groups = new Map<string, Target[]>();
+      for (const t of targets) {
+        if (!groups.has(t.original)) groups.set(t.original, []);
+        groups.get(t.original)!.push(t);
       }
 
       const needRequest: string[] = [];
-      for (const [original, nodes] of groups) {
+      for (const [original, ts] of groups) {
         const cached = getCached(lang, original);
         if (cached) {
-          nodes.forEach((n) => applyTranslation(n, original, cached));
+          ts.forEach((t) => applyTranslation(t, original, cached));
           continue;
         }
         if (inFlightRef.current.has(`${lang}:${original}`)) continue;
@@ -165,11 +202,8 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       }
 
       if (needRequest.length === 0) return;
-
-      // Mark in-flight
       needRequest.forEach((o) => inFlightRef.current.add(`${lang}:${o}`));
 
-      // Batch
       for (let i = 0; i < needRequest.length; i += BATCH_SIZE) {
         const slice = needRequest.slice(i, i + BATCH_SIZE);
         const map = await translateBatch(slice);
@@ -177,11 +211,14 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           slice.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
           return;
         }
-        // Re-collect (DOM may have changed) and apply
-        const fresh = collectTextNodes(document.body);
-        for (const { node, original } of fresh) {
-          const tr = map[original];
-          if (tr) applyTranslation(node, original, tr);
+        // Re-collect to handle DOM changes
+        const fresh: Target[] = [
+          ...collectTextTargets(document.body),
+          ...collectAttrTargets(document.body),
+        ];
+        for (const t of fresh) {
+          const tr = map[t.original];
+          if (tr) applyTranslation(t, t.original, tr);
         }
         slice.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
       }
