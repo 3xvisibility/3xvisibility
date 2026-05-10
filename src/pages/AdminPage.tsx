@@ -298,8 +298,43 @@ export default function AdminPage() {
     },
   });
 
-  const openEditFromUser = (user: AdminUser) => {
-    const sub = data?.subscriptions?.find((s) => s.user_id === user.id) || null;
+  const callAction = async (payload: Record<string, any>) => {
+    const { data, error } = await supabase.functions.invoke("admin-panel", { body: payload });
+    if (error) throw error;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data;
+  };
+
+  const banMutation = useMutation({
+    mutationFn: (vars: { user_id: string; banned: boolean; reason?: string }) =>
+      callAction({ action: "ban-user", target_user_id: vars.user_id, banned: vars.banned, reason: vars.reason }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.banned ? "User banned" : "User unbanned");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (user_id: string) => callAction({ action: "delete-user", target_user_id: user_id }),
+    onSuccess: () => {
+      toast.success("User deleted");
+      setConfirmDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: (vars: { user_id: string; role: string }) =>
+      callAction({ action: "set-role", target_user_id: vars.user_id, role: vars.role }),
+    onSuccess: () => {
+      toast.success("Role updated");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
     setEditUser(user);
     setEditSub(sub);
     setDialogOpen(true);
