@@ -126,16 +126,12 @@ export function processLoops(content: string, vars: Record<string, string>): str
 
 // ─── Variable transforms: {var:transform} ────────────────────────────
 
-export function applyTransform(value: string, transform: string): string {
+export function applyTransform(value: string, transform: string, locale?: string): string {
   const t = transform.toLowerCase();
-  if (t === "uppercase") return value.toUpperCase();
-  if (t === "lowercase") return value.toLowerCase();
-  if (t === "capitalize")
-    return value
-      .split(" ")
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-      .join(" ");
-  if (t === "slug") return slugify(value);
+  if (t === "uppercase") return upperLocale(value, locale);
+  if (t === "lowercase") return lowerLocale(value, locale);
+  if (t === "capitalize") return titleCaseLocale(value, locale);
+  if (t === "slug") return slugifyLocale(value, locale);
 
   const extractMatch = t.match(/^extract\((\d+)\)$/);
   if (extractMatch) {
@@ -146,7 +142,8 @@ export function applyTransform(value: string, transform: string): string {
   const truncMatch = t.match(/^truncate\((\d+)\)$/);
   if (truncMatch) {
     const n = parseInt(truncMatch[1]);
-    return value.length > n ? value.slice(0, n) + "…" : value;
+    const truncated = truncateByGrapheme(value, n, locale);
+    return truncated.length < value.length ? truncated + "…" : truncated;
   }
 
   return value;
@@ -154,11 +151,11 @@ export function applyTransform(value: string, transform: string): string {
 
 // ─── Variable replacement ────────────────────────────────────────────
 
-export function replaceVariables(content: string, vars: Record<string, string>): string {
+export function replaceVariables(content: string, vars: Record<string, string>, locale?: string): string {
   // First pass: transforms {var:transform}
   let result = content.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName: string, transform: string) => {
     const rawVal = vars[varName] || vars[varName.toLowerCase()] || "";
-    return applyTransform(rawVal, transform);
+    return applyTransform(rawVal, transform, locale);
   });
 
   // Second pass: plain {var}
@@ -171,8 +168,8 @@ export function replaceVariables(content: string, vars: Record<string, string>):
 
 // ─── Resolve a pattern string (SEO title/desc, OG, slug) ─────────────
 
-export function resolvePattern(pattern: string, vars: Record<string, string>): string {
-  return replaceVariables(pattern, vars);
+export function resolvePattern(pattern: string, vars: Record<string, string>, locale?: string): string {
+  return replaceVariables(pattern, vars, locale);
 }
 
 // ─── Build JSON-LD ───────────────────────────────────────────────────
