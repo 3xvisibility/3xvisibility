@@ -258,6 +258,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "get-settings") {
+      const { data, error } = await serviceClient.from("system_settings").select("*").eq("id", "global").maybeSingle();
+      if (error) throw error;
+      const settings = data || { id: "global", ai_provider: "lovable", feature_flags: {}, maintenance_mode: false, maintenance_message: null };
+      return new Response(JSON.stringify({ settings }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "update-settings") {
+      const { ai_provider, feature_flags, maintenance_mode, maintenance_message } = body;
+      const updates: Record<string, any> = { id: "global", updated_by: user.id, updated_at: new Date().toISOString() };
+      if (ai_provider !== undefined) updates.ai_provider = ai_provider;
+      if (feature_flags !== undefined) updates.feature_flags = feature_flags;
+      if (maintenance_mode !== undefined) updates.maintenance_mode = !!maintenance_mode;
+      if (maintenance_message !== undefined) updates.maintenance_message = maintenance_message;
+      const { data, error } = await serviceClient.from("system_settings").upsert(updates, { onConflict: "id" }).select().single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, settings: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
