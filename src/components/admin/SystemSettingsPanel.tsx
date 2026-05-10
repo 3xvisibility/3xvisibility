@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, AlertTriangle, Sparkles, Plus, X } from "lucide-react";
+import { Save, AlertTriangle, Sparkles, Plus, X, Activity, CheckCircle2, XCircle, RefreshCw, Loader2 } from "lucide-react";
 
 interface SystemSettings {
   id: string;
