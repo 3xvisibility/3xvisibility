@@ -248,6 +248,51 @@ function EditSubscriptionDialog({
   );
 }
 
+// --- Per-row actions menu ---
+function UserActionsMenu({
+  u, onEditPlan, onSetRole, onToggleBan, onDelete,
+}: {
+  u: AdminUser;
+  onEditPlan: () => void;
+  onSetRole: (role: "admin" | "moderator" | "user") => void;
+  onToggleBan: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuLabel className="text-xs">Manage user</DropdownMenuLabel>
+        <DropdownMenuItem onClick={onEditPlan}>
+          <Pencil className="h-3.5 w-3.5 mr-2" /> Edit plan & quota
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground">Set role</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => onSetRole("admin")} disabled={u.role === "admin"}>
+          <ShieldCheck className="h-3.5 w-3.5 mr-2 text-primary" /> Admin
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSetRole("moderator")} disabled={u.role === "moderator"}>
+          <UserCog className="h-3.5 w-3.5 mr-2" /> Moderator
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSetRole("user")} disabled={u.role === "user"}>
+          <Users className="h-3.5 w-3.5 mr-2" /> User
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onToggleBan} className={u.is_banned ? "" : "text-destructive focus:text-destructive"}>
+          {u.is_banned ? <><ShieldOff className="h-3.5 w-3.5 mr-2" /> Unban user</> : <><Ban className="h-3.5 w-3.5 mr-2" /> Ban user</>}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+          <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete user
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function AdminPage() {
   const { t } = useLanguage();
   const [userSearch, setUserSearch] = useState("");
