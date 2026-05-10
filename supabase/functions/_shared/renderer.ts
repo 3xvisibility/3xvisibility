@@ -212,22 +212,27 @@ export function buildOgMeta(opts: { title: string; description: string; url?: st
 
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
+  const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
   let html = processConditionals(template.content, allVars);
   html = processLoops(html, allVars);
-  html = replaceVariables(html, allVars);
+  html = replaceVariables(html, allVars, locale);
   html = processSpintax(html);
   const unresolved = html.match(/\{[a-z_]+\}/gi);
   if (unresolved) warnings.push(`Unresolved variables: ${[...new Set(unresolved)].join(", ")}`);
   const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
   let title = h1Match ? h1Match[1].replace(/<[^>]*>/g, "").trim() : (Object.values(ctx.row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${(ctx.rowIndex ?? 0) + 1}`);
+  // Apply locale-aware title casing for the H1-derived title
+  title = titleCaseLocale(title, locale);
   const slugPattern = schemaConfig._slugPattern || "";
-  let slug = slugPattern ? (slugify(resolvePattern(slugPattern, allVars)) || slugify(title)) : (slugify(title) || `page-${(ctx.rowIndex ?? 0) + 1}`);
+  let slug = slugPattern
+    ? (slugify(resolvePattern(slugPattern, allVars), locale) || slugify(title, locale))
+    : (slugify(title, locale) || `page-${(ctx.rowIndex ?? 0) + 1}`);
   const tplTitle = template.seo_title_pattern || "";
   const tplDesc = template.seo_description_pattern || "";
-  const seoTitle = tplTitle ? resolvePattern(tplTitle, allVars).slice(0, 60) : title.slice(0, 60);
-  const seoDescription = tplDesc ? resolvePattern(tplDesc, allVars).slice(0, 160) : html.replace(/<[^>]*>/g, "").slice(0, 160);
+  const seoTitle = tplTitle ? truncateByGrapheme(resolvePattern(tplTitle, allVars), 60, locale) : truncateByGrapheme(title, 60, locale);
+  const seoDescription = tplDesc ? truncateByGrapheme(resolvePattern(tplDesc, allVars), 160, locale) : truncateByGrapheme(html.replace(/<[^>]*>/g, ""), 160, locale);
   if (seoTitle.length > 60) warnings.push(`SEO title exceeds 60 chars (${seoTitle.length})`);
   if (seoDescription.length > 160) warnings.push(`SEO description exceeds 160 chars (${seoDescription.length})`);
   if (seoDescription.length < 50 && seoDescription.length > 0) warnings.push(`SEO description too short (${seoDescription.length} chars)`);
