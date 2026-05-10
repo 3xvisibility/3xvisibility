@@ -1983,6 +1983,36 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          ai_provider: string
+          feature_flags: Json
+          id: string
+          maintenance_message: string | null
+          maintenance_mode: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ai_provider?: string
+          feature_flags?: Json
+          id?: string
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ai_provider?: string
+          feature_flags?: Json
+          id?: string
+          maintenance_message?: string | null
+          maintenance_mode?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       template_ratings: {
         Row: {
           created_at: string
