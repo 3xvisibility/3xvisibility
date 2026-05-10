@@ -335,6 +335,8 @@ export default function AdminPage() {
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
 
+  const openEditFromUser = (user: AdminUser) => {
+    const sub = data?.subscriptions?.find((s) => s.user_id === user.id) || null;
     setEditUser(user);
     setEditSub(sub);
     setDialogOpen(true);
