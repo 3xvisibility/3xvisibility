@@ -115,6 +115,8 @@ export function SystemSettingsPanel() {
         </CardContent>
       </Card>
 
+      <AiProviderHealthCard provider={data?.ai_provider || draft.ai_provider} draftProvider={draft.ai_provider} />
+
       {/* Maintenance Mode */}
       <Card className={draft.maintenance_mode ? "border-destructive" : ""}>
         <CardHeader>
