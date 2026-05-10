@@ -20,6 +20,8 @@ export interface RenderContext {
   website?: { name?: string; url?: string };
   campaignType?: string;
   rowIndex?: number;
+  /** BCP-47 / ISO-639-1 language code for locale-aware slugs and titles. */
+  locale?: string;
 }
 
 export interface RenderResult {
@@ -36,13 +38,14 @@ export interface RenderResult {
 
 // ─── Core functions ──────────────────────────────────────────────────
 
-export function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+import { slugifyLocale, titleCaseLocale, lowerLocale, upperLocale, truncateByGrapheme } from "./locale-format.ts";
+
+/**
+ * Slugify with optional locale awareness. Default behaviour (no locale) is
+ * the legacy ASCII slug for backward compatibility.
+ */
+export function slugify(text: string, locale?: string): string {
+  return slugifyLocale(text, locale);
 }
 
 export function processSpintax(text: string, deterministic = false): string {
@@ -90,24 +93,27 @@ export function processLoops(content: string, vars: Record<string, string>): str
   );
 }
 
-export function applyTransform(value: string, transform: string): string {
+export function applyTransform(value: string, transform: string, locale?: string): string {
   const t = transform.toLowerCase();
-  if (t === "uppercase") return value.toUpperCase();
-  if (t === "lowercase") return value.toLowerCase();
-  if (t === "capitalize")
-    return value.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-  if (t === "slug") return slugify(value);
+  if (t === "uppercase") return upperLocale(value, locale);
+  if (t === "lowercase") return lowerLocale(value, locale);
+  if (t === "capitalize") return titleCaseLocale(value, locale);
+  if (t === "slug") return slugifyLocale(value, locale);
   const extractMatch = t.match(/^extract\((\d+)\)$/);
   if (extractMatch) return value.split(/\s+/).slice(0, parseInt(extractMatch[1])).join(" ");
   const truncMatch = t.match(/^truncate\((\d+)\)$/);
-  if (truncMatch) { const n = parseInt(truncMatch[1]); return value.length > n ? value.slice(0, n) + "…" : value; }
+  if (truncMatch) {
+    const n = parseInt(truncMatch[1]);
+    const truncated = truncateByGrapheme(value, n, locale);
+    return truncated.length < value.length ? truncated + "…" : truncated;
+  }
   return value;
 }
 
-export function replaceVariables(content: string, vars: Record<string, string>): string {
+export function replaceVariables(content: string, vars: Record<string, string>, locale?: string): string {
   let result = content.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName: string, transform: string) => {
     const rawVal = vars[varName] || vars[varName.toLowerCase()] || "";
-    return applyTransform(rawVal, transform);
+    return applyTransform(rawVal, transform, locale);
   });
   for (const [key, value] of Object.entries(vars)) {
     result = result.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
@@ -206,22 +212,27 @@ export function buildOgMeta(opts: { title: string; description: string; url?: st
 
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
+  const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
   let html = processConditionals(template.content, allVars);
   html = processLoops(html, allVars);
-  html = replaceVariables(html, allVars);
+  html = replaceVariables(html, allVars, locale);
   html = processSpintax(html);
   const unresolved = html.match(/\{[a-z_]+\}/gi);
   if (unresolved) warnings.push(`Unresolved variables: ${[...new Set(unresolved)].join(", ")}`);
   const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
   let title = h1Match ? h1Match[1].replace(/<[^>]*>/g, "").trim() : (Object.values(ctx.row).filter(Boolean).slice(0, 2).join(" - ") || `Page ${(ctx.rowIndex ?? 0) + 1}`);
+  // Apply locale-aware title casing for the H1-derived title
+  title = titleCaseLocale(title, locale);
   const slugPattern = schemaConfig._slugPattern || "";
-  let slug = slugPattern ? (slugify(resolvePattern(slugPattern, allVars)) || slugify(title)) : (slugify(title) || `page-${(ctx.rowIndex ?? 0) + 1}`);
+  let slug = slugPattern
+    ? (slugify(resolvePattern(slugPattern, allVars), locale) || slugify(title, locale))
+    : (slugify(title, locale) || `page-${(ctx.rowIndex ?? 0) + 1}`);
   const tplTitle = template.seo_title_pattern || "";
   const tplDesc = template.seo_description_pattern || "";
-  const seoTitle = tplTitle ? resolvePattern(tplTitle, allVars).slice(0, 60) : title.slice(0, 60);
-  const seoDescription = tplDesc ? resolvePattern(tplDesc, allVars).slice(0, 160) : html.replace(/<[^>]*>/g, "").slice(0, 160);
+  const seoTitle = tplTitle ? truncateByGrapheme(resolvePattern(tplTitle, allVars), 60, locale) : truncateByGrapheme(title, 60, locale);
+  const seoDescription = tplDesc ? truncateByGrapheme(resolvePattern(tplDesc, allVars), 160, locale) : truncateByGrapheme(html.replace(/<[^>]*>/g, ""), 160, locale);
   if (seoTitle.length > 60) warnings.push(`SEO title exceeds 60 chars (${seoTitle.length})`);
   if (seoDescription.length > 160) warnings.push(`SEO description exceeds 160 chars (${seoDescription.length})`);
   if (seoDescription.length < 50 && seoDescription.length > 0) warnings.push(`SEO description too short (${seoDescription.length} chars)`);

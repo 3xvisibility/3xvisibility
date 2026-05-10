@@ -12,13 +12,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+import { slugifyLocale } from "../_shared/locale-format.ts";
+
+function slugify(text: string, locale?: string): string {
+  return slugifyLocale(text, locale);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1827,9 +1824,9 @@ Deno.serve(async (req) => {
             for (const [key, value] of Object.entries(allVars)) {
               resolvedSlug = resolvedSlug.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
             }
-            slug = slugify(resolvedSlug) || slugify(pageTitle) || `page-${processedCount + 1}`;
+            slug = slugify(resolvedSlug, resolvedLanguage) || slugify(pageTitle, resolvedLanguage) || `page-${processedCount + 1}`;
           } else {
-            slug = slugify(pageTitle) || `page-${processedCount + 1}`;
+            slug = slugify(pageTitle, resolvedLanguage) || `page-${processedCount + 1}`;
           }
           const dirStructure = (campaign as any).directory_structure as { levels?: string[]; separator?: string } | null;
           if (dirStructure?.levels && dirStructure.levels.length > 0) {
@@ -1837,7 +1834,7 @@ Deno.serve(async (req) => {
             for (const level of dirStructure.levels) {
               const levelValue = allVars[level] || row[level];
               if (levelValue) {
-                dirParts.push(slugify(levelValue));
+                dirParts.push(slugify(levelValue, resolvedLanguage));
               }
             }
             if (dirParts.length > 0) {
