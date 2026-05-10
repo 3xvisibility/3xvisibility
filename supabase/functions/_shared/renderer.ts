@@ -93,24 +93,27 @@ export function processLoops(content: string, vars: Record<string, string>): str
   );
 }
 
-export function applyTransform(value: string, transform: string): string {
+export function applyTransform(value: string, transform: string, locale?: string): string {
   const t = transform.toLowerCase();
-  if (t === "uppercase") return value.toUpperCase();
-  if (t === "lowercase") return value.toLowerCase();
-  if (t === "capitalize")
-    return value.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-  if (t === "slug") return slugify(value);
+  if (t === "uppercase") return upperLocale(value, locale);
+  if (t === "lowercase") return lowerLocale(value, locale);
+  if (t === "capitalize") return titleCaseLocale(value, locale);
+  if (t === "slug") return slugifyLocale(value, locale);
   const extractMatch = t.match(/^extract\((\d+)\)$/);
   if (extractMatch) return value.split(/\s+/).slice(0, parseInt(extractMatch[1])).join(" ");
   const truncMatch = t.match(/^truncate\((\d+)\)$/);
-  if (truncMatch) { const n = parseInt(truncMatch[1]); return value.length > n ? value.slice(0, n) + "…" : value; }
+  if (truncMatch) {
+    const n = parseInt(truncMatch[1]);
+    const truncated = truncateByGrapheme(value, n, locale);
+    return truncated.length < value.length ? truncated + "…" : truncated;
+  }
   return value;
 }
 
-export function replaceVariables(content: string, vars: Record<string, string>): string {
+export function replaceVariables(content: string, vars: Record<string, string>, locale?: string): string {
   let result = content.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m, varName: string, transform: string) => {
     const rawVal = vars[varName] || vars[varName.toLowerCase()] || "";
-    return applyTransform(rawVal, transform);
+    return applyTransform(rawVal, transform, locale);
   });
   for (const [key, value] of Object.entries(vars)) {
     result = result.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
