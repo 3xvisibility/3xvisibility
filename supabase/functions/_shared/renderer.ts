@@ -38,13 +38,14 @@ export interface RenderResult {
 
 // ─── Core functions ──────────────────────────────────────────────────
 
-export function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+import { slugifyLocale, titleCaseLocale, lowerLocale, upperLocale, truncateByGrapheme } from "./locale-format.ts";
+
+/**
+ * Slugify with optional locale awareness. Default behaviour (no locale) is
+ * the legacy ASCII slug for backward compatibility.
+ */
+export function slugify(text: string, locale?: string): string {
+  return slugifyLocale(text, locale);
 }
 
 export function processSpintax(text: string, deterministic = false): string {
