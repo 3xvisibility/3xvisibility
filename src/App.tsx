@@ -196,6 +196,7 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
+      <AutoTranslateProvider>
       <WorkspaceProvider>
       <BrandingProvider>
       <TooltipProvider>
