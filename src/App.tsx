@@ -247,6 +247,7 @@ const App = () => {
       </TooltipProvider>
       </BrandingProvider>
       </WorkspaceProvider>
+      </AutoTranslateProvider>
       </LanguageProvider>
     </QueryClientProvider>
     </ThemeProvider>
