@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
       if (usersError) throw usersError;
 
       const { data: profiles } = await serviceClient.from("profiles").select("*");
+      const { data: rolesData } = await serviceClient.from("user_roles").select("user_id, role");
       const { data: campaigns } = await serviceClient.from("campaigns").select("*");
       const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at, title, user_id");
       const { data: subscriptions } = await serviceClient.from("subscriptions").select("*");
