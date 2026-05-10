@@ -113,6 +113,9 @@ Deno.serve(async (req) => {
           campaigns_count: userCampaigns.length,
           pages_count: userPages.length,
           websites_count: userWebsites.length,
+          is_banned: profile?.is_banned || false,
+          banned_reason: profile?.banned_reason || null,
+          role: rolesData?.find((r: any) => r.user_id === u.id)?.role || "user",
         };
       });
 
