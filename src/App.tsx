@@ -45,6 +45,7 @@ import NotFound from "./pages/NotFound";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
 import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
+import { AutoTranslateProvider } from "./i18n/AutoTranslateProvider";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
