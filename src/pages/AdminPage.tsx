@@ -19,6 +19,7 @@ import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, Us
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
+import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 
 interface AdminUser {
   id: string;
@@ -456,6 +457,7 @@ export default function AdminPage() {
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ai-credits" className="space-y-4">
@@ -464,6 +466,10 @@ export default function AdminPage() {
 
         <TabsContent value="connections" className="space-y-4">
           <AdminConnectionsPanel />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <SystemSettingsPanel />
         </TabsContent>
 
         {/* Activity feed tab */}
