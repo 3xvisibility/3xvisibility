@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, AlertTriangle, Sparkles, Plus, X } from "lucide-react";
+import { Save, AlertTriangle, Sparkles, Plus, X, Activity, CheckCircle2, XCircle, RefreshCw, Loader2 } from "lucide-react";
 
 interface SystemSettings {
   id: string;
@@ -114,6 +114,8 @@ export function SystemSettingsPanel() {
           <p className="text-xs text-muted-foreground">Requires the matching API key secret to be configured.</p>
         </CardContent>
       </Card>
+
+      <AiProviderHealthCard provider={data?.ai_provider || draft.ai_provider} draftProvider={draft.ai_provider} />
 
       {/* Maintenance Mode */}
       <Card className={draft.maintenance_mode ? "border-destructive" : ""}>
@@ -218,5 +220,116 @@ export function SystemSettingsPanel() {
         </Button>
       </div>
     </div>
+  );
+}
+
+interface HealthResult {
+  provider: string;
+  provider_name: string;
+  key_env: string;
+  has_key: boolean;
+  status: "healthy" | "missing_key" | "unauthorized" | "no_credits" | "rate_limited" | "timeout" | "unreachable" | "error" | "unknown";
+  latency_ms: number | null;
+  http_status?: number;
+  message: string;
+  checked_at: string;
+}
+
+function AiProviderHealthCard({ provider, draftProvider }: { provider: string; draftProvider: string }) {
+  const qc = useQueryClient();
+  const dirty = provider !== draftProvider;
+
+  const { data, isFetching, refetch } = useQuery({
+    queryKey: ["admin-ai-health", provider],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("admin-panel", {
+        body: { action: "check-ai-provider", provider },
+      });
+      if (error) throw error;
+      return data as HealthResult;
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const checkDraft = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("admin-panel", {
+        body: { action: "check-ai-provider", provider: draftProvider },
+      });
+      if (error) throw error;
+      return data as HealthResult;
+    },
+    onSuccess: (r) => {
+      qc.setQueryData(["admin-ai-health", draftProvider], r);
+      if (r.status === "healthy") toast.success(`${r.provider_name} is healthy`);
+      else toast.warning(`${r.provider_name}: ${r.message}`);
+    },
+    onError: (e: any) => toast.error(e.message || "Health check failed"),
+  });
+
+  const statusMeta = (s?: HealthResult["status"]) => {
+    switch (s) {
+      case "healthy": return { color: "bg-green-500/15 text-green-500 border-green-500/30", icon: CheckCircle2, label: "Healthy" };
+      case "missing_key": return { color: "bg-amber-500/15 text-amber-500 border-amber-500/30", icon: AlertTriangle, label: "Missing key" };
+      case "unauthorized": return { color: "bg-destructive/15 text-destructive border-destructive/30", icon: XCircle, label: "Unauthorized" };
+      case "no_credits": return { color: "bg-amber-500/15 text-amber-500 border-amber-500/30", icon: AlertTriangle, label: "No credits" };
+      case "rate_limited": return { color: "bg-amber-500/15 text-amber-500 border-amber-500/30", icon: AlertTriangle, label: "Rate limited" };
+      case "timeout": return { color: "bg-amber-500/15 text-amber-500 border-amber-500/30", icon: AlertTriangle, label: "Timeout" };
+      case "unreachable": return { color: "bg-destructive/15 text-destructive border-destructive/30", icon: XCircle, label: "Unreachable" };
+      case "error": return { color: "bg-destructive/15 text-destructive border-destructive/30", icon: XCircle, label: "Error" };
+      default: return { color: "bg-muted text-muted-foreground border-border", icon: Activity, label: "Unknown" };
+    }
+  };
+
+  const meta = statusMeta(data?.status);
+  const Icon = meta.icon;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Activity className="h-4 w-4" /> Provider Health</CardTitle>
+        <CardDescription>Live verification of the saved AI provider's API key and reachability.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-start justify-between gap-3 p-3 rounded-lg border bg-card">
+          <div className="min-w-0 space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-sm">{data?.provider_name || provider}</span>
+              <Badge variant="outline" className={meta.color}>
+                <Icon className="h-3 w-3 mr-1" />
+                {meta.label}
+              </Badge>
+              {data?.latency_ms != null && (
+                <Badge variant="secondary" className="text-[10px]">{data.latency_ms} ms</Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Secret: <code className="text-[11px]">{data?.key_env || "—"}</code>
+              {data?.has_key === false && <span className="ml-2 text-amber-500">not configured</span>}
+            </p>
+            {data?.message && <p className="text-xs text-muted-foreground">{data.message}</p>}
+            {data?.checked_at && (
+              <p className="text-[10px] text-muted-foreground">Checked {new Date(data.checked_at).toLocaleTimeString()}</p>
+            )}
+          </div>
+          <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            <span className="ml-1">Recheck</span>
+          </Button>
+        </div>
+
+        {dirty && (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-dashed">
+            <p className="text-xs text-muted-foreground">
+              Test the unsaved provider selection (<code className="text-[11px]">{draftProvider}</code>) before saving.
+            </p>
+            <Button size="sm" variant="secondary" onClick={() => checkDraft.mutate()} disabled={checkDraft.isPending}>
+              {checkDraft.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Activity className="h-3.5 w-3.5 mr-1" />}
+              Test draft
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
