@@ -19,6 +19,7 @@ import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, Us
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
+import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 
 interface AdminUser {
   id: string;
