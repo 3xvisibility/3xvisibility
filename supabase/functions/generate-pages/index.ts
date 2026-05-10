@@ -12,13 +12,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+import { slugifyLocale } from "../_shared/locale-format.ts";
+
+function slugify(text: string, locale?: string): string {
+  return slugifyLocale(text, locale);
 }
 
 // ═══════════════════════════════════════════════════════════
