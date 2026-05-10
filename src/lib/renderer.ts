@@ -339,6 +339,7 @@ export function buildOgMeta(opts: {
 
 export function renderPage(template: TemplateConfig, ctx: RenderContext): RenderResult {
   const warnings: string[] = [];
+  const locale = ctx.locale || "en";
   const allVars: Record<string, string> = { ...ctx.row, ...ctx.extraVars };
   const schemaConfig = template.schema_config || {};
 
@@ -346,8 +347,8 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
   let html = processConditionals(template.content, allVars);
   html = processLoops(html, allVars);
 
-  // 2) Replace variables (with transforms)
-  html = replaceVariables(html, allVars);
+  // 2) Replace variables (with transforms) — locale-aware
+  html = replaceVariables(html, allVars, locale);
 
   // 3) Process spintax
   html = processSpintax(html);
@@ -359,7 +360,7 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
     warnings.push(`Unresolved variables: ${unique.join(", ")}`);
   }
 
-  // 5) Extract title from <h1> or row values
+  // 5) Extract title from <h1> or row values, then locale-format
   const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/i);
   let title: string;
   if (h1Match) {
@@ -368,23 +369,26 @@ export function renderPage(template: TemplateConfig, ctx: RenderContext): Render
     const vals = Object.values(ctx.row).filter(Boolean);
     title = vals.slice(0, 2).join(" - ") || `Page ${(ctx.rowIndex ?? 0) + 1}`;
   }
+  title = titleCaseLocale(title, locale);
 
-  // 6) Build slug from template slug pattern or title
+  // 6) Build slug from template slug pattern or title (locale-aware)
   const slugPattern = schemaConfig._slugPattern || "";
   let slug: string;
   if (slugPattern) {
-    slug = slugify(resolvePattern(slugPattern, allVars)) || slugify(title);
+    slug = slugify(resolvePattern(slugPattern, allVars, locale), locale) || slugify(title, locale);
   } else {
-    slug = slugify(title) || `page-${(ctx.rowIndex ?? 0) + 1}`;
+    slug = slugify(title, locale) || `page-${(ctx.rowIndex ?? 0) + 1}`;
   }
 
-  // 7) SEO title & description
+  // 7) SEO title & description — grapheme-aware truncation
   const tplTitle = template.seo_title_pattern || "";
   const tplDesc = template.seo_description_pattern || "";
-  let seoTitle = tplTitle ? resolvePattern(tplTitle, allVars).slice(0, 60) : title.slice(0, 60);
+  let seoTitle = tplTitle
+    ? truncateByGrapheme(resolvePattern(tplTitle, allVars, locale), 60, locale)
+    : truncateByGrapheme(title, 60, locale);
   let seoDescription = tplDesc
-    ? resolvePattern(tplDesc, allVars).slice(0, 160)
-    : html.replace(/<[^>]*>/g, "").slice(0, 160);
+    ? truncateByGrapheme(resolvePattern(tplDesc, allVars, locale), 160, locale)
+    : truncateByGrapheme(html.replace(/<[^>]*>/g, ""), 160, locale);
 
   // Length warnings
   if (seoTitle.length > 60) warnings.push(`SEO title exceeds 60 chars (${seoTitle.length})`);
