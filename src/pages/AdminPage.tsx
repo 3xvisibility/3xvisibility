@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -32,6 +34,9 @@ interface AdminUser {
   campaigns_count: number;
   pages_count: number;
   websites_count: number;
+  is_banned: boolean;
+  banned_reason: string | null;
+  role: "admin" | "moderator" | "user";
 }
 
 interface AdminOverview {
@@ -243,6 +248,51 @@ function EditSubscriptionDialog({
   );
 }
 
+// --- Per-row actions menu ---
+function UserActionsMenu({
+  u, onEditPlan, onSetRole, onToggleBan, onDelete,
+}: {
+  u: AdminUser;
+  onEditPlan: () => void;
+  onSetRole: (role: "admin" | "moderator" | "user") => void;
+  onToggleBan: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuLabel className="text-xs">Manage user</DropdownMenuLabel>
+        <DropdownMenuItem onClick={onEditPlan}>
+          <Pencil className="h-3.5 w-3.5 mr-2" /> Edit plan & quota
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground">Set role</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => onSetRole("admin")} disabled={u.role === "admin"}>
+          <ShieldCheck className="h-3.5 w-3.5 mr-2 text-primary" /> Admin
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSetRole("moderator")} disabled={u.role === "moderator"}>
+          <UserCog className="h-3.5 w-3.5 mr-2" /> Moderator
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onSetRole("user")} disabled={u.role === "user"}>
+          <Users className="h-3.5 w-3.5 mr-2" /> User
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onToggleBan} className={u.is_banned ? "" : "text-destructive focus:text-destructive"}>
+          {u.is_banned ? <><ShieldOff className="h-3.5 w-3.5 mr-2" /> Unban user</> : <><Ban className="h-3.5 w-3.5 mr-2" /> Ban user</>}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+          <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete user
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function AdminPage() {
   const { t } = useLanguage();
   const [userSearch, setUserSearch] = useState("");
@@ -250,6 +300,7 @@ export default function AdminPage() {
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -291,6 +342,43 @@ export default function AdminPage() {
     onError: (err: any) => {
       toast.error(err.message || "Failed to update subscription");
     },
+  });
+
+  const callAction = async (payload: Record<string, any>) => {
+    const { data, error } = await supabase.functions.invoke("admin-panel", { body: payload });
+    if (error) throw error;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data;
+  };
+
+  const banMutation = useMutation({
+    mutationFn: (vars: { user_id: string; banned: boolean; reason?: string }) =>
+      callAction({ action: "ban-user", target_user_id: vars.user_id, banned: vars.banned, reason: vars.reason }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.banned ? "User banned" : "User unbanned");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (user_id: string) => callAction({ action: "delete-user", target_user_id: user_id }),
+    onSuccess: () => {
+      toast.success("User deleted");
+      setConfirmDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: (vars: { user_id: string; role: string }) =>
+      callAction({ action: "set-role", target_user_id: vars.user_id, role: vars.role }),
+    onSuccess: () => {
+      toast.success("Role updated");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
   });
 
   const openEditFromUser = (user: AdminUser) => {
@@ -435,7 +523,11 @@ export default function AdminPage() {
                   filteredUsers.map((u) => (
                     <div key={u.id} className="p-3 flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{u.full_name || "—"}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-medium">{u.full_name || "—"}</p>
+                          {u.is_banned && <Badge variant="destructive" className="text-[9px] h-4">Banned</Badge>}
+                          {u.role !== "user" && <Badge variant="outline" className="text-[9px] h-4 border-primary/40 text-primary capitalize">{u.role}</Badge>}
+                        </div>
                         <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge variant="outline" className="capitalize text-[10px]">{u.plan}</Badge>
@@ -443,9 +535,13 @@ export default function AdminPage() {
                           <span className="text-[10px] text-muted-foreground">{u.campaigns_count} campaigns</span>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => openEditFromUser(u)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
+                      <UserActionsMenu
+                        u={u}
+                        onEditPlan={() => openEditFromUser(u)}
+                        onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
+                        onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
+                        onDelete={() => setConfirmDelete(u)}
+                      />
                     </div>
                   ))
                 )}
@@ -475,7 +571,11 @@ export default function AdminPage() {
                         <TableRow key={u.id}>
                           <TableCell>
                             <div>
-                              <p className="font-medium text-sm">{u.full_name || "—"}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="font-medium text-sm">{u.full_name || "—"}</p>
+                                {u.is_banned && <Badge variant="destructive" className="text-[10px] h-4">Banned</Badge>}
+                                {u.role !== "user" && <Badge variant="outline" className="text-[10px] h-4 border-primary/40 text-primary capitalize">{u.role}</Badge>}
+                              </div>
                               <p className="text-xs text-muted-foreground">{u.email}</p>
                             </div>
                           </TableCell>
@@ -486,9 +586,13 @@ export default function AdminPage() {
                           <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{formatDate(u.created_at)}</TableCell>
                           <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">{formatDate(u.last_sign_in_at)}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromUser(u)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
+                            <UserActionsMenu
+                              u={u}
+                              onEditPlan={() => openEditFromUser(u)}
+                              onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
+                              onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
+                              onDelete={() => setConfirmDelete(u)}
+                            />
                           </TableCell>
                         </TableRow>
                       ))
@@ -645,6 +749,28 @@ export default function AdminPage() {
         onSave={handleSave}
         saving={updateMutation.isPending}
       />
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes <span className="font-medium text-foreground">{confirmDelete?.email}</span> and all of their data.
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDelete) deleteMutation.mutate(confirmDelete.id); }}
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete user"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
       if (usersError) throw usersError;
 
       const { data: profiles } = await serviceClient.from("profiles").select("*");
+      const { data: rolesData } = await serviceClient.from("user_roles").select("user_id, role");
       const { data: campaigns } = await serviceClient.from("campaigns").select("*");
       const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at, title, user_id");
       const { data: subscriptions } = await serviceClient.from("subscriptions").select("*");
@@ -112,6 +113,9 @@ Deno.serve(async (req) => {
           campaigns_count: userCampaigns.length,
           pages_count: userPages.length,
           websites_count: userWebsites.length,
+          is_banned: profile?.is_banned || false,
+          banned_reason: profile?.banned_reason || null,
+          role: rolesData?.find((r: any) => r.user_id === u.id)?.role || "user",
         };
       });
 
@@ -171,6 +175,54 @@ Deno.serve(async (req) => {
         JSON.stringify({ logs: enriched, byStatus, byReason, byPromptType, total: enriched.length }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (action === "ban-user") {
+      const { target_user_id, banned, reason } = body;
+      if (!target_user_id) return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (target_user_id === user.id) return new Response(JSON.stringify({ error: "Cannot ban yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const isBan = banned !== false;
+      const { error } = await serviceClient.from("profiles").update({
+        is_banned: isBan,
+        banned_at: isBan ? new Date().toISOString() : null,
+        banned_reason: isBan ? (reason || null) : null,
+      }).eq("user_id", target_user_id);
+      if (error) throw error;
+      // Also revoke active sessions when banning
+      if (isBan) {
+        try { await serviceClient.auth.admin.signOut(target_user_id, "global" as any); } catch { /* best-effort */ }
+      }
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "delete-user") {
+      const { target_user_id } = body;
+      if (!target_user_id) return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (target_user_id === user.id) return new Response(JSON.stringify({ error: "Cannot delete yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { error } = await serviceClient.auth.admin.deleteUser(target_user_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "set-role") {
+      const { target_user_id, role } = body;
+      if (!target_user_id || !role) return new Response(JSON.stringify({ error: "target_user_id and role required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const allowed = ["admin", "moderator", "user"];
+      if (!allowed.includes(role)) return new Response(JSON.stringify({ error: "Invalid role" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (target_user_id === user.id && role !== "admin") {
+        return new Response(JSON.stringify({ error: "Cannot demote yourself" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      // Remove all existing roles, then insert new one (single active role per user)
+      await serviceClient.from("user_roles").delete().eq("user_id", target_user_id);
+      const { error } = await serviceClient.from("user_roles").insert({ user_id: target_user_id, role });
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "get-user-roles") {
+      const { data: roles, error } = await serviceClient.from("user_roles").select("user_id, role");
+      if (error) throw error;
+      return new Response(JSON.stringify({ roles: roles || [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "update-subscription") {
