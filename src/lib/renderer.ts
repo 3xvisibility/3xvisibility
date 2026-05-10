@@ -31,6 +31,8 @@ export interface RenderContext {
   campaignType?: string;
   /** Row index for fallback naming */
   rowIndex?: number;
+  /** BCP-47 / ISO-639-1 language code for locale-aware slugs and titles. */
+  locale?: string;
 }
 
 export interface RenderResult {
@@ -48,13 +50,14 @@ export interface RenderResult {
 
 // ─── Slug normalisation ──────────────────────────────────────────────
 
-export function slugify(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+import { slugifyLocale, titleCaseLocale, lowerLocale, upperLocale, truncateByGrapheme } from "./locale-format";
+
+/**
+ * Slugify with optional locale awareness. Default behaviour (no locale) is
+ * the legacy ASCII slug for backward compatibility.
+ */
+export function slugify(text: string, locale?: string): string {
+  return slugifyLocale(text, locale);
 }
 
 // ─── Spintax ─────────────────────────────────────────────────────────
