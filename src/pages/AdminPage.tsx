@@ -526,7 +526,11 @@ export default function AdminPage() {
                         <TableRow key={u.id}>
                           <TableCell>
                             <div>
-                              <p className="font-medium text-sm">{u.full_name || "—"}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="font-medium text-sm">{u.full_name || "—"}</p>
+                                {u.is_banned && <Badge variant="destructive" className="text-[10px] h-4">Banned</Badge>}
+                                {u.role !== "user" && <Badge variant="outline" className="text-[10px] h-4 border-primary/40 text-primary capitalize">{u.role}</Badge>}
+                              </div>
                               <p className="text-xs text-muted-foreground">{u.email}</p>
                             </div>
                           </TableCell>
@@ -537,9 +541,13 @@ export default function AdminPage() {
                           <TableCell className="text-sm text-muted-foreground hidden xl:table-cell">{formatDate(u.created_at)}</TableCell>
                           <TableCell className="text-sm text-muted-foreground hidden 2xl:table-cell">{formatDate(u.last_sign_in_at)}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditFromUser(u)}>
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
+                            <UserActionsMenu
+                              u={u}
+                              onEditPlan={() => openEditFromUser(u)}
+                              onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
+                              onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
+                              onDelete={() => setConfirmDelete(u)}
+                            />
                           </TableCell>
                         </TableRow>
                       ))
