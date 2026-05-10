@@ -45,6 +45,7 @@ import NotFound from "./pages/NotFound";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
 import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
+import { AutoTranslateProvider } from "./i18n/AutoTranslateProvider";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
 import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
@@ -195,6 +196,7 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
+      <AutoTranslateProvider>
       <WorkspaceProvider>
       <BrandingProvider>
       <TooltipProvider>
@@ -245,6 +247,7 @@ const App = () => {
       </TooltipProvider>
       </BrandingProvider>
       </WorkspaceProvider>
+      </AutoTranslateProvider>
       </LanguageProvider>
     </QueryClientProvider>
     </ThemeProvider>
