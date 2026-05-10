@@ -20,6 +20,8 @@ export interface RenderContext {
   website?: { name?: string; url?: string };
   campaignType?: string;
   rowIndex?: number;
+  /** BCP-47 / ISO-639-1 language code for locale-aware slugs and titles. */
+  locale?: string;
 }
 
 export interface RenderResult {
