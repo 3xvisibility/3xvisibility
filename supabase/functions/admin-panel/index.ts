@@ -265,6 +265,88 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ settings }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (action === "check-ai-provider") {
+      // Determine provider: explicit body.provider → current settings → env → "lovable"
+      let provider = (body.provider || "").toLowerCase().trim();
+      if (!provider) {
+        const { data: s } = await serviceClient.from("system_settings").select("ai_provider").eq("id", "global").maybeSingle();
+        provider = (s?.ai_provider || Deno.env.get("AI_PROVIDER") || "lovable").toLowerCase();
+      }
+
+      const PROVIDERS: Record<string, { name: string; keyEnv: string; pingUrl?: string; pingHeaders?: (k: string) => Record<string, string> }> = {
+        lovable: {
+          name: "Lovable AI Gateway",
+          keyEnv: "LOVABLE_API_KEY",
+          pingUrl: "https://ai.gateway.lovable.dev/v1/models",
+          pingHeaders: (k) => ({ Authorization: `Bearer ${k}` }),
+        },
+        gemini: {
+          name: "Google Gemini",
+          keyEnv: "GEMINI_API_KEY",
+          pingUrl: "https://generativelanguage.googleapis.com/v1beta/models",
+          pingHeaders: (k) => ({ "x-goog-api-key": k }),
+        },
+        openai: {
+          name: "OpenAI",
+          keyEnv: "OPENAI_API_KEY",
+          pingUrl: "https://api.openai.com/v1/models",
+          pingHeaders: (k) => ({ Authorization: `Bearer ${k}` }),
+        },
+        groq: { name: "Groq", keyEnv: "GROQ_API_KEY", pingUrl: "https://api.groq.com/openai/v1/models", pingHeaders: (k) => ({ Authorization: `Bearer ${k}` }) },
+        deepseek: { name: "DeepSeek", keyEnv: "DEEPSEEK_API_KEY", pingUrl: "https://api.deepseek.com/v1/models", pingHeaders: (k) => ({ Authorization: `Bearer ${k}` }) },
+      };
+
+      const info = PROVIDERS[provider] || PROVIDERS.lovable;
+      const key = Deno.env.get(info.keyEnv);
+      const result: any = {
+        provider,
+        provider_name: info.name,
+        key_env: info.keyEnv,
+        has_key: !!key,
+        status: "unknown",
+        latency_ms: null,
+        message: "",
+        checked_at: new Date().toISOString(),
+      };
+
+      if (!key) {
+        result.status = "missing_key";
+        result.message = `Secret ${info.keyEnv} is not configured.`;
+        return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      try {
+        const t0 = Date.now();
+        const ctrl = new AbortController();
+        const to = setTimeout(() => ctrl.abort(), 8000);
+        const resp = await fetch(info.pingUrl!, { headers: info.pingHeaders!(key), signal: ctrl.signal });
+        clearTimeout(to);
+        result.latency_ms = Date.now() - t0;
+        result.http_status = resp.status;
+        if (resp.ok) {
+          result.status = "healthy";
+          result.message = `Reachable (${resp.status}) in ${result.latency_ms}ms`;
+        } else if (resp.status === 401 || resp.status === 403) {
+          result.status = "unauthorized";
+          result.message = `API key rejected (HTTP ${resp.status}).`;
+        } else if (resp.status === 402) {
+          result.status = "no_credits";
+          result.message = "Provider reports insufficient credits (HTTP 402).";
+        } else if (resp.status === 429) {
+          result.status = "rate_limited";
+          result.message = "Rate limited (HTTP 429).";
+        } else {
+          result.status = "error";
+          result.message = `Unexpected HTTP ${resp.status}`;
+        }
+      } catch (e: any) {
+        result.status = e?.name === "AbortError" ? "timeout" : "unreachable";
+        result.message = e?.message || "Network error";
+      }
+
+      return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "update-settings") {
       const { ai_provider, feature_flags, maintenance_mode, maintenance_message } = body;
       const updates: Record<string, any> = { id: "global", updated_by: user.id, updated_at: new Date().toISOString() };
