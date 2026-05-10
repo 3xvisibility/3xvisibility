@@ -1510,10 +1510,13 @@ export type Database = {
           ai_content_length: string
           ai_language: string
           ai_tone: string
+          banned_at: string | null
+          banned_reason: string | null
           company: string | null
           created_at: string
           full_name: string | null
           id: string
+          is_banned: boolean
           notification_preferences: Json
           updated_at: string
           user_id: string
@@ -1523,10 +1526,13 @@ export type Database = {
           ai_content_length?: string
           ai_language?: string
           ai_tone?: string
+          banned_at?: string | null
+          banned_reason?: string | null
           company?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          is_banned?: boolean
           notification_preferences?: Json
           updated_at?: string
           user_id: string
@@ -1536,10 +1542,13 @@ export type Database = {
           ai_content_length?: string
           ai_language?: string
           ai_tone?: string
+          banned_at?: string | null
+          banned_reason?: string | null
           company?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          is_banned?: boolean
           notification_preferences?: Json
           updated_at?: string
           user_id?: string
