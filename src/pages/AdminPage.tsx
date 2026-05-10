@@ -478,7 +478,11 @@ export default function AdminPage() {
                   filteredUsers.map((u) => (
                     <div key={u.id} className="p-3 flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{u.full_name || "—"}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-medium">{u.full_name || "—"}</p>
+                          {u.is_banned && <Badge variant="destructive" className="text-[9px] h-4">Banned</Badge>}
+                          {u.role !== "user" && <Badge variant="outline" className="text-[9px] h-4 border-primary/40 text-primary capitalize">{u.role}</Badge>}
+                        </div>
                         <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge variant="outline" className="capitalize text-[10px]">{u.plan}</Badge>
@@ -486,9 +490,13 @@ export default function AdminPage() {
                           <span className="text-[10px] text-muted-foreground">{u.campaigns_count} campaigns</span>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => openEditFromUser(u)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
+                      <UserActionsMenu
+                        u={u}
+                        onEditPlan={() => openEditFromUser(u)}
+                        onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
+                        onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
+                        onDelete={() => setConfirmDelete(u)}
+                      />
                     </div>
                   ))
                 )}
