@@ -34,6 +34,9 @@ interface AdminUser {
   campaigns_count: number;
   pages_count: number;
   websites_count: number;
+  is_banned: boolean;
+  banned_reason: string | null;
+  role: "admin" | "moderator" | "user";
 }
 
 interface AdminOverview {
