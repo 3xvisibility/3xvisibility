@@ -240,7 +240,6 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
     // Observe DOM changes (route changes, dialogs, async content)
     observer = new MutationObserver((mutations) => {
-      // Skip mutations triggered solely by our own text replacements
       let relevant = false;
       for (const m of mutations) {
         if (m.type === "childList" && (m.addedNodes.length || m.removedNodes.length)) {
@@ -248,9 +247,17 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           break;
         }
         if (m.type === "characterData") {
-          // Ignore if it's our own translation
           const t = m.target as Text;
           if ((t as any).__autoTrLang !== langRef.current) {
+            relevant = true;
+            break;
+          }
+        }
+        if (m.type === "attributes" && m.attributeName) {
+          const el = m.target as Element;
+          const tag = `__autoTr_${m.attributeName}_lang`;
+          // Ignore self-applied translations
+          if ((el as any)[tag] !== langRef.current) {
             relevant = true;
             break;
           }
@@ -262,6 +269,8 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true,
+      attributeFilter: [...TRANSLATABLE_ATTRS],
     });
 
     return () => {
