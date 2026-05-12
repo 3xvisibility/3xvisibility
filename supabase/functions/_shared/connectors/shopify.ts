@@ -185,7 +185,7 @@ export class ShopifyConnector implements CmsConnector {
 
     if (payload.title) body.title = payload.title;
     // Preserve existing on-site design when republishing — only metadata flows through.
-    if (!preserveDesign && payload.content) body.body_html = payload.content;
+    if (!preserveDesign && payload.content) body.body_html = adaptHtmlForShopifyTheme(payload.content, "page");
     if (payload.slug) body.handle = slugify(payload.slug);
     if (payload.status) body.published = payload.status === "publish";
     if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
