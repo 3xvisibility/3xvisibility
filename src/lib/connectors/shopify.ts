@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
+import { adaptHtmlForShopifyTheme } from "./shopify-theme-adapter";
 
 /**
  * Shopify Admin API connector.
