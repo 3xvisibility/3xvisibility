@@ -91,7 +91,7 @@ export class ShopifyConnector implements CmsConnector {
   private mapPayload(payload: PagePayload): Record<string, unknown> {
     const page: Record<string, unknown> = {
       title: payload.title,
-      body_html: payload.content,
+      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page"),
       handle: payload.slug,
       published: payload.status === "publish",
     };
