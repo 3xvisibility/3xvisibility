@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
+import { adaptHtmlForShopifyTheme } from "./shopify-theme-adapter.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -45,7 +46,7 @@ export class ShopifyConnector implements CmsConnector {
 
     const pageBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: payload.content,
+      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page"),
       handle: slugify(payload.slug || payload.title),
       published: payload.status === "publish",
     };
@@ -77,9 +78,10 @@ export class ShopifyConnector implements CmsConnector {
 
   private async createProduct(payload: PagePayload): Promise<ConnectorResult> {
     const pd = payload.product_data!;
+    const rawProductHtml = pd.body_html || payload.content || "";
     const productBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: pd.body_html || payload.content,
+      body_html: adaptHtmlForShopifyTheme(rawProductHtml, "product"),
       handle: slugify(pd.handle || payload.slug || payload.title),
       status: pd.product_status || "active",
     };
@@ -183,7 +185,7 @@ export class ShopifyConnector implements CmsConnector {
 
     if (payload.title) body.title = payload.title;
     // Preserve existing on-site design when republishing — only metadata flows through.
-    if (!preserveDesign && payload.content) body.body_html = payload.content;
+    if (!preserveDesign && payload.content) body.body_html = adaptHtmlForShopifyTheme(payload.content, "page");
     if (payload.slug) body.handle = slugify(payload.slug);
     if (payload.status) body.published = payload.status === "publish";
     if (payload.seo_title) body.metafields_global_title_tag = payload.seo_title;
@@ -213,7 +215,8 @@ export class ShopifyConnector implements CmsConnector {
 
     if (payload.title) body.title = payload.title;
     if (!preserveDesign && (payload.product_data?.body_html || payload.content)) {
-      body.body_html = payload.product_data?.body_html || payload.content;
+      const raw = payload.product_data?.body_html || payload.content || "";
+      body.body_html = adaptHtmlForShopifyTheme(raw, "product");
     }
     if (payload.product_data?.handle || payload.slug) body.handle = slugify(payload.product_data?.handle || payload.slug || "");
     if (payload.product_data?.vendor) body.vendor = payload.product_data.vendor;
