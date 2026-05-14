@@ -44,6 +44,12 @@ import TemplateMappingPage from "./pages/TemplateMappingPage";
 import NotFound from "./pages/NotFound";
 import ShopifyCallbackPage from "./pages/ShopifyCallbackPage";
 import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
+import AboutPage from "./pages/AboutPage";
+import BlogPage from "./pages/BlogPage";
+import ContactPage from "./pages/ContactPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
+import ChangelogPage from "./pages/ChangelogPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { AutoTranslateProvider } from "./i18n/AutoTranslateProvider";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
@@ -208,6 +214,12 @@ const App = () => {
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/changelog" element={<ChangelogPage />} />
             <Route path="/shopify/oauth-launch" element={<ShopifyOAuthLaunchPage />} />
             <Route path="/shopify/callback" element={<ShopifyCallbackPage />} />
             <Route path="/api/shopify/callback" element={<ShopifyCallbackPage />} />

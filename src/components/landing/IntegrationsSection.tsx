@@ -21,7 +21,7 @@ export function IntegrationsSection() {
   ];
 
   return (
-    <section className="py-20 md:py-28 relative overflow-hidden">
+    <section id="integrations" className="py-20 md:py-28 relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
           backgroundImage: `linear-gradient(hsl(217,91%,60%) 1px, transparent 1px), linear-gradient(90deg, hsl(217,91%,60%) 1px, transparent 1px)`,
