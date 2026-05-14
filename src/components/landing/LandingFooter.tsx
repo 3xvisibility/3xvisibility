@@ -10,16 +10,13 @@ export function LandingFooter() {
       { label: t("footer.pricing"), href: "/#pricing" },
       { label: t("footer.faq"), href: "/#faq" },
       { label: "Documentation", href: "/docs" },
-      { label: t("footer.changelog"), href: "/changelog" },
     ],
     [t("footer.integrations")]: [
       { label: t("footer.wordpress"), href: "/#integrations" },
       { label: t("footer.shopify"), href: "/#integrations" },
-      { label: t("footer.apiDocs"), href: "/docs" },
     ],
     [t("footer.company")]: [
       { label: t("footer.about"), href: "/about" },
-      { label: t("footer.blog"), href: "/blog" },
       { label: t("footer.contact"), href: "/contact" },
     ],
     [t("footer.legal")]: [
