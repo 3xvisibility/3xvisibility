@@ -498,19 +498,19 @@ export default function CampaignDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3 min-w-0">
           <Button variant="ghost" size="icon" onClick={() => navigate(`${basePath}/campaigns`)} className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-display">{campaign.name}</h1>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl sm:text-display font-bold tracking-tight break-words min-w-0">{campaign.name}</h1>
               <Badge variant="secondary" className={`${cStatus.class} border text-xs`}>{cStatus.label}</Badge>
               {((campaign as any).campaign_types?.length ? (campaign as any).campaign_types : [campaign.campaign_type]).map((t: string) => (
                 <Badge key={t} variant="outline" className="uppercase text-[10px] font-semibold">{t}</Badge>
               ))}
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5 break-words">
               {(campaign as any).websites?.name || "No site"} · {(campaign as any).templates?.name || "No template"} · {campaign.total_rows || 0} rows
             </p>
           </div>
@@ -715,8 +715,8 @@ export default function CampaignDetailPage() {
                 </DropdownMenu>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="overflow-hidden">
-                  <table className="w-full table-fixed text-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground">
                         <th className="text-left p-3 font-medium">Status</th>
