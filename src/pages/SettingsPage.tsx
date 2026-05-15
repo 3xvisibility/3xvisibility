@@ -552,6 +552,7 @@ interface WebhookEndpoint {
 
 function WebhookSettings({ wsId }: { wsId: string | undefined }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [newUrl, setNewUrl] = useState("");
   const [newSecret, setNewSecret] = useState("");
@@ -573,7 +574,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
   const addMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+        if (!user) throw new Error(t("settings.notAuthenticated"));
       const { error } = await supabase.from("webhook_endpoints").insert({
         user_id: user.id,
         workspace_id: wsId!,
@@ -587,9 +588,9 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
       setNewUrl("");
       setNewSecret("");
-      toast({ title: "Webhook added" });
+      toast({ title: t("settings.webhookAdded") });
     },
-    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("settings.error"), description: err.message, variant: "destructive" }),
   });
 
   const toggleMutation = useMutation({
@@ -607,7 +608,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
-      toast({ title: "Webhook deleted" });
+      toast({ title: t("settings.webhookDeleted") });
     },
   });
 
