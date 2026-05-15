@@ -470,7 +470,7 @@ export default function WorkspaceSettingsPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge variant="outline" className="gap-1 text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {t("workspaceSettings.pending")} {t(`workspaceSettings.${inv.role}`)}
+                      {t("workspaceSettings.pending")} {inv.role === "readonly" ? t("workspaceSettings.readOnly") : t(`workspaceSettings.${inv.role}`)}
                     </Badge>
                     {isAdminOrOwner && (
                       <Button
