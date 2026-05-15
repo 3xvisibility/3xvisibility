@@ -238,7 +238,7 @@ export default function WorkspaceSettingsPage() {
   if (!wsId) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
-        No workspace selected.
+        {t("workspaceSettings.noWorkspaceSelected")}
       </div>
     );
   }
@@ -282,7 +282,7 @@ export default function WorkspaceSettingsPage() {
               </Button>
             </div>
             {!isOwner && (
-              <p className="text-xs text-muted-foreground">Only workspace owners can rename the workspace.</p>
+              <p className="text-xs text-muted-foreground">{t("workspaceSettings.onlyOwnersCanRename")}</p>
             )}
           </div>
           <div className="flex gap-4 text-sm text-muted-foreground">
@@ -303,7 +303,7 @@ export default function WorkspaceSettingsPage() {
               {t("workspaceSettings.inviteMember")}
             </CardTitle>
             <CardDescription>
-              Invite users by email. Existing users are added immediately; others receive a pending invitation.
+              {t("workspaceSettings.inviteDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -490,7 +490,7 @@ export default function WorkspaceSettingsPage() {
 
               {filteredMembers.length === 0 && filteredInvitations.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-6">
-                  {searchQuery || roleFilter !== "all" ? "No members match your filters." : "No members yet."}
+                  {searchQuery || roleFilter !== "all" ? t("workspaceSettings.noMembersMatch") : t("workspaceSettings.noMembers")}
                 </p>
               )}
             </div>
