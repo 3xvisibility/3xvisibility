@@ -1224,5 +1224,8 @@
   "workspaceSettings.tenantSettingsSaved": "Paramètres du tenant enregistrés",
   "workspaceSettings.timezone": "Fuseau horaire",
   "workspaceSettings.timezoneDesc": "Utilisé pour les tâches planifiées et les horodatages d’activité.",
-  "workspaceSettings.accentColor": "Couleur d’accent"
+  "workspaceSettings.accentColor": "Couleur d’accent",
+  "workspaceSettings.workspaceRenamed": "Espace de travail renommé",
+  "workspaceSettings.workspaceRenamedDesc": "Le nom de l’espace de travail a été mis à jour.",
+  "common.english": "Anglais"
 }
