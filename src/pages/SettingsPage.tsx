@@ -27,31 +27,31 @@ const AI_PLAN_LIMITS: Record<string, number> = {
 };
 
 const TONE_OPTIONS = [
-  { value: "professional", label: "Professional" },
-  { value: "casual", label: "Casual" },
-  { value: "marketing", label: "Marketing" },
-  { value: "formal", label: "Formal" },
-  { value: "friendly", label: "Friendly" },
+  { value: "professional", labelKey: "settings.professional" },
+  { value: "casual", labelKey: "settings.casual" },
+  { value: "marketing", labelKey: "settings.marketing" },
+  { value: "formal", labelKey: "settings.formal" },
+  { value: "friendly", labelKey: "settings.friendly" },
 ];
 
 const LENGTH_OPTIONS = [
-  { value: "short", label: "Short (1-2 sentences)" },
-  { value: "medium", label: "Medium (3-5 sentences)" },
-  { value: "long", label: "Long (2-3 paragraphs)" },
+  { value: "short", labelKey: "settings.short" },
+  { value: "medium", labelKey: "settings.medium" },
+  { value: "long", labelKey: "settings.long" },
 ];
 
 const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Spanish" },
-  { value: "fr", label: "French" },
-  { value: "de", label: "German" },
-  { value: "pt", label: "Portuguese" },
-  { value: "it", label: "Italian" },
-  { value: "nl", label: "Dutch" },
-  { value: "ja", label: "Japanese" },
-  { value: "zh", label: "Chinese" },
-  { value: "ko", label: "Korean" },
-  { value: "ar", label: "Arabic" },
+  { value: "en", labelKey: "common.english" },
+  { value: "es", labelKey: "settings.spanish" },
+  { value: "fr", labelKey: "settings.french" },
+  { value: "de", labelKey: "settings.german" },
+  { value: "pt", labelKey: "settings.portuguese" },
+  { value: "it", labelKey: "settings.italian" },
+  { value: "nl", labelKey: "settings.dutch" },
+  { value: "ja", labelKey: "settings.japanese" },
+  { value: "zh", labelKey: "settings.chinese" },
+  { value: "ko", labelKey: "settings.korean" },
+  { value: "ar", labelKey: "settings.arabic" },
 ];
 
 export default function SettingsPage() {
