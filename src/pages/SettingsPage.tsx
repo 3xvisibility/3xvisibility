@@ -617,12 +617,12 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Webhook className="h-5 w-5 text-primary" />
-          Webhooks
+          {t("settings.webhooks")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Receive HTTP notifications when campaigns complete or fail. We&apos;ll POST a JSON payload to your URL.
+          {t("settings.receiveWebhookDesc")}
         </p>
 
         {/* Add new webhook */}
@@ -634,7 +634,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
             className="flex-1"
           />
           <Input
-            placeholder="Secret (optional)"
+            placeholder={t("settings.secretOptional")}
             value={newSecret}
             onChange={(e) => setNewSecret(e.target.value)}
             className="sm:w-44"
@@ -644,7 +644,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
             disabled={!newUrl || addMutation.isPending}
             size="sm"
           >
-            <Plus className="h-4 w-4 mr-1" /> Add
+            <Plus className="h-4 w-4 mr-1" /> {t("settings.add")}
           </Button>
         </div>
 
@@ -652,7 +652,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
         {isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : webhooks.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">No webhooks configured.</p>
+          <p className="text-xs text-muted-foreground text-center py-4">{t("settings.noWebhooksConfigured")}</p>
         ) : (
           <div className="space-y-2">
             {webhooks.map((wh) => (
