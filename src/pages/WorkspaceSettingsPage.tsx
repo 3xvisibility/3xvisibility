@@ -320,9 +320,9 @@ export default function WorkspaceSettingsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="readonly">Read-only</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="member">{t("workspaceSettings.member")}</SelectItem>
+                  <SelectItem value="readonly">{t("workspaceSettings.readOnly")}</SelectItem>
+                  <SelectItem value="admin">{t("workspaceSettings.admin")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -357,7 +357,7 @@ export default function WorkspaceSettingsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by email..."
+                placeholder={t("workspaceSettings.searchByEmail")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
