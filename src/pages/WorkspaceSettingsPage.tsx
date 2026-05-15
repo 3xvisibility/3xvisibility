@@ -753,21 +753,21 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
         {/* App Name */}
         <div className="space-y-2">
           <Label htmlFor="brand-name" className="flex items-center gap-1.5">
-            <Type className="h-3.5 w-3.5" /> App Name
+            <Type className="h-3.5 w-3.5" /> {t("workspaceSettings.appName")}
           </Label>
           <Input
             id="brand-name"
-            placeholder="e.g., My Agency SEO Tool"
+            placeholder={t("workspaceSettings.appNamePlaceholder")}
             value={appName}
             onChange={(e) => setAppName(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">Replaces "PageGen" throughout the dashboard</p>
+          <p className="text-xs text-muted-foreground">{t("workspaceSettings.appNameDesc")}</p>
         </div>
 
         {/* Logo URL */}
         <div className="space-y-2">
           <Label htmlFor="brand-logo" className="flex items-center gap-1.5">
-            <ImageIcon className="h-3.5 w-3.5" /> Logo URL
+            <ImageIcon className="h-3.5 w-3.5" /> {t("workspaceSettings.logoUrl")}
           </Label>
           <Input
             id="brand-logo"
@@ -777,8 +777,8 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
           />
           {logoUrl && (
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
-              <img src={logoUrl} alt="Logo preview" className="h-10 w-10 rounded-lg object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-              <span className="text-xs text-muted-foreground">Preview</span>
+              <img src={logoUrl} alt={t("workspaceSettings.logoPreview")} className="h-10 w-10 rounded-lg object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+              <span className="text-xs text-muted-foreground">{t("workspaceSettings.preview")}</span>
             </div>
           )}
         </div>
@@ -786,7 +786,7 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
         {/* Colors */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="brand-primary">Primary Color</Label>
+            <Label htmlFor="brand-primary">{t("workspaceSettings.primaryColor")}</Label>
             <div className="flex gap-2">
               <Input
                 id="brand-primary"
@@ -802,10 +802,10 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
                 />
               )}
             </div>
-            <p className="text-xs text-muted-foreground">HSL values (e.g., 217 91% 60%)</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.hslDesc")}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="brand-accent">Accent Color</Label>
+            <Label htmlFor="brand-accent">{t("workspaceSettings.accentColor")}</Label>
             <div className="flex gap-2">
               <Input
                 id="brand-accent"
@@ -821,13 +821,13 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
                 />
               )}
             </div>
-            <p className="text-xs text-muted-foreground">HSL values (e.g., 262 83% 58%)</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.hslDesc")}</p>
           </div>
         </div>
 
         {/* Favicon */}
         <div className="space-y-2">
-          <Label htmlFor="brand-favicon">Favicon URL</Label>
+          <Label htmlFor="brand-favicon">{t("workspaceSettings.faviconUrl")}</Label>
           <Input
             id="brand-favicon"
             placeholder="https://example.com/favicon.ico"
@@ -839,14 +839,14 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
         {/* Hide powered by */}
         <div className="flex items-center justify-between rounded-lg border border-border p-4">
           <div>
-            <p className="text-sm font-medium">Hide "Powered by" branding</p>
-            <p className="text-xs text-muted-foreground">Remove any platform branding for a fully whitelabeled experience</p>
+            <p className="text-sm font-medium">{t("workspaceSettings.hidePoweredBy")}</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.hidePoweredByDesc")}</p>
           </div>
           <Switch checked={hidePoweredBy} onCheckedChange={setHidePoweredBy} />
         </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-          {saving ? "Saving..." : "Save Branding"}
+          {saving ? t("workspaceSettings.saving") : t("workspaceSettings.saveBranding")}
         </Button>
       </CardContent>
     </Card>
