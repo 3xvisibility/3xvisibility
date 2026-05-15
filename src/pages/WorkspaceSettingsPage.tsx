@@ -463,14 +463,14 @@ export default function WorkspaceSettingsPage() {
                       <p className="text-sm font-medium truncate">{inv.email}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        Invited {new Date(inv.created_at).toLocaleDateString()} · Expires {new Date(inv.expires_at).toLocaleDateString()}
+                        {t("workspaceSettings.invitedDate", { date: new Date(inv.created_at).toLocaleDateString() })} · {t("workspaceSettings.expiresDate", { date: new Date(inv.expires_at).toLocaleDateString() })}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge variant="outline" className="gap-1 text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      Pending {inv.role}
+                      {t("workspaceSettings.pending")} {t(`workspaceSettings.${inv.role}`)}
                     </Badge>
                     {isAdminOrOwner && (
                       <Button
@@ -479,7 +479,7 @@ export default function WorkspaceSettingsPage() {
                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                         onClick={() => cancelInvitationMutation.mutate(inv.id)}
                         disabled={cancelInvitationMutation.isPending}
-                        title="Cancel invitation"
+                        title={t("workspaceSettings.cancelInvitation")}
                       >
                         <X className="h-4 w-4" />
                       </Button>
