@@ -112,7 +112,7 @@ export default function SettingsPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const { error } = await supabase
         .from("profiles")
@@ -129,10 +129,10 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings-profile"] });
-      toast({ title: "Settings saved", description: "Your profile and AI settings have been updated." });
+      toast({ title: t("settings.settingsSaved"), description: t("settings.settingsSavedDesc") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("settings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -228,7 +228,7 @@ export default function SettingsPage() {
           <div className="rounded-lg border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">{t("settings.aiGenerations")}</p>
-              <Badge variant="outline" className="capitalize">{subscription?.plan || "free"} plan</Badge>
+              <Badge variant="outline" className="capitalize">{t("settings.planLabel", { plan: subscription?.plan || "free" })}</Badge>
             </div>
             {loadingSub ? (
               <Skeleton className="h-4 w-full" />
