@@ -715,8 +715,8 @@ export default function CampaignDetailPage() {
                 </DropdownMenu>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="overflow-hidden">
-                  <table className="w-full table-fixed text-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead>
                       <tr className="border-b text-xs text-muted-foreground">
                         <th className="text-left p-3 font-medium">Status</th>
