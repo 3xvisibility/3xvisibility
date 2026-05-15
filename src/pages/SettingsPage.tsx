@@ -429,6 +429,7 @@ export default function SettingsPage() {
 // ── Password Change Form ─────────────────────────────
 function PasswordChangeForm() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -436,11 +437,11 @@ function PasswordChangeForm() {
 
   const handleChange = async () => {
     if (newPw.length < 8) {
-      toast({ title: "Password too short", description: "Minimum 8 characters.", variant: "destructive" });
+      toast({ title: t("settings.passwordTooShort"), description: t("settings.passwordTooShortDesc"), variant: "destructive" });
       return;
     }
     if (newPw !== confirmPw) {
-      toast({ title: "Mismatch", description: "Passwords don't match.", variant: "destructive" });
+      toast({ title: t("settings.passwordMismatch"), description: t("settings.passwordMismatchDesc"), variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -450,7 +451,7 @@ function PasswordChangeForm() {
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
-      toast({ title: "Password updated", description: "Your password has been changed." });
+      toast({ title: t("settings.passwordUpdated"), description: t("settings.passwordUpdatedDesc") });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -461,15 +462,15 @@ function PasswordChangeForm() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="new-pw">New Password</Label>
+        <Label htmlFor="new-pw">{t("settings.newPassword")}</Label>
         <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="••••••••" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirm-pw">Confirm New Password</Label>
+        <Label htmlFor="confirm-pw">{t("settings.confirmPassword")}</Label>
         <Input id="confirm-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="••••••••" />
       </div>
       <Button onClick={handleChange} disabled={saving || !newPw} variant="outline">
-        {saving ? "Updating..." : "Update Password"}
+        {saving ? t("settings.updating") : t("settings.updatePassword")}
       </Button>
     </div>
   );
