@@ -528,6 +528,7 @@ export default function WorkspaceSettingsPage() {
 // ── Tenant Settings Card ─────────────────────────────
 function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [locale, setLocale] = useState("en");
   const [tz, setTz] = useState("UTC");
   const [canonicalBase, setCanonicalBase] = useState("");
@@ -594,9 +595,9 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
         .eq("id", workspaceId);
       if (error) throw error;
       onSaved();
-      toast({ title: "Tenant settings saved" });
+      toast({ title: t("workspaceSettings.tenantSettingsSaved") });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -607,10 +608,10 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5 text-primary" />
-          Tenant Settings
+          {t("workspaceSettings.tenantSettings")}
         </CardTitle>
         <CardDescription>
-          Configure locale, timezone, and SEO defaults that apply across all campaigns in this workspace.
+          {t("workspaceSettings.tenantSettingsDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
