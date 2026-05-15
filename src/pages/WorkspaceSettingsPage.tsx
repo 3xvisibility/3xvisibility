@@ -125,10 +125,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       refetchWorkspaces();
-      toast({ title: "Workspace renamed", description: "Workspace name has been updated." });
+      toast({ title: t("workspaceSettings.workspaceRenamed"), description: t("workspaceSettings.workspaceRenamedDesc") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -151,13 +151,13 @@ export default function WorkspaceSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["workspace-members", wsId] });
       queryClient.invalidateQueries({ queryKey: ["workspace-invitations", wsId] });
       if (status === "pending") {
-        toast({ title: "Invitation sent", description: `A pending invitation has been created for ${inviteEmail}. They'll see it when they sign up and log in.` });
+        toast({ title: t("workspaceSettings.invitationSent"), description: t("workspaceSettings.invitationSentDesc", { email: inviteEmail }) });
       } else {
-        toast({ title: "Member added", description: `${inviteEmail} has been added to the workspace.` });
+        toast({ title: t("workspaceSettings.memberAdded"), description: t("workspaceSettings.memberAddedDesc", { email: inviteEmail }) });
       }
     },
     onError: (err: Error) => {
-      toast({ title: "Invite failed", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.inviteFailed"), description: err.message, variant: "destructive" });
     },
   });
 
