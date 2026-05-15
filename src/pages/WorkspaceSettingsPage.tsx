@@ -617,7 +617,7 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
       <CardContent className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Default Locale</Label>
+            <Label>{t("workspaceSettings.defaultLocale")}</Label>
             <Select value={locale} onValueChange={setLocale}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -626,10 +626,10 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Language for new campaigns by default.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.defaultLocaleDesc")}</p>
           </div>
           <div className="space-y-2">
-            <Label>Timezone</Label>
+            <Label>{t("workspaceSettings.timezone")}</Label>
             <Select value={tz} onValueChange={setTz}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -638,7 +638,7 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Used for scheduled jobs and activity timestamps.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.timezoneDesc")}</p>
           </div>
         </div>
 
@@ -647,43 +647,43 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Link2 className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">SEO Defaults</h3>
+            <h3 className="text-sm font-semibold">{t("workspaceSettings.seoDefaults")}</h3>
           </div>
 
           <div className="space-y-2">
-            <Label>Canonical Base URL</Label>
+            <Label>{t("workspaceSettings.canonicalBaseUrl")}</Label>
             <Input
               placeholder="https://www.example.com"
               value={canonicalBase}
               onChange={(e) => setCanonicalBase(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Base URL prepended to page slugs for canonical tags.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.canonicalBaseUrlDesc")}</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Default Meta Title Pattern</Label>
+            <Label>{t("workspaceSettings.defaultMetaTitlePattern")}</Label>
             <Input
               placeholder="{title} | {company} - {service}"
               value={defaultTitlePattern}
               onChange={(e) => setDefaultTitlePattern(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Fallback SEO title pattern for new templates. Use {"{ }"} variables.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.defaultMetaTitlePatternDesc")}</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Default Meta Description Pattern</Label>
+            <Label>{t("workspaceSettings.defaultMetaDescriptionPattern")}</Label>
             <Textarea
               placeholder="{company} offers {service} in {location}. Contact us today!"
               value={defaultDescPattern}
               onChange={(e) => setDefaultDescPattern(e.target.value)}
               rows={2}
             />
-            <p className="text-xs text-muted-foreground">Fallback meta description for new templates.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.defaultMetaDescriptionPatternDesc")}</p>
           </div>
         </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-          {saving ? "Saving..." : "Save Tenant Settings"}
+          {saving ? t("workspaceSettings.saving") : t("workspaceSettings.saveTenantSettings")}
         </Button>
       </CardContent>
     </Card>
