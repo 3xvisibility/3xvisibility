@@ -295,7 +295,7 @@ export default function SettingsPage() {
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
             <p className="text-sm font-medium">{t("settings.aiTemplateSyntax")}</p>
             <p className="text-xs text-muted-foreground">
-              Use <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono">{"{{AI:your prompt here}}"}</code> in your templates to generate dynamic AI content.
+              {t("settings.aiTemplateSyntaxDesc", { prompt: "" })}<code className="bg-muted px-1 py-0.5 rounded text-primary font-mono">{"{{AI:your prompt here}}"}</code>
             </p>
             <div className="font-mono text-xs bg-background border border-border rounded-md p-3 space-y-1 text-muted-foreground">
               <p className="text-foreground">{"<h1>{title}</h1>"}</p>
@@ -304,7 +304,7 @@ export default function SettingsPage() {
               <p className="text-primary">{"<p>{{AI:Write why customers should choose {company} for {service}.}}</p>"}</p>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Variables like <code className="font-mono">{"{service}"}</code> inside AI prompts are replaced with CSV values before AI generation.
+              {t("settings.aiTemplateVariablesDesc", { variable: "" })}<code className="font-mono">{"{service}"}</code>
             </p>
           </div>
         </CardContent>
