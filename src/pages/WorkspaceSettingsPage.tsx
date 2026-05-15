@@ -693,6 +693,7 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
 // ... keep existing code (WhitelabelBrandingCard component)
 function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { branding } = useBranding();
 
   const [appName, setAppName] = useState(branding.app_name || "");
@@ -729,9 +730,9 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
         .eq("id", workspaceId);
       if (error) throw error;
       onSaved();
-      toast({ title: "Branding saved", description: "Your whitelabel settings have been updated." });
+      toast({ title: t("workspaceSettings.brandingSaved"), description: t("workspaceSettings.brandingSavedDesc") });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -742,10 +743,10 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Palette className="h-5 w-5 text-primary" />
-          Whitelabel / Agency Branding
+          {t("workspaceSettings.agencyBranding")}
         </CardTitle>
         <CardDescription>
-          Customize the app appearance for your clients. Set a custom name, logo, and color scheme.
+          {t("workspaceSettings.agencyBrandingDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
