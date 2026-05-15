@@ -27,31 +27,31 @@ const AI_PLAN_LIMITS: Record<string, number> = {
 };
 
 const TONE_OPTIONS = [
-  { value: "professional", label: "Professional" },
-  { value: "casual", label: "Casual" },
-  { value: "marketing", label: "Marketing" },
-  { value: "formal", label: "Formal" },
-  { value: "friendly", label: "Friendly" },
+  { value: "professional", labelKey: "settings.professional" },
+  { value: "casual", labelKey: "settings.casual" },
+  { value: "marketing", labelKey: "settings.marketing" },
+  { value: "formal", labelKey: "settings.formal" },
+  { value: "friendly", labelKey: "settings.friendly" },
 ];
 
 const LENGTH_OPTIONS = [
-  { value: "short", label: "Short (1-2 sentences)" },
-  { value: "medium", label: "Medium (3-5 sentences)" },
-  { value: "long", label: "Long (2-3 paragraphs)" },
+  { value: "short", labelKey: "settings.short" },
+  { value: "medium", labelKey: "settings.medium" },
+  { value: "long", labelKey: "settings.long" },
 ];
 
 const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Spanish" },
-  { value: "fr", label: "French" },
-  { value: "de", label: "German" },
-  { value: "pt", label: "Portuguese" },
-  { value: "it", label: "Italian" },
-  { value: "nl", label: "Dutch" },
-  { value: "ja", label: "Japanese" },
-  { value: "zh", label: "Chinese" },
-  { value: "ko", label: "Korean" },
-  { value: "ar", label: "Arabic" },
+  { value: "en", labelKey: "common.english" },
+  { value: "es", labelKey: "settings.spanish" },
+  { value: "fr", labelKey: "settings.french" },
+  { value: "de", labelKey: "settings.german" },
+  { value: "pt", labelKey: "settings.portuguese" },
+  { value: "it", labelKey: "settings.italian" },
+  { value: "nl", labelKey: "settings.dutch" },
+  { value: "ja", labelKey: "settings.japanese" },
+  { value: "zh", labelKey: "settings.chinese" },
+  { value: "ko", labelKey: "settings.korean" },
+  { value: "ar", labelKey: "settings.arabic" },
 ];
 
 export default function SettingsPage() {
@@ -112,7 +112,7 @@ export default function SettingsPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const { error } = await supabase
         .from("profiles")
@@ -129,10 +129,10 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings-profile"] });
-      toast({ title: "Settings saved", description: "Your profile and AI settings have been updated." });
+      toast({ title: t("settings.settingsSaved"), description: t("settings.settingsSavedDesc") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("settings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -228,7 +228,7 @@ export default function SettingsPage() {
           <div className="rounded-lg border border-border p-4 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">{t("settings.aiGenerations")}</p>
-              <Badge variant="outline" className="capitalize">{subscription?.plan || "free"} plan</Badge>
+              <Badge variant="outline" className="capitalize">{t("settings.planLabel", { plan: subscription?.plan || "free" })}</Badge>
             </div>
             {loadingSub ? (
               <Skeleton className="h-4 w-full" />
@@ -255,7 +255,7 @@ export default function SettingsPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TONE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value}>{t(o.labelKey)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -268,7 +268,7 @@ export default function SettingsPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {LENGTH_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value}>{t(o.labelKey)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -281,7 +281,7 @@ export default function SettingsPage() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {LANGUAGE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    <SelectItem key={o.value} value={o.value}>{t(o.labelKey)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -295,7 +295,7 @@ export default function SettingsPage() {
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
             <p className="text-sm font-medium">{t("settings.aiTemplateSyntax")}</p>
             <p className="text-xs text-muted-foreground">
-              Use <code className="bg-muted px-1 py-0.5 rounded text-primary font-mono">{"{{AI:your prompt here}}"}</code> in your templates to generate dynamic AI content.
+              {t("settings.aiTemplateSyntaxDesc")}
             </p>
             <div className="font-mono text-xs bg-background border border-border rounded-md p-3 space-y-1 text-muted-foreground">
               <p className="text-foreground">{"<h1>{title}</h1>"}</p>
@@ -304,7 +304,7 @@ export default function SettingsPage() {
               <p className="text-primary">{"<p>{{AI:Write why customers should choose {company} for {service}.}}</p>"}</p>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Variables like <code className="font-mono">{"{service}"}</code> inside AI prompts are replaced with CSV values before AI generation.
+              {t("settings.aiTemplateVariablesDesc")}
             </p>
           </div>
         </CardContent>
@@ -429,6 +429,7 @@ export default function SettingsPage() {
 // ── Password Change Form ─────────────────────────────
 function PasswordChangeForm() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -436,11 +437,11 @@ function PasswordChangeForm() {
 
   const handleChange = async () => {
     if (newPw.length < 8) {
-      toast({ title: "Password too short", description: "Minimum 8 characters.", variant: "destructive" });
+      toast({ title: t("settings.passwordTooShort"), description: t("settings.passwordTooShortDesc"), variant: "destructive" });
       return;
     }
     if (newPw !== confirmPw) {
-      toast({ title: "Mismatch", description: "Passwords don't match.", variant: "destructive" });
+      toast({ title: t("settings.passwordMismatch"), description: t("settings.passwordMismatchDesc"), variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -450,9 +451,9 @@ function PasswordChangeForm() {
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
-      toast({ title: "Password updated", description: "Your password has been changed." });
+      toast({ title: t("settings.passwordUpdated"), description: t("settings.passwordUpdatedDesc") });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("settings.error"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -461,15 +462,15 @@ function PasswordChangeForm() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="new-pw">New Password</Label>
+        <Label htmlFor="new-pw">{t("settings.newPassword")}</Label>
         <Input id="new-pw" type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="••••••••" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="confirm-pw">Confirm New Password</Label>
+        <Label htmlFor="confirm-pw">{t("settings.confirmPassword")}</Label>
         <Input id="confirm-pw" type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="••••••••" />
       </div>
       <Button onClick={handleChange} disabled={saving || !newPw} variant="outline">
-        {saving ? "Updating..." : "Update Password"}
+        {saving ? t("settings.updating") : t("settings.updatePassword")}
       </Button>
     </div>
   );
@@ -478,6 +479,7 @@ function PasswordChangeForm() {
 // ── Notification Preferences ─────────────────────────
 function NotificationPrefsEditor() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [prefs, setPrefs] = useState({ job_completed: true, job_failed: true, usage_limit: true });
   const [loaded, setLoaded] = useState(false);
@@ -514,13 +516,13 @@ function NotificationPrefsEditor() {
       .from("profiles")
       .update({ notification_preferences: newPrefs as any, updated_at: new Date().toISOString() } as any)
       .eq("user_id", user.id);
-    toast({ title: "Preference saved" });
+    toast({ title: t("settings.preferenceSaved") });
   };
 
   const items = [
-    { key: "job_completed" as const, label: "Job Completed", desc: "Notify when a generation job finishes successfully." },
-    { key: "job_failed" as const, label: "Job Failed / Errors", desc: "Notify on generation failures or publishing errors." },
-    { key: "usage_limit" as const, label: "Usage Limit Warnings", desc: "Notify when approaching page or AI generation limits." },
+    { key: "job_completed" as const, label: t("settings.jobCompleted"), desc: t("settings.jobCompletedDesc") },
+    { key: "job_failed" as const, label: t("settings.jobFailed"), desc: t("settings.jobFailedDesc") },
+    { key: "usage_limit" as const, label: t("settings.usageLimitWarnings"), desc: t("settings.usageLimitWarningsDesc") },
   ];
 
   return (
@@ -550,6 +552,7 @@ interface WebhookEndpoint {
 
 function WebhookSettings({ wsId }: { wsId: string | undefined }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [newUrl, setNewUrl] = useState("");
   const [newSecret, setNewSecret] = useState("");
@@ -571,7 +574,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
   const addMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+        if (!user) throw new Error(t("settings.notAuthenticated"));
       const { error } = await supabase.from("webhook_endpoints").insert({
         user_id: user.id,
         workspace_id: wsId!,
@@ -585,9 +588,9 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
       setNewUrl("");
       setNewSecret("");
-      toast({ title: "Webhook added" });
+      toast({ title: t("settings.webhookAdded") });
     },
-    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("settings.error"), description: err.message, variant: "destructive" }),
   });
 
   const toggleMutation = useMutation({
@@ -605,7 +608,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["webhooks"] });
-      toast({ title: "Webhook deleted" });
+      toast({ title: t("settings.webhookDeleted") });
     },
   });
 
@@ -614,12 +617,12 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Webhook className="h-5 w-5 text-primary" />
-          Webhooks
+          {t("settings.webhooks")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Receive HTTP notifications when campaigns complete or fail. We&apos;ll POST a JSON payload to your URL.
+          {t("settings.receiveWebhookDesc")}
         </p>
 
         {/* Add new webhook */}
@@ -631,7 +634,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
             className="flex-1"
           />
           <Input
-            placeholder="Secret (optional)"
+            placeholder={t("settings.secretOptional")}
             value={newSecret}
             onChange={(e) => setNewSecret(e.target.value)}
             className="sm:w-44"
@@ -641,7 +644,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
             disabled={!newUrl || addMutation.isPending}
             size="sm"
           >
-            <Plus className="h-4 w-4 mr-1" /> Add
+            <Plus className="h-4 w-4 mr-1" /> {t("settings.add")}
           </Button>
         </div>
 
@@ -649,7 +652,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
         {isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : webhooks.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">No webhooks configured.</p>
+          <p className="text-xs text-muted-foreground text-center py-4">{t("settings.noWebhooksConfigured")}</p>
         ) : (
           <div className="space-y-2">
             {webhooks.map((wh) => (

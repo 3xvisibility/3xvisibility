@@ -125,10 +125,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       refetchWorkspaces();
-      toast({ title: "Workspace renamed", description: "Workspace name has been updated." });
+      toast({ title: t("workspaceSettings.workspaceRenamed"), description: t("workspaceSettings.workspaceRenamedDesc") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -151,13 +151,13 @@ export default function WorkspaceSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["workspace-members", wsId] });
       queryClient.invalidateQueries({ queryKey: ["workspace-invitations", wsId] });
       if (status === "pending") {
-        toast({ title: "Invitation sent", description: `A pending invitation has been created for ${inviteEmail}. They'll see it when they sign up and log in.` });
+        toast({ title: t("workspaceSettings.invitationSent"), description: t("workspaceSettings.invitationSentDesc", { email: inviteEmail }) });
       } else {
-        toast({ title: "Member added", description: `${inviteEmail} has been added to the workspace.` });
+        toast({ title: t("workspaceSettings.memberAdded"), description: t("workspaceSettings.memberAddedDesc", { email: inviteEmail }) });
       }
     },
     onError: (err: Error) => {
-      toast({ title: "Invite failed", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.inviteFailed"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -175,10 +175,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspace-members", wsId] });
-      toast({ title: "Role updated" });
+      toast({ title: t("workspaceSettings.roleUpdated") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -195,10 +195,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspace-members", wsId] });
-      toast({ title: "Member removed" });
+      toast({ title: t("workspaceSettings.memberRemoved") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -215,10 +215,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspace-invitations", wsId] });
-      toast({ title: "Invitation cancelled" });
+      toast({ title: t("workspaceSettings.invitationCancelled") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -238,7 +238,7 @@ export default function WorkspaceSettingsPage() {
   if (!wsId) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
-        No workspace selected.
+        {t("workspaceSettings.noWorkspaceSelected")}
       </div>
     );
   }
@@ -282,7 +282,7 @@ export default function WorkspaceSettingsPage() {
               </Button>
             </div>
             {!isOwner && (
-              <p className="text-xs text-muted-foreground">Only workspace owners can rename the workspace.</p>
+              <p className="text-xs text-muted-foreground">{t("workspaceSettings.onlyOwnersCanRename")}</p>
             )}
           </div>
           <div className="flex gap-4 text-sm text-muted-foreground">
@@ -303,7 +303,7 @@ export default function WorkspaceSettingsPage() {
               {t("workspaceSettings.inviteMember")}
             </CardTitle>
             <CardDescription>
-              Invite users by email. Existing users are added immediately; others receive a pending invitation.
+              {t("workspaceSettings.inviteDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -320,9 +320,9 @@ export default function WorkspaceSettingsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="readonly">Read-only</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="member">{t("workspaceSettings.member")}</SelectItem>
+                  <SelectItem value="readonly">{t("workspaceSettings.readOnly")}</SelectItem>
+                  <SelectItem value="admin">{t("workspaceSettings.admin")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -357,7 +357,7 @@ export default function WorkspaceSettingsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by email..."
+                placeholder={t("workspaceSettings.searchByEmail")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -373,15 +373,15 @@ export default function WorkspaceSettingsPage() {
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All roles" />
+                <SelectValue placeholder={t("workspaceSettings.allRoles")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value="owner">Owner</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="readonly">Read-only</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t("workspaceSettings.allRoles")}</SelectItem>
+                <SelectItem value="owner">{t("workspaceSettings.owner")}</SelectItem>
+                <SelectItem value="admin">{t("workspaceSettings.admin")}</SelectItem>
+                <SelectItem value="member">{t("workspaceSettings.member")}</SelectItem>
+                <SelectItem value="readonly">{t("workspaceSettings.readOnly")}</SelectItem>
+                <SelectItem value="pending">{t("workspaceSettings.pending")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -407,7 +407,7 @@ export default function WorkspaceSettingsPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{member.email}</p>
                       <p className="text-xs text-muted-foreground">
-                        Joined {new Date(member.created_at).toLocaleDateString()}
+                        {t("workspaceSettings.joinedDate", { date: new Date(member.created_at).toLocaleDateString() })}
                       </p>
                     </div>
                   </div>
@@ -423,9 +423,9 @@ export default function WorkspaceSettingsPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="readonly">Read-only</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="member">{t("workspaceSettings.member")}</SelectItem>
+                          <SelectItem value="readonly">{t("workspaceSettings.readOnly")}</SelectItem>
+                          <SelectItem value="admin">{t("workspaceSettings.admin")}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
@@ -463,14 +463,14 @@ export default function WorkspaceSettingsPage() {
                       <p className="text-sm font-medium truncate">{inv.email}</p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        Invited {new Date(inv.created_at).toLocaleDateString()} · Expires {new Date(inv.expires_at).toLocaleDateString()}
+                        {t("workspaceSettings.invitedDate", { date: new Date(inv.created_at).toLocaleDateString() })} · {t("workspaceSettings.expiresDate", { date: new Date(inv.expires_at).toLocaleDateString() })}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge variant="outline" className="gap-1 text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      Pending {inv.role}
+                      {t("workspaceSettings.pending")} {inv.role === "readonly" ? t("workspaceSettings.readOnly") : t(`workspaceSettings.${inv.role}`)}
                     </Badge>
                     {isAdminOrOwner && (
                       <Button
@@ -479,7 +479,7 @@ export default function WorkspaceSettingsPage() {
                         className="h-8 w-8 text-destructive hover:bg-destructive/10"
                         onClick={() => cancelInvitationMutation.mutate(inv.id)}
                         disabled={cancelInvitationMutation.isPending}
-                        title="Cancel invitation"
+                        title={t("workspaceSettings.cancelInvitation")}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -490,7 +490,7 @@ export default function WorkspaceSettingsPage() {
 
               {filteredMembers.length === 0 && filteredInvitations.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-6">
-                  {searchQuery || roleFilter !== "all" ? "No members match your filters." : "No members yet."}
+                  {searchQuery || roleFilter !== "all" ? t("workspaceSettings.noMembersMatch") : t("workspaceSettings.noMembers")}
                 </p>
               )}
             </div>
@@ -528,6 +528,7 @@ export default function WorkspaceSettingsPage() {
 // ── Tenant Settings Card ─────────────────────────────
 function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [locale, setLocale] = useState("en");
   const [tz, setTz] = useState("UTC");
   const [canonicalBase, setCanonicalBase] = useState("");
@@ -594,9 +595,9 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
         .eq("id", workspaceId);
       if (error) throw error;
       onSaved();
-      toast({ title: "Tenant settings saved" });
+      toast({ title: t("workspaceSettings.tenantSettingsSaved") });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -607,16 +608,16 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5 text-primary" />
-          Tenant Settings
+          {t("workspaceSettings.tenantSettings")}
         </CardTitle>
         <CardDescription>
-          Configure locale, timezone, and SEO defaults that apply across all campaigns in this workspace.
+          {t("workspaceSettings.tenantSettingsDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Default Locale</Label>
+            <Label>{t("workspaceSettings.defaultLocale")}</Label>
             <Select value={locale} onValueChange={setLocale}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -625,10 +626,10 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Language for new campaigns by default.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.defaultLocaleDesc")}</p>
           </div>
           <div className="space-y-2">
-            <Label>Timezone</Label>
+            <Label>{t("workspaceSettings.timezone")}</Label>
             <Select value={tz} onValueChange={setTz}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -637,7 +638,7 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Used for scheduled jobs and activity timestamps.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.timezoneDesc")}</p>
           </div>
         </div>
 
@@ -646,43 +647,43 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Link2 className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">SEO Defaults</h3>
+            <h3 className="text-sm font-semibold">{t("workspaceSettings.seoDefaults")}</h3>
           </div>
 
           <div className="space-y-2">
-            <Label>Canonical Base URL</Label>
+            <Label>{t("workspaceSettings.canonicalBaseUrl")}</Label>
             <Input
               placeholder="https://www.example.com"
               value={canonicalBase}
               onChange={(e) => setCanonicalBase(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Base URL prepended to page slugs for canonical tags.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.canonicalBaseUrlDesc")}</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Default Meta Title Pattern</Label>
+            <Label>{t("workspaceSettings.defaultMetaTitlePattern")}</Label>
             <Input
               placeholder="{title} | {company} - {service}"
               value={defaultTitlePattern}
               onChange={(e) => setDefaultTitlePattern(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">Fallback SEO title pattern for new templates. Use {"{ }"} variables.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.defaultMetaTitlePatternDesc")}</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Default Meta Description Pattern</Label>
+            <Label>{t("workspaceSettings.defaultMetaDescriptionPattern")}</Label>
             <Textarea
               placeholder="{company} offers {service} in {location}. Contact us today!"
               value={defaultDescPattern}
               onChange={(e) => setDefaultDescPattern(e.target.value)}
               rows={2}
             />
-            <p className="text-xs text-muted-foreground">Fallback meta description for new templates.</p>
+            <p className="text-xs text-muted-foreground">{t("workspaceSettings.defaultMetaDescriptionPatternDesc")}</p>
           </div>
         </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-          {saving ? "Saving..." : "Save Tenant Settings"}
+          {saving ? t("workspaceSettings.saving") : t("workspaceSettings.saveTenantSettings")}
         </Button>
       </CardContent>
     </Card>
@@ -692,6 +693,7 @@ function TenantSettingsCard({ workspaceId, onSaved }: { workspaceId: string; onS
 // ... keep existing code (WhitelabelBrandingCard component)
 function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string; onSaved: () => void }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const { branding } = useBranding();
 
   const [appName, setAppName] = useState(branding.app_name || "");
@@ -728,9 +730,9 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
         .eq("id", workspaceId);
       if (error) throw error;
       onSaved();
-      toast({ title: "Branding saved", description: "Your whitelabel settings have been updated." });
+      toast({ title: t("workspaceSettings.brandingSaved"), description: t("workspaceSettings.brandingSavedDesc") });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -741,10 +743,10 @@ function WhitelabelBrandingCard({ workspaceId, onSaved }: { workspaceId: string;
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Palette className="h-5 w-5 text-primary" />
-          Whitelabel / Agency Branding
+          {t("workspaceSettings.agencyBranding")}
         </CardTitle>
         <CardDescription>
-          Customize the app appearance for your clients. Set a custom name, logo, and color scheme.
+          {t("workspaceSettings.agencyBrandingDesc")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
