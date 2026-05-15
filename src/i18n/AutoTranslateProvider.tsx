@@ -77,6 +77,36 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
+    if (language !== "en") return;
+
+    const restoreEnglish = () => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        const textNode = node as Text & { __autoTrOriginal?: string; __autoTrLang?: string };
+        if (!textNode.__autoTrOriginal) continue;
+        const raw = textNode.nodeValue || "";
+        const leading = raw.match(/^\s*/)?.[0] ?? "";
+        const trailing = raw.match(/\s*$/)?.[0] ?? "";
+        textNode.nodeValue = `${leading}${textNode.__autoTrOriginal}${trailing}`;
+        textNode.__autoTrLang = "en";
+      }
+
+      const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
+      document.body.querySelectorAll(selector).forEach((el) => {
+        for (const attr of TRANSLATABLE_ATTRS) {
+          const original = (el as any)[`__autoTr_${attr}_orig`];
+          if (!original) continue;
+          el.setAttribute(attr, original);
+          (el as any)[`__autoTr_${attr}_lang`] = "en";
+        }
+      });
+    };
+
+    restoreEnglish();
+  }, [language]);
+
+  useEffect(() => {
     if (language === "en") return;
 
     let observer: MutationObserver | null = null;
@@ -110,7 +140,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       let node: Node | null;
       while ((node = walker.nextNode())) {
         const t = node as Text;
-        out.push({ kind: "text", node: t, original: (t.nodeValue || "").trim() });
+        out.push({ kind: "text", node: t, original: ((t as any).__autoTrOriginal || t.nodeValue || "").trim() });
       }
       return out;
     };
@@ -129,7 +159,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           // Already translated to current language?
           const cacheTag = `__autoTr_${attr}_lang`;
           if ((el as any)[cacheTag] === lang) continue;
-          out.push({ kind: "attr", el, attr, original: value.trim() });
+          out.push({ kind: "attr", el, attr, original: ((el as any)[`__autoTr_${attr}_orig`] || value).trim() });
         }
       });
       return out;
