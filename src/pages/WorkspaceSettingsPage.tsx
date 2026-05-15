@@ -373,15 +373,15 @@ export default function WorkspaceSettingsPage() {
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="All roles" />
+                <SelectValue placeholder={t("workspaceSettings.allRoles")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All roles</SelectItem>
-                <SelectItem value="owner">Owner</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="readonly">Read-only</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="all">{t("workspaceSettings.allRoles")}</SelectItem>
+                <SelectItem value="owner">{t("workspaceSettings.owner")}</SelectItem>
+                <SelectItem value="admin">{t("workspaceSettings.admin")}</SelectItem>
+                <SelectItem value="member">{t("workspaceSettings.member")}</SelectItem>
+                <SelectItem value="readonly">{t("workspaceSettings.readOnly")}</SelectItem>
+                <SelectItem value="pending">{t("workspaceSettings.pending")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -407,7 +407,7 @@ export default function WorkspaceSettingsPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{member.email}</p>
                       <p className="text-xs text-muted-foreground">
-                        Joined {new Date(member.created_at).toLocaleDateString()}
+                        {t("workspaceSettings.joinedDate", { date: new Date(member.created_at).toLocaleDateString() })}
                       </p>
                     </div>
                   </div>
@@ -423,9 +423,9 @@ export default function WorkspaceSettingsPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="member">Member</SelectItem>
-                          <SelectItem value="readonly">Read-only</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="member">{t("workspaceSettings.member")}</SelectItem>
+                          <SelectItem value="readonly">{t("workspaceSettings.readOnly")}</SelectItem>
+                          <SelectItem value="admin">{t("workspaceSettings.admin")}</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
