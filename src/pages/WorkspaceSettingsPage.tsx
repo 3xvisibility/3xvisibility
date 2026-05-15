@@ -175,10 +175,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspace-members", wsId] });
-      toast({ title: "Role updated" });
+      toast({ title: t("workspaceSettings.roleUpdated") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -195,10 +195,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspace-members", wsId] });
-      toast({ title: "Member removed" });
+      toast({ title: t("workspaceSettings.memberRemoved") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -215,10 +215,10 @@ export default function WorkspaceSettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workspace-invitations", wsId] });
-      toast({ title: "Invitation cancelled" });
+      toast({ title: t("workspaceSettings.invitationCancelled") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("workspaceSettings.error"), description: err.message, variant: "destructive" });
     },
   });
 
