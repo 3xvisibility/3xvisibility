@@ -479,6 +479,7 @@ function PasswordChangeForm() {
 // ── Notification Preferences ─────────────────────────
 function NotificationPrefsEditor() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [prefs, setPrefs] = useState({ job_completed: true, job_failed: true, usage_limit: true });
   const [loaded, setLoaded] = useState(false);
@@ -515,13 +516,13 @@ function NotificationPrefsEditor() {
       .from("profiles")
       .update({ notification_preferences: newPrefs as any, updated_at: new Date().toISOString() } as any)
       .eq("user_id", user.id);
-    toast({ title: "Preference saved" });
+    toast({ title: t("settings.preferenceSaved") });
   };
 
   const items = [
-    { key: "job_completed" as const, label: "Job Completed", desc: "Notify when a generation job finishes successfully." },
-    { key: "job_failed" as const, label: "Job Failed / Errors", desc: "Notify on generation failures or publishing errors." },
-    { key: "usage_limit" as const, label: "Usage Limit Warnings", desc: "Notify when approaching page or AI generation limits." },
+    { key: "job_completed" as const, label: t("settings.jobCompleted"), desc: t("settings.jobCompletedDesc") },
+    { key: "job_failed" as const, label: t("settings.jobFailed"), desc: t("settings.jobFailedDesc") },
+    { key: "usage_limit" as const, label: t("settings.usageLimitWarnings"), desc: t("settings.usageLimitWarningsDesc") },
   ];
 
   return (
