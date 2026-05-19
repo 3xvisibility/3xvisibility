@@ -72,7 +72,7 @@ export function PricingSection() {
           )}
         </div>
 
-        <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto items-start" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto items-start" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
           {plans.map((plan) => {
             const price = isYearly ? Math.round(plan.monthlyPrice * (1 - YEARLY_DISCOUNT)) : plan.monthlyPrice;
             return (
