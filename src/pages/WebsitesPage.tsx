@@ -42,7 +42,7 @@ export default function WebsitesPage() {
   const [open, setOpen] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [filterType, setFilterType] = useState("all");
-  const { sitesConnected, sitesLimit, hasReachedSiteLimit } = useSubscription();
+  const { sitesConnected, sitesLimit, hasReachedSiteLimit, canUseFeature, plan } = useSubscription();
   const [siteType, setSiteType] = useState<WebsiteType | "">("");
   const [siteName, setSiteName] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
@@ -491,9 +491,15 @@ export default function WebsitesPage() {
                     <SelectTrigger><SelectValue placeholder={t("common.selectPlatform")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="wordpress">WordPress</SelectItem>
-                      <SelectItem value="shopify">Shopify</SelectItem>
-                      <SelectItem value="prestashop">PrestaShop</SelectItem>
-                      <SelectItem value="woocommerce">WooCommerce</SelectItem>
+                      <SelectItem value="shopify" disabled={!canUseFeature("shopify")}>
+                        Shopify {!canUseFeature("shopify") && "🔒 Pro"}
+                      </SelectItem>
+                      <SelectItem value="prestashop" disabled={!canUseFeature("prestashop")}>
+                        PrestaShop {!canUseFeature("prestashop") && "🔒 Pro"}
+                      </SelectItem>
+                      <SelectItem value="woocommerce" disabled={!canUseFeature("woocommerce")}>
+                        WooCommerce {!canUseFeature("woocommerce") && "🔒 Pro"}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
