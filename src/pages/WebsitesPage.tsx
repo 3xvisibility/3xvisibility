@@ -491,9 +491,15 @@ export default function WebsitesPage() {
                     <SelectTrigger><SelectValue placeholder={t("common.selectPlatform")} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="wordpress">WordPress</SelectItem>
-                      <SelectItem value="shopify">Shopify</SelectItem>
-                      <SelectItem value="prestashop">PrestaShop</SelectItem>
-                      <SelectItem value="woocommerce">WooCommerce</SelectItem>
+                      <SelectItem value="shopify" disabled={!canUseFeature("shopify")}>
+                        Shopify {!canUseFeature("shopify") && "🔒 Pro"}
+                      </SelectItem>
+                      <SelectItem value="prestashop" disabled={!canUseFeature("prestashop")}>
+                        PrestaShop {!canUseFeature("prestashop") && "🔒 Pro"}
+                      </SelectItem>
+                      <SelectItem value="woocommerce" disabled={!canUseFeature("woocommerce")}>
+                        WooCommerce {!canUseFeature("woocommerce") && "🔒 Pro"}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
