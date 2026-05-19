@@ -116,16 +116,16 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="scanner" element={<Navigate to="../website-content" replace />} />
       <Route path="discovery" element={<Navigate to="../website-content" replace />} />
       <Route path="analytics" element={wrap(<AnalyticsPage />)} />
-      <Route path="marketplace" element={wrap(<TemplateMarketplacePage />)} />
+      <Route path="marketplace" element={wrap(<FeatureGate feature="internalLinks"><TemplateMarketplacePage /></FeatureGate>)} />
       <Route path="billing" element={wrap(<BillingPage />)} />
       <Route path="settings" element={wrap(<SettingsPage />)} />
       <Route path="admin" element={wrap(<AdminPage />)} />
       <Route path="indexing" element={wrap(<FeatureGate feature="indexing"><IndexingPage /></FeatureGate>)} />
       <Route path="workspace-settings" element={wrap(<FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate>)} />
       <Route path="data" element={wrap(<DataCsvPage />)} />
-      <Route path="website-content" element={wrap(<WebsiteContentPage />)} />
+      <Route path="website-content" element={wrap(<FeatureGate feature="discovery"><WebsiteContentPage /></FeatureGate>)} />
       
-      <Route path="content-calendar" element={wrap(<ContentCalendarPage />)} />
+      <Route path="content-calendar" element={wrap(<FeatureGate feature="internalLinks"><ContentCalendarPage /></FeatureGate>)} />
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
@@ -134,7 +134,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
       <Route path="pgp-terms" element={wrap(<PgpTermsPage />)} />
       <Route path="pgp-logs" element={<Navigate to="../pages" replace />} />
-      <Route path="template-mapping" element={wrap(<TemplateMappingPage />)} />
+      <Route path="template-mapping" element={wrap(<FeatureGate feature="discovery"><TemplateMappingPage /></FeatureGate>)} />
       <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
