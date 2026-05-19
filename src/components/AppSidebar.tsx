@@ -64,7 +64,7 @@ const mainNav: NavItem[] = [
   { titleKey: "sidebar.campaigns", path: "campaigns", icon: Rocket },
   { titleKey: "sidebar.generatedPages", path: "pages", icon: Layers },
   { titleKey: "sidebar.templates", path: "templates", icon: FileText },
-  { titleKey: "sidebar.marketplace", path: "marketplace", icon: Store },
+  { titleKey: "sidebar.marketplace", path: "marketplace", icon: Store, requiredFeature: "internalLinks" },
   { titleKey: "sidebar.dataCsv", path: "data", icon: Database },
 ];
 
@@ -75,12 +75,12 @@ const pgpNav: NavItem[] = [
 ];
 
 const toolsNav: NavItem[] = [
-  { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers },
-  { titleKey: "Variable Mapping", path: "template-mapping", icon: Columns3 },
+  { titleKey: "sidebar.websiteContent", path: "website-content", icon: Layers, requiredFeature: "discovery" },
+  { titleKey: "Variable Mapping", path: "template-mapping", icon: Columns3, requiredFeature: "discovery" },
   { titleKey: "sidebar.analytics", path: "analytics", icon: BarChart3 },
   { titleKey: "sidebar.performance", path: "performance", icon: Activity },
   
-  { titleKey: "sidebar.contentCalendar", path: "content-calendar", icon: CalendarDays },
+  { titleKey: "sidebar.contentCalendar", path: "content-calendar", icon: CalendarDays, requiredFeature: "internalLinks" },
   { titleKey: "sidebar.seoAudit", path: "seo-audit", icon: ClipboardCheck },
   { titleKey: "sidebar.indexing", path: "indexing", icon: SearchIcon, requiredFeature: "indexing" },
 ];
