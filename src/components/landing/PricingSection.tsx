@@ -145,6 +145,7 @@ export function PricingSection() {
                     {comparisonFeatures.map((row, i) => (
                       <tr key={row.label} className={`border-b border-[hsl(217,91%,60%,0.06)] last:border-0 transition-colors hover:bg-[hsl(217,91%,60%,0.03)] ${i % 2 === 1 ? "bg-[hsl(220,35%,7%)]" : ""}`}>
                         <td className="py-3.5 px-5"><div className="flex items-center gap-2.5">{row.icon}<span className="text-foreground font-medium">{row.label}</span></div></td>
+                        <td className="py-3.5 px-5 text-center"><TableCell val={row.free} /></td>
                         <td className="py-3.5 px-5 text-center"><TableCell val={row.starter} /></td>
                         <td className="py-3.5 px-5 text-center bg-[hsl(217,91%,60%,0.02)]"><TableCell val={row.pro} /></td>
                         <td className="py-3.5 px-5 text-center"><TableCell val={row.agency} /></td>
