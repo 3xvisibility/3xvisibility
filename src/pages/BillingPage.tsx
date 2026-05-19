@@ -37,7 +37,7 @@ import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const YEARLY_DISCOUNT = 0.2;
+const YEARLY_DISCOUNT = 2 / 12;
 
 interface PlanConfig {
   name: PlanName;
@@ -52,8 +52,8 @@ interface PlanConfig {
 const planConfigs: PlanConfig[] = [
   {
     name: "starter",
-    monthlyPrice: 29,
-    description: "Perfect for individuals and small projects",
+    monthlyPrice: 19,
+    description: "For freelancers and small businesses",
     popular: false,
     icon: <Zap className="h-5 w-5" />,
     gradient: "from-secondary/20 to-secondary/5",
@@ -61,8 +61,8 @@ const planConfigs: PlanConfig[] = [
   },
   {
     name: "pro",
-    monthlyPrice: 79,
-    description: "Best for growing businesses and marketers",
+    monthlyPrice: 59,
+    description: "For growing businesses and marketers",
     popular: true,
     icon: <Sparkles className="h-5 w-5" />,
     gradient: "from-primary/20 to-primary/5",
@@ -70,8 +70,8 @@ const planConfigs: PlanConfig[] = [
   },
   {
     name: "agency",
-    monthlyPrice: 199,
-    description: "For agencies and enterprise teams",
+    monthlyPrice: 149,
+    description: "For agencies and multi-client teams",
     popular: false,
     icon: <Crown className="h-5 w-5" />,
     gradient: "from-warning/20 to-warning/5",

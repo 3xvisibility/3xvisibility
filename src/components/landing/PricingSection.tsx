@@ -9,7 +9,7 @@ import { ScrollReveal } from "./ScrollReveal";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const YEARLY_DISCOUNT = 0.2;
+const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
 
 function TableCell({ val }: { val: string | boolean }) {
   if (typeof val === "boolean") {
@@ -31,23 +31,24 @@ export function PricingSection() {
   const { t } = useLanguage();
 
   const plans = [
-    { name: t("pricing.starter"), monthlyPrice: 29, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `100 ${t("pricing.pagesPerMonth")}`, features: [`100 ${t("pricing.pagesPerMonth")}`, `50 ${t("pricing.aiGenerations")}`, `5 ${t("pricing.templates")}`, `1 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.pro"), monthlyPrice: 79, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `2,000 ${t("pricing.pagesPerMonth")}`, features: [`2,000 ${t("pricing.pagesPerMonth")}`, `500 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `5 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
-    { name: t("pricing.agency"), monthlyPrice: 199, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `10,000 ${t("pricing.pagesPerMonth")}`, features: [`10,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
+    { name: "Free", monthlyPrice: 0, description: t("pricing.freeDesc"), popular: false, icon: <Layers className="h-5 w-5" />, cta: t("pricing.tryFree"), pagesLimit: `10 ${t("pricing.pagesPerMonth")}`, features: [`10 ${t("pricing.pagesPerMonth")}`, `10 ${t("pricing.aiGenerations")}`, `1 ${t("pricing.templates").toLowerCase()}`, `1 ${t("pricing.websites").toLowerCase()}`, `${t("pricing.wordpress")} ${t("pricing.only")}`, t("pricing.noCreditCard")] },
+    { name: t("pricing.starter"), monthlyPrice: 19, description: t("pricing.starterDesc"), popular: false, icon: <Zap className="h-5 w-5" />, cta: t("pricing.getStarted"), pagesLimit: `300 ${t("pricing.pagesPerMonth")}`, features: [`300 ${t("pricing.pagesPerMonth")}`, `100 ${t("pricing.aiGenerations")}`, `10 ${t("pricing.templates").toLowerCase()}`, `2 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress"), `${t("pricing.email")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.pro"), monthlyPrice: 59, description: t("pricing.proDesc"), popular: true, icon: <Sparkles className="h-5 w-5" />, cta: t("pricing.startProTrial"), pagesLimit: `3,000 ${t("pricing.pagesPerMonth")}`, features: [`3,000 ${t("pricing.pagesPerMonth")}`, `1,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `10 ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), `${t("pricing.priority")} ${t("pricing.support").toLowerCase()}`] },
+    { name: t("pricing.agency"), monthlyPrice: 149, description: t("pricing.agencyDesc"), popular: false, icon: <Crown className="h-5 w-5" />, cta: t("pricing.contactSales"), pagesLimit: `15,000 ${t("pricing.pagesPerMonth")}`, features: [`15,000 ${t("pricing.pagesPerMonth")}`, `5,000 ${t("pricing.aiGenerations")}`, `${t("pricing.unlimited")} ${t("pricing.templates").toLowerCase()}`, `${t("pricing.unlimited")} ${t("pricing.websites").toLowerCase()}`, t("pricing.wordpress") + " & " + t("pricing.shopify"), t("pricing.googleIndexing"), t("pricing.internalLinks"), t("pricing.apiAccess"), t("pricing.teamCollaboration"), `${t("pricing.dedicated")} ${t("pricing.support").toLowerCase()}`] },
   ];
 
   const comparisonFeatures = [
-    { label: t("pricing.pagesMonth"), icon: <Layers className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: "100", pro: "2,000", agency: "10,000" },
-    { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: "50", pro: "500", agency: "5,000" },
-    { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: "5", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
-    { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: "1", pro: "5", agency: t("pricing.unlimited") },
-    { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: true, pro: true, agency: true },
-    { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: true, agency: true },
-    { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: false, pro: false, agency: true },
-    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-[hsl(217,91%,68%)]" />, starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
+    { label: t("pricing.pagesMonth"), icon: <Layers className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: "10", starter: "300", pro: "3,000", agency: "15,000" },
+    { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: "10", starter: "100", pro: "1,000", agency: "5,000" },
+    { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
+    { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: "1", starter: "2", pro: "10", agency: t("pricing.unlimited") },
+    { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: true, starter: true, pro: true, agency: true },
+    { label: t("pricing.shopify"), icon: <Store className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.googleIndexing"), icon: <Search className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.internalLinks"), icon: <Link2 className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.apiAccess"), icon: <Code className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: false, starter: false, pro: true, agency: true },
+    { label: t("pricing.teamCollaboration"), icon: <Users className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: false, starter: false, pro: false, agency: true },
+    { label: t("pricing.support"), icon: <Headphones className="h-4 w-4 text-[hsl(217,91%,68%)]" />, free: "—", starter: t("pricing.email"), pro: t("pricing.priority"), agency: t("pricing.dedicated") },
   ];
 
   return (
@@ -71,7 +72,7 @@ export function PricingSection() {
           )}
         </div>
 
-        <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto items-start" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
+        <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto items-start" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={{ visible: { transition: { staggerChildren: 0.1 } } }}>
           {plans.map((plan) => {
             const price = isYearly ? Math.round(plan.monthlyPrice * (1 - YEARLY_DISCOUNT)) : plan.monthlyPrice;
             return (
@@ -144,6 +145,7 @@ export function PricingSection() {
                     {comparisonFeatures.map((row, i) => (
                       <tr key={row.label} className={`border-b border-[hsl(217,91%,60%,0.06)] last:border-0 transition-colors hover:bg-[hsl(217,91%,60%,0.03)] ${i % 2 === 1 ? "bg-[hsl(220,35%,7%)]" : ""}`}>
                         <td className="py-3.5 px-5"><div className="flex items-center gap-2.5">{row.icon}<span className="text-foreground font-medium">{row.label}</span></div></td>
+                        <td className="py-3.5 px-5 text-center"><TableCell val={row.free} /></td>
                         <td className="py-3.5 px-5 text-center"><TableCell val={row.starter} /></td>
                         <td className="py-3.5 px-5 text-center bg-[hsl(217,91%,60%,0.02)]"><TableCell val={row.pro} /></td>
                         <td className="py-3.5 px-5 text-center"><TableCell val={row.agency} /></td>
