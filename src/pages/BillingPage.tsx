@@ -37,7 +37,7 @@ import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const YEARLY_DISCOUNT = 0.2;
+const YEARLY_DISCOUNT = 2 / 12;
 
 interface PlanConfig {
   name: PlanName;
