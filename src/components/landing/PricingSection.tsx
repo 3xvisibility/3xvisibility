@@ -9,7 +9,7 @@ import { ScrollReveal } from "./ScrollReveal";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const YEARLY_DISCOUNT = 0.2;
+const YEARLY_DISCOUNT = 2 / 12; // Save 2 months
 
 function TableCell({ val }: { val: string | boolean }) {
   if (typeof val === "boolean") {
