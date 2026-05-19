@@ -42,7 +42,7 @@ export default function WebsitesPage() {
   const [open, setOpen] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [filterType, setFilterType] = useState("all");
-  const { sitesConnected, sitesLimit, hasReachedSiteLimit } = useSubscription();
+  const { sitesConnected, sitesLimit, hasReachedSiteLimit, canUseFeature, plan } = useSubscription();
   const [siteType, setSiteType] = useState<WebsiteType | "">("");
   const [siteName, setSiteName] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
