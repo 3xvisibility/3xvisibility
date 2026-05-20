@@ -61,11 +61,12 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
   };
 
   const fmt = (v: number) => (v === -1 ? "∞" : v.toLocaleString());
+  const sitesRem = sitesRemaining === Infinity ? -1 : sitesRemaining;
   const usageStats = [
-    { label: t("featureGate.pagesPerMonth"), used: pagesUsed, limit: pagesLimit },
-    { label: t("featureGate.aiCredits"), used: aiUsed, limit: aiLimit },
-    { label: t("featureGate.templates"), used: null as number | null, limit: currentFeatures.templates },
-    { label: t("featureGate.websites"), used: sitesConnected, limit: sitesLimit },
+    { label: t("featureGate.pagesPerMonth"), used: pagesUsed, limit: pagesLimit, remaining: pagesRemaining },
+    { label: t("featureGate.aiCredits"), used: aiUsed, limit: aiLimit, remaining: aiRemaining },
+    { label: t("featureGate.templates"), used: null as number | null, limit: currentFeatures.templates, remaining: null as number | null },
+    { label: t("featureGate.websites"), used: sitesConnected, limit: sitesLimit, remaining: sitesRem },
   ];
 
   const savePct = Math.round(YEARLY_DISCOUNT * 100);
