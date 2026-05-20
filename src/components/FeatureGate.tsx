@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { getMinimumPlanFor, PLAN_FEATURES, type FeatureKey, type PlanName } from "@/lib/plan-features";
-import { Lock, ArrowRight, Check, X, Sparkles, Mail } from "lucide-react";
+import { Lock, ArrowRight, Check, X, Sparkles, Mail, GitCompare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
