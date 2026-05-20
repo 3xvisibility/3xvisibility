@@ -93,7 +93,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
-            <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 w-full sm:w-auto">
+            <Button onClick={() => navigate(`${basePath}/billing?highlight=${minPlan}`)} className="gap-2 w-full sm:w-auto">
               {t("featureGate.upgradeCta", { plan: planLabel })}
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -109,9 +109,17 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
             </Button>
           </div>
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground text-center sm:text-right">
-          {t("featureGate.enterpriseNote")}
-        </p>
+        <div className="mt-2 flex flex-col sm:flex-row items-center sm:justify-between gap-1 text-[11px] text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => navigate(`${basePath}/billing?highlight=${minPlan}`)}
+            className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+          >
+            <GitCompare className="h-3 w-3" />
+            {t("featureGate.comparePlans")}
+          </button>
+          <span className="text-center sm:text-right">{t("featureGate.enterpriseNote")}</span>
+        </div>
         {/* Inline billing toggle */}
         <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-center gap-3">
           <span className={`text-xs font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("featureGate.monthly")}</span>
