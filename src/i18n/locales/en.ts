@@ -508,6 +508,7 @@ const en: Record<string, string> = {
   "faq.title": "Frequently asked questions",
   "featureGate.aiCredits": "AI credits",
   "featureGate.aiLeft": "AI credits",
+  "featureGate.comparePlans": "Compare all plans",
   "featureGate.contactSales": "Contact sales",
   "featureGate.current": "Current",
   "featureGate.currentPlan": "Your current plan: {plan}",
