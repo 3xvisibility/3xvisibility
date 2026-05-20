@@ -23,7 +23,7 @@ interface FeatureGateProps {
 }
 
 export function FeatureGate({ feature, children }: FeatureGateProps) {
-  const { canUseFeature, plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, features: currentFeatures } = useSubscription();
+  const { canUseFeature, plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, pagesRemaining, aiRemaining, sitesRemaining, features: currentFeatures } = useSubscription();
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
   const { t } = useLanguage();
@@ -61,11 +61,12 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
   };
 
   const fmt = (v: number) => (v === -1 ? "∞" : v.toLocaleString());
+  const sitesRem = sitesRemaining === Infinity ? -1 : sitesRemaining;
   const usageStats = [
-    { label: t("featureGate.pagesPerMonth"), used: pagesUsed, limit: pagesLimit },
-    { label: t("featureGate.aiCredits"), used: aiUsed, limit: aiLimit },
-    { label: t("featureGate.templates"), used: null as number | null, limit: currentFeatures.templates },
-    { label: t("featureGate.websites"), used: sitesConnected, limit: sitesLimit },
+    { label: t("featureGate.pagesPerMonth"), used: pagesUsed, limit: pagesLimit, remaining: pagesRemaining },
+    { label: t("featureGate.aiCredits"), used: aiUsed, limit: aiLimit, remaining: aiRemaining },
+    { label: t("featureGate.templates"), used: null as number | null, limit: currentFeatures.templates, remaining: null as number | null },
+    { label: t("featureGate.websites"), used: sitesConnected, limit: sitesLimit, remaining: sitesRem },
   ];
 
   const savePct = Math.round(YEARLY_DISCOUNT * 100);
@@ -130,16 +131,37 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
           </p>
           <span className="text-xs text-muted-foreground">{t("featureGate.usageThisPeriod")}</span>
         </div>
+        {/* Remaining quota highlight */}
+        <div className="mb-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+          <span className="font-semibold text-foreground">{t("featureGate.remainingThisMonth")}</span>
+          <span className="text-foreground">
+            <span className="font-bold text-primary">{pagesRemaining.toLocaleString()}</span> {t("featureGate.pagesLeft")}
+          </span>
+          <span className="text-foreground">
+            <span className="font-bold text-primary">{aiRemaining.toLocaleString()}</span> {t("featureGate.aiLeft")}
+          </span>
+          <span className="text-foreground">
+            <span className="font-bold text-primary">{sitesRem === -1 ? "∞" : sitesRem.toLocaleString()}</span> {t("featureGate.sitesLeft")}
+          </span>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {usageStats.map((s) => {
             const pct = s.used !== null && s.limit > 0 ? Math.min(100, Math.round((s.used / s.limit) * 100)) : 0;
             const isUnlimited = s.limit === -1;
+            const exhausted = s.remaining !== null && s.remaining !== -1 && s.remaining <= 0;
             return (
               <div key={s.label} className="rounded-lg border border-border bg-background px-3 py-2">
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
                 <p className="text-sm font-semibold text-foreground mt-0.5">
                   {s.used !== null ? `${s.used.toLocaleString()} / ${fmt(s.limit)}` : fmt(s.limit)}
                 </p>
+                {s.remaining !== null && (
+                  <p className={`text-[10px] mt-0.5 font-medium ${exhausted ? "text-destructive" : "text-muted-foreground"}`}>
+                    {isUnlimited
+                      ? t("featureGate.unlimitedShort")
+                      : t("featureGate.nLeft", { count: (s.remaining === -1 ? 0 : s.remaining).toLocaleString() })}
+                  </p>
+                )}
                 {s.used !== null && !isUnlimited && (
                   <div className="mt-1.5 h-1 w-full rounded-full bg-muted overflow-hidden">
                     <div
