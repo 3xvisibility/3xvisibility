@@ -391,8 +391,11 @@ export default function BillingPage() {
           return (
             <Card
               key={config.name}
+              id={`plan-${config.name}`}
               className={`relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                config.popular
+                highlightPlan === config.name
+                  ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-2xl shadow-primary/30 animate-pulse-slow"
+                  : config.popular
                   ? "ring-2 ring-primary shadow-xl shadow-primary/10 md:scale-[1.03]"
                   : "shadow-surface border-0 hover:shadow-surface-hover"
               }`}
