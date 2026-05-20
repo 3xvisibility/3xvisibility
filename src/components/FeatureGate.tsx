@@ -1,35 +1,11 @@
 import { useState } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
-import { getMinimumPlanFor, PLAN_FEATURES, FEATURE_LABELS, type FeatureKey, type PlanName } from "@/lib/plan-features";
+import { getMinimumPlanFor, PLAN_FEATURES, type FeatureKey, type PlanName } from "@/lib/plan-features";
 import { Lock, ArrowRight, Check, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-
-const FEATURE_DESCRIPTIONS: Record<FeatureKey, string> = {
-  wordpress: "Connect your WordPress site to automatically publish generated pages and keep your content in sync.",
-  shopify: "Integrate with Shopify to create and manage product pages, collections, and SEO-optimized store content.",
-  prestashop: "Connect PrestaShop to generate and publish product descriptions, category pages, and more.",
-  woocommerce: "Seamlessly push generated content to your WooCommerce store including products and landing pages.",
-  indexing: "Submit your pages directly to Google for faster indexing and monitor their crawl status in real time.",
-  discovery: "Analyze any website to discover its structure, pages, templates, and SEO opportunities.",
-  internalLinks: "Automatically build internal links between your generated pages to boost SEO and user navigation.",
-  apiAccess: "Access the full API to integrate page generation into your own workflows and tools.",
-  teamCollaboration: "Invite team members to your workspace with role-based permissions and shared resources.",
-};
-
-const COMPARISON_ROWS: { label: string; getValue: (plan: PlanName) => string | boolean }[] = [
-  { label: "Pages", getValue: (p) => { const v = PLAN_FEATURES[p].pagesLimit; return v === -1 ? "Unlimited" : v.toLocaleString(); } },
-  { label: "AI Credits", getValue: (p) => { const v = PLAN_FEATURES[p].aiLimit; return v === -1 ? "Unlimited" : v.toLocaleString(); } },
-  { label: "Templates", getValue: (p) => { const v = PLAN_FEATURES[p].templates; return v === -1 ? "Unlimited" : String(v); } },
-  { label: "Websites", getValue: (p) => { const v = PLAN_FEATURES[p].websites; return v === -1 ? "Unlimited" : String(v); } },
-  { label: "CMS Integrations", getValue: (p) => PLAN_FEATURES[p].wordpress },
-  { label: "Website Discovery", getValue: (p) => PLAN_FEATURES[p].discovery },
-  { label: "Google Indexing", getValue: (p) => PLAN_FEATURES[p].indexing },
-  { label: "Internal Links", getValue: (p) => PLAN_FEATURES[p].internalLinks },
-  { label: "API Access", getValue: (p) => PLAN_FEATURES[p].apiAccess },
-  { label: "Team Collaboration", getValue: (p) => PLAN_FEATURES[p].teamCollaboration },
-];
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const PLAN_PRICES_MONTHLY: Record<PlanName, number> = {
   free: 0,
@@ -39,7 +15,6 @@ const PLAN_PRICES_MONTHLY: Record<PlanName, number> = {
 };
 
 const YEARLY_DISCOUNT = 0.2; // 20% off
-
 const PLANS: PlanName[] = ["free", "starter", "pro", "agency"];
 
 interface FeatureGateProps {
@@ -51,6 +26,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
   const { canUseFeature, plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, features: currentFeatures } = useSubscription();
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
+  const { t } = useLanguage();
   const [isYearly, setIsYearly] = useState(false);
 
   if (canUseFeature(feature)) {
@@ -60,8 +36,22 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
   const minPlan = getMinimumPlanFor(feature);
   const planLabel = PLAN_FEATURES[minPlan].label;
   const currentPlanLabel = PLAN_FEATURES[currentPlan].label;
-  const featureName = FEATURE_LABELS[feature];
-  const featureDesc = FEATURE_DESCRIPTIONS[feature];
+  const featureName = t(`featureGate.label.${feature}`);
+  const featureDesc = t(`featureGate.desc.${feature}`);
+  const unlimited = t("featureGate.unlimited");
+
+  const COMPARISON_ROWS: { label: string; getValue: (plan: PlanName) => string | boolean }[] = [
+    { label: t("featureGate.rowPages"), getValue: (p) => { const v = PLAN_FEATURES[p].pagesLimit; return v === -1 ? unlimited : v.toLocaleString(); } },
+    { label: t("featureGate.rowAiCredits"), getValue: (p) => { const v = PLAN_FEATURES[p].aiLimit; return v === -1 ? unlimited : v.toLocaleString(); } },
+    { label: t("featureGate.rowTemplates"), getValue: (p) => { const v = PLAN_FEATURES[p].templates; return v === -1 ? unlimited : String(v); } },
+    { label: t("featureGate.rowWebsites"), getValue: (p) => { const v = PLAN_FEATURES[p].websites; return v === -1 ? unlimited : String(v); } },
+    { label: t("featureGate.rowCmsIntegrations"), getValue: (p) => PLAN_FEATURES[p].wordpress },
+    { label: t("featureGate.rowWebsiteDiscovery"), getValue: (p) => PLAN_FEATURES[p].discovery },
+    { label: t("featureGate.rowGoogleIndexing"), getValue: (p) => PLAN_FEATURES[p].indexing },
+    { label: t("featureGate.rowInternalLinks"), getValue: (p) => PLAN_FEATURES[p].internalLinks },
+    { label: t("featureGate.rowApiAccess"), getValue: (p) => PLAN_FEATURES[p].apiAccess },
+    { label: t("featureGate.rowTeamCollab"), getValue: (p) => PLAN_FEATURES[p].teamCollaboration },
+  ];
 
   const getPrice = (plan: PlanName) => {
     const monthly = PLAN_PRICES_MONTHLY[plan];
@@ -72,11 +62,13 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
 
   const fmt = (v: number) => (v === -1 ? "∞" : v.toLocaleString());
   const usageStats = [
-    { label: "Pages / mo", used: pagesUsed, limit: pagesLimit },
-    { label: "AI credits", used: aiUsed, limit: aiLimit },
-    { label: "Templates", used: null as number | null, limit: currentFeatures.templates },
-    { label: "Websites", used: sitesConnected, limit: sitesLimit },
+    { label: t("featureGate.pagesPerMonth"), used: pagesUsed, limit: pagesLimit },
+    { label: t("featureGate.aiCredits"), used: aiUsed, limit: aiLimit },
+    { label: t("featureGate.templates"), used: null as number | null, limit: currentFeatures.templates },
+    { label: t("featureGate.websites"), used: sitesConnected, limit: sitesLimit },
   ];
+
+  const savePct = Math.round(YEARLY_DISCOUNT * 100);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-8">
@@ -89,31 +81,31 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">
-                Upgrade to {planLabel} to unlock {featureName}
+                {t("featureGate.upgradeTo", { plan: planLabel, feature: featureName })}
               </p>
               <p className="text-xs text-muted-foreground">
-                {getPrice(minPlan)}/mo {isYearly ? "billed yearly" : "billed monthly"} — cancel anytime.
+                {t(isYearly ? "featureGate.priceYearly" : "featureGate.priceMonthly", { price: getPrice(minPlan) })}
                 {isYearly && PLAN_PRICES_MONTHLY[minPlan] > 0 && (
-                  <span className="ml-1 font-semibold text-primary">Save {Math.round(YEARLY_DISCOUNT * 100)}%</span>
+                  <span className="ml-1 font-semibold text-primary">{t("featureGate.save", { percent: savePct })}</span>
                 )}
               </p>
             </div>
           </div>
           <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 shrink-0 w-full sm:w-auto">
-            Upgrade to {planLabel}
+            {t("featureGate.upgradeCta", { plan: planLabel })}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
         {/* Inline billing toggle */}
         <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-center gap-3">
-          <span className={`text-xs font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+          <span className={`text-xs font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("featureGate.monthly")}</span>
           <button
             type="button"
             onClick={() => setIsYearly(!isYearly)}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
               isYearly ? "bg-primary" : "bg-muted-foreground/30"
             }`}
-            aria-label="Toggle yearly billing"
+            aria-label={t("featureGate.toggleYearly")}
           >
             <span
               className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
@@ -122,22 +114,21 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
             />
           </button>
           <span className={`text-xs font-medium ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
-            Yearly
+            {t("featureGate.yearly")}
           </span>
           <span className="text-[10px] font-semibold text-primary bg-primary/10 rounded-full px-2 py-0.5">
-            Save {Math.round(YEARLY_DISCOUNT * 100)}%
+            {t("featureGate.save", { percent: savePct })}
           </span>
         </div>
       </div>
-
 
       {/* Current plan limits summary */}
       <div className="w-full max-w-3xl mb-6 rounded-xl border border-border bg-card px-5 py-4 text-left">
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-foreground">
-            Your current plan: <span className="text-primary">{currentPlanLabel}</span>
+            {t("featureGate.currentPlan", { plan: currentPlanLabel })}
           </p>
-          <span className="text-xs text-muted-foreground">Usage this period</span>
+          <span className="text-xs text-muted-foreground">{t("featureGate.usageThisPeriod")}</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {usageStats.map((s) => {
@@ -163,7 +154,6 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
         </div>
       </div>
 
-
       <div className="rounded-full bg-muted p-6 mb-6">
         <Lock className="h-10 w-10 text-muted-foreground" />
       </div>
@@ -171,7 +161,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
         {featureName}
       </h2>
       <span className="inline-block text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 rounded-full px-3 py-1 mb-4">
-        {planLabel} Plan
+        {t("featureGate.planSuffix", { plan: planLabel })}
       </span>
       <p className="text-muted-foreground max-w-md mb-6">
         {featureDesc}
@@ -179,7 +169,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
 
       {/* Billing Toggle */}
       <div className="flex items-center gap-3 mb-6">
-        <span className={`text-sm font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+        <span className={`text-sm font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("featureGate.monthly")}</span>
         <button
           onClick={() => setIsYearly(!isYearly)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
@@ -193,11 +183,11 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
           />
         </button>
         <span className={`text-sm font-medium ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
-          Yearly
+          {t("featureGate.yearly")}
         </span>
         {isYearly && (
           <span className="text-xs font-semibold text-primary bg-primary/10 rounded-full px-2 py-0.5">
-            Save 20%
+            {t("featureGate.save", { percent: savePct })}
           </span>
         )}
       </div>
@@ -208,7 +198,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
           <thead>
             <tr className="border-b border-border bg-muted/50">
               <th className="sticky left-0 z-20 bg-muted/50 text-left font-medium text-muted-foreground px-4 py-3 min-w-[120px] border-r border-border">
-                Feature
+                {t("featureGate.feature")}
               </th>
               {PLANS.map((plan) => {
                 const isRec = plan === minPlan;
@@ -230,12 +220,12 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
                     </span>
                     {isCurrent && (
                       <span className="block text-[10px] font-medium text-foreground/70 mt-0.5">
-                        Current
+                        {t("featureGate.current")}
                       </span>
                     )}
                     {isRec && !isCurrent && (
                       <span className="block text-[10px] font-medium text-primary mt-0.5">
-                        Recommended
+                        {t("featureGate.recommended")}
                       </span>
                     )}
                   </th>
@@ -283,7 +273,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
       </div>
 
       <Button onClick={() => navigate(`${basePath}/billing`)} size="lg" className="gap-2">
-        Upgrade to {planLabel}
+        {t("featureGate.upgradeCta", { plan: planLabel })}
         <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
