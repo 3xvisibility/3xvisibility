@@ -159,6 +159,17 @@ export default function BillingPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
   const [hasSynced, setHasSynced] = useState(false);
+  const highlightPlan = searchParams.get("highlight") as PlanName | null;
+
+  // Auto-scroll to highlighted plan
+  useEffect(() => {
+    if (!highlightPlan) return;
+    const el = document.getElementById(`plan-${highlightPlan}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightPlan]);
+
 
   // Sync with Stripe on mount and after checkout success
   useEffect(() => {
