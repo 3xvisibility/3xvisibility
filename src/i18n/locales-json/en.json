@@ -343,6 +343,8 @@
   "featureGate.priceYearly": "{price}/mo billed yearly — cancel anytime.",
   "featureGate.save": "Save {percent}%",
   "featureGate.upgradeCta": "Upgrade to {plan}",
+  "featureGate.contactSales": "Contact sales",
+  "featureGate.enterpriseNote": "Need a custom plan or enterprise volume? Talk to our team.",
   "featureGate.monthly": "Monthly",
   "featureGate.yearly": "Yearly",
   "featureGate.toggleYearly": "Toggle yearly billing",
