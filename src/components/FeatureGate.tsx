@@ -182,12 +182,15 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
               </th>
               {PLANS.map((plan) => {
                 const isRec = plan === minPlan;
+                const isCurrent = plan === currentPlan;
                 return (
                   <th
                     key={plan}
                     className={`px-3 py-3 font-semibold text-center min-w-[90px] ${
                       isRec
                         ? "sticky left-[120px] z-10 text-primary bg-primary/5 border-x-2 border-primary/20"
+                        : isCurrent
+                        ? "text-foreground bg-muted/70 border-x border-border"
                         : "text-foreground"
                     }`}
                   >
@@ -195,7 +198,12 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
                     <span className="block text-xs font-normal text-muted-foreground mt-0.5">
                       {getPrice(plan)}/mo
                     </span>
-                    {isRec && (
+                    {isCurrent && (
+                      <span className="block text-[10px] font-medium text-foreground/70 mt-0.5">
+                        Current
+                      </span>
+                    )}
+                    {isRec && !isCurrent && (
                       <span className="block text-[10px] font-medium text-primary mt-0.5">
                         Recommended
                       </span>
