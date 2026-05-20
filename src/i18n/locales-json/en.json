@@ -367,7 +367,7 @@
   "featureGate.rowInternalLinks": "Internal Links",
   "featureGate.rowApiAccess": "API Access",
   "featureGate.rowTeamCollab": "Team Collaboration",
-
+  "contentCalendar.allTypes": "All Types",
   "contentCalendar.description": "Visualize your campaign schedule and timelines",
   "contentCalendar.fri": "Fri",
   "contentCalendar.mon": "Mon",
