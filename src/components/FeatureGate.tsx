@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { getMinimumPlanFor, PLAN_FEATURES, type FeatureKey, type PlanName } from "@/lib/plan-features";
-import { Lock, ArrowRight, Check, X, Sparkles } from "lucide-react";
+import { Lock, ArrowRight, Check, X, Sparkles, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -92,11 +92,26 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
               </p>
             </div>
           </div>
-          <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 shrink-0 w-full sm:w-auto">
-            {t("featureGate.upgradeCta", { plan: planLabel })}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
+            <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 w-full sm:w-auto">
+              {t("featureGate.upgradeCta", { plan: planLabel })}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              asChild
+              className="gap-2 w-full sm:w-auto"
+            >
+              <a href="mailto:sales@pagegen.app?subject=Enterprise%20inquiry">
+                <Mail className="h-4 w-4" />
+                {t("featureGate.contactSales")}
+              </a>
+            </Button>
+          </div>
         </div>
+        <p className="mt-2 text-[11px] text-muted-foreground text-center sm:text-right">
+          {t("featureGate.enterpriseNote")}
+        </p>
         {/* Inline billing toggle */}
         <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-center gap-3">
           <span className={`text-xs font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("featureGate.monthly")}</span>
