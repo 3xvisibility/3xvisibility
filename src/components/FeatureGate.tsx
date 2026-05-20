@@ -48,7 +48,7 @@ interface FeatureGateProps {
 }
 
 export function FeatureGate({ feature, children }: FeatureGateProps) {
-  const { canUseFeature } = useSubscription();
+  const { canUseFeature, plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, features: currentFeatures } = useSubscription();
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
   const [isYearly, setIsYearly] = useState(false);
@@ -59,6 +59,7 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
 
   const minPlan = getMinimumPlanFor(feature);
   const planLabel = PLAN_FEATURES[minPlan].label;
+  const currentPlanLabel = PLAN_FEATURES[currentPlan].label;
   const featureName = FEATURE_LABELS[feature];
   const featureDesc = FEATURE_DESCRIPTIONS[feature];
 
@@ -68,6 +69,14 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
     if (isYearly) return `$${Math.round(monthly * (1 - YEARLY_DISCOUNT))}`;
     return `$${monthly}`;
   };
+
+  const fmt = (v: number) => (v === -1 ? "∞" : v.toLocaleString());
+  const usageStats = [
+    { label: "Pages / mo", used: pagesUsed, limit: pagesLimit },
+    { label: "AI credits", used: aiUsed, limit: aiLimit },
+    { label: "Templates", used: null as number | null, limit: currentFeatures.templates },
+    { label: "Websites", used: sitesConnected, limit: sitesLimit },
+  ];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-8">
@@ -91,6 +100,39 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Current plan limits summary */}
+      <div className="w-full max-w-3xl mb-6 rounded-xl border border-border bg-card px-5 py-4 text-left">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-foreground">
+            Your current plan: <span className="text-primary">{currentPlanLabel}</span>
+          </p>
+          <span className="text-xs text-muted-foreground">Usage this period</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {usageStats.map((s) => {
+            const pct = s.used !== null && s.limit > 0 ? Math.min(100, Math.round((s.used / s.limit) * 100)) : 0;
+            const isUnlimited = s.limit === -1;
+            return (
+              <div key={s.label} className="rounded-lg border border-border bg-background px-3 py-2">
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{s.label}</p>
+                <p className="text-sm font-semibold text-foreground mt-0.5">
+                  {s.used !== null ? `${s.used.toLocaleString()} / ${fmt(s.limit)}` : fmt(s.limit)}
+                </p>
+                {s.used !== null && !isUnlimited && (
+                  <div className="mt-1.5 h-1 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full ${pct >= 90 ? "bg-destructive" : pct >= 70 ? "bg-warning" : "bg-primary"}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
 
       <div className="rounded-full bg-muted p-6 mb-6">
         <Lock className="h-10 w-10 text-muted-foreground" />
