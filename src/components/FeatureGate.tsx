@@ -81,25 +81,55 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-8">
       {/* Prominent upgrade CTA banner */}
-      <div className="w-full max-w-3xl mb-6 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 px-5 py-4 flex flex-col sm:flex-row items-center gap-3 shadow-sm">
-        <div className="flex items-center gap-3 flex-1 text-left">
-          <div className="h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-            <Sparkles className="h-5 w-5 text-primary" />
+      <div className="w-full max-w-3xl mb-6 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 px-5 py-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex items-center gap-3 flex-1 text-left">
+            <div className="h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Upgrade to {planLabel} to unlock {featureName}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {getPrice(minPlan)}/mo {isYearly ? "billed yearly" : "billed monthly"} — cancel anytime.
+                {isYearly && PLAN_PRICES_MONTHLY[minPlan] > 0 && (
+                  <span className="ml-1 font-semibold text-primary">Save {Math.round(YEARLY_DISCOUNT * 100)}%</span>
+                )}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              Upgrade to {planLabel} to unlock {featureName}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Starting at {getPrice(minPlan)}/mo — instant access, cancel anytime.
-            </p>
-          </div>
+          <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 shrink-0 w-full sm:w-auto">
+            Upgrade to {planLabel}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
-        <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 shrink-0 w-full sm:w-auto">
-          Upgrade to {planLabel}
-          <ArrowRight className="h-4 w-4" />
-        </Button>
+        {/* Inline billing toggle */}
+        <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-center gap-3">
+          <span className={`text-xs font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+          <button
+            type="button"
+            onClick={() => setIsYearly(!isYearly)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+              isYearly ? "bg-primary" : "bg-muted-foreground/30"
+            }`}
+            aria-label="Toggle yearly billing"
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 rounded-full bg-background transition-transform ${
+                isYearly ? "translate-x-5" : "translate-x-1"
+              }`}
+            />
+          </button>
+          <span className={`text-xs font-medium ${isYearly ? "text-foreground" : "text-muted-foreground"}`}>
+            Yearly
+          </span>
+          <span className="text-[10px] font-semibold text-primary bg-primary/10 rounded-full px-2 py-0.5">
+            Save {Math.round(YEARLY_DISCOUNT * 100)}%
+          </span>
+        </div>
       </div>
+
 
       {/* Current plan limits summary */}
       <div className="w-full max-w-3xl mb-6 rounded-xl border border-border bg-card px-5 py-4 text-left">
