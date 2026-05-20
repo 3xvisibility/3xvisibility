@@ -92,10 +92,22 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
               </p>
             </div>
           </div>
-          <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 shrink-0 w-full sm:w-auto">
-            {t("featureGate.upgradeCta", { plan: planLabel })}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
+            <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 w-full sm:w-auto">
+              {t("featureGate.upgradeCta", { plan: planLabel })}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              asChild
+              className="gap-2 w-full sm:w-auto"
+            >
+              <a href="mailto:sales@pagegen.app?subject=Enterprise%20inquiry">
+                <Mail className="h-4 w-4" />
+                {t("featureGate.contactSales")}
+              </a>
+            </Button>
+          </div>
         </div>
         {/* Inline billing toggle */}
         <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-center gap-3">
