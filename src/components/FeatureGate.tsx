@@ -109,6 +109,9 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
             </Button>
           </div>
         </div>
+        <p className="mt-2 text-[11px] text-muted-foreground text-center sm:text-right">
+          {t("featureGate.enterpriseNote")}
+        </p>
         {/* Inline billing toggle */}
         <div className="mt-3 pt-3 border-t border-primary/20 flex items-center justify-center gap-3">
           <span className={`text-xs font-medium ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("featureGate.monthly")}</span>
