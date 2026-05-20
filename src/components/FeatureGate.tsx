@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { getMinimumPlanFor, PLAN_FEATURES, FEATURE_LABELS, type FeatureKey, type PlanName } from "@/lib/plan-features";
-import { Lock, ArrowRight, Check, X } from "lucide-react";
+import { Lock, ArrowRight, Check, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -71,6 +71,27 @@ export function FeatureGate({ feature, children }: FeatureGateProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-8">
+      {/* Prominent upgrade CTA banner */}
+      <div className="w-full max-w-3xl mb-6 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 px-5 py-4 flex flex-col sm:flex-row items-center gap-3 shadow-sm">
+        <div className="flex items-center gap-3 flex-1 text-left">
+          <div className="h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              Upgrade to {planLabel} to unlock {featureName}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Starting at {getPrice(minPlan)}/mo — instant access, cancel anytime.
+            </p>
+          </div>
+        </div>
+        <Button onClick={() => navigate(`${basePath}/billing`)} className="gap-2 shrink-0 w-full sm:w-auto">
+          Upgrade to {planLabel}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+
       <div className="rounded-full bg-muted p-6 mb-6">
         <Lock className="h-10 w-10 text-muted-foreground" />
       </div>
