@@ -23,7 +23,7 @@ interface FeatureGateProps {
 }
 
 export function FeatureGate({ feature, children }: FeatureGateProps) {
-  const { canUseFeature, plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, features: currentFeatures } = useSubscription();
+  const { canUseFeature, plan: currentPlan, pagesUsed, pagesLimit, aiUsed, aiLimit, sitesConnected, sitesLimit, pagesRemaining, aiRemaining, sitesRemaining, features: currentFeatures } = useSubscription();
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
   const { t } = useLanguage();
