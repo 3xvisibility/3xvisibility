@@ -197,9 +197,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             {logoUrl ? (
               <img src={logoUrl} alt={appName} className="h-7 w-7 rounded-lg object-contain shrink-0" />
             ) : (
-              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Zap className="h-3.5 w-3.5 text-primary" />
-              </div>
+              <img src={logo3x} alt={appName} className="h-7 w-7 rounded-lg object-contain shrink-0" />
             )}
             <span className="text-sm font-semibold truncate">{appName}</span>
           </div>
