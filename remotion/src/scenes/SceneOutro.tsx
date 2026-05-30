@@ -71,7 +71,7 @@ export const SceneOutro: React.FC = () => {
           opacity: urlOp,
         }}
       >
-        page-generator-project.lovable.app
+        3xvisibility.com
       </div>
     </AbsoluteFill>
   );
