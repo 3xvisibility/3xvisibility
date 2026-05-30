@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const DEFAULT_VIDEO = "/pagegen-demo.mp4";
+// Bump this when the rendered video changes to bust browser/CDN caches.
+const VIDEO_VERSION = "3xvisibility-1";
+const DEFAULT_VIDEO = `/pagegen-demo.mp4?v=${VIDEO_VERSION}`;
 
 export function VideoSection() {
   const [playing, setPlaying] = useState(false);
@@ -12,7 +14,7 @@ export function VideoSection() {
 
   // Try /pagegen-demo-{lang}.mp4; fall back to default if not present.
   const candidate = useMemo(
-    () => (language && language !== "en" ? `/pagegen-demo-${language}.mp4` : DEFAULT_VIDEO),
+    () => (language && language !== "en" ? `/pagegen-demo-${language}.mp4?v=${VIDEO_VERSION}` : DEFAULT_VIDEO),
     [language]
   );
   const [videoSrc, setVideoSrc] = useState<string>(DEFAULT_VIDEO);
