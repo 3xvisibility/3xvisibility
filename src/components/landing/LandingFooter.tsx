@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
+import logo3x from "@/assets/logo-3x.png";
 
 export function LandingFooter() {
   const { t } = useLanguage();

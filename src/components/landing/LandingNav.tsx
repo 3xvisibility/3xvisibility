@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import logo3x from "@/assets/logo-3x.png";
 
 export function LandingNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
