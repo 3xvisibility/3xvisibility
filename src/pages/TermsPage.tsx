@@ -5,7 +5,7 @@ export default function TermsPage() {
     <StaticPageLayout title="Terms of Service" subtitle="Last updated: May 2026">
       <h2>Acceptance</h2>
       <p>
-        By using PageGen you agree to these Terms. If you do not agree, do not use
+        By using 3XVISIBILITY you agree to these Terms. If you do not agree, do not use
         the service.
       </p>
       <h2>Account</h2>
@@ -26,7 +26,7 @@ export default function TermsPage() {
       </p>
       <h2>Liability</h2>
       <p>
-        PageGen is provided "as is". We are not liable for indirect or consequential
+        3XVISIBILITY is provided "as is". We are not liable for indirect or consequential
         damages arising from use of the service.
       </p>
       <h2>Contact</h2>

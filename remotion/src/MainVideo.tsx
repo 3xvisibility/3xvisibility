@@ -96,7 +96,7 @@ const PersistentChrome: React.FC = () => {
         >
           <div style={{ width: 16, height: 16, borderRadius: 4, background: C.bg }} />
         </div>
-        <span style={{ color: C.text, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20 }}>PageGen</span>
+        <span style={{ color: C.text, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20 }}>3XVISIBILITY</span>
       </div>
       {/* Bottom progress bar */}
       <div style={{ position: "absolute", bottom: 30, left: 60, right: 60, height: 2, background: "rgba(255,255,255,0.06)", borderRadius: 999 }}>

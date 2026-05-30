@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <StaticPageLayout title="Privacy Policy" subtitle="Last updated: May 2026">
       <h2>Overview</h2>
       <p>
-        This Privacy Policy explains how PageGen ("we", "us") collects, uses and
+        This Privacy Policy explains how 3XVISIBILITY ("we", "us") collects, uses and
         protects information when you use our service.
       </p>
       <h2>Data we collect</h2>
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <h2>How we use data</h2>
       <p>
         We use your data to operate the service, generate and publish pages on your
-        behalf, provide support and improve PageGen. We never sell your data.
+        behalf, provide support and improve 3XVISIBILITY. We never sell your data.
       </p>
       <h2>Data storage</h2>
       <p>

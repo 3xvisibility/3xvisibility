@@ -39,7 +39,7 @@ export function LandingNav() {
             <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-[hsl(210,100%,70%)] flex items-center justify-center">
               <span className="text-xs font-black text-primary-foreground">P</span>
             </div>
-            <span className="text-base font-bold tracking-tight text-foreground">PageGen</span>
+            <span className="text-base font-bold tracking-tight text-foreground">3XVISIBILITY</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

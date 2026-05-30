@@ -34,7 +34,7 @@ export function LandingFooter() {
               <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-[hsl(280,80%,65%)] flex items-center justify-center">
                 <span className="text-[10px] font-black text-primary-foreground">P</span>
               </div>
-              <span className="text-sm font-bold tracking-tight">PageGen</span>
+              <span className="text-sm font-bold tracking-tight">3XVISIBILITY</span>
             </Link>
             <p className="mt-3 text-xs text-[hsl(250,15%,40%)] leading-relaxed max-w-[200px]">
               {t("footer.description")}
@@ -65,7 +65,7 @@ export function LandingFooter() {
 
         <div className="mt-12 pt-6 border-t border-[hsl(262,83%,58%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[hsl(250,15%,35%)]">
-            © {new Date().getFullYear()} PageGen. {t("footer.rights")}
+            © {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-5 text-[11px] text-[hsl(250,15%,35%)]">
             <a href="#" className="hover:text-foreground transition-colors">Twitter</a>

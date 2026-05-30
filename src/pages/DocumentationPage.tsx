@@ -211,9 +211,9 @@ export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
 
   useEffect(() => {
-    document.title = "Documentation — PageGen";
+    document.title = "Documentation — 3XVISIBILITY";
     const m = document.querySelector('meta[name="description"]');
-    if (m) m.setAttribute("content", "Complete guide to PageGen tools — learn how to use campaigns, templates, websites and AI features.");
+    if (m) m.setAttribute("content", "Complete guide to 3XVISIBILITY tools — learn how to use campaigns, templates, websites and AI features.");
   }, []);
 
   return (

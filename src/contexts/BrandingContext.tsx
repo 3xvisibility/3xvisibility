@@ -19,7 +19,7 @@ interface BrandingContextType {
 
 const BrandingContext = createContext<BrandingContextType>({
   branding: {},
-  appName: "PageGen",
+  appName: "3XVISIBILITY",
   logoUrl: null,
   isWhitelabeled: false,
 });
@@ -37,7 +37,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     return {};
   }, [currentWorkspace]);
 
-  const appName = branding.app_name?.trim() || "PageGen";
+  const appName = branding.app_name?.trim() || "3XVISIBILITY";
   const logoUrl = branding.logo_url?.trim() || null;
   const isWhitelabeled = !!(branding.app_name || branding.logo_url || branding.primary_color);
 

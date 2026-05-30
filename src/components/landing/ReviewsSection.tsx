@@ -8,7 +8,7 @@ const reviews = [
   { name: "Emily Rodriguez", role: "Content Manager, TechScale", avatar: "ER", text: "Our team went from manually creating 10 pages/day to generating 500 in one click." },
   { name: "David Park", role: "Founder, LocalSEO Pro", avatar: "DP", text: "Best investment for our agency. Template variables are incredibly flexible. 50+ campaigns monthly." },
   { name: "Lisa Thompson", role: "Marketing Lead, ShopifyPlus", avatar: "LT", text: "Shopify integration works flawlessly. 800 product landing pages, 2x conversion increase." },
-  { name: "James Mitchell", role: "Head of Growth, ContentFarm", avatar: "JM", text: "We evaluated 5 tools. PageGen was the only one handling 10,000 pages/month without breaking." },
+  { name: "James Mitchell", role: "Head of Growth, ContentFarm", avatar: "JM", text: "We evaluated 5 tools. 3XVISIBILITY was the only one handling 10,000 pages/month without breaking." },
   { name: "Anna Kowalski", role: "Digital Strategist, RankRise", avatar: "AK", text: "The field mapping UI is brilliant. Upload, map, generate. Cut workflow time by 90%." },
   { name: "Robert Kim", role: "CTO, PageStack", avatar: "RK", text: "Clean API, solid WordPress integration, campaign monitoring is top-notch." },
 ];

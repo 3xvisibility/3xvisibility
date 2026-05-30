@@ -9,7 +9,7 @@ const posts = [
   {
     title: "Publishing to Shopify without breaking your theme",
     date: "April 2026",
-    excerpt: "How PageGen's theme adapter keeps generated pages pixel-perfect inside any Shopify theme.",
+    excerpt: "How 3XVISIBILITY's theme adapter keeps generated pages pixel-perfect inside any Shopify theme.",
   },
   {
     title: "AI templates: from CSV to live page in 60 seconds",
@@ -20,7 +20,7 @@ const posts = [
 
 export default function BlogPage() {
   return (
-    <StaticPageLayout title="Blog" subtitle="Product updates, SEO playbooks and engineering notes from the PageGen team.">
+    <StaticPageLayout title="Blog" subtitle="Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team.">
       <div className="not-prose grid gap-6">
         {posts.map((p) => (
           <article
