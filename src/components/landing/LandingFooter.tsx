@@ -99,10 +99,19 @@ export function LandingFooter() {
           <p className="text-[11px] text-[hsl(250,15%,35%)]">
             © {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
           </p>
-          <div className="flex items-center gap-5 text-[11px] text-[hsl(250,15%,35%)]">
-            <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
-            <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
-            <a href="#" className="hover:text-foreground transition-colors">LinkedIn</a>
+          <div className="flex items-center gap-4">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                aria-label={s.label}
+                className="text-[hsl(250,15%,45%)] hover:text-foreground transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                  <path d={s.path} />
+                </svg>
+              </a>
+            ))}
           </div>
         </div>
       </div>
