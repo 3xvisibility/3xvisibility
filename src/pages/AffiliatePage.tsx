@@ -257,7 +257,7 @@ export default function AffiliatePage() {
                 </Button>
                 <Button variant="outline" size="icon" onClick={() => {
                   if (navigator.share) {
-                    navigator.share({ title: "Join PageGen", url: affiliateUrl });
+                    navigator.share({ title: "Join 3XVISIBILITY", url: affiliateUrl });
                   } else {
                     copyLink();
                   }

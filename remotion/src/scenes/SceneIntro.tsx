@@ -36,7 +36,7 @@ export const SceneIntro: React.FC = () => {
           }}
         >
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: C.success, boxShadow: `0 0 12px ${C.success}` }} />
-          How PageGen Works
+          How 3XVISIBILITY Works
         </div>
         <h1
           style={{
