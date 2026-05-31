@@ -16,7 +16,15 @@
 
 import { useEffect, useRef } from "react";
 import { useLanguage } from "./LanguageContext";
+import { translations } from "./translations";
 import { supabase } from "@/integrations/supabase/client";
+
+// Languages that already ship full t() translations. For these, React + t()
+// are the single source of truth — running the DOM translator on top of them
+// fights React and leaves content stuck when switching. Only translate the
+// DOM for languages that have NO built-in t() coverage.
+const hasBuiltinCoverage = (lang: string) =>
+  Object.prototype.hasOwnProperty.call(translations, lang);
 
 const CACHE_PREFIX = "auto-tr:";
 const BATCH_SIZE = 40;
