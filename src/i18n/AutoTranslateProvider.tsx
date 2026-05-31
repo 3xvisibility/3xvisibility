@@ -85,7 +85,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
-    if (language !== "en") return;
+    // Built-in languages (incl. English) are fully handled by t(); undo any
+    // leftover DOM translations so React stays the source of truth.
+    if (!hasBuiltinCoverage(language)) return;
 
     const restoreEnglish = () => {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
