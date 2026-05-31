@@ -48,6 +48,7 @@ export function LandingFooter() {
     [t("footer.integrations")]: [
       { label: t("footer.wordpress"), href: "/#integrations" },
       { label: t("footer.shopify"), href: "/#integrations" },
+      { label: "PrestaShop", href: "/#integrations" },
     ],
     [t("footer.company")]: [
       { label: t("footer.about"), href: "/about" },

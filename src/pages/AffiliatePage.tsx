@@ -113,7 +113,7 @@ export default function AffiliatePage() {
         user_id: user.id,
         workspace_id: currentWorkspace?.id || null,
         code,
-        commission_rate: 20,
+        commission_rate: 5,
       } as any)
       .select()
       .single();
@@ -209,7 +209,7 @@ export default function AffiliatePage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
               <div className="p-4 rounded-xl bg-muted/50">
-                <p className="text-2xl font-bold text-primary">20%</p>
+                <p className="text-2xl font-bold text-primary">5%</p>
                 <p className="text-xs text-muted-foreground">{t("affiliate.commission")}</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/50">

@@ -48,7 +48,7 @@ export function AffiliateSection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <div className="flex items-center gap-8 text-center">
               <div>
-                <p className="text-3xl font-extrabold text-primary">20%</p>
+                <p className="text-3xl font-extrabold text-primary">5%</p>
                 <p className="text-xs text-[hsl(220,15%,55%)] mt-1">{t("affiliateLanding.commissionRate")}</p>
               </div>
               <div className="h-10 w-px bg-[hsl(217,91%,60%,0.15)]" />
