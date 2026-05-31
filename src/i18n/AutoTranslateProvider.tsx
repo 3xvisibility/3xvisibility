@@ -117,7 +117,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
-    if (language === "en") return;
+    if (hasBuiltinCoverage(language)) return;
 
     let observer: MutationObserver | null = null;
     let debounceTimer: number | null = null;
