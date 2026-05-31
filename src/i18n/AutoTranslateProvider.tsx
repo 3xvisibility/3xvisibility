@@ -16,7 +16,15 @@
 
 import { useEffect, useRef } from "react";
 import { useLanguage } from "./LanguageContext";
+import { translations } from "./translations";
 import { supabase } from "@/integrations/supabase/client";
+
+// Languages that already ship full t() translations. For these, React + t()
+// are the single source of truth — running the DOM translator on top of them
+// fights React and leaves content stuck when switching. Only translate the
+// DOM for languages that have NO built-in t() coverage.
+const hasBuiltinCoverage = (lang: string) =>
+  Object.prototype.hasOwnProperty.call(translations, lang);
 
 const CACHE_PREFIX = "auto-tr:";
 const BATCH_SIZE = 40;
@@ -77,7 +85,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
-    if (language !== "en") return;
+    // Built-in languages (incl. English) are fully handled by t(); undo any
+    // leftover DOM translations so React stays the source of truth.
+    if (!hasBuiltinCoverage(language)) return;
 
     const restoreEnglish = () => {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -107,7 +117,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
-    if (language === "en") return;
+    if (hasBuiltinCoverage(language)) return;
 
     let observer: MutationObserver | null = null;
     let debounceTimer: number | null = null;
