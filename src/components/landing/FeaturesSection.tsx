@@ -22,7 +22,7 @@ export function FeaturesSection() {
 
   return (
     <section id="features" className="py-20 md:py-28 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_0%,hsl(217,91%,60%,0.06),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_0%,hsl(96,90%,45%,0.06),transparent)] pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-14">
@@ -46,17 +46,17 @@ export function FeaturesSection() {
           {featureConfigs.map((f) => (
             <motion.div
               key={f.titleKey}
-              className="group relative rounded-2xl border border-[hsl(217,91%,60%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(217,91%,60%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]"
+              className="group relative rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,90%,45%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]"
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
               }}
               whileHover={{ y: -4 }}
             >
-              <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_center,hsl(217,91%,60%,0.04),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_center,hsl(96,90%,45%,0.04),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
               <div className="relative z-10">
-                <div className="h-11 w-11 rounded-xl bg-[hsl(217,91%,60%,0.1)] border border-[hsl(217,91%,60%,0.15)] flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-[hsl(217,91%,60%,0.15)] transition-all duration-300">
-                  <f.icon className="h-5 w-5 text-[hsl(217,91%,68%)]" />
+                <div className="h-11 w-11 rounded-xl bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.15)] flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-[hsl(96,90%,45%,0.15)] transition-all duration-300">
+                  <f.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
                 </div>
                 <h3 className="font-bold text-sm mb-2 text-foreground">{t(f.titleKey)}</h3>
                 <p className="text-[13px] text-[hsl(220,15%,50%)] leading-relaxed">{t(f.descKey)}</p>
