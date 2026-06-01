@@ -354,7 +354,7 @@ export default function AnalyticsPage() {
   <div class="stats">
     <div class="stat"><div class="stat-value">${stats.total}</div><div class="stat-label">Total Pages</div></div>
     <div class="stat"><div class="stat-value" style="color:#16a34a">${stats.published}</div><div class="stat-label">Published</div></div>
-    <div class="stat"><div class="stat-value" style="color:#3b82f6">${stats.pending}</div><div class="stat-label">Pending</div></div>
+    <div class="stat"><div class="stat-value" style="color:#374151">${stats.pending}</div><div class="stat-label">Pending</div></div>
     <div class="stat"><div class="stat-value" style="color:#dc2626">${stats.failed}</div><div class="stat-label">Failed</div></div>
   </div>
 
