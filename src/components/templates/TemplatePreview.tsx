@@ -72,7 +72,7 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
     // Highlight {variable} placeholders (simple, no transforms)
     styled = styled.replace(
       /\{([a-z_][a-z0-9_]*)\}/gi,
-      '<span style="background:hsl(210 80% 92%);color:hsl(210 80% 35%);padding:1px 5px;border-radius:3px;font-size:0.85em;font-family:monospace;border:1px solid hsl(210 60% 82%)">$&</span>'
+      '<span style="background:hsl(0 0% 92%);color:hsl(0 0% 25%);padding:1px 5px;border-radius:3px;font-size:0.85em;font-family:monospace;border:1px solid hsl(0 0% 82%)">$&</span>'
     );
 
     // Highlight {{#if ...}}...{{/if}} conditionals
