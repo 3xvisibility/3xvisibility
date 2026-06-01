@@ -94,7 +94,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   // Theme color controls
   const [themeMode, setThemeMode] = useState<"auto" | "website" | "custom">("auto");
   const [websiteId, setWebsiteId] = useState<string>("");
-  const [primaryColor, setPrimaryColor] = useState("#2563eb");
+  const [primaryColor, setPrimaryColor] = useState("#1f2937");
   const [accentColor, setAccentColor] = useState("#f59e0b");
   const [bgColor, setBgColor] = useState("#ffffff");
   const [textColor, setTextColor] = useState("#111827");

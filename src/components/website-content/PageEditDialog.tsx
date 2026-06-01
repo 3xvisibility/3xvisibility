@@ -242,7 +242,7 @@ export function PageEditDialog({
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; margin: 0; font-size: 14px; line-height: 1.6; color: #1a1a1a; }
   body:focus { outline: none; }
   img { max-width: 100%; height: auto; }
-  a { color: #2563eb; }
+  a { color: #1f2937; }
   h1,h2,h3,h4 { margin-top: 1em; margin-bottom: 0.5em; }
   p { margin: 0.5em 0; }
   ul,ol { padding-left: 1.5em; }
