@@ -17,6 +17,20 @@ import { BackToTop } from "@/components/BackToTop";
 export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col landing-page">
+      <Seo
+        title="Mass-build SEO, GEO & programmatic pages at scale"
+        titleFull="3XVISIBILITY — Mass-build SEO, GEO & programmatic pages at scale"
+        description="Automatically mass-build local SEO, programmatic SEO, GEO sites, directories and content at scale with one-click deployment. Save 40 hours per site."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "3XVISIBILITY",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        }}
+      />
       <LandingNav />
       <main className="flex-1">
         <HeroSection />
