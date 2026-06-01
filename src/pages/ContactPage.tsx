@@ -10,7 +10,7 @@ export default function ContactPage() {
       <div className="not-prose grid gap-4 sm:grid-cols-3">
         <a
           href="mailto:hello@pagegen.app"
-          className="rounded-xl border border-[hsl(262,83%,58%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(262,83%,58%,0.3)] transition-colors"
+          className="rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(96,90%,45%,0.3)] transition-colors"
         >
           <Mail className="h-5 w-5 text-primary" />
           <h3 className="mt-3 font-semibold">Email</h3>
@@ -18,7 +18,7 @@ export default function ContactPage() {
         </a>
         <a
           href="mailto:support@pagegen.app"
-          className="rounded-xl border border-[hsl(262,83%,58%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(262,83%,58%,0.3)] transition-colors"
+          className="rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(96,90%,45%,0.3)] transition-colors"
         >
           <LifeBuoy className="h-5 w-5 text-primary" />
           <h3 className="mt-3 font-semibold">Support</h3>
@@ -26,7 +26,7 @@ export default function ContactPage() {
         </a>
         <a
           href="mailto:sales@pagegen.app"
-          className="rounded-xl border border-[hsl(262,83%,58%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(262,83%,58%,0.3)] transition-colors"
+          className="rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(96,90%,45%,0.3)] transition-colors"
         >
           <MessageSquare className="h-5 w-5 text-primary" />
           <h3 className="mt-3 font-semibold">Sales</h3>

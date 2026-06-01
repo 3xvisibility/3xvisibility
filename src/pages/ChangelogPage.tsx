@@ -35,7 +35,7 @@ export default function ChangelogPage() {
     <StaticPageLayout title="Changelog" subtitle="Recent improvements, fixes and new features.">
       <div className="not-prose space-y-8">
         {releases.map((r) => (
-          <div key={r.version} className="rounded-xl border border-[hsl(262,83%,58%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6">
+          <div key={r.version} className="rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6">
             <div className="flex items-baseline gap-3">
               <h3 className="text-xl font-semibold">{r.version}</h3>
               <span className="text-xs uppercase tracking-widest text-[hsl(250,15%,45%)]">{r.date}</span>

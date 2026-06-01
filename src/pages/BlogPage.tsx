@@ -25,7 +25,7 @@ export default function BlogPage() {
         {posts.map((p) => (
           <article
             key={p.title}
-            className="rounded-xl border border-[hsl(262,83%,58%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(262,83%,58%,0.3)] transition-colors"
+            className="rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(96,90%,45%,0.3)] transition-colors"
           >
             <p className="text-xs uppercase tracking-widest text-[hsl(250,15%,45%)]">{p.date}</p>
             <h3 className="mt-2 text-xl font-semibold">{p.title}</h3>

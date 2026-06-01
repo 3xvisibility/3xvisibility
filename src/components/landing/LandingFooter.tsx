@@ -61,7 +61,7 @@ export function LandingFooter() {
   };
 
   return (
-    <footer className="border-t border-[hsl(262,83%,58%,0.08)] py-14 md:py-16">
+    <footer className="border-t border-[hsl(96,90%,45%,0.08)] py-14 md:py-16">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
@@ -96,7 +96,7 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-[hsl(262,83%,58%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-6 border-t border-[hsl(96,90%,45%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[hsl(250,15%,35%)]">
             © {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
           </p>
