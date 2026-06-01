@@ -20,6 +20,23 @@ const posts = [
 
 export default function BlogPage() {
   return (
+    <>
+      <Seo
+        title="Blog"
+        description="Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team."
+        path="/blog"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "3XVISIBILITY Blog",
+          url: "https://3xvisibility.com/blog",
+          blogPost: posts.map((p) => ({
+            "@type": "BlogPosting",
+            headline: p.title,
+            description: p.excerpt,
+          })),
+        }}
+      />
     <StaticPageLayout title="Blog" subtitle="Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team.">
       <div className="not-prose grid gap-6">
         {posts.map((p) => (
