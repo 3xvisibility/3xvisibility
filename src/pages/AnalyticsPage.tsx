@@ -334,7 +334,7 @@ export default function AnalyticsPage() {
 <html><head><meta charset="utf-8"><title>Analytics Report</title>
 <style>
   body { font-family: -apple-system, sans-serif; padding: 40px; color: #1a1a2e; max-width: 800px; margin: 0 auto; }
-  h1 { font-size: 24px; border-bottom: 2px solid #3b82f6; padding-bottom: 8px; }
+  h1 { font-size: 24px; border-bottom: 2px solid #1f2937; padding-bottom: 8px; }
   h2 { font-size: 16px; margin-top: 28px; color: #334155; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
   .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; }
