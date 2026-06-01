@@ -37,5 +37,6 @@ export default function PrivacyPage() {
         Privacy questions: <a href="mailto:privacy@pagegen.app">privacy@pagegen.app</a>
       </p>
     </StaticPageLayout>
+    </>
   );
 }
