@@ -41,5 +41,6 @@ export default function TermsPage() {
         Legal questions: <a href="mailto:legal@pagegen.app">legal@pagegen.app</a>
       </p>
     </StaticPageLayout>
+    </>
   );
 }
