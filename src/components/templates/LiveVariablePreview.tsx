@@ -90,7 +90,7 @@ export function LiveVariablePreview({ templateContent, csvData = [], className =
   ul, ol { margin: 0.5em 0 0.5em 1.5em; }
   li { margin-bottom: 0.3em; }
   section { margin-bottom: 1em; }
-  a { color: hsl(210 80% 45%); }
+  a { color: hsl(0 0% 30%); }
   img { max-width: 100%; height: auto; }
 </style>
 </head><body>${resolvedHtml}</body></html>`;
