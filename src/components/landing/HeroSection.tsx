@@ -91,7 +91,7 @@ function TiltCard({ children }: { children: React.ReactNode }) {
       <div
         className="pointer-events-none absolute inset-0 z-50 rounded-2xl"
         style={{
-          background: `radial-gradient(500px circle at ${glowPos.x}px ${glowPos.y}px, hsl(217 91% 60% / 0.1), transparent 50%)`,
+          background: `radial-gradient(500px circle at ${glowPos.x}px ${glowPos.y}px, hsl(96 90% 45% / 0.12), transparent 50%)`,
           opacity: glowPos.opacity,
           transition: "opacity 0.3s ease-out",
         }}
