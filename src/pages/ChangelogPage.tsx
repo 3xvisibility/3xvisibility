@@ -1,3 +1,4 @@
+import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 
 const releases = [
@@ -32,6 +33,12 @@ const releases = [
 
 export default function ChangelogPage() {
   return (
+    <>
+      <Seo
+        title="Changelog"
+        description="Recent improvements, fixes and new features shipped to 3XVISIBILITY."
+        path="/changelog"
+      />
     <StaticPageLayout title="Changelog" subtitle="Recent improvements, fixes and new features.">
       <div className="not-prose space-y-8">
         {releases.map((r) => (
@@ -49,5 +56,6 @@ export default function ChangelogPage() {
         ))}
       </div>
     </StaticPageLayout>
+    </>
   );
 }

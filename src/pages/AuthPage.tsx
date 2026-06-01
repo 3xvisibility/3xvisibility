@@ -1,3 +1,4 @@
+import { Seo } from "@/components/Seo";
 import { useState, useEffect, useMemo } from "react";
 import heroDashboard from "@/assets/hero-dashboard.png";
 import { Button } from "@/components/ui/button";
@@ -290,6 +291,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen relative flex overflow-hidden">
+      <Seo title="Sign in" description="Sign in or create your 3XVISIBILITY account." path="/auth" noindex />
       {/* Background effects */}
       <div className="absolute inset-0 bg-background" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[600px] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/.12),transparent)] pointer-events-none" />

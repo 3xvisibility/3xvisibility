@@ -12,3 +12,32 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /auth
+Disallow: /reset-password
+Disallow: /dashboard
+Disallow: /campaigns
+Disallow: /templates
+Disallow: /websites
+Disallow: /pages
+Disallow: /analytics
+Disallow: /marketplace
+Disallow: /billing
+Disallow: /settings
+Disallow: /admin
+Disallow: /indexing
+Disallow: /workspace-settings
+Disallow: /data
+Disallow: /website-content
+Disallow: /content-calendar
+Disallow: /performance
+Disallow: /seo-audit
+Disallow: /affiliate
+Disallow: /pgp-keywords
+Disallow: /pgp-generate
+Disallow: /pgp-terms
+Disallow: /template-mapping
+Disallow: /w/
+Disallow: /shopify/
+Disallow: /api/
+
+Sitemap: https://3xvisibility.com/sitemap.xml

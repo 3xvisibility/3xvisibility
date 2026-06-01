@@ -1,7 +1,14 @@
+import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 
 export default function PrivacyPage() {
   return (
+    <>
+      <Seo
+        title="Privacy Policy"
+        description="How 3XVISIBILITY collects, uses and protects your information when you use our service."
+        path="/privacy"
+      />
     <StaticPageLayout title="Privacy Policy" subtitle="Last updated: May 2026">
       <h2>Overview</h2>
       <p>
@@ -30,5 +37,6 @@ export default function PrivacyPage() {
         Privacy questions: <a href="mailto:privacy@pagegen.app">privacy@pagegen.app</a>
       </p>
     </StaticPageLayout>
+    </>
   );
 }

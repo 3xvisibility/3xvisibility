@@ -1,7 +1,14 @@
+import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 
 export default function TermsPage() {
   return (
+    <>
+      <Seo
+        title="Terms of Service"
+        description="The terms that govern your use of 3XVISIBILITY's page generation and publishing service."
+        path="/terms"
+      />
     <StaticPageLayout title="Terms of Service" subtitle="Last updated: May 2026">
       <h2>Acceptance</h2>
       <p>
@@ -34,5 +41,6 @@ export default function TermsPage() {
         Legal questions: <a href="mailto:legal@pagegen.app">legal@pagegen.app</a>
       </p>
     </StaticPageLayout>
+    </>
   );
 }

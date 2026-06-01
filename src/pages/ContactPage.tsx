@@ -1,8 +1,15 @@
+import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 import { Mail, MessageSquare, LifeBuoy } from "lucide-react";
 
 export default function ContactPage() {
   return (
+    <>
+      <Seo
+        title="Contact us"
+        description="Questions, feedback or partnership inquiries — reach the 3XVISIBILITY team by email. We read every message and reply within one business day."
+        path="/contact"
+      />
     <StaticPageLayout
       title="Contact us"
       subtitle="Questions, feedback or partnership inquiries — we read every message."
@@ -36,5 +43,6 @@ export default function ContactPage() {
       <h2>Response time</h2>
       <p>We aim to reply to all messages within one business day.</p>
     </StaticPageLayout>
+    </>
   );
 }
