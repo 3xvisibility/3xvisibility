@@ -218,6 +218,11 @@ export default function DocumentationPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Seo
+        title="Documentation"
+        description="Step-by-step guides for every 3XVISIBILITY tool — from connecting websites and building templates to generating and publishing pages at scale."
+        path="/docs"
+      />
       <LandingNav />
 
       <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16">
