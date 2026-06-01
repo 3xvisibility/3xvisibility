@@ -22,14 +22,14 @@ export function CheckoutSuccessOverlay({ planName, onDismiss }: CheckoutSuccessO
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.7 },
-        colors: ["hsl(262,83%,58%)", "hsl(280,80%,65%)", "hsl(210,100%,56%)"],
+        colors: ["hsl(96,90%,45%)", "hsl(96,92%,62%)", "hsl(96,80%,38%)"],
       });
       confetti({
         particleCount: 3,
         angle: 120,
         spread: 55,
         origin: { x: 1, y: 0.7 },
-        colors: ["hsl(262,83%,58%)", "hsl(280,80%,65%)", "hsl(210,100%,56%)"],
+        colors: ["hsl(96,90%,45%)", "hsl(96,92%,62%)", "hsl(96,80%,38%)"],
       });
 
       if (Date.now() < end) requestAnimationFrame(frame);
@@ -41,7 +41,7 @@ export function CheckoutSuccessOverlay({ planName, onDismiss }: CheckoutSuccessO
       particleCount: 120,
       spread: 100,
       origin: { y: 0.5 },
-      colors: ["hsl(262,83%,58%)", "hsl(280,80%,65%)", "hsl(48,96%,53%)", "hsl(142,76%,36%)"],
+      colors: ["hsl(96,90%,45%)", "hsl(96,92%,62%)", "hsl(48,96%,53%)", "hsl(142,76%,36%)"],
     });
   }, []);
 

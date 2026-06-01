@@ -639,7 +639,7 @@ export function ShopifyProductManager({ open, onOpenChange, website }: ShopifyPr
                     {(seo.seo_title || seo.seo_description) && (
                       <div className="border border-primary/20 bg-primary/5 rounded-md p-2.5 space-y-0.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-primary/70">Preview after update</p>
-                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium truncate leading-snug">
+                        <p className="text-sm text-primary dark:text-primary font-medium truncate leading-snug">
                           {previewTitle}
                         </p>
                         <p className="text-[11px] text-emerald-700 dark:text-emerald-400 truncate">

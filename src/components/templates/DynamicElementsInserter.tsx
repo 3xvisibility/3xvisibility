@@ -13,19 +13,19 @@ interface DynamicElementsInserterProps {
 
 const ELEMENTS = [
   { id: "MAP", icon: MapPin, label: "Google Map", placeholder: "{city}, {state}", color: "text-emerald-600", desc: "Embed a Google Map for a location" },
-  { id: "OSM", icon: MapPin, label: "OpenStreetMap", placeholder: "{city}", color: "text-blue-600", desc: "Embed an OpenStreetMap" },
+  { id: "OSM", icon: MapPin, label: "OpenStreetMap", placeholder: "{city}", color: "text-primary", desc: "Embed an OpenStreetMap" },
   { id: "YOUTUBE", icon: Youtube, label: "YouTube Video", placeholder: "{service} in {city}", color: "text-red-500", desc: "Embed a YouTube search result" },
   { id: "WIKIPEDIA", icon: BookOpen, label: "Wikipedia", placeholder: "{city}", color: "text-amber-600", desc: "Embed Wikipedia summary" },
-  { id: "WEATHER", icon: Cloud, label: "Weather (OpenWeatherMap)", placeholder: "{city}, {state}", color: "text-sky-500", desc: "Show current weather via OpenWeatherMap" },
+  { id: "WEATHER", icon: Cloud, label: "Weather (OpenWeatherMap)", placeholder: "{city}, {state}", color: "text-primary", desc: "Show current weather via OpenWeatherMap" },
   { id: "PEXELS", icon: ImageIcon, label: "Pexels Image", placeholder: "{service}", color: "text-green-600", desc: "Insert a Pexels stock photo" },
   { id: "PIXABAY", icon: ImageIcon, label: "Pixabay Image", placeholder: "{keyword}", color: "text-purple-500", desc: "Insert a Pixabay photo" },
   { id: "CREATIVE_COMMONS", icon: ImageIcon, label: "Creative Commons", placeholder: "{keyword}", color: "text-teal-600", desc: "Insert a Creative Commons image" },
   { id: "MEDIA_LIBRARY", icon: ImageIcon, label: "Media Library", placeholder: "{keyword}", color: "text-orange-500", desc: "Insert from connected media library" },
   { id: "OPENAI_IMAGE", icon: Star, label: "OpenAI Image", placeholder: "{service} in {city}", color: "text-slate-600", desc: "AI-generated image via OpenAI DALL·E" },
-  { id: "GEMINI_IMAGE", icon: Star, label: "Gemini AI Image", placeholder: "{service} {city}", color: "text-blue-500", desc: "AI-generated image via Google Gemini" },
+  { id: "GEMINI_IMAGE", icon: Star, label: "Gemini AI Image", placeholder: "{service} {city}", color: "text-primary", desc: "AI-generated image via Google Gemini" },
   { id: "YELP", icon: Star, label: "Yelp Reviews", placeholder: "{service} {city}", color: "text-red-600", desc: "Show Yelp business results" },
   { id: "RELATED_LINKS", icon: Plug, label: "Related Links", placeholder: "{service}", color: "text-violet-500", desc: "Auto internal linking / interlinking" },
-  { id: "IMAGE", icon: ImageIcon, label: "Dynamic Image", placeholder: "{keyword}", color: "text-indigo-500", desc: "Insert an image by keyword" },
+  { id: "IMAGE", icon: ImageIcon, label: "Dynamic Image", placeholder: "{keyword}", color: "text-primary", desc: "Insert an image by keyword" },
 ] as const;
 
 export function DynamicElementsInserter({ onInsert }: DynamicElementsInserterProps) {

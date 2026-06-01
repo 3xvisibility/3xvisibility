@@ -45,7 +45,7 @@ export const SECTIONS: Record<SectionKey, SectionInfo> = {
     key: "seo",
     label: "SEO meta",
     description: "Meta title, description, canonical and social tags.",
-    badgeClass: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+    badgeClass: "bg-primary/10 text-primary border-primary/30",
   },
   other: {
     key: "other",

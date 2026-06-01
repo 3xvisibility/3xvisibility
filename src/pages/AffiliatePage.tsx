@@ -319,8 +319,8 @@ export default function AffiliatePage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <TrendingUp className="h-4 w-4 text-blue-500" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <TrendingUp className="h-4 w-4 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{conversionRate}%</p>

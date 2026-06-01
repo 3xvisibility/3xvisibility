@@ -1362,7 +1362,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                     <div className="flex gap-2">
                       {([
                         { value: "seo" as const, label: "SEO", icon: SearchIconLucide, color: "text-emerald-600" },
-                        { value: "sea" as const, label: "SEA", icon: Target, color: "text-blue-600" },
+                        { value: "sea" as const, label: "SEA", icon: Target, color: "text-primary" },
                         { value: "geo" as const, label: "GEO", icon: MapPin, color: "text-orange-600" },
                       ]).map(t => {
                         const isSelected = campaignTypes.includes(t.value);
