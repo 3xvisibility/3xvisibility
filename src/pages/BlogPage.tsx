@@ -53,5 +53,6 @@ export default function BlogPage() {
       </div>
       <p className="mt-10 text-sm">More posts coming soon — follow us for updates.</p>
     </StaticPageLayout>
+    </>
   );
 }
