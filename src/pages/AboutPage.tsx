@@ -33,5 +33,6 @@ export default function AboutPage() {
         pages to tens of thousands without breaking your design system.
       </p>
     </StaticPageLayout>
+    </>
   );
 }
