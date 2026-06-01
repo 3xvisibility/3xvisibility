@@ -33,7 +33,7 @@ export function LandingNav() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`transition-all duration-500 ${scrolled ? "bg-[hsl(220,60%,4%)]/80 backdrop-blur-2xl border-b border-[hsl(217,91%,60%,0.08)]" : "bg-transparent"}`}
+        className={`transition-all duration-500 ${scrolled ? "bg-[hsl(220,60%,4%)]/80 backdrop-blur-2xl border-b border-[hsl(96,90%,45%,0.08)]" : "bg-transparent"}`}
       >
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
           <Link to="/" className="flex items-center gap-2.5">
@@ -49,7 +49,7 @@ export function LandingNav() {
 
           <div className="hidden md:flex items-center gap-2">
             <LanguageSwitcher variant="ghost" size="icon" className="h-9 w-9 text-[hsl(220,15%,55%)] hover:text-foreground rounded-lg" />
-            <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,15%,60%)] hover:text-foreground hover:bg-[hsl(217,91%,60%,0.08)]" asChild>
+            <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,15%,60%)] hover:text-foreground hover:bg-[hsl(96,90%,45%,0.08)]" asChild>
               <Link to="/auth">{t("nav.login")}</Link>
             </Button>
             <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-9 px-5 rounded-lg font-semibold shadow-lg shadow-primary/20" asChild>
@@ -64,14 +64,14 @@ export function LandingNav() {
 
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="md:hidden border-t border-[hsl(217,91%,60%,0.1)] overflow-hidden bg-[hsl(220,60%,4%)]/95 backdrop-blur-2xl">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="md:hidden border-t border-[hsl(96,90%,45%,0.1)] overflow-hidden bg-[hsl(220,60%,4%)]/95 backdrop-blur-2xl">
               <div className="px-4 py-4 space-y-1">
                 {navLinks.map((l) => (
-                  <a key={l.href} href={l.href} className="block text-sm text-[hsl(220,15%,60%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(217,91%,60%,0.08)] transition-all" onClick={() => setMobileOpen(false)}>{l.label}</a>
+                  <a key={l.href} href={l.href} className="block text-sm text-[hsl(220,15%,60%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(96,90%,45%,0.08)] transition-all" onClick={() => setMobileOpen(false)}>{l.label}</a>
                 ))}
-                <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(217,91%,60%,0.1)] mt-3">
-                  <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(217,91%,60%,0.15)]" />
-                  <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(217,91%,60%,0.15)] text-foreground" asChild>
+                <div className="pt-3 flex flex-col gap-2 border-t border-[hsl(96,90%,45%,0.1)] mt-3">
+                  <LanguageSwitcher variant="outline" size="sm" className="justify-start gap-2 rounded-lg h-10 border-[hsl(96,90%,45%,0.15)]" />
+                  <Button variant="outline" size="sm" className="rounded-lg h-10 border-[hsl(96,90%,45%,0.15)] text-foreground" asChild>
                     <Link to="/auth">{t("nav.login")}</Link>
                   </Button>
                   <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-10 font-semibold" asChild>

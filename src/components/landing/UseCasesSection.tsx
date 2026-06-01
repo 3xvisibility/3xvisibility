@@ -32,9 +32,9 @@ export function UseCasesSection() {
         t("useCases.seoHighlight4"),
       ],
       example: t("useCases.seoExample"),
-      gradient: "from-[hsl(217,91%,60%,0.15)] to-[hsl(210,100%,70%,0.08)]",
-      borderColor: "border-[hsl(217,91%,60%,0.2)]",
-      tagBg: "bg-[hsl(217,91%,60%,0.12)] text-[hsl(217,91%,68%)]",
+      gradient: "from-[hsl(96,90%,45%,0.15)] to-[hsl(96,92%,62%,0.08)]",
+      borderColor: "border-[hsl(96,90%,45%,0.2)]",
+      tagBg: "bg-[hsl(96,90%,45%,0.12)] text-[hsl(96,80%,52%)]",
     },
     {
       icon: Target,
@@ -79,7 +79,7 @@ export function UseCasesSection() {
 
   return (
     <section id="use-cases" className="py-20 md:py-28 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,hsl(217,91%,60%,0.05),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_30%,hsl(96,90%,45%,0.05),transparent)] pointer-events-none" />
 
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         {/* Header */}
@@ -109,7 +109,7 @@ export function UseCasesSection() {
                     <div className="lg:col-span-3">
                       <div className="flex items-center gap-3 mb-4">
                         <div className={`h-9 w-9 rounded-xl bg-[hsl(220,35%,12%)] ${uc.borderColor} border flex items-center justify-center`}>
-                          <uc.icon className="h-4 w-4 text-[hsl(217,91%,68%)]" />
+                          <uc.icon className="h-4 w-4 text-[hsl(96,80%,52%)]" />
                         </div>
                         <span className={`text-[10px] font-bold uppercase tracking-[0.15em] px-2.5 py-1 rounded-full ${uc.tagBg}`}>
                           {uc.tag}
@@ -125,7 +125,7 @@ export function UseCasesSection() {
                         {uc.highlights.map((h) => (
                           <span
                             key={h}
-                            className="text-[11px] font-medium text-[hsl(220,15%,60%)] bg-[hsl(220,35%,10%)] rounded-full px-3 py-1 border border-[hsl(217,91%,60%,0.1)]"
+                            className="text-[11px] font-medium text-[hsl(220,15%,60%)] bg-[hsl(220,35%,10%)] rounded-full px-3 py-1 border border-[hsl(96,90%,45%,0.1)]"
                           >
                             {h}
                           </span>
@@ -135,8 +135,8 @@ export function UseCasesSection() {
 
                     {/* Example */}
                     <div className="lg:col-span-2">
-                      <div className="rounded-xl border border-[hsl(217,91%,60%,0.12)] bg-[hsl(220,40%,6%)] overflow-hidden">
-                        <div className="h-8 bg-[hsl(220,35%,10%)] flex items-center gap-2 px-3 border-b border-[hsl(217,91%,60%,0.08)]">
+                      <div className="rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(220,40%,6%)] overflow-hidden">
+                        <div className="h-8 bg-[hsl(220,35%,10%)] flex items-center gap-2 px-3 border-b border-[hsl(96,90%,45%,0.08)]">
                           <div className="flex gap-1">
                             <div className="h-2 w-2 rounded-full bg-[hsl(0,60%,45%,0.6)]" />
                             <div className="h-2 w-2 rounded-full bg-[hsl(40,70%,50%,0.6)]" />
@@ -146,7 +146,7 @@ export function UseCasesSection() {
                             slug pattern
                           </span>
                         </div>
-                        <div className="p-4 font-mono text-[12px] text-[hsl(217,91%,68%)] leading-relaxed break-all">
+                        <div className="p-4 font-mono text-[12px] text-[hsl(96,80%,52%)] leading-relaxed break-all">
                           {uc.example}
                         </div>
                       </div>
@@ -180,15 +180,15 @@ export function UseCasesSection() {
           {audiences.map((a) => (
             <motion.div
               key={a.title}
-              className="group relative rounded-2xl border border-[hsl(217,91%,60%,0.1)] bg-[hsl(220,40%,8%)] p-5 hover:border-[hsl(217,91%,60%,0.25)] transition-all duration-500"
+              className="group relative rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-5 hover:border-[hsl(96,90%,45%,0.25)] transition-all duration-500"
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease } },
               }}
               whileHover={{ y: -4 }}
             >
-              <div className="h-10 w-10 rounded-xl bg-[hsl(217,91%,60%,0.1)] border border-[hsl(217,91%,60%,0.15)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <a.icon className="h-5 w-5 text-[hsl(217,91%,68%)]" />
+              <div className="h-10 w-10 rounded-xl bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.15)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                <a.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
               </div>
               <h4 className="font-bold text-sm mb-1.5">{a.title}</h4>
               <p className="text-[12px] text-[hsl(220,15%,50%)] leading-relaxed">
