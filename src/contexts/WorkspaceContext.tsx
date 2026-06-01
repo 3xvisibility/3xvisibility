@@ -42,7 +42,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use the locally-stored session (no network round-trip) to identify the
+      // user. getUser() hits /auth/v1/user over the network and can transiently
+      // return 403 "session_not_found" right after login or on flaky networks,
+      // which previously left the dashboard stuck on an infinite spinner.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
       if (!user) {
         setWorkspaces([]);
         setCurrentWorkspaceState(null);
