@@ -1,7 +1,14 @@
+import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 
 export default function AboutPage() {
   return (
+    <>
+      <Seo
+        title="About us"
+        description="3XVISIBILITY helps marketers, agencies and ecommerce teams turn structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop."
+        path="/about"
+      />
     <StaticPageLayout
       title="About 3XVISIBILITY"
       subtitle="We help marketers, agencies, and ecommerce teams turn structured data into thousands of high-quality, SEO-optimized pages — published directly to WordPress, Shopify, WooCommerce and PrestaShop."
