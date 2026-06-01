@@ -71,7 +71,7 @@ export function IntegrationsSection() {
             </motion.div>
             <motion.div animate={{ scale: [1, 1.35, 1], opacity: [0.25, 0, 0.25] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} className="absolute -inset-5 rounded-[22px] border border-[hsl(96,90%,45%,0.2)]" />
             <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0, 0.15] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} className="absolute -inset-3 rounded-[20px] border border-[hsl(96,90%,45%,0.15)]" />
-            <motion.div initial={{ opacity: 0, scale: 0.6 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.3, ease }} className="relative h-[130px] w-[130px] rounded-2xl bg-gradient-to-b from-[hsl(96,90%,38%)] to-[hsl(220,70%,30%)] flex items-center justify-center shadow-[0_0_80px_hsl(96,90%,45%,0.35),0_0_30px_hsl(96,90%,45%,0.2)] border border-[hsl(217,91%,70%,0.2)]">
+            <motion.div initial={{ opacity: 0, scale: 0.6 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.3, ease }} className="relative h-[130px] w-[130px] rounded-2xl bg-gradient-to-b from-[hsl(96,90%,38%)] to-[hsl(96,70%,28%)] flex items-center justify-center shadow-[0_0_80px_hsl(96,90%,45%,0.35),0_0_30px_hsl(96,90%,45%,0.2)] border border-[hsl(96,80%,62%,0.2)]">
               <div className="absolute -top-[3px] left-1/3 h-1.5 w-1.5 rounded-full bg-white/80 blur-[1px]" />
               <div className="absolute -bottom-[3px] right-1/3 h-1.5 w-1.5 rounded-full bg-white/60 blur-[1px]" />
               <div className="absolute top-1/3 -left-[3px] h-1.5 w-1.5 rounded-full bg-white/70 blur-[1px]" />
