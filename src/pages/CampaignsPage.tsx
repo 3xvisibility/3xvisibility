@@ -369,7 +369,7 @@ export default function CampaignsPage() {
                   {
                     num: 1,
                     icon: FileText,
-                    color: "from-blue-500/15 to-blue-500/5 text-blue-600 dark:text-blue-400 ring-blue-500/20",
+                    color: "from-primary/15 to-primary/5 text-primary dark:text-primary ring-primary/20",
                     title: "CSV rows",
                     desc: "Upload a CSV file — for example city names, a list of services, or product details. Each row creates one unique page.",
                     ex: "Example: 100 cities = 100 pages.",

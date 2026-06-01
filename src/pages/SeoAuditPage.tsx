@@ -16,7 +16,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 const categoryIcon = {
   critical: <AlertTriangle className="h-4 w-4 text-destructive" />,
   warning: <AlertCircle className="h-4 w-4 text-amber-500" />,
-  info: <Info className="h-4 w-4 text-blue-500" />,
+  info: <Info className="h-4 w-4 text-primary" />,
   passed: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
 };
 

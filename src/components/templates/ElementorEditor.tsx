@@ -54,11 +54,11 @@ const VAR_CATEGORIES = [
 const SHORTCODES = [
   { type: "MAP", label: "Google Map", icon: MapPin, color: "text-red-500", template: "{{MAP:{city}, {state}}}" },
   { type: "YOUTUBE", label: "YouTube", icon: Youtube, color: "text-red-600", template: "{{YOUTUBE:{keyword} {city}}}" },
-  { type: "IMAGE", label: "Stock Photo", icon: ImageIcon, color: "text-blue-500", template: "{{IMAGE:{keyword} {city}}}" },
+  { type: "IMAGE", label: "Stock Photo", icon: ImageIcon, color: "text-primary", template: "{{IMAGE:{keyword} {city}}}" },
   { type: "AI", label: "AI Content", icon: Wand2, color: "text-purple-500", template: "{{AI:Write about {keyword} in {city}}}" },
   { type: "AI_IMAGE", label: "AI Image", icon: ImagePlus, color: "text-pink-500", template: "{{AI_IMAGE:{keyword} in {city}}}" },
   { type: "WIKIPEDIA", label: "Wikipedia", icon: BookOpen, color: "text-gray-600", template: "{{WIKIPEDIA:{keyword}}}" },
-  { type: "WEATHER", label: "Weather", icon: CloudSun, color: "text-sky-500", template: "{{WEATHER:{city}}}" },
+  { type: "WEATHER", label: "Weather", icon: CloudSun, color: "text-primary", template: "{{WEATHER:{city}}}" },
 ];
 
 // ── Transforms reference ──────────────────────────────────

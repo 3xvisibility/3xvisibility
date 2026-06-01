@@ -105,10 +105,10 @@ const SHORTCODES = [
   { type: "MAP", label: "Google Map", icon: MapPin, color: "text-red-500", bgColor: "bg-red-500/10", template: "{{MAP:{city}, {state}}}", desc: "Embed Google Maps" },
   { type: "OSM", label: "OpenStreetMap", icon: Map, color: "text-green-600", bgColor: "bg-green-500/10", template: "{{OSM:{city}, {state}}}", desc: "Free map embed" },
   { type: "YOUTUBE", label: "YouTube", icon: Youtube, color: "text-red-600", bgColor: "bg-red-500/10", template: "{{YOUTUBE:{keyword} {city}}}", desc: "YouTube video embed" },
-  { type: "IMAGE", label: "Unsplash", icon: ImageIcon, color: "text-blue-500", bgColor: "bg-blue-500/10", template: "{{IMAGE:{keyword} {city}}}", desc: "Stock photo from Unsplash" },
+  { type: "IMAGE", label: "Unsplash", icon: ImageIcon, color: "text-primary", bgColor: "bg-primary/10", template: "{{IMAGE:{keyword} {city}}}", desc: "Stock photo from Unsplash" },
   { type: "WIKIPEDIA", label: "Wikipedia", icon: BookOpen, color: "text-gray-600", bgColor: "bg-gray-500/10", template: "{{WIKIPEDIA:{keyword}}}", desc: "Wikipedia excerpt" },
   { type: "YELP", label: "Yelp", icon: Star, color: "text-red-700", bgColor: "bg-red-600/10", template: "{{YELP:{category}, {city}}}", desc: "Yelp business listings" },
-  { type: "WEATHER", label: "Weather", icon: CloudSun, color: "text-sky-500", bgColor: "bg-sky-500/10", template: "{{WEATHER:{city}}}", desc: "Weather widget" },
+  { type: "WEATHER", label: "Weather", icon: CloudSun, color: "text-primary", bgColor: "bg-sky-500/10", template: "{{WEATHER:{city}}}", desc: "Weather widget" },
   { type: "AI", label: "AI Content", icon: Wand2, color: "text-purple-500", bgColor: "bg-purple-500/10", template: "{{AI:Write a paragraph about {keyword} in {city}}}", desc: "AI-generated content" },
   { type: "AI_IMAGE", label: "AI Image", icon: ImagePlus, color: "text-pink-500", bgColor: "bg-pink-500/10", template: "{{AI_IMAGE:Professional photo of {keyword} in {city}}}", desc: "AI-generated image" },
 ];

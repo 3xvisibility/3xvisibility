@@ -518,7 +518,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
               </p>
               <div className="flex items-center gap-3 mt-3">
                 <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-[10px]">SEO 90+</Badge>
-                <Badge variant="outline" className="text-blue-600 border-blue-300 text-[10px]">SEA 90+</Badge>
+                <Badge variant="outline" className="text-primary border-primary text-[10px]">SEA 90+</Badge>
                 <Badge variant="outline" className="text-purple-600 border-purple-300 text-[10px]">GEO 90+</Badge>
               </div>
             </div>
