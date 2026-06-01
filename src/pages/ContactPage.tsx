@@ -1,3 +1,4 @@
+import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 import { Mail, MessageSquare, LifeBuoy } from "lucide-react";
 
