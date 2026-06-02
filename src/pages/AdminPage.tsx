@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -41,6 +41,9 @@ interface AdminUser {
   is_banned: boolean;
   banned_reason: string | null;
   role: "admin" | "moderator" | "user";
+  credits_total: number | null;
+  credits_used: number | null;
+  credits_remaining: number | null;
 }
 
 interface AdminOverview {
@@ -159,20 +162,31 @@ function EditSubscriptionDialog({
   onOpenChange: (v: boolean) => void;
   user: AdminUser | null;
   subscription: Subscription | null;
-  onSave: (data: { plan: string; pages_limit: number; pages_used: number }) => void;
+  onSave: (data: {
+    plan: string;
+    pages_limit: number;
+    pages_used: number;
+    credits_total: number;
+    credits_remaining: number;
+  }) => void;
   saving: boolean;
 }) {
   const [plan, setPlan] = useState(subscription?.plan || user?.plan || "free");
   const [pagesLimit, setPagesLimit] = useState(String(subscription?.pages_limit ?? user?.pages_limit ?? 0));
   const [pagesUsed, setPagesUsed] = useState(String(subscription?.pages_used ?? user?.pages_used ?? 0));
+  const [creditsTotal, setCreditsTotal] = useState(String(user?.credits_total ?? 100));
+  const [creditsRemaining, setCreditsRemaining] = useState(String(user?.credits_remaining ?? user?.credits_total ?? 100));
 
   // Sync state when dialog opens with new data
-  const key = user?.id || subscription?.id || "";
-  useState(() => {
+  useEffect(() => {
+    if (!open) return;
     setPlan(subscription?.plan || user?.plan || "free");
     setPagesLimit(String(subscription?.pages_limit ?? user?.pages_limit ?? 0));
     setPagesUsed(String(subscription?.pages_used ?? user?.pages_used ?? 0));
-  });
+    setCreditsTotal(String(user?.credits_total ?? 100));
+    setCreditsRemaining(String(user?.credits_remaining ?? user?.credits_total ?? 100));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, user?.id, subscription?.id]);
 
   const handlePlanChange = (newPlan: string) => {
     setPlan(newPlan);
@@ -185,7 +199,7 @@ function EditSubscriptionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Subscription</DialogTitle>
+          <DialogTitle>Edit Subscription &amp; Credits</DialogTitle>
         </DialogHeader>
         <div className="space-y-1 mb-4">
           <p className="text-sm font-medium">{user?.full_name || "Unknown"}</p>
@@ -207,7 +221,7 @@ function EditSubscriptionDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Pages Limit</Label>
+            <Label>Monthly Pages Quota</Label>
             <Input
               type="number"
               min={0}
@@ -235,13 +249,57 @@ function EditSubscriptionDialog({
               onChange={(e) => setPagesUsed(e.target.value)}
             />
           </div>
+
+          <div className="border-t pt-4 space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">AI Credits</p>
+            <div className="space-y-2">
+              <Label>Monthly Credit Limit</Label>
+              <Input
+                type="number"
+                min={0}
+                value={creditsTotal}
+                onChange={(e) => setCreditsTotal(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Remaining Credits</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1 text-muted-foreground"
+                  onClick={() => setCreditsRemaining(creditsTotal)}
+                >
+                  <RotateCcw className="h-3 w-3" /> Refill
+                </Button>
+              </div>
+              <Input
+                type="number"
+                min={0}
+                value={creditsRemaining}
+                onChange={(e) => setCreditsRemaining(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Capped to the monthly limit. Used credits are recalculated automatically.
+              </p>
+            </div>
+          </div>
         </div>
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancel
           </Button>
           <Button
-            onClick={() => onSave({ plan, pages_limit: Number(pagesLimit), pages_used: Number(pagesUsed) })}
+            onClick={() =>
+              onSave({
+                plan,
+                pages_limit: Number(pagesLimit),
+                pages_used: Number(pagesUsed),
+                credits_total: Number(creditsTotal),
+                credits_remaining: Number(creditsRemaining),
+              })
+            }
             disabled={saving}
           >
             {saving ? "Saving…" : "Save Changes"}
@@ -335,18 +393,34 @@ export default function AdminPage() {
     mutationFn: async (payload: {
       subscription_id?: string | null;
       user_id?: string;
+      target_user_id?: string;
       plan: string;
       pages_limit: number;
       pages_used: number;
+      credits_total?: number;
+      credits_remaining?: number;
     }) => {
+      const { target_user_id, credits_total, credits_remaining, ...subPayload } = payload;
       const { data, error } = await supabase.functions.invoke("admin-panel", {
-        body: { action: "update-subscription", ...payload },
+        body: { action: "update-subscription", ...subPayload },
       });
       if (error) throw error;
+
+      if (target_user_id && (credits_total !== undefined || credits_remaining !== undefined)) {
+        const { error: creditError } = await supabase.functions.invoke("admin-panel", {
+          body: {
+            action: "set-ai-credits",
+            target_user_id,
+            total_credits: credits_total,
+            remaining_credits: credits_remaining,
+          },
+        });
+        if (creditError) throw creditError;
+      }
       return data;
     },
     onSuccess: () => {
-      toast.success("Subscription updated");
+      toast.success("Subscription & credits updated");
       queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
       setDialogOpen(false);
     },
@@ -406,13 +480,24 @@ export default function AdminPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = (formData: { plan: string; pages_limit: number; pages_used: number }) => {
+  const handleSave = (formData: {
+    plan: string;
+    pages_limit: number;
+    pages_used: number;
+    credits_total: number;
+    credits_remaining: number;
+  }) => {
+    const { credits_total, credits_remaining, ...subData } = formData;
     updateMutation.mutate({
       subscription_id: editSub?.id || editUser?.subscription_id || null,
       user_id: editUser?.id,
-      ...formData,
+      target_user_id: editUser?.id,
+      credits_total,
+      credits_remaining,
+      ...subData,
     });
   };
+
 
   if (error) {
     return (

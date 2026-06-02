@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
       const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at, title, user_id");
       const { data: subscriptions } = await serviceClient.from("subscriptions").select("*");
       const { data: websites } = await serviceClient.from("websites").select("id, user_id, type, status");
+      const { data: aiCredits } = await serviceClient.from("ai_credits").select("*");
 
       // Build activity feed from recent events
       const activity: { type: string; message: string; timestamp: string; user_email?: string }[] = [];
@@ -98,6 +99,7 @@ Deno.serve(async (req) => {
           userCampaigns.some((c: any) => c.id === p.campaign_id)
         ) || [];
         const userWebsites = websites?.filter((w: any) => w.user_id === u.id) || [];
+        const credit = aiCredits?.find((c: any) => c.user_id === u.id);
 
         return {
           id: u.id,
@@ -116,6 +118,9 @@ Deno.serve(async (req) => {
           is_banned: profile?.is_banned || false,
           banned_reason: profile?.banned_reason || null,
           role: rolesData?.find((r: any) => r.user_id === u.id)?.role || "user",
+          credits_total: credit?.total_credits ?? null,
+          credits_used: credit?.used_credits ?? null,
+          credits_remaining: credit?.remaining_credits ?? null,
         };
       });
 
@@ -254,6 +259,38 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "set-ai-credits") {
+      const { target_user_id, total_credits, remaining_credits } = body;
+      if (!target_user_id) {
+        return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Ensure a credits row exists
+      const { data: existing } = await serviceClient.from("ai_credits").select("*").eq("user_id", target_user_id).maybeSingle();
+
+      const total = total_credits !== undefined && total_credits !== null
+        ? Math.max(0, Math.floor(Number(total_credits)))
+        : (existing?.total_credits ?? 100);
+      const remaining = remaining_credits !== undefined && remaining_credits !== null
+        ? Math.max(0, Math.min(Math.floor(Number(remaining_credits)), total))
+        : (existing?.remaining_credits ?? total);
+      const used = Math.max(0, total - remaining);
+
+      const row: Record<string, any> = {
+        user_id: target_user_id,
+        total_credits: total,
+        remaining_credits: remaining,
+        used_credits: used,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await serviceClient.from("ai_credits").upsert(row, { onConflict: "user_id" }).select().single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, credits: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
