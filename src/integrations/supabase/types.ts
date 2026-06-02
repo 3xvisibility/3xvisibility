@@ -2113,6 +2113,45 @@ export type Database = {
           },
         ]
       }
+      user_ai_access: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          monthly_credit_limit: number | null
+          notes: string | null
+          provider: string
+          purposes: string[]
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          monthly_credit_limit?: number | null
+          notes?: string | null
+          provider?: string
+          purposes?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          monthly_credit_limit?: number | null
+          notes?: string | null
+          provider?: string
+          purposes?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
