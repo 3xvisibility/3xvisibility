@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
       const { data: generatedPages } = await serviceClient.from("generated_pages").select("id, status, campaign_id, created_at, title, user_id");
       const { data: subscriptions } = await serviceClient.from("subscriptions").select("*");
       const { data: websites } = await serviceClient.from("websites").select("id, user_id, type, status");
+      const { data: aiCredits } = await serviceClient.from("ai_credits").select("*");
 
       // Build activity feed from recent events
       const activity: { type: string; message: string; timestamp: string; user_email?: string }[] = [];
