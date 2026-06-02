@@ -445,7 +445,7 @@ export function StartGenerationDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             onClick={handleStart}
-            disabled={isPending || !isScheduledValid}
+            disabled={isPending || !isScheduledValid || quotaBlocked}
             className="bg-gradient-primary hover:brightness-110 gap-2"
           >
             {retryFailedOnly ? (
