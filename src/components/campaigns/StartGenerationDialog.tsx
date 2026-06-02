@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -14,11 +16,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages } from "lucide-react";
+import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages, Zap } from "lucide-react";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface StartGenerationDialogProps {
   open: boolean;
@@ -93,6 +97,34 @@ export function StartGenerationDialog({
 
   const siteLangLabel = siteLanguage && siteLanguage.trim().length > 0 ? siteLanguage : "Auto-detect";
 
+  // ── Pre-generation quota check ───────────────────────────────
+  const { pagesUsed, pagesLimit, pagesRemaining } = useSubscription();
+
+  const { data: credits, isLoading: creditsLoading } = useQuery({
+    queryKey: ["ai-credits"],
+    enabled: open,
+    queryFn: async () => {
+      const res = await supabase.functions.invoke("ai-credits", { body: { action: "check" } });
+      if (res.error) throw new Error("Failed to fetch credits");
+      return res.data?.credits;
+    },
+    refetchInterval: 60000,
+    placeholderData: (prev) => prev,
+    retry: 1,
+  });
+
+  const creditsRemaining = credits?.remaining_credits ?? 0;
+  const creditsTotal = credits?.total_credits ?? 0;
+  const creditsPct = creditsTotal > 0 ? Math.round((creditsRemaining / creditsTotal) * 100) : 0;
+  const pagesPct = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
+
+  // Only enforce when actually running now (scheduling stores config for later).
+  const enforceQuota = scheduleMode === "now";
+  const exceedsPages = enforceQuota && pagesLimit > 0 && effectiveRows > pagesRemaining;
+  const creditsExhausted = enforceQuota && creditsTotal > 0 && creditsRemaining <= 0;
+  const quotaBlocked = exceedsPages || creditsExhausted;
+
+
   // Detect language of template + CSV sample and compare against the
   // language we'll actually generate in (override if set, else site lang).
   const effectiveTargetLang = (languageOverrideEnabled && !siteLanguageLocked) ? languageOverride : siteLanguage;
@@ -143,6 +175,57 @@ export function StartGenerationDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-2">
+          {/* Pre-generation quota & credits check */}
+          <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Quota check</span>
+              {creditsLoading && <span className="text-[11px] text-muted-foreground ml-auto">Checking…</span>}
+            </div>
+
+            {/* Pages quota */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Monthly pages</span>
+                <span className="tabular-nums font-medium">
+                  {pagesRemaining.toLocaleString()} left of {pagesLimit.toLocaleString()}
+                </span>
+              </div>
+              <Progress value={pagesPct} className="h-2" />
+            </div>
+
+            {/* AI credits */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">AI credits</span>
+                <span className="tabular-nums font-medium">
+                  {creditsRemaining.toLocaleString()} left of {creditsTotal.toLocaleString()}
+                </span>
+              </div>
+              <Progress value={creditsPct} className="h-2" />
+            </div>
+
+            {exceedsPages && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">
+                  This run needs <span className="font-semibold">{effectiveRows.toLocaleString()}</span> pages
+                  but only <span className="font-semibold">{pagesRemaining.toLocaleString()}</span> remain in your
+                  monthly quota. Reduce the row limit or upgrade your plan.
+                </p>
+              </div>
+            )}
+            {creditsExhausted && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">
+                  You've run out of AI credits. Upgrade your plan or wait for the monthly reset to continue generating.
+                </p>
+              </div>
+            )}
+          </div>
+
+
           {/* Language mismatch warning — fires when template/CSV are obviously
               in a different language than the locked site / run language. */}
           {showMismatch && mismatchInfo && (
@@ -362,7 +445,7 @@ export function StartGenerationDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             onClick={handleStart}
-            disabled={isPending || !isScheduledValid}
+            disabled={isPending || !isScheduledValid || quotaBlocked}
             className="bg-gradient-primary hover:brightness-110 gap-2"
           >
             {retryFailedOnly ? (
