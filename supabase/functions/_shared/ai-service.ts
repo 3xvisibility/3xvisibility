@@ -296,6 +296,43 @@ export function getActiveProvider(): AiProvider {
   return valid.includes(raw as AiProvider) ? (raw as AiProvider) : "lovable";
 }
 
+export interface UserAiAccess {
+  enabled: boolean;
+  provider: AiProvider;
+  purposes: string[];
+}
+
+/**
+ * Resolve the AI access settings for a specific user, as configured by an
+ * administrator in the `user_ai_access` table. Falls back to the global
+ * provider (and enabled) when the user has no explicit assignment.
+ */
+export async function resolveUserAiAccess(userId?: string): Promise<UserAiAccess> {
+  const globalProvider = getActiveProvider();
+  if (!userId) return { enabled: true, provider: globalProvider, purposes: [] };
+  const sb = getServiceClient();
+  if (!sb) return { enabled: true, provider: globalProvider, purposes: [] };
+  try {
+    const { data } = await sb
+      .from("user_ai_access")
+      .select("provider, enabled, purposes")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!data) return { enabled: true, provider: globalProvider, purposes: [] };
+    const valid: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
+    const provider = valid.includes(data.provider as AiProvider)
+      ? (data.provider as AiProvider)
+      : globalProvider;
+    return {
+      enabled: data.enabled !== false,
+      provider,
+      purposes: Array.isArray(data.purposes) ? data.purposes : [],
+    };
+  } catch {
+    return { enabled: true, provider: globalProvider, purposes: [] };
+  }
+}
+
 // ── Main entry: generate (non-streaming) ─────────────────────────────────────
 
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
