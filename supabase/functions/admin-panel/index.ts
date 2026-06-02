@@ -264,7 +264,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "set-ai-credits") {
-      const { target_user_id, total_credits, remaining_credits } = body;
+      const { target_user_id, total_credits, remaining_credits, plan } = body;
       if (!target_user_id) {
         return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -287,6 +287,7 @@ Deno.serve(async (req) => {
         used_credits: used,
         updated_at: new Date().toISOString(),
       };
+      if (plan !== undefined && plan !== null) row.plan = plan;
 
       const { data, error } = await serviceClient.from("ai_credits").upsert(row, { onConflict: "user_id" }).select().single();
       if (error) throw error;

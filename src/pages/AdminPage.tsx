@@ -91,6 +91,14 @@ const PLAN_LIMITS: Record<string, number> = {
   agency: 10000,
 };
 
+// AI credit quota per plan — kept in sync with the subscription plan
+const PLAN_CREDITS: Record<string, number> = {
+  free: 0,
+  starter: 100,
+  pro: 1000,
+  agency: 5000,
+};
+
 function StatCard({ title, value, icon: Icon, subtitle, variant }: {
   title: string;
   value: string | number;
@@ -192,6 +200,11 @@ function EditSubscriptionDialog({
     setPlan(newPlan);
     if (PLAN_LIMITS[newPlan] !== undefined) {
       setPagesLimit(String(PLAN_LIMITS[newPlan]));
+    }
+    // Keep AI credit quota aligned with the selected subscription plan
+    if (PLAN_CREDITS[newPlan] !== undefined) {
+      setCreditsTotal(String(PLAN_CREDITS[newPlan]));
+      setCreditsRemaining(String(PLAN_CREDITS[newPlan]));
     }
   };
 
@@ -411,6 +424,7 @@ export default function AdminPage() {
           body: {
             action: "set-ai-credits",
             target_user_id,
+            plan: payload.plan,
             total_credits: credits_total,
             remaining_credits: credits_remaining,
           },
