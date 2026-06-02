@@ -97,6 +97,34 @@ export function StartGenerationDialog({
 
   const siteLangLabel = siteLanguage && siteLanguage.trim().length > 0 ? siteLanguage : "Auto-detect";
 
+  // ── Pre-generation quota check ───────────────────────────────
+  const { pagesUsed, pagesLimit, pagesRemaining } = useSubscription();
+
+  const { data: credits, isLoading: creditsLoading } = useQuery({
+    queryKey: ["ai-credits"],
+    enabled: open,
+    queryFn: async () => {
+      const res = await supabase.functions.invoke("ai-credits", { body: { action: "check" } });
+      if (res.error) throw new Error("Failed to fetch credits");
+      return res.data?.credits;
+    },
+    refetchInterval: 60000,
+    placeholderData: (prev) => prev,
+    retry: 1,
+  });
+
+  const creditsRemaining = credits?.remaining_credits ?? 0;
+  const creditsTotal = credits?.total_credits ?? 0;
+  const creditsPct = creditsTotal > 0 ? Math.round((creditsRemaining / creditsTotal) * 100) : 0;
+  const pagesPct = pagesLimit > 0 ? Math.round((pagesUsed / pagesLimit) * 100) : 0;
+
+  // Only enforce when actually running now (scheduling stores config for later).
+  const enforceQuota = scheduleMode === "now";
+  const exceedsPages = enforceQuota && pagesLimit > 0 && effectiveRows > pagesRemaining;
+  const creditsExhausted = enforceQuota && creditsTotal > 0 && creditsRemaining <= 0;
+  const quotaBlocked = exceedsPages || creditsExhausted;
+
+
   // Detect language of template + CSV sample and compare against the
   // language we'll actually generate in (override if set, else site lang).
   const effectiveTargetLang = (languageOverrideEnabled && !siteLanguageLocked) ? languageOverride : siteLanguage;
