@@ -41,6 +41,8 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { basePath } = useWorkspace();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.endsWith("/admin");
   useJobNotifications();
   useSessionTimeout();
   useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));
