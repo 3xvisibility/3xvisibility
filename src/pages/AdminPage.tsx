@@ -201,6 +201,11 @@ function EditSubscriptionDialog({
     if (PLAN_LIMITS[newPlan] !== undefined) {
       setPagesLimit(String(PLAN_LIMITS[newPlan]));
     }
+    // Keep AI credit quota aligned with the selected subscription plan
+    if (PLAN_CREDITS[newPlan] !== undefined) {
+      setCreditsTotal(String(PLAN_CREDITS[newPlan]));
+      setCreditsRemaining(String(PLAN_CREDITS[newPlan]));
+    }
   };
 
   return (
