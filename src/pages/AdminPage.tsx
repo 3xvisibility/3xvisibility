@@ -393,18 +393,34 @@ export default function AdminPage() {
     mutationFn: async (payload: {
       subscription_id?: string | null;
       user_id?: string;
+      target_user_id?: string;
       plan: string;
       pages_limit: number;
       pages_used: number;
+      credits_total?: number;
+      credits_remaining?: number;
     }) => {
+      const { target_user_id, credits_total, credits_remaining, ...subPayload } = payload;
       const { data, error } = await supabase.functions.invoke("admin-panel", {
-        body: { action: "update-subscription", ...payload },
+        body: { action: "update-subscription", ...subPayload },
       });
       if (error) throw error;
+
+      if (target_user_id && (credits_total !== undefined || credits_remaining !== undefined)) {
+        const { error: creditError } = await supabase.functions.invoke("admin-panel", {
+          body: {
+            action: "set-ai-credits",
+            target_user_id,
+            total_credits: credits_total,
+            remaining_credits: credits_remaining,
+          },
+        });
+        if (creditError) throw creditError;
+      }
       return data;
     },
     onSuccess: () => {
-      toast.success("Subscription updated");
+      toast.success("Subscription & credits updated");
       queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
       setDialogOpen(false);
     },
