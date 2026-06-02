@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
           userCampaigns.some((c: any) => c.id === p.campaign_id)
         ) || [];
         const userWebsites = websites?.filter((w: any) => w.user_id === u.id) || [];
+        const credit = aiCredits?.find((c: any) => c.user_id === u.id);
 
         return {
           id: u.id,
@@ -117,6 +118,9 @@ Deno.serve(async (req) => {
           is_banned: profile?.is_banned || false,
           banned_reason: profile?.banned_reason || null,
           role: rolesData?.find((r: any) => r.user_id === u.id)?.role || "user",
+          credits_total: credit?.total_credits ?? null,
+          credits_used: credit?.used_credits ?? null,
+          credits_remaining: credit?.remaining_credits ?? null,
         };
       });
 
