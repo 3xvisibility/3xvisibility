@@ -175,6 +175,57 @@ export function StartGenerationDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-2">
+          {/* Pre-generation quota & credits check */}
+          <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Quota check</span>
+              {creditsLoading && <span className="text-[11px] text-muted-foreground ml-auto">Checking…</span>}
+            </div>
+
+            {/* Pages quota */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Monthly pages</span>
+                <span className="tabular-nums font-medium">
+                  {pagesRemaining.toLocaleString()} left of {pagesLimit.toLocaleString()}
+                </span>
+              </div>
+              <Progress value={pagesPct} className="h-2" />
+            </div>
+
+            {/* AI credits */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">AI credits</span>
+                <span className="tabular-nums font-medium">
+                  {creditsRemaining.toLocaleString()} left of {creditsTotal.toLocaleString()}
+                </span>
+              </div>
+              <Progress value={creditsPct} className="h-2" />
+            </div>
+
+            {exceedsPages && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">
+                  This run needs <span className="font-semibold">{effectiveRows.toLocaleString()}</span> pages
+                  but only <span className="font-semibold">{pagesRemaining.toLocaleString()}</span> remain in your
+                  monthly quota. Reduce the row limit or upgrade your plan.
+                </p>
+              </div>
+            )}
+            {creditsExhausted && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">
+                  You've run out of AI credits. Upgrade your plan or wait for the monthly reset to continue generating.
+                </p>
+              </div>
+            )}
+          </div>
+
+
           {/* Language mismatch warning — fires when template/CSV are obviously
               in a different language than the locked site / run language. */}
           {showMismatch && mismatchInfo && (
