@@ -124,6 +124,20 @@ export function StartGenerationDialog({
   const creditsExhausted = enforceQuota && creditsTotal > 0 && creditsRemaining <= 0;
   const quotaBlocked = exceedsPages || creditsExhausted;
 
+  // Build specific, human-readable reasons for why generation is blocked.
+  const blockReasons: string[] = [];
+  if (exceedsPages) {
+    const shortfall = effectiveRows - pagesRemaining;
+    blockReasons.push(
+      `Monthly pages quota exceeded: this run needs ${effectiveRows.toLocaleString()} pages but only ${pagesRemaining.toLocaleString()} of ${pagesLimit.toLocaleString()} remain (${shortfall.toLocaleString()} over the limit).`,
+    );
+  }
+  if (creditsExhausted) {
+    blockReasons.push(
+      `AI credits exhausted: ${creditsRemaining.toLocaleString()} of ${creditsTotal.toLocaleString()} credits remain. Wait for the monthly reset or upgrade your plan.`,
+    );
+  }
+
 
   // Detect language of template + CSV sample and compare against the
   // language we'll actually generate in (override if set, else site lang).
