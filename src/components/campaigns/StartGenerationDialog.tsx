@@ -124,6 +124,20 @@ export function StartGenerationDialog({
   const creditsExhausted = enforceQuota && creditsTotal > 0 && creditsRemaining <= 0;
   const quotaBlocked = exceedsPages || creditsExhausted;
 
+  // Build specific, human-readable reasons for why generation is blocked.
+  const blockReasons: string[] = [];
+  if (exceedsPages) {
+    const shortfall = effectiveRows - pagesRemaining;
+    blockReasons.push(
+      `Monthly pages quota exceeded: this run needs ${effectiveRows.toLocaleString()} pages but only ${pagesRemaining.toLocaleString()} of ${pagesLimit.toLocaleString()} remain (${shortfall.toLocaleString()} over the limit).`,
+    );
+  }
+  if (creditsExhausted) {
+    blockReasons.push(
+      `AI credits exhausted: ${creditsRemaining.toLocaleString()} of ${creditsTotal.toLocaleString()} credits remain. Wait for the monthly reset or upgrade your plan.`,
+    );
+  }
+
 
   // Detect language of template + CSV sample and compare against the
   // language we'll actually generate in (override if set, else site lang).
@@ -441,11 +455,40 @@ export function StartGenerationDialog({
           </span>
         </div>
 
+        {/* Consolidated blocking reason — shown right above the action button */}
+        {quotaBlocked && (
+          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+              <span className="text-sm font-semibold text-destructive">
+                Generation blocked — limit reached
+              </span>
+            </div>
+            <ul className="space-y-1.5 pl-1">
+              {blockReasons.map((reason, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-destructive">
+                  <span className="mt-1 h-1 w-1 rounded-full bg-destructive shrink-0" />
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[11px] text-destructive/90">
+              <span>
+                Pages left: <span className="font-semibold tabular-nums">{pagesRemaining.toLocaleString()}</span>
+              </span>
+              <span>
+                AI credits left: <span className="font-semibold tabular-nums">{creditsRemaining.toLocaleString()}</span>
+              </span>
+            </div>
+          </div>
+        )}
+
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             onClick={handleStart}
             disabled={isPending || !isScheduledValid || quotaBlocked}
+            title={quotaBlocked ? blockReasons.join(" ") : undefined}
             className="bg-gradient-primary hover:brightness-110 gap-2"
           >
             {retryFailedOnly ? (
