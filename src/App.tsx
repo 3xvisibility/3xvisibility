@@ -15,6 +15,7 @@ import type { Session } from "@supabase/supabase-js";
 import LandingPage from "./pages/LandingPage";
 import DocumentationPage from "./pages/DocumentationPage";
 import AuthPage from "./pages/AuthPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import DashboardPage from "./pages/DashboardPage";
 import CampaignsPage from "./pages/CampaignsPage";
