@@ -41,6 +41,9 @@ interface AdminUser {
   is_banned: boolean;
   banned_reason: string | null;
   role: "admin" | "moderator" | "user";
+  credits_total: number | null;
+  credits_used: number | null;
+  credits_remaining: number | null;
 }
 
 interface AdminOverview {
