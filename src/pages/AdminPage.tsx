@@ -464,13 +464,24 @@ export default function AdminPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = (formData: { plan: string; pages_limit: number; pages_used: number }) => {
+  const handleSave = (formData: {
+    plan: string;
+    pages_limit: number;
+    pages_used: number;
+    credits_total: number;
+    credits_remaining: number;
+  }) => {
+    const { credits_total, credits_remaining, ...subData } = formData;
     updateMutation.mutate({
       subscription_id: editSub?.id || editUser?.subscription_id || null,
       user_id: editUser?.id,
-      ...formData,
+      target_user_id: editUser?.id,
+      credits_total,
+      credits_remaining,
+      ...subData,
     });
   };
+
 
   if (error) {
     return (
