@@ -385,6 +385,85 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, access: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (action === "get-ai-usage-report") {
+      const PLAN_CREDITS: Record<string, number> = { starter: 100, pro: 1000, agency: 5000 };
+
+      const { data: authUsers } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
+      const userList = authUsers?.users || [];
+      const userMap = new Map(userList.map((u: any) => [u.id, u.email]));
+
+      const { data: profiles } = await serviceClient.from("profiles").select("user_id, full_name, company");
+      const { data: credits } = await serviceClient.from("ai_credits").select("*");
+      const { data: usage } = await serviceClient
+        .from("ai_credits_usage")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(2000);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      const creditMap = new Map((credits || []).map((c: any) => [c.user_id, c]));
+
+      // Aggregate usage per user
+      const usageByUser = new Map<string, { total: number; count: number; byType: Record<string, number>; recent: any[] }>();
+      for (const row of usage || []) {
+        if (!usageByUser.has(row.user_id)) {
+          usageByUser.set(row.user_id, { total: 0, count: 0, byType: {}, recent: [] });
+        }
+        const agg = usageByUser.get(row.user_id)!;
+        agg.total += row.credits_used || 0;
+        agg.count += 1;
+        agg.byType[row.prompt_type || "default"] = (agg.byType[row.prompt_type || "default"] || 0) + (row.credits_used || 0);
+        if (agg.recent.length < 20) agg.recent.push(row);
+      }
+
+      // Build report for every user that has credits or usage (or all users)
+      const userIds = new Set<string>([
+        ...userList.map((u: any) => u.id),
+      ]);
+
+      const report = Array.from(userIds).map((uid) => {
+        const c = creditMap.get(uid);
+        const agg = usageByUser.get(uid);
+        const profile = profileMap.get(uid);
+        const plan = c?.plan || "starter";
+        const total = c?.total_credits ?? PLAN_CREDITS[plan] ?? 100;
+        const used = c?.used_credits ?? 0;
+        const remaining = c?.remaining_credits ?? total;
+        return {
+          user_id: uid,
+          email: userMap.get(uid) || null,
+          full_name: profile?.full_name || null,
+          company: profile?.company || null,
+          plan,
+          total_credits: total,
+          used_credits: used,
+          remaining_credits: remaining,
+          monthly_limit: total,
+          credits_reset_at: c?.credits_reset_at || null,
+          lifetime_usage: agg?.total || 0,
+          events_count: agg?.count || 0,
+          usage_by_type: agg?.byType || {},
+          recent_usage: agg?.recent || [],
+        };
+      });
+
+      // Sort by used credits desc
+      report.sort((a, b) => b.used_credits - a.used_credits);
+
+      const totals = {
+        total_users: report.length,
+        total_credits: report.reduce((s, r) => s + r.total_credits, 0),
+        total_used: report.reduce((s, r) => s + r.used_credits, 0),
+        total_remaining: report.reduce((s, r) => s + r.remaining_credits, 0),
+        total_events: report.reduce((s, r) => s + r.events_count, 0),
+      };
+
+      return new Response(JSON.stringify({ report, totals }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: "Invalid action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

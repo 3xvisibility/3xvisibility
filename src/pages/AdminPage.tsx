@@ -21,6 +21,7 @@ import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
 import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
+import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 
 interface AdminUser {
   id: string;
@@ -457,6 +458,7 @@ export default function AdminPage() {
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
+          <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
@@ -470,6 +472,11 @@ export default function AdminPage() {
         <TabsContent value="ai-credits" className="space-y-4">
           <AiCreditsAdminPanel />
         </TabsContent>
+
+        <TabsContent value="ai-usage" className="space-y-4">
+          <AiUsageReportPanel />
+        </TabsContent>
+
 
         <TabsContent value="connections" className="space-y-4">
           <AdminConnectionsPanel />
