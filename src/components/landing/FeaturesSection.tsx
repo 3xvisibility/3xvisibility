@@ -59,7 +59,7 @@ export function FeaturesSection() {
                   <f.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
                 </div>
                 <h3 className="font-bold text-sm mb-2 text-foreground">{t(f.titleKey)}</h3>
-                <p className="text-[13px] text-[hsl(220,15%,50%)] leading-relaxed">{t(f.descKey)}</p>
+                <p className="text-[13px] text-[hsl(220,10%,70%)] leading-relaxed">{t(f.descKey)}</p>
               </div>
             </motion.div>
           ))}

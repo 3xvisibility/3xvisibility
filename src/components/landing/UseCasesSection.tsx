@@ -92,7 +92,7 @@ export function UseCasesSection() {
             {t("useCases.title1")}<br />
             <span className="text-gradient-primary">{t("useCases.title2")}</span>
           </h2>
-          <p className="mt-4 text-sm text-[hsl(220,15%,50%)] max-w-lg mx-auto leading-relaxed">
+          <p className="mt-4 text-sm text-[hsl(220,10%,70%)] max-w-lg mx-auto leading-relaxed">
             {t("useCases.description")}
           </p>
         </ScrollReveal>
@@ -118,14 +118,14 @@ export function UseCasesSection() {
                       <h3 className="text-xl md:text-2xl font-extrabold tracking-[-0.02em] mb-3">
                         {uc.title}
                       </h3>
-                      <p className="text-sm text-[hsl(220,15%,50%)] leading-relaxed mb-5">
+                      <p className="text-sm text-[hsl(220,10%,70%)] leading-relaxed mb-5">
                         {uc.description}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {uc.highlights.map((h) => (
                           <span
                             key={h}
-                            className="text-[11px] font-medium text-[hsl(220,15%,60%)] bg-[hsl(220,35%,10%)] rounded-full px-3 py-1 border border-[hsl(96,90%,45%,0.1)]"
+                            className="text-[11px] font-medium text-[hsl(220,10%,78%)] bg-[hsl(220,35%,10%)] rounded-full px-3 py-1 border border-[hsl(96,90%,45%,0.1)]"
                           >
                             {h}
                           </span>
@@ -142,7 +142,7 @@ export function UseCasesSection() {
                             <div className="h-2 w-2 rounded-full bg-[hsl(40,70%,50%,0.6)]" />
                             <div className="h-2 w-2 rounded-full bg-[hsl(140,50%,40%,0.6)]" />
                           </div>
-                          <span className="text-[9px] text-[hsl(220,15%,40%)] ml-2 font-mono">
+                          <span className="text-[9px] text-[hsl(220,10%,58%)] ml-2 font-mono">
                             slug pattern
                           </span>
                         </div>
@@ -164,7 +164,7 @@ export function UseCasesSection() {
             <h3 className="text-2xl md:text-3xl font-extrabold tracking-[-0.03em]">
               {t("useCases.audienceTitle1")} <span className="text-gradient-primary">{t("useCases.audienceTitle2")}</span>
             </h3>
-            <p className="mt-3 text-sm text-[hsl(220,15%,50%)] max-w-md mx-auto">
+            <p className="mt-3 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto">
               {t("useCases.audienceDescription")}
             </p>
           </div>
@@ -191,7 +191,7 @@ export function UseCasesSection() {
                 <a.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
               </div>
               <h4 className="font-bold text-sm mb-1.5">{a.title}</h4>
-              <p className="text-[12px] text-[hsl(220,15%,50%)] leading-relaxed">
+              <p className="text-[12px] text-[hsl(220,10%,70%)] leading-relaxed">
                 {a.description}
               </p>
             </motion.div>
