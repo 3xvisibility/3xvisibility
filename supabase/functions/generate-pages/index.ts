@@ -1341,6 +1341,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Enforce monthly pages quota (skip for test runs which don't persist pages)
+    if (!test_mode) {
+      const { data: pageSub } = await supabase
+        .from("subscriptions")
+        .select("pages_used, pages_limit")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const pagesUsed = pageSub?.pages_used || 0;
+      const pagesLimit = pageSub?.pages_limit ?? 0;
+      const pagesNeeded = remainingRows.length;
+      if (pagesLimit > 0 && pagesUsed + pagesNeeded > pagesLimit) {
+        return new Response(JSON.stringify({
+          error: `Monthly page quota exceeded. Need ${pagesNeeded}, have ${Math.max(0, pagesLimit - pagesUsed)} remaining of ${pagesLimit}.`,
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     if ((hasAiBlocks || hasAiImageBlocks) && !LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "AI service not configured" }), {
         status: 500,
