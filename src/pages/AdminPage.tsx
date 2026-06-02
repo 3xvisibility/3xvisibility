@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
 import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
+import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
 
 interface AdminUser {
   id: string;
