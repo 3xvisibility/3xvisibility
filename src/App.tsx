@@ -213,6 +213,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
             <Route path="/auth" element={session ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+            <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
             <Route path="/about" element={<AboutPage />} />
