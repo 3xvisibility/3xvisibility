@@ -336,9 +336,10 @@ export async function resolveUserAiAccess(userId?: string): Promise<UserAiAccess
 // ── Main entry: generate (non-streaming) ─────────────────────────────────────
 
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
-  // ── Credit gate ──────────────────────────────────────────────────────────
+  // Resolve user + admin-controlled AI access
+  const uid = await resolveUserId(opts);
+  let provider = getActiveProvider();
   if (!opts.skipCredits) {
-    const uid = await resolveUserId(opts);
     if (!uid) {
       return {
         success: false,
@@ -347,6 +348,24 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
         fallback_used: false,
       };
     }
+    const access = await resolveUserAiAccess(uid);
+    if (!access.enabled) {
+      return {
+        success: false,
+        content: "AI access is disabled for your account. Please contact your administrator.",
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    if (access.purposes.length > 0 && opts.promptType && !access.purposes.includes(opts.promptType)) {
+      return {
+        success: false,
+        content: "Your administrator has not enabled this AI feature for your account.",
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    provider = access.provider;
     const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
     if (!credit.allowed) {
       return {
@@ -359,7 +378,6 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   }
 
   // ── Provider routing ─────────────────────────────────────────────────────
-  const provider = getActiveProvider();
   let fallbackUsed = false;
   let response: Response;
 
