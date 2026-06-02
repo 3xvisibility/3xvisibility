@@ -11,8 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Sparkles, Moon, Sun, Monitor, Webhook, Plus, Trash2, CheckCircle2, XCircle, Shield, Lock, FileText, Globe } from "lucide-react";
-import AiProviderSettings from "@/components/settings/AiProviderSettings";
-import EnvironmentConfigSettings from "@/components/settings/EnvironmentConfigSettings";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
