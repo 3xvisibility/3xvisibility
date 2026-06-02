@@ -299,6 +299,13 @@ function UserActionsMenu({
 
 export default function AdminPage() {
   const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const section = searchParams.get("section") || "activity";
+  const setSection = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("section", value);
+    setSearchParams(next);
+  };
   const [userSearch, setUserSearch] = useState("");
   const [campaignSearch, setCampaignSearch] = useState("");
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
