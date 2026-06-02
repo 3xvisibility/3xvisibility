@@ -473,6 +473,11 @@ export default function AdminPage() {
           <AiCreditsAdminPanel />
         </TabsContent>
 
+        <TabsContent value="ai-usage" className="space-y-4">
+          <AiUsageReportPanel />
+        </TabsContent>
+
+
         <TabsContent value="connections" className="space-y-4">
           <AdminConnectionsPanel />
         </TabsContent>
