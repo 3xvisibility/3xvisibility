@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden px-4">
-      <Seo title="Admin Login" description="Administrator access" noindex />
+      <Seo title="Admin Login" description="Administrator access" path="/admin-login" noindex />
 
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0">
