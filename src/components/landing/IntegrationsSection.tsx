@@ -39,7 +39,7 @@ export function IntegrationsSection() {
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.04em]">
               {t("integrations.title1")}{" "}<span className="text-gradient-primary">{t("integrations.title2")}</span>
             </h2>
-            <p className="mt-4 text-sm md:text-base text-[hsl(220,15%,50%)] max-w-lg mx-auto leading-relaxed">
+            <p className="mt-4 text-sm md:text-base text-[hsl(220,10%,70%)] max-w-lg mx-auto leading-relaxed">
               {t("integrations.description")}
             </p>
           </div>
@@ -92,9 +92,9 @@ export function IntegrationsSection() {
               <motion.div key={item.name} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.1, duration: 0.5, ease }} className="absolute" style={{ top: positions[i].top, left: positions[i].left }}>
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center shadow-lg hover:border-[hsl(96,90%,45%,0.3)] hover:shadow-[0_0_20px_hsl(96,90%,45%,0.1)] transition-all duration-300 cursor-pointer group">
-                    <item.icon className="h-5 w-5 text-[hsl(220,15%,50%)] group-hover:text-[hsl(96,80%,52%)] transition-colors" />
+                    <item.icon className="h-5 w-5 text-[hsl(220,10%,70%)] group-hover:text-[hsl(96,80%,52%)] transition-colors" />
                   </div>
-                  <span className="text-[10px] font-medium text-[hsl(220,15%,50%)]">{item.name}</span>
+                  <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
                 </div>
               </motion.div>
             );
@@ -106,9 +106,9 @@ export function IntegrationsSection() {
               <motion.div key={item.name} initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.1, duration: 0.5, ease }} className="absolute" style={{ top: positions[i].top, right: positions[i].right }}>
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center shadow-lg hover:border-[hsl(96,90%,45%,0.3)] hover:shadow-[0_0_20px_hsl(96,90%,45%,0.1)] transition-all duration-300 cursor-pointer group">
-                    <item.icon className="h-5 w-5 text-[hsl(220,15%,50%)] group-hover:text-[hsl(96,80%,52%)] transition-colors" />
+                    <item.icon className="h-5 w-5 text-[hsl(220,10%,70%)] group-hover:text-[hsl(96,80%,52%)] transition-colors" />
                   </div>
-                  <span className="text-[10px] font-medium text-[hsl(220,15%,50%)]">{item.name}</span>
+                  <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
                 </div>
               </motion.div>
             );
@@ -121,7 +121,7 @@ export function IntegrationsSection() {
               <div className="h-12 w-12 rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center">
                 <item.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
               </div>
-              <span className="text-[10px] font-medium text-[hsl(220,15%,50%)]">{item.name}</span>
+              <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
             </motion.div>
           ))}
         </div>

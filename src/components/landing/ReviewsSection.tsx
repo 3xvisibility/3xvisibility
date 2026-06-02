@@ -21,14 +21,14 @@ function ReviewCard({ review }: { review: typeof reviews[0] }) {
           <Star key={i} className="h-3.5 w-3.5 fill-[hsl(38,92%,60%)] text-[hsl(38,92%,60%)]" />
         ))}
       </div>
-      <p className="text-[13px] text-[hsl(220,15%,65%)] leading-relaxed mb-4">"{review.text}"</p>
+      <p className="text-[13px] text-[hsl(220,10%,82%)] leading-relaxed mb-4">"{review.text}"</p>
       <div className="flex items-center gap-3 pt-3 border-t border-[hsl(96,90%,45%,0.08)]">
         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[hsl(96,90%,45%,0.2)] to-[hsl(96,92%,62%,0.2)] flex items-center justify-center text-[10px] font-bold text-[hsl(96,80%,52%)]">
           {review.avatar}
         </div>
         <div>
           <p className="text-xs font-semibold text-foreground">{review.name}</p>
-          <p className="text-[10px] text-[hsl(220,15%,45%)]">{review.role}</p>
+          <p className="text-[10px] text-[hsl(220,10%,64%)]">{review.role}</p>
         </div>
       </div>
     </div>
@@ -45,7 +45,7 @@ export function ReviewsSection() {
         <div className="text-center max-w-2xl mx-auto">
           <span className="section-badge mb-6">{t("reviews.badge")}</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("reviews.title")}</h2>
-          <p className="mt-3 text-sm text-[hsl(220,15%,50%)]">{t("reviews.description")}</p>
+          <p className="mt-3 text-sm text-[hsl(220,10%,70%)]">{t("reviews.description")}</p>
         </div>
       </ScrollReveal>
       <ScrollReveal delay={0.1}>

@@ -43,7 +43,7 @@ export function VideoSection() {
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-12">
           <span className="section-badge mb-6">{t("video.badge")}</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("video.title")}</h2>
-          <p className="mt-3 text-sm text-[hsl(220,15%,50%)]">{t("video.description")}</p>
+          <p className="mt-3 text-sm text-[hsl(220,10%,70%)]">{t("video.description")}</p>
         </ScrollReveal>
 
         <ScrollReveal delay={0.1} className="max-w-4xl mx-auto">
@@ -58,7 +58,7 @@ export function VideoSection() {
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:shadow-primary/40">
                       <Play className="h-6 w-6 ml-1 fill-current" />
                     </motion.div>
-                    <p className="text-sm font-medium text-[hsl(220,15%,85%)]">{t("video.watchDemo")}</p>
+                    <p className="text-sm font-medium text-[hsl(220,10%,92%)]">{t("video.watchDemo")}</p>
                   </div>
                 </>
               )}
@@ -76,7 +76,7 @@ export function VideoSection() {
             ].map((stat) => (
               <div key={stat.labelKey} className="text-center py-5 rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)]">
                 <p className="text-2xl md:text-3xl font-extrabold tracking-tight text-gradient-primary">{stat.value}</p>
-                <p className="text-[11px] text-[hsl(220,15%,45%)] mt-1 uppercase tracking-wider font-medium">{t(stat.labelKey)}</p>
+                <p className="text-[11px] text-[hsl(220,10%,64%)] mt-1 uppercase tracking-wider font-medium">{t(stat.labelKey)}</p>
               </div>
             ))}
           </div>

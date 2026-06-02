@@ -149,7 +149,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2, ease }}
-            className="mt-6 text-base md:text-lg text-[hsl(220,15%,55%)] leading-relaxed max-w-xl mx-auto"
+            className="mt-6 text-base md:text-lg text-[hsl(220,10%,74%)] leading-relaxed max-w-xl mx-auto"
           >
             {t("hero.description")}
           </motion.p>
@@ -172,7 +172,7 @@ export function HeroSection() {
             <Button
               variant="outline"
               size="lg"
-              className="border-[hsl(96,90%,45%,0.2)] bg-transparent text-[hsl(220,15%,70%)] hover:text-foreground h-12 text-sm px-8 rounded-xl font-medium hover:bg-[hsl(96,90%,45%,0.08)] hover:border-[hsl(96,90%,45%,0.3)]"
+              className="border-[hsl(96,90%,45%,0.2)] bg-transparent text-[hsl(220,10%,85%)] hover:text-foreground h-12 text-sm px-8 rounded-xl font-medium hover:bg-[hsl(96,90%,45%,0.08)] hover:border-[hsl(96,90%,45%,0.3)]"
               asChild
             >
               <a href="#demo-video">{t("hero.watchDemo")}</a>
@@ -183,7 +183,7 @@ export function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.45 }}
-            className="mt-5 flex items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-[hsl(220,15%,45%)] flex-wrap"
+            className="mt-5 flex items-center justify-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-[hsl(220,10%,64%)] flex-wrap"
           >
             <span>{t("hero.freeStart")}</span>
             <span>{t("hero.noCreditCard")}</span>
@@ -212,7 +212,7 @@ export function HeroSection() {
                     className={`h-8 w-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors ${
                       i === 0
                         ? "bg-[hsl(96,90%,45%,0.15)] text-[hsl(96,80%,52%)]"
-                        : "text-[hsl(220,15%,40%)] hover:text-[hsl(220,15%,60%)] hover:bg-[hsl(220,30%,12%)]"
+                        : "text-[hsl(220,10%,58%)] hover:text-[hsl(220,10%,78%)] hover:bg-[hsl(220,30%,12%)]"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -224,15 +224,15 @@ export function HeroSection() {
                 <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(96,90%,45%,0.08)]">
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9, duration: 0.5 }}>
                     <h2 className="text-sm font-bold text-foreground">{t("hero.mockWelcomeBack", { name: "John" })}</h2>
-                    <p className="text-[10px] text-[hsl(220,15%,45%)]">{t("hero.mockStatisticsOverview")}</p>
+                    <p className="text-[10px] text-[hsl(220,10%,64%)]">{t("hero.mockStatisticsOverview")}</p>
                   </motion.div>
                   <div className="flex items-center gap-3">
                     <div className="hidden sm:flex items-center gap-2 h-7 px-3 rounded-lg bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.08)]">
-                      <Search className="h-3 w-3 text-[hsl(220,15%,40%)]" />
-                      <span className="text-[10px] text-[hsl(220,15%,40%)]">{t("hero.mockSearch")}</span>
+                      <Search className="h-3 w-3 text-[hsl(220,10%,58%)]" />
+                      <span className="text-[10px] text-[hsl(220,10%,58%)]">{t("hero.mockSearch")}</span>
                     </div>
-                    <Bell className="h-4 w-4 text-[hsl(220,15%,40%)]" />
-                    <Mail className="h-4 w-4 text-[hsl(220,15%,40%)]" />
+                    <Bell className="h-4 w-4 text-[hsl(220,10%,58%)]" />
+                    <Mail className="h-4 w-4 text-[hsl(220,10%,58%)]" />
                     <div className="h-7 w-7 rounded-full bg-gradient-to-br from-[hsl(96,90%,45%)] to-[hsl(96,92%,62%)]" />
                   </div>
                 </div>
@@ -243,11 +243,11 @@ export function HeroSection() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 1, duration: 0.4 }}
-                      className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.1)] text-[10px] font-medium text-[hsl(220,15%,55%)] cursor-pointer"
+                      className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg bg-[hsl(220,30%,12%)] border border-[hsl(96,90%,45%,0.1)] text-[10px] font-medium text-[hsl(220,10%,74%)] cursor-pointer"
                     >
                       {t("hero.mockThisWeek")} <ArrowRight className="h-2.5 w-2.5 rotate-90" />
                     </motion.div>
-                    <span className="text-[9px] text-[hsl(220,15%,35%)]">{t("hero.mockLastUpdated")}</span>
+                    <span className="text-[9px] text-[hsl(220,10%,52%)]">{t("hero.mockLastUpdated")}</span>
                   </div>
 
                   <div className="flex gap-4">
@@ -266,7 +266,7 @@ export function HeroSection() {
                             className="rounded-xl bg-[hsl(220,35%,10%)] border border-[hsl(96,90%,45%,0.08)] p-3"
                           >
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-[9px] text-[hsl(220,15%,45%)] font-medium">{stat.label}</span>
+                              <span className="text-[9px] text-[hsl(220,10%,64%)] font-medium">{stat.label}</span>
                               <span className={`text-[9px] font-semibold ${stat.changeColor} flex items-center gap-0.5`}>
                                 {stat.change} <TrendingUp className="h-2.5 w-2.5" />
                               </span>
@@ -291,10 +291,10 @@ export function HeroSection() {
                       >
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[11px] font-semibold text-foreground">{t("hero.mockDailyVisitors")}</span>
-                          <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(220,15%,40%)]" />
+                          <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(220,10%,58%)]" />
                         </div>
                         <MiniBarChart />
-                        <div className="flex justify-between mt-2 text-[8px] text-[hsl(220,15%,35%)]">
+                        <div className="flex justify-between mt-2 text-[8px] text-[hsl(220,10%,52%)]">
                           <span>{t("hero.mockJanuary")}</span>
                           <span>{t("hero.mockFebruary")}</span>
                           <span>{t("hero.mockMarch")}</span>
@@ -311,7 +311,7 @@ export function HeroSection() {
                       <div className="rounded-xl bg-[hsl(220,35%,10%)] border border-[hsl(96,90%,45%,0.08)] p-3">
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[11px] font-semibold text-foreground">{t("hero.mockIntegrations")}</span>
-                          <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(220,15%,40%)]" />
+                          <MoreHorizontal className="h-3.5 w-3.5 text-[hsl(220,10%,58%)]" />
                         </div>
                         {[
                           { name: "WordPress", connected: true },
@@ -323,9 +323,9 @@ export function HeroSection() {
                           <motion.div key={item.name} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 + i * 0.08, duration: 0.3, ease }} className="flex items-center justify-between py-1.5">
                             <div className="flex items-center gap-2">
                               <div className="h-6 w-6 rounded-full bg-[hsl(220,30%,15%)] flex items-center justify-center">
-                                <Globe className="h-3 w-3 text-[hsl(220,15%,50%)]" />
+                                <Globe className="h-3 w-3 text-[hsl(220,10%,70%)]" />
                               </div>
-                              <span className="text-[10px] text-[hsl(220,15%,60%)]">{item.name}</span>
+                              <span className="text-[10px] text-[hsl(220,10%,78%)]">{item.name}</span>
                             </div>
                             {item.connected ? (
                               <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(142,76%,36%,0.15)] text-[hsl(142,76%,50%)] font-medium">{t("common.connected")}</span>
@@ -345,7 +345,7 @@ export function HeroSection() {
                         ].map((activity, i) => (
                           <div key={i} className="flex items-center gap-2 py-1">
                             <CheckCircle2 className={`h-3 w-3 shrink-0 ${activity.status === t("status.completed") ? "text-[hsl(142,76%,50%)]" : "text-[hsl(38,92%,50%)]"}`} />
-                            <span className="text-[9px] text-[hsl(220,15%,55%)] truncate">{activity.text}</span>
+                            <span className="text-[9px] text-[hsl(220,10%,74%)] truncate">{activity.text}</span>
                           </div>
                         ))}
                       </motion.div>
@@ -357,13 +357,13 @@ export function HeroSection() {
                   <div className="rounded-lg bg-[hsl(220,40%,10%)] border border-[hsl(96,90%,45%,0.15)] p-2.5 shadow-xl backdrop-blur-sm">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="h-2 w-2 rounded-full bg-[hsl(142,76%,50%)]" />
-                        <span className="text-[8px] text-[hsl(220,15%,45%)]">{t("hero.mockPublishedAt")}</span>
+                        <span className="text-[8px] text-[hsl(220,10%,64%)]">{t("hero.mockPublishedAt")}</span>
                     </div>
                       <span className="text-[10px] font-semibold text-foreground">{t("hero.mockSeoPagesDeployed")}</span>
                     <div className="flex items-center gap-3 mt-1.5">
-                      <span className="flex items-center gap-1 text-[8px] text-[hsl(220,15%,40%)]"><Heart className="h-2.5 w-2.5" /> —</span>
-                      <span className="flex items-center gap-1 text-[8px] text-[hsl(220,15%,40%)]"><Eye className="h-2.5 w-2.5" /> —</span>
-                      <span className="flex items-center gap-1 text-[8px] text-[hsl(220,15%,40%)]"><Users className="h-2.5 w-2.5" /> —</span>
+                      <span className="flex items-center gap-1 text-[8px] text-[hsl(220,10%,58%)]"><Heart className="h-2.5 w-2.5" /> —</span>
+                      <span className="flex items-center gap-1 text-[8px] text-[hsl(220,10%,58%)]"><Eye className="h-2.5 w-2.5" /> —</span>
+                      <span className="flex items-center gap-1 text-[8px] text-[hsl(220,10%,58%)]"><Users className="h-2.5 w-2.5" /> —</span>
                     </div>
                   </div>
                 </motion.div>

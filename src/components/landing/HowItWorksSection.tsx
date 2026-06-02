@@ -30,7 +30,7 @@ export function HowItWorksSection() {
                 <s.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
               </div>
               <h3 className="font-bold text-sm mb-2">{t(s.titleKey)}</h3>
-              <p className="text-[12px] text-[hsl(220,15%,50%)] leading-relaxed">{t(s.descKey)}</p>
+              <p className="text-[12px] text-[hsl(220,10%,70%)] leading-relaxed">{t(s.descKey)}</p>
             </motion.div>
           ))}
         </motion.div>

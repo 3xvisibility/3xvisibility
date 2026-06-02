@@ -25,7 +25,7 @@ export function AffiliateSection() {
             {t("affiliateLanding.title1")}{" "}
             <span className="text-primary">{t("affiliateLanding.title2")}</span>
           </h2>
-          <p className="text-[hsl(220,15%,55%)] mt-4 max-w-2xl mx-auto text-base md:text-lg">
+          <p className="text-[hsl(220,10%,74%)] mt-4 max-w-2xl mx-auto text-base md:text-lg">
             {t("affiliateLanding.description")}
           </p>
         </ScrollReveal>
@@ -38,7 +38,7 @@ export function AffiliateSection() {
                   <b.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">{b.title}</h3>
-                <p className="text-sm text-[hsl(220,15%,55%)]">{b.desc}</p>
+                <p className="text-sm text-[hsl(220,10%,74%)]">{b.desc}</p>
               </div>
             ))}
           </div>
@@ -49,17 +49,17 @@ export function AffiliateSection() {
             <div className="flex items-center gap-8 text-center">
               <div>
                 <p className="text-3xl font-extrabold text-primary">5%</p>
-                <p className="text-xs text-[hsl(220,15%,55%)] mt-1">{t("affiliateLanding.commissionRate")}</p>
+                <p className="text-xs text-[hsl(220,10%,74%)] mt-1">{t("affiliateLanding.commissionRate")}</p>
               </div>
               <div className="h-10 w-px bg-[hsl(96,90%,45%,0.15)]" />
               <div>
                 <p className="text-3xl font-extrabold text-foreground">$25</p>
-                <p className="text-xs text-[hsl(220,15%,55%)] mt-1">{t("affiliateLanding.minPayout")}</p>
+                <p className="text-xs text-[hsl(220,10%,74%)] mt-1">{t("affiliateLanding.minPayout")}</p>
               </div>
               <div className="h-10 w-px bg-[hsl(96,90%,45%,0.15)]" />
               <div>
                 <p className="text-3xl font-extrabold text-foreground">∞</p>
-                <p className="text-xs text-[hsl(220,15%,55%)] mt-1">{t("affiliateLanding.unlimited")}</p>
+                <p className="text-xs text-[hsl(220,10%,74%)] mt-1">{t("affiliateLanding.unlimited")}</p>
               </div>
             </div>
           </div>

@@ -15,7 +15,7 @@ export function FeatureShowcaseSection() {
         <div className="rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(220,40%,8%)] p-4 space-y-2.5">
           {["keyword", "city", "title", "meta_desc"].map((col, i) => (
             <motion.div key={col} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 + i * 0.06 }} className="flex items-center gap-2">
-              <div className="h-7 w-16 rounded-lg bg-[hsl(220,30%,12%)] flex items-center px-2 text-[10px] text-[hsl(220,15%,50%)] font-mono">{col}</div>
+              <div className="h-7 w-16 rounded-lg bg-[hsl(220,30%,12%)] flex items-center px-2 text-[10px] text-[hsl(220,10%,70%)] font-mono">{col}</div>
               <ArrowRight className="h-3 w-3 text-[hsl(96,90%,45%,0.5)] shrink-0" />
               <div className="h-7 flex-1 rounded-lg bg-[hsl(96,90%,45%,0.08)] border border-[hsl(96,90%,45%,0.15)] flex items-center px-2 text-[10px] text-[hsl(96,80%,52%)] font-mono">{`{${col}}`}</div>
             </motion.div>
@@ -35,12 +35,12 @@ export function FeatureShowcaseSection() {
               <div className="h-2 w-2 rounded-full bg-[hsl(40,70%,50%,0.6)]" />
               <div className="h-2 w-2 rounded-full bg-[hsl(140,50%,40%,0.6)]" />
             </div>
-            <span className="text-[9px] text-[hsl(220,15%,40%)] ml-2 font-mono">template.html</span>
+            <span className="text-[9px] text-[hsl(220,10%,58%)] ml-2 font-mono">template.html</span>
           </div>
           <div className="p-4 space-y-1.5 font-mono text-[11px] leading-relaxed">
-            <div className="text-[hsl(220,15%,45%)]">&lt;h1&gt;<span className="text-[hsl(96,80%,52%)] font-semibold">{"{title}"}</span>&lt;/h1&gt;</div>
-            <div className="text-[hsl(220,15%,45%)]">&lt;meta name="desc" content="<span className="text-[hsl(96,80%,52%)] font-semibold">{"{meta_desc}"}</span>" /&gt;</div>
-            <div className="text-[hsl(220,15%,45%)]">&lt;p&gt;Best in <span className="text-[hsl(96,80%,52%)] font-semibold">{"{city}"}</span>&lt;/p&gt;</div>
+            <div className="text-[hsl(220,10%,64%)]">&lt;h1&gt;<span className="text-[hsl(96,80%,52%)] font-semibold">{"{title}"}</span>&lt;/h1&gt;</div>
+            <div className="text-[hsl(220,10%,64%)]">&lt;meta name="desc" content="<span className="text-[hsl(96,80%,52%)] font-semibold">{"{meta_desc}"}</span>" /&gt;</div>
+            <div className="text-[hsl(220,10%,64%)]">&lt;p&gt;Best in <span className="text-[hsl(96,80%,52%)] font-semibold">{"{city}"}</span>&lt;/p&gt;</div>
           </div>
         </div>
       ),
@@ -59,7 +59,7 @@ export function FeatureShowcaseSection() {
           ].map((page, i) => (
             <motion.div key={page.title} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 + i * 0.08 }} className="flex items-center gap-2">
               <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${page.status === "done" ? "text-[hsl(142,76%,50%)]" : "text-[hsl(96,80%,52%)] animate-pulse"}`} />
-              <span className="text-[10px] font-mono text-[hsl(220,15%,55%)] flex-1 truncate">{page.title}</span>
+              <span className="text-[10px] font-mono text-[hsl(220,10%,74%)] flex-1 truncate">{page.title}</span>
               <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${page.status === "done" ? "bg-[hsl(142,76%,36%,0.1)] text-[hsl(142,76%,50%)]" : "bg-[hsl(96,90%,45%,0.1)] text-[hsl(96,80%,52%)]"}`}>
                 {page.status === "done" ? t("showcase.live") : t("showcase.deploying")}
               </span>
@@ -81,13 +81,13 @@ export function FeatureShowcaseSection() {
                 <div>
                   <div className="flex items-center gap-3 mb-4">
                     <span className="text-xs font-bold text-[hsl(96,80%,52%)] bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.2)] rounded-full px-3 py-1">{item.step}</span>
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(220,15%,50%)]">{item.tag}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(220,10%,70%)]">{item.tag}</span>
                   </div>
                   <h3 className="text-2xl md:text-3xl font-extrabold tracking-[-0.03em] mb-3">{item.title}</h3>
-                  <p className="text-sm text-[hsl(220,15%,50%)] leading-relaxed mb-5">{item.description}</p>
+                  <p className="text-sm text-[hsl(220,10%,70%)] leading-relaxed mb-5">{item.description}</p>
                   <div className="flex flex-wrap gap-2">
                     {item.highlights.map((h) => (
-                      <span key={h} className="text-[11px] font-medium text-[hsl(220,15%,60%)] bg-[hsl(220,35%,10%)] rounded-full px-3 py-1 border border-[hsl(96,90%,45%,0.1)]">{h}</span>
+                      <span key={h} className="text-[11px] font-medium text-[hsl(220,10%,78%)] bg-[hsl(220,35%,10%)] rounded-full px-3 py-1 border border-[hsl(96,90%,45%,0.1)]">{h}</span>
                     ))}
                   </div>
                 </div>

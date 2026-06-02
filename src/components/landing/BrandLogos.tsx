@@ -24,7 +24,7 @@ export function BrandLogos() {
       transition={{ duration: 0.8, delay: 0.8 }}
       className="mt-16 md:mt-20 text-center"
     >
-      <p className="text-[11px] uppercase tracking-[0.2em] text-[hsl(220,15%,40%)] font-medium mb-8">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-[hsl(220,10%,58%)] font-medium mb-8">
         {t("hero.trustedBy")}
       </p>
       <div className="relative overflow-hidden max-w-5xl mx-auto">

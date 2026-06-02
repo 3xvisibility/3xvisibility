@@ -19,7 +19,7 @@ function TableCell({ val }: { val: string | boolean }) {
       </div>
     ) : (
       <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(220,30%,12%)]">
-        <X className="h-3.5 w-3.5 text-[hsl(220,15%,35%)]" />
+        <X className="h-3.5 w-3.5 text-[hsl(220,10%,52%)]" />
       </div>
     );
   }
@@ -58,15 +58,15 @@ export function PricingSection() {
         <ScrollReveal className="text-center max-w-2xl mx-auto mb-10">
           <span className="section-badge mb-6">{t("pricing.badge")}</span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em]">{t("pricing.title")}</h2>
-          <p className="mt-3 text-sm text-[hsl(220,15%,50%)] max-w-md mx-auto">{t("pricing.description")}</p>
+          <p className="mt-3 text-sm text-[hsl(220,10%,70%)] max-w-md mx-auto">{t("pricing.description")}</p>
         </ScrollReveal>
 
         <div className="flex items-center justify-center gap-3 mb-10">
-          <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-[hsl(220,15%,50%)]"}`}>{t("pricing.monthly")}</span>
+          <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-[hsl(220,10%,70%)]"}`}>{t("pricing.monthly")}</span>
           <button onClick={() => setIsYearly(!isYearly)} className={`relative h-7 w-[52px] rounded-full transition-colors duration-300 ${isYearly ? "bg-primary" : "bg-[hsl(220,30%,17%)]"}`}>
             <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${isYearly ? "translate-x-[26px]" : "translate-x-0.5"}`} />
           </button>
-          <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-[hsl(220,15%,50%)]"}`}>{t("pricing.yearly")}</span>
+          <span className={`text-sm font-medium transition-colors ${isYearly ? "text-foreground" : "text-[hsl(220,10%,70%)]"}`}>{t("pricing.yearly")}</span>
           {isYearly && (
             <Badge className="bg-[hsl(96,90%,45%,0.1)] text-[hsl(96,80%,52%)] border-[hsl(96,90%,45%,0.2)] text-[10px] font-bold animate-fade-in">{t("pricing.save")}</Badge>
           )}
@@ -87,17 +87,17 @@ export function PricingSection() {
                       </div>
                       {plan.popular && <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">{t("pricing.mostPopular")}</Badge>}
                     </div>
-                    <p className="text-xs text-[hsl(220,15%,50%)] mt-2">{plan.description}</p>
+                    <p className="text-xs text-[hsl(220,10%,70%)] mt-2">{plan.description}</p>
                     <div className="mt-4 flex items-baseline gap-1">
                       <span className="text-4xl font-extrabold tabular-nums tracking-tight">€{price}</span>
-                      <span className="text-[hsl(220,15%,50%)] text-sm">{t("pricing.mo")}</span>
+                      <span className="text-[hsl(220,10%,70%)] text-sm">{t("pricing.mo")}</span>
                     </div>
                     {isYearly && (
-                      <p className="text-[11px] text-[hsl(220,15%,45%)] mt-0.5">
-                        {t("pricing.billed")} €{price * 12}/{t("pricing.year")} <span className="line-through text-[hsl(220,15%,35%)]">€{plan.monthlyPrice * 12}</span>
+                      <p className="text-[11px] text-[hsl(220,10%,64%)] mt-0.5">
+                        {t("pricing.billed")} €{price * 12}/{t("pricing.year")} <span className="line-through text-[hsl(220,10%,52%)]">€{plan.monthlyPrice * 12}</span>
                       </p>
                     )}
-                    <p className="text-xs text-[hsl(220,15%,50%)] mt-1">{plan.pagesLimit}</p>
+                    <p className="text-xs text-[hsl(220,10%,70%)] mt-1">{plan.pagesLimit}</p>
                   </CardHeader>
                   <CardContent className="pt-4 space-y-4">
                     <Separator className="bg-[hsl(96,90%,45%,0.08)]" />
@@ -105,7 +105,7 @@ export function PricingSection() {
                       {plan.features.map((f) => (
                         <li key={f} className="flex items-center gap-2.5 text-[13px]">
                           <div className="h-5 w-5 rounded-full bg-[hsl(142,76%,36%,0.1)] flex items-center justify-center shrink-0"><Check className="h-3 w-3 text-[hsl(142,76%,50%)]" /></div>
-                          <span className="text-[hsl(220,15%,65%)]">{f}</span>
+                          <span className="text-[hsl(220,10%,82%)]">{f}</span>
                         </li>
                       ))}
                     </ul>
@@ -123,7 +123,7 @@ export function PricingSection() {
           <Card className="rounded-2xl overflow-hidden border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)]">
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-xl font-bold">{t("pricing.comparePlans")}</CardTitle>
-              <p className="text-sm text-[hsl(220,15%,50%)]">{t("pricing.compareDesc")}</p>
+              <p className="text-sm text-[hsl(220,10%,70%)]">{t("pricing.compareDesc")}</p>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -135,7 +135,7 @@ export function PricingSection() {
                         <th key={p.name} className="text-center py-3.5 px-5">
                           <div className="flex flex-col items-center gap-1">
                             <span className={`font-semibold ${p.popular ? "text-[hsl(96,80%,52%)]" : "text-foreground"}`}>{p.name}</span>
-                            <span className="text-xs text-[hsl(220,15%,45%)] tabular-nums">€{isYearly ? Math.round(p.monthlyPrice * (1 - YEARLY_DISCOUNT)) : p.monthlyPrice}{t("pricing.mo")}</span>
+                            <span className="text-xs text-[hsl(220,10%,64%)] tabular-nums">€{isYearly ? Math.round(p.monthlyPrice * (1 - YEARLY_DISCOUNT)) : p.monthlyPrice}{t("pricing.mo")}</span>
                           </div>
                         </th>
                       ))}
