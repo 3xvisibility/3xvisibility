@@ -424,6 +424,7 @@ export default function AdminPage() {
           body: {
             action: "set-ai-credits",
             target_user_id,
+            plan: payload.plan,
             total_credits: credits_total,
             remaining_credits: credits_remaining,
           },
