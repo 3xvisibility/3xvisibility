@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -298,6 +299,13 @@ function UserActionsMenu({
 
 export default function AdminPage() {
   const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const section = searchParams.get("section") || "activity";
+  const setSection = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("section", value);
+    setSearchParams(next);
+  };
   const [userSearch, setUserSearch] = useState("");
   const [campaignSearch, setCampaignSearch] = useState("");
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
@@ -451,8 +459,8 @@ export default function AdminPage() {
         </div>
       )}
 
-      <Tabs defaultValue="activity">
-        <TabsList className="flex-wrap h-auto gap-1 p-1">
+      <Tabs value={section} onValueChange={setSection}>
+        <TabsList className="flex-wrap h-auto gap-1 p-1 lg:hidden">
           <TabsTrigger value="activity" className="text-xs">{t("admin.activity")}</TabsTrigger>
           <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
@@ -463,6 +471,7 @@ export default function AdminPage() {
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="ai-access" className="space-y-4">
           <AiAccessAdminPanel />

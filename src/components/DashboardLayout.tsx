@@ -3,6 +3,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useJobNotifications } from "@/hooks/use-job-notifications";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { AppSidebar } from "@/components/AppSidebar";
+import { AdminSidebar } from "@/components/AdminSidebar";
+import { useLocation } from "react-router-dom";
 import { Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
@@ -39,6 +41,8 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { basePath } = useWorkspace();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.endsWith("/admin");
   useJobNotifications();
   useSessionTimeout();
   useKeyboardShortcuts(useCallback(() => setCmdOpen(true), []));
@@ -56,7 +60,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar onLogout={onLogout} />
+        {isAdminRoute ? <AdminSidebar onLogout={onLogout} /> : <AppSidebar onLogout={onLogout} />}
         <div className="flex-1 flex flex-col min-w-0">
           <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-border bg-card px-3 py-2 sm:px-4 lg:px-6 shrink-0">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
