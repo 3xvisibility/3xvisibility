@@ -458,8 +458,14 @@ export default function AdminPage() {
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
+          <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai-access" className="space-y-4">
+          <AiAccessAdminPanel />
+        </TabsContent>
+
 
         <TabsContent value="ai-credits" className="space-y-4">
           <AiCreditsAdminPanel />
