@@ -296,12 +296,50 @@ export function getActiveProvider(): AiProvider {
   return valid.includes(raw as AiProvider) ? (raw as AiProvider) : "lovable";
 }
 
+export interface UserAiAccess {
+  enabled: boolean;
+  provider: AiProvider;
+  purposes: string[];
+}
+
+/**
+ * Resolve the AI access settings for a specific user, as configured by an
+ * administrator in the `user_ai_access` table. Falls back to the global
+ * provider (and enabled) when the user has no explicit assignment.
+ */
+export async function resolveUserAiAccess(userId?: string): Promise<UserAiAccess> {
+  const globalProvider = getActiveProvider();
+  if (!userId) return { enabled: true, provider: globalProvider, purposes: [] };
+  const sb = getServiceClient();
+  if (!sb) return { enabled: true, provider: globalProvider, purposes: [] };
+  try {
+    const { data } = await sb
+      .from("user_ai_access")
+      .select("provider, enabled, purposes")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!data) return { enabled: true, provider: globalProvider, purposes: [] };
+    const valid: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
+    const provider = valid.includes(data.provider as AiProvider)
+      ? (data.provider as AiProvider)
+      : globalProvider;
+    return {
+      enabled: data.enabled !== false,
+      provider,
+      purposes: Array.isArray(data.purposes) ? data.purposes : [],
+    };
+  } catch {
+    return { enabled: true, provider: globalProvider, purposes: [] };
+  }
+}
+
 // ── Main entry: generate (non-streaming) ─────────────────────────────────────
 
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
-  // ── Credit gate ──────────────────────────────────────────────────────────
+  // Resolve user + admin-controlled AI access
+  const uid = await resolveUserId(opts);
+  let provider = getActiveProvider();
   if (!opts.skipCredits) {
-    const uid = await resolveUserId(opts);
     if (!uid) {
       return {
         success: false,
@@ -310,6 +348,24 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
         fallback_used: false,
       };
     }
+    const access = await resolveUserAiAccess(uid);
+    if (!access.enabled) {
+      return {
+        success: false,
+        content: "AI access is disabled for your account. Please contact your administrator.",
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    if (access.purposes.length > 0 && opts.promptType && !access.purposes.includes(opts.promptType)) {
+      return {
+        success: false,
+        content: "Your administrator has not enabled this AI feature for your account.",
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    provider = access.provider;
     const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
     if (!credit.allowed) {
       return {
@@ -322,7 +378,6 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   }
 
   // ── Provider routing ─────────────────────────────────────────────────────
-  const provider = getActiveProvider();
   let fallbackUsed = false;
   let response: Response;
 
@@ -375,9 +430,9 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   provider: AiProvider;
   fallback_used: boolean;
 }> {
-  // ── Credit gate ──────────────────────────────────────────────────────────
+  const uid = await resolveUserId(opts);
+  let provider = getActiveProvider();
   if (!opts.skipCredits) {
-    const uid = await resolveUserId(opts);
     if (!uid) {
       return {
         response: new Response(
@@ -388,6 +443,28 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
         fallback_used: false,
       };
     }
+    const access = await resolveUserAiAccess(uid);
+    if (!access.enabled) {
+      return {
+        response: new Response(
+          JSON.stringify({ error: "ai_disabled", message: "AI access is disabled for your account." }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        ),
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    if (access.purposes.length > 0 && opts.promptType && !access.purposes.includes(opts.promptType)) {
+      return {
+        response: new Response(
+          JSON.stringify({ error: "ai_purpose_not_allowed", message: "This AI feature is not enabled for your account." }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        ),
+        provider: "lovable",
+        fallback_used: false,
+      };
+    }
+    provider = access.provider;
     const credit = await checkAndDeductCredits(uid, opts.promptType || "default", opts.model);
     if (!credit.allowed) {
       return {
@@ -402,7 +479,6 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   }
 
   const streamOpts = { ...opts, stream: true };
-  const provider = getActiveProvider();
 
   if (provider === "lovable") {
     return { response: await callLovable(streamOpts), provider, fallback_used: false };

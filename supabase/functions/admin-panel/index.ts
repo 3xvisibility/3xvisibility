@@ -359,7 +359,32 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true, settings: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown action" }), {
+    if (action === "get-ai-access") {
+      const { data: access } = await serviceClient.from("user_ai_access").select("*");
+      return new Response(JSON.stringify({ access: access || [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "set-ai-access") {
+      const { target_user_id, provider, enabled, purposes, monthly_credit_limit, notes } = body;
+      if (!target_user_id) {
+        return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const validProviders = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
+      const row: Record<string, any> = {
+        user_id: target_user_id,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
+      };
+      if (provider !== undefined) row.provider = validProviders.includes(provider) ? provider : "lovable";
+      if (enabled !== undefined) row.enabled = !!enabled;
+      if (purposes !== undefined) row.purposes = Array.isArray(purposes) ? purposes : [];
+      if (monthly_credit_limit !== undefined) row.monthly_credit_limit = monthly_credit_limit;
+      if (notes !== undefined) row.notes = notes;
+      const { data, error } = await serviceClient.from("user_ai_access").upsert(row, { onConflict: "user_id" }).select().single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, access: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
