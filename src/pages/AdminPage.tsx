@@ -91,6 +91,14 @@ const PLAN_LIMITS: Record<string, number> = {
   agency: 10000,
 };
 
+// AI credit quota per plan — kept in sync with the subscription plan
+const PLAN_CREDITS: Record<string, number> = {
+  free: 0,
+  starter: 100,
+  pro: 1000,
+  agency: 5000,
+};
+
 function StatCard({ title, value, icon: Icon, subtitle, variant }: {
   title: string;
   value: string | number;
