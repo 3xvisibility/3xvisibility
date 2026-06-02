@@ -263,6 +263,38 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "set-ai-credits") {
+      const { target_user_id, total_credits, remaining_credits } = body;
+      if (!target_user_id) {
+        return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Ensure a credits row exists
+      const { data: existing } = await serviceClient.from("ai_credits").select("*").eq("user_id", target_user_id).maybeSingle();
+
+      const total = total_credits !== undefined && total_credits !== null
+        ? Math.max(0, Math.floor(Number(total_credits)))
+        : (existing?.total_credits ?? 100);
+      const remaining = remaining_credits !== undefined && remaining_credits !== null
+        ? Math.max(0, Math.min(Math.floor(Number(remaining_credits)), total))
+        : (existing?.remaining_credits ?? total);
+      const used = Math.max(0, total - remaining);
+
+      const row: Record<string, any> = {
+        user_id: target_user_id,
+        total_credits: total,
+        remaining_credits: remaining,
+        used_credits: used,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await serviceClient.from("ai_credits").upsert(row, { onConflict: "user_id" }).select().single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, credits: data }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "get-settings") {
       const { data, error } = await serviceClient.from("system_settings").select("*").eq("id", "global").maybeSingle();
       if (error) throw error;
