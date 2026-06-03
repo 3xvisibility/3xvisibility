@@ -290,10 +290,37 @@ async function callExternal(
 
 // ── Resolve active provider ──────────────────────────────────────────────────
 
+const VALID_PROVIDERS: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
+
+/** Env-based provider (last-resort fallback when the DB is unreachable). */
 export function getActiveProvider(): AiProvider {
   const raw = edgeConfig.ai.provider;
-  const valid: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
-  return valid.includes(raw as AiProvider) ? (raw as AiProvider) : "lovable";
+  return VALID_PROVIDERS.includes(raw as AiProvider) ? (raw as AiProvider) : "lovable";
+}
+
+/**
+ * Resolve the SINGLE global AI provider that every user shares.
+ *
+ * The admin picks this in Admin → System Settings, which writes
+ * `system_settings.ai_provider` (id = 'global'). That choice is the source of
+ * truth for ALL users and ALL prompts. We fall back to the AI_PROVIDER env
+ * secret, then to "lovable", only when the DB value is missing/unreachable.
+ */
+export async function getGlobalProvider(): Promise<AiProvider> {
+  const sb = getServiceClient();
+  if (!sb) return getActiveProvider();
+  try {
+    const { data } = await sb
+      .from("system_settings")
+      .select("ai_provider")
+      .eq("id", "global")
+      .maybeSingle();
+    const raw = (data?.ai_provider || "").toLowerCase().trim();
+    if (VALID_PROVIDERS.includes(raw as AiProvider)) return raw as AiProvider;
+    return getActiveProvider();
+  } catch {
+    return getActiveProvider();
+  }
 }
 
 export interface UserAiAccess {
@@ -303,29 +330,27 @@ export interface UserAiAccess {
 }
 
 /**
- * Resolve the AI access settings for a specific user, as configured by an
- * administrator in the `user_ai_access` table. Falls back to the global
- * provider (and enabled) when the user has no explicit assignment.
+ * Resolve AI access for a user. The PROVIDER is always the admin-configured
+ * global provider — every user uses exactly what the admin set up. The
+ * per-user `user_ai_access` row is only used by the admin to disable a user
+ * or restrict which AI purposes/features they may use; it can NEVER change
+ * which provider is used.
  */
 export async function resolveUserAiAccess(userId?: string): Promise<UserAiAccess> {
-  const globalProvider = getActiveProvider();
+  const globalProvider = await getGlobalProvider();
   if (!userId) return { enabled: true, provider: globalProvider, purposes: [] };
   const sb = getServiceClient();
   if (!sb) return { enabled: true, provider: globalProvider, purposes: [] };
   try {
     const { data } = await sb
       .from("user_ai_access")
-      .select("provider, enabled, purposes")
+      .select("enabled, purposes")
       .eq("user_id", userId)
       .maybeSingle();
     if (!data) return { enabled: true, provider: globalProvider, purposes: [] };
-    const valid: AiProvider[] = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
-    const provider = valid.includes(data.provider as AiProvider)
-      ? (data.provider as AiProvider)
-      : globalProvider;
     return {
       enabled: data.enabled !== false,
-      provider,
+      provider: globalProvider,
       purposes: Array.isArray(data.purposes) ? data.purposes : [],
     };
   } catch {
@@ -333,12 +358,13 @@ export async function resolveUserAiAccess(userId?: string): Promise<UserAiAccess
   }
 }
 
+
 // ── Main entry: generate (non-streaming) ─────────────────────────────────────
 
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   // Resolve user + admin-controlled AI access
   const uid = await resolveUserId(opts);
-  let provider = getActiveProvider();
+  let provider = await getGlobalProvider();
   if (!opts.skipCredits) {
     if (!uid) {
       return {
@@ -431,7 +457,7 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   fallback_used: boolean;
 }> {
   const uid = await resolveUserId(opts);
-  let provider = getActiveProvider();
+  let provider = await getGlobalProvider();
   if (!opts.skipCredits) {
     if (!uid) {
       return {
