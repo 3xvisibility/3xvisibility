@@ -147,6 +147,46 @@ function formatRelativeTime(d: string) {
   return formatDate(d);
 }
 
+function paginate<T>(items: T[], page: number, pageSize: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * pageSize;
+  return { items: items.slice(start, start + pageSize), currentPage, totalPages };
+}
+
+function PaginationBar({
+  page,
+  totalPages,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  page: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (p: number) => void;
+  onPageSizeChange: (s: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground pt-2">
+      <div className="tabular-nums">
+        Showing {totalItems === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalItems)} of {totalItems}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+          <ChevronLeft className="h-3.5 w-3.5" /> Prev
+        </Button>
+        <span className="tabular-nums">Page {page} / {totalPages}</span>
+        <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+          Next <ChevronRight className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function statusBadge(status: string) {
   const map: Record<string, string> = {
     completed: "bg-success/10 text-success border-success/20",
