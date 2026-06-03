@@ -19,6 +19,7 @@ import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizar
 import { CampaignHowItWorks } from "@/components/campaigns/CampaignHowItWorks";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { wsChannel, wsFilter } from "@/lib/realtime-scope";
 import type { Tables } from "@/integrations/supabase/types";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
