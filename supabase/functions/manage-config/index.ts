@@ -126,6 +126,8 @@ Deno.serve(async (req) => {
       const forbidden = await requireAdmin(workspaceId);
       if (forbidden) return forbidden;
 
+      const callerIsAdmin = await isPlatformAdmin();
+
       const { data: rows, error } = await sb
         .from("app_config")
         .select("config_key, config_value, is_secret, updated_at")
@@ -137,15 +139,17 @@ Deno.serve(async (req) => {
         console.warn("[manage-config] read error:", error.message);
         return new Response(
           JSON.stringify({
-            configs: ALLOWED_KEYS.map((k) => ({
-              key: k,
-              value: "",
-              is_secret: SECRET_KEYS.has(k),
-              source: "env",
-              env_value: SECRET_KEYS.has(k)
-                ? (Deno.env.get(k) ? "••••••••" : "")
-                : (Deno.env.get(k) ?? ""),
-            })),
+            configs: ALLOWED_KEYS
+              .filter((k) => callerIsAdmin || k !== "AI_PROVIDER")
+              .map((k) => ({
+                key: k,
+                value: "",
+                is_secret: SECRET_KEYS.has(k),
+                source: "env",
+                env_value: SECRET_KEYS.has(k)
+                  ? (Deno.env.get(k) ? "••••••••" : "")
+                  : (Deno.env.get(k) ?? ""),
+              })),
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
@@ -153,33 +157,35 @@ Deno.serve(async (req) => {
 
       const rowMap = new Map(rows?.map((r: any) => [r.config_key, r]) ?? []);
 
-      const configs = ALLOWED_KEYS.map((k) => {
-        const row = rowMap.get(k) as any;
-        const isSecret = SECRET_KEYS.has(k);
-        const envVal = Deno.env.get(k) ?? "";
+      const configs = ALLOWED_KEYS
+        .filter((k) => callerIsAdmin || k !== "AI_PROVIDER")
+        .map((k) => {
+          const row = rowMap.get(k) as any;
+          const isSecret = SECRET_KEYS.has(k);
+          const envVal = Deno.env.get(k) ?? "";
 
-        if (row) {
+          if (row) {
+            return {
+              key: k,
+              value: isSecret ? "••••••••" : row.config_value,
+              has_override: true,
+              is_secret: isSecret,
+              source: "database",
+              env_value: isSecret ? (envVal ? "••••••••" : "") : envVal,
+              updated_at: row.updated_at,
+            };
+          }
+
           return {
             key: k,
-            value: isSecret ? "••••••••" : row.config_value,
-            has_override: true,
+            value: "",
+            has_override: false,
             is_secret: isSecret,
-            source: "database",
+            source: "env",
             env_value: isSecret ? (envVal ? "••••••••" : "") : envVal,
-            updated_at: row.updated_at,
+            updated_at: null,
           };
-        }
-
-        return {
-          key: k,
-          value: "",
-          has_override: false,
-          is_secret: isSecret,
-          source: "env",
-          env_value: isSecret ? (envVal ? "••••••••" : "") : envVal,
-          updated_at: null,
-        };
-      });
+        });
 
       return new Response(JSON.stringify({ configs }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
