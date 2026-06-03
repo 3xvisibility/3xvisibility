@@ -24,6 +24,7 @@ import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSel
 import { exportPagesCsv, exportPagesJson, exportDataFile } from "@/lib/export-csv";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { wsChannel } from "@/lib/realtime-scope";
 import type { Tables } from "@/integrations/supabase/types";
 import { calculateSeoScore } from "@/lib/seo-score";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
@@ -114,7 +115,7 @@ export default function GeneratedPagesPage() {
   useEffect(() => {
     if (!wsId) return;
     const channel = supabase
-      .channel(`generated-pages-${wsId}`)
+      .channel(wsChannel("generated-pages", wsId))
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "generated_pages", filter: `workspace_id=eq.${wsId}` },

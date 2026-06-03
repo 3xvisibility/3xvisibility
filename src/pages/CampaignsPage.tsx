@@ -19,6 +19,7 @@ import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizar
 import { CampaignHowItWorks } from "@/components/campaigns/CampaignHowItWorks";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { wsChannel, wsFilter } from "@/lib/realtime-scope";
 import type { Tables } from "@/integrations/supabase/types";
 import { useSubscription } from "@/hooks/use-subscription";
 import { UsageLimitBanner } from "@/components/UpgradePrompt";
@@ -64,14 +65,16 @@ export default function CampaignsPage() {
   const [typeFilter, setTypeFilter] = useState<"all" | "seo" | "sea" | "geo">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Realtime
+  // Realtime — scoped to the current workspace topic + workspace_id filters
   useEffect(() => {
+    if (!wsId) return;
+    const wsScopeFilter = wsFilter(wsId);
     const channel = supabase
-      .channel("campaign-progress")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "campaigns" }, () => {
+      .channel(wsChannel("campaign-progress", wsId))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "campaigns", filter: wsScopeFilter }, () => {
         queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "generation_jobs" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "generation_jobs", filter: wsScopeFilter }, () => {
         queryClient.invalidateQueries({ queryKey: ["campaigns"] });
         queryClient.invalidateQueries({ queryKey: ["generation-jobs", wsId] });
       })
