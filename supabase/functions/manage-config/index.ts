@@ -213,6 +213,12 @@ Deno.serve(async (req) => {
         );
       }
 
+      // AI_PROVIDER is global — only platform admins may change it
+      if (key === "AI_PROVIDER") {
+        const adminCheck = await requirePlatformAdmin();
+        if (adminCheck) return adminCheck;
+      }
+
       // Validate AI_PROVIDER value
       if (key === "AI_PROVIDER") {
         const validProviders = ["lovable", "openai", "gemini", "groq", "deepseek", "openrouter"];
