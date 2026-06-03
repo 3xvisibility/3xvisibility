@@ -907,16 +907,37 @@ export default function AdminPage() {
 
         {/* Subscriptions tab */}
         <TabsContent value="subscriptions" className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by user, email, or plan..."
+                value={subSearch}
+                onChange={(e) => { setSubSearch(e.target.value); setSubPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={String(subPageSize)} onValueChange={(v) => { setSubPageSize(Number(v)); setSubPage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
           ) : (
             <div className="rounded-xl border">
               {/* Mobile card layout */}
               <div className="lg:hidden divide-y divide-border">
-                {(data?.subscriptions || []).length === 0 ? (
+                {subPagination.items.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">No subscriptions found</p>
                 ) : (
-                  data!.subscriptions.map((s) => {
+                  subPagination.items.map((s) => {
                     const user = data?.users?.find((u) => u.id === s.user_id);
                     const usagePercent = s.pages_limit > 0 ? Math.round((s.pages_used / s.pages_limit) * 100) : 0;
                     return (
@@ -956,12 +977,12 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(data?.subscriptions || []).length === 0 ? (
+                    {subPagination.items.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No subscriptions found</TableCell>
                       </TableRow>
                     ) : (
-                      data!.subscriptions.map((s) => {
+                      subPagination.items.map((s) => {
                         const user = data?.users?.find((u) => u.id === s.user_id);
                         const usagePercent = s.pages_limit > 0 ? Math.round((s.pages_used / s.pages_limit) * 100) : 0;
                         return (
@@ -996,6 +1017,16 @@ export default function AdminPage() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={subPagination.currentPage}
+                  totalPages={subPagination.totalPages}
+                  pageSize={subPageSize}
+                  totalItems={filteredSubscriptions.length}
+                  onPageChange={setSubPage}
+                  onPageSizeChange={(s) => { setSubPageSize(s); setSubPage(1); }}
+                />
               </div>
             </div>
           )}
