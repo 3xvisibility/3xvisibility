@@ -84,6 +84,34 @@ Deno.serve(async (req) => {
       return null;
     }
 
+    // ── Helper: verify caller is platform admin ─────────────────────────
+    async function requirePlatformAdmin(): Promise<Response | null> {
+      const { data: roleData } = await sb
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!roleData) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: platform admin role required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      return null;
+    }
+
+    // ── Helper: check if caller is platform admin (boolean) ─────────────
+    async function isPlatformAdmin(): Promise<boolean> {
+      const { data: roleData } = await sb
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!roleData;
+    }
+
     // ── GET ─────────────────────────────────────────────────────────────────
     if (req.method === "GET") {
       const url = new URL(req.url);
