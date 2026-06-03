@@ -44,7 +44,7 @@ export function LiveGenerationProgress({ workspaceId }: { workspaceId: string })
   useEffect(() => {
     if (!workspaceId) return;
     const channel = supabase
-      .channel(`gen-jobs-${workspaceId}`)
+      .channel(wsChannel("gen-jobs", workspaceId))
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "generation_jobs", filter: `workspace_id=eq.${workspaceId}` },
