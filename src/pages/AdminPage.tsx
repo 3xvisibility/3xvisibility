@@ -840,9 +840,26 @@ export default function AdminPage() {
 
         {/* Campaigns tab */}
         <TabsContent value="campaigns" className="space-y-4">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search campaigns..." value={campaignSearch} onChange={(e) => setCampaignSearch(e.target.value)} className="pl-9" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search campaigns..."
+                value={campaignSearch}
+                onChange={(e) => { setCampaignSearch(e.target.value); setCampaignPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={String(campaignPageSize)} onValueChange={(v) => { setCampaignPageSize(Number(v)); setCampaignPage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
@@ -858,12 +875,12 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCampaigns.length === 0 ? (
+                  {campaignPagination.items.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
                     </TableRow>
                   ) : (
-                    filteredCampaigns.map((c) => (
+                    campaignPagination.items.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell className="font-medium text-sm">{c.name}</TableCell>
                         <TableCell>{statusBadge(c.status)}</TableCell>
@@ -874,6 +891,16 @@ export default function AdminPage() {
                   )}
                 </TableBody>
               </Table>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={campaignPagination.currentPage}
+                  totalPages={campaignPagination.totalPages}
+                  pageSize={campaignPageSize}
+                  totalItems={filteredCampaigns.length}
+                  onPageChange={setCampaignPage}
+                  onPageSizeChange={(s) => { setCampaignPageSize(s); setCampaignPage(1); }}
+                />
+              </div>
             </div>
           )}
         </TabsContent>
