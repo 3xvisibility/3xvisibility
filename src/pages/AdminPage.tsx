@@ -380,11 +380,21 @@ export default function AdminPage() {
   };
   const [userSearch, setUserSearch] = useState("");
   const [campaignSearch, setCampaignSearch] = useState("");
+  const [subSearch, setSubSearch] = useState("");
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const queryClient = useQueryClient();
+
+  // Pagination state
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [userPage, setUserPage] = useState(1);
+  const [userPageSize, setUserPageSize] = useState(25);
+  const [campaignPage, setCampaignPage] = useState(1);
+  const [campaignPageSize, setCampaignPageSize] = useState(25);
+  const [subPage, setSubPage] = useState(1);
+  const [subPageSize, setSubPageSize] = useState(25);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-panel"],
