@@ -573,6 +573,18 @@ export default function AdminPage() {
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="overview" className="space-y-4">
+          <AdminOverviewPanel
+            loading={isLoading}
+            overview={overview}
+            users={data?.users || []}
+            campaigns={data?.campaigns || []}
+            subscriptions={data?.subscriptions || []}
+          />
+        </TabsContent>
+
+
+
 
         <TabsContent value="ai-access" className="space-y-4">
           <AiAccessAdminPanel />
