@@ -372,7 +372,7 @@ function UserActionsMenu({
 export default function AdminPage() {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const section = searchParams.get("section") || "activity";
+  const section = searchParams.get("section") || "overview";
   const setSection = (value: string) => {
     const next = new URLSearchParams(searchParams);
     next.set("section", value);
