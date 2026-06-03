@@ -271,6 +271,12 @@ Deno.serve(async (req) => {
       const forbidden = await requireAdmin(workspace_id);
       if (forbidden) return forbidden;
 
+      // AI_PROVIDER is global — only platform admins may change it
+      if (key === "AI_PROVIDER") {
+        const adminCheck = await requirePlatformAdmin();
+        if (adminCheck) return adminCheck;
+      }
+
       const { error } = await sb.from("app_config").delete()
         .eq("workspace_id", workspace_id)
         .eq("config_key", key);
