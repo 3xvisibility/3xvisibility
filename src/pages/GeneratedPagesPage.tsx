@@ -115,7 +115,7 @@ export default function GeneratedPagesPage() {
   useEffect(() => {
     if (!wsId) return;
     const channel = supabase
-      .channel(`generated-pages-${wsId}`)
+      .channel(wsChannel("generated-pages", wsId))
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "generated_pages", filter: `workspace_id=eq.${wsId}` },
