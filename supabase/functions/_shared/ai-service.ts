@@ -457,7 +457,7 @@ export async function aiGenerateStream(opts: AiGenerateOptions): Promise<{
   fallback_used: boolean;
 }> {
   const uid = await resolveUserId(opts);
-  let provider = getActiveProvider();
+  let provider = await getGlobalProvider();
   if (!opts.skipCredits) {
     if (!uid) {
       return {
