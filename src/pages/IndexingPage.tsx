@@ -53,7 +53,7 @@ export default function IndexingPage() {
     queryKey: ["websites", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("websites").select("*").eq("workspace_id", wsId!).order("name");
+      const { data, error } = await supabase.from("websites").select("id, user_id, name, url, type, status, last_sync, created_at, updated_at, google_indexing_enabled, workspace_id, language, language_locked, shop_details").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
