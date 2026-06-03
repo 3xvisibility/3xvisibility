@@ -714,9 +714,26 @@ export default function AdminPage() {
 
         {/* Users tab */}
         <TabsContent value="users" className="space-y-4">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search users..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-9" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                value={userSearch}
+                onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={String(userPageSize)} onValueChange={(v) => { setUserPageSize(Number(v)); setUserPage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
@@ -724,10 +741,10 @@ export default function AdminPage() {
             <div className="rounded-xl border">
               {/* Mobile card layout */}
               <div className="lg:hidden divide-y divide-border">
-                {filteredUsers.length === 0 ? (
+                {userPagination.items.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">No users found</p>
                 ) : (
-                  filteredUsers.map((u) => (
+                  userPagination.items.map((u) => (
                     <div key={u.id} className="p-3 flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -769,12 +786,12 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.length === 0 ? (
+                    {userPagination.items.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users found</TableCell>
                       </TableRow>
                     ) : (
-                      filteredUsers.map((u) => (
+                      userPagination.items.map((u) => (
                         <TableRow key={u.id}>
                           <TableCell>
                             <div>
@@ -806,6 +823,16 @@ export default function AdminPage() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={userPagination.currentPage}
+                  totalPages={userPagination.totalPages}
+                  pageSize={userPageSize}
+                  totalItems={filteredUsers.length}
+                  onPageChange={setUserPage}
+                  onPageSizeChange={(s) => { setUserPageSize(s); setUserPage(1); }}
+                />
               </div>
             </div>
           )}
