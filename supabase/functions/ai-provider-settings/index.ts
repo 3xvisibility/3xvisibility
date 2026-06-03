@@ -11,7 +11,11 @@
  *
  * For now this reads/writes the AI_PROVIDER env var which is set as a
  * Supabase secret. The admin UI calls this to check the current value.
+ *
+ * SECURITY: All access requires platform admin role.
  */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,6 +40,45 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── Auth + platform admin check ────────────────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const sb = createClient(supabaseUrl, serviceKey);
+
+    const token = authHeader.replace("Bearer ", "");
+    const {
+      data: { user },
+      error: authErr,
+    } = await sb.auth.getUser(token);
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: roleData } = await sb
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: platform admin role required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // GET — return current provider + available providers
     if (req.method === "GET") {
       const { edgeConfig: ec } = await import("../_shared/config.ts");
