@@ -16,13 +16,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
 import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
+import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 
 interface AdminUser {
   id: string;
@@ -371,7 +372,7 @@ function UserActionsMenu({
 export default function AdminPage() {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const section = searchParams.get("section") || "activity";
+  const section = searchParams.get("section") || "overview";
   const setSection = (value: string) => {
     const next = new URLSearchParams(searchParams);
     next.set("section", value);
@@ -560,6 +561,7 @@ export default function AdminPage() {
 
       <Tabs value={section} onValueChange={setSection}>
         <TabsList className="flex-wrap h-auto gap-1 p-1 lg:hidden">
+          <TabsTrigger value="overview" className="text-xs gap-1"><BarChart3 className="h-3 w-3" />Overview</TabsTrigger>
           <TabsTrigger value="activity" className="text-xs">{t("admin.activity")}</TabsTrigger>
           <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
@@ -570,6 +572,18 @@ export default function AdminPage() {
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <AdminOverviewPanel
+            loading={isLoading}
+            overview={overview}
+            users={data?.users || []}
+            campaigns={data?.campaigns || []}
+            subscriptions={data?.subscriptions || []}
+          />
+        </TabsContent>
+
+
 
 
         <TabsContent value="ai-access" className="space-y-4">
