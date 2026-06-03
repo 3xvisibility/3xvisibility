@@ -64,7 +64,7 @@ export function AdminSidebar({ onLogout }: AdminSidebarProps) {
   const { basePath } = useWorkspace();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const active = searchParams.get("section") || "activity";
+  const active = searchParams.get("section") || "overview";
 
   const renderItems = (items: AdminNavItem[]) =>
     items.map((item) => {
