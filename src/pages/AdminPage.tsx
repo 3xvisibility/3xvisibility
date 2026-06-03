@@ -23,6 +23,7 @@ import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel"
 import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
+import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 
 interface AdminUser {
   id: string;
