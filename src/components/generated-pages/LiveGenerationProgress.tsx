@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Activity, CheckCircle2, AlertCircle, Pause } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { wsChannel } from "@/lib/realtime-scope";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import type { Tables } from "@/integrations/supabase/types";
