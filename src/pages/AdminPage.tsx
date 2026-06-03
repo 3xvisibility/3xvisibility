@@ -579,15 +579,30 @@ export default function AdminPage() {
   }
 
   const overview = data?.overview;
-  const filteredUsers = data?.users?.filter(
+  const filteredUsers = (data?.users || []).filter(
     (u) =>
       u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.company?.toLowerCase().includes(userSearch.toLowerCase())
-  ) || [];
-  const filteredCampaigns = data?.campaigns?.filter(
+  );
+  const filteredCampaigns = (data?.campaigns || []).filter(
     (c) => c.name?.toLowerCase().includes(campaignSearch.toLowerCase())
-  ) || [];
+  );
+  const filteredSubscriptions = (data?.subscriptions || []).filter((s) => {
+    const user = data?.users?.find((u) => u.id === s.user_id);
+    const q = subSearch.toLowerCase();
+    return (
+      !q ||
+      user?.email?.toLowerCase().includes(q) ||
+      user?.full_name?.toLowerCase().includes(q) ||
+      s.plan?.toLowerCase().includes(q) ||
+      s.user_id?.toLowerCase().includes(q)
+    );
+  });
+
+  const userPagination = paginate(filteredUsers, userPage, userPageSize);
+  const campaignPagination = paginate(filteredCampaigns, campaignPage, campaignPageSize);
+  const subPagination = paginate(filteredSubscriptions, subPage, subPageSize);
 
   return (
     <div className="space-y-6">
