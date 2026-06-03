@@ -561,6 +561,7 @@ export default function AdminPage() {
 
       <Tabs value={section} onValueChange={setSection}>
         <TabsList className="flex-wrap h-auto gap-1 p-1 lg:hidden">
+          <TabsTrigger value="overview" className="text-xs gap-1"><BarChart3 className="h-3 w-3" />Overview</TabsTrigger>
           <TabsTrigger value="activity" className="text-xs">{t("admin.activity")}</TabsTrigger>
           <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
