@@ -86,7 +86,7 @@ export default function IndexingPage() {
   useEffect(() => {
     if (!selectedWebsite) return;
     const channel = supabase
-      .channel("indexing-updates")
+      .channel(`indexing-updates:${selectedWebsite}`)
       .on("postgres_changes", {
         event: "*",
         schema: "public",
