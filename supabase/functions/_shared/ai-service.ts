@@ -364,7 +364,7 @@ export async function resolveUserAiAccess(userId?: string): Promise<UserAiAccess
 export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   // Resolve user + admin-controlled AI access
   const uid = await resolveUserId(opts);
-  let provider = getActiveProvider();
+  let provider = await getGlobalProvider();
   if (!opts.skipCredits) {
     if (!uid) {
       return {
