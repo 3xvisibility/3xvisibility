@@ -558,7 +558,7 @@ function WebhookSettings({ wsId }: { wsId: string | undefined }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("webhook_endpoints")
-        .select("*")
+        .select("id, user_id, workspace_id, url, events, is_active, last_triggered_at, last_status_code, created_at, updated_at")
         .eq("workspace_id", wsId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
