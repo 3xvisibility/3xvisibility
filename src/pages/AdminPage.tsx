@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3 } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -145,6 +145,46 @@ function formatRelativeTime(d: string) {
   const days = Math.floor(hrs / 24);
   if (days < 30) return `${days}d ago`;
   return formatDate(d);
+}
+
+function paginate<T>(items: T[], page: number, pageSize: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * pageSize;
+  return { items: items.slice(start, start + pageSize), currentPage, totalPages };
+}
+
+function PaginationBar({
+  page,
+  totalPages,
+  pageSize,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  page: number;
+  totalPages: number;
+  pageSize: number;
+  totalItems: number;
+  onPageChange: (p: number) => void;
+  onPageSizeChange: (s: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 flex-wrap text-xs text-muted-foreground pt-2">
+      <div className="tabular-nums">
+        Showing {totalItems === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalItems)} of {totalItems}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+          <ChevronLeft className="h-3.5 w-3.5" /> Prev
+        </Button>
+        <span className="tabular-nums">Page {page} / {totalPages}</span>
+        <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+          Next <ChevronRight className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 function statusBadge(status: string) {
@@ -380,11 +420,21 @@ export default function AdminPage() {
   };
   const [userSearch, setUserSearch] = useState("");
   const [campaignSearch, setCampaignSearch] = useState("");
+  const [subSearch, setSubSearch] = useState("");
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const queryClient = useQueryClient();
+
+  // Pagination state
+  const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+  const [userPage, setUserPage] = useState(1);
+  const [userPageSize, setUserPageSize] = useState(25);
+  const [campaignPage, setCampaignPage] = useState(1);
+  const [campaignPageSize, setCampaignPageSize] = useState(25);
+  const [subPage, setSubPage] = useState(1);
+  const [subPageSize, setSubPageSize] = useState(25);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-panel"],
@@ -529,15 +579,30 @@ export default function AdminPage() {
   }
 
   const overview = data?.overview;
-  const filteredUsers = data?.users?.filter(
+  const filteredUsers = (data?.users || []).filter(
     (u) =>
       u.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.company?.toLowerCase().includes(userSearch.toLowerCase())
-  ) || [];
-  const filteredCampaigns = data?.campaigns?.filter(
+  );
+  const filteredCampaigns = (data?.campaigns || []).filter(
     (c) => c.name?.toLowerCase().includes(campaignSearch.toLowerCase())
-  ) || [];
+  );
+  const filteredSubscriptions = (data?.subscriptions || []).filter((s) => {
+    const user = data?.users?.find((u) => u.id === s.user_id);
+    const q = subSearch.toLowerCase();
+    return (
+      !q ||
+      user?.email?.toLowerCase().includes(q) ||
+      user?.full_name?.toLowerCase().includes(q) ||
+      s.plan?.toLowerCase().includes(q) ||
+      s.user_id?.toLowerCase().includes(q)
+    );
+  });
+
+  const userPagination = paginate(filteredUsers, userPage, userPageSize);
+  const campaignPagination = paginate(filteredCampaigns, campaignPage, campaignPageSize);
+  const subPagination = paginate(filteredSubscriptions, subPage, subPageSize);
 
   return (
     <div className="space-y-6">
@@ -649,9 +714,26 @@ export default function AdminPage() {
 
         {/* Users tab */}
         <TabsContent value="users" className="space-y-4">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search users..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="pl-9" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                value={userSearch}
+                onChange={(e) => { setUserSearch(e.target.value); setUserPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={String(userPageSize)} onValueChange={(v) => { setUserPageSize(Number(v)); setUserPage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
@@ -659,10 +741,10 @@ export default function AdminPage() {
             <div className="rounded-xl border">
               {/* Mobile card layout */}
               <div className="lg:hidden divide-y divide-border">
-                {filteredUsers.length === 0 ? (
+                {userPagination.items.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">No users found</p>
                 ) : (
-                  filteredUsers.map((u) => (
+                  userPagination.items.map((u) => (
                     <div key={u.id} className="p-3 flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -704,12 +786,12 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.length === 0 ? (
+                    {userPagination.items.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users found</TableCell>
                       </TableRow>
                     ) : (
-                      filteredUsers.map((u) => (
+                      userPagination.items.map((u) => (
                         <TableRow key={u.id}>
                           <TableCell>
                             <div>
@@ -742,15 +824,42 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               </div>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={userPagination.currentPage}
+                  totalPages={userPagination.totalPages}
+                  pageSize={userPageSize}
+                  totalItems={filteredUsers.length}
+                  onPageChange={setUserPage}
+                  onPageSizeChange={(s) => { setUserPageSize(s); setUserPage(1); }}
+                />
+              </div>
             </div>
           )}
         </TabsContent>
 
         {/* Campaigns tab */}
         <TabsContent value="campaigns" className="space-y-4">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search campaigns..." value={campaignSearch} onChange={(e) => setCampaignSearch(e.target.value)} className="pl-9" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search campaigns..."
+                value={campaignSearch}
+                onChange={(e) => { setCampaignSearch(e.target.value); setCampaignPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={String(campaignPageSize)} onValueChange={(v) => { setCampaignPageSize(Number(v)); setCampaignPage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
@@ -766,12 +875,12 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCampaigns.length === 0 ? (
+                  {campaignPagination.items.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
                     </TableRow>
                   ) : (
-                    filteredCampaigns.map((c) => (
+                    campaignPagination.items.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell className="font-medium text-sm">{c.name}</TableCell>
                         <TableCell>{statusBadge(c.status)}</TableCell>
@@ -782,22 +891,53 @@ export default function AdminPage() {
                   )}
                 </TableBody>
               </Table>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={campaignPagination.currentPage}
+                  totalPages={campaignPagination.totalPages}
+                  pageSize={campaignPageSize}
+                  totalItems={filteredCampaigns.length}
+                  onPageChange={setCampaignPage}
+                  onPageSizeChange={(s) => { setCampaignPageSize(s); setCampaignPage(1); }}
+                />
+              </div>
             </div>
           )}
         </TabsContent>
 
         {/* Subscriptions tab */}
         <TabsContent value="subscriptions" className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by user, email, or plan..."
+                value={subSearch}
+                onChange={(e) => { setSubSearch(e.target.value); setSubPage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={String(subPageSize)} onValueChange={(v) => { setSubPageSize(Number(v)); setSubPage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
           ) : (
             <div className="rounded-xl border">
               {/* Mobile card layout */}
               <div className="lg:hidden divide-y divide-border">
-                {(data?.subscriptions || []).length === 0 ? (
+                {subPagination.items.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">No subscriptions found</p>
                 ) : (
-                  data!.subscriptions.map((s) => {
+                  subPagination.items.map((s) => {
                     const user = data?.users?.find((u) => u.id === s.user_id);
                     const usagePercent = s.pages_limit > 0 ? Math.round((s.pages_used / s.pages_limit) * 100) : 0;
                     return (
@@ -837,12 +977,12 @@ export default function AdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(data?.subscriptions || []).length === 0 ? (
+                    {subPagination.items.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No subscriptions found</TableCell>
                       </TableRow>
                     ) : (
-                      data!.subscriptions.map((s) => {
+                      subPagination.items.map((s) => {
                         const user = data?.users?.find((u) => u.id === s.user_id);
                         const usagePercent = s.pages_limit > 0 ? Math.round((s.pages_used / s.pages_limit) * 100) : 0;
                         return (
@@ -877,6 +1017,16 @@ export default function AdminPage() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={subPagination.currentPage}
+                  totalPages={subPagination.totalPages}
+                  pageSize={subPageSize}
+                  totalItems={filteredSubscriptions.length}
+                  onPageChange={setSubPage}
+                  onPageSizeChange={(s) => { setSubPageSize(s); setSubPage(1); }}
+                />
               </div>
             </div>
           )}
