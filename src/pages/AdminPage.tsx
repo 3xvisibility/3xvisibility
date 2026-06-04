@@ -860,7 +860,7 @@ export default function AdminPage() {
             <div className="relative flex-1 min-w-[220px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search campaigns..."
+                placeholder="Search by campaign or user email..."
                 value={campaignSearch}
                 onChange={(e) => { setCampaignSearch(e.target.value); setCampaignPage(1); }}
                 className="pl-9"
