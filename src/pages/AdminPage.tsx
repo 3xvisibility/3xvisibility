@@ -1073,6 +1073,14 @@ export default function AdminPage() {
         saving={updateMutation.isPending}
       />
 
+      <UserDetailDialog
+        userId={detailUserId}
+        open={!!detailUserId}
+        onOpenChange={(o) => !o && setDetailUserId(null)}
+      />
+
+
+
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
