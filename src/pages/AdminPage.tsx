@@ -821,6 +821,7 @@ export default function AdminPage() {
                           <TableCell>
                             <UserActionsMenu
                               u={u}
+                              onViewDetails={() => setDetailUserId(u.id)}
                               onEditPlan={() => openEditFromUser(u)}
                               onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
                               onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
