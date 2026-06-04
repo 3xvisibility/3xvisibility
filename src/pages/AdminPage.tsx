@@ -803,14 +803,14 @@ export default function AdminPage() {
                       userPagination.items.map((u) => (
                         <TableRow key={u.id}>
                           <TableCell>
-                            <div>
+                            <button type="button" onClick={() => setDetailUserId(u.id)} className="text-left hover:underline">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <p className="font-medium text-sm">{u.full_name || "—"}</p>
                                 {u.is_banned && <Badge variant="destructive" className="text-[10px] h-4">Banned</Badge>}
                                 {u.role !== "user" && <Badge variant="outline" className="text-[10px] h-4 border-primary/40 text-primary capitalize">{u.role}</Badge>}
                               </div>
                               <p className="text-xs text-muted-foreground">{u.email}</p>
-                            </div>
+                            </button>
                           </TableCell>
                           <TableCell><Badge variant="outline" className="capitalize">{u.plan}</Badge></TableCell>
                           <TableCell className="text-right tabular-nums text-sm">{u.pages_used} / {u.pages_limit || "∞"}</TableCell>
