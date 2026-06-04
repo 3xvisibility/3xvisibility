@@ -66,6 +66,8 @@ interface Campaign {
   total_rows: number | null;
   processed_rows: number | null;
   created_at: string;
+  user_email?: string | null;
+  user_name?: string | null;
 }
 
 interface Subscription {
