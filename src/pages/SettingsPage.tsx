@@ -208,6 +208,10 @@ export default function SettingsPage() {
       </Card>
 
       {/* AI Provider configuration is managed by administrators (see Admin → AI Access). */}
+      {/* Read-only summary of the active global provider — visible to admins only. */}
+      <ActiveAiProviderCard />
+
+
 
 
       {/* AI Content Settings */}
