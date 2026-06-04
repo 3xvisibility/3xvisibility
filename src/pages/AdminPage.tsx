@@ -593,9 +593,15 @@ export default function AdminPage() {
       u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.company?.toLowerCase().includes(userSearch.toLowerCase())
   );
-  const filteredCampaigns = (data?.campaigns || []).filter(
-    (c) => c.name?.toLowerCase().includes(campaignSearch.toLowerCase())
-  );
+  const filteredCampaigns = (data?.campaigns || []).filter((c) => {
+    const q = campaignSearch.toLowerCase();
+    return (
+      !q ||
+      c.name?.toLowerCase().includes(q) ||
+      c.user_email?.toLowerCase().includes(q) ||
+      c.user_name?.toLowerCase().includes(q)
+    );
+  });
   const filteredSubscriptions = (data?.subscriptions || []).filter((s) => {
     const user = data?.users?.find((u) => u.id === s.user_id);
     const q = subSearch.toLowerCase();
