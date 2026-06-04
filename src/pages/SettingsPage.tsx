@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import ActiveAiProviderCard from "@/components/settings/ActiveAiProviderCard";
 
 const AI_PLAN_LIMITS: Record<string, number> = {
   free: 0,
@@ -208,6 +209,10 @@ export default function SettingsPage() {
       </Card>
 
       {/* AI Provider configuration is managed by administrators (see Admin → AI Access). */}
+      {/* Read-only summary of the active global provider — visible to admins only. */}
+      <ActiveAiProviderCard />
+
+
 
 
       {/* AI Content Settings */}
