@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import ActiveAiProviderCard from "@/components/settings/ActiveAiProviderCard";
 
 const AI_PLAN_LIMITS: Record<string, number> = {
   free: 0,
