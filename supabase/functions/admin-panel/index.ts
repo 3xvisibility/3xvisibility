@@ -130,10 +130,20 @@ Deno.serve(async (req) => {
       const activeCampaigns = campaigns?.filter((c: any) => c.status === "processing" || c.status === "queued").length || 0;
       const completedCampaigns = campaigns?.filter((c: any) => c.status === "completed").length || 0;
 
+      // Enrich campaigns with the owning user's email & name so admins can see
+      // at a glance which user is running which campaign.
+      const emailById = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
+      const nameById = new Map((profiles || []).map((p: any) => [p.user_id, p.full_name]));
+      const enrichedCampaigns = (campaigns || []).map((c: any) => ({
+        ...c,
+        user_email: emailById.get(c.user_id) || null,
+        user_name: nameById.get(c.user_id) || null,
+      }));
+
       return new Response(
         JSON.stringify({
           users,
-          campaigns: campaigns || [],
+          campaigns: enrichedCampaigns,
           subscriptions: subscriptions || [],
           activity: recentActivity,
           overview: {
