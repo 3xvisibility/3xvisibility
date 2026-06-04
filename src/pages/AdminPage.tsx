@@ -879,6 +879,7 @@ export default function AdminPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Campaign</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Progress</TableHead>
                     <TableHead>Created</TableHead>
@@ -887,12 +888,26 @@ export default function AdminPage() {
                 <TableBody>
                   {campaignPagination.items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
                     </TableRow>
                   ) : (
                     campaignPagination.items.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell className="font-medium text-sm">{c.name}</TableCell>
+                        <TableCell>
+                          {c.user_id ? (
+                            <button
+                              type="button"
+                              onClick={() => setDetailUserId(c.user_id)}
+                              className="text-left hover:underline"
+                            >
+                              <p className="text-sm font-medium">{c.user_name || "—"}</p>
+                              <p className="text-xs text-muted-foreground">{c.user_email || c.user_id}</p>
+                            </button>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell>{statusBadge(c.status)}</TableCell>
                         <TableCell className="text-right tabular-nums text-sm">{c.processed_rows ?? 0} / {c.total_rows ?? 0}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(c.created_at)}</TableCell>
