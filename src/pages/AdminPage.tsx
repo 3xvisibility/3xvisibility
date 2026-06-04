@@ -24,6 +24,7 @@ import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
+import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 
 interface AdminUser {
   id: string;
