@@ -24,6 +24,7 @@ import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
+import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 
 interface AdminUser {
   id: string;
@@ -66,6 +67,8 @@ interface Campaign {
   total_rows: number | null;
   processed_rows: number | null;
   created_at: string;
+  user_email?: string | null;
+  user_name?: string | null;
 }
 
 interface Subscription {
@@ -366,9 +369,10 @@ function EditSubscriptionDialog({
 
 // --- Per-row actions menu ---
 function UserActionsMenu({
-  u, onEditPlan, onSetRole, onToggleBan, onDelete,
+  u, onViewDetails, onEditPlan, onSetRole, onToggleBan, onDelete,
 }: {
   u: AdminUser;
+  onViewDetails: () => void;
   onEditPlan: () => void;
   onSetRole: (role: "admin" | "moderator" | "user") => void;
   onToggleBan: () => void;
@@ -383,6 +387,9 @@ function UserActionsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         <DropdownMenuLabel className="text-xs">Manage user</DropdownMenuLabel>
+        <DropdownMenuItem onClick={onViewDetails}>
+          <Search className="h-3.5 w-3.5 mr-2" /> View full details
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={onEditPlan}>
           <Pencil className="h-3.5 w-3.5 mr-2" /> Edit plan & quota
         </DropdownMenuItem>
@@ -425,6 +432,7 @@ export default function AdminPage() {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Pagination state
@@ -585,9 +593,15 @@ export default function AdminPage() {
       u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.company?.toLowerCase().includes(userSearch.toLowerCase())
   );
-  const filteredCampaigns = (data?.campaigns || []).filter(
-    (c) => c.name?.toLowerCase().includes(campaignSearch.toLowerCase())
-  );
+  const filteredCampaigns = (data?.campaigns || []).filter((c) => {
+    const q = campaignSearch.toLowerCase();
+    return (
+      !q ||
+      c.name?.toLowerCase().includes(q) ||
+      c.user_email?.toLowerCase().includes(q) ||
+      c.user_name?.toLowerCase().includes(q)
+    );
+  });
   const filteredSubscriptions = (data?.subscriptions || []).filter((s) => {
     const user = data?.users?.find((u) => u.id === s.user_id);
     const q = subSearch.toLowerCase();
@@ -761,6 +775,7 @@ export default function AdminPage() {
                       </div>
                       <UserActionsMenu
                         u={u}
+                        onViewDetails={() => setDetailUserId(u.id)}
                         onEditPlan={() => openEditFromUser(u)}
                         onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
                         onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
@@ -794,14 +809,14 @@ export default function AdminPage() {
                       userPagination.items.map((u) => (
                         <TableRow key={u.id}>
                           <TableCell>
-                            <div>
+                            <button type="button" onClick={() => setDetailUserId(u.id)} className="text-left hover:underline">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <p className="font-medium text-sm">{u.full_name || "—"}</p>
                                 {u.is_banned && <Badge variant="destructive" className="text-[10px] h-4">Banned</Badge>}
                                 {u.role !== "user" && <Badge variant="outline" className="text-[10px] h-4 border-primary/40 text-primary capitalize">{u.role}</Badge>}
                               </div>
                               <p className="text-xs text-muted-foreground">{u.email}</p>
-                            </div>
+                            </button>
                           </TableCell>
                           <TableCell><Badge variant="outline" className="capitalize">{u.plan}</Badge></TableCell>
                           <TableCell className="text-right tabular-nums text-sm">{u.pages_used} / {u.pages_limit || "∞"}</TableCell>
@@ -812,6 +827,7 @@ export default function AdminPage() {
                           <TableCell>
                             <UserActionsMenu
                               u={u}
+                              onViewDetails={() => setDetailUserId(u.id)}
                               onEditPlan={() => openEditFromUser(u)}
                               onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
                               onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
@@ -844,7 +860,7 @@ export default function AdminPage() {
             <div className="relative flex-1 min-w-[220px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search campaigns..."
+                placeholder="Search by campaign or user email..."
                 value={campaignSearch}
                 onChange={(e) => { setCampaignSearch(e.target.value); setCampaignPage(1); }}
                 className="pl-9"
@@ -869,6 +885,7 @@ export default function AdminPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Campaign</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Progress</TableHead>
                     <TableHead>Created</TableHead>
@@ -877,12 +894,26 @@ export default function AdminPage() {
                 <TableBody>
                   {campaignPagination.items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
                     </TableRow>
                   ) : (
                     campaignPagination.items.map((c) => (
                       <TableRow key={c.id}>
                         <TableCell className="font-medium text-sm">{c.name}</TableCell>
+                        <TableCell>
+                          {c.user_id ? (
+                            <button
+                              type="button"
+                              onClick={() => setDetailUserId(c.user_id)}
+                              className="text-left hover:underline"
+                            >
+                              <p className="text-sm font-medium">{c.user_name || "—"}</p>
+                              <p className="text-xs text-muted-foreground">{c.user_email || c.user_id}</p>
+                            </button>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell>{statusBadge(c.status)}</TableCell>
                         <TableCell className="text-right tabular-nums text-sm">{c.processed_rows ?? 0} / {c.total_rows ?? 0}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(c.created_at)}</TableCell>
@@ -1041,6 +1072,14 @@ export default function AdminPage() {
         onSave={handleSave}
         saving={updateMutation.isPending}
       />
+
+      <UserDetailDialog
+        userId={detailUserId}
+        open={!!detailUserId}
+        onOpenChange={(o) => !o && setDetailUserId(null)}
+      />
+
+
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>

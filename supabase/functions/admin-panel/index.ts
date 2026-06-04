@@ -130,10 +130,20 @@ Deno.serve(async (req) => {
       const activeCampaigns = campaigns?.filter((c: any) => c.status === "processing" || c.status === "queued").length || 0;
       const completedCampaigns = campaigns?.filter((c: any) => c.status === "completed").length || 0;
 
+      // Enrich campaigns with the owning user's email & name so admins can see
+      // at a glance which user is running which campaign.
+      const emailById = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
+      const nameById = new Map((profiles || []).map((p: any) => [p.user_id, p.full_name]));
+      const enrichedCampaigns = (campaigns || []).map((c: any) => ({
+        ...c,
+        user_email: emailById.get(c.user_id) || null,
+        user_name: nameById.get(c.user_id) || null,
+      }));
+
       return new Response(
         JSON.stringify({
           users,
-          campaigns: campaigns || [],
+          campaigns: enrichedCampaigns,
           subscriptions: subscriptions || [],
           activity: recentActivity,
           overview: {
@@ -229,6 +239,108 @@ Deno.serve(async (req) => {
       if (error) throw error;
       return new Response(JSON.stringify({ roles: roles || [] }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    // Full 360° view of a single user: profile, subscription, payments,
+    // campaigns, pages, websites, AI credits & usage — everything they've done.
+    if (action === "get-user-detail") {
+      const { target_user_id } = body;
+      if (!target_user_id) {
+        return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const { data: authUser } = await serviceClient.auth.admin.getUserById(target_user_id);
+      const targetUser = authUser?.user || null;
+
+      const [
+        profileRes,
+        roleRes,
+        subRes,
+        campaignsRes,
+        pagesRes,
+        websitesRes,
+        creditsRes,
+        usageRes,
+      ] = await Promise.all([
+        serviceClient.from("profiles").select("*").eq("user_id", target_user_id).maybeSingle(),
+        serviceClient.from("user_roles").select("role").eq("user_id", target_user_id).maybeSingle(),
+        serviceClient.from("subscriptions").select("*").eq("user_id", target_user_id).maybeSingle(),
+        serviceClient.from("campaigns").select("*").eq("user_id", target_user_id).order("created_at", { ascending: false }),
+        serviceClient.from("generated_pages").select("id, title, slug, status, created_at, campaign_id").eq("user_id", target_user_id).order("created_at", { ascending: false }).limit(200),
+        serviceClient.from("websites").select("*").eq("user_id", target_user_id),
+        serviceClient.from("ai_credits").select("*").eq("user_id", target_user_id).maybeSingle(),
+        serviceClient.from("ai_credits_usage").select("*").eq("user_id", target_user_id).order("created_at", { ascending: false }).limit(50),
+      ]);
+
+      // Payment / billing history from Stripe (best-effort)
+      let payments: any[] = [];
+      let stripeCustomer: any = null;
+      try {
+        const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+        const email = targetUser?.email;
+        if (stripeKey && email) {
+          const sk = stripeKey;
+          const headers = { Authorization: `Bearer ${sk}`, "Content-Type": "application/x-www-form-urlencoded" };
+          const custRes = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=1`, { headers });
+          const custJson = await custRes.json();
+          const customer = custJson?.data?.[0];
+          if (customer) {
+            stripeCustomer = { id: customer.id, email: customer.email, name: customer.name, balance: customer.balance, currency: customer.currency };
+            const invRes = await fetch(`https://api.stripe.com/v1/invoices?customer=${customer.id}&limit=25`, { headers });
+            const invJson = await invRes.json();
+            payments = (invJson?.data || []).map((inv: any) => ({
+              id: inv.id,
+              amount: (inv.amount_paid ?? inv.amount_due ?? 0) / 100,
+              currency: (inv.currency || "usd").toUpperCase(),
+              status: inv.status,
+              number: inv.number,
+              created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
+              hosted_invoice_url: inv.hosted_invoice_url,
+              pdf: inv.invoice_pdf,
+            }));
+          }
+        }
+      } catch (e) {
+        console.error("Stripe payment fetch failed", e);
+      }
+
+      const campaigns = campaignsRes.data || [];
+      const pages = pagesRes.data || [];
+
+      return new Response(
+        JSON.stringify({
+          user: targetUser
+            ? {
+                id: targetUser.id,
+                email: targetUser.email,
+                created_at: targetUser.created_at,
+                last_sign_in_at: targetUser.last_sign_in_at,
+                phone: targetUser.phone || null,
+                providers: targetUser.app_metadata?.providers || [],
+              }
+            : null,
+          profile: profileRes.data || null,
+          role: roleRes.data?.role || "user",
+          subscription: subRes.data || null,
+          credits: creditsRes.data || null,
+          campaigns,
+          pages,
+          websites: websitesRes.data || [],
+          usage: usageRes.data || [],
+          payments,
+          stripe_customer: stripeCustomer,
+          totals: {
+            campaigns: campaigns.length,
+            pages: pages.length,
+            websites: (websitesRes.data || []).length,
+            published_pages: pages.filter((p: any) => p.status === "published").length,
+            failed_pages: pages.filter((p: any) => p.status === "failed").length,
+          },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+
 
     if (action === "update-subscription") {
       const { subscription_id, user_id, plan, pages_limit, pages_used } = body;
