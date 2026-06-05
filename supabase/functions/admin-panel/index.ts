@@ -637,7 +637,85 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: "Invalid action" }), {
+    // ===== Generated Pages management =====
+    if (action === "get-pages") {
+      const { data: pages } = await serviceClient
+        .from("generated_pages")
+        .select("id, title, slug, status, campaign_id, website_id, user_id, external_url, error_message, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5000);
+
+      const { data: authUsers } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
+      const { data: profiles } = await serviceClient.from("profiles").select("user_id, full_name");
+      const { data: campaigns } = await serviceClient.from("campaigns").select("id, name");
+      const { data: websites } = await serviceClient.from("websites").select("id, url, type");
+
+      const emailById = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
+      const nameById = new Map((profiles || []).map((p: any) => [p.user_id, p.full_name]));
+      const campaignById = new Map((campaigns || []).map((c: any) => [c.id, c.name]));
+      const websiteById = new Map((websites || []).map((w: any) => [w.id, w]));
+
+      const enriched = (pages || []).map((p: any) => ({
+        ...p,
+        user_email: emailById.get(p.user_id) || null,
+        user_name: nameById.get(p.user_id) || null,
+        campaign_name: p.campaign_id ? campaignById.get(p.campaign_id) || null : null,
+        website_url: p.website_id ? websiteById.get(p.website_id)?.url || null : null,
+      }));
+
+      return new Response(JSON.stringify({ pages: enriched }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "delete-page" || action === "delete-pages") {
+      const ids: string[] = action === "delete-pages"
+        ? (Array.isArray(body.page_ids) ? body.page_ids : [])
+        : (body.page_id ? [body.page_id] : []);
+      if (ids.length === 0) {
+        return new Response(JSON.stringify({ error: "page_id(s) required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { error } = await serviceClient.from("generated_pages").delete().in("id", ids);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, deleted: ids.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "update-page") {
+      const { page_id } = body;
+      if (!page_id) {
+        return new Response(JSON.stringify({ error: "page_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const updates: Record<string, any> = {};
+      for (const f of ["title", "slug", "content", "seo_title", "seo_description", "status"]) {
+        if (body[f] !== undefined) updates[f] = body[f];
+      }
+      if (Object.keys(updates).length === 0) {
+        return new Response(JSON.stringify({ error: "No fields to update" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data, error } = await serviceClient.from("generated_pages").update(updates).eq("id", page_id).select().single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, page: data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "retry-publish") {
+      const ids: string[] = Array.isArray(body.page_ids)
+        ? body.page_ids
+        : (body.page_id ? [body.page_id] : []);
+      if (ids.length === 0) {
+        return new Response(JSON.stringify({ error: "page_id(s) required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const resp = await fetch(`${supabaseUrl}/functions/v1/publish-pages`, {
+        method: "POST",
+        headers: { Authorization: authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({ page_ids: ids, publish_type: body.publish_type || "page", as_admin: true }),
+      });
+      const result = await resp.json().catch(() => ({}));
+      return new Response(JSON.stringify({ success: resp.ok, ...result }), {
+        status: resp.ok ? 200 : 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
