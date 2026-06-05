@@ -545,7 +545,14 @@ export default function TemplateMarketplacePage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.filter(c => c.id !== "all").map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>
+                        <span className="flex items-center gap-2">
+                          {c.label}
+                          {c.id === "prestashop" && (
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
+                          )}
+                        </span>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
