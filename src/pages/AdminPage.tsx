@@ -911,17 +911,23 @@ export default function AdminPage() {
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Progress</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {campaignPagination.items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
                     </TableRow>
                   ) : (
                     campaignPagination.items.map((c) => (
                       <TableRow key={c.id}>
-                        <TableCell className="font-medium text-sm">{c.name}</TableCell>
+                        <TableCell className="font-medium text-sm">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {c.name}
+                            {c.is_paused && <Badge variant="outline" className="text-[9px] h-4 text-yellow-600 border-yellow-500/30">Paused</Badge>}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           {c.user_id ? (
                             <button
@@ -939,6 +945,34 @@ export default function AdminPage() {
                         <TableCell>{statusBadge(c.status)}</TableCell>
                         <TableCell className="text-right tabular-nums text-sm">{c.processed_rows ?? 0} / {c.total_rows ?? 0}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs">Manage campaign</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => setDetailUserId(c.user_id)}>
+                                <Search className="h-3.5 w-3.5 mr-2" /> View owner details
+                              </DropdownMenuItem>
+                              {c.is_paused ? (
+                                <DropdownMenuItem onClick={() => campaignPauseMutation.mutate({ campaign_id: c.id, paused: false })}>
+                                  <Play className="h-3.5 w-3.5 mr-2" /> Resume campaign
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => campaignPauseMutation.mutate({ campaign_id: c.id, paused: true })}>
+                                  <Pause className="h-3.5 w-3.5 mr-2" /> Pause campaign
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setConfirmDeleteCampaign(c)} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete campaign
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
