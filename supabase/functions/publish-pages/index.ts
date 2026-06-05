@@ -339,6 +339,18 @@ Deno.serve(async (req) => {
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
+    // Admin override: allow platform admins to (re)publish pages owned by other users.
+    let isAdmin = false;
+    if (body.as_admin) {
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      isAdmin = !!roleRow;
+    }
+
     // Optional Shopify template suffix overrides for this request (direct publish).
     const directShopifySuffixes: { page?: string; product?: string } = {
       page: typeof body.shopify_page_template_suffix === "string" ? body.shopify_page_template_suffix.trim() : undefined,
