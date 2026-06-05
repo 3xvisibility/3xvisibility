@@ -641,7 +641,7 @@ Deno.serve(async (req) => {
     if (action === "get-pages") {
       const { data: pages } = await serviceClient
         .from("generated_pages")
-        .select("id, title, slug, status, campaign_id, website_id, user_id, external_url, error_message, created_at")
+        .select("id, title, slug, status, campaign_id, website_id, user_id, external_url, error_message, created_at, seo_title, seo_description")
         .order("created_at", { ascending: false })
         .limit(5000);
 
