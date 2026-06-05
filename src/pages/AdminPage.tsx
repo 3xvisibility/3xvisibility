@@ -749,6 +749,7 @@ export default function AdminPage() {
           <TabsTrigger value="activity" className="text-xs">{t("admin.activity")}</TabsTrigger>
           <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
+          <TabsTrigger value="pages" className="text-xs gap-1"><FileText className="h-3 w-3" />Pages</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
           <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
