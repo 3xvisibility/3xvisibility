@@ -453,6 +453,14 @@ export default function AdminPage() {
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  // Generated pages state
+  const [pageSearch, setPageSearch] = useState("");
+  const [pageStatusFilter, setPageStatusFilter] = useState("__all__");
+  const [pagePage, setPagePage] = useState(1);
+  const [pagePageSize, setPagePageSize] = useState(25);
+  const [selectedPageIds, setSelectedPageIds] = useState<string[]>([]);
+  const [editPage, setEditPage] = useState<GeneratedPage | null>(null);
+  const [confirmDeletePages, setConfirmDeletePages] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
 
   // Pagination state
