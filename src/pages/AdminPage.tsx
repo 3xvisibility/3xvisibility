@@ -1461,3 +1461,69 @@ export default function AdminPage() {
     </div>
   );
 }
+
+function EditPageDialog({
+  page,
+  open,
+  onOpenChange,
+  onSave,
+  saving,
+}: {
+  page: GeneratedPage | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSave: (vars: { page_id: string; title: string; slug: string; seo_title: string; seo_description: string }) => void;
+  saving: boolean;
+}) {
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  useEffect(() => {
+    if (page) {
+      setTitle(page.title || "");
+      setSlug(page.slug || "");
+      setSeoTitle((page as any).seo_title || "");
+      setSeoDescription((page as any).seo_description || "");
+    }
+  }, [page]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit page</DialogTitle>
+          <DialogDescription>Update the page details. Changes are saved on behalf of the owner.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Title</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Slug</Label>
+            <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>SEO Title</Label>
+            <Input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>SEO Description</Label>
+            <Textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={3} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+          <Button
+            disabled={saving || !page}
+            onClick={() => page && onSave({ page_id: page.id, title, slug, seo_title: seoTitle, seo_description: seoDescription })}
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
