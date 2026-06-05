@@ -433,6 +433,7 @@ export default function AdminPage() {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
