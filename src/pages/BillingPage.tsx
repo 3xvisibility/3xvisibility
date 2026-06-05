@@ -504,13 +504,20 @@ export default function BillingPage() {
                       <div className="flex items-center gap-2.5">
                         {featureIcons[row.key]}
                         <span className="text-foreground font-medium">{row.label}</span>
+                        {row.key === "prestashop" && (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border-amber-500/20">Coming Soon</Badge>
+                        )}
                       </div>
                     </td>
                     {planConfigs.map((p) => {
                       const val = (PLAN_FEATURES[p.name] as any)[row.key];
                       return (
                         <td key={p.name} className={`py-3.5 px-5 text-center ${p.name === activePlan ? "bg-primary/[0.02]" : ""}`}>
-                          {formatValue(val)}
+                          {row.key === "prestashop" ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            formatValue(val)
+                          )}
                         </td>
                       );
                     })}
