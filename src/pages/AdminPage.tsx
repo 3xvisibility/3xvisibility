@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -67,6 +67,7 @@ interface Campaign {
   total_rows: number | null;
   processed_rows: number | null;
   created_at: string;
+  is_paused?: boolean | null;
   user_email?: string | null;
   user_name?: string | null;
 }
@@ -432,6 +433,7 @@ export default function AdminPage() {
   const [editSub, setEditSub] = useState<Subscription | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
+  const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -534,6 +536,26 @@ export default function AdminPage() {
       callAction({ action: "set-role", target_user_id: vars.user_id, role: vars.role }),
     onSuccess: () => {
       toast.success("Role updated");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const campaignPauseMutation = useMutation({
+    mutationFn: (vars: { campaign_id: string; paused: boolean }) =>
+      callAction({ action: vars.paused ? "pause-campaign" : "resume-campaign", campaign_id: vars.campaign_id }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.paused ? "Campaign paused" : "Campaign resumed");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const campaignDeleteMutation = useMutation({
+    mutationFn: (campaign_id: string) => callAction({ action: "delete-campaign", campaign_id }),
+    onSuccess: () => {
+      toast.success("Campaign deleted");
+      setConfirmDeleteCampaign(null);
       queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
     },
     onError: (e: any) => toast.error(e.message || "Failed"),
@@ -889,17 +911,23 @@ export default function AdminPage() {
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Progress</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {campaignPagination.items.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">No campaigns found</TableCell>
                     </TableRow>
                   ) : (
                     campaignPagination.items.map((c) => (
                       <TableRow key={c.id}>
-                        <TableCell className="font-medium text-sm">{c.name}</TableCell>
+                        <TableCell className="font-medium text-sm">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {c.name}
+                            {c.is_paused && <Badge variant="outline" className="text-[9px] h-4 text-yellow-600 border-yellow-500/30">Paused</Badge>}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           {c.user_id ? (
                             <button
@@ -917,6 +945,34 @@ export default function AdminPage() {
                         <TableCell>{statusBadge(c.status)}</TableCell>
                         <TableCell className="text-right tabular-nums text-sm">{c.processed_rows ?? 0} / {c.total_rows ?? 0}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(c.created_at)}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs">Manage campaign</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => setDetailUserId(c.user_id)}>
+                                <Search className="h-3.5 w-3.5 mr-2" /> View owner details
+                              </DropdownMenuItem>
+                              {c.is_paused ? (
+                                <DropdownMenuItem onClick={() => campaignPauseMutation.mutate({ campaign_id: c.id, paused: false })}>
+                                  <Play className="h-3.5 w-3.5 mr-2" /> Resume campaign
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => campaignPauseMutation.mutate({ campaign_id: c.id, paused: true })}>
+                                  <Pause className="h-3.5 w-3.5 mr-2" /> Pause campaign
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setConfirmDeleteCampaign(c)} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete campaign
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -1098,6 +1154,27 @@ export default function AdminPage() {
               onClick={(e) => { e.preventDefault(); if (confirmDelete) deleteMutation.mutate(confirmDelete.id); }}
             >
               {deleteMutation.isPending ? "Deleting…" : "Delete user"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmDeleteCampaign} onOpenChange={(o) => !o && setConfirmDeleteCampaign(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete campaign?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes <span className="font-medium text-foreground">{confirmDeleteCampaign?.name}</span> along with its generated pages, logs and generation jobs. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={campaignDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={campaignDeleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeleteCampaign) campaignDeleteMutation.mutate(confirmDeleteCampaign.id); }}
+            >
+              {campaignDeleteMutation.isPending ? "Deleting…" : "Delete campaign"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
