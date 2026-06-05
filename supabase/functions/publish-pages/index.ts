@@ -339,6 +339,18 @@ Deno.serve(async (req) => {
     const pubType = publish_type || "page";
     const fallbackWebsiteId = website_id || null;
 
+    // Admin override: allow platform admins to (re)publish pages owned by other users.
+    let isAdmin = false;
+    if (body.as_admin) {
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      isAdmin = !!roleRow;
+    }
+
     // Optional Shopify template suffix overrides for this request (direct publish).
     const directShopifySuffixes: { page?: string; product?: string } = {
       page: typeof body.shopify_page_template_suffix === "string" ? body.shopify_page_template_suffix.trim() : undefined,
@@ -519,11 +531,12 @@ Deno.serve(async (req) => {
     // Accumulate results from prior batches (passed via self-chain)
     const priorResults: { id: string; status: string; external_url?: string; error?: string }[] = body._prior_results || [];
 
-    const { data: pages, error: pagesError } = await supabase
+    let pagesQuery = supabase
       .from("generated_pages")
       .select("*, websites(id, url, type, credentials)")
-      .in("id", currentBatchIds)
-      .eq("user_id", user.id);
+      .in("id", currentBatchIds);
+    if (!isAdmin) pagesQuery = pagesQuery.eq("user_id", user.id);
+    const { data: pages, error: pagesError } = await pagesQuery;
 
     if (pagesError || !pages) {
       return new Response(JSON.stringify({ error: "Failed to fetch pages" }), {
@@ -551,7 +564,7 @@ Deno.serve(async (req) => {
             headers: { Authorization: authHeader, "Content-Type": "application/json" },
             body: JSON.stringify({
               page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
-              overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+              overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
             }),
           }).catch(() => {});
         }
@@ -829,7 +842,7 @@ Deno.serve(async (req) => {
         headers: { Authorization: authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({
           page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
-          overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+          overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
         }),
       }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
     }

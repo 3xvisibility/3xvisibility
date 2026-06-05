@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
@@ -71,6 +73,26 @@ interface Campaign {
   user_email?: string | null;
   user_name?: string | null;
 }
+
+interface GeneratedPage {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  campaign_id: string | null;
+  website_id: string | null;
+  user_id: string;
+  external_url: string | null;
+  error_message: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  created_at: string;
+  user_email?: string | null;
+  user_name?: string | null;
+  campaign_name?: string | null;
+  website_url?: string | null;
+}
+
 
 interface Subscription {
   id: string;
@@ -198,6 +220,8 @@ function statusBadge(status: string) {
     queued: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
     failed: "bg-destructive/10 text-destructive border-destructive/20",
     draft: "bg-muted text-muted-foreground border-border",
+    published: "bg-success/10 text-success border-success/20",
+    pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
   };
   return <Badge variant="outline" className={map[status] || ""}>{status}</Badge>;
 }
@@ -435,6 +459,14 @@ export default function AdminPage() {
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  // Generated pages state
+  const [pageSearch, setPageSearch] = useState("");
+  const [pageStatusFilter, setPageStatusFilter] = useState("__all__");
+  const [pagePage, setPagePage] = useState(1);
+  const [pagePageSize, setPagePageSize] = useState(25);
+  const [selectedPageIds, setSelectedPageIds] = useState<string[]>([]);
+  const [editPage, setEditPage] = useState<GeneratedPage | null>(null);
+  const [confirmDeletePages, setConfirmDeletePages] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
 
   // Pagination state
@@ -561,6 +593,48 @@ export default function AdminPage() {
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
 
+  // ===== Generated pages =====
+  const { data: pagesData, isLoading: pagesLoading } = useQuery({
+    queryKey: ["admin-pages"],
+    queryFn: async () => {
+      const res = await callAction({ action: "get-pages" });
+      return (res as { pages: GeneratedPage[] }).pages || [];
+    },
+  });
+
+  const pageDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => callAction({ action: "delete-pages", page_ids: ids }),
+    onSuccess: (_d, ids) => {
+      toast.success(`${ids.length} page${ids.length > 1 ? "s" : ""} deleted`);
+      setConfirmDeletePages(null);
+      setSelectedPageIds([]);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const pageRetryMutation = useMutation({
+    mutationFn: (ids: string[]) => callAction({ action: "retry-publish", page_ids: ids }),
+    onSuccess: (d: any) => {
+      toast.success(`Publish retry started${typeof d?.published === "number" ? ` — ${d.published} published, ${d.failed} failed` : ""}`);
+      setSelectedPageIds([]);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const pageUpdateMutation = useMutation({
+    mutationFn: (vars: { page_id: string; title: string; slug: string; seo_title: string; seo_description: string }) =>
+      callAction({ action: "update-page", ...vars }),
+    onSuccess: () => {
+      toast.success("Page updated");
+      setEditPage(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
   const openEditFromUser = (user: AdminUser) => {
     const sub = data?.subscriptions?.find((s) => s.user_id === user.id) || null;
     setEditUser(user);
@@ -640,6 +714,21 @@ export default function AdminPage() {
   const campaignPagination = paginate(filteredCampaigns, campaignPage, campaignPageSize);
   const subPagination = paginate(filteredSubscriptions, subPage, subPageSize);
 
+  const filteredPages = (pagesData || []).filter((p) => {
+    const q = pageSearch.toLowerCase();
+    const matchesSearch = !q ||
+      p.title?.toLowerCase().includes(q) ||
+      p.slug?.toLowerCase().includes(q) ||
+      p.user_email?.toLowerCase().includes(q) ||
+      p.user_name?.toLowerCase().includes(q) ||
+      p.campaign_name?.toLowerCase().includes(q);
+    const matchesStatus = pageStatusFilter === "__all__" || p.status === pageStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+  const pagePagination = paginate(filteredPages, pagePage, pagePageSize);
+  const pageStatuses = Array.from(new Set((pagesData || []).map((p) => p.status))).sort();
+  const allVisibleSelected = pagePagination.items.length > 0 && pagePagination.items.every((p) => selectedPageIds.includes(p.id));
+
   return (
     <div className="space-y-6">
       <div>
@@ -666,6 +755,7 @@ export default function AdminPage() {
           <TabsTrigger value="activity" className="text-xs">{t("admin.activity")}</TabsTrigger>
           <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
+          <TabsTrigger value="pages" className="text-xs gap-1"><FileText className="h-3 w-3" />Pages</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
           <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
@@ -992,7 +1082,171 @@ export default function AdminPage() {
           )}
         </TabsContent>
 
-        {/* Subscriptions tab */}
+        {/* Generated Pages tab */}
+        <TabsContent value="pages" className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search page, user, or campaign..."
+                value={pageSearch}
+                onChange={(e) => { setPageSearch(e.target.value); setPagePage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={pageStatusFilter} onValueChange={(v) => { setPageStatusFilter(v); setPagePage(1); }}>
+              <SelectTrigger className="w-[150px] h-9">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All statuses</SelectItem>
+                {pageStatuses.map((s) => (
+                  <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(pagePageSize)} onValueChange={(v) => { setPagePageSize(Number(v)); setPagePage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedPageIds.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap rounded-lg border bg-muted/30 px-3 py-2">
+              <span className="text-sm font-medium">{selectedPageIds.length} selected</span>
+              <div className="flex-1" />
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                disabled={pageRetryMutation.isPending}
+                onClick={() => pageRetryMutation.mutate(selectedPageIds)}
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Retry publish
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="gap-1"
+                onClick={() => setConfirmDeletePages(selectedPageIds)}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delete
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedPageIds([])}>Clear</Button>
+            </div>
+          )}
+
+          {pagesLoading ? (
+            <Skeleton className="h-[300px] rounded-xl" />
+          ) : (
+            <div className="rounded-xl border overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allVisibleSelected}
+                        onCheckedChange={(c) => {
+                          const ids = pagePagination.items.map((p) => p.id);
+                          setSelectedPageIds((prev) =>
+                            c ? Array.from(new Set([...prev, ...ids])) : prev.filter((id) => !ids.includes(id))
+                          );
+                        }}
+                      />
+                    </TableHead>
+                    <TableHead>Page</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Campaign</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pagePagination.items.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">No pages found</TableCell>
+                    </TableRow>
+                  ) : (
+                    pagePagination.items.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedPageIds.includes(p.id)}
+                            onCheckedChange={(c) =>
+                              setSelectedPageIds((prev) => c ? [...prev, p.id] : prev.filter((id) => id !== p.id))
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-sm max-w-[260px]">
+                          <p className="truncate">{p.title}</p>
+                          {p.external_url ? (
+                            <a href={p.external_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block">{p.external_url}</a>
+                          ) : (
+                            <p className="text-xs text-muted-foreground truncate">/{p.slug}</p>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {p.user_id ? (
+                            <button type="button" onClick={() => setDetailUserId(p.user_id)} className="text-left hover:underline">
+                              <p className="text-sm font-medium">{p.user_name || "—"}</p>
+                              <p className="text-xs text-muted-foreground">{p.user_email || p.user_id}</p>
+                            </button>
+                          ) : <span className="text-sm text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate">{p.campaign_name || "—"}</TableCell>
+                        <TableCell>{statusBadge(p.status)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{formatDate(p.created_at)}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs">Manage page</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => setEditPage(p)}>
+                                <Pencil className="h-3.5 w-3.5 mr-2" /> Edit page
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => pageRetryMutation.mutate([p.id])}>
+                                <RotateCcw className="h-3.5 w-3.5 mr-2" /> Retry publish
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setDetailUserId(p.user_id)}>
+                                <Search className="h-3.5 w-3.5 mr-2" /> View owner details
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setConfirmDeletePages([p.id])} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete page
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={pagePagination.currentPage}
+                  totalPages={pagePagination.totalPages}
+                  pageSize={pagePageSize}
+                  totalItems={filteredPages.length}
+                  onPageChange={setPagePage}
+                  onPageSizeChange={(s) => { setPagePageSize(s); setPagePage(1); }}
+                />
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="subscriptions" className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[220px] max-w-sm">
@@ -1179,6 +1433,101 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!confirmDeletePages} onOpenChange={(o) => !o && setConfirmDeletePages(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {confirmDeletePages?.length} page{(confirmDeletePages?.length || 0) > 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the selected generated page(s). This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pageDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={pageDeleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeletePages) pageDeleteMutation.mutate(confirmDeletePages); }}
+            >
+              {pageDeleteMutation.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <EditPageDialog
+        page={editPage}
+        open={!!editPage}
+        onOpenChange={(o) => !o && setEditPage(null)}
+        onSave={(vars) => pageUpdateMutation.mutate(vars)}
+        saving={pageUpdateMutation.isPending}
+      />
     </div>
+  );
+}
+
+function EditPageDialog({
+  page,
+  open,
+  onOpenChange,
+  onSave,
+  saving,
+}: {
+  page: GeneratedPage | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onSave: (vars: { page_id: string; title: string; slug: string; seo_title: string; seo_description: string }) => void;
+  saving: boolean;
+}) {
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+
+  useEffect(() => {
+    if (page) {
+      setTitle(page.title || "");
+      setSlug(page.slug || "");
+      setSeoTitle((page as any).seo_title || "");
+      setSeoDescription((page as any).seo_description || "");
+    }
+  }, [page]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit page</DialogTitle>
+          <DialogDescription>Update the page details. Changes are saved on behalf of the owner.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Title</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Slug</Label>
+            <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>SEO Title</Label>
+            <Input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>SEO Description</Label>
+            <Textarea value={seoDescription} onChange={(e) => setSeoDescription(e.target.value)} rows={3} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
+          <Button
+            disabled={saving || !page}
+            onClick={() => page && onSave({ page_id: page.id, title, slug, seo_title: seoTitle, seo_description: seoDescription })}
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
