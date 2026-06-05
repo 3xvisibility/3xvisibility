@@ -107,8 +107,11 @@ export function IntegrationsSection() {
         <div className="md:hidden grid grid-cols-3 gap-4 max-w-sm mx-auto">
           {[...leftItems, ...rightItems].map((item, i) => (
             <motion.div key={item.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + i * 0.08, duration: 0.4, ease }} className="flex flex-col items-center gap-2">
-              <div className="h-12 w-12 rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center">
+              <div className="relative h-12 w-12 rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center">
                 <item.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
+                {"soon" in item && item.soon && (
+                  <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[8px] font-semibold px-1.5 py-0.5 leading-none">Soon</span>
+                )}
               </div>
               <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
             </motion.div>
