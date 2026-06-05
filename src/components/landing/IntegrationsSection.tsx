@@ -15,7 +15,7 @@ export function IntegrationsSection() {
   const { t } = useLanguage();
 
   const rightItems = [
-    { name: "PrestaShop", icon: FileText },
+    { name: "PrestaShop", icon: FileText, soon: true },
     { name: t("integrations.googleIndex"), icon: Search },
     { name: t("integrations.analytics"), icon: BarChart3 },
   ];
@@ -91,22 +91,11 @@ export function IntegrationsSection() {
             return (
               <motion.div key={item.name} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.1, duration: 0.5, ease }} className="absolute" style={{ top: positions[i].top, left: positions[i].left }}>
                 <div className="flex flex-col items-center gap-1.5">
-                  <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center shadow-lg hover:border-[hsl(96,90%,45%,0.3)] hover:shadow-[0_0_20px_hsl(96,90%,45%,0.1)] transition-all duration-300 cursor-pointer group">
+                  <div className="relative h-[52px] w-[52px] rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center shadow-lg hover:border-[hsl(96,90%,45%,0.3)] hover:shadow-[0_0_20px_hsl(96,90%,45%,0.1)] transition-all duration-300 cursor-pointer group">
                     <item.icon className="h-5 w-5 text-[hsl(220,10%,70%)] group-hover:text-[hsl(96,80%,52%)] transition-colors" />
-                  </div>
-                  <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
-                </div>
-              </motion.div>
-            );
-          })}
-
-          {rightItems.map((item, i) => {
-            const positions = [{ top: "16%", right: "10%" }, { top: "42%", right: "4%" }, { top: "68%", right: "14%" }];
-            return (
-              <motion.div key={item.name} initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.4 + i * 0.1, duration: 0.5, ease }} className="absolute" style={{ top: positions[i].top, right: positions[i].right }}>
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="h-[52px] w-[52px] rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center shadow-lg hover:border-[hsl(96,90%,45%,0.3)] hover:shadow-[0_0_20px_hsl(96,90%,45%,0.1)] transition-all duration-300 cursor-pointer group">
-                    <item.icon className="h-5 w-5 text-[hsl(220,10%,70%)] group-hover:text-[hsl(96,80%,52%)] transition-colors" />
+                    {"soon" in item && item.soon && (
+                      <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[8px] font-semibold px-1.5 py-0.5 leading-none">Soon</span>
+                    )}
                   </div>
                   <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
                 </div>
@@ -118,8 +107,11 @@ export function IntegrationsSection() {
         <div className="md:hidden grid grid-cols-3 gap-4 max-w-sm mx-auto">
           {[...leftItems, ...rightItems].map((item, i) => (
             <motion.div key={item.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 + i * 0.08, duration: 0.4, ease }} className="flex flex-col items-center gap-2">
-              <div className="h-12 w-12 rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center">
+              <div className="relative h-12 w-12 rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center">
                 <item.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
+                {"soon" in item && item.soon && (
+                  <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[8px] font-semibold px-1.5 py-0.5 leading-none">Soon</span>
+                )}
               </div>
               <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
             </motion.div>
