@@ -72,6 +72,24 @@ interface Campaign {
   user_name?: string | null;
 }
 
+interface GeneratedPage {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  campaign_id: string | null;
+  website_id: string | null;
+  user_id: string;
+  external_url: string | null;
+  error_message: string | null;
+  created_at: string;
+  user_email?: string | null;
+  user_name?: string | null;
+  campaign_name?: string | null;
+  website_url?: string | null;
+}
+
+
 interface Subscription {
   id: string;
   user_id: string;
