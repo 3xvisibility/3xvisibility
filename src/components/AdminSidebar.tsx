@@ -4,6 +4,7 @@ import {
   Activity,
   Users,
   Rocket,
+  FileText,
   CreditCard,
   Zap,
   BarChart3,
@@ -40,6 +41,7 @@ const managementNav: AdminNavItem[] = [
   { label: "Activity", section: "activity", icon: Activity },
   { label: "Users", section: "users", icon: Users },
   { label: "Campaigns", section: "campaigns", icon: Rocket },
+  { label: "Generated Pages", section: "pages", icon: FileText },
   { label: "Subscriptions", section: "subscriptions", icon: CreditCard },
 ];
 
