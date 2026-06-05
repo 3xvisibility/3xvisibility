@@ -587,7 +587,48 @@ export default function AdminPage() {
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
 
-  const openEditFromUser = (user: AdminUser) => {
+  // ===== Generated pages =====
+  const { data: pagesData, isLoading: pagesLoading } = useQuery({
+    queryKey: ["admin-pages"],
+    queryFn: async () => {
+      const res = await callAction({ action: "get-pages" });
+      return (res as { pages: GeneratedPage[] }).pages || [];
+    },
+  });
+
+  const pageDeleteMutation = useMutation({
+    mutationFn: (ids: string[]) => callAction({ action: "delete-pages", page_ids: ids }),
+    onSuccess: (_d, ids) => {
+      toast.success(`${ids.length} page${ids.length > 1 ? "s" : ""} deleted`);
+      setConfirmDeletePages(null);
+      setSelectedPageIds([]);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const pageRetryMutation = useMutation({
+    mutationFn: (ids: string[]) => callAction({ action: "retry-publish", page_ids: ids }),
+    onSuccess: (d: any) => {
+      toast.success(`Publish retry started${typeof d?.published === "number" ? ` — ${d.published} published, ${d.failed} failed` : ""}`);
+      setSelectedPageIds([]);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const pageUpdateMutation = useMutation({
+    mutationFn: (vars: { page_id: string; title: string; slug: string; seo_title: string; seo_description: string }) =>
+      callAction({ action: "update-page", ...vars }),
+    onSuccess: () => {
+      toast.success("Page updated");
+      setEditPage(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
     const sub = data?.subscriptions?.find((s) => s.user_id === user.id) || null;
     setEditUser(user);
     setEditSub(sub);
