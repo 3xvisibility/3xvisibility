@@ -99,7 +99,7 @@ export function UserDetailDialog({ userId, open, onOpenChange }: UserDetailDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="w-[80vw] lg:w-[90vw] max-w-[1600px] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
         <DialogHeader className="p-5 pb-3 border-b">
           <DialogTitle className="flex items-center gap-2">
             <UserIcon className="h-5 w-5 text-primary" />
