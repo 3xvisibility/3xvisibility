@@ -220,6 +220,8 @@ function statusBadge(status: string) {
     queued: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
     failed: "bg-destructive/10 text-destructive border-destructive/20",
     draft: "bg-muted text-muted-foreground border-border",
+    published: "bg-success/10 text-success border-success/20",
+    pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
   };
   return <Badge variant="outline" className={map[status] || ""}>{status}</Badge>;
 }
