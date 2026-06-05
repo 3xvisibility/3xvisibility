@@ -84,6 +84,8 @@ interface GeneratedPage {
   user_id: string;
   external_url: string | null;
   error_message: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
   created_at: string;
   user_email?: string | null;
   user_name?: string | null;
