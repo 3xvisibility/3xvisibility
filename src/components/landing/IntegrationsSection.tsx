@@ -15,7 +15,7 @@ export function IntegrationsSection() {
   const { t } = useLanguage();
 
   const rightItems = [
-    { name: "PrestaShop", icon: FileText },
+    { name: "PrestaShop", icon: FileText, soon: true },
     { name: t("integrations.googleIndex"), icon: Search },
     { name: t("integrations.analytics"), icon: BarChart3 },
   ];
