@@ -19,7 +19,12 @@ export function SiteTypeFilter({ value, onChange }: SiteTypeFilterProps) {
         <SelectItem value="all">All platforms</SelectItem>
         <SelectItem value="wordpress">WordPress</SelectItem>
         <SelectItem value="shopify">Shopify</SelectItem>
-        <SelectItem value="prestashop">PrestaShop</SelectItem>
+        <SelectItem value="prestashop">
+          <span className="flex items-center gap-2">
+            PrestaShop
+            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
+          </span>
+        </SelectItem>
         <SelectItem value="woocommerce">WooCommerce</SelectItem>
       </SelectContent>
     </Select>
