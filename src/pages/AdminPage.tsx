@@ -1158,6 +1158,27 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!confirmDeleteCampaign} onOpenChange={(o) => !o && setConfirmDeleteCampaign(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete campaign?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes <span className="font-medium text-foreground">{confirmDeleteCampaign?.name}</span> along with its generated pages, logs and generation jobs. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={campaignDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={campaignDeleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeleteCampaign) campaignDeleteMutation.mutate(confirmDeleteCampaign.id); }}
+            >
+              {campaignDeleteMutation.isPending ? "Deleting…" : "Delete campaign"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
