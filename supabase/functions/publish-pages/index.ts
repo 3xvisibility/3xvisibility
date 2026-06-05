@@ -531,11 +531,12 @@ Deno.serve(async (req) => {
     // Accumulate results from prior batches (passed via self-chain)
     const priorResults: { id: string; status: string; external_url?: string; error?: string }[] = body._prior_results || [];
 
-    const { data: pages, error: pagesError } = await supabase
+    let pagesQuery = supabase
       .from("generated_pages")
       .select("*, websites(id, url, type, credentials)")
-      .in("id", currentBatchIds)
-      .eq("user_id", user.id);
+      .in("id", currentBatchIds);
+    if (!isAdmin) pagesQuery = pagesQuery.eq("user_id", user.id);
+    const { data: pages, error: pagesError } = await pagesQuery;
 
     if (pagesError || !pages) {
       return new Response(JSON.stringify({ error: "Failed to fetch pages" }), {
