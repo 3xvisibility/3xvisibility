@@ -286,6 +286,9 @@ export default function TemplateMarketplacePage() {
           >
             <cat.icon className="h-3.5 w-3.5" />
             {cat.label}
+            {cat.id === "prestashop" && (
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
+            )}
           </button>
         ))}
       </div>
