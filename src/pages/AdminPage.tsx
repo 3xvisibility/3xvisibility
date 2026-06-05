@@ -708,6 +708,21 @@ export default function AdminPage() {
   const campaignPagination = paginate(filteredCampaigns, campaignPage, campaignPageSize);
   const subPagination = paginate(filteredSubscriptions, subPage, subPageSize);
 
+  const filteredPages = (pagesData || []).filter((p) => {
+    const q = pageSearch.toLowerCase();
+    const matchesSearch = !q ||
+      p.title?.toLowerCase().includes(q) ||
+      p.slug?.toLowerCase().includes(q) ||
+      p.user_email?.toLowerCase().includes(q) ||
+      p.user_name?.toLowerCase().includes(q) ||
+      p.campaign_name?.toLowerCase().includes(q);
+    const matchesStatus = pageStatusFilter === "__all__" || p.status === pageStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+  const pagePagination = paginate(filteredPages, pagePage, pagePageSize);
+  const pageStatuses = Array.from(new Set((pagesData || []).map((p) => p.status))).sort();
+  const allVisibleSelected = pagePagination.items.length > 0 && pagePagination.items.every((p) => selectedPageIds.includes(p.id));
+
   return (
     <div className="space-y-6">
       <div>
