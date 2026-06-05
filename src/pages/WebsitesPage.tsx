@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { launchShopifyOAuthInTopWindow } from "@/lib/shopify-auth-url";
 import { useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -625,17 +625,28 @@ export default function WebsitesPage() {
                       )}
                     </Button>
                   )}
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading || siteType === "prestashop"}
-                  >
-                    {isConnecting || shopifyOAuthLoading ? (
-                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
-                    ) : (
-                      siteType === "shopify" ? "Connect with Shopify" : siteType === "prestashop" ? "Coming Soon" : t("common.connect")
-                    )}
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="w-full sm:w-auto"
+                          onClick={() => runConnectFlow()}
+                          disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading || siteType === "prestashop"}
+                        >
+                          {isConnecting || shopifyOAuthLoading ? (
+                            <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
+                          ) : (
+                            siteType === "shopify" ? "Connect with Shopify" : siteType === "prestashop" ? "Coming Soon" : t("common.connect")
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      {siteType === "prestashop" && (
+                        <TooltipContent side="top">
+                          <p>Coming Soon</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </DialogContent>
