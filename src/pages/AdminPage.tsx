@@ -541,6 +541,26 @@ export default function AdminPage() {
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
 
+  const campaignPauseMutation = useMutation({
+    mutationFn: (vars: { campaign_id: string; paused: boolean }) =>
+      callAction({ action: vars.paused ? "pause-campaign" : "resume-campaign", campaign_id: vars.campaign_id }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.paused ? "Campaign paused" : "Campaign resumed");
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
+  const campaignDeleteMutation = useMutation({
+    mutationFn: (campaign_id: string) => callAction({ action: "delete-campaign", campaign_id }),
+    onSuccess: () => {
+      toast.success("Campaign deleted");
+      setConfirmDeleteCampaign(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed"),
+  });
+
   const openEditFromUser = (user: AdminUser) => {
     const sub = data?.subscriptions?.find((s) => s.user_id === user.id) || null;
     setEditUser(user);
