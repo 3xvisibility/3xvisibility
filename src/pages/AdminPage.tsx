@@ -1429,6 +1429,35 @@ export default function AdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!confirmDeletePages} onOpenChange={(o) => !o && setConfirmDeletePages(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {confirmDeletePages?.length} page{(confirmDeletePages?.length || 0) > 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the selected generated page(s). This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pageDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={pageDeleteMutation.isPending}
+              onClick={(e) => { e.preventDefault(); if (confirmDeletePages) pageDeleteMutation.mutate(confirmDeletePages); }}
+            >
+              {pageDeleteMutation.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <EditPageDialog
+        page={editPage}
+        open={!!editPage}
+        onOpenChange={(o) => !o && setEditPage(null)}
+        onSave={(vars) => pageUpdateMutation.mutate(vars)}
+        saving={pageUpdateMutation.isPending}
+      />
     </div>
   );
 }
