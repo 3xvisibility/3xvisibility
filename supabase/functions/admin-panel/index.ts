@@ -375,6 +375,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "pause-campaign" || action === "resume-campaign") {
+      const { campaign_id } = body;
+      if (!campaign_id) return new Response(JSON.stringify({ error: "campaign_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const isPause = action === "pause-campaign";
+      const { error } = await serviceClient
+        .from("campaigns")
+        .update({ is_paused: isPause, updated_at: new Date().toISOString() })
+        .eq("id", campaign_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (action === "delete-campaign") {
+      const { campaign_id } = body;
+      if (!campaign_id) return new Response(JSON.stringify({ error: "campaign_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      // Remove dependent rows first (no FK cascade in schema), then the campaign.
+      await serviceClient.from("generated_pages").delete().eq("campaign_id", campaign_id);
+      await serviceClient.from("campaign_logs").delete().eq("campaign_id", campaign_id);
+      await serviceClient.from("generation_jobs").delete().eq("campaign_id", campaign_id);
+      const { error } = await serviceClient.from("campaigns").delete().eq("id", campaign_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "set-ai-credits") {
       const { target_user_id, total_credits, remaining_credits, plan } = body;
       if (!target_user_id) {
