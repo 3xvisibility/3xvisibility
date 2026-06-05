@@ -1076,7 +1076,171 @@ export default function AdminPage() {
           )}
         </TabsContent>
 
-        {/* Subscriptions tab */}
+        {/* Generated Pages tab */}
+        <TabsContent value="pages" className="space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search page, user, or campaign..."
+                value={pageSearch}
+                onChange={(e) => { setPageSearch(e.target.value); setPagePage(1); }}
+                className="pl-9"
+              />
+            </div>
+            <Select value={pageStatusFilter} onValueChange={(v) => { setPageStatusFilter(v); setPagePage(1); }}>
+              <SelectTrigger className="w-[150px] h-9">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All statuses</SelectItem>
+                {pageStatuses.map((s) => (
+                  <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(pagePageSize)} onValueChange={(v) => { setPagePageSize(Number(v)); setPagePage(1); }}>
+              <SelectTrigger className="w-[110px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedPageIds.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap rounded-lg border bg-muted/30 px-3 py-2">
+              <span className="text-sm font-medium">{selectedPageIds.length} selected</span>
+              <div className="flex-1" />
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                disabled={pageRetryMutation.isPending}
+                onClick={() => pageRetryMutation.mutate(selectedPageIds)}
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Retry publish
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="gap-1"
+                onClick={() => setConfirmDeletePages(selectedPageIds)}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delete
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedPageIds([])}>Clear</Button>
+            </div>
+          )}
+
+          {pagesLoading ? (
+            <Skeleton className="h-[300px] rounded-xl" />
+          ) : (
+            <div className="rounded-xl border overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={allVisibleSelected}
+                        onCheckedChange={(c) => {
+                          const ids = pagePagination.items.map((p) => p.id);
+                          setSelectedPageIds((prev) =>
+                            c ? Array.from(new Set([...prev, ...ids])) : prev.filter((id) => !ids.includes(id))
+                          );
+                        }}
+                      />
+                    </TableHead>
+                    <TableHead>Page</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Campaign</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pagePagination.items.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">No pages found</TableCell>
+                    </TableRow>
+                  ) : (
+                    pagePagination.items.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedPageIds.includes(p.id)}
+                            onCheckedChange={(c) =>
+                              setSelectedPageIds((prev) => c ? [...prev, p.id] : prev.filter((id) => id !== p.id))
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-sm max-w-[260px]">
+                          <p className="truncate">{p.title}</p>
+                          {p.external_url ? (
+                            <a href={p.external_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block">{p.external_url}</a>
+                          ) : (
+                            <p className="text-xs text-muted-foreground truncate">/{p.slug}</p>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {p.user_id ? (
+                            <button type="button" onClick={() => setDetailUserId(p.user_id)} className="text-left hover:underline">
+                              <p className="text-sm font-medium">{p.user_name || "—"}</p>
+                              <p className="text-xs text-muted-foreground">{p.user_email || p.user_id}</p>
+                            </button>
+                          ) : <span className="text-sm text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground max-w-[160px] truncate">{p.campaign_name || "—"}</TableCell>
+                        <TableCell>{statusBadge(p.status)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{formatDate(p.created_at)}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs">Manage page</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => setEditPage(p)}>
+                                <Pencil className="h-3.5 w-3.5 mr-2" /> Edit page
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => pageRetryMutation.mutate([p.id])}>
+                                <RotateCcw className="h-3.5 w-3.5 mr-2" /> Retry publish
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setDetailUserId(p.user_id)}>
+                                <Search className="h-3.5 w-3.5 mr-2" /> View owner details
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => setConfirmDeletePages([p.id])} className="text-destructive focus:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete page
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              <div className="p-2 border-t">
+                <PaginationBar
+                  page={pagePagination.currentPage}
+                  totalPages={pagePagination.totalPages}
+                  pageSize={pagePageSize}
+                  totalItems={filteredPages.length}
+                  onPageChange={setPagePage}
+                  onPageSizeChange={(s) => { setPagePageSize(s); setPagePage(1); }}
+                />
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="subscriptions" className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[220px] max-w-sm">
