@@ -564,7 +564,7 @@ Deno.serve(async (req) => {
             headers: { Authorization: authHeader, "Content-Type": "application/json" },
             body: JSON.stringify({
               page_ids: allRemaining, publish_type: pubType, website_id: fallbackWebsiteId,
-              overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+              overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
             }),
           }).catch(() => {});
         }
@@ -842,7 +842,7 @@ Deno.serve(async (req) => {
         headers: { Authorization: authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({
           page_ids: remainingIds, publish_type: pubType, website_id: fallbackWebsiteId,
-          overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results],
+          overwrite_design: allowOverwriteDesign, _prior_results: [...priorResults, ...results], as_admin: body.as_admin,
         }),
       }).catch((e) => console.error("[PUBLISH] Self-chain failed:", e));
     }
