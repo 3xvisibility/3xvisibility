@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Loader2, Zap, Languages, Lock, AlertTriangle, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -494,8 +495,11 @@ export default function WebsitesPage() {
                       <SelectItem value="shopify" disabled={!canUseFeature("shopify")}>
                         Shopify {!canUseFeature("shopify") && "🔒 Pro"}
                       </SelectItem>
-                      <SelectItem value="prestashop" disabled={!canUseFeature("prestashop")}>
-                        PrestaShop {!canUseFeature("prestashop") && "🔒 Pro"}
+                      <SelectItem value="prestashop" disabled>
+                        <span className="flex items-center gap-2">
+                          PrestaShop
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border-amber-500/20">Coming Soon</Badge>
+                        </span>
                       </SelectItem>
                       <SelectItem value="woocommerce" disabled={!canUseFeature("woocommerce")}>
                         WooCommerce {!canUseFeature("woocommerce") && "🔒 Pro"}
@@ -533,13 +537,18 @@ export default function WebsitesPage() {
                       />
                  )}
                 {siteType === "prestashop" && (
-                  <>
-                    <ConnectionSetupGuide provider="prestashop" siteHint={siteUrl} />
-                    <PrestaShopCredentialFields
-                      apiKey={prestashopApiKey}
-                      onApiKeyChange={setPrestashopApiKey}
-                    />
-                  </>
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 text-center space-y-3">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+                      <Store className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground">PrestaShop Integration</h4>
+                      <p className="text-xs text-muted-foreground mt-1 max-w-[260px] mx-auto">
+                        PrestaShop support is coming soon. Stay tuned for updates — it will be added to your tools automatically.
+                      </p>
+                    </div>
+                    <Badge variant="secondary" className="bg-amber-500/10 text-amber-500 border-amber-500/20">Coming Soon</Badge>
+                  </div>
                 )}
                 {siteType === "woocommerce" && (
                   <>
@@ -619,12 +628,12 @@ export default function WebsitesPage() {
                   <Button
                     className="w-full sm:w-auto"
                     onClick={() => runConnectFlow()}
-                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading}
+                    disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading || siteType === "prestashop"}
                   >
                     {isConnecting || shopifyOAuthLoading ? (
                       <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
                     ) : (
-                      siteType === "shopify" ? "Connect with Shopify" : t("common.connect")
+                      siteType === "shopify" ? "Connect with Shopify" : siteType === "prestashop" ? "Coming Soon" : t("common.connect")
                     )}
                   </Button>
                 </div>
