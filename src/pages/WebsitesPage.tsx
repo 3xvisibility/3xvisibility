@@ -629,17 +629,20 @@ export default function WebsitesPage() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          className="w-full sm:w-auto"
-                          onClick={() => runConnectFlow()}
-                          disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading || siteType === "prestashop"}
-                        >
-                          {isConnecting || shopifyOAuthLoading ? (
-                            <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
-                          ) : (
-                            siteType === "shopify" ? "Connect with Shopify" : siteType === "prestashop" ? "Coming Soon" : t("common.connect")
-                          )}
-                        </Button>
+                        <span className={siteType === "prestashop" ? "inline-block w-full sm:w-auto cursor-not-allowed" : "inline-block w-full sm:w-auto"}>
+                          <Button
+                            className="w-full sm:w-auto"
+                            onClick={() => runConnectFlow()}
+                            disabled={!(siteType === "shopify" ? shopDomain : siteUrl) || !siteType || shopifyInvalid || isConnecting || shopifyOAuthLoading || siteType === "prestashop"}
+                            style={siteType === "prestashop" ? { pointerEvents: "none" } : undefined}
+                          >
+                            {isConnecting || shopifyOAuthLoading ? (
+                              <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> {t("common.connecting")}</>
+                            ) : (
+                              siteType === "shopify" ? "Connect with Shopify" : siteType === "prestashop" ? "Coming Soon" : t("common.connect")
+                            )}
+                          </Button>
+                        </span>
                       </TooltipTrigger>
                       {siteType === "prestashop" && (
                         <TooltipContent side="top">
