@@ -559,57 +559,126 @@ export default function ReferralPage() {
               <Users className="h-5 w-5 text-primary" />
               <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
             </div>
-            {referrals.length > 0 && (
-              <Button variant="outline" size="sm" onClick={exportReferralsCsv} className="gap-2">
-                <FileDown className="h-3.5 w-3.5" />
-                {t("referral.exportCsv")}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)} className="gap-2">
+                  <Settings className="h-3.5 w-3.5" />
+                  {t("referral.rewardSettings")}
+                </Button>
+              )}
+              {referrals.length > 0 && (
+                <Button variant="outline" size="sm" onClick={exportReferralsCsv} className="gap-2">
+                  <FileDown className="h-3.5 w-3.5" />
+                  {t("referral.exportCsv")}
+                </Button>
+              )}
+            </div>
           </div>
           <CardDescription>{t("referral.referredUsersDesc")}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {referrals.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
               {t("referral.noReferrals")}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("referral.colDate")}</TableHead>
-                    <TableHead>{t("referral.colStatus")}</TableHead>
-                    <TableHead>{t("referral.colPlan")}</TableHead>
-                    <TableHead className="text-right">{t("referral.colReward")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {referrals.map((r) => {
-                    const verified = r.status === "verified" || r.status === "converted" || !!r.converted_at;
-                    return (
-                      <TableRow key={r.id}>
-                        <TableCell className="text-sm">
-                          {new Date(r.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={verified ? "default" : "secondary"} className="gap-1">
-                            {verified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                            {verified ? t("referral.statusVerified") : t("referral.statusPending")}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {r.subscription_plan || "—"}
-                        </TableCell>
-                        <TableCell className="text-right text-sm font-medium">
-                          {verified ? `$${Number(r.commission_amount || 0).toFixed(2)}` : "—"}
-                        </TableCell>
+            <>
+              {/* Filters & search */}
+              <div className="flex flex-col lg:flex-row lg:items-end gap-3">
+                <div className="relative flex-1 min-w-[160px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={t("referral.searchPlaceholder")}
+                    className="pl-9 h-9"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9 w-full lg:w-[150px]">
+                    <SelectValue placeholder={t("referral.colStatus")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("referral.filterAllStatus")}</SelectItem>
+                    <SelectItem value="verified">{t("referral.statusVerified")}</SelectItem>
+                    <SelectItem value="pending">{t("referral.statusPending")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={planFilter} onValueChange={setPlanFilter}>
+                  <SelectTrigger className="h-9 w-full lg:w-[150px]">
+                    <SelectValue placeholder={t("referral.colPlan")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("referral.filterAllPlans")}</SelectItem>
+                    {planOptions.map((p) => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2">
+                  <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-[140px]" aria-label={t("referral.filterFrom")} />
+                  <span className="text-muted-foreground text-sm">–</span>
+                  <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-[140px]" aria-label={t("referral.filterTo")} />
+                </div>
+                {filtersActive && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 h-9">
+                    <X className="h-3.5 w-3.5" />
+                    {t("referral.clearFilters")}
+                  </Button>
+                )}
+              </div>
+
+              {filteredReferrals.length === 0 ? (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  {t("referral.noMatches")}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("referral.colDate")}</TableHead>
+                        <TableHead>{t("referral.colStatus")}</TableHead>
+                        <TableHead>{t("referral.colPlan")}</TableHead>
+                        <TableHead className="text-right">{t("referral.colCreditReward")}</TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredReferrals.map((r) => {
+                        const verified = isVerified(r);
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell className="text-sm">
+                              {new Date(r.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={verified ? "default" : "secondary"} className="gap-1">
+                                {verified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                {verified ? t("referral.statusVerified") : t("referral.statusPending")}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {r.subscription_plan || "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-medium">
+                              {verified ? (
+                                <span className="inline-flex items-center gap-1 text-primary">
+                                  <Coins className="h-3.5 w-3.5" />
+                                  {Number(r.credit_reward ?? 0)}
+                                </span>
+                              ) : "—"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    {t("referral.showingCount").replace("{shown}", String(filteredReferrals.length)).replace("{total}", String(referrals.length))}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
