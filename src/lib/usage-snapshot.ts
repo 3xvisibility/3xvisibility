@@ -9,6 +9,10 @@ export interface UsageSnapshot {
   pagesUsed: number;
   pagesLimit: number;
   pagesRemaining: number;
+  /** Human-readable current plan name (e.g. "free", "agency"). */
+  planName?: string;
+  /** ISO date string for the next usage reset / billing period end. */
+  resetDate?: string | null;
 }
 
 let snapshot: UsageSnapshot | null = null;

@@ -56,8 +56,17 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
   if (isSubscriptionLimitError(raw)) {
     const usage = getUsageSnapshot();
     let description = friendlyError(raw);
+    if (usage?.planName) {
+      description += ` Current plan: ${usage.planName}.`;
+    }
     if (usage && usage.pagesLimit > 0) {
       description += ` You've used ${usage.pagesUsed} of ${usage.pagesLimit} pages (${usage.pagesRemaining} remaining).`;
+    }
+    if (usage?.resetDate) {
+      const reset = new Date(usage.resetDate);
+      if (!isNaN(reset.getTime())) {
+        description += ` Resets on ${reset.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}.`;
+      }
     }
     toast.error("Plan limit reached", {
       description,
