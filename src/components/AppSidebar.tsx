@@ -24,6 +24,7 @@ import {
   Gift,
   KeyRound,
   Columns3,
+  Link2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
@@ -88,6 +89,7 @@ const toolsNav: NavItem[] = [
 
 const settingsNav: NavItem[] = [
   { titleKey: "sidebar.affiliate", path: "affiliate", icon: Gift },
+  { titleKey: "sidebar.referral", path: "referral", icon: Link2 },
   { titleKey: "sidebar.billing", path: "billing", icon: CreditCard },
   { titleKey: "sidebar.settings", path: "settings", icon: Settings },
   { titleKey: "sidebar.workspaceSettings", path: "workspace-settings", icon: Users, requiredFeature: "teamCollaboration" },
