@@ -1401,7 +1401,7 @@ export default function AdminPage() {
         user={editProfileUser}
         open={!!editProfileUser}
         onOpenChange={(o) => !o && setEditProfileUser(null)}
-        onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-stats"] })}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-panel"] })}
       />
 
 
