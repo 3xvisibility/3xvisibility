@@ -5,8 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Credits granted to the referrer when a referred signup is verified
-const REWARD_CREDITS = 50;
+// Fallback credits granted to the referrer when a referred signup is verified
+// (used only if no row exists in referral_reward_settings)
+const DEFAULT_REWARD_CREDITS = 50;
 // Commission amount recorded on the referral (informational / payouts)
 const REWARD_COMMISSION = 5;
 
