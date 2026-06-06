@@ -274,19 +274,59 @@ export default function ReferralPage() {
     }
   }
 
+  function isVerified(r: ReferredUser) {
+    return r.status === "verified" || r.status === "converted" || !!r.converted_at;
+  }
+
+  // Apply search + filters to the referred users list
+  const filteredReferrals = referrals.filter((r) => {
+    const verified = isVerified(r);
+    if (statusFilter === "verified" && !verified) return false;
+    if (statusFilter === "pending" && verified) return false;
+    if (planFilter !== "all" && (r.subscription_plan || "—") !== planFilter) return false;
+    const created = new Date(r.created_at);
+    if (fromDate && created < new Date(fromDate + "T00:00:00")) return false;
+    if (toDate && created > new Date(toDate + "T23:59:59")) return false;
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      const hay = `${r.subscription_plan || ""} ${r.status} ${verified ? "verified" : "pending"} ${new Date(r.created_at).toLocaleDateString()}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const planOptions = Array.from(new Set(referrals.map((r) => r.subscription_plan || "—")));
+  const filtersActive = !!searchTerm.trim() || statusFilter !== "all" || planFilter !== "all" || !!fromDate || !!toDate;
+
+  function clearFilters() {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setPlanFilter("all");
+    setFromDate("");
+    setToDate("");
+  }
+
   function exportReferralsCsv() {
-    if (referrals.length === 0) return;
-    const rows = referrals.map((r) => ({
-      Date: new Date(r.created_at).toLocaleDateString(),
-      Status: r.status === "verified" || r.status === "converted" || !!r.converted_at ? "Verified" : "Pending",
-      Plan: r.subscription_plan || "—",
-      "Credit Reward": r.status === "verified" || r.status === "converted" || !!r.converted_at ? "50" : "0",
-    }));
-    exportDataFile(rows, "csv", "referred-users.csv");
-    toast.success(t("referral.exportSuccess"));
+    try {
+      if (filteredReferrals.length === 0) {
+        toast.error(t("referral.exportEmpty"));
+        return;
+      }
+      const rows = filteredReferrals.map((r) => ({
+        Date: new Date(r.created_at).toLocaleDateString(),
+        Status: isVerified(r) ? "Verified" : "Pending",
+        Plan: r.subscription_plan || "—",
+        "Credit Reward": isVerified(r) ? String(r.credit_reward ?? 0) : "0",
+      }));
+      exportDataFile(rows, "csv", "referred-users.csv");
+      toast.success(t("referral.exportSuccess").replace("{count}", String(rows.length)));
+    } catch {
+      toast.error(t("referral.exportFailed"));
+    }
   }
 
   const referralUrl = referralCode ? `${AFFILIATE_BASE_URL}/?ref=${referralCode}` : "";
+
 
   if (loading) {
     return (
