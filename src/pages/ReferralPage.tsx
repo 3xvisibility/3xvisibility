@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -24,7 +26,13 @@ import {
   ClipboardCopy,
   Award,
   ArrowRight,
+  RefreshCw,
+  Pencil,
+  Coins,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
+
 
 interface ReferralStats {
   totalClicks: number;
@@ -32,14 +40,30 @@ interface ReferralStats {
   totalEarned: number;
 }
 
+interface ReferredUser {
+  id: string;
+  status: string;
+  commission_amount: number;
+  subscription_plan: string | null;
+  converted_at: string | null;
+  created_at: string;
+}
+
 export default function ReferralPage() {
   const { t } = useLanguage();
   const { currentWorkspace } = useWorkspace();
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [linkId, setLinkId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<ReferralStats>({ totalClicks: 0, totalSignups: 0, totalEarned: 0 });
+  const [referrals, setReferrals] = useState<ReferredUser[]>([]);
+  const [credits, setCredits] = useState<{ remaining: number; total: number } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [customCode, setCustomCode] = useState("");
+  const [savingCode, setSavingCode] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   const AFFILIATE_BASE_URL = "https://www.3xvisibility.com";
 
@@ -57,21 +81,72 @@ export default function ReferralPage() {
 
     const { data: links } = await supabase
       .from("affiliate_links")
-      .select("code,total_clicks,total_conversions,total_earned")
+      .select("id,code,total_clicks,total_conversions,total_earned")
       .eq("user_id", user.id)
       .limit(1);
 
     if (links && links.length > 0) {
       const l = links[0];
       setReferralCode(l.code);
+      setLinkId(l.id);
       setStats({
         totalClicks: Number(l.total_clicks || 0),
         totalSignups: Number(l.total_conversions || 0),
         totalEarned: Number(l.total_earned || 0),
       });
+
+      const { data: refs } = await supabase
+        .from("affiliate_referrals")
+        .select("id,status,commission_amount,subscription_plan,converted_at,created_at")
+        .eq("affiliate_link_id", l.id)
+        .order("created_at", { ascending: false });
+      setReferrals((refs as ReferredUser[]) || []);
     }
+
+    const { data: cr } = await supabase
+      .from("ai_credits")
+      .select("remaining_credits,total_credits")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (cr) setCredits({ remaining: Number(cr.remaining_credits || 0), total: Number(cr.total_credits || 0) });
+
     setLoading(false);
   }
+
+  async function regenerateLink() {
+    setRegenerating(true);
+    const { data, error } = await supabase.functions.invoke("affiliate-track", {
+      body: { action: "regenerate" },
+    });
+    if (error || !data?.success) {
+      toast.error(t("referral.updateFailed"));
+    } else {
+      setReferralCode(data.code);
+      toast.success(t("referral.linkUpdated"));
+    }
+    setRegenerating(false);
+  }
+
+  async function saveCustomCode() {
+    if (customCode.trim().length < 3) {
+      toast.error(t("referral.codeTooShort"));
+      return;
+    }
+    setSavingCode(true);
+    const { data, error } = await supabase.functions.invoke("affiliate-track", {
+      body: { action: "set_code", code: customCode },
+    });
+    if (error || !data?.success) {
+      toast.error(data?.error === "code_taken" ? t("referral.codeTaken") : t("referral.updateFailed"));
+    } else {
+      setReferralCode(data.code);
+      setEditOpen(false);
+      setCustomCode("");
+      toast.success(t("referral.linkUpdated"));
+    }
+    setSavingCode(false);
+  }
+
 
   async function createReferralCode() {
     setCreating(true);
@@ -245,6 +320,29 @@ export default function ReferralPage() {
             </div>
           </div>
 
+          {/* Customize / Regenerate */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground hover:text-primary"
+              onClick={() => { setCustomCode(referralCode || ""); setEditOpen(true); }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              {t("referral.customize")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground hover:text-primary"
+              onClick={regenerateLink}
+              disabled={regenerating}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+              {t("referral.regenerate")}
+            </Button>
+          </div>
+
           <Separator />
 
           {/* Social Share */}
@@ -277,7 +375,7 @@ export default function ReferralPage() {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -317,7 +415,75 @@ export default function ReferralPage() {
             </div>
           </CardContent>
         </Card>
+        <Card className="border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-primary/10">
+                <Coins className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{credits ? credits.remaining : 0}</p>
+                <p className="text-xs text-muted-foreground">{t("referral.creditsBalance")}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Referred Users */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
+          </div>
+          <CardDescription>{t("referral.referredUsersDesc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {referrals.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              {t("referral.noReferrals")}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("referral.colDate")}</TableHead>
+                    <TableHead>{t("referral.colStatus")}</TableHead>
+                    <TableHead>{t("referral.colPlan")}</TableHead>
+                    <TableHead className="text-right">{t("referral.colReward")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {referrals.map((r) => {
+                    const verified = r.status === "verified" || r.status === "converted" || !!r.converted_at;
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-sm">
+                          {new Date(r.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={verified ? "default" : "secondary"} className="gap-1">
+                            {verified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                            {verified ? t("referral.statusVerified") : t("referral.statusPending")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {r.subscription_plan || "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-medium">
+                          {verified ? `$${Number(r.commission_amount || 0).toFixed(2)}` : "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* How It Works */}
       <Card>
@@ -373,6 +539,38 @@ export default function ReferralPage() {
           <ArrowRight className="ml-1 h-3 w-3" />
         </Button>
       </div>
+
+      {/* Customize code dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("referral.customizeTitle")}</DialogTitle>
+            <DialogDescription>{t("referral.customizeDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center rounded-md border bg-muted/30 overflow-hidden">
+              <span className="px-3 text-xs text-muted-foreground whitespace-nowrap border-r">
+                {AFFILIATE_BASE_URL.replace("https://", "")}/?ref=
+              </span>
+              <Input
+                value={customCode}
+                onChange={(e) => setCustomCode(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "-"))}
+                placeholder="my-name"
+                className="border-0 font-mono text-sm focus-visible:ring-0"
+                maxLength={40}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">{t("referral.customizeHint")}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>{t("referral.cancel")}</Button>
+            <Button onClick={saveCustomCode} disabled={savingCode}>
+              {savingCode ? t("referral.saving") : t("referral.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
