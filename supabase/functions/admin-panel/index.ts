@@ -219,6 +219,83 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Update a user's profile (name, company) and optionally their email address.
+    if (action === "update-user-profile") {
+      const { target_user_id, full_name, company, email } = body;
+      if (!target_user_id) {
+        return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Update email via auth admin if provided & changed
+      if (email !== undefined && email !== null && String(email).trim() !== "") {
+        const emailStr = String(email).trim();
+        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRe.test(emailStr)) {
+          return new Response(JSON.stringify({ error: "Invalid email address" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: emailErr } = await serviceClient.auth.admin.updateUserById(target_user_id, {
+          email: emailStr,
+          email_confirm: true,
+        });
+        if (emailErr) throw emailErr;
+      }
+
+      // Update profile fields
+      const profileUpdates: Record<string, any> = {};
+      if (full_name !== undefined) profileUpdates.full_name = full_name;
+      if (company !== undefined) profileUpdates.company = company;
+      if (Object.keys(profileUpdates).length > 0) {
+        profileUpdates.updated_at = new Date().toISOString();
+        const { error: profErr } = await serviceClient
+          .from("profiles")
+          .update(profileUpdates)
+          .eq("user_id", target_user_id);
+        if (profErr) throw profErr;
+      }
+
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Reset a user's password. Either set a specific new password directly,
+    // or generate a recovery link the admin can share with the user.
+    if (action === "reset-user-password") {
+      const { target_user_id, new_password } = body;
+      if (!target_user_id) {
+        return new Response(JSON.stringify({ error: "target_user_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Look up the user's email
+      const { data: targetUserData, error: getErr } = await serviceClient.auth.admin.getUserById(target_user_id);
+      if (getErr) throw getErr;
+      const targetEmail = targetUserData?.user?.email || null;
+
+      // Direct password set
+      if (new_password !== undefined && new_password !== null && String(new_password).length > 0) {
+        if (String(new_password).length < 6) {
+          return new Response(JSON.stringify({ error: "Password must be at least 6 characters" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const { error: pwErr } = await serviceClient.auth.admin.updateUserById(target_user_id, {
+          password: String(new_password),
+        });
+        if (pwErr) throw pwErr;
+        return new Response(JSON.stringify({ success: true, mode: "password_set", email: targetEmail }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Otherwise generate a recovery link
+      if (!targetEmail) {
+        return new Response(JSON.stringify({ error: "User has no email to send a reset link" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: linkData, error: linkErr } = await serviceClient.auth.admin.generateLink({
+        type: "recovery",
+        email: targetEmail,
+      });
+      if (linkErr) throw linkErr;
+      const actionLink = (linkData as any)?.properties?.action_link || null;
+      return new Response(JSON.stringify({ success: true, mode: "recovery_link", email: targetEmail, action_link: actionLink }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+
+
     if (action === "set-role") {
       const { target_user_id, role } = body;
       if (!target_user_id || !role) return new Response(JSON.stringify({ error: "target_user_id and role required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
