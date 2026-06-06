@@ -539,6 +539,38 @@ export default function ReferralPage() {
           <ArrowRight className="ml-1 h-3 w-3" />
         </Button>
       </div>
+
+      {/* Customize code dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("referral.customizeTitle")}</DialogTitle>
+            <DialogDescription>{t("referral.customizeDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center rounded-md border bg-muted/30 overflow-hidden">
+              <span className="px-3 text-xs text-muted-foreground whitespace-nowrap border-r">
+                {AFFILIATE_BASE_URL.replace("https://", "")}/?ref=
+              </span>
+              <Input
+                value={customCode}
+                onChange={(e) => setCustomCode(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "-"))}
+                placeholder="my-name"
+                className="border-0 font-mono text-sm focus-visible:ring-0"
+                maxLength={40}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">{t("referral.customizeHint")}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>{t("referral.cancel")}</Button>
+            <Button onClick={saveCustomCode} disabled={savingCode}>
+              {savingCode ? t("referral.saving") : t("referral.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
