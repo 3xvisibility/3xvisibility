@@ -22,6 +22,9 @@ interface FailingSite {
   last_error_at: string | null;
   workspace_id: string;
   user_id: string;
+  user_name?: string | null;
+  user_company?: string | null;
+  user_email?: string | null;
   updated_at: string;
 }
 
