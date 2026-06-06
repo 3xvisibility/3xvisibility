@@ -1,5 +1,14 @@
 import { Link } from "react-router-dom";
+import { useRef } from "react";
 import { motion } from "framer-motion";
+import Autoplay from "embla-carousel-autoplay";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import {
   Sparkles,
   Target,
