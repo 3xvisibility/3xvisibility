@@ -447,9 +447,17 @@ export default function ReferralPage() {
       {/* Referred Users */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
+            </div>
+            {referrals.length > 0 && (
+              <Button variant="outline" size="sm" onClick={exportReferralsCsv} className="gap-2">
+                <FileDown className="h-3.5 w-3.5" />
+                {t("referral.exportCsv")}
+              </Button>
+            )}
           </div>
           <CardDescription>{t("referral.referredUsersDesc")}</CardDescription>
         </CardHeader>
