@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { exportDataFile } from "@/lib/export-csv";
@@ -33,6 +36,9 @@ import {
   CheckCircle2,
   Clock,
   FileDown,
+  Settings,
+  Search,
+  X,
 } from "lucide-react";
 
 
@@ -46,9 +52,19 @@ interface ReferredUser {
   id: string;
   status: string;
   commission_amount: number;
+  credit_reward: number;
   subscription_plan: string | null;
   converted_at: string | null;
   created_at: string;
+}
+
+interface RewardSetting {
+  id: string;
+  plan: string;
+  reward_credits: number;
+  monthly_limit: number | null;
+  min_threshold: number;
+  is_active: boolean;
 }
 
 export default function ReferralPage() {
@@ -66,6 +82,19 @@ export default function ReferralPage() {
   const [customCode, setCustomCode] = useState("");
   const [savingCode, setSavingCode] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+
+  // Admin reward settings
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [rewardSettings, setRewardSettings] = useState<RewardSetting[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  // Filters / search for referred users
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [planFilter, setPlanFilter] = useState<string>("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const AFFILIATE_BASE_URL = "https://www.3xvisibility.com";
 
@@ -99,7 +128,7 @@ export default function ReferralPage() {
 
       const { data: refs } = await supabase
         .from("affiliate_referrals")
-        .select("id,status,commission_amount,subscription_plan,converted_at,created_at")
+        .select("id,status,commission_amount,credit_reward,subscription_plan,converted_at,created_at")
         .eq("affiliate_link_id", l.id)
         .order("created_at", { ascending: false });
       setReferrals((refs as ReferredUser[]) || []);
@@ -112,7 +141,45 @@ export default function ReferralPage() {
       .maybeSingle();
     if (cr) setCredits({ remaining: Number(cr.remaining_credits || 0), total: Number(cr.total_credits || 0) });
 
+    // Reward settings (visible to everyone; editable only by admins)
+    const { data: settings } = await supabase
+      .from("referral_reward_settings")
+      .select("id,plan,reward_credits,monthly_limit,min_threshold,is_active")
+      .order("plan", { ascending: true });
+    if (settings) setRewardSettings(settings as RewardSetting[]);
+
+    const { data: adminCheck } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+    setIsAdmin(!!adminCheck);
+
     setLoading(false);
+  }
+
+  async function saveRewardSettings() {
+    setSavingSettings(true);
+    const updates = rewardSettings.map((s) =>
+      supabase
+        .from("referral_reward_settings")
+        .update({
+          reward_credits: Math.max(0, Number(s.reward_credits) || 0),
+          monthly_limit: s.monthly_limit === null || s.monthly_limit === undefined ? null : Math.max(0, Number(s.monthly_limit)),
+          min_threshold: Math.max(0, Number(s.min_threshold) || 0),
+          is_active: s.is_active,
+        })
+        .eq("id", s.id),
+    );
+    const results = await Promise.all(updates);
+    const failed = results.some((r) => r.error);
+    if (failed) {
+      toast.error(t("referral.settingsSaveFailed"));
+    } else {
+      toast.success(t("referral.settingsSaved"));
+      setSettingsOpen(false);
+    }
+    setSavingSettings(false);
+  }
+
+  function updateSetting(id: string, patch: Partial<RewardSetting>) {
+    setRewardSettings((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
 
   async function regenerateLink() {
@@ -213,19 +280,59 @@ export default function ReferralPage() {
     }
   }
 
+  function isVerified(r: ReferredUser) {
+    return r.status === "verified" || r.status === "converted" || !!r.converted_at;
+  }
+
+  // Apply search + filters to the referred users list
+  const filteredReferrals = referrals.filter((r) => {
+    const verified = isVerified(r);
+    if (statusFilter === "verified" && !verified) return false;
+    if (statusFilter === "pending" && verified) return false;
+    if (planFilter !== "all" && (r.subscription_plan || "—") !== planFilter) return false;
+    const created = new Date(r.created_at);
+    if (fromDate && created < new Date(fromDate + "T00:00:00")) return false;
+    if (toDate && created > new Date(toDate + "T23:59:59")) return false;
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      const hay = `${r.subscription_plan || ""} ${r.status} ${verified ? "verified" : "pending"} ${new Date(r.created_at).toLocaleDateString()}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const planOptions = Array.from(new Set(referrals.map((r) => r.subscription_plan || "—")));
+  const filtersActive = !!searchTerm.trim() || statusFilter !== "all" || planFilter !== "all" || !!fromDate || !!toDate;
+
+  function clearFilters() {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setPlanFilter("all");
+    setFromDate("");
+    setToDate("");
+  }
+
   function exportReferralsCsv() {
-    if (referrals.length === 0) return;
-    const rows = referrals.map((r) => ({
-      Date: new Date(r.created_at).toLocaleDateString(),
-      Status: r.status === "verified" || r.status === "converted" || !!r.converted_at ? "Verified" : "Pending",
-      Plan: r.subscription_plan || "—",
-      "Credit Reward": r.status === "verified" || r.status === "converted" || !!r.converted_at ? "50" : "0",
-    }));
-    exportDataFile(rows, "csv", "referred-users.csv");
-    toast.success(t("referral.exportSuccess"));
+    try {
+      if (filteredReferrals.length === 0) {
+        toast.error(t("referral.exportEmpty"));
+        return;
+      }
+      const rows = filteredReferrals.map((r) => ({
+        Date: new Date(r.created_at).toLocaleDateString(),
+        Status: isVerified(r) ? "Verified" : "Pending",
+        Plan: r.subscription_plan || "—",
+        "Credit Reward": isVerified(r) ? String(r.credit_reward ?? 0) : "0",
+      }));
+      exportDataFile(rows, "csv", "referred-users.csv");
+      toast.success(t("referral.exportSuccess").replace("{count}", String(rows.length)));
+    } catch {
+      toast.error(t("referral.exportFailed"));
+    }
   }
 
   const referralUrl = referralCode ? `${AFFILIATE_BASE_URL}/?ref=${referralCode}` : "";
+
 
   if (loading) {
     return (
@@ -452,57 +559,126 @@ export default function ReferralPage() {
               <Users className="h-5 w-5 text-primary" />
               <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
             </div>
-            {referrals.length > 0 && (
-              <Button variant="outline" size="sm" onClick={exportReferralsCsv} className="gap-2">
-                <FileDown className="h-3.5 w-3.5" />
-                {t("referral.exportCsv")}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)} className="gap-2">
+                  <Settings className="h-3.5 w-3.5" />
+                  {t("referral.rewardSettings")}
+                </Button>
+              )}
+              {referrals.length > 0 && (
+                <Button variant="outline" size="sm" onClick={exportReferralsCsv} className="gap-2">
+                  <FileDown className="h-3.5 w-3.5" />
+                  {t("referral.exportCsv")}
+                </Button>
+              )}
+            </div>
           </div>
           <CardDescription>{t("referral.referredUsersDesc")}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {referrals.length === 0 ? (
             <div className="py-10 text-center text-sm text-muted-foreground">
               {t("referral.noReferrals")}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("referral.colDate")}</TableHead>
-                    <TableHead>{t("referral.colStatus")}</TableHead>
-                    <TableHead>{t("referral.colPlan")}</TableHead>
-                    <TableHead className="text-right">{t("referral.colReward")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {referrals.map((r) => {
-                    const verified = r.status === "verified" || r.status === "converted" || !!r.converted_at;
-                    return (
-                      <TableRow key={r.id}>
-                        <TableCell className="text-sm">
-                          {new Date(r.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={verified ? "default" : "secondary"} className="gap-1">
-                            {verified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                            {verified ? t("referral.statusVerified") : t("referral.statusPending")}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {r.subscription_plan || "—"}
-                        </TableCell>
-                        <TableCell className="text-right text-sm font-medium">
-                          {verified ? `$${Number(r.commission_amount || 0).toFixed(2)}` : "—"}
-                        </TableCell>
+            <>
+              {/* Filters & search */}
+              <div className="flex flex-col lg:flex-row lg:items-end gap-3">
+                <div className="relative flex-1 min-w-[160px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={t("referral.searchPlaceholder")}
+                    className="pl-9 h-9"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9 w-full lg:w-[150px]">
+                    <SelectValue placeholder={t("referral.colStatus")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("referral.filterAllStatus")}</SelectItem>
+                    <SelectItem value="verified">{t("referral.statusVerified")}</SelectItem>
+                    <SelectItem value="pending">{t("referral.statusPending")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={planFilter} onValueChange={setPlanFilter}>
+                  <SelectTrigger className="h-9 w-full lg:w-[150px]">
+                    <SelectValue placeholder={t("referral.colPlan")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("referral.filterAllPlans")}</SelectItem>
+                    {planOptions.map((p) => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2">
+                  <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-[140px]" aria-label={t("referral.filterFrom")} />
+                  <span className="text-muted-foreground text-sm">–</span>
+                  <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-[140px]" aria-label={t("referral.filterTo")} />
+                </div>
+                {filtersActive && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 h-9">
+                    <X className="h-3.5 w-3.5" />
+                    {t("referral.clearFilters")}
+                  </Button>
+                )}
+              </div>
+
+              {filteredReferrals.length === 0 ? (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  {t("referral.noMatches")}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("referral.colDate")}</TableHead>
+                        <TableHead>{t("referral.colStatus")}</TableHead>
+                        <TableHead>{t("referral.colPlan")}</TableHead>
+                        <TableHead className="text-right">{t("referral.colCreditReward")}</TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredReferrals.map((r) => {
+                        const verified = isVerified(r);
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell className="text-sm">
+                              {new Date(r.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={verified ? "default" : "secondary"} className="gap-1">
+                                {verified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                {verified ? t("referral.statusVerified") : t("referral.statusPending")}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {r.subscription_plan || "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-medium">
+                              {verified ? (
+                                <span className="inline-flex items-center gap-1 text-primary">
+                                  <Coins className="h-3.5 w-3.5" />
+                                  {Number(r.credit_reward ?? 0)}
+                                </span>
+                              ) : "—"}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                  <p className="text-xs text-muted-foreground mt-3">
+                    {t("referral.showingCount").replace("{shown}", String(filteredReferrals.length)).replace("{total}", String(referrals.length))}
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -611,6 +787,72 @@ export default function ReferralPage() {
             <Button variant="outline" onClick={() => setEditOpen(false)}>{t("referral.cancel")}</Button>
             <Button onClick={saveCustomCode} disabled={savingCode}>
               {savingCode ? t("referral.saving") : t("referral.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin reward settings dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("referral.rewardSettingsTitle")}</DialogTitle>
+            <DialogDescription>{t("referral.rewardSettingsDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            {rewardSettings.map((s) => (
+              <div key={s.id} className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-sm capitalize">{s.plan}</p>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`active-${s.id}`} className="text-xs text-muted-foreground">{t("referral.settingActive")}</Label>
+                    <Switch
+                      id={`active-${s.id}`}
+                      checked={s.is_active}
+                      onCheckedChange={(v) => updateSetting(s.id, { is_active: v })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("referral.settingRewardCredits")}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={s.reward_credits}
+                      onChange={(e) => updateSetting(s.id, { reward_credits: Number(e.target.value) })}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("referral.settingMinThreshold")}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={s.min_threshold}
+                      onChange={(e) => updateSetting(s.id, { min_threshold: Number(e.target.value) })}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("referral.settingMonthlyLimit")}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={s.monthly_limit ?? ""}
+                      placeholder={t("referral.settingNoLimit")}
+                      onChange={(e) => updateSetting(s.id, { monthly_limit: e.target.value === "" ? null : Number(e.target.value) })}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>{t("referral.cancel")}</Button>
+            <Button onClick={saveRewardSettings} disabled={savingSettings}>
+              {savingSettings ? t("referral.saving") : t("referral.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

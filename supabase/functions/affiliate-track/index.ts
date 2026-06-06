@@ -5,8 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Credits granted to the referrer when a referred signup is verified
-const REWARD_CREDITS = 50;
+// Fallback credits granted to the referrer when a referred signup is verified
+// (used only if no row exists in referral_reward_settings)
+const DEFAULT_REWARD_CREDITS = 50;
 // Commission amount recorded on the referral (informational / payouts)
 const REWARD_COMMISSION = 5;
 
@@ -96,11 +97,64 @@ Deno.serve(async (req) => {
       if (existing) return json({ success: true, attributed: false, reason: "already_attributed" });
 
       const now = new Date().toISOString();
+
+      // Determine the referred user's plan to pick the right reward rule
+      const { data: sub } = await admin
+        .from("subscriptions")
+        .select("plan")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const planKey = sub?.plan || "default";
+
+      // Load reward settings for this plan, falling back to the 'default' rule
+      let { data: setting } = await admin
+        .from("referral_reward_settings")
+        .select("reward_credits,monthly_limit,min_threshold,is_active")
+        .eq("plan", planKey)
+        .maybeSingle();
+      if (!setting) {
+        const { data: def } = await admin
+          .from("referral_reward_settings")
+          .select("reward_credits,monthly_limit,min_threshold,is_active")
+          .eq("plan", "default")
+          .maybeSingle();
+        setting = def || null;
+      }
+
+      const rewardActive = setting ? setting.is_active : true;
+      let rewardCredits = setting ? Number(setting.reward_credits || 0) : DEFAULT_REWARD_CREDITS;
+      const monthlyLimit = setting?.monthly_limit ?? null;
+      const minThreshold = Number(setting?.min_threshold || 0);
+
+      // Enforce minimum threshold: rewards only start after N verified referrals
+      const priorConversions = Number(link.total_conversions || 0);
+      if (!rewardActive || priorConversions < minThreshold) {
+        rewardCredits = 0;
+      }
+
+      // Enforce monthly limit on the number of rewarded referrals for this link
+      if (rewardCredits > 0 && monthlyLimit != null) {
+        const monthStart = new Date();
+        monthStart.setUTCDate(1);
+        monthStart.setUTCHours(0, 0, 0, 0);
+        const { count } = await admin
+          .from("affiliate_referrals")
+          .select("id", { count: "exact", head: true })
+          .eq("affiliate_link_id", link.id)
+          .gt("credit_reward", 0)
+          .gte("created_at", monthStart.toISOString());
+        if ((count || 0) >= monthlyLimit) {
+          rewardCredits = 0;
+        }
+      }
+
       await admin.from("affiliate_referrals").insert({
         affiliate_link_id: link.id,
         referred_user_id: user.id,
         status: "verified",
         commission_amount: REWARD_COMMISSION,
+        credit_reward: rewardCredits,
+        subscription_plan: planKey,
         converted_at: now,
       });
 
@@ -109,30 +163,32 @@ Deno.serve(async (req) => {
         .update({
           total_conversions: (link.total_conversions || 0) + 1,
           total_earned: Number(link.total_earned || 0) + REWARD_COMMISSION,
-          total_credited: Number(link.total_credited || 0) + REWARD_CREDITS,
+          total_credited: Number(link.total_credited || 0) + rewardCredits,
           updated_at: now,
         })
         .eq("id", link.id);
 
-      // Reward the referrer with AI credits
-      await admin.from("ai_credits").upsert({ user_id: link.user_id }, { onConflict: "user_id", ignoreDuplicates: true });
-      const { data: credits } = await admin
-        .from("ai_credits")
-        .select("total_credits,remaining_credits")
-        .eq("user_id", link.user_id)
-        .maybeSingle();
-      if (credits) {
-        await admin
+      // Reward the referrer with AI credits (if any are due)
+      if (rewardCredits > 0) {
+        await admin.from("ai_credits").upsert({ user_id: link.user_id }, { onConflict: "user_id", ignoreDuplicates: true });
+        const { data: credits } = await admin
           .from("ai_credits")
-          .update({
-            total_credits: (credits.total_credits || 0) + REWARD_CREDITS,
-            remaining_credits: (credits.remaining_credits || 0) + REWARD_CREDITS,
-            updated_at: now,
-          })
-          .eq("user_id", link.user_id);
+          .select("total_credits,remaining_credits")
+          .eq("user_id", link.user_id)
+          .maybeSingle();
+        if (credits) {
+          await admin
+            .from("ai_credits")
+            .update({
+              total_credits: (credits.total_credits || 0) + rewardCredits,
+              remaining_credits: (credits.remaining_credits || 0) + rewardCredits,
+              updated_at: now,
+            })
+            .eq("user_id", link.user_id);
+        }
       }
 
-      return json({ success: true, attributed: true, reward: REWARD_CREDITS });
+      return json({ success: true, attributed: true, reward: rewardCredits });
     }
 
     // ---- Set a custom code / regenerate the referral link ----
