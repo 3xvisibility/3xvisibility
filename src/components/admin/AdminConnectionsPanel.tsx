@@ -79,7 +79,7 @@ export function AdminConnectionsPanel() {
     const q = search.trim().toLowerCase();
     if (!q) return items;
     return items.filter((s) =>
-      [s.name, s.url, s.user_id, s.workspace_id, s.type, s.last_error]
+      [s.name, s.url, s.user_id, s.user_name, s.user_company, s.user_email, s.workspace_id, s.type, s.last_error]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
     );
