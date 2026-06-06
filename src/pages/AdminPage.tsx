@@ -464,6 +464,7 @@ export default function AdminPage() {
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [editProfileUser, setEditProfileUser] = useState<AdminUser | null>(null);
   // Generated pages state
   const [pageSearch, setPageSearch] = useState("");
   const [pageStatusFilter, setPageStatusFilter] = useState("__all__");
