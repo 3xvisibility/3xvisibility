@@ -96,14 +96,21 @@ export function useSubscription(): SubscriptionData {
   const sitesConnected = data?.sitesConnected ?? 0;
   const sitesLimit = features.websites; // -1 means unlimited
 
+  // Next usage reset: billing period end if known, otherwise start of next month.
+  const resetDate =
+    (data?.current_period_end as string | undefined) ??
+    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString();
+
   // Publish a snapshot so non-React code (e.g. handleApiError) can show page counts
   useEffect(() => {
     setUsageSnapshot({
       pagesUsed,
       pagesLimit,
       pagesRemaining: Math.max(0, pagesLimit - pagesUsed),
+      planName: plan,
+      resetDate,
     });
-  }, [pagesUsed, pagesLimit]);
+  }, [pagesUsed, pagesLimit, plan, resetDate]);
 
 
 
