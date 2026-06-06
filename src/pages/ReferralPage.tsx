@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { exportDataFile } from "@/lib/export-csv";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import {
@@ -31,6 +32,7 @@ import {
   Coins,
   CheckCircle2,
   Clock,
+  FileDown,
 } from "lucide-react";
 
 
@@ -211,6 +213,18 @@ export default function ReferralPage() {
     }
   }
 
+  function exportReferralsCsv() {
+    if (referrals.length === 0) return;
+    const rows = referrals.map((r) => ({
+      Date: new Date(r.created_at).toLocaleDateString(),
+      Status: r.status === "verified" || r.status === "converted" || !!r.converted_at ? "Verified" : "Pending",
+      Plan: r.subscription_plan || "—",
+      "Credit Reward": r.status === "verified" || r.status === "converted" || !!r.converted_at ? "50" : "0",
+    }));
+    exportDataFile(rows, "csv", "referred-users.csv");
+    toast.success(t("referral.exportSuccess"));
+  }
+
   const referralUrl = referralCode ? `${AFFILIATE_BASE_URL}/?ref=${referralCode}` : "";
 
   if (loading) {
@@ -241,11 +255,11 @@ export default function ReferralPage() {
             </div>
             <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
               <div className="p-4 rounded-xl bg-muted/50 space-y-1">
-                <p className="text-2xl font-bold text-primary">5%</p>
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("referral.commission")}</p>
+                <p className="text-2xl font-bold text-primary">50</p>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("referral.creditsEach")}</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/50 space-y-1">
-                <p className="text-2xl font-bold text-primary">$25</p>
+                <p className="text-2xl font-bold text-primary">0</p>
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("referral.minPayout")}</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/50 space-y-1">
@@ -433,9 +447,17 @@ export default function ReferralPage() {
       {/* Referred Users */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
+            </div>
+            {referrals.length > 0 && (
+              <Button variant="outline" size="sm" onClick={exportReferralsCsv} className="gap-2">
+                <FileDown className="h-3.5 w-3.5" />
+                {t("referral.exportCsv")}
+              </Button>
+            )}
           </div>
           <CardDescription>{t("referral.referredUsersDesc")}</CardDescription>
         </CardHeader>
@@ -485,6 +507,21 @@ export default function ReferralPage() {
         </CardContent>
       </Card>
 
+      {/* Payout / Threshold Note */}
+      <Card className="border-primary/10 bg-primary/[0.03]">
+        <CardContent className="pt-5 pb-5">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0 mt-0.5">
+              <Gift className="h-4 w-4 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">{t("referral.rewardNoteTitle")}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{t("referral.rewardNoteDesc")}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* How It Works */}
       <Card>
         <CardHeader>
@@ -510,6 +547,7 @@ export default function ReferralPage() {
                 icon: Gift,
                 title: t("referral.step3Title"),
                 desc: t("referral.step3Desc"),
+                reward: "+50 AI credits",
               },
             ].map((item) => (
               <div key={item.step} className="relative flex gap-4">
@@ -521,9 +559,16 @@ export default function ReferralPage() {
                     <div className="hidden md:block w-px h-full bg-border mt-2" />
                   )}
                 </div>
-                <div className="space-y-1 pb-2">
+                <div className="space-y-1 pb-2 flex-1">
                   <item.icon className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-sm">{item.title}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm">{item.title}</h3>
+                    {item.reward && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 bg-green-500/10 text-green-600 hover:bg-green-500/10">
+                        {item.reward}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
               </div>
