@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { friendlyError, isCreditError, isUnauthorizedError, isForbiddenError, isSubscriptionLimitError } from "@/lib/friendly-errors";
+import { getUsageSnapshot } from "@/lib/usage-snapshot";
 
 /**
  * Centralised handler for edge function / API errors.
@@ -53,8 +54,13 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
 
   // Subscription / plan limit — show upgrade prompt
   if (isSubscriptionLimitError(raw)) {
+    const usage = getUsageSnapshot();
+    let description = friendlyError(raw);
+    if (usage && usage.pagesLimit > 0) {
+      description += ` You've used ${usage.pagesUsed} of ${usage.pagesLimit} pages (${usage.pagesRemaining} remaining).`;
+    }
     toast.error("Plan limit reached", {
-      description: friendlyError(raw),
+      description,
       action: {
         label: "Upgrade plan",
         onClick: () => {
@@ -67,6 +73,7 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
     });
     return;
   }
+
 
   // Forbidden — signed in but lacking permission. Explain clearly with admin-only guidance.
   if (isForbiddenError(raw)) {

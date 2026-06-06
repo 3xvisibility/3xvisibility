@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PLAN_FEATURES, type PlanName, type FeatureKey, type PlanFeatures } from "@/lib/plan-features";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
+import { setUsageSnapshot } from "@/lib/usage-snapshot";
 
 export interface SubscriptionData {
   plan: PlanName;
@@ -94,6 +95,17 @@ export function useSubscription(): SubscriptionData {
   const aiLimit = data?.ai_generations_limit ?? features.aiLimit;
   const sitesConnected = data?.sitesConnected ?? 0;
   const sitesLimit = features.websites; // -1 means unlimited
+
+  // Publish a snapshot so non-React code (e.g. handleApiError) can show page counts
+  useEffect(() => {
+    setUsageSnapshot({
+      pagesUsed,
+      pagesLimit,
+      pagesRemaining: Math.max(0, pagesLimit - pagesUsed),
+    });
+  }, [pagesUsed, pagesLimit]);
+
+
 
   // ── Usage limit warning (90% threshold) ─────────────
   useEffect(() => {
