@@ -791,6 +791,72 @@ export default function ReferralPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Admin reward settings dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("referral.rewardSettingsTitle")}</DialogTitle>
+            <DialogDescription>{t("referral.rewardSettingsDesc")}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            {rewardSettings.map((s) => (
+              <div key={s.id} className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-sm capitalize">{s.plan}</p>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`active-${s.id}`} className="text-xs text-muted-foreground">{t("referral.settingActive")}</Label>
+                    <Switch
+                      id={`active-${s.id}`}
+                      checked={s.is_active}
+                      onCheckedChange={(v) => updateSetting(s.id, { is_active: v })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("referral.settingRewardCredits")}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={s.reward_credits}
+                      onChange={(e) => updateSetting(s.id, { reward_credits: Number(e.target.value) })}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("referral.settingMinThreshold")}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={s.min_threshold}
+                      onChange={(e) => updateSetting(s.id, { min_threshold: Number(e.target.value) })}
+                      className="h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("referral.settingMonthlyLimit")}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={s.monthly_limit ?? ""}
+                      placeholder={t("referral.settingNoLimit")}
+                      onChange={(e) => updateSetting(s.id, { monthly_limit: e.target.value === "" ? null : Number(e.target.value) })}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettingsOpen(false)}>{t("referral.cancel")}</Button>
+            <Button onClick={saveRewardSettings} disabled={savingSettings}>
+              {savingSettings ? t("referral.saving") : t("referral.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
