@@ -948,6 +948,7 @@ export default function AdminPage() {
                               u={u}
                               onViewDetails={() => setDetailUserId(u.id)}
                               onEditPlan={() => openEditFromUser(u)}
+                              onEditProfile={() => setEditProfileUser(u)}
                               onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
                               onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
                               onDelete={() => setConfirmDelete(u)}
