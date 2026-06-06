@@ -6,10 +6,12 @@ import { History, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface PeriodRow {
   key: string;
-  label: string;
+  month: number;
+  year: number;
   count: number;
 }
 
@@ -26,11 +28,7 @@ function buildPeriods(dates: string[]): PeriodRow[] {
     .slice(0, 12)
     .map(([key, count]) => {
       const [y, m] = key.split("-").map(Number);
-      const label = new Date(y, m - 1, 1).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-      });
-      return { key, label, count };
+      return { key, year: y, month: m, count };
     });
 }
 
@@ -38,6 +36,7 @@ export function UsageHistoryWidget() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const { resetDate } = useSubscription();
+  const { t } = useLanguage();
 
   const { data: periods = [], isLoading } = useQuery({
     queryKey: ["dashboard-usage-history", wsId],
@@ -60,11 +59,7 @@ export function UsageHistoryWidget() {
     if (!resetDate) return null;
     const d = new Date(resetDate);
     if (isNaN(d.getTime())) return null;
-    return d.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return `${t(`dashboard.month${d.getMonth() + 1}`)} ${d.getDate()}, ${d.getFullYear()}`;
   })();
 
   return (
@@ -72,11 +67,11 @@ export function UsageHistoryWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <History className="h-4 w-4 text-primary" />
-          Usage history
+          {t("dashboard.usageHistory")}
           {resetLabel && (
             <Badge variant="outline" className="ml-auto gap-1 text-[10px] font-normal">
               <CalendarClock className="h-3 w-3" />
-              Resets {resetLabel}
+              {t("dashboard.usageResets", { date: resetLabel })}
             </Badge>
           )}
         </CardTitle>
@@ -90,14 +85,14 @@ export function UsageHistoryWidget() {
           </div>
         ) : periods.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            No pages generated yet.
+            {t("dashboard.usageNoPages")}
           </p>
         ) : (
           <ul className="space-y-3">
             {periods.map((p) => (
               <li key={p.key} className="flex items-center gap-3">
                 <span className="w-28 shrink-0 text-xs text-muted-foreground truncate">
-                  {p.label}
+                  {t(`dashboard.month${p.month}`)} {p.year}
                 </span>
                 <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                   <div
