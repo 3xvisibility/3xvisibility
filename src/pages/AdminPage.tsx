@@ -395,11 +395,12 @@ function EditSubscriptionDialog({
 
 // --- Per-row actions menu ---
 function UserActionsMenu({
-  u, onViewDetails, onEditPlan, onSetRole, onToggleBan, onDelete,
+  u, onViewDetails, onEditPlan, onEditProfile, onSetRole, onToggleBan, onDelete,
 }: {
   u: AdminUser;
   onViewDetails: () => void;
   onEditPlan: () => void;
+  onEditProfile: () => void;
   onSetRole: (role: "admin" | "moderator" | "user") => void;
   onToggleBan: () => void;
   onDelete: () => void;
@@ -415,6 +416,9 @@ function UserActionsMenu({
         <DropdownMenuLabel className="text-xs">Manage user</DropdownMenuLabel>
         <DropdownMenuItem onClick={onViewDetails}>
           <Search className="h-3.5 w-3.5 mr-2" /> View full details
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onEditProfile}>
+          <UserCog className="h-3.5 w-3.5 mr-2" /> Edit profile & password
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onEditPlan}>
           <Pencil className="h-3.5 w-3.5 mr-2" /> Edit plan & quota
