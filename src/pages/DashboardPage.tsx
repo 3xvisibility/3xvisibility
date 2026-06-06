@@ -46,6 +46,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitationsBanner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { AiCreditsWidget } from "@/components/dashboard/AiCreditsWidget";
+import { PagesUsageWidget } from "@/components/dashboard/PagesUsageWidget";
 
 
 const statusColors: Record<string, string> = {
@@ -393,8 +394,11 @@ export default function DashboardPage() {
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
       <UsageLimitBanner type="ai" used={subAiUsed} limit={subAiLimit} />
 
-      {/* AI Credits */}
-      <AiCreditsWidget />
+      {/* Usage Overview Widgets */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <PagesUsageWidget />
+        <AiCreditsWidget />
+      </div>
 
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-glow to-secondary p-6 sm:p-8 text-primary-foreground">
