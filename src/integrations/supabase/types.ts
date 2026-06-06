@@ -246,6 +246,7 @@ export type Database = {
           commission_amount: number
           converted_at: string | null
           created_at: string
+          credit_reward: number
           id: string
           referred_user_id: string | null
           status: string
@@ -257,6 +258,7 @@ export type Database = {
           commission_amount?: number
           converted_at?: string | null
           created_at?: string
+          credit_reward?: number
           id?: string
           referred_user_id?: string | null
           status?: string
@@ -268,6 +270,7 @@ export type Database = {
           commission_amount?: number
           converted_at?: string | null
           created_at?: string
+          credit_reward?: number
           id?: string
           referred_user_id?: string | null
           status?: string
@@ -1563,6 +1566,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referral_reward_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          min_threshold: number
+          monthly_limit: number | null
+          plan: string
+          reward_credits: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_threshold?: number
+          monthly_limit?: number | null
+          plan: string
+          reward_credits?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_threshold?: number
+          monthly_limit?: number | null
+          plan?: string
+          reward_credits?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       shared_templates: {
         Row: {
