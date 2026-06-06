@@ -99,7 +99,7 @@ const en: Record<string, string> = {
   "referral.step1Title": "Share your link",
   "referral.step2Desc": "When someone signs up through your link, they're tracked as your referral.",
   "referral.step2Title": "They sign up",
-  "referral.step3Desc": "Get 5% commission applied as account credits when they subscribe.",
+  "referral.step3Desc": "You earn 50 AI credits instantly when their signup is verified. No minimum threshold — rewards are applied immediately.",
   "referral.step3Title": "Earn credits",
   "referral.subtitle": "Earn commissions by referring new users to 3XVISIBILITY",
   "referral.title": "Refer & Earn",

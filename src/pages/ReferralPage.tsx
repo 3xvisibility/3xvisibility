@@ -507,6 +507,21 @@ export default function ReferralPage() {
         </CardContent>
       </Card>
 
+      {/* Payout / Threshold Note */}
+      <Card className="border-primary/10 bg-primary/[0.03]">
+        <CardContent className="pt-5 pb-5">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0 mt-0.5">
+              <Gift className="h-4 w-4 text-primary" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">{t("referral.rewardNoteTitle")}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{t("referral.rewardNoteDesc")}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* How It Works */}
       <Card>
         <CardHeader>
@@ -532,6 +547,7 @@ export default function ReferralPage() {
                 icon: Gift,
                 title: t("referral.step3Title"),
                 desc: t("referral.step3Desc"),
+                reward: "+50 AI credits",
               },
             ].map((item) => (
               <div key={item.step} className="relative flex gap-4">
@@ -543,9 +559,16 @@ export default function ReferralPage() {
                     <div className="hidden md:block w-px h-full bg-border mt-2" />
                   )}
                 </div>
-                <div className="space-y-1 pb-2">
+                <div className="space-y-1 pb-2 flex-1">
                   <item.icon className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-sm">{item.title}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm">{item.title}</h3>
+                    {item.reward && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 bg-green-500/10 text-green-600 hover:bg-green-500/10">
+                        {item.reward}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
               </div>
