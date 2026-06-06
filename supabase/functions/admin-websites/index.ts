@@ -55,6 +55,32 @@ Deno.serve(async (req) => {
       const { data: sites, error } = await q;
       if (error) return json({ error: error.message }, 500);
 
+      // Enrich with owner identity so admins know which user a site belongs to
+      const userIds = [...new Set((sites || []).map((s: any) => s.user_id).filter(Boolean))];
+      const profileMap = new Map<string, { name: string | null; company: string | null }>();
+      const emailMap = new Map<string, string | null>();
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await admin
+          .from("profiles")
+          .select("user_id,full_name,company")
+          .in("user_id", userIds);
+        for (const p of profiles || []) {
+          profileMap.set(p.user_id, { name: p.full_name ?? null, company: p.company ?? null });
+        }
+        // Emails live in auth.users — fetch individually via admin API
+        await Promise.all(
+          userIds.map(async (uid: string) => {
+            try {
+              const { data } = await admin.auth.admin.getUserById(uid);
+              emailMap.set(uid, data?.user?.email ?? null);
+            } catch (_) {
+              emailMap.set(uid, null);
+            }
+          })
+        );
+      }
+
       const items = (sites || []).map((s: any) => ({
         id: s.id,
         name: s.name,
@@ -64,6 +90,9 @@ Deno.serve(async (req) => {
         last_sync: s.last_sync,
         workspace_id: s.workspace_id,
         user_id: s.user_id,
+        user_name: profileMap.get(s.user_id)?.name || null,
+        user_company: profileMap.get(s.user_id)?.company || null,
+        user_email: emailMap.get(s.user_id) || null,
         updated_at: s.updated_at,
         created_at: s.created_at,
         last_error:
