@@ -181,8 +181,20 @@ export function AdminConnectionsPanel() {
                         >
                           {s.url} <ExternalLink className="h-3 w-3" />
                         </a>
-                        <div className="text-[10px] text-muted-foreground/70 font-mono mt-0.5 truncate">
-                          user: {s.user_id?.slice(0, 8)}…
+                        <div className="text-[11px] mt-1 truncate">
+                          {(s.user_name || s.user_company) && (
+                            <span className="font-medium text-foreground/80">
+                              {s.user_name || s.user_company}
+                            </span>
+                          )}
+                          {s.user_email && (
+                            <span className="text-muted-foreground">
+                              {(s.user_name || s.user_company) ? " · " : ""}{s.user_email}
+                            </span>
+                          )}
+                          {!s.user_name && !s.user_company && !s.user_email && (
+                            <span className="text-muted-foreground/70 font-mono">user: {s.user_id?.slice(0, 8)}…</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell><Badge variant="outline">{s.type}</Badge></TableCell>
