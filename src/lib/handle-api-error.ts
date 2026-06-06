@@ -69,6 +69,14 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
           window.location.href = `${base}/billing`;
         },
       },
+      cancel: {
+        label: "View plan",
+        onClick: () => {
+          const match = window.location.pathname.match(/^\/w\/([^/]+)/);
+          const base = match ? `/w/${match[1]}` : "";
+          window.location.href = `${base}/billing`;
+        },
+      },
       duration: 10000,
     });
     return;
