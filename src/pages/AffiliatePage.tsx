@@ -151,14 +151,18 @@ export default function AffiliatePage() {
     setRequestingPayout(false);
   }
 
+  // Always use the public branded domain for referral links so they are
+  // shareable and unique to our tool (not the preview/lovableproject domain).
+  const AFFILIATE_BASE_URL = "https://www.3xvisibility.com";
+
   function copyLink() {
     if (!link) return;
-    const url = `${window.location.origin}/?ref=${link.code}`;
+    const url = `${AFFILIATE_BASE_URL}/?ref=${link.code}`;
     navigator.clipboard.writeText(url);
     toast.success("Affiliate link copied!");
   }
 
-  const affiliateUrl = link ? `${window.location.origin}/?ref=${link.code}` : "";
+  const affiliateUrl = link ? `${AFFILIATE_BASE_URL}/?ref=${link.code}` : "";
   const conversionRate = link && link.total_clicks > 0 ? ((link.total_conversions / link.total_clicks) * 100).toFixed(1) : "0";
 
   // Generate chart data from referrals
