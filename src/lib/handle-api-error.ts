@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { friendlyError, isCreditError, isUnauthorizedError, isForbiddenError } from "@/lib/friendly-errors";
+import { friendlyError, isCreditError, isUnauthorizedError, isForbiddenError, isSubscriptionLimitError } from "@/lib/friendly-errors";
 
 /**
  * Centralised handler for edge function / API errors.
@@ -47,6 +47,23 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
         },
       },
       duration: 8000,
+    });
+    return;
+  }
+
+  // Subscription / plan limit — show upgrade prompt
+  if (isSubscriptionLimitError(raw)) {
+    toast.error("Plan limit reached", {
+      description: friendlyError(raw),
+      action: {
+        label: "Upgrade plan",
+        onClick: () => {
+          const match = window.location.pathname.match(/^\/w\/([^/]+)/);
+          const base = match ? `/w/${match[1]}` : "";
+          window.location.href = `${base}/billing`;
+        },
+      },
+      duration: 10000,
     });
     return;
   }

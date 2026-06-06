@@ -32,6 +32,21 @@ export function friendlyError(message: string): string {
     return "Could not establish a secure connection to the site. The server's SSL certificate may be misconfigured.";
   }
 
+  // Subscription / plan limit — needs upgrade
+  if (
+    lower.includes("page limit") ||
+    lower.includes("subscription") ||
+    lower.includes("plan limit") ||
+    lower.includes("upgrade required") ||
+    lower.includes("quota exceeded") ||
+    lower.includes("limit reached") ||
+    lower.includes("exceeds plan") ||
+    lower.includes("plan exceeded") ||
+    lower.includes("pages limit")
+  ) {
+    return "You've hit your plan limit. Upgrade to a higher plan to unlock more pages and features.";
+  }
+
   // Forbidden — authenticated but lacking permission (check before 401 so 403 wins)
   if (
     msg.includes("403") ||
@@ -126,3 +141,22 @@ export function isForbiddenError(err: unknown): boolean {
     msg.includes("workspace admin")
   );
 }
+
+/**
+ * Checks if an error is a subscription / plan limit error.
+ */
+export function isSubscriptionLimitError(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err || "")).toLowerCase();
+  return (
+    msg.includes("page limit") ||
+    msg.includes("subscription") ||
+    msg.includes("plan limit") ||
+    msg.includes("upgrade required") ||
+    msg.includes("quota exceeded") ||
+    msg.includes("limit reached") ||
+    msg.includes("exceeds plan") ||
+    msg.includes("plan exceeded") ||
+    msg.includes("pages limit")
+  );
+}
+
