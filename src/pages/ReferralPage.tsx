@@ -320,6 +320,29 @@ export default function ReferralPage() {
             </div>
           </div>
 
+          {/* Customize / Regenerate */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground hover:text-primary"
+              onClick={() => { setCustomCode(referralCode || ""); setEditOpen(true); }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              {t("referral.customize")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground hover:text-primary"
+              onClick={regenerateLink}
+              disabled={regenerating}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+              {t("referral.regenerate")}
+            </Button>
+          </div>
+
           <Separator />
 
           {/* Social Share */}
