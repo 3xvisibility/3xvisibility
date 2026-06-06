@@ -415,7 +415,75 @@ export default function ReferralPage() {
             </div>
           </CardContent>
         </Card>
+        <Card className="border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-primary/10">
+                <Coins className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{credits ? credits.remaining : 0}</p>
+                <p className="text-xs text-muted-foreground">{t("referral.creditsBalance")}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Referred Users */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <CardTitle className="text-base">{t("referral.referredUsers")}</CardTitle>
+          </div>
+          <CardDescription>{t("referral.referredUsersDesc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {referrals.length === 0 ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              {t("referral.noReferrals")}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("referral.colDate")}</TableHead>
+                    <TableHead>{t("referral.colStatus")}</TableHead>
+                    <TableHead>{t("referral.colPlan")}</TableHead>
+                    <TableHead className="text-right">{t("referral.colReward")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {referrals.map((r) => {
+                    const verified = r.status === "verified" || r.status === "converted" || !!r.converted_at;
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-sm">
+                          {new Date(r.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={verified ? "default" : "secondary"} className="gap-1">
+                            {verified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                            {verified ? t("referral.statusVerified") : t("referral.statusPending")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {r.subscription_plan || "—"}
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-medium">
+                          {verified ? `$${Number(r.commission_amount || 0).toFixed(2)}` : "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* How It Works */}
       <Card>
