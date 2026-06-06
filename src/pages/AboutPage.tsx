@@ -54,6 +54,41 @@ const stats = [
   { value: "8", label: "Languages" },
 ];
 
+const testimonials = [
+  {
+    name: "Sarah Mitchell",
+    role: "Head of SEO",
+    company: "BrightLeaf Agency",
+    quote:
+      "We went from manually building 20 landing pages a week to generating over 800 localized pages in a single campaign. 3XVISIBILITY cut our production time by 90%.",
+    stars: 5,
+  },
+  {
+    name: "James Okoro",
+    role: "Ecommerce Director",
+    company: "UrbanCart",
+    quote:
+      "Publishing directly to Shopify with SEO scoring built-in changed how we launch product collections. What used to take weeks now happens in days.",
+    stars: 5,
+  },
+  {
+    name: "Elena Voss",
+    role: "Founder",
+    company: "Voss Digital",
+    quote:
+      "The AI template scanner pulled our exact Elementor design system and turned it into a reusable template. Our clients think we have a 10-person dev team.",
+    stars: 5,
+  },
+  {
+    name: "Marcus Chen",
+    role: "Performance Marketing Lead",
+    company: "NexGen Media",
+    quote:
+      "Multilingual content at scale used to be a pipe dream. With 3XVISIBILITY we run GEO campaigns across 8 languages without hiring translators.",
+    stars: 5,
+  },
+];
+
 const sectionReveal = {
   hidden: { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
