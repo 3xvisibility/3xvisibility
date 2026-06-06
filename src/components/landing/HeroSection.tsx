@@ -317,9 +317,9 @@ export function HeroSection() {
                           { name: "WordPress", connected: true },
                           { name: "Shopify", connected: true },
                           { name: "WooCommerce", connected: false },
-                          { name: "PrestaShop", connected: false },
+                          { name: "PrestaShop", connected: false, soon: true },
                           { name: t("integrations.googleIndex"), connected: true },
-                        ].map((item, i) => (
+                        ].map((item: { name: string; connected: boolean; soon?: boolean }, i) => (
                           <motion.div key={item.name} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 + i * 0.08, duration: 0.3, ease }} className="flex items-center justify-between py-1.5">
                             <div className="flex items-center gap-2">
                               <div className="h-6 w-6 rounded-full bg-[hsl(220,30%,15%)] flex items-center justify-center">
@@ -327,7 +327,9 @@ export function HeroSection() {
                               </div>
                               <span className="text-[10px] text-[hsl(220,10%,78%)]">{item.name}</span>
                             </div>
-                            {item.connected ? (
+                            {item.soon ? (
+                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 font-medium">Coming Soon</span>
+                            ) : item.connected ? (
                               <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(142,76%,36%,0.15)] text-[hsl(142,76%,50%)] font-medium">{t("common.connected")}</span>
                             ) : (
                               <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(96,90%,45%,0.1)] text-[hsl(96,90%,45%)] font-medium cursor-pointer hover:bg-[hsl(96,90%,45%,0.2)] transition-colors">{t("common.connect")}</span>
