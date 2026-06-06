@@ -122,7 +122,7 @@ export default function ReferralPage() {
 
       const { data: refs } = await supabase
         .from("affiliate_referrals")
-        .select("id,status,commission_amount,subscription_plan,converted_at,created_at")
+        .select("id,status,commission_amount,credit_reward,subscription_plan,converted_at,created_at")
         .eq("affiliate_link_id", l.id)
         .order("created_at", { ascending: false });
       setReferrals((refs as ReferredUser[]) || []);
@@ -135,7 +135,45 @@ export default function ReferralPage() {
       .maybeSingle();
     if (cr) setCredits({ remaining: Number(cr.remaining_credits || 0), total: Number(cr.total_credits || 0) });
 
+    // Reward settings (visible to everyone; editable only by admins)
+    const { data: settings } = await supabase
+      .from("referral_reward_settings")
+      .select("id,plan,reward_credits,monthly_limit,min_threshold,is_active")
+      .order("plan", { ascending: true });
+    if (settings) setRewardSettings(settings as RewardSetting[]);
+
+    const { data: adminCheck } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
+    setIsAdmin(!!adminCheck);
+
     setLoading(false);
+  }
+
+  async function saveRewardSettings() {
+    setSavingSettings(true);
+    const updates = rewardSettings.map((s) =>
+      supabase
+        .from("referral_reward_settings")
+        .update({
+          reward_credits: Math.max(0, Number(s.reward_credits) || 0),
+          monthly_limit: s.monthly_limit === null || s.monthly_limit === undefined ? null : Math.max(0, Number(s.monthly_limit)),
+          min_threshold: Math.max(0, Number(s.min_threshold) || 0),
+          is_active: s.is_active,
+        })
+        .eq("id", s.id),
+    );
+    const results = await Promise.all(updates);
+    const failed = results.some((r) => r.error);
+    if (failed) {
+      toast.error(t("referral.settingsSaveFailed"));
+    } else {
+      toast.success(t("referral.settingsSaved"));
+      setSettingsOpen(false);
+    }
+    setSavingSettings(false);
+  }
+
+  function updateSetting(id: string, patch: Partial<RewardSetting>) {
+    setRewardSettings((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   }
 
   async function regenerateLink() {
