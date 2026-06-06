@@ -47,6 +47,7 @@ import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitati
 import { useLanguage } from "@/i18n/LanguageContext";
 import { AiCreditsWidget } from "@/components/dashboard/AiCreditsWidget";
 import { PagesUsageWidget } from "@/components/dashboard/PagesUsageWidget";
+import { UsageHistoryWidget } from "@/components/dashboard/UsageHistoryWidget";
 
 
 const statusColors: Record<string, string> = {
@@ -399,6 +400,9 @@ export default function DashboardPage() {
         <PagesUsageWidget />
         <AiCreditsWidget />
       </div>
+
+      {/* Usage History */}
+      <UsageHistoryWidget />
 
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-glow to-secondary p-6 sm:p-8 text-primary-foreground">
