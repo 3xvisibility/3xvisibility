@@ -32,9 +32,32 @@ export function friendlyError(message: string): string {
     return "Could not establish a secure connection to the site. The server's SSL certificate may be misconfigured.";
   }
 
-  // Auth errors
-  if (lower.includes("jwt") || lower.includes("unauthorized") || msg.includes("401")) {
-    return "Your session expired. Please refresh the page and sign in again.";
+  // Forbidden — authenticated but lacking permission (check before 401 so 403 wins)
+  if (
+    msg.includes("403") ||
+    lower.includes("forbidden") ||
+    lower.includes("permission denied") ||
+    lower.includes("not allowed") ||
+    lower.includes("insufficient") ||
+    lower.includes("admin access required") ||
+    lower.includes("requires admin")
+  ) {
+    return "You don't have permission to do this. This action needs a higher access level or admin rights. If you think this is a mistake, contact your workspace owner.";
+  }
+
+  // Unauthorized — missing/expired token, not signed in
+  if (
+    msg.includes("401") ||
+    lower.includes("jwt") ||
+    lower.includes("unauthorized") ||
+    lower.includes("no authorization header") ||
+    lower.includes("missing authorization") ||
+    lower.includes("invalid token") ||
+    lower.includes("token expired") ||
+    lower.includes("not authenticated") ||
+    lower.includes("auth session missing")
+  ) {
+    return "You're not signed in (or your session expired). Please refresh the page and sign in again to continue.";
   }
 
   // Generic fetch failures
