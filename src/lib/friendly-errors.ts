@@ -40,9 +40,17 @@ export function friendlyError(message: string): string {
     lower.includes("not allowed") ||
     lower.includes("insufficient") ||
     lower.includes("admin access required") ||
-    lower.includes("requires admin")
+    lower.includes("requires admin") ||
+    lower.includes("admin only") ||
+    lower.includes("not an admin") ||
+    lower.includes("need admin") ||
+    lower.includes("workspace admin")
   ) {
-    return "You don't have permission to do this. This action needs a higher access level or admin rights. If you think this is a mistake, contact your workspace owner.";
+    const needsAdmin =
+      lower.includes("admin") || lower.includes("administrator") || lower.includes("workspace owner");
+    return needsAdmin
+      ? "Access denied — this area is admin-only. Only a workspace owner or admin can use this feature. If you need access, ask your workspace admin to upgrade your role."
+      : "You don't have permission to do this. This action needs a higher access level. If you think this is a mistake, contact your workspace owner.";
   }
 
   // Unauthorized — missing/expired token, not signed in
