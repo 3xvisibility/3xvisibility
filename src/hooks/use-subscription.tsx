@@ -96,6 +96,17 @@ export function useSubscription(): SubscriptionData {
   const sitesConnected = data?.sitesConnected ?? 0;
   const sitesLimit = features.websites; // -1 means unlimited
 
+  // Publish a snapshot so non-React code (e.g. handleApiError) can show page counts
+  useEffect(() => {
+    setUsageSnapshot({
+      pagesUsed,
+      pagesLimit,
+      pagesRemaining: Math.max(0, pagesLimit - pagesUsed),
+    });
+  }, [pagesUsed, pagesLimit]);
+
+
+
   // ── Usage limit warning (90% threshold) ─────────────
   useEffect(() => {
     if (isLoading || !data) return;
