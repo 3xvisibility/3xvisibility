@@ -67,7 +67,7 @@ export function useSubscription(): SubscriptionData {
       // Fetch subscription
       const subQuery = supabase
         .from("subscriptions")
-        .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit")
+        .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end")
         .eq("user_id", user.id);
       if (wsId) subQuery.eq("workspace_id", wsId);
       const { data: subData } = await subQuery.maybeSingle();
