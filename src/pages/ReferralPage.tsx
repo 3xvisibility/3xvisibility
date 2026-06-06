@@ -77,6 +77,19 @@ export default function ReferralPage() {
   const [savingCode, setSavingCode] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
 
+  // Admin reward settings
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [rewardSettings, setRewardSettings] = useState<RewardSetting[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  // Filters / search for referred users
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [planFilter, setPlanFilter] = useState<string>("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   const AFFILIATE_BASE_URL = "https://www.3xvisibility.com";
 
   useEffect(() => {
