@@ -51,11 +51,23 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
     return;
   }
 
-  // Forbidden — signed in but lacking permission. Explain clearly, no sign-in action.
+  // Forbidden — signed in but lacking permission. Explain clearly with admin-only guidance.
   if (isForbiddenError(raw)) {
+    const msg = friendlyError(raw);
+    const isAdminOnly = msg.toLowerCase().includes("admin-only");
     toast.error("Access denied", {
-      description: friendlyError(raw),
-      duration: 8000,
+      description: msg,
+      action: isAdminOnly
+        ? {
+            label: "Contact admin",
+            onClick: () => {
+              const match = window.location.pathname.match(/^\/w\/([^/]+)/);
+              const base = match ? `/w/${match[1]}` : "";
+              window.location.href = `${base}/settings/team`;
+            },
+          }
+        : undefined,
+      duration: 10000,
     });
     return;
   }
