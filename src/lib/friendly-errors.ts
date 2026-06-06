@@ -119,6 +119,10 @@ export function isForbiddenError(err: unknown): boolean {
     msg.includes("not allowed") ||
     msg.includes("insufficient") ||
     msg.includes("admin access required") ||
-    msg.includes("requires admin")
+    msg.includes("requires admin") ||
+    msg.includes("admin only") ||
+    msg.includes("not an admin") ||
+    msg.includes("need admin") ||
+    msg.includes("workspace admin")
   );
 }
