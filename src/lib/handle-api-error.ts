@@ -1,9 +1,11 @@
 import { toast } from "sonner";
-import { friendlyError, isCreditError } from "@/lib/friendly-errors";
+import { friendlyError, isCreditError, isUnauthorizedError, isForbiddenError } from "@/lib/friendly-errors";
 
 /**
  * Centralised handler for edge function / API errors.
  * - Detects AI credit exhaustion and shows a toast with a "Top up" action.
+ * - Detects Unauthorized (401) and shows a "Sign in" action.
+ * - Detects Forbidden (403) and explains the missing permission.
  * - Falls back to friendly error mapping for everything else.
  *
  * Usage:
@@ -28,6 +30,31 @@ export function handleApiError(err: unknown, opts?: { title?: string }): void {
           window.location.href = `${base}/billing`;
         },
       },
+      duration: 8000,
+    });
+    return;
+  }
+
+  // Unauthorized — not signed in / token missing or expired. Guide the user to sign in.
+  if (isUnauthorizedError(raw)) {
+    toast.error("Sign-in required", {
+      description: friendlyError(raw),
+      action: {
+        label: "Sign in",
+        onClick: () => {
+          const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.href = `/auth?redirect=${redirect}`;
+        },
+      },
+      duration: 8000,
+    });
+    return;
+  }
+
+  // Forbidden — signed in but lacking permission. Explain clearly, no sign-in action.
+  if (isForbiddenError(raw)) {
+    toast.error("Access denied", {
+      description: friendlyError(raw),
       duration: 8000,
     });
     return;
