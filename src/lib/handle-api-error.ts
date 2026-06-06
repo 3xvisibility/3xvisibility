@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { friendlyError, isCreditError, isUnauthorizedError, isForbiddenError, isSubscriptionLimitError } from "@/lib/friendly-errors";
+import { getUsageSnapshot } from "@/lib/usage-snapshot";
 
 /**
  * Centralised handler for edge function / API errors.
