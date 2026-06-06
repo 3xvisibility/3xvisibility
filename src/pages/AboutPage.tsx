@@ -104,6 +104,9 @@ const sectionReveal = {
 };
 
 export default function AboutPage() {
+  const autoplayRef = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true }),
+  );
   return (
     <div className="min-h-screen flex flex-col landing-page">
       <Seo
