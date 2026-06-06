@@ -541,7 +541,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} width={30} />
-                  <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,.12)", fontSize: "12px", padding: "8px 12px" }} />
+                  <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", boxShadow: "0 8px 24px rgba(0,0,0,.25)", fontSize: "12px", padding: "8px 12px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" }} labelStyle={{ color: "hsl(var(--popover-foreground))" }} itemStyle={{ color: "hsl(var(--popover-foreground))" }} />
                   <Area type="monotone" dataKey="pages" stroke="hsl(239, 84%, 67%)" strokeWidth={2.5} fill="url(#pageGradient)" dot={false} activeDot={{ r: 5, fill: "hsl(239, 84%, 67%)", stroke: "#fff", strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -574,7 +574,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} width={30} />
-                  <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 8px 24px rgba(0,0,0,.12)", fontSize: "12px", padding: "8px 12px" }} />
+                  <Tooltip cursor={{ fill: "hsl(var(--muted) / 0.4)" }} contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", boxShadow: "0 8px 24px rgba(0,0,0,.25)", fontSize: "12px", padding: "8px 12px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" }} labelStyle={{ color: "hsl(var(--popover-foreground))" }} itemStyle={{ color: "hsl(var(--popover-foreground))" }} />
                   <Bar dataKey="campaigns" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
