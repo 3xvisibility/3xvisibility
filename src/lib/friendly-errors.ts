@@ -80,3 +80,37 @@ export function isCreditError(err: unknown): boolean {
   const msg = (err instanceof Error ? err.message : String(err || "")).toLowerCase();
   return msg.includes("402") || msg.includes("credits exhausted") || msg.includes("ai credits") || msg.includes("payment required");
 }
+
+/**
+ * Checks if an error is an Unauthorized (401) error — missing/expired token, not signed in.
+ */
+export function isUnauthorizedError(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err || "")).toLowerCase();
+  return (
+    msg.includes("401") ||
+    msg.includes("jwt") ||
+    msg.includes("unauthorized") ||
+    msg.includes("no authorization header") ||
+    msg.includes("missing authorization") ||
+    msg.includes("invalid token") ||
+    msg.includes("token expired") ||
+    msg.includes("not authenticated") ||
+    msg.includes("auth session missing")
+  );
+}
+
+/**
+ * Checks if an error is a Forbidden (403) error — authenticated but lacking permission.
+ */
+export function isForbiddenError(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err || "")).toLowerCase();
+  return (
+    msg.includes("403") ||
+    msg.includes("forbidden") ||
+    msg.includes("permission denied") ||
+    msg.includes("not allowed") ||
+    msg.includes("insufficient") ||
+    msg.includes("admin access required") ||
+    msg.includes("requires admin")
+  );
+}
