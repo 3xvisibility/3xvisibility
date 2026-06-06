@@ -1397,6 +1397,13 @@ export default function AdminPage() {
         onOpenChange={(o) => !o && setDetailUserId(null)}
       />
 
+      <EditUserProfileDialog
+        user={editProfileUser}
+        open={!!editProfileUser}
+        onOpenChange={(o) => !o && setEditProfileUser(null)}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-stats"] })}
+      />
+
 
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
