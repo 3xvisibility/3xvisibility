@@ -32,14 +32,30 @@ interface ReferralStats {
   totalEarned: number;
 }
 
+interface ReferredUser {
+  id: string;
+  status: string;
+  commission_amount: number;
+  subscription_plan: string | null;
+  converted_at: string | null;
+  created_at: string;
+}
+
 export default function ReferralPage() {
   const { t } = useLanguage();
   const { currentWorkspace } = useWorkspace();
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [linkId, setLinkId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<ReferralStats>({ totalClicks: 0, totalSignups: 0, totalEarned: 0 });
+  const [referrals, setReferrals] = useState<ReferredUser[]>([]);
+  const [credits, setCredits] = useState<{ remaining: number; total: number } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [customCode, setCustomCode] = useState("");
+  const [savingCode, setSavingCode] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   const AFFILIATE_BASE_URL = "https://www.3xvisibility.com";
 
@@ -57,21 +73,72 @@ export default function ReferralPage() {
 
     const { data: links } = await supabase
       .from("affiliate_links")
-      .select("code,total_clicks,total_conversions,total_earned")
+      .select("id,code,total_clicks,total_conversions,total_earned")
       .eq("user_id", user.id)
       .limit(1);
 
     if (links && links.length > 0) {
       const l = links[0];
       setReferralCode(l.code);
+      setLinkId(l.id);
       setStats({
         totalClicks: Number(l.total_clicks || 0),
         totalSignups: Number(l.total_conversions || 0),
         totalEarned: Number(l.total_earned || 0),
       });
+
+      const { data: refs } = await supabase
+        .from("affiliate_referrals")
+        .select("id,status,commission_amount,subscription_plan,converted_at,created_at")
+        .eq("affiliate_link_id", l.id)
+        .order("created_at", { ascending: false });
+      setReferrals((refs as ReferredUser[]) || []);
     }
+
+    const { data: cr } = await supabase
+      .from("ai_credits")
+      .select("remaining_credits,total_credits")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (cr) setCredits({ remaining: Number(cr.remaining_credits || 0), total: Number(cr.total_credits || 0) });
+
     setLoading(false);
   }
+
+  async function regenerateLink() {
+    setRegenerating(true);
+    const { data, error } = await supabase.functions.invoke("affiliate-track", {
+      body: { action: "regenerate" },
+    });
+    if (error || !data?.success) {
+      toast.error(t("referral.updateFailed"));
+    } else {
+      setReferralCode(data.code);
+      toast.success(t("referral.linkUpdated"));
+    }
+    setRegenerating(false);
+  }
+
+  async function saveCustomCode() {
+    if (customCode.trim().length < 3) {
+      toast.error(t("referral.codeTooShort"));
+      return;
+    }
+    setSavingCode(true);
+    const { data, error } = await supabase.functions.invoke("affiliate-track", {
+      body: { action: "set_code", code: customCode },
+    });
+    if (error || !data?.success) {
+      toast.error(data?.error === "code_taken" ? t("referral.codeTaken") : t("referral.updateFailed"));
+    } else {
+      setReferralCode(data.code);
+      setEditOpen(false);
+      setCustomCode("");
+      toast.success(t("referral.linkUpdated"));
+    }
+    setSavingCode(false);
+  }
+
 
   async function createReferralCode() {
     setCreating(true);
