@@ -38,7 +38,7 @@ function AnimatedNumber({ value, suffix = "", delay = 0 }: { value: number; suff
 
 // Mini bar chart component
 function MiniBarChart() {
-  const bars = [40, 55, 35, 65, 50, 75, 60, 80, 45, 70, 55, 85, 65, 90, 50, 70, 60, 75, 80, 55, 65, 85, 70, 95];
+  const bars = [40, 55, 35, 65, 50, 75, 60, 80, 70, 85, 78, 95];
   return (
     <div className="flex items-end gap-[3px] h-[100px] w-full">
       {bars.map((h, i) => (
@@ -295,9 +295,9 @@ export function HeroSection() {
                         </div>
                         <MiniBarChart />
                         <div className="flex justify-between mt-2 text-[8px] text-[hsl(220,10%,52%)]">
-                          <span>{t("hero.mockJanuary")}</span>
-                          <span>{t("hero.mockFebruary")}</span>
-                          <span>{t("hero.mockMarch")}</span>
+                          {["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"].map((m) => (
+                            <span key={m} className="flex-1 text-center">{m}</span>
+                          ))}
                         </div>
                       </motion.div>
                     </div>
