@@ -27,6 +27,7 @@ import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
+import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
 
 interface AdminUser {
   id: string;
@@ -394,11 +395,12 @@ function EditSubscriptionDialog({
 
 // --- Per-row actions menu ---
 function UserActionsMenu({
-  u, onViewDetails, onEditPlan, onSetRole, onToggleBan, onDelete,
+  u, onViewDetails, onEditPlan, onEditProfile, onSetRole, onToggleBan, onDelete,
 }: {
   u: AdminUser;
   onViewDetails: () => void;
   onEditPlan: () => void;
+  onEditProfile: () => void;
   onSetRole: (role: "admin" | "moderator" | "user") => void;
   onToggleBan: () => void;
   onDelete: () => void;
@@ -414,6 +416,9 @@ function UserActionsMenu({
         <DropdownMenuLabel className="text-xs">Manage user</DropdownMenuLabel>
         <DropdownMenuItem onClick={onViewDetails}>
           <Search className="h-3.5 w-3.5 mr-2" /> View full details
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onEditProfile}>
+          <UserCog className="h-3.5 w-3.5 mr-2" /> Edit profile & password
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onEditPlan}>
           <Pencil className="h-3.5 w-3.5 mr-2" /> Edit plan & quota
@@ -459,6 +464,7 @@ export default function AdminPage() {
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [editProfileUser, setEditProfileUser] = useState<AdminUser | null>(null);
   // Generated pages state
   const [pageSearch, setPageSearch] = useState("");
   const [pageStatusFilter, setPageStatusFilter] = useState("__all__");
@@ -889,6 +895,7 @@ export default function AdminPage() {
                         u={u}
                         onViewDetails={() => setDetailUserId(u.id)}
                         onEditPlan={() => openEditFromUser(u)}
+                        onEditProfile={() => setEditProfileUser(u)}
                         onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
                         onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
                         onDelete={() => setConfirmDelete(u)}
@@ -941,6 +948,7 @@ export default function AdminPage() {
                               u={u}
                               onViewDetails={() => setDetailUserId(u.id)}
                               onEditPlan={() => openEditFromUser(u)}
+                              onEditProfile={() => setEditProfileUser(u)}
                               onSetRole={(role) => roleMutation.mutate({ user_id: u.id, role })}
                               onToggleBan={() => banMutation.mutate({ user_id: u.id, banned: !u.is_banned })}
                               onDelete={() => setConfirmDelete(u)}
@@ -1387,6 +1395,13 @@ export default function AdminPage() {
         userId={detailUserId}
         open={!!detailUserId}
         onOpenChange={(o) => !o && setDetailUserId(null)}
+      />
+
+      <EditUserProfileDialog
+        user={editProfileUser}
+        open={!!editProfileUser}
+        onOpenChange={(o) => !o && setEditProfileUser(null)}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-panel"] })}
       />
 
 
