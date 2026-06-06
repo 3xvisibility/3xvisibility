@@ -7,12 +7,10 @@ import { FileText, ArrowRight, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSubscription } from "@/hooks/use-subscription";
-import { useLanguage } from "@/i18n/LanguageContext";
 
 export function PagesUsageWidget() {
   const navigate = useNavigate();
   const { basePath } = useWorkspace();
-  const { t } = useLanguage();
   const {
     plan,
     pagesUsed,
@@ -43,7 +41,7 @@ export function PagesUsageWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <FileText className="h-4 w-4 text-primary" />
-          {t("dashboard.remainingPagesTitle")}
+          Remaining pages this period
           <Badge variant="outline" className="ml-auto capitalize text-[10px]">
             {plan}
           </Badge>
@@ -71,7 +69,7 @@ export function PagesUsageWidget() {
                   {pagesRemaining.toLocaleString()}
                 </span>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("dashboard.remainingPagesLabel")}
+                  remaining this period
                 </p>
               </div>
               {isExhausted && (
@@ -108,7 +106,7 @@ export function PagesUsageWidget() {
                   className="shrink-0 gap-1 h-7 text-xs"
                   onClick={() => navigate(`${basePath}/billing`)}
                 >
-                  {t("common.upgrade")} <ArrowRight className="h-3 w-3" />
+                  Upgrade <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>
             )}
