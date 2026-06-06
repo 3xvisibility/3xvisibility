@@ -34,6 +34,7 @@ import ContentCalendarPage from "./pages/ContentCalendarPage";
 import PagePerformancePage from "./pages/PagePerformancePage";
 import SeoAuditPage from "./pages/SeoAuditPage";
 import AffiliatePage from "./pages/AffiliatePage";
+import ReferralPage from "./pages/ReferralPage";
 
 import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage";
 import DataCsvPage from "./pages/DataCsvPage";
@@ -130,6 +131,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="performance" element={wrap(<PagePerformancePage />)} />
       <Route path="seo-audit" element={wrap(<SeoAuditPage />)} />
       <Route path="affiliate" element={wrap(<AffiliatePage />)} />
+      <Route path="referral" element={wrap(<ReferralPage />)} />
       <Route path="pgp-keywords" element={wrap(<PgpKeywordsPage />)} />
       <Route path="pgp-content" element={<Navigate to="../templates" replace />} />
       <Route path="pgp-generate" element={wrap(<PgpGeneratePage />)} />
@@ -254,6 +256,7 @@ const App = () => {
             <Route path="/performance" element={<ProtectedRoute session={session}><WorkspaceRedirect path="performance" /></ProtectedRoute>} />
             <Route path="/seo-audit" element={<ProtectedRoute session={session}><WorkspaceRedirect path="seo-audit" /></ProtectedRoute>} />
             <Route path="/affiliate" element={<ProtectedRoute session={session}><WorkspaceRedirect path="affiliate" /></ProtectedRoute>} />
+            <Route path="/referral" element={<ProtectedRoute session={session}><WorkspaceRedirect path="referral" /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
