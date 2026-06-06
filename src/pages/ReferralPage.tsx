@@ -46,9 +46,19 @@ interface ReferredUser {
   id: string;
   status: string;
   commission_amount: number;
+  credit_reward: number;
   subscription_plan: string | null;
   converted_at: string | null;
   created_at: string;
+}
+
+interface RewardSetting {
+  id: string;
+  plan: string;
+  reward_credits: number;
+  monthly_limit: number | null;
+  min_threshold: number;
+  is_active: boolean;
 }
 
 export default function ReferralPage() {
