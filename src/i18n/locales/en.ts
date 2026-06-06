@@ -1016,6 +1016,7 @@ const en: Record<string, string> = {
   "sidebar.account": "Account",
   "sidebar.admin": "Admin",
   "sidebar.affiliate": "Affiliate",
+  "sidebar.referral": "Referral",
   "sidebar.aiScanner": "AI Scanner",
   "sidebar.analytics": "Analytics",
   "sidebar.billing": "Billing",
