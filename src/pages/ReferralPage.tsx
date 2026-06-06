@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { exportDataFile } from "@/lib/export-csv";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import {
@@ -31,6 +32,7 @@ import {
   Coins,
   CheckCircle2,
   Clock,
+  FileDown,
 } from "lucide-react";
 
 
