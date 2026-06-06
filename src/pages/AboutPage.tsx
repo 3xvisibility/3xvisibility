@@ -224,6 +224,63 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* Testimonials */}
+        <section className="py-16 md:py-24 relative">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_55%_40%_at_50%_100%,hsl(96,90%,45%,0.06),transparent)] pointer-events-none" />
+          <div className="container mx-auto px-4 lg:px-8 relative z-10">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={sectionReveal}>
+                <span className="section-badge mb-6">
+                  <Sparkles className="h-3 w-3" />
+                  Loved by teams
+                </span>
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-[-0.03em] leading-tight">
+                  Results that{" "}
+                  <span className="text-gradient-primary">speak for themselves</span>
+                </h2>
+              </motion.div>
+            </div>
+
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-60px" }}
+              variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+            >
+              {testimonials.map((t) => (
+                <motion.div
+                  key={t.name}
+                  className="group relative rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,90%,45%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]"
+                  variants={sectionReveal}
+                  whileHover={{ y: -4 }}
+                >
+                  <div className="flex items-center gap-1 mb-4">
+                    {Array.from({ length: t.stars }).map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-[hsl(96,80%,52%)] text-[hsl(96,80%,52%)]" />
+                    ))}
+                  </div>
+                  <Quote className="h-6 w-6 text-[hsl(96,90%,45%,0.25)] mb-3" />
+                  <p className="text-sm text-[hsl(220,10%,70%)] leading-relaxed mb-6">
+                    {t.quote}
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-[hsl(96,90%,45%,0.12)] border border-[hsl(96,90%,45%,0.2)] flex items-center justify-center text-sm font-bold text-[hsl(96,80%,52%)]">
+                      {t.name.split(" ").map((n) => n[0]).join("")}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-foreground">{t.name}</div>
+                      <div className="text-xs text-[hsl(220,10%,70%)]">
+                        {t.role} · {t.company}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="py-16 md:py-24 relative overflow-hidden">
           <div className="container mx-auto px-4 lg:px-8 relative z-10">
