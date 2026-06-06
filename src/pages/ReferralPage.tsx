@@ -36,6 +36,9 @@ import {
   CheckCircle2,
   Clock,
   FileDown,
+  Settings,
+  Search,
+  X,
 } from "lucide-react";
 
 
