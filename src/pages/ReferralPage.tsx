@@ -213,6 +213,18 @@ export default function ReferralPage() {
     }
   }
 
+  function exportReferralsCsv() {
+    if (referrals.length === 0) return;
+    const rows = referrals.map((r) => ({
+      Date: new Date(r.created_at).toLocaleDateString(),
+      Status: r.status === "verified" || r.status === "converted" || !!r.converted_at ? "Verified" : "Pending",
+      Plan: r.subscription_plan || "—",
+      "Credit Reward": r.status === "verified" || r.status === "converted" || !!r.converted_at ? "50" : "0",
+    }));
+    exportDataFile(rows, "csv", "referred-users.csv");
+    toast.success(t("referral.exportSuccess"));
+  }
+
   const referralUrl = referralCode ? `${AFFILIATE_BASE_URL}/?ref=${referralCode}` : "";
 
   if (loading) {
