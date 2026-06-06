@@ -24,6 +24,7 @@ import {
   Gift,
   KeyRound,
   Columns3,
+  Link2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { WorkspaceSwitcher } from "@/components/WorkspaceSwitcher";
