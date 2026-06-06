@@ -8,6 +8,8 @@ import {
   Globe,
   ShieldCheck,
   ArrowRight,
+  Quote,
+  Star,
   type LucideIcon,
 } from "lucide-react";
 import { Seo } from "@/components/Seo";
