@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PLAN_FEATURES, type PlanName, type FeatureKey, type PlanFeatures } from "@/lib/plan-features";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
+import { setUsageSnapshot } from "@/lib/usage-snapshot";
 
 export interface SubscriptionData {
   plan: PlanName;
