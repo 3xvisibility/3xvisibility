@@ -9,7 +9,7 @@ const logos = [
   { name: "WooCommerce", icon: Store },
   { name: "Semrush", icon: BarChart3 },
   { name: "Ahrefs", icon: Layers },
-  { name: "PrestaShop", icon: FileText },
+  { name: "PrestaShop", icon: FileText, soon: true },
 ];
 
 export function BrandLogos() {
@@ -51,6 +51,9 @@ export function BrandLogos() {
               <span className="text-sm md:text-base font-semibold text-white tracking-tight whitespace-nowrap">
                 {logo.name}
               </span>
+              {"soon" in logo && logo.soon && (
+                <span className="rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[9px] font-semibold px-1.5 py-0.5 leading-none whitespace-nowrap">Soon</span>
+              )}
             </div>
           ))}
         </motion.div>
