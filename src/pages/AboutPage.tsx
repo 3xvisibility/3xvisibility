@@ -1,5 +1,14 @@
 import { Link } from "react-router-dom";
+import { useRef } from "react";
 import { motion } from "framer-motion";
+import Autoplay from "embla-carousel-autoplay";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import {
   Sparkles,
   Target,
@@ -95,6 +104,9 @@ const sectionReveal = {
 };
 
 export default function AboutPage() {
+  const autoplayRef = useRef(
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true }),
+  );
   return (
     <div className="min-h-screen flex flex-col landing-page">
       <Seo
@@ -242,41 +254,50 @@ export default function AboutPage() {
             </div>
 
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto"
+              className="max-w-4xl mx-auto"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-60px" }}
-              variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+              variants={sectionReveal}
             >
-              {testimonials.map((t) => (
-                <motion.div
-                  key={t.name}
-                  className="group relative rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,90%,45%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]"
-                  variants={sectionReveal}
-                  whileHover={{ y: -4 }}
-                >
-                  <div className="flex items-center gap-1 mb-4">
-                    {Array.from({ length: t.stars }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-[hsl(96,80%,52%)] text-[hsl(96,80%,52%)]" />
-                    ))}
-                  </div>
-                  <Quote className="h-6 w-6 text-[hsl(96,90%,45%,0.25)] mb-3" />
-                  <p className="text-sm text-[hsl(220,10%,70%)] leading-relaxed mb-6">
-                    {t.quote}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[hsl(96,90%,45%,0.12)] border border-[hsl(96,90%,45%,0.2)] flex items-center justify-center text-sm font-bold text-[hsl(96,80%,52%)]">
-                      {t.name.split(" ").map((n) => n[0]).join("")}
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">{t.name}</div>
-                      <div className="text-xs text-[hsl(220,10%,70%)]">
-                        {t.role} · {t.company}
+              <Carousel
+                opts={{ loop: true, align: "start" }}
+                plugins={[autoplayRef.current]}
+                onMouseEnter={() => autoplayRef.current.stop()}
+                onMouseLeave={() => autoplayRef.current.play()}
+                className="px-2"
+              >
+                <CarouselContent className="-ml-4">
+                  {testimonials.map((t) => (
+                    <CarouselItem key={t.name} className="pl-4 md:basis-1/2">
+                      <div className="group relative h-full rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-6 hover:border-[hsl(96,90%,45%,0.25)] transition-all duration-500 hover:bg-[hsl(220,40%,9%)]">
+                        <div className="flex items-center gap-1 mb-4">
+                          {Array.from({ length: t.stars }).map((_, i) => (
+                            <Star key={i} className="h-4 w-4 fill-[hsl(96,80%,52%)] text-[hsl(96,80%,52%)]" />
+                          ))}
+                        </div>
+                        <Quote className="h-6 w-6 text-[hsl(96,90%,45%,0.25)] mb-3" />
+                        <p className="text-sm text-[hsl(220,10%,70%)] leading-relaxed mb-6">
+                          {t.quote}
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-[hsl(96,90%,45%,0.12)] border border-[hsl(96,90%,45%,0.2)] flex items-center justify-center text-sm font-bold text-[hsl(96,80%,52%)]">
+                            {t.name.split(" ").map((n) => n[0]).join("")}
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold text-foreground">{t.name}</div>
+                            <div className="text-xs text-[hsl(220,10%,70%)]">
+                              {t.role} · {t.company}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden sm:flex" />
+                <CarouselNext className="hidden sm:flex" />
+              </Carousel>
             </motion.div>
           </div>
         </section>
