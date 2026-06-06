@@ -193,14 +193,23 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
     <Sidebar collapsible="icon" className="border-r border-border bg-card">
       <SidebarContent className="px-3 py-4">
         {/* Branding / Workspace Switcher */}
-        {isWhitelabeled && !collapsed && (
+        {!collapsed && (
           <div className="mb-3 px-3 flex items-center gap-2.5">
             {logoUrl ? (
               <img src={logoUrl} alt={appName} className="h-7 w-7 rounded-lg object-contain shrink-0" />
             ) : (
               <img src={logo3x} alt={appName} className="h-7 w-7 rounded-lg object-contain shrink-0" />
             )}
-            <span className="text-sm font-semibold truncate">{appName}</span>
+            {isWhitelabeled ? (
+              <span className="text-sm font-semibold truncate">{appName}</span>
+            ) : (
+              <span className="flex flex-col leading-none min-w-0">
+                <span className="text-sm font-bold tracking-tight truncate">
+                  <span className="text-primary">3X</span>visibility
+                </span>
+                <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-muted-foreground mt-0.5 truncate">Build Smarter, Ranking Faster</span>
+              </span>
+            )}
           </div>
         )}
         <div className="mb-4">
