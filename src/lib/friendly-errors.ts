@@ -141,3 +141,22 @@ export function isForbiddenError(err: unknown): boolean {
     msg.includes("workspace admin")
   );
 }
+
+/**
+ * Checks if an error is a subscription / plan limit error.
+ */
+export function isSubscriptionLimitError(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err || "")).toLowerCase();
+  return (
+    msg.includes("page limit") ||
+    msg.includes("subscription") ||
+    msg.includes("plan limit") ||
+    msg.includes("upgrade required") ||
+    msg.includes("quota exceeded") ||
+    msg.includes("limit reached") ||
+    msg.includes("exceeds plan") ||
+    msg.includes("plan exceeded") ||
+    msg.includes("pages limit")
+  );
+}
+
