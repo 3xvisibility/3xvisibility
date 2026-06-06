@@ -24,6 +24,8 @@ export interface SubscriptionData {
   pagesRemaining: number;
   aiRemaining: number;
   sitesRemaining: number;
+  /** ISO date string for the next usage reset / billing period end. */
+  resetDate: string | null;
 }
 
 export function useSubscription(): SubscriptionData {
@@ -186,5 +188,6 @@ export function useSubscription(): SubscriptionData {
     pagesRemaining: Math.max(0, pagesLimit - pagesUsed),
     aiRemaining: Math.max(0, aiLimit - aiUsed),
     sitesRemaining: sitesLimit === -1 ? Infinity : Math.max(0, sitesLimit - sitesConnected),
+    resetDate,
   };
 }
