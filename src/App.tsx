@@ -82,6 +82,7 @@ const clearExpiredLocalAuthSession = () => {
 };
 
 import { registerQueryClient } from "@/lib/ai-client";
+import { captureReferralFromUrl, attributeReferralIfPending } from "@/lib/referral-tracking";
 
 const queryClient = new QueryClient({
   defaultOptions: {
