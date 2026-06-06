@@ -255,11 +255,11 @@ export default function ReferralPage() {
             </div>
             <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
               <div className="p-4 rounded-xl bg-muted/50 space-y-1">
-                <p className="text-2xl font-bold text-primary">5%</p>
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("referral.commission")}</p>
+                <p className="text-2xl font-bold text-primary">50</p>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("referral.creditsEach")}</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/50 space-y-1">
-                <p className="text-2xl font-bold text-primary">$25</p>
+                <p className="text-2xl font-bold text-primary">0</p>
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t("referral.minPayout")}</p>
               </div>
               <div className="p-4 rounded-xl bg-muted/50 space-y-1">
