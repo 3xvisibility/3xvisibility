@@ -149,15 +149,19 @@ const App = () => {
 
   useEffect(() => {
     clearExpiredLocalAuthSession();
+    captureReferralFromUrl();
     if (window.location.pathname === "/auth") {
       const key = getAuthStorageKey();
       if (key) localStorage.removeItem(key);
       setSession(null);
       setLoading(false);
     }
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setLoading(false);
+      if (session?.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        setTimeout(() => { attributeReferralIfPending(); }, 0);
+      }
     });
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
