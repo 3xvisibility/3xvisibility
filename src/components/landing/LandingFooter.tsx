@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import logo3x from "@/assets/logo-3x.png";
 
@@ -40,6 +41,7 @@ interface FooterLink {
   href: string;
   isHash: boolean;
   badge?: string;
+  comingSoon?: boolean;
 }
 
 function SmoothScrollLink({ href, children }: { href: string; children: React.ReactNode }) {
