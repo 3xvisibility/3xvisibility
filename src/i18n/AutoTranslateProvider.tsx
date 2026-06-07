@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 const hasBuiltinCoverage = (lang: string) =>
   Object.prototype.hasOwnProperty.call(translations, lang);
 
-const CACHE_PREFIX = "auto-tr2:";
+const CACHE_PREFIX = "auto-tr3:";
 const BATCH_SIZE = 40;
 const DEBOUNCE_MS = 250;
 
@@ -164,7 +164,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
           const text = n.nodeValue || "";
           if (SHOULD_SKIP_TEXT(text)) return NodeFilter.FILTER_REJECT;
-          if ((n as any).__autoTrLang === langRef.current) return NodeFilter.FILTER_REJECT;
+          const original = ((n as any).__autoTrOriginal || text).trim();
+          const visible = text.trim();
+          if ((n as any).__autoTrLang === langRef.current && visible !== original) return NodeFilter.FILTER_REJECT;
           return NodeFilter.FILTER_ACCEPT;
         },
       });
@@ -189,8 +191,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           if (SHOULD_SKIP_TEXT(value)) continue;
           // Already translated to current language?
           const cacheTag = `__autoTr_${attr}_lang`;
-          if ((el as any)[cacheTag] === lang) continue;
-          out.push({ kind: "attr", el, attr, original: ((el as any)[`__autoTr_${attr}_orig`] || value).trim() });
+          const original = ((el as any)[`__autoTr_${attr}_orig`] || value).trim();
+          if ((el as any)[cacheTag] === lang && value.trim() !== original) continue;
+          out.push({ kind: "attr", el, attr, original });
         }
       });
       return out;
