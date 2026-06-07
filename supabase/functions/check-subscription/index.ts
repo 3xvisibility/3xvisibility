@@ -222,6 +222,7 @@ async function upsertSubscription(
       stripe_customer_id: stripeCustomerId,
       current_period_end: periodEnd,
       current_period_start: periodStart,
+      billing_cycle: billingCycle,
     };
     if (workspaceId) insertData.workspace_id = workspaceId;
     const { error } = await supabase.from("subscriptions").insert(insertData);
