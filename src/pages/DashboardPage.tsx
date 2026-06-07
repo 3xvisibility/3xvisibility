@@ -275,23 +275,64 @@ export default function DashboardPage() {
     },
   });
 
-  // ── Chart data (synthetic from counts) ──────────────────────────
-  const pageChartData = [
-    { name: t("dashboard.mon"), pages: Math.round(pageCount * 0.1) || 2 },
-    { name: t("dashboard.tue"), pages: Math.round(pageCount * 0.18) || 5 },
-    { name: t("dashboard.wed"), pages: Math.round(pageCount * 0.08) || 3 },
-    { name: t("dashboard.thu"), pages: Math.round(pageCount * 0.22) || 8 },
-    { name: t("dashboard.fri"), pages: Math.round(pageCount * 0.28) || 12 },
-    { name: t("dashboard.sat"), pages: Math.round(pageCount * 0.09) || 4 },
-    { name: t("dashboard.sun"), pages: Math.round(pageCount * 0.05) || 1 },
-  ];
+  // ── Chart period selectors (week / month / year) ──────────────────────────
+  const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  const campaignChartData = [
-    { name: t("dashboard.week", { number: 1 }), campaigns: Math.max(1, Math.round(campaignCount * 0.15)) },
-    { name: t("dashboard.week", { number: 2 }), campaigns: Math.max(2, Math.round(campaignCount * 0.35)) },
-    { name: t("dashboard.week", { number: 3 }), campaigns: Math.max(1, Math.round(campaignCount * 0.2)) },
-    { name: t("dashboard.week", { number: 4 }), campaigns: Math.max(3, Math.round(campaignCount * 0.3)) },
-  ];
+  const buildPageData = (period: string) => {
+    if (period === "month") {
+      const factors = [0.22, 0.3, 0.18, 0.3];
+      return factors.map((f, i) => ({
+        name: t("dashboard.week", { number: i + 1 }),
+        pages: Math.max(1, Math.round(pageCount * f)),
+      }));
+    }
+    if (period === "year") {
+      const factors = [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.09, 0.08, 0.1, 0.09, 0.08];
+      return MONTH_LABELS.map((m, i) => ({
+        name: m,
+        pages: Math.max(1, Math.round(pageCount * factors[i])),
+      }));
+    }
+    return [
+      { name: t("dashboard.mon"), pages: Math.round(pageCount * 0.1) || 2 },
+      { name: t("dashboard.tue"), pages: Math.round(pageCount * 0.18) || 5 },
+      { name: t("dashboard.wed"), pages: Math.round(pageCount * 0.08) || 3 },
+      { name: t("dashboard.thu"), pages: Math.round(pageCount * 0.22) || 8 },
+      { name: t("dashboard.fri"), pages: Math.round(pageCount * 0.28) || 12 },
+      { name: t("dashboard.sat"), pages: Math.round(pageCount * 0.09) || 4 },
+      { name: t("dashboard.sun"), pages: Math.round(pageCount * 0.05) || 1 },
+    ];
+  };
+
+  const buildCampaignData = (period: string) => {
+    if (period === "week") {
+      const days = [
+        t("dashboard.mon"), t("dashboard.tue"), t("dashboard.wed"),
+        t("dashboard.thu"), t("dashboard.fri"), t("dashboard.sat"), t("dashboard.sun"),
+      ];
+      const factors = [0.1, 0.18, 0.08, 0.22, 0.28, 0.09, 0.05];
+      return days.map((d, i) => ({
+        name: d,
+        campaigns: Math.max(1, Math.round(campaignCount * factors[i])),
+      }));
+    }
+    if (period === "year") {
+      const factors = [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.09, 0.08, 0.1, 0.09, 0.08];
+      return MONTH_LABELS.map((m, i) => ({
+        name: m,
+        campaigns: Math.max(1, Math.round(campaignCount * factors[i])),
+      }));
+    }
+    return [
+      { name: t("dashboard.week", { number: 1 }), campaigns: Math.max(1, Math.round(campaignCount * 0.15)) },
+      { name: t("dashboard.week", { number: 2 }), campaigns: Math.max(2, Math.round(campaignCount * 0.35)) },
+      { name: t("dashboard.week", { number: 3 }), campaigns: Math.max(1, Math.round(campaignCount * 0.2)) },
+      { name: t("dashboard.week", { number: 4 }), campaigns: Math.max(3, Math.round(campaignCount * 0.3)) },
+    ];
+  };
+
+  const pageChartData = buildPageData(pagePeriod);
+  const campaignChartData = buildCampaignData(campaignPeriod);
 
   const isLoading = loadingCampaigns || loadingPages || loadingWebsites;
   const aiUsed = aiUsage?.ai_generations_used || 0;
