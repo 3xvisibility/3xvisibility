@@ -22,4 +22,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-reply': contactReply,
   'admin-signup-notification': adminSignupNotification,
   'admin-reset-notification': adminResetNotification,
+  'admin-reset-completed': adminResetCompleted,
 }
