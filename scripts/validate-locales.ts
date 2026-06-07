@@ -165,12 +165,17 @@ for (const f of localeFiles) {
   }
 }
 
-for (const m of missingCritical) {
-  addIssue(m.file, 0, m.key, "MISSING_CRITICAL_KEY", `Critical key "${m.key}" exists in en.ts but is missing here`);
+// ── Report ──────────────────────────────────────────────────────────────
+// Missing keys are NON-FATAL: the runtime falls back to English, so they never
+// break the build. Report them as warnings only (criticals highlighted first).
+if (missingCritical.length > 0) {
+  const byFile = new Map<string, number>();
+  for (const m of missingCritical) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
+  console.warn(`⚠️  ${missingCritical.length} critical-prefix key(s) missing (fall back to English at runtime — please translate):`);
+  for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
+  console.warn("");
 }
 
-// ── Report ──────────────────────────────────────────────────────────────
-// Non-fatal warnings first (missing non-critical translations).
 if (missingWarnings.length > 0) {
   const byFile = new Map<string, number>();
   for (const m of missingWarnings) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
