@@ -652,20 +652,31 @@ export default function AuthPage() {
 
                     {mode === "signup" && showRepeatSignupNotice && (
                       <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ duration: 0.3, ease }}
                         className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3"
                       >
-                        <p className="text-sm text-foreground leading-relaxed">
-                          {t("auth.repeatSignupNotice")}
-                        </p>
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <Info className="h-4 w-4" />
+                          </span>
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-semibold text-foreground">
+                              {t("auth.repeatSignupTitle")}
+                            </p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {t("auth.repeatSignupNotice")}
+                            </p>
+                          </div>
+                        </div>
                         <div className="flex gap-2">
                           <Button
                             type="button"
                             onClick={() => { setMode("login"); setShowRepeatSignupNotice(false); }}
                             className="flex-1 h-9 rounded-lg bg-foreground text-background hover:bg-foreground/90 font-medium text-xs transition-all"
                           >
+                            <LogIn className="h-3.5 w-3.5 mr-1.5" />
                             {t("auth.repeatSignupSignIn")}
                           </Button>
                           <Button
@@ -674,6 +685,7 @@ export default function AuthPage() {
                             onClick={() => { handleResetPassword(); setShowRepeatSignupNotice(false); }}
                             className="flex-1 h-9 rounded-lg border-border/60 hover:bg-accent/50 font-medium text-xs transition-all"
                           >
+                            <KeyRound className="h-3.5 w-3.5 mr-1.5" />
                             {t("auth.repeatSignupReset")}
                           </Button>
                         </div>
