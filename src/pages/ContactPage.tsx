@@ -2,7 +2,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
-import { Mail, MessageSquare, LifeBuoy, Send } from "lucide-react";
+import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 const channels = [
-  { icon: Mail, key: "email" as const },
-  { icon: LifeBuoy, key: "support" as const },
-  { icon: MessageSquare, key: "sales" as const },
+  { icon: Mail, label: "Email", value: "info@3xvisibility.com", href: "mailto:info@3xvisibility.com" },
+  { icon: Phone, label: "Phone", value: "+1 (555) 012-3456", href: "tel:+15550123456" },
+  { icon: MapPin, label: "Address", value: "123 Demo Street, Suite 100, Paris, France", href: undefined },
 ];
 
 export default function ContactPage() {
@@ -56,19 +56,22 @@ export default function ContactPage() {
       <Seo title={t("contact.title")} description={t("contact.metaDesc")} path="/contact" />
       <StaticPageLayout title={t("contact.title")} subtitle={t("contact.subtitle")}>
         <div className="not-prose grid gap-4 sm:grid-cols-3">
-          {channels.map(({ icon: Icon, key }) => (
-            <a
-              key={key}
-              href="mailto:info@3xvisibility.com"
-              className="group rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(96,90%,45%,0.3)] hover:bg-[hsl(250,30%,10%,0.5)] transition-all"
-            >
-              <div className="h-10 w-10 rounded-lg bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.15)] flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Icon className="h-5 w-5 text-primary" />
-              </div>
-              <h3 className="mt-3 font-semibold">{t(`contact.${key}`)}</h3>
-              <p className="text-xs text-[hsl(250,15%,55%)] mt-1">info@3xvisibility.com</p>
-            </a>
-          ))}
+          {channels.map(({ icon: Icon, label, value, href }) => {
+            const Tag = href ? "a" : "div";
+            return (
+              <Tag
+                key={label}
+                {...(href ? { href } : {})}
+                className="group rounded-xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 hover:border-[hsl(96,90%,45%,0.3)] hover:bg-[hsl(250,30%,10%,0.5)] transition-all"
+              >
+                <div className="h-10 w-10 rounded-lg bg-[hsl(96,90%,45%,0.1)] border border-[hsl(96,90%,45%,0.15)] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="mt-3 font-semibold">{label}</h3>
+                <p className="text-xs text-[hsl(250,15%,55%)] mt-1">{value}</p>
+              </Tag>
+            );
+          })}
         </div>
 
         <div className="not-prose mt-10 rounded-2xl border border-[hsl(96,90%,45%,0.12)] bg-[hsl(250,30%,8%,0.4)] p-6 md:p-8 relative overflow-hidden">
