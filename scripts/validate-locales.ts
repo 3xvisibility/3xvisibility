@@ -108,15 +108,17 @@ for (const f of localeFiles) checkFile(f);
 checkFile(TRANSLATIONS_FILE);
 
 // ── Rule 8: Missing keys vs. English source of truth ──────────────────────
-// English (en.ts) defines the canonical set of keys. Locales fall back to
-// English at runtime, so most missing keys are reported as non-fatal WARNINGS
-// to give full visibility. However, keys under the critical prefixes are
-// user-facing static pages that MUST be translated everywhere — a missing
-// critical key is a build-breaking ERROR so untranslated text never slips into
-// a new locale unnoticed.
+// English (en.ts) defines the canonical set of keys. Every locale falls back to
+// English at runtime (see src/i18n/LanguageContext.tsx:
+//   translations[language]?.[key] ?? translations.en[key] ?? key
+// ), so a missing key NEVER produces broken UI — it transparently renders the
+// English string. Because of that runtime fallback, missing keys must NEVER
+// break the build. They are always reported as non-fatal warnings (grouped by
+// "critical" vs. "other" purely for visibility / translation backlog), and the
+// process still exits 0 unless there is real syntax corruption.
 //
-// The critical prefixes are defined in scripts/i18n-critical.config.json so the
-// build-breaking rules can be adjusted without editing this script.
+// The critical prefixes are defined in scripts/i18n-critical.config.json and are
+// used only to highlight which untranslated keys are most worth filling in.
 const CONFIG_FILE = join(import.meta.dir, "i18n-critical.config.json");
 let CRITICAL_PREFIXES: string[] = ["contact.", "footer."];
 try {
