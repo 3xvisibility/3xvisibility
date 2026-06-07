@@ -1256,6 +1256,9 @@ const fr: Record<string, string> = {
   "workspaceSettings.workspaceName": "Nom de l'espace de travail",
   "workspaceSettings.workspaceRenamed": "Espace de travail renommé",
   "workspaceSettings.workspaceRenamedDesc": "Le nom de l’espace de travail a été mis à jour.",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default fr;

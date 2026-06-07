@@ -75,6 +75,9 @@ const hi: Record<string, string> = {
   "sidebar.templates": "टेम्पलेट",
   "sidebar.tools": "उपकरण",
   "sidebar.websites": "वेबसाइटें",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default hi;

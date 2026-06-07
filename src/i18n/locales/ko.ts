@@ -291,6 +291,9 @@ const ko: Record<string, string> = {
   "video.title": "실제 동작 보기",
   "video.uptimeSLA": "업타임 SLA",
   "video.watchDemo": "2분 데모 보기",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default ko;

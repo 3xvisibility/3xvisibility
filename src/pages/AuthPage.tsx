@@ -68,6 +68,7 @@ export default function AuthPage() {
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [aiLanguage, setAiLanguage] = useState("en");
+  const [showRepeatSignupNotice, setShowRepeatSignupNotice] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -219,6 +220,16 @@ export default function AuthPage() {
     });
     if (error) {
       setLoading(false);
+      const errMsg = error.message.toLowerCase();
+      if (
+        errMsg.includes("user_repeated_signup") ||
+        errMsg.includes("already registered") ||
+        errMsg.includes("already exists") ||
+        errMsg.includes("user already")
+      ) {
+        setShowRepeatSignupNotice(true);
+        return;
+      }
       toast({ title: t("auth.signupFailed"), description: error.message, variant: "destructive" });
       return;
     }
@@ -372,7 +383,7 @@ export default function AuthPage() {
                   {(["login", "signup"] as const).map((m) => (
                     <button
                       key={m}
-                      onClick={() => { setMode(m); setConfirmPassword(""); }}
+                      onClick={() => { setMode(m); setConfirmPassword(""); setShowRepeatSignupNotice(false); }}
                       className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                         mode === m
                           ? "bg-background text-foreground shadow-sm"
@@ -425,7 +436,7 @@ export default function AuthPage() {
                           type="email"
                           placeholder={t("auth.emailPlaceholder")}
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => { setEmail(e.target.value); setShowRepeatSignupNotice(false); }}
                           required
                           className="pl-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
                         />
@@ -629,6 +640,36 @@ export default function AuthPage() {
                           {t("auth.forgotPassword")}
                         </button>
                       </div>
+                    )}
+
+                    {mode === "signup" && showRepeatSignupNotice && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease }}
+                        className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3"
+                      >
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {t("auth.repeatSignupNotice")}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => { setMode("login"); setShowRepeatSignupNotice(false); }}
+                            className="flex-1 h-9 rounded-lg bg-foreground text-background hover:bg-foreground/90 font-medium text-xs transition-all"
+                          >
+                            {t("auth.repeatSignupSignIn")}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => { handleResetPassword(); setShowRepeatSignupNotice(false); }}
+                            className="flex-1 h-9 rounded-lg border-border/60 hover:bg-accent/50 font-medium text-xs transition-all"
+                          >
+                            {t("auth.repeatSignupReset")}
+                          </Button>
+                        </div>
+                      </motion.div>
                     )}
 
                     <Button

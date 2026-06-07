@@ -291,6 +291,9 @@ const bn: Record<string, string> = {
   "video.title": "কার্যকরী দেখুন",
   "video.uptimeSLA": "আপটাইম SLA",
   "video.watchDemo": "২ মিনিটের ডেমো দেখুন",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default bn;

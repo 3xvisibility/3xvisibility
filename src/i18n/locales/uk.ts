@@ -292,6 +292,9 @@ const uk: Record<string, string> = {
   "video.title": "Подивіться в дії",
   "video.uptimeSLA": "SLA Uptime",
   "video.watchDemo": "Дивитись 2-хвилинне демо",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default uk;
