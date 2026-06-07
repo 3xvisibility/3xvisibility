@@ -648,6 +648,7 @@ export default function ReferralPage() {
                         <TableHead>{t("referral.colDate")}</TableHead>
                         <TableHead>{t("referral.colStatus")}</TableHead>
                         <TableHead>{t("referral.colPlan")}</TableHead>
+                        <TableHead className="text-right">{t("referral.colCommission")}</TableHead>
                         <TableHead className="text-right">{t("referral.colCreditReward")}</TableHead>
                       </TableRow>
                     </TableHeader>
