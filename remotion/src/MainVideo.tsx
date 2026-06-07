@@ -51,7 +51,7 @@ const PersistentBackground: React.FC = () => {
       <svg width={width} height={height} style={{ position: "absolute", inset: 0, opacity: 0.06 }}>
         <defs>
           <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#60A5FA" strokeWidth="1" />
+            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#8CF745" strokeWidth="1" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid)" />
