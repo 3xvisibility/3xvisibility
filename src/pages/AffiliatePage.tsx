@@ -426,10 +426,19 @@ export default function AffiliatePage() {
                         <TableRow key={ref.id}>
                           <TableCell className="text-sm">{format(new Date(ref.created_at), "MMM dd, yyyy")}</TableCell>
                           <TableCell>
-                            <Badge variant={ref.status === "converted" ? "default" : "secondary"} className="text-xs">
-                              {ref.status === "converted" ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <Clock className="h-3 w-3 mr-1" />}
-                              {ref.status}
-                            </Badge>
+                            {(() => {
+                              const activated = ref.status === "converted" || ref.status === "verified";
+                              return (
+                                <Badge
+                                  variant={activated ? "default" : "secondary"}
+                                  className="text-xs whitespace-nowrap"
+                                  title={activated ? t("affiliate.statusActivatedHint") : t("affiliate.statusPendingHint")}
+                                >
+                                  {activated ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <Clock className="h-3 w-3 mr-1" />}
+                                  {activated ? t("affiliate.statusActivated") : t("affiliate.statusPending")}
+                                </Badge>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell className="text-sm">{ref.subscription_plan || "—"}</TableCell>
                           <TableCell className="text-right font-medium">${Number(ref.commission_amount).toFixed(2)}</TableCell>
