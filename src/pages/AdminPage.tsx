@@ -1424,7 +1424,7 @@ export default function AdminPage() {
       <UserDetailDialog
         userId={detailUserId}
         open={!!detailUserId}
-        onOpenChange={(o) => !o && setDetailUserId(null)}
+        onOpenChange={handleDetailOpenChange}
       />
 
       <EditUserProfileDialog
