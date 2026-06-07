@@ -117,7 +117,28 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
-    if (hasBuiltinCoverage(language)) return;
+    // English is the source language — nothing to translate.
+    if (language === "en") return;
+
+    // For languages with built-in t() coverage, React handles the UI. Only
+    // translate explicitly opted-in subtrees ([data-auto-translate]) such as
+    // marketing pages that have no t() calls. For languages without built-in
+    // coverage, translate the whole document.
+    const builtin = hasBuiltinCoverage(language);
+    const getRoots = (): ParentNode[] => {
+      if (builtin) {
+        return Array.from(document.querySelectorAll<HTMLElement>("[data-auto-translate]"));
+      }
+      return [document.body];
+    };
+    const collectAll = (): Target[] => {
+      const out: Target[] = [];
+      for (const root of getRoots()) {
+        out.push(...collectTextTargets(root));
+        out.push(...collectAttrTargets(root));
+      }
+      return out;
+    };
 
     let observer: MutationObserver | null = null;
     let debounceTimer: number | null = null;
@@ -217,10 +238,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     const processPending = async () => {
       if (cancelled) return;
       const lang = langRef.current;
-      const targets: Target[] = [
-        ...collectTextTargets(document.body),
-        ...collectAttrTargets(document.body),
-      ];
+      const targets: Target[] = collectAll();
       if (targets.length === 0) return;
 
       // Group by original
@@ -252,10 +270,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           return;
         }
         // Re-collect to handle DOM changes
-        const fresh: Target[] = [
-          ...collectTextTargets(document.body),
-          ...collectAttrTargets(document.body),
-        ];
+        const fresh: Target[] = collectAll();
         for (const t of fresh) {
           const tr = map[t.original];
           if (tr) applyTranslation(t, t.original, tr);

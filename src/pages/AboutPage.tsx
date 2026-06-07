@@ -108,7 +108,7 @@ export default function AboutPage() {
     Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true }),
   );
   return (
-    <div className="min-h-screen flex flex-col landing-page">
+    <div className="min-h-screen flex flex-col landing-page" data-auto-translate>
       <Seo
         title="About us"
         description="3XVISIBILITY helps marketers, agencies and ecommerce teams turn structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop."
