@@ -66,6 +66,12 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
           <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-border bg-card px-3 py-2 sm:px-4 lg:px-6 shrink-0">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <SidebarTrigger className="shrink-0 lg:hidden" />
+              <Link to={`${basePath}/dashboard`} className="flex items-center gap-2 shrink-0" data-no-translate translate="no">
+                <img src={logo3x} alt="3XVISIBILITY" className="h-7 w-7 rounded-lg object-contain" />
+                <span className="hidden sm:inline text-sm font-bold tracking-tight">
+                  <span className="text-primary">3X</span>visibility
+                </span>
+              </Link>
               <Button
                 variant="ghost"
                 size="icon"
