@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageContext";
 import logo3x from "@/assets/logo-3x.png";
 
@@ -35,28 +35,60 @@ const socials = [
   },
 ];
 
+interface FooterLink {
+  label: string;
+  href: string;
+  isHash: boolean;
+  badge?: string;
+}
+
+function SmoothScrollLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const location = useLocation();
+  const isSamePageHash = href.startsWith("/#") && location.pathname === "/";
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isSamePageHash) {
+      e.preventDefault();
+      const targetId = href.replace("/#", "");
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.history.pushState(null, "", href);
+      }
+    }
+  };
+
+  return (
+    <a href={href} onClick={handleClick} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
+      {children}
+    </a>
+  );
+}
+
 export function LandingFooter() {
   const { t } = useLanguage();
 
-  const footerLinks = {
+  const footerLinks: Record<string, FooterLink[]> = {
     [t("footer.product")]: [
-      { label: t("footer.features"), href: "/#features" },
-      { label: t("footer.pricing"), href: "/#pricing" },
-      { label: t("footer.faq"), href: "/#faq" },
-      { label: "Documentation", href: "/docs" },
+      { label: t("footer.features"), href: "/#features", isHash: true },
+      { label: t("footer.pricing"), href: "/#pricing", isHash: true },
+      { label: t("footer.faq"), href: "/#faq", isHash: true },
+      { label: t("footer.apiDocs"), href: "/docs", isHash: false },
     ],
     [t("footer.integrations")]: [
-      { label: t("footer.wordpress"), href: "/#integrations" },
-      { label: t("footer.shopify"), href: "/#integrations" },
-      { label: "PrestaShop", href: "/#integrations" },
+      { label: t("footer.wordpress"), href: "/#integrations", isHash: true },
+      { label: t("footer.shopify"), href: "/#integrations", isHash: true },
+      { label: t("footer.prestaShop"), href: "/#integrations", isHash: true, badge: t("footer.comingSoon") },
     ],
     [t("footer.company")]: [
-      { label: t("footer.about"), href: "/about" },
-      { label: t("footer.contact"), href: "/contact" },
+      { label: t("footer.about"), href: "/about", isHash: false },
+      { label: t("footer.contact"), href: "/contact", isHash: false },
+      { label: t("footer.blog"), href: "/blog", isHash: false },
+      { label: t("footer.changelog"), href: "/changelog", isHash: false },
     ],
     [t("footer.legal")]: [
-      { label: t("footer.privacy"), href: "/privacy" },
-      { label: t("footer.terms"), href: "/terms" },
+      { label: t("footer.privacy"), href: "/privacy", isHash: false },
+      { label: t("footer.terms"), href: "/terms", isHash: false },
     ],
   };
 
@@ -84,15 +116,18 @@ export function LandingFooter() {
               <h4 className="font-semibold text-[11px] uppercase tracking-[0.15em] text-[hsl(250,15%,40%)] mb-4">{group}</h4>
               <ul className="space-y-2.5">
                 {links.map((link) => (
-                  <li key={link.label}>
-                    {link.href.startsWith("/") ? (
+                  <li key={link.label} className="flex items-center gap-1.5 flex-wrap">
+                    {link.isHash ? (
+                      <SmoothScrollLink href={link.href}>{link.label}</SmoothScrollLink>
+                    ) : (
                       <Link to={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
                         {link.label}
                       </Link>
-                    ) : (
-                      <a href={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
-                        {link.label}
-                      </a>
+                    )}
+                    {link.badge && (
+                      <span className="inline-flex items-center rounded-full bg-[hsl(96,90%,45%,0.12)] px-1.5 py-0.5 text-[9px] font-medium text-[hsl(96,90%,55%)] uppercase tracking-wide">
+                        {link.badge}
+                      </span>
                     )}
                   </li>
                 ))}
@@ -103,7 +138,7 @@ export function LandingFooter() {
 
         <div className="mt-12 pt-6 border-t border-[hsl(96,90%,45%,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[hsl(250,15%,35%)]">
-            © {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
+            &copy; {new Date().getFullYear()} 3XVISIBILITY. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-4">
             {socials.map((s) => (
