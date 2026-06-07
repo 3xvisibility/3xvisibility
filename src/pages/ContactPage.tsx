@@ -43,6 +43,11 @@ export default function ContactPage() {
     setSending(true);
     const { name, email, subject, message } = result.data;
     try {
+      // Save submission to the in-app inbox (best-effort)
+      await supabase
+        .from("contact_submissions")
+        .insert({ name, email, subject: subject || null, message });
+
       const { error } = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "contact-notification",
