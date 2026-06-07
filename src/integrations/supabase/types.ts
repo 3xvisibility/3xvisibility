@@ -1964,6 +1964,7 @@ export type Database = {
         Row: {
           ai_generations_limit: number
           ai_generations_used: number
+          billing_cycle: string
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -1980,6 +1981,7 @@ export type Database = {
         Insert: {
           ai_generations_limit?: number
           ai_generations_used?: number
+          billing_cycle?: string
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -1996,6 +1998,7 @@ export type Database = {
         Update: {
           ai_generations_limit?: number
           ai_generations_used?: number
+          billing_cycle?: string
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null

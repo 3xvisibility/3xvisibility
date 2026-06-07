@@ -50,6 +50,7 @@ export function AffiliateSection() {
               <div>
                 <p className="text-3xl font-extrabold text-primary">5%</p>
                 <p className="text-xs text-[hsl(220,10%,74%)] mt-1">{t("affiliateLanding.commissionRate")}</p>
+                <p className="text-[10px] text-primary/80 mt-0.5">{t("affiliateLanding.yearlyNote")}</p>
               </div>
               <div className="h-10 w-px bg-[hsl(96,90%,45%,0.15)]" />
               <div>

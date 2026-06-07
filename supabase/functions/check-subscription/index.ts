@@ -103,6 +103,7 @@ serve(async (req) => {
     let priceId: string | null = null;
     let subscriptionEnd: string | null = null;
     let planName = "free";
+    let billingCycle = "monthly";
 
     if (hasActiveSub) {
       const sub = subscriptions.data[0];
@@ -123,7 +124,9 @@ serve(async (req) => {
       productId = String(sub.items.data[0]?.price?.product ?? "");
       priceId = sub.items.data[0]?.price?.id ?? null;
       planName = PRODUCT_TO_PLAN[productId] || "free";
-      logStep("Active subscription", { productId, priceId, subscriptionEnd, planName });
+      const interval = sub.items.data[0]?.price?.recurring?.interval ?? "month";
+      billingCycle = interval === "year" ? "yearly" : "monthly";
+      logStep("Active subscription", { productId, priceId, subscriptionEnd, planName, billingCycle });
     }
 
     // Sync to database
@@ -134,8 +137,18 @@ serve(async (req) => {
       planName,
       customerId,
       subscriptionEnd,
-      subscriptionEnd ? new Date(new Date(subscriptionEnd).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString() : null
+      subscriptionEnd ? new Date(new Date(subscriptionEnd).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString() : null,
+      billingCycle
     );
+
+    // Affiliate commission is granted ONLY for active yearly subscriptions (5% of the yearly price).
+    if (hasActiveSub && billingCycle === "yearly" && planName !== "free") {
+      try {
+        await grantYearlyAffiliateCommission(supabaseClient, userId, planName);
+      } catch (e) {
+        logStep("Affiliate commission grant failed", { error: e instanceof Error ? e.message : String(e) });
+      }
+    }
 
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
@@ -143,6 +156,7 @@ serve(async (req) => {
       price_id: priceId,
       subscription_end: subscriptionEnd,
       plan: planName,
+      billing_cycle: billingCycle,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -165,6 +179,7 @@ async function upsertSubscription(
   stripeCustomerId: string | null,
   periodEnd: string | null,
   periodStart: string | null,
+  billingCycle: string = "monthly",
 ) {
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
@@ -184,6 +199,7 @@ async function upsertSubscription(
       stripe_customer_id: stripeCustomerId,
       current_period_end: periodEnd,
       current_period_start: periodStart,
+      billing_cycle: billingCycle,
       updated_at: new Date().toISOString(),
     };
     // Backfill workspace_id if it was missing
@@ -206,10 +222,112 @@ async function upsertSubscription(
       stripe_customer_id: stripeCustomerId,
       current_period_end: periodEnd,
       current_period_start: periodStart,
+      billing_cycle: billingCycle,
     };
     if (workspaceId) insertData.workspace_id = workspaceId;
     const { error } = await supabase.from("subscriptions").insert(insertData);
     if (error) logStep("Failed to insert subscription", { error: error.message });
     else logStep("Inserted new subscription row", { plan });
   }
+}
+
+// Yearly total price per plan (monthly price * (1 - 2/12), rounded, * 12)
+const YEARLY_TOTAL: Record<string, number> = {
+  starter: 192,
+  pro: 588,
+  agency: 1488,
+};
+const COMMISSION_RATE = 0.05; // 5%
+const DEFAULT_REWARD_CREDITS = 50;
+
+// Grant the referrer a 5% commission (and AI credit reward) when the referred
+// user activates a YEARLY plan. Idempotent: only fills referrals that are still pending.
+async function grantYearlyAffiliateCommission(supabase: any, referredUserId: string, plan: string) {
+  // Find a pending referral row for this referred user (commission not yet granted)
+  const { data: referral } = await supabase
+    .from("affiliate_referrals")
+    .select("id, affiliate_link_id, commission_amount, credit_reward")
+    .eq("referred_user_id", referredUserId)
+    .eq("commission_amount", 0)
+    .maybeSingle();
+
+  if (!referral) {
+    logStep("No pending referral to reward for yearly plan", { referredUserId });
+    return;
+  }
+
+  const yearlyTotal = YEARLY_TOTAL[plan] ?? 0;
+  const commission = Math.round(yearlyTotal * COMMISSION_RATE * 100) / 100;
+  if (commission <= 0) return;
+
+  const now = new Date().toISOString();
+
+  const { data: link } = await supabase
+    .from("affiliate_links")
+    .select("id, user_id, total_earned, total_credited")
+    .eq("id", referral.affiliate_link_id)
+    .maybeSingle();
+  if (!link) return;
+
+  // Reward credits (use settings for the plan if present, else default)
+  let rewardCredits = referral.credit_reward || 0;
+  if (rewardCredits <= 0) {
+    let { data: setting } = await supabase
+      .from("referral_reward_settings")
+      .select("reward_credits,is_active")
+      .eq("plan", plan)
+      .maybeSingle();
+    if (!setting) {
+      const { data: def } = await supabase
+        .from("referral_reward_settings")
+        .select("reward_credits,is_active")
+        .eq("plan", "default")
+        .maybeSingle();
+      setting = def || null;
+    }
+    rewardCredits = setting
+      ? (setting.is_active ? Number(setting.reward_credits || 0) : 0)
+      : DEFAULT_REWARD_CREDITS;
+  }
+
+  await supabase
+    .from("affiliate_referrals")
+    .update({
+      status: "verified",
+      commission_amount: commission,
+      credit_reward: rewardCredits,
+      subscription_plan: plan,
+      converted_at: now,
+    })
+    .eq("id", referral.id);
+
+  await supabase
+    .from("affiliate_links")
+    .update({
+      total_earned: Number(link.total_earned || 0) + commission,
+      total_credited: Number(link.total_credited || 0) + rewardCredits,
+      updated_at: now,
+    })
+    .eq("id", link.id);
+
+  if (rewardCredits > 0) {
+    await supabase.from("ai_credits").upsert({ user_id: link.user_id }, { onConflict: "user_id", ignoreDuplicates: true });
+    const { data: credits } = await supabase
+      .from("ai_credits")
+      .select("total_credits,remaining_credits")
+      .eq("user_id", link.user_id)
+      .maybeSingle();
+    if (credits) {
+      await supabase
+        .from("ai_credits")
+        .update({
+          total_credits: (credits.total_credits || 0) + rewardCredits,
+          remaining_credits: (credits.remaining_credits || 0) + rewardCredits,
+          updated_at: now,
+        })
+        .eq("user_id", link.user_id);
+    }
+  }
+
+  logStep("Granted yearly affiliate commission", { referralId: referral.id, commission, rewardCredits });
 }
