@@ -142,6 +142,7 @@ const en: Record<string, string> = {
   "referral.rewardNoteTitle": "Reward details",
   "referral.rewardNoteDesc": "Commission (5% of the yearly plan price) and reward credits are granted only when a referred user activates a yearly plan. Monthly subscriptions do not earn affiliate commission.",
   "referral.colCreditReward": "Credit Reward",
+  "referral.colCommission": "Commission",
   "referral.searchPlaceholder": "Search by plan, status or date...",
   "referral.filterAllStatus": "All statuses",
   "referral.filterAllPlans": "All plans",
