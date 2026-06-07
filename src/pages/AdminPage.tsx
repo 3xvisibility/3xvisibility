@@ -454,9 +454,11 @@ export default function AdminPage() {
   const setSection = (value: string) => {
     const next = new URLSearchParams(searchParams);
     next.set("section", value);
+    next.delete("userId");
+    next.delete("search");
     setSearchParams(next);
   };
-  const [userSearch, setUserSearch] = useState("");
+  const [userSearch, setUserSearch] = useState(searchParams.get("search") || "");
   const [campaignSearch, setCampaignSearch] = useState("");
   const [subSearch, setSubSearch] = useState("");
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
@@ -464,7 +466,7 @@ export default function AdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<AdminUser | null>(null);
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
-  const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [detailUserId, setDetailUserId] = useState<string | null>(searchParams.get("userId"));
   const [editProfileUser, setEditProfileUser] = useState<AdminUser | null>(null);
   // Generated pages state
   const [pageSearch, setPageSearch] = useState("");
@@ -475,6 +477,28 @@ export default function AdminPage() {
   const [editPage, setEditPage] = useState<GeneratedPage | null>(null);
   const [confirmDeletePages, setConfirmDeletePages] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
+
+  // Deep-link support: auto-open user detail and pre-fill search from URL
+  useEffect(() => {
+    const urlUserId = searchParams.get("userId");
+    const urlSearch = searchParams.get("search");
+    if (urlUserId) {
+      setDetailUserId(urlUserId);
+    }
+    if (urlSearch) {
+      setUserSearch(urlSearch);
+    }
+  }, [searchParams]);
+
+  // Clear deep-link params when detail dialog closes so refresh doesn't reopen it
+  const handleDetailOpenChange = (open: boolean) => {
+    if (!open) {
+      setDetailUserId(null);
+      const next = new URLSearchParams(searchParams);
+      next.delete("userId");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   // Pagination state
   const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
@@ -1400,7 +1424,7 @@ export default function AdminPage() {
       <UserDetailDialog
         userId={detailUserId}
         open={!!detailUserId}
-        onOpenChange={(o) => !o && setDetailUserId(null)}
+        onOpenChange={handleDetailOpenChange}
       />
 
       <EditUserProfileDialog

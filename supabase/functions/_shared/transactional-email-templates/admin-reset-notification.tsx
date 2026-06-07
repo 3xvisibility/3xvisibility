@@ -4,6 +4,7 @@ import * as React from 'npm:react@18.3.1'
 
 import {
   Body,
+  Button,
   Container,
   Head,
   Heading,
@@ -35,50 +36,74 @@ export const AdminResetNotificationEmail = ({
   userAgent,
   origin,
   language,
-}: AdminResetNotificationProps) => (
-  <Html lang="en" dir="ltr">
-    <Head />
-    <Preview>Password reset requested{email ? ` — ${email}` : ''}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Img src={LOGO_URL} width="48" height="48" alt="3Xvisibility" style={logo} />
-        <Heading style={h1}>Password reset requested</Heading>
-        <Text style={text}>A user just requested a password reset link.</Text>
+}: AdminResetNotificationProps) => {
+  const searchEmail = email ? encodeURIComponent(email) : ''
+  const adminLink = origin
+    ? `${origin}/admin?section=users&search=${searchEmail}`
+    : ''
 
-        <Section style={card}>
-          <Text style={label}>Email</Text>
-          <Text style={value}>
-            {email ? (
-              <Link href={`mailto:${email}`} style={link}>
-                {email}
-              </Link>
-            ) : (
-              '—'
+  return (
+    <Html lang="en" dir="ltr">
+      <Head />
+      <Preview>Password reset requested{email ? ` — ${email}` : ''}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Img src={LOGO_URL} width="48" height="48" alt="3Xvisibility" style={logo} />
+          <Heading style={h1}>Password reset requested</Heading>
+          <Text style={text}>A user just requested a password reset link.</Text>
+
+          <Section style={card}>
+            <Text style={label}>Email</Text>
+            <Text style={value}>
+              {email ? (
+                <Link href={`mailto:${email}`} style={link}>
+                  {email}
+                </Link>
+              ) : (
+                '—'
+              )}
+            </Text>
+
+            <Text style={label}>Requested at</Text>
+            <Text style={value}>{requestedAt || new Date().toISOString()}</Text>
+
+            <Text style={label}>From page</Text>
+            <Text style={value}>{origin || '—'}</Text>
+
+            <Hr style={hr} />
+
+            <Text style={label}>Preferred language</Text>
+            <Text style={value}>{language || '—'}</Text>
+
+            <Text style={label}>Device / browser</Text>
+            <Text style={messageStyle}>{userAgent || '—'}</Text>
+
+            {adminLink && (
+              <>
+                <Hr style={hr} />
+                <Section style={{ textAlign: 'center' as const, marginTop: '12px' }}>
+                  <Button href={adminLink} style={cta}>
+                    Open user profile in admin
+                  </Button>
+                  <Text style={{ ...text, marginTop: '8px', fontSize: '12px' }}>
+                    Or copy this link:{' '}
+                    <Link href={adminLink} style={link}>
+                      {adminLink}
+                    </Link>
+                  </Text>
+                </Section>
+              </>
             )}
+          </Section>
+
+          <Text style={footer}>
+            You are receiving this because you are the platform administrator.
           </Text>
-
-          <Text style={label}>Requested at</Text>
-          <Text style={value}>{requestedAt || new Date().toISOString()}</Text>
-
-          <Text style={label}>From page</Text>
-          <Text style={value}>{origin || '—'}</Text>
-
-          <Hr style={hr} />
-
-          <Text style={label}>Preferred language</Text>
-          <Text style={value}>{language || '—'}</Text>
-
-          <Text style={label}>Device / browser</Text>
-          <Text style={messageStyle}>{userAgent || '—'}</Text>
-        </Section>
-
-        <Text style={footer}>
-          You are receiving this because you are the platform administrator.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
-)
+        </Container>
+      </Body>
+    </Html>
+  )
+}
 
 export default AdminResetNotificationEmail
 
@@ -145,4 +170,14 @@ const messageStyle = {
 }
 const hr = { borderColor: 'hsl(96, 40%, 85%)', margin: '16px 0' }
 const link = { color: 'hsl(217, 50%, 45%)', textDecoration: 'underline' }
+const cta = {
+  backgroundColor: 'hsl(217, 50%, 45%)',
+  color: '#ffffff',
+  borderRadius: '8px',
+  padding: '10px 18px',
+  fontSize: '14px',
+  fontWeight: 'bold' as const,
+  textDecoration: 'none',
+  display: 'inline-block',
+}
 const footer = { fontSize: '12px', color: 'hsl(220, 10%, 60%)', margin: '24px 0 0' }
