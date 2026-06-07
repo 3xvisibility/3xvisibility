@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
 import ActiveAiProviderCard from "@/components/settings/ActiveAiProviderCard";
+import LocaleSettingsCard from "@/components/settings/LocaleSettingsCard";
 
 const AI_PLAN_LIMITS: Record<string, number> = {
   free: 0,
