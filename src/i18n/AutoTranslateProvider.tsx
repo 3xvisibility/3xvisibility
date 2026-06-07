@@ -270,10 +270,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           return;
         }
         // Re-collect to handle DOM changes
-        const fresh: Target[] = [
-          ...collectTextTargets(document.body),
-          ...collectAttrTargets(document.body),
-        ];
+        const fresh: Target[] = collectAll();
         for (const t of fresh) {
           const tr = map[t.original];
           if (tr) applyTranslation(t, t.original, tr);
