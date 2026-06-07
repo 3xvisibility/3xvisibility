@@ -642,6 +642,36 @@ export default function AuthPage() {
                       </div>
                     )}
 
+                    {mode === "signup" && showRepeatSignupNotice && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease }}
+                        className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3"
+                      >
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {t("auth.repeatSignupNotice")}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => { setMode("login"); setShowRepeatSignupNotice(false); }}
+                            className="flex-1 h-9 rounded-lg bg-foreground text-background hover:bg-foreground/90 font-medium text-xs transition-all"
+                          >
+                            {t("auth.repeatSignupSignIn")}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => { handleResetPassword(); setShowRepeatSignupNotice(false); }}
+                            className="flex-1 h-9 rounded-lg border-border/60 hover:bg-accent/50 font-medium text-xs transition-all"
+                          >
+                            {t("auth.repeatSignupReset")}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
                     <Button
                       type="submit"
                       disabled={loading || (mode === "signup" && !canSignup)}
