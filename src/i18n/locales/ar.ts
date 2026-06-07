@@ -291,6 +291,7 @@ const ar: Record<string, string> = {
   "video.title": "شاهده أثناء العمل",
   "video.uptimeSLA": "SLA وقت التشغيل",
   "video.watchDemo": "شاهد العرض التوضيحي لمدة دقيقتين",
+  "auth.repeatSignupTitle": "This email may already be in use",
   "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
   "auth.repeatSignupSignIn": "Sign In",
   "auth.repeatSignupReset": "Reset Password",

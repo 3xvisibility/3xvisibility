@@ -1800,6 +1800,7 @@ const pl: Record<string, string> = {
   "workspaceSettings.workspaceDetails": "Szczegóły obszaru roboczego",
   "workspaceSettings.workspaceDetailsDesc": "Zaktualizuj nazwę swojego obszaru roboczego. Tylko właściciele obszaru roboczego mogą zmieniać nazwy.",
   "workspaceSettings.workspaceName": "Nazwa obszaru roboczego",
+  "auth.repeatSignupTitle": "This email may already be in use",
   "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
   "auth.repeatSignupSignIn": "Sign In",
   "auth.repeatSignupReset": "Reset Password",

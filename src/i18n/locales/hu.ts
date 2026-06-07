@@ -291,6 +291,7 @@ const hu: Record<string, string> = {
   "video.title": "Lássa működés közben",
   "video.uptimeSLA": "Uptime SLA",
   "video.watchDemo": "2 perces demo megtekintése",
+  "auth.repeatSignupTitle": "This email may already be in use",
   "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
   "auth.repeatSignupSignIn": "Sign In",
   "auth.repeatSignupReset": "Reset Password",

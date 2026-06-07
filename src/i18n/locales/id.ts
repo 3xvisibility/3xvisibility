@@ -291,6 +291,7 @@ const id: Record<string, string> = {
   "video.title": "Lihat aksinya",
   "video.uptimeSLA": "SLA Uptime",
   "video.watchDemo": "Tonton demo 2 menit",
+  "auth.repeatSignupTitle": "This email may already be in use",
   "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
   "auth.repeatSignupSignIn": "Sign In",
   "auth.repeatSignupReset": "Reset Password",
