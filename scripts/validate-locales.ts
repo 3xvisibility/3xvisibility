@@ -107,6 +107,32 @@ const localeFiles = readdirSync(LOCALES_DIR)
 for (const f of localeFiles) checkFile(f);
 checkFile(TRANSLATIONS_FILE);
 
+// ── Rule 8: Missing keys vs. English source of truth ──────────────────────
+// English (en.ts) defines the canonical set of keys. Every other locale must
+// contain every key, so untranslated text never silently falls back to English.
+function extractKeys(filePath: string): Set<string> {
+  const content = readFileSync(filePath, "utf-8");
+  const keys = new Set<string>();
+  const kvRegex = /"([^"]+)"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = kvRegex.exec(content)) !== null) keys.add(m[1]);
+  return keys;
+}
+
+const EN_FILE = join(LOCALES_DIR, "en.ts");
+const enKeys = extractKeys(EN_FILE);
+
+for (const f of localeFiles) {
+  if (f === EN_FILE) continue;
+  const label = f.replace(ROOT + "/", "");
+  const localeKeys = extractKeys(f);
+  for (const key of enKeys) {
+    if (!localeKeys.has(key)) {
+      addIssue(label, 0, key, "MISSING_KEY", `Key "${key}" exists in en.ts but is missing here`);
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 if (issues.length === 0) {
   console.log(`✅ All ${localeFiles.length + 1} locale files are valid (7 rules checked).\n`);
