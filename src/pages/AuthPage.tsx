@@ -721,7 +721,7 @@ export default function AuthPage() {
                     <div className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
                     <div className="h-2.5 w-2.5 rounded-full bg-warning/60" />
                     <div className="h-2.5 w-2.5 rounded-full bg-success/60" />
-                    <span className="text-[10px] text-muted-foreground/50 ml-2 font-mono">pagegen.app/dashboard</span>
+                    <span className="text-[10px] text-muted-foreground/50 ml-2 font-mono" data-no-translate translate="no">3xvisibility.com/dashboard</span>
                   </div>
                   <img
                     src={heroDashboard}
