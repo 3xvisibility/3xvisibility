@@ -28,6 +28,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WorkspaceBreadcrumb } from "@/components/WorkspaceBreadcrumb";
 import { BackToTop } from "@/components/BackToTop";
+import logo3x from "@/assets/logo-3x.png";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
