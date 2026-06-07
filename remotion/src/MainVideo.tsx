@@ -63,7 +63,7 @@ const PersistentBackground: React.FC = () => {
           width: 400,
           height: 400,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%)",
+          background: "radial-gradient(circle, rgba(94,218,12,0.15), transparent 70%)",
           top: 100 + drift,
           right: 200 + drift2,
           filter: "blur(40px)",
