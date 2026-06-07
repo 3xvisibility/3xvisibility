@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring, Img, staticFile } from "remotion";
 import { C, FONT_DISPLAY, FONT_BODY } from "../MainVideo";
 
 export const SceneOutro: React.FC = () => {
