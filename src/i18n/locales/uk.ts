@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/uk.json — DO NOT EDIT BY HAND
 const uk: Record<string, string> = {
+  "contact.title": "Зв'яжіться з нами",
+  "contact.metaDesc": "Питання, відгуки або запити щодо партнерства — зв'яжіться з командою 3XVISIBILITY електронною поштою. Ми читаємо кожне повідомлення та відповідаємо протягом одного робочого дня.",
+  "contact.subtitle": "Питання, відгуки або запити щодо партнерства — ми читаємо кожне повідомлення.",
+  "contact.email": "Електронна пошта",
+  "contact.support": "Підтримка",
+  "contact.sales": "Продажі",
+  "contact.responseTime": "Час відповіді",
+  "contact.responseTimeDesc": "Ми прагнемо відповідати на всі повідомлення протягом одного робочого дня.",
   "auth.acceptTerms": "Я приймаю",
   "auth.agencyPlanInfo": "Всі нові акаунти включають план Agency з 10 000 сторінками та 5 000 AI генераціями.",
   "auth.and": "та",

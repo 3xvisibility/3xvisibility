@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/hi.json — DO NOT EDIT BY HAND
 const hi: Record<string, string> = {
+  "contact.title": "संपर्क करें",
+  "contact.metaDesc": "प्रश्न, प्रतिक्रिया या साझेदारी पूछताछ — ईमेल द्वारा 3XVISIBILITY टीम से संपर्क करें। हम हर संदेश पढ़ते हैं और एक कार्यदिवस में जवाब देते हैं।",
+  "contact.subtitle": "प्रश्न, प्रतिक्रिया या साझेदारी पूछताछ — हम हर संदेश पढ़ते हैं।",
+  "contact.email": "ईमेल",
+  "contact.support": "सहायता",
+  "contact.sales": "बिक्री",
+  "contact.responseTime": "प्रतिक्रिया समय",
+  "contact.responseTimeDesc": "हम सभी संदेशों का एक कार्यदिवस के भीतर उत्तर देने का लक्ष्य रखते हैं।",
   "auth.email": "ईमेल",
   "auth.password": "पासवर्ड",
   "auth.signIn": "लॉगिन",

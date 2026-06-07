@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/vi.json — DO NOT EDIT BY HAND
 const vi: Record<string, string> = {
+  "contact.title": "Liên hệ với chúng tôi",
+  "contact.metaDesc": "Câu hỏi, phản hồi hoặc yêu cầu hợp tác — liên hệ với đội ngũ 3XVISIBILITY qua email. Chúng tôi đọc mọi tin nhắn và phản hồi trong vòng một ngày làm việc.",
+  "contact.subtitle": "Câu hỏi, phản hồi hoặc yêu cầu hợp tác — chúng tôi đọc mọi tin nhắn.",
+  "contact.email": "Email",
+  "contact.support": "Hỗ trợ",
+  "contact.sales": "Bán hàng",
+  "contact.responseTime": "Thời gian phản hồi",
+  "contact.responseTimeDesc": "Chúng tôi cố gắng phản hồi tất cả tin nhắn trong vòng một ngày làm việc.",
   "auth.acceptTerms": "Tôi đồng ý với",
   "auth.agencyPlanInfo": "Tất cả tài khoản mới bao gồm gói Agency với 10.000 trang và 5.000 lượt tạo AI.",
   "auth.and": "và",

@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/sv.json — DO NOT EDIT BY HAND
 const sv: Record<string, string> = {
+  "contact.title": "Kontakta oss",
+  "contact.metaDesc": "Frågor, feedback eller partnerskapsförfrågningar — kontakta 3XVISIBILITY-teamet via e-post. Vi läser varje meddelande och svarar inom en arbetsdag.",
+  "contact.subtitle": "Frågor, feedback eller partnerskapsförfrågningar — vi läser varje meddelande.",
+  "contact.email": "E-post",
+  "contact.support": "Support",
+  "contact.sales": "Försäljning",
+  "contact.responseTime": "Svarstid",
+  "contact.responseTimeDesc": "Vi strävar efter att svara på alla meddelanden inom en arbetsdag.",
   "auth.acceptTerms": "Jag accepterar",
   "auth.agencyPlanInfo": "Alla nya konton inkluderar Agency-planen med 10 000 sidor och 5 000 AI-genereringar.",
   "auth.and": "och",

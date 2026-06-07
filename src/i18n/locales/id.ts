@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/id.json — DO NOT EDIT BY HAND
 const id: Record<string, string> = {
+  "contact.title": "Hubungi kami",
+  "contact.metaDesc": "Pertanyaan, masukan, atau permintaan kemitraan — hubungi tim 3XVISIBILITY melalui email. Kami membaca setiap pesan dan membalas dalam satu hari kerja.",
+  "contact.subtitle": "Pertanyaan, masukan, atau permintaan kemitraan — kami membaca setiap pesan.",
+  "contact.email": "Email",
+  "contact.support": "Dukungan",
+  "contact.sales": "Penjualan",
+  "contact.responseTime": "Waktu respons",
+  "contact.responseTimeDesc": "Kami berusaha membalas semua pesan dalam satu hari kerja.",
   "auth.acceptTerms": "Saya setuju dengan",
   "auth.agencyPlanInfo": "Semua akun baru termasuk paket Agency dengan 10.000 halaman dan 5.000 generasi AI.",
   "auth.and": "dan",

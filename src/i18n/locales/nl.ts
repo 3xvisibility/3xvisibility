@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/nl.json — DO NOT EDIT BY HAND
 const nl: Record<string, string> = {
+  "contact.title": "Neem contact op",
+  "contact.metaDesc": "Vragen, feedback of samenwerkingsverzoeken — bereik het 3XVISIBILITY-team via e-mail. We lezen elk bericht en reageren binnen één werkdag.",
+  "contact.subtitle": "Vragen, feedback of samenwerkingsverzoeken — we lezen elk bericht.",
+  "contact.email": "E-mail",
+  "contact.support": "Ondersteuning",
+  "contact.sales": "Verkoop",
+  "contact.responseTime": "Reactietijd",
+  "contact.responseTimeDesc": "We streven ernaar alle berichten binnen één werkdag te beantwoorden.",
   "abTesting.baseTemplate": "Basissjabloon (optioneel)",
   "abTesting.compare": "Vergelijk",
   "abTesting.createTest": "Maak een A/B-test",

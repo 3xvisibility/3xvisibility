@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/cs.json — DO NOT EDIT BY HAND
 const cs: Record<string, string> = {
+  "contact.title": "Kontaktujte nás",
+  "contact.metaDesc": "Dotazy, zpětná vazba nebo partnerství — spojte se s týmem 3XVISIBILITY e-mailem. Čteme každou zprávu a odpovídáme do jednoho pracovního dne.",
+  "contact.subtitle": "Dotazy, zpětná vazba nebo partnerství — čteme každou zprávu.",
+  "contact.email": "E-mail",
+  "contact.support": "Podpora",
+  "contact.sales": "Obchod",
+  "contact.responseTime": "Doba odezvy",
+  "contact.responseTimeDesc": "Snažíme se odpovědět na všechny zprávy do jednoho pracovního dne.",
   "auth.acceptTerms": "Souhlasím s",
   "auth.agencyPlanInfo": "Všechny nové účty zahrnují plán Agency s 10 000 stránkami a 5 000 AI generacemi.",
   "auth.and": "a",

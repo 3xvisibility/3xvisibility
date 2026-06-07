@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/ja.json — DO NOT EDIT BY HAND
 const ja: Record<string, string> = {
+  "contact.title": "お問い合わせ",
+  "contact.metaDesc": "ご質問、ご意見、提携のお問い合わせ — メールで3XVISIBILITYチームにご連絡ください。すべてのメッセージを読み、1営業日以内に返信します。",
+  "contact.subtitle": "ご質問、ご意見、提携のお問い合わせ — すべてのメッセージを読みます。",
+  "contact.email": "メール",
+  "contact.support": "サポート",
+  "contact.sales": "営業",
+  "contact.responseTime": "応答時間",
+  "contact.responseTimeDesc": "すべてのメッセージに1営業日以内に返信するよう努めています。",
   "auth.acceptTerms": "同意します",
   "auth.agencyPlanInfo": "すべての新規アカウントにはAgencyプラン（10,000ページ、5,000 AI生成）が含まれます。",
   "auth.and": "と",

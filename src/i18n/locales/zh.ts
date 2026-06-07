@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/zh.json — DO NOT EDIT BY HAND
 const zh: Record<string, string> = {
+  "contact.title": "联系我们",
+  "contact.metaDesc": "问题、反馈或合作咨询 — 通过电子邮件联系 3XVISIBILITY 团队。我们阅读每条消息，并在一个工作日内回复。",
+  "contact.subtitle": "问题、反馈或合作咨询 — 我们阅读每条消息。",
+  "contact.email": "电子邮件",
+  "contact.support": "支持",
+  "contact.sales": "销售",
+  "contact.responseTime": "响应时间",
+  "contact.responseTimeDesc": "我们力争在一个工作日内回复所有消息。",
   "auth.acceptTerms": "我同意",
   "auth.agencyPlanInfo": "所有新账户包含Agency方案，含10,000页面和5,000次AI生成。",
   "auth.and": "和",
