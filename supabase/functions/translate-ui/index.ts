@@ -108,11 +108,31 @@ Deno.serve(async (req) => {
     }
     // Cap batch size for safety
     const capped = texts.slice(0, 100).map((t) => String(t ?? ""));
+    const hasLetters = (s: string) => /[A-Za-z\u00C0-\u024F]/.test(s);
     let translations = await libreBatch(capped, target);
     let via = "libre";
     if (!translations) {
       translations = await aiBatch(capped, target);
       via = "ai";
+    } else {
+      // LibreTranslate often returns some strings unchanged (untranslated).
+      // Fill those gaps with the AI translator so no item stays in English.
+      const gapIdx: number[] = [];
+      translations.forEach((tr, i) => {
+        const orig = capped[i];
+        if (hasLetters(orig) && tr.trim().toLowerCase() === orig.trim().toLowerCase()) {
+          gapIdx.push(i);
+        }
+      });
+      if (gapIdx.length > 0) {
+        const aiFixed = await aiBatch(gapIdx.map((i) => capped[i]), target);
+        if (aiFixed && aiFixed.length === gapIdx.length) {
+          gapIdx.forEach((origIdx, k) => {
+            translations![origIdx] = aiFixed[k];
+          });
+          via = "libre+ai";
+        }
+      }
     }
     if (!translations) {
       return new Response(JSON.stringify({ translations: capped, via: "fallback-original" }), {
