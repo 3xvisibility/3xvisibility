@@ -16,6 +16,7 @@ interface LanguageSwitcherProps {
 
 export function LanguageSwitcher({ variant = "ghost", size = "icon", className }: LanguageSwitcherProps) {
   const { language, setLanguage } = useLanguage();
+  const languages = useEnabledLocales();
   const current = languages.find((l) => l.code === language);
 
   return (
