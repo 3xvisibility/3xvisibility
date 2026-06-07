@@ -675,6 +675,24 @@ export default function ReferralPage() {
                             </TableCell>
                             <TableCell className="text-right text-sm font-medium">
                               {verified ? (
+                                (() => {
+                                  const planKey = (r.subscription_plan || "").toLowerCase();
+                                  const yearlyPrice = YEARLY_TOTAL[planKey] ?? 0;
+                                  return (
+                                    <div className="flex flex-col items-end gap-0.5">
+                                      <span className="text-primary">€{Number(r.commission_amount ?? 0).toFixed(2)}</span>
+                                      {yearlyPrice > 0 && (
+                                        <span className="text-[10px] font-normal text-muted-foreground whitespace-nowrap">
+                                          €{yearlyPrice} × {Math.round(COMMISSION_RATE * 100)}%
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })()
+                              ) : "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-medium">
+                              {verified ? (
                                 <span className="inline-flex items-center gap-1 text-primary">
                                   <Coins className="h-3.5 w-3.5" />
                                   {Number(r.credit_reward ?? 0)}
