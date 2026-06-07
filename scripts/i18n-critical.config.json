@@ -1,0 +1,7 @@
+{
+  "$comment": "Controls the i18n missing-key build check in scripts/validate-locales.ts. Any en.ts key whose name starts with one of these prefixes MUST exist in every locale, or the build fails. All other missing keys are reported as non-fatal warnings (they fall back to English at runtime). Edit this list to change the build-breaking rules without touching the script.",
+  "criticalPrefixes": [
+    "contact.",
+    "footer."
+  ]
+}
