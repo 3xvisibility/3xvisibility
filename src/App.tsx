@@ -57,6 +57,7 @@ import ChangelogPage from "./pages/ChangelogPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { AutoTranslateProvider } from "./i18n/AutoTranslateProvider";
 import { WorkspaceProvider } from "./contexts/WorkspaceContext";
+import { ScrollToTop } from "./components/ScrollToTop";
 import { BrandingProvider } from "./contexts/BrandingContext";
 import { FeatureGate } from "./components/FeatureGate";
 
