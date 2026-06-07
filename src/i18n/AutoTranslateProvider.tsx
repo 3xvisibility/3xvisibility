@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 const hasBuiltinCoverage = (lang: string) =>
   Object.prototype.hasOwnProperty.call(translations, lang);
 
-const CACHE_PREFIX = "auto-tr:";
+const CACHE_PREFIX = "auto-tr2:";
 const BATCH_SIZE = 40;
 const DEBOUNCE_MS = 250;
 
