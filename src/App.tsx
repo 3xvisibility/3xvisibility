@@ -14,6 +14,8 @@ import type { Session } from "@supabase/supabase-js";
 
 import LandingPage from "./pages/LandingPage";
 import DocumentationPage from "./pages/DocumentationPage";
+import WordPressGuidePage from "./pages/WordPressGuidePage";
+import ShopifyGuidePage from "./pages/ShopifyGuidePage";
 import AuthPage from "./pages/AuthPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
