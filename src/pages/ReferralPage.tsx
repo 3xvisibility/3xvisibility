@@ -652,7 +652,11 @@ export default function ReferralPage() {
                               {new Date(r.created_at).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                              <Badge variant={verified ? "default" : "secondary"} className="gap-1">
+                              <Badge
+                                variant={verified ? "default" : "secondary"}
+                                className="gap-1"
+                                title={verified ? t("referral.statusActivatedHint") : t("referral.statusPendingHint")}
+                              >
                                 {verified ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                                 {verified ? t("referral.statusVerified") : t("referral.statusPending")}
                               </Badge>
