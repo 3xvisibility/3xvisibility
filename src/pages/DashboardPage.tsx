@@ -72,6 +72,8 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [userName, setUserName] = useState("");
   const [timeRange, setTimeRange] = useState("30");
+  const [pagePeriod, setPagePeriod] = useState("week");
+  const [campaignPeriod, setCampaignPeriod] = useState("week");
   const { currentWorkspace, basePath } = useWorkspace();
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
