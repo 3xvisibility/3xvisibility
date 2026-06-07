@@ -103,6 +103,7 @@ serve(async (req) => {
     let priceId: string | null = null;
     let subscriptionEnd: string | null = null;
     let planName = "free";
+    let billingCycle = "monthly";
 
     if (hasActiveSub) {
       const sub = subscriptions.data[0];
@@ -123,7 +124,9 @@ serve(async (req) => {
       productId = String(sub.items.data[0]?.price?.product ?? "");
       priceId = sub.items.data[0]?.price?.id ?? null;
       planName = PRODUCT_TO_PLAN[productId] || "free";
-      logStep("Active subscription", { productId, priceId, subscriptionEnd, planName });
+      const interval = sub.items.data[0]?.price?.recurring?.interval ?? "month";
+      billingCycle = interval === "year" ? "yearly" : "monthly";
+      logStep("Active subscription", { productId, priceId, subscriptionEnd, planName, billingCycle });
     }
 
     // Sync to database
@@ -134,8 +137,18 @@ serve(async (req) => {
       planName,
       customerId,
       subscriptionEnd,
-      subscriptionEnd ? new Date(new Date(subscriptionEnd).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString() : null
+      subscriptionEnd ? new Date(new Date(subscriptionEnd).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString() : null,
+      billingCycle
     );
+
+    // Affiliate commission is granted ONLY for active yearly subscriptions (5% of the yearly price).
+    if (hasActiveSub && billingCycle === "yearly" && planName !== "free") {
+      try {
+        await grantYearlyAffiliateCommission(supabaseClient, userId, planName);
+      } catch (e) {
+        logStep("Affiliate commission grant failed", { error: e instanceof Error ? e.message : String(e) });
+      }
+    }
 
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
@@ -143,6 +156,7 @@ serve(async (req) => {
       price_id: priceId,
       subscription_end: subscriptionEnd,
       plan: planName,
+      billing_cycle: billingCycle,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
