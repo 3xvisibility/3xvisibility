@@ -80,7 +80,7 @@ export default function ResetPasswordPage() {
     if (!canSubmit) return;
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { data: updateData, error } = await supabase.auth.updateUser({ password });
     setLoading(false);
 
     if (error) {
@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    // Log the password reset in the audit log
+    // Log the password reset in the audit log and notify admin
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -110,9 +110,24 @@ export default function ResetPasswordPage() {
             details: { method: "email_link" },
           });
         }
+
+        // Notify the admin inbox that the password reset was completed (best-effort, non-blocking)
+        supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "admin-reset-completed",
+            idempotencyKey: `admin-reset-completed-${user.id}-${Date.now()}`,
+            templateData: {
+              email: user.email,
+              completedAt: new Date().toISOString(),
+              origin: window.location.origin,
+              language: typeof navigator !== "undefined" ? navigator.language : "en",
+              userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+            },
+          },
+        }).catch(() => { /* ignore — admin notification is best-effort */ });
       }
     } catch {
-      // Audit logging is best-effort
+      // Audit logging and admin notification are best-effort
     }
 
     toast({ title: t("auth.passwordUpdated"), description: t("auth.passwordUpdatedDesc") });
