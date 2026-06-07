@@ -205,7 +205,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             {isWhitelabeled ? (
               <span className="text-sm font-semibold truncate">{appName}</span>
             ) : (
-              <span className="flex flex-col leading-none min-w-0">
+              <span className="flex flex-col leading-none min-w-0" data-no-translate translate="no">
                 <span className="text-sm font-bold tracking-tight truncate">
                   <span className="text-primary">3X</span>visibility
                 </span>

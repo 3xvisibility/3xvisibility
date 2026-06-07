@@ -108,7 +108,7 @@ export function LandingFooter() {
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2">
               <img src={logo3x} alt="3X Visibility logo" width={28} height={28} loading="lazy" className="h-7 w-7 rounded-lg" />
-              <span className="flex flex-col leading-none">
+              <span className="flex flex-col leading-none" data-no-translate translate="no">
                 <span className="text-sm font-bold tracking-tight">
                   <span className="text-primary">3X</span>visibility
                 </span>

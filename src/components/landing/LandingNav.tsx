@@ -38,7 +38,7 @@ export function LandingNav() {
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
           <Link to="/" className="flex items-center gap-2.5">
             <img src={logo3x} alt="3X Visibility logo" width={32} height={32} className="h-8 w-8 rounded-xl" />
-            <span className="flex flex-col leading-none">
+            <span className="flex flex-col leading-none" data-no-translate translate="no">
               <span className="text-base font-bold tracking-tight">
                 <span className="text-primary">3X</span>
                 <span className="text-foreground">visibility</span>
