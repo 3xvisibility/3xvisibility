@@ -133,7 +133,7 @@ const en: Record<string, string> = {
   "referral.exportEmpty": "No referred users match your filters to export",
   "referral.exportFailed": "Failed to export referred users",
   "referral.rewardNoteTitle": "Reward details",
-  "referral.rewardNoteDesc": "Each verified referral earns you AI credits automatically based on the active reward rules. Credits are added to your balance immediately — there's no payout threshold or waiting period.",
+  "referral.rewardNoteDesc": "Commission (5% of the yearly plan price) and reward credits are granted only when a referred user activates a yearly plan. Monthly subscriptions do not earn affiliate commission.",
   "referral.colCreditReward": "Credit Reward",
   "referral.searchPlaceholder": "Search by plan, status or date...",
   "referral.filterAllStatus": "All statuses",
