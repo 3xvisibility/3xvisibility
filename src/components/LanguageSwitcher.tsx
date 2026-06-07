@@ -1,5 +1,5 @@
 import { useLanguage } from "@/i18n/LanguageContext";
-import { languages } from "@/i18n/translations";
+import { useEnabledLocales } from "@/i18n/localeConfig";
 import {
   DropdownMenu,
   DropdownMenuContent,
