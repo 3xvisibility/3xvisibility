@@ -26,8 +26,8 @@ import { supabase } from "@/integrations/supabase/client";
 const hasBuiltinCoverage = (lang: string) =>
   Object.prototype.hasOwnProperty.call(translations, lang);
 
-const CACHE_PREFIX = "auto-tr4:";
-const BATCH_SIZE = 40;
+const CACHE_PREFIX = "auto-tr5:";
+const BATCH_SIZE = 100;
 const DEBOUNCE_MS = 250;
 
 const SKIP_TAGS = new Set([
@@ -288,20 +288,31 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       if (needRequest.length === 0) return;
       needRequest.forEach((o) => inFlightRef.current.add(`${lang}:${o}`));
 
+      const slices: string[][] = [];
       for (let i = 0; i < needRequest.length; i += BATCH_SIZE) {
-        const slice = needRequest.slice(i, i + BATCH_SIZE);
-        const map = await translateBatch(slice);
-        if (cancelled || langRef.current !== lang) {
-          slice.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
-          return;
-        }
-        // Re-collect to handle DOM changes
-        const fresh: Target[] = collectAll();
-        for (const t of fresh) {
-          const tr = map[t.original];
-          if (tr) applyTranslation(t, t.original, tr);
-        }
+        slices.push(needRequest.slice(i, i + BATCH_SIZE));
+      }
+
+      const settled = await Promise.all(
+        slices.map(async (slice) => ({ slice, map: await translateBatch(slice) }))
+      );
+      if (cancelled || langRef.current !== lang) {
+        needRequest.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
+        return;
+      }
+
+      const combined: Record<string, string> = {};
+      settled.forEach(({ slice, map }) => {
+        Object.assign(combined, map);
         slice.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
+      });
+
+      // Re-collect once after all batches so React re-renders and late-mounted
+      // sections still receive translations from the fresh result map/cache.
+      const fresh: Target[] = collectAll();
+      for (const t of fresh) {
+        const tr = combined[t.original];
+        if (tr) applyTranslation(t, t.original, tr);
       }
 
       // After translating, run one more sweep so anything that wasn't matched
@@ -344,7 +355,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         }
         if (m.type === "characterData") {
           const t = m.target as Text;
-          if ((t as any).__autoTrLang !== langRef.current) {
+          const original = ((t as any).__autoTrOriginal || "").trim();
+          const visible = (t.nodeValue || "").trim();
+          if ((t as any).__autoTrLang !== langRef.current || (original && visible === original)) {
             relevant = true;
             break;
           }
@@ -352,8 +365,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         if (m.type === "attributes" && m.attributeName) {
           const el = m.target as Element;
           const tag = `__autoTr_${m.attributeName}_lang`;
+          const original = ((el as any)[`__autoTr_${m.attributeName}_orig`] || "").trim();
+          const visible = (el.getAttribute(m.attributeName) || "").trim();
           // Ignore self-applied translations
-          if ((el as any)[tag] !== langRef.current) {
+          if ((el as any)[tag] !== langRef.current || (original && visible === original)) {
             relevant = true;
             break;
           }
