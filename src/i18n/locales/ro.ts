@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/ro.json — DO NOT EDIT BY HAND
 const ro: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "Contactează-ne",
   "contact.metaDesc": "Întrebări, feedback sau solicitări de parteneriat — contactează echipa 3XVISIBILITY prin e-mail. Citim fiecare mesaj și răspundem într-o zi lucrătoare.",
   "contact.subtitle": "Întrebări, feedback sau solicitări de parteneriat — citim fiecare mesaj.",

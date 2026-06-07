@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/bn.json — DO NOT EDIT BY HAND
 const bn: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "যোগাযোগ করুন",
   "contact.metaDesc": "প্রশ্ন, মতামত বা অংশীদারিত্বের অনুসন্ধান — ইমেল করে 3XVISIBILITY টিমের সাথে যোগাযোগ করুন। আমরা প্রতিটি বার্তা পড়ি এবং এক কর্মদিবসের মধ্যে উত্তর দিই।",
   "contact.subtitle": "প্রশ্ন, মতামত বা অংশীদারিত্বের অনুসন্ধান — আমরা প্রতিটি বার্তা পড়ি।",

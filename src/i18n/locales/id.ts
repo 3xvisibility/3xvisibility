@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/id.json — DO NOT EDIT BY HAND
 const id: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "Hubungi kami",
   "contact.metaDesc": "Pertanyaan, masukan, atau permintaan kemitraan — hubungi tim 3XVISIBILITY melalui email. Kami membaca setiap pesan dan membalas dalam satu hari kerja.",
   "contact.subtitle": "Pertanyaan, masukan, atau permintaan kemitraan — kami membaca setiap pesan.",

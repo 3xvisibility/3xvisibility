@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/zh.json — DO NOT EDIT BY HAND
 const zh: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "联系我们",
   "contact.metaDesc": "问题、反馈或合作咨询 — 通过电子邮件联系 3XVISIBILITY 团队。我们阅读每条消息，并在一个工作日内回复。",
   "contact.subtitle": "问题、反馈或合作咨询 — 我们阅读每条消息。",

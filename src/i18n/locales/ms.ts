@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/ms.json — DO NOT EDIT BY HAND
 const ms: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "Hubungi kami",
   "contact.metaDesc": "Soalan, maklum balas atau pertanyaan perkongsian — hubungi pasukan 3XVISIBILITY melalui e-mel. Kami membaca setiap mesej dan membalas dalam satu hari bekerja.",
   "contact.subtitle": "Soalan, maklum balas atau pertanyaan perkongsian — kami membaca setiap mesej.",
