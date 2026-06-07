@@ -131,7 +131,11 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md border-border">
-          <CardHeader className="text-center">
+          <CardHeader className="text-center space-y-2">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <img src={logo3x} alt="3XVISIBILITY" className="h-7 w-7 object-contain" />
+            </div>
+            <div className="text-xs font-bold tracking-wider text-primary" data-no-translate translate="no">3XVISIBILITY</div>
             <CardTitle className="text-xl font-semibold text-foreground">{t("auth.invalidResetLink")}</CardTitle>
             <CardDescription className="text-muted-foreground">
               {t("auth.invalidResetLinkDesc")}
