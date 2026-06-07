@@ -19,9 +19,10 @@ export const FONT_BODY = inter.fontFamily;
 export const FONT_DISPLAY = space.fontFamily;
 
 // Palette — defined in ./palette.ts. Edit that file to change brand colors.
-// Re-exported here so existing scene imports (`import { C } from "../MainVideo"`)
-// keep working.
-export { C } from "./palette";
+// Imported here for local use and re-exported so existing scene imports
+// (`import { C } from "../MainVideo"`) keep working.
+import { C } from "./palette";
+export { C };
 
 const PersistentBackground: React.FC = () => {
   const frame = useCurrentFrame();
