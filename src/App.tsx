@@ -14,6 +14,8 @@ import type { Session } from "@supabase/supabase-js";
 
 import LandingPage from "./pages/LandingPage";
 import DocumentationPage from "./pages/DocumentationPage";
+import WordPressGuidePage from "./pages/WordPressGuidePage";
+import ShopifyGuidePage from "./pages/ShopifyGuidePage";
 import AuthPage from "./pages/AuthPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -223,6 +225,8 @@ const App = () => {
             <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
+            <Route path="/guides/wordpress" element={<WordPressGuidePage />} />
+            <Route path="/guides/shopify" element={<ShopifyGuidePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/contact" element={<ContactPage />} />

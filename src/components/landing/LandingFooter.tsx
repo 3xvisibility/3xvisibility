@@ -85,8 +85,8 @@ export function LandingFooter() {
       { label: t("footer.apiDocs"), href: "/docs", isHash: false },
     ],
     [t("footer.integrations")]: [
-      { label: t("footer.wordpress"), href: "/#integrations", isHash: true },
-      { label: t("footer.shopify"), href: "/#integrations", isHash: true },
+      { label: t("footer.wordpress"), href: "/guides/wordpress", isHash: false },
+      { label: t("footer.shopify"), href: "/guides/shopify", isHash: false },
       { label: t("footer.prestaShop"), href: "#", isHash: true, badge: t("footer.comingSoon"), comingSoon: true },
     ],
     [t("footer.company")]: [
