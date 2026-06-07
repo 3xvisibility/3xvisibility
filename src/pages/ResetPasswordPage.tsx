@@ -152,16 +152,17 @@ export default function ResetPasswordPage() {
       {/* Background effect */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-[600px] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/.10),transparent)] pointer-events-none" />
 
-      <Card className="relative z-10 w-full max-w-md border-border shadow-lg">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-xl font-semibold text-foreground">{t("auth.setNewPassword")}</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            {t("auth.setNewPasswordDesc")}
-          </CardDescription>
-        </CardHeader>
+        <Card className="relative z-10 w-full max-w-md border-border shadow-lg">
+          <CardHeader className="text-center space-y-2">
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <img src={logo3x} alt="3XVISIBILITY" className="h-7 w-7 object-contain" />
+            </div>
+            <div className="text-xs font-bold tracking-wider text-primary" data-no-translate translate="no">3XVISIBILITY</div>
+            <CardTitle className="text-xl font-semibold text-foreground">{t("auth.setNewPassword")}</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              {t("auth.setNewPasswordDesc")}
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleReset} className="space-y-5">
             {/* New password */}
