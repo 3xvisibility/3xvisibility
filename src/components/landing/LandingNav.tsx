@@ -54,7 +54,7 @@ export function LandingNav() {
           </nav>
 
           <div className="hidden md:flex items-center gap-2">
-            <LanguageSwitcher variant="ghost" size="icon" className="h-9 w-9 text-[hsl(220,10%,74%)] hover:text-foreground rounded-lg" />
+            <LanguageSwitcher variant="ghost" size="icon" className="h-9 w-auto px-2 text-[hsl(220,10%,74%)] hover:text-foreground rounded-lg" />
             <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,10%,78%)] hover:text-foreground hover:bg-[hsl(96,90%,45%,0.08)]" asChild>
               <Link to="/auth">{t("nav.login")}</Link>
             </Button>
