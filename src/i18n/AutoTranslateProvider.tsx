@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 const hasBuiltinCoverage = (lang: string) =>
   Object.prototype.hasOwnProperty.call(translations, lang);
 
-const CACHE_PREFIX = "auto-tr2:";
+const CACHE_PREFIX = "auto-tr4:";
 const BATCH_SIZE = 40;
 const DEBOUNCE_MS = 250;
 
@@ -46,6 +46,16 @@ const SHOULD_SKIP_TEXT = (s: string): boolean => {
 };
 
 const cacheKey = (lang: string, text: string) => `${CACHE_PREFIX}${lang}:${text}`;
+
+const isProtectedNoop = (text: string): boolean => {
+  const t = text.trim();
+  if (!t) return true;
+  if (/^3X(?:VISIBILITY)?$/i.test(t)) return true;
+  if (/^(WordPress|WooCommerce|Shopify|PrestaShop|PGP|SEO|SEA|GEO|CSV|API|CMS|SSL|SNI|URL|AI|FAQ|Gemini|LibreTranslate|Unsplash|Stripe)$/i.test(t)) return true;
+  if (/^\{[a-z0-9_]+\}$/i.test(t)) return true;
+  if (/^https?:\/\//i.test(t)) return true;
+  return false;
+};
 
 function getCached(lang: string, text: string): string | null {
   try {
@@ -164,7 +174,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
           const text = n.nodeValue || "";
           if (SHOULD_SKIP_TEXT(text)) return NodeFilter.FILTER_REJECT;
-          if ((n as any).__autoTrLang === langRef.current) return NodeFilter.FILTER_REJECT;
+          const original = ((n as any).__autoTrOriginal || text).trim();
+          const visible = text.trim();
+          if ((n as any).__autoTrLang === langRef.current && visible !== original) return NodeFilter.FILTER_REJECT;
           return NodeFilter.FILTER_ACCEPT;
         },
       });
@@ -189,8 +201,9 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           if (SHOULD_SKIP_TEXT(value)) continue;
           // Already translated to current language?
           const cacheTag = `__autoTr_${attr}_lang`;
-          if ((el as any)[cacheTag] === lang) continue;
-          out.push({ kind: "attr", el, attr, original: ((el as any)[`__autoTr_${attr}_orig`] || value).trim() });
+          const original = ((el as any)[`__autoTr_${attr}_orig`] || value).trim();
+          if ((el as any)[cacheTag] === lang && value.trim() !== original) continue;
+          out.push({ kind: "attr", el, attr, original });
         }
       });
       return out;
@@ -230,7 +243,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
           // Only cache real translations. If the service returned the original
           // text unchanged (a failed/no-op translation), skip caching so the
           // string is retried on the next scan instead of being stuck in English.
-          if (tr.trim().toLowerCase() !== o.trim().toLowerCase()) {
+          if (tr.trim().toLowerCase() !== o.trim().toLowerCase() || isProtectedNoop(o)) {
             setCached(lang, o, tr);
           }
         });

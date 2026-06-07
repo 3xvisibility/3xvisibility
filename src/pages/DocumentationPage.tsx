@@ -218,7 +218,7 @@ export default function DocumentationPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground" data-auto-translate>
+    <div className="min-h-screen bg-background text-foreground">
       <Seo
         title="Documentation"
         description="Step-by-step guides for every 3XVISIBILITY tool — from connecting websites and building templates to generating and publishing pages at scale."
@@ -226,7 +226,7 @@ export default function DocumentationPage() {
       />
       <LandingNav />
 
-      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16">
+      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16" data-auto-translate>
         {/* Hero */}
         <header className="max-w-3xl mx-auto text-center mb-12">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
