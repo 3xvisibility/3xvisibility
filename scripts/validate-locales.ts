@@ -135,7 +135,7 @@ for (const f of localeFiles) {
 
 // ── Report ──────────────────────────────────────────────────────────────
 if (issues.length === 0) {
-  console.log(`✅ All ${localeFiles.length + 1} locale files are valid (7 rules checked).\n`);
+  console.log(`✅ All ${localeFiles.length + 1} locale files are valid (8 rules checked, incl. missing-key parity).\n`);
   process.exit(0);
 } else {
   // Group by rule
