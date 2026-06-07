@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Check, X, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageContext";
+import logo3x from "@/assets/logo-3x.png";
 
 const PASSWORD_RULES = [
   { key: "minLength", test: (p: string) => p.length >= 8, label: "auth.pwRuleMinLength" },
