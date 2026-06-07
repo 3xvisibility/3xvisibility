@@ -295,8 +295,8 @@ export function HeroSection() {
                         </div>
                         <MiniBarChart />
                         <div className="flex justify-between mt-2 text-[8px] text-[hsl(220,10%,52%)]">
-                          {["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"].map((m) => (
-                            <span key={m} className="flex-1 text-center">{m}</span>
+                          {["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].map((m) => (
+                            <span key={m} className="flex-1 text-center">{t(`hero.month.${m}`)}</span>
                           ))}
                         </div>
                       </motion.div>
