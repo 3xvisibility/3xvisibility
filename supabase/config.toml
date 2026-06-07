@@ -1,61 +1,45 @@
 project_id = "qmuxdkxdrxevlnckssuw"
 
-[functions.generate-pages]
-verify_jwt = false
-
-[functions.publish-pages]
-verify_jwt = false
-
-[functions.scan-template]
-verify_jwt = false
-
-[functions.discover-templates]
-verify_jwt = false
-
-[functions.admin-panel]
-verify_jwt = false
-
-[functions.generate-template]
-verify_jwt = false
-
-[functions.build-internal-links]
-verify_jwt = false
-
-[functions.generate-store]
-verify_jwt = false
-
-[functions.regenerate-product-image]
-verify_jwt = false
-
-[functions.generate-caption]
-verify_jwt = false
-
-[functions.publish-store]
-verify_jwt = false
-
-[functions.create-checkout]
-verify_jwt = false
-
-[functions.check-subscription]
-verify_jwt = false
-
-[functions.ai-credits]
-verify_jwt = false
-
-
-[functions.customer-portal]
-verify_jwt = false
-
-[functions.seed-locations]
-verify_jwt = false
-
-[functions.fire-webhooks]
-verify_jwt = false
-
-[functions.rewrite-content]
-verify_jwt = false
-
-[functions.translate-content]
-verify_jwt = false
-[functions.process-email-queue]
-verify_jwt = true
+[functions]
+  [functions.admin-panel]
+    verify_jwt = false
+  [functions.ai-credits]
+    verify_jwt = false
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.build-internal-links]
+    verify_jwt = false
+  [functions.check-subscription]
+    verify_jwt = false
+  [functions.create-checkout]
+    verify_jwt = false
+  [functions.customer-portal]
+    verify_jwt = false
+  [functions.discover-templates]
+    verify_jwt = false
+  [functions.fire-webhooks]
+    verify_jwt = false
+  [functions.generate-caption]
+    verify_jwt = false
+  [functions.generate-pages]
+    verify_jwt = false
+  [functions.generate-store]
+    verify_jwt = false
+  [functions.generate-template]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.publish-pages]
+    verify_jwt = false
+  [functions.publish-store]
+    verify_jwt = false
+  [functions.regenerate-product-image]
+    verify_jwt = false
+  [functions.rewrite-content]
+    verify_jwt = false
+  [functions.scan-template]
+    verify_jwt = false
+  [functions.seed-locations]
+    verify_jwt = false
+  [functions.translate-content]
+    verify_jwt = false
