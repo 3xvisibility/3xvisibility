@@ -617,7 +617,16 @@ export default function DashboardPage() {
                 </div>
                 <CardTitle className="text-sm font-semibold">{t("dashboard.campaignActivity")}</CardTitle>
               </div>
-              <Badge variant="secondary" className="text-[11px] bg-muted border-0">{t("dashboard.thisMonth")}</Badge>
+              <Select value={campaignPeriod} onValueChange={setCampaignPeriod}>
+                <SelectTrigger className="h-7 w-auto gap-1 text-[11px] bg-muted border-0 rounded-md px-2.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">{t("dashboard.weekly")}</SelectItem>
+                  <SelectItem value="month">{t("dashboard.monthly")}</SelectItem>
+                  <SelectItem value="year">{t("dashboard.yearly")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           <CardContent className="pt-2 px-2 sm:px-4">
