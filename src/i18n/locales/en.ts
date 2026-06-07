@@ -41,6 +41,7 @@ const en: Record<string, string> = {
   "affiliate.active": "Active",
   "affiliate.amount": "Amount",
   "affiliate.commission": "Commission",
+  "affiliate.creditsLabel": "credits",
   "affiliate.yearlyOnly": "Yearly plans only",
   "affiliate.conversionRate": "Conv. Rate",
   "affiliate.conversions": "Conversions",
