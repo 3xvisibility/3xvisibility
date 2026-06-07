@@ -4,7 +4,7 @@ import { useJobNotifications } from "@/hooks/use-job-notifications";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
