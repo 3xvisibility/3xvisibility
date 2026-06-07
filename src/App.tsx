@@ -225,6 +225,8 @@ const App = () => {
             <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
+            <Route path="/guides/wordpress" element={<WordPressGuidePage />} />
+            <Route path="/guides/shopify" element={<ShopifyGuidePage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/contact" element={<ContactPage />} />
