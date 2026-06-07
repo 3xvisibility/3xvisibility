@@ -257,7 +257,6 @@ export default function AuthPage() {
           templateData: {
             fullName,
             email,
-            company,
             aiLanguage,
             signedUpAt: new Date().toISOString(),
           },
