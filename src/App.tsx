@@ -51,6 +51,7 @@ import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
 import AboutPage from "./pages/AboutPage";
 import BlogPage from "./pages/BlogPage";
 import ContactPage from "./pages/ContactPage";
+import UnsubscribePage from "./pages/UnsubscribePage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import ChangelogPage from "./pages/ChangelogPage";
