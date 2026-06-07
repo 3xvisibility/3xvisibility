@@ -29,7 +29,7 @@ export const SceneOutro: React.FC = () => {
           justifyContent: "center",
           marginBottom: 50,
           transform: `scale(${logoScale})`,
-          boxShadow: `0 20px 60px rgba(59,130,246,0.45)`,
+          boxShadow: `0 20px 60px rgba(94,218,12,0.45)`,
         }}
       >
         <div style={{ width: 56, height: 56, borderRadius: 14, background: C.bg }} />
@@ -62,7 +62,7 @@ export const SceneOutro: React.FC = () => {
           padding: "16px 32px",
           borderRadius: 999,
           border: `1px solid ${C.border}`,
-          background: "rgba(59,130,246,0.06)",
+          background: "rgba(94,218,12,0.06)",
           fontFamily: FONT_DISPLAY,
           fontSize: 28,
           color: C.primaryGlow,

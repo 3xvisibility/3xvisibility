@@ -68,7 +68,7 @@ export const SceneGenerate: React.FC = () => {
                 key={i}
                 style={{
                   height: 12,
-                  background: i === 0 ? "rgba(59,130,246,0.4)" : "rgba(122,138,166,0.18)",
+                  background: i === 0 ? "rgba(94,218,12,0.4)" : "rgba(122,138,166,0.18)",
                   borderRadius: 3,
                   marginBottom: 8,
                   width: `${85 - i * 4}%`,
@@ -104,7 +104,7 @@ export const SceneGenerate: React.FC = () => {
               padding: "10px 18px",
               borderRadius: 999,
               border: `1px solid ${C.accent}`,
-              background: "rgba(34,211,238,0.08)",
+              background: "rgba(158,245,74,0.08)",
               fontFamily: FONT_DISPLAY,
               fontSize: 16,
               fontWeight: 600,
@@ -139,7 +139,7 @@ export const SceneGenerate: React.FC = () => {
                   padding: 20,
                   opacity: op,
                   transform: `translateX(${x}px)`,
-                  boxShadow: i === rows.length - 1 ? `0 20px 60px rgba(59,130,246,0.25)` : "none",
+                  boxShadow: i === rows.length - 1 ? `0 20px 60px rgba(94,218,12,0.25)` : "none",
                   zIndex: i,
                 }}
               >
@@ -147,7 +147,7 @@ export const SceneGenerate: React.FC = () => {
                 <div style={{ height: 5, background: "rgba(122,138,166,0.3)", borderRadius: 2, width: "90%", marginBottom: 6 }} />
                 <div style={{ height: 5, background: "rgba(122,138,166,0.3)", borderRadius: 2, width: "75%", marginBottom: 6 }} />
                 <div style={{ height: 5, background: "rgba(122,138,166,0.3)", borderRadius: 2, width: "85%", marginBottom: 18 }} />
-                <div style={{ height: 80, background: "rgba(59,130,246,0.10)", borderRadius: 6, marginBottom: 12 }} />
+                <div style={{ height: 80, background: "rgba(94,218,12,0.10)", borderRadius: 6, marginBottom: 12 }} />
                 <div style={{ height: 5, background: "rgba(122,138,166,0.3)", borderRadius: 2, width: "70%", marginBottom: 6 }} />
                 <div style={{ height: 5, background: "rgba(122,138,166,0.3)", borderRadius: 2, width: "55%" }} />
               </div>
