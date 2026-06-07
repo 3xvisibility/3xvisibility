@@ -58,6 +58,14 @@ interface ReferredUser {
   created_at: string;
 }
 
+// Yearly total price per plan (must match the check-subscription edge function)
+const YEARLY_TOTAL: Record<string, number> = {
+  starter: 192,
+  pro: 588,
+  agency: 1488,
+};
+const COMMISSION_RATE = 0.05; // 5%
+
 interface RewardSetting {
   id: string;
   plan: string;
@@ -640,6 +648,7 @@ export default function ReferralPage() {
                         <TableHead>{t("referral.colDate")}</TableHead>
                         <TableHead>{t("referral.colStatus")}</TableHead>
                         <TableHead>{t("referral.colPlan")}</TableHead>
+                        <TableHead className="text-right">{t("referral.colCommission")}</TableHead>
                         <TableHead className="text-right">{t("referral.colCreditReward")}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -663,6 +672,24 @@ export default function ReferralPage() {
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {r.subscription_plan || "—"}
+                            </TableCell>
+                            <TableCell className="text-right text-sm font-medium">
+                              {verified ? (
+                                (() => {
+                                  const planKey = (r.subscription_plan || "").toLowerCase();
+                                  const yearlyPrice = YEARLY_TOTAL[planKey] ?? 0;
+                                  return (
+                                    <div className="flex flex-col items-end gap-0.5">
+                                      <span className="text-primary">€{Number(r.commission_amount ?? 0).toFixed(2)}</span>
+                                      {yearlyPrice > 0 && (
+                                        <span className="text-[10px] font-normal text-muted-foreground whitespace-nowrap">
+                                          €{yearlyPrice} × {Math.round(COMMISSION_RATE * 100)}%
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })()
+                              ) : "—"}
                             </TableCell>
                             <TableCell className="text-right text-sm font-medium">
                               {verified ? (
