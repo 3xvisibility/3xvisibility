@@ -44,7 +44,7 @@ const PersistentBackground: React.FC = () => {
         style={{
           position: "absolute",
           inset: 0,
-          background: `radial-gradient(circle at ${30 + drift}% ${20 + drift2}%, rgba(59,130,246,0.18), transparent 50%), radial-gradient(circle at ${70 - drift}% ${80 - drift2}%, rgba(34,211,238,0.10), transparent 55%)`,
+          background: `radial-gradient(circle at ${30 + drift}% ${20 + drift2}%, rgba(94,218,12,0.18), transparent 50%), radial-gradient(circle at ${70 - drift}% ${80 - drift2}%, rgba(158,245,74,0.10), transparent 55%)`,
         }}
       />
       {/* Subtle grid */}
