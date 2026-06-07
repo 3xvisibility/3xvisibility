@@ -298,6 +298,21 @@ export default function AuthPage() {
     } else {
       setResetCooldown(60);
       toast({ title: t("auth.resetSent"), description: t("auth.resetSentDesc") });
+
+      // Notify the admin inbox of the reset request (best-effort, non-blocking)
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "admin-reset-notification",
+          idempotencyKey: `admin-reset-${email}-${Date.now()}`,
+          templateData: {
+            email,
+            requestedAt: new Date().toISOString(),
+            origin: window.location.origin,
+            language: aiLanguage,
+            userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+          },
+        },
+      }).catch(() => { /* ignore — admin notification is best-effort */ });
     }
   };
 
