@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageContext";
 import logo3x from "@/assets/logo-3x.png";
 
@@ -40,6 +41,7 @@ interface FooterLink {
   href: string;
   isHash: boolean;
   badge?: string;
+  comingSoon?: boolean;
 }
 
 function SmoothScrollLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -68,6 +70,13 @@ function SmoothScrollLink({ href, children }: { href: string; children: React.Re
 export function LandingFooter() {
   const { t } = useLanguage();
 
+  const handleComingSoon = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast.info(t("footer.comingSoonTitle") || "Coming Soon", {
+      description: t("footer.comingSoonDesc") || "PrestaShop integration is under development. Stay tuned!",
+    });
+  };
+
   const footerLinks: Record<string, FooterLink[]> = {
     [t("footer.product")]: [
       { label: t("footer.features"), href: "/#features", isHash: true },
@@ -78,7 +87,7 @@ export function LandingFooter() {
     [t("footer.integrations")]: [
       { label: t("footer.wordpress"), href: "/#integrations", isHash: true },
       { label: t("footer.shopify"), href: "/#integrations", isHash: true },
-      { label: t("footer.prestaShop"), href: "/#integrations", isHash: true, badge: t("footer.comingSoon") },
+      { label: t("footer.prestaShop"), href: "#", isHash: true, badge: t("footer.comingSoon"), comingSoon: true },
     ],
     [t("footer.company")]: [
       { label: t("footer.about"), href: "/about", isHash: false },
@@ -117,7 +126,14 @@ export function LandingFooter() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label} className="flex items-center gap-1.5 flex-wrap">
-                    {link.isHash ? (
+                    {link.comingSoon ? (
+                      <button
+                        onClick={handleComingSoon}
+                        className="text-xs text-[hsl(250,15%,35%)] cursor-default transition-colors duration-200 flex items-center gap-1"
+                      >
+                        {link.label}
+                      </button>
+                    ) : link.isHash ? (
                       <SmoothScrollLink href={link.href}>{link.label}</SmoothScrollLink>
                     ) : (
                       <Link to={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">

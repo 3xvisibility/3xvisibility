@@ -674,6 +674,8 @@ const en: Record<string, string> = {
   "footer.blog": "Blog",
   "footer.changelog": "Changelog",
   "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
   "footer.company": "Company",
   "footer.contact": "Contact",
   "footer.description": "Deploy data-driven content at scale. CSV to published pages in minutes.",
