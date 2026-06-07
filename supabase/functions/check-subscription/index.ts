@@ -179,6 +179,7 @@ async function upsertSubscription(
   stripeCustomerId: string | null,
   periodEnd: string | null,
   periodStart: string | null,
+  billingCycle: string = "monthly",
 ) {
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
