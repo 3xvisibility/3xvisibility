@@ -110,15 +110,30 @@ checkFile(TRANSLATIONS_FILE);
 // ── Rule 8: Missing keys vs. English source of truth ──────────────────────
 // English (en.ts) defines the canonical set of keys. Locales fall back to
 // English at runtime, so most missing keys are reported as non-fatal WARNINGS
-// to give full visibility. However, keys under CRITICAL_PREFIXES are
+// to give full visibility. However, keys under the critical prefixes are
 // user-facing static pages that MUST be translated everywhere — a missing
 // critical key is a build-breaking ERROR so untranslated text never slips into
 // a new locale unnoticed.
-const CRITICAL_PREFIXES = ["contact.", "footer."];
+//
+// The critical prefixes are defined in scripts/i18n-critical.config.json so the
+// build-breaking rules can be adjusted without editing this script.
+const CONFIG_FILE = join(import.meta.dir, "i18n-critical.config.json");
+let CRITICAL_PREFIXES: string[] = ["contact.", "footer."];
+try {
+  const cfg = JSON.parse(readFileSync(CONFIG_FILE, "utf-8"));
+  if (Array.isArray(cfg.criticalPrefixes)) {
+    CRITICAL_PREFIXES = cfg.criticalPrefixes.filter((p: unknown) => typeof p === "string");
+  }
+  console.log(`🛠  Critical i18n prefixes (from ${CONFIG_FILE.replace(ROOT + "/", "")}): ${CRITICAL_PREFIXES.join(", ")}\n`);
+} catch {
+  console.warn(`⚠️  Could not read ${CONFIG_FILE.replace(ROOT + "/", "")}; using defaults: ${CRITICAL_PREFIXES.join(", ")}\n`);
+}
 
 function isCritical(key: string): boolean {
   return CRITICAL_PREFIXES.some((p) => key.startsWith(p));
 }
+
+
 
 function extractKeys(filePath: string): Set<string> {
   const content = readFileSync(filePath, "utf-8");
