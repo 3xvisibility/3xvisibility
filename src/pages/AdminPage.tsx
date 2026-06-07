@@ -784,6 +784,10 @@ export default function AdminPage() {
 
 
 
+        <TabsContent value="inbox" className="space-y-4">
+          <ContactInboxPanel />
+        </TabsContent>
+
         <TabsContent value="ai-access" className="space-y-4">
           <AiAccessAdminPanel />
         </TabsContent>
