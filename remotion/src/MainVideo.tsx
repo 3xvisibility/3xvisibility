@@ -18,19 +18,10 @@ const space = loadSpace("normal", { weights: ["400", "500", "600", "700"], subse
 export const FONT_BODY = inter.fontFamily;
 export const FONT_DISPLAY = space.fontFamily;
 
-// Palette
-export const C = {
-  bg: "#070B14",
-  bgSoft: "#0C1322",
-  card: "#111B30",
-  border: "rgba(140,247,69,0.20)",
-  primary: "#5EDA0C",
-  primaryGlow: "#8CF745",
-  accent: "#9EF54A",
-  text: "#E6EDF7",
-  muted: "#7A8AA6",
-  success: "#34D399",
-};
+// Palette — defined in ./palette.ts. Edit that file to change brand colors.
+// Re-exported here so existing scene imports (`import { C } from "../MainVideo"`)
+// keep working.
+export { C } from "./palette";
 
 const PersistentBackground: React.FC = () => {
   const frame = useCurrentFrame();
