@@ -240,15 +240,16 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         originals.forEach((o, i) => {
           const tr = translations[i] || o;
           result[o] = tr;
-          // Only cache real translations. If the service returned the original
-          // text unchanged (a failed/no-op translation), skip caching so the
-          // string is retried on the next scan instead of being stuck in English.
-          if (tr.trim().toLowerCase() !== o.trim().toLowerCase() || isProtectedNoop(o)) {
-            setCached(lang, o, tr);
-          }
+          // Cache every resolved string — including ones the service returned
+          // unchanged (proper nouns, already-matching words, or true no-ops).
+          // Caching them prevents an infinite re-request loop where unchanged
+          // strings get re-fetched on every scan and starve real translations.
+          setCached(lang, o, tr);
         });
       } catch {
+        // Network/transport failure — do NOT cache so these retry next scan.
         originals.forEach((o) => (result[o] = o));
+        return result;
       }
       return result;
     };
