@@ -39,6 +39,10 @@ verify_jwt = false
 [functions.check-subscription]
 verify_jwt = false
 
+[functions.ai-credits]
+verify_jwt = false
+
+
 [functions.customer-portal]
 verify_jwt = false
 
