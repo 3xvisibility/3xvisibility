@@ -147,6 +147,9 @@ export default function SettingsPage() {
         <p className="text-muted-foreground mt-1">{t("settings.description")}</p>
       </div>
 
+      {/* Supported languages */}
+      <LocaleSettingsCard />
+
       {/* Profile */}
       <Card className="shadow-surface">
         <CardHeader>
