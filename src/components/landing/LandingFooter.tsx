@@ -126,7 +126,14 @@ export function LandingFooter() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label} className="flex items-center gap-1.5 flex-wrap">
-                    {link.isHash ? (
+                    {link.comingSoon ? (
+                      <button
+                        onClick={handleComingSoon}
+                        className="text-xs text-[hsl(250,15%,35%)] cursor-default transition-colors duration-200 flex items-center gap-1"
+                      >
+                        {link.label}
+                      </button>
+                    ) : link.isHash ? (
                       <SmoothScrollLink href={link.href}>{link.label}</SmoothScrollLink>
                     ) : (
                       <Link to={link.href} className="text-xs text-[hsl(250,15%,50%)] hover:text-foreground transition-colors duration-200">
