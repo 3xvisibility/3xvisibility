@@ -450,7 +450,31 @@ export default function AffiliatePage() {
                             })()}
                           </TableCell>
                           <TableCell className="text-sm">{ref.subscription_plan || "—"}</TableCell>
-                          <TableCell className="text-right font-medium">${Number(ref.commission_amount).toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            {(() => {
+                              const activated = ref.status === "converted" || ref.status === "verified";
+                              const planKey = (ref.subscription_plan || "").toLowerCase();
+                              const yearlyPrice = YEARLY_TOTAL[planKey] ?? 0;
+                              if (!activated) {
+                                return <span className="text-muted-foreground">—</span>;
+                              }
+                              return (
+                                <div className="flex flex-col items-end gap-0.5">
+                                  <span className="text-primary">€{Number(ref.commission_amount).toFixed(2)}</span>
+                                  {yearlyPrice > 0 && (
+                                    <span className="text-[10px] font-normal text-muted-foreground whitespace-nowrap">
+                                      €{yearlyPrice} × {Math.round(COMMISSION_RATE * 100)}%
+                                    </span>
+                                  )}
+                                  {Number(ref.credit_reward ?? 0) > 0 && (
+                                    <span className="text-[10px] font-normal text-primary/80 whitespace-nowrap">
+                                      +{Number(ref.credit_reward)} {t("affiliate.creditsLabel")}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
