@@ -41,6 +41,7 @@ const en: Record<string, string> = {
   "affiliate.active": "Active",
   "affiliate.amount": "Amount",
   "affiliate.commission": "Commission",
+  "affiliate.yearlyOnly": "Yearly plans only",
   "affiliate.conversionRate": "Conv. Rate",
   "affiliate.conversions": "Conversions",
   "affiliate.createLink": "Create Affiliate Link",
