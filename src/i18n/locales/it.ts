@@ -1166,6 +1166,7 @@ const it: Record<string, string> = {
   "workspaceSettings.workspaceDetails": "Dettagli dell'area di lavoro",
   "workspaceSettings.workspaceDetailsDesc": "Aggiorna il nome dell'area di lavoro. Solo i proprietari dell'area di lavoro possono rinominare.",
   "workspaceSettings.workspaceName": "Nome dell'area di lavoro",
+  "auth.repeatSignupTitle": "This email may already be in use",
   "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
   "auth.repeatSignupSignIn": "Sign In",
   "auth.repeatSignupReset": "Reset Password",

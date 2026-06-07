@@ -84,6 +84,7 @@ const tr: Record<string, string> = {
   "sidebar.templates": "Şablonlar",
   "sidebar.tools": "Araçlar",
   "sidebar.websites": "Web siteleri",
+  "auth.repeatSignupTitle": "This email may already be in use",
   "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
   "auth.repeatSignupSignIn": "Sign In",
   "auth.repeatSignupReset": "Reset Password",

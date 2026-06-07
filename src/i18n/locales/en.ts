@@ -1435,6 +1435,7 @@ const en: Record<string, string> = {
   "workspaceSettings.workspaceName": "Workspace Name",
   "workspaceSettings.workspaceRenamed": "Workspace renamed",
   "workspaceSettings.workspaceRenamedDesc": "Workspace name has been updated.",
+  "auth.repeatSignupTitle": "This email may already be in use",
   "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
   "auth.repeatSignupSignIn": "Sign In",
   "auth.repeatSignupReset": "Reset Password",
