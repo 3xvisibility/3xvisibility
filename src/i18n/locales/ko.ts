@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/ko.json — DO NOT EDIT BY HAND
 const ko: Record<string, string> = {
+  "contact.title": "문의하기",
+  "contact.metaDesc": "질문, 피드백 또는 파트너십 문의 — 이메일로 3XVISIBILITY 팀에 연락하세요. 모든 메시지를 읽고 영업일 기준 하루 이내에 답변합니다.",
+  "contact.subtitle": "질문, 피드백 또는 파트너십 문의 — 모든 메시지를 읽습니다.",
+  "contact.email": "이메일",
+  "contact.support": "지원",
+  "contact.sales": "영업",
+  "contact.responseTime": "응답 시간",
+  "contact.responseTimeDesc": "모든 메시지에 영업일 기준 하루 이내에 답변하는 것을 목표로 합니다.",
   "auth.acceptTerms": "동의합니다",
   "auth.agencyPlanInfo": "모든 새 계정에는 10,000페이지와 5,000 AI 생성이 포함된 Agency 플랜이 포함됩니다.",
   "auth.and": "및",

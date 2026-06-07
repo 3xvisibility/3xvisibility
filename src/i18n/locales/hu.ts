@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/hu.json — DO NOT EDIT BY HAND
 const hu: Record<string, string> = {
+  "contact.title": "Lépjen kapcsolatba velünk",
+  "contact.metaDesc": "Kérdések, visszajelzések vagy partnerségi megkeresések — vegye fel a kapcsolatot a 3XVISIBILITY csapatával e-mailben. Minden üzenetet elolvasunk és egy munkanapon belül válaszolunk.",
+  "contact.subtitle": "Kérdések, visszajelzések vagy partnerségi megkeresések — minden üzenetet elolvasunk.",
+  "contact.email": "E-mail",
+  "contact.support": "Támogatás",
+  "contact.sales": "Értékesítés",
+  "contact.responseTime": "Válaszidő",
+  "contact.responseTimeDesc": "Igyekszünk minden üzenetre egy munkanapon belül válaszolni.",
   "auth.acceptTerms": "Elfogadom a",
   "auth.agencyPlanInfo": "Minden új fiók tartalmazza az Agency csomagot 10 000 oldallal és 5 000 AI generálással.",
   "auth.and": "és",

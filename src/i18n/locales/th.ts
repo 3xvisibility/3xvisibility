@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/th.json — DO NOT EDIT BY HAND
 const th: Record<string, string> = {
+  "contact.title": "ติดต่อเรา",
+  "contact.metaDesc": "คำถาม ความคิดเห็น หรือสอบถามเรื่องพาร์ทเนอร์ — ติดต่อทีม 3XVISIBILITY ทางอีเมล เราอ่านทุกข้อความและตอบกลับภายในหนึ่งวันทำการ",
+  "contact.subtitle": "คำถาม ความคิดเห็น หรือสอบถามเรื่องพาร์ทเนอร์ — เราอ่านทุกข้อความ",
+  "contact.email": "อีเมล",
+  "contact.support": "ฝ่ายสนับสนุน",
+  "contact.sales": "ฝ่ายขาย",
+  "contact.responseTime": "เวลาตอบกลับ",
+  "contact.responseTimeDesc": "เรามุ่งตอบกลับทุกข้อความภายในหนึ่งวันทำการ",
   "auth.acceptTerms": "ฉันยอมรับ",
   "auth.agencyPlanInfo": "บัญชีใหม่ทุกบัญชีรวมแพลน Agency พร้อม 10,000 หน้าและ 5,000 การสร้าง AI",
   "auth.and": "และ",

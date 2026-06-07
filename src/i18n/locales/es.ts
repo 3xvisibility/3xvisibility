@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/es.json — DO NOT EDIT BY HAND
 const es: Record<string, string> = {
+  "contact.title": "Contáctanos",
+  "contact.metaDesc": "Preguntas, comentarios o consultas de colaboración — contacta con el equipo de 3XVISIBILITY por correo. Leemos cada mensaje y respondemos en un día hábil.",
+  "contact.subtitle": "Preguntas, comentarios o consultas de colaboración — leemos cada mensaje.",
+  "contact.email": "Correo electrónico",
+  "contact.support": "Soporte",
+  "contact.sales": "Ventas",
+  "contact.responseTime": "Tiempo de respuesta",
+  "contact.responseTimeDesc": "Procuramos responder a todos los mensajes en un día hábil.",
   "abTesting.baseTemplate": "Plantilla base (opcional)",
   "abTesting.compare": "Comparar",
   "abTesting.createTest": "Crear prueba A/B",

@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/fi.json — DO NOT EDIT BY HAND
 const fi: Record<string, string> = {
+  "contact.title": "Ota yhteyttä",
+  "contact.metaDesc": "Kysymyksiä, palautetta tai kumppanuustiedusteluja — ota yhteyttä 3XVISIBILITY-tiimiin sähköpostitse. Luemme jokaisen viestin ja vastaamme yhden työpäivän kuluessa.",
+  "contact.subtitle": "Kysymyksiä, palautetta tai kumppanuustiedusteluja — luemme jokaisen viestin.",
+  "contact.email": "Sähköposti",
+  "contact.support": "Tuki",
+  "contact.sales": "Myynti",
+  "contact.responseTime": "Vastausaika",
+  "contact.responseTimeDesc": "Pyrimme vastaamaan kaikkiin viesteihin yhden työpäivän kuluessa.",
   "auth.acceptTerms": "Hyväksyn",
   "auth.agencyPlanInfo": "Kaikki uudet tilit sisältävät Agency-paketin 10 000 sivulla ja 5 000 AI-luonnilla.",
   "auth.and": "ja",

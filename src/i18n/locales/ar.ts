@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/ar.json — DO NOT EDIT BY HAND
 const ar: Record<string, string> = {
+  "contact.title": "تواصل معنا",
+  "contact.metaDesc": "أسئلة أو ملاحظات أو استفسارات شراكة — تواصل مع فريق 3XVISIBILITY عبر البريد الإلكتروني. نقرأ كل رسالة ونرد خلال يوم عمل واحد.",
+  "contact.subtitle": "أسئلة أو ملاحظات أو استفسارات شراكة — نقرأ كل رسالة.",
+  "contact.email": "البريد الإلكتروني",
+  "contact.support": "الدعم",
+  "contact.sales": "المبيعات",
+  "contact.responseTime": "وقت الاستجابة",
+  "contact.responseTimeDesc": "نهدف إلى الرد على جميع الرسائل خلال يوم عمل واحد.",
   "auth.acceptTerms": "أوافق على",
   "auth.agencyPlanInfo": "جميع الحسابات الجديدة تشمل خطة Agency مع 10,000 صفحة و5,000 توليد AI. سيتم إنشاء مساحة العمل تلقائياً من اسم شركتك.",
   "auth.and": "و",

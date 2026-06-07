@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/ro.json — DO NOT EDIT BY HAND
 const ro: Record<string, string> = {
+  "contact.title": "Contactează-ne",
+  "contact.metaDesc": "Întrebări, feedback sau solicitări de parteneriat — contactează echipa 3XVISIBILITY prin e-mail. Citim fiecare mesaj și răspundem într-o zi lucrătoare.",
+  "contact.subtitle": "Întrebări, feedback sau solicitări de parteneriat — citim fiecare mesaj.",
+  "contact.email": "E-mail",
+  "contact.support": "Asistență",
+  "contact.sales": "Vânzări",
+  "contact.responseTime": "Timp de răspuns",
+  "contact.responseTimeDesc": "Ne propunem să răspundem la toate mesajele într-o zi lucrătoare.",
   "auth.acceptTerms": "Accept",
   "auth.agencyPlanInfo": "Toate conturile noi includ planul Agency cu 10.000 pagini și 5.000 generări AI.",
   "auth.and": "și",

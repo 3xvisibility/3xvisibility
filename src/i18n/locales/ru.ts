@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/ru.json — DO NOT EDIT BY HAND
 const ru: Record<string, string> = {
+  "contact.title": "Свяжитесь с нами",
+  "contact.metaDesc": "Вопросы, отзывы или предложения о сотрудничестве — свяжитесь с командой 3XVISIBILITY по электронной почте. Мы читаем каждое сообщение и отвечаем в течение одного рабочего дня.",
+  "contact.subtitle": "Вопросы, отзывы или предложения о сотрудничестве — мы читаем каждое сообщение.",
+  "contact.email": "Эл. почта",
+  "contact.support": "Поддержка",
+  "contact.sales": "Продажи",
+  "contact.responseTime": "Время ответа",
+  "contact.responseTimeDesc": "Мы стремимся отвечать на все сообщения в течение одного рабочего дня.",
   "auth.acceptTerms": "Я принимаю",
   "auth.agencyPlanInfo": "Все новые аккаунты включают план Agency с 10 000 страниц и 5 000 ИИ-генераций. Ваш workspace будет автоматически создан из названия компании.",
   "auth.and": "и",

@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/pt.json — DO NOT EDIT BY HAND
 const pt: Record<string, string> = {
+  "contact.title": "Fale conosco",
+  "contact.metaDesc": "Dúvidas, feedback ou propostas de parceria — entre em contato com a equipe 3XVISIBILITY por e-mail. Lemos cada mensagem e respondemos em um dia útil.",
+  "contact.subtitle": "Dúvidas, feedback ou propostas de parceria — lemos cada mensagem.",
+  "contact.email": "E-mail",
+  "contact.support": "Suporte",
+  "contact.sales": "Vendas",
+  "contact.responseTime": "Tempo de resposta",
+  "contact.responseTimeDesc": "Buscamos responder a todas as mensagens em um dia útil.",
   "abTesting.baseTemplate": "Modelo base (opcional)",
   "abTesting.compare": "Comparar",
   "abTesting.createTest": "Criar teste A/B",

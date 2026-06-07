@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/he.json — DO NOT EDIT BY HAND
 const he: Record<string, string> = {
+  "contact.title": "צרו קשר",
+  "contact.metaDesc": "שאלות, משוב או פניות לשיתוף פעולה — צרו קשר עם צוות 3XVISIBILITY במייל. אנו קוראים כל הודעה ומשיבים תוך יום עסקים אחד.",
+  "contact.subtitle": "שאלות, משוב או פניות לשיתוף פעולה — אנו קוראים כל הודעה.",
+  "contact.email": "אימייל",
+  "contact.support": "תמיכה",
+  "contact.sales": "מכירות",
+  "contact.responseTime": "זמן תגובה",
+  "contact.responseTimeDesc": "אנו שואפים להשיב לכל ההודעות תוך יום עסקים אחד.",
   "auth.acceptTerms": "אני מסכים ל",
   "auth.agencyPlanInfo": "כל החשבונות החדשים כוללים תוכנית Agency עם 10,000 עמודים ו-5,000 יצירות AI.",
   "auth.and": "ו",

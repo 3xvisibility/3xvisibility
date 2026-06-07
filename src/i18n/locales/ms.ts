@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/ms.json — DO NOT EDIT BY HAND
 const ms: Record<string, string> = {
+  "contact.title": "Hubungi kami",
+  "contact.metaDesc": "Soalan, maklum balas atau pertanyaan perkongsian — hubungi pasukan 3XVISIBILITY melalui e-mel. Kami membaca setiap mesej dan membalas dalam satu hari bekerja.",
+  "contact.subtitle": "Soalan, maklum balas atau pertanyaan perkongsian — kami membaca setiap mesej.",
+  "contact.email": "E-mel",
+  "contact.support": "Sokongan",
+  "contact.sales": "Jualan",
+  "contact.responseTime": "Masa tindak balas",
+  "contact.responseTimeDesc": "Kami berusaha membalas semua mesej dalam satu hari bekerja.",
   "auth.acceptTerms": "Saya bersetuju dengan",
   "auth.agencyPlanInfo": "Semua akaun baharu termasuk pelan Agency dengan 10,000 halaman dan 5,000 penjanaan AI.",
   "auth.and": "dan",

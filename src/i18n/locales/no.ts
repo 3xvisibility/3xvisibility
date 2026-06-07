@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/no.json — DO NOT EDIT BY HAND
 const no: Record<string, string> = {
+  "contact.title": "Kontakt oss",
+  "contact.metaDesc": "Spørsmål, tilbakemeldinger eller samarbeidsforespørsler — kontakt 3XVISIBILITY-teamet via e-post. Vi leser hver melding og svarer innen én virkedag.",
+  "contact.subtitle": "Spørsmål, tilbakemeldinger eller samarbeidsforespørsler — vi leser hver melding.",
+  "contact.email": "E-post",
+  "contact.support": "Support",
+  "contact.sales": "Salg",
+  "contact.responseTime": "Responstid",
+  "contact.responseTimeDesc": "Vi tar sikte på å svare på alle meldinger innen én virkedag.",
   "auth.acceptTerms": "Jeg godtar",
   "auth.agencyPlanInfo": "Alle nye kontoer inkluderer Agency-planen med 10 000 sider og 5 000 AI-genereringer.",
   "auth.and": "og",

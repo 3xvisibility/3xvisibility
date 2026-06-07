@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/tr.json — DO NOT EDIT BY HAND
 const tr: Record<string, string> = {
+  "contact.title": "Bize ulaşın",
+  "contact.metaDesc": "Sorular, geri bildirimler veya ortaklık talepleri — 3XVISIBILITY ekibine e-posta ile ulaşın. Her mesajı okuyor ve bir iş günü içinde yanıtlıyoruz.",
+  "contact.subtitle": "Sorular, geri bildirimler veya ortaklık talepleri — her mesajı okuyoruz.",
+  "contact.email": "E-posta",
+  "contact.support": "Destek",
+  "contact.sales": "Satış",
+  "contact.responseTime": "Yanıt süresi",
+  "contact.responseTimeDesc": "Tüm mesajları bir iş günü içinde yanıtlamayı hedefliyoruz.",
   "auth.email": "E-posta",
   "auth.forgotPassword": "Şifrenizi mi unuttunuz?",
   "auth.password": "Şifre",

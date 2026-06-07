@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/bn.json — DO NOT EDIT BY HAND
 const bn: Record<string, string> = {
+  "contact.title": "যোগাযোগ করুন",
+  "contact.metaDesc": "প্রশ্ন, মতামত বা অংশীদারিত্বের অনুসন্ধান — ইমেল করে 3XVISIBILITY টিমের সাথে যোগাযোগ করুন। আমরা প্রতিটি বার্তা পড়ি এবং এক কর্মদিবসের মধ্যে উত্তর দিই।",
+  "contact.subtitle": "প্রশ্ন, মতামত বা অংশীদারিত্বের অনুসন্ধান — আমরা প্রতিটি বার্তা পড়ি।",
+  "contact.email": "ইমেল",
+  "contact.support": "সহায়তা",
+  "contact.sales": "বিক্রয়",
+  "contact.responseTime": "প্রতিক্রিয়ার সময়",
+  "contact.responseTimeDesc": "আমরা সমস্ত বার্তার এক কর্মদিবসের মধ্যে উত্তর দেওয়ার লক্ষ্য রাখি।",
   "auth.acceptTerms": "আমি সম্মত",
   "auth.agencyPlanInfo": "সব নতুন অ্যাকাউন্টে Agency প্ল্যান অন্তর্ভুক্ত ১০,০০০ পৃষ্ঠা এবং ৫,০০০ AI জেনারেশন সহ।",
   "auth.and": "এবং",

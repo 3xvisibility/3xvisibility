@@ -1,5 +1,13 @@
 // Auto-generated from locales-json/el.json — DO NOT EDIT BY HAND
 const el: Record<string, string> = {
+  "contact.title": "Επικοινωνήστε μαζί μας",
+  "contact.metaDesc": "Ερωτήσεις, σχόλια ή συνεργασίες — επικοινωνήστε με την ομάδα 3XVISIBILITY μέσω email. Διαβάζουμε κάθε μήνυμα και απαντάμε εντός μίας εργάσιμης ημέρας.",
+  "contact.subtitle": "Ερωτήσεις, σχόλια ή συνεργασίες — διαβάζουμε κάθε μήνυμα.",
+  "contact.email": "Email",
+  "contact.support": "Υποστήριξη",
+  "contact.sales": "Πωλήσεις",
+  "contact.responseTime": "Χρόνος απόκρισης",
+  "contact.responseTimeDesc": "Στόχος μας είναι να απαντάμε σε όλα τα μηνύματα εντός μίας εργάσιμης ημέρας.",
   "auth.acceptTerms": "Αποδέχομαι τους",
   "auth.agencyPlanInfo": "Όλοι οι νέοι λογαριασμοί περιλαμβάνουν το πλάνο Agency με 10.000 σελίδες και 5.000 AI δημιουργίες.",
   "auth.and": "και",
