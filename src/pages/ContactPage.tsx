@@ -32,7 +32,7 @@ export default function ContactPage() {
   const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = schema.safeParse(form);
     if (!result.success) {
@@ -41,14 +41,22 @@ export default function ContactPage() {
     }
     setSending(true);
     const { name, email, subject, message } = result.data;
-    const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`);
-    const mailSubject = encodeURIComponent(subject || "Contact request");
-    window.location.href = `mailto:info@3xvisibility.com?subject=${mailSubject}&body=${body}`;
-    setTimeout(() => {
-      setSending(false);
+    try {
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "contact-notification",
+          idempotencyKey: `contact-${email}-${Date.now()}`,
+          templateData: { name, email, subject, message },
+        },
+      });
+      if (error) throw error;
       toast({ title: t("contact.success") });
       setForm({ name: "", email: "", subject: "", message: "" });
-    }, 600);
+    } catch {
+      toast({ title: t("contact.errorMessage"), variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
