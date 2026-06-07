@@ -15,6 +15,7 @@ interface SubscriptionCancelledProps {
   accessUntil?: string
   nextBillingDate?: string
   origin?: string
+  portalUrl?: string
 }
 
 export const SubscriptionCancelledEmail = ({
@@ -25,9 +26,12 @@ export const SubscriptionCancelledEmail = ({
   accessUntil,
   nextBillingDate,
   origin,
+  portalUrl,
 }: SubscriptionCancelledProps) => {
   const when = cancelledAt ? new Date(cancelledAt) : new Date()
-  const resubscribeLink = origin ? `${origin}/settings/billing` : ''
+  // Prefer a direct Stripe Customer Billing Portal link so users can update
+  // billing details or reactivate immediately; fall back to the in-app page.
+  const resubscribeLink = portalUrl || (origin ? `${origin}/billing` : '')
 
   return (
     <EmailLayout preview="Your subscription has been cancelled">
@@ -102,5 +106,6 @@ export const template = {
     accessUntil: new Date(Date.now() + 20 * 864e5).toISOString(),
     nextBillingDate: new Date(Date.now() + 30 * 864e5).toISOString(),
     origin: 'https://3xvisibility.com',
+    portalUrl: 'https://billing.stripe.com/p/session/test_example',
   },
 } satisfies TemplateEntry
