@@ -16,6 +16,7 @@ interface PaymentFailedProps {
   reason?: string
   nextAttemptDate?: string
   origin?: string
+  portalUrl?: string
 }
 
 const formatAmount = (amount?: string, currency?: string) => {
@@ -33,8 +34,11 @@ export const PaymentFailedEmail = ({
   reason,
   nextAttemptDate,
   origin,
+  portalUrl,
 }: PaymentFailedProps) => {
-  const billingLink = origin ? `${origin}/settings/billing` : ''
+  // Prefer a direct Stripe Customer Billing Portal link so users can update
+  // their payment method immediately; fall back to the in-app billing page.
+  const billingLink = portalUrl || (origin ? `${origin}/billing` : '')
 
   return (
     <EmailLayout preview="Action needed: your payment could not be processed">
@@ -75,7 +79,7 @@ export const PaymentFailedEmail = ({
       {billingLink && (
         <Section style={{ textAlign: 'center' as const, margin: '24px 0 0' }}>
           <Button href={billingLink} style={cta}>
-            Update billing settings
+            Update payment method
           </Button>
         </Section>
       )}
@@ -103,5 +107,6 @@ export const template = {
     reason: 'Your card was declined',
     nextAttemptDate: new Date(Date.now() + 3 * 864e5).toISOString(),
     origin: 'https://3xvisibility.com',
+    portalUrl: 'https://billing.stripe.com/p/session/test_example',
   },
 } satisfies TemplateEntry
