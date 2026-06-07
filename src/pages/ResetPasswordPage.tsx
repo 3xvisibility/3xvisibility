@@ -125,9 +125,25 @@ export default function ResetPasswordPage() {
             },
           },
         }).catch(() => { /* ignore — admin notification is best-effort */ });
+
+        // Send the user a confirmation email that their password was reset (best-effort, non-blocking)
+        if (user.email) {
+          supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "password-reset-confirmation",
+              recipientEmail: user.email,
+              idempotencyKey: `user-reset-confirm-${user.id}-${Date.now()}`,
+              templateData: {
+                email: user.email,
+                completedAt: new Date().toISOString(),
+                origin: window.location.origin,
+              },
+            },
+          }).catch(() => { /* ignore — user confirmation is best-effort */ });
+        }
       }
     } catch {
-      // Audit logging and admin notification are best-effort
+      // Audit logging and email notifications are best-effort
     }
 
     toast({ title: t("auth.passwordUpdated"), description: t("auth.passwordUpdatedDesc") });
