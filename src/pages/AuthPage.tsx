@@ -248,6 +248,20 @@ export default function AuthPage() {
         full_name: fullName,
         ai_language: aiLanguage,
       }, { onConflict: "user_id" });
+
+      // Notify the admin inbox of the new signup (best-effort, non-blocking)
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "admin-signup-notification",
+          idempotencyKey: `admin-signup-${data.user.id}`,
+          templateData: {
+            fullName,
+            email,
+            aiLanguage,
+            signedUpAt: new Date().toISOString(),
+          },
+        },
+      }).catch(() => { /* ignore — admin notification is best-effort */ });
     }
     setLoading(false);
     toast({ title: t("auth.checkEmail"), description: t("auth.confirmationSent") });
