@@ -68,6 +68,7 @@ export default function AuthPage() {
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [aiLanguage, setAiLanguage] = useState("en");
+  const [showRepeatSignupNotice, setShowRepeatSignupNotice] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -219,6 +220,16 @@ export default function AuthPage() {
     });
     if (error) {
       setLoading(false);
+      const errMsg = error.message.toLowerCase();
+      if (
+        errMsg.includes("user_repeated_signup") ||
+        errMsg.includes("already registered") ||
+        errMsg.includes("already exists") ||
+        errMsg.includes("user already")
+      ) {
+        setShowRepeatSignupNotice(true);
+        return;
+      }
       toast({ title: t("auth.signupFailed"), description: error.message, variant: "destructive" });
       return;
     }
@@ -372,7 +383,7 @@ export default function AuthPage() {
                   {(["login", "signup"] as const).map((m) => (
                     <button
                       key={m}
-                      onClick={() => { setMode(m); setConfirmPassword(""); }}
+                      onClick={() => { setMode(m); setConfirmPassword(""); setShowRepeatSignupNotice(false); }}
                       className={`flex-1 text-sm font-medium py-2.5 rounded-lg transition-all duration-200 ${
                         mode === m
                           ? "bg-background text-foreground shadow-sm"
@@ -425,7 +436,7 @@ export default function AuthPage() {
                           type="email"
                           placeholder={t("auth.emailPlaceholder")}
                           value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          onChange={(e) => { setEmail(e.target.value); setShowRepeatSignupNotice(false); }}
                           required
                           className="pl-10 h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all"
                         />
