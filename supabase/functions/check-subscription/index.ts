@@ -199,6 +199,7 @@ async function upsertSubscription(
       stripe_customer_id: stripeCustomerId,
       current_period_end: periodEnd,
       current_period_start: periodStart,
+      billing_cycle: billingCycle,
       updated_at: new Date().toISOString(),
     };
     // Backfill workspace_id if it was missing
