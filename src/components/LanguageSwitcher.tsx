@@ -7,7 +7,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Globe } from "lucide-react";
 
 interface LanguageSwitcherProps {
   variant?: "ghost" | "outline";
@@ -29,7 +28,6 @@ export function LanguageSwitcher({ variant = "ghost", size = "icon", className }
           aria-label={current?.label}
         >
           <span className="flex items-center gap-1.5">
-            <Globe className="h-3.5 w-3.5 shrink-0" />
             <span>{current?.flag}</span>
             <span className="text-xs font-medium">{current?.code.toUpperCase()}</span>
           </span>
