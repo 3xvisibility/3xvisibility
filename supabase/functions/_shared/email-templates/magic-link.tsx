@@ -2,79 +2,30 @@
 
 import * as React from 'npm:react@18.3.1'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Img,
-  Preview,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+import { Button, Heading, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-const LOGO_URL =
-  'https://qmuxdkxdrxevlnckssuw.supabase.co/storage/v1/object/public/ai-images/email%2Flogo-3x.png'
+import { EmailLayout, cta, h1, text, footerNote } from './_layout.tsx'
 
 interface MagicLinkEmailProps {
   siteName: string
   confirmationUrl: string
 }
 
-export const MagicLinkEmail = ({
-  siteName,
-  confirmationUrl,
-}: MagicLinkEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head />
-    <Preview>Your login link for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Img src={LOGO_URL} width="48" height="48" alt={siteName} style={logo} />
-        <Heading style={h1}>Your login link</Heading>
-        <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Log In
-        </Button>
-        <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+export const MagicLinkEmail = ({ siteName, confirmationUrl }: MagicLinkEmailProps) => (
+  <EmailLayout preview={`Your login link for ${siteName}`}>
+    <Heading style={h1}>Your login link</Heading>
+    <Text style={text}>
+      Click the button below to log in to {siteName}. This link will expire shortly.
+    </Text>
+    <Section style={{ margin: '4px 0 0' }}>
+      <Button style={cta} href={confirmationUrl}>
+        Log In
+      </Button>
+    </Section>
+    <Text style={footerNote}>
+      If you didn't request this link, you can safely ignore this email.
+    </Text>
+  </EmailLayout>
 )
 
 export default MagicLinkEmail
-
-const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: "'Plus Jakarta Sans', 'Inter', Arial, sans-serif",
-}
-const container = { padding: '20px 25px' }
-const logo = { margin: '0 0 24px', borderRadius: '12px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: 'hsl(252, 40%, 10%)',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: 'hsl(220, 10%, 45%)',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const button = {
-  backgroundColor: 'hsl(96, 90%, 45%)',
-  color: 'hsl(220, 60%, 6%)',
-  fontSize: '14px',
-  fontWeight: 'bold' as const,
-  borderRadius: '12px',
-  padding: '12px 22px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: 'hsl(220, 10%, 60%)', margin: '30px 0 0' }

@@ -2,21 +2,9 @@
 
 import * as React from 'npm:react@18.3.1'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Img,
-  Link,
-  Preview,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+import { Button, Heading, Link, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-const LOGO_URL =
-  'https://qmuxdkxdrxevlnckssuw.supabase.co/storage/v1/object/public/ai-images/email%2Flogo-3x.png'
+import { EmailLayout, cta, h1, link, text, footerNote } from './_layout.tsx'
 
 interface EmailChangeEmailProps {
   siteName: string
@@ -36,67 +24,29 @@ export const EmailChangeEmail = ({
   newEmail,
   confirmationUrl,
 }: EmailChangeEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head />
-    <Preview>Confirm your email change for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Img src={LOGO_URL} width="48" height="48" alt={siteName} style={logo} />
-        <Heading style={h1}>Confirm your email change</Heading>
-        <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
-          <Link href={`mailto:${oldEmail}`} style={link}>
-            {oldEmail}
-          </Link>{' '}
-          to{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>
-            {newEmail}
-          </Link>
-          .
-        </Text>
-        <Text style={text}>
-          Click the button below to confirm this change:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Confirm Email Change
-        </Button>
-        <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+  <EmailLayout preview={`Confirm your email change for ${siteName}`}>
+    <Heading style={h1}>Confirm your email change</Heading>
+    <Text style={text}>
+      You requested to change your email address for {siteName} from{' '}
+      <Link href={`mailto:${oldEmail}`} style={link}>
+        {oldEmail}
+      </Link>{' '}
+      to{' '}
+      <Link href={`mailto:${newEmail}`} style={link}>
+        {newEmail}
+      </Link>
+      .
+    </Text>
+    <Text style={text}>Click the button below to confirm this change:</Text>
+    <Section style={{ margin: '4px 0 0' }}>
+      <Button style={cta} href={confirmationUrl}>
+        Confirm Email Change
+      </Button>
+    </Section>
+    <Text style={footerNote}>
+      If you didn't request this change, please secure your account immediately.
+    </Text>
+  </EmailLayout>
 )
 
 export default EmailChangeEmail
-
-const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: "'Plus Jakarta Sans', 'Inter', Arial, sans-serif",
-}
-const container = { padding: '20px 25px' }
-const logo = { margin: '0 0 24px', borderRadius: '12px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: 'hsl(252, 40%, 10%)',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: 'hsl(220, 10%, 45%)',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'hsl(217, 50%, 45%)', textDecoration: 'underline' }
-const button = {
-  backgroundColor: 'hsl(96, 90%, 45%)',
-  color: 'hsl(220, 60%, 6%)',
-  fontSize: '14px',
-  fontWeight: 'bold' as const,
-  borderRadius: '12px',
-  padding: '12px 22px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: 'hsl(220, 10%, 60%)', margin: '30px 0 0' }
