@@ -2,6 +2,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import logo3x from "@/assets/logo-3x.png";
 import {
   ShieldCheck,
+  Mail,
   Activity,
   Users,
   Rocket,
