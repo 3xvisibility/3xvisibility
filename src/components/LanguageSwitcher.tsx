@@ -22,15 +22,17 @@ export function LanguageSwitcher({ variant = "ghost", size = "icon", className }
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} size={size} className={className}>
-          {size === "icon" ? (
-            <Globe className="h-3.5 w-3.5" />
-          ) : (
-            <span className="flex items-center gap-1.5">
-              <span>{current?.flag}</span>
-              <span className="text-xs">{current?.code.toUpperCase()}</span>
-            </span>
-          )}
+        <Button
+          variant={variant}
+          size={size === "icon" ? "sm" : size}
+          className={className}
+          aria-label={current?.label}
+        >
+          <span className="flex items-center gap-1.5">
+            <Globe className="h-3.5 w-3.5 shrink-0" />
+            <span>{current?.flag}</span>
+            <span className="text-xs font-medium">{current?.code.toUpperCase()}</span>
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" data-no-translate className="min-w-[160px] max-h-[320px] overflow-y-auto">
