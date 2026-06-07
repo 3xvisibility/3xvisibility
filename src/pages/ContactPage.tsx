@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const channels = [
   { icon: Mail, label: "Email", value: "info@3xvisibility.com", href: "mailto:info@3xvisibility.com" },
