@@ -6,6 +6,11 @@ import { template as adminSignupNotification } from './admin-signup-notification
 import { template as adminResetNotification } from './admin-reset-notification.tsx'
 import { template as adminResetCompleted } from './admin-reset-completed.tsx'
 import { template as passwordResetConfirmation } from './password-reset-confirmation.tsx'
+import { template as paymentReceipt } from './payment-receipt.tsx'
+import { template as paymentFailed } from './payment-failed.tsx'
+import { template as subscriptionConfirmation } from './subscription-confirmation.tsx'
+import { template as subscriptionCancelled } from './subscription-cancelled.tsx'
+
 
 
 export interface TemplateEntry {
@@ -25,4 +30,8 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'admin-reset-notification': adminResetNotification,
   'admin-reset-completed': adminResetCompleted,
   'password-reset-confirmation': passwordResetConfirmation,
+  'payment-receipt': paymentReceipt,
+  'payment-failed': paymentFailed,
+  'subscription-confirmation': subscriptionConfirmation,
+  'subscription-cancelled': subscriptionCancelled,
 }
