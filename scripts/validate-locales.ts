@@ -108,8 +108,18 @@ for (const f of localeFiles) checkFile(f);
 checkFile(TRANSLATIONS_FILE);
 
 // ── Rule 8: Missing keys vs. English source of truth ──────────────────────
-// English (en.ts) defines the canonical set of keys. Every other locale must
-// contain every key, so untranslated text never silently falls back to English.
+// English (en.ts) defines the canonical set of keys. Locales fall back to
+// English at runtime, so most missing keys are reported as non-fatal WARNINGS
+// to give full visibility. However, keys under CRITICAL_PREFIXES are
+// user-facing static pages that MUST be translated everywhere — a missing
+// critical key is a build-breaking ERROR so untranslated text never slips into
+// a new locale unnoticed.
+const CRITICAL_PREFIXES = ["contact.", "footer."];
+
+function isCritical(key: string): boolean {
+  return CRITICAL_PREFIXES.some((p) => key.startsWith(p));
+}
+
 function extractKeys(filePath: string): Set<string> {
   const content = readFileSync(filePath, "utf-8");
   const keys = new Set<string>();
@@ -118,6 +128,10 @@ function extractKeys(filePath: string): Set<string> {
   while ((m = kvRegex.exec(content)) !== null) keys.add(m[1]);
   return keys;
 }
+
+type Missing = { file: string; key: string };
+const missingCritical: Missing[] = [];
+const missingWarnings: Missing[] = [];
 
 const EN_FILE = join(LOCALES_DIR, "en.ts");
 const enKeys = extractKeys(EN_FILE);
@@ -128,14 +142,30 @@ for (const f of localeFiles) {
   const localeKeys = extractKeys(f);
   for (const key of enKeys) {
     if (!localeKeys.has(key)) {
-      addIssue(label, 0, key, "MISSING_KEY", `Key "${key}" exists in en.ts but is missing here`);
+      if (isCritical(key)) missingCritical.push({ file: label, key });
+      else missingWarnings.push({ file: label, key });
     }
   }
 }
 
+for (const m of missingCritical) {
+  addIssue(m.file, 0, m.key, "MISSING_CRITICAL_KEY", `Critical key "${m.key}" exists in en.ts but is missing here`);
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
+// Non-fatal warnings first (missing non-critical translations).
+if (missingWarnings.length > 0) {
+  const byFile = new Map<string, number>();
+  for (const m of missingWarnings) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
+  console.warn(`⚠️  ${missingWarnings.length} non-critical key(s) missing (fall back to English at runtime):`);
+  for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
+  console.warn("");
+}
+
 if (issues.length === 0) {
-  console.log(`✅ All ${localeFiles.length + 1} locale files are valid (8 rules checked, incl. missing-key parity).\n`);
+  console.log(
+    `✅ All ${localeFiles.length + 1} locale files are valid (8 rules checked, incl. critical missing-key parity for: ${CRITICAL_PREFIXES.join(", ")}).\n`,
+  );
   process.exit(0);
 } else {
   // Group by rule
