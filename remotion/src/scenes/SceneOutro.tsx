@@ -18,22 +18,17 @@ export const SceneOutro: React.FC = () => {
   return (
     <AbsoluteFill style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 80 }}>
       {/* Big logo mark */}
-      <div
+      <Img
+        src={staticFile("images/logo-3x.png")}
         style={{
-          width: 140,
-          height: 140,
-          borderRadius: 32,
-          background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 50,
+          width: 200,
+          height: 200,
+          objectFit: "contain",
+          marginBottom: 40,
           transform: `scale(${logoScale})`,
-          boxShadow: `0 20px 60px rgba(94,218,12,0.45)`,
+          filter: `drop-shadow(0 20px 60px rgba(94,218,12,0.5))`,
         }}
-      >
-        <div style={{ width: 56, height: 56, borderRadius: 14, background: C.bg }} />
-      </div>
+      />
 
       <h2
         style={{
