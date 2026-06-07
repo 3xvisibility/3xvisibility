@@ -186,7 +186,7 @@ if (missingWarnings.length > 0) {
 
 if (issues.length === 0) {
   console.log(
-    `✅ All ${localeFiles.length + 1} locale files are valid (8 rules checked, incl. critical missing-key parity for: ${CRITICAL_PREFIXES.join(", ")}).\n`,
+    `✅ All ${localeFiles.length + 1} locale files are valid (syntax rules checked). Missing keys (if any) fall back to English at runtime and never break the build.\n`,
   );
   process.exit(0);
 } else {
