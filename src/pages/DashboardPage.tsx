@@ -635,13 +635,13 @@ export default function DashboardPage() {
                 <BarChart data={campaignChartData} barCategoryGap="20%">
                   <defs>
                     <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(187, 92%, 42%)" stopOpacity={1} />
-                      <stop offset="100%" stopColor="hsl(239, 84%, 67%)" stopOpacity={0.8} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={1} />
+                      <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity={0.85} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} width={30} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip cursor={{ fill: "hsl(var(--muted) / 0.4)" }} contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", boxShadow: "0 8px 24px rgba(0,0,0,.25)", fontSize: "12px", padding: "8px 12px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" }} labelStyle={{ color: "hsl(var(--popover-foreground))" }} itemStyle={{ color: "hsl(var(--popover-foreground))" }} />
                   <Bar dataKey="campaigns" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
                 </BarChart>
