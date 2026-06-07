@@ -11,9 +11,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 const channels = [
-  { icon: Mail, key: "email" as const },
-  { icon: LifeBuoy, key: "support" as const },
-  { icon: MessageSquare, key: "sales" as const },
+  { icon: Mail, label: "Email", value: "info@3xvisibility.com", href: "mailto:info@3xvisibility.com" },
+  { icon: Phone, label: "Phone", value: "+1 (555) 012-3456", href: "tel:+15550123456" },
+  { icon: MapPin, label: "Address", value: "123 Demo Street, Suite 100, Paris, France", href: undefined },
 ];
 
 export default function ContactPage() {
