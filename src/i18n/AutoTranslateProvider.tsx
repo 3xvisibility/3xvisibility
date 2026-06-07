@@ -238,10 +238,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     const processPending = async () => {
       if (cancelled) return;
       const lang = langRef.current;
-      const targets: Target[] = [
-        ...collectTextTargets(document.body),
-        ...collectAttrTargets(document.body),
-      ];
+      const targets: Target[] = collectAll();
       if (targets.length === 0) return;
 
       // Group by original
