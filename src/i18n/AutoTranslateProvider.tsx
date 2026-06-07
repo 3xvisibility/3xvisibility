@@ -359,6 +359,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     return () => {
       cancelled = true;
       if (debounceTimer) window.clearTimeout(debounceTimer);
+      if (rescanTimer) window.clearTimeout(rescanTimer);
       observer?.disconnect();
     };
   }, [language]);
