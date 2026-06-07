@@ -106,7 +106,7 @@ export default function ShopifyGuidePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground" data-auto-translate>
+    <div className="min-h-screen bg-background text-foreground">
       <Seo
         title="Connect Shopify"
         description="A step-by-step guide to connecting your Shopify store to 3XVISIBILITY through secure OAuth, then publishing pages and optimizing product SEO."
@@ -114,7 +114,7 @@ export default function ShopifyGuidePage() {
       />
       <LandingNav />
 
-      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16">
+      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16" data-auto-translate>
         {/* Hero */}
         <header className="max-w-3xl mx-auto text-center mb-14">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
