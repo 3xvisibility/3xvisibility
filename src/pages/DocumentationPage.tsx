@@ -218,7 +218,7 @@ export default function DocumentationPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" data-auto-translate>
       <Seo
         title="Documentation"
         description="Step-by-step guides for every 3XVISIBILITY tool — from connecting websites and building templates to generating and publishing pages at scale."
