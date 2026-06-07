@@ -4,7 +4,7 @@ import { useJobNotifications } from "@/hooks/use-job-notifications";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AdminSidebar } from "@/components/AdminSidebar";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
@@ -28,6 +28,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { WorkspaceBreadcrumb } from "@/components/WorkspaceBreadcrumb";
 import { BackToTop } from "@/components/BackToTop";
+import logo3x from "@/assets/logo-3x.png";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -65,6 +66,12 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
           <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-border bg-card px-3 py-2 sm:px-4 lg:px-6 shrink-0">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <SidebarTrigger className="shrink-0 lg:hidden" />
+              <Link to={`${basePath}/dashboard`} className="flex items-center gap-2 shrink-0" data-no-translate translate="no">
+                <img src={logo3x} alt="3XVISIBILITY" className="h-7 w-7 rounded-lg object-contain" />
+                <span className="hidden sm:inline text-sm font-bold tracking-tight">
+                  <span className="text-primary">3X</span>visibility
+                </span>
+              </Link>
               <Button
                 variant="ghost"
                 size="icon"
