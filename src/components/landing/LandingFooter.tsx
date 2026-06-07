@@ -70,6 +70,13 @@ function SmoothScrollLink({ href, children }: { href: string; children: React.Re
 export function LandingFooter() {
   const { t } = useLanguage();
 
+  const handleComingSoon = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast.info(t("footer.comingSoonTitle") || "Coming Soon", {
+      description: t("footer.comingSoonDesc") || "PrestaShop integration is under development. Stay tuned!",
+    });
+  };
+
   const footerLinks: Record<string, FooterLink[]> = {
     [t("footer.product")]: [
       { label: t("footer.features"), href: "/#features", isHash: true },
@@ -80,7 +87,7 @@ export function LandingFooter() {
     [t("footer.integrations")]: [
       { label: t("footer.wordpress"), href: "/#integrations", isHash: true },
       { label: t("footer.shopify"), href: "/#integrations", isHash: true },
-      { label: t("footer.prestaShop"), href: "/#integrations", isHash: true, badge: t("footer.comingSoon") },
+      { label: t("footer.prestaShop"), href: "#", isHash: true, badge: t("footer.comingSoon"), comingSoon: true },
     ],
     [t("footer.company")]: [
       { label: t("footer.about"), href: "/about", isHash: false },
