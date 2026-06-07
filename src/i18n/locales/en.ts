@@ -168,6 +168,7 @@ const en: Record<string, string> = {
   "affiliateLanding.title1": "Earn while you",
   "affiliateLanding.title2": "share",
   "affiliateLanding.unlimited": "Referral limit",
+  "affiliateLanding.yearlyNote": "On yearly plans only",
   "analytics.aiUsage": "AI Usage",
   "analytics.avgProcessingTime": "Avg Processing Time",
   "analytics.avgSeoScore": "Avg SEO Score",
