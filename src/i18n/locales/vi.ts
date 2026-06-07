@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/vi.json — DO NOT EDIT BY HAND
 const vi: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "Liên hệ với chúng tôi",
   "contact.metaDesc": "Câu hỏi, phản hồi hoặc yêu cầu hợp tác — liên hệ với đội ngũ 3XVISIBILITY qua email. Chúng tôi đọc mọi tin nhắn và phản hồi trong vòng một ngày làm việc.",
   "contact.subtitle": "Câu hỏi, phản hồi hoặc yêu cầu hợp tác — chúng tôi đọc mọi tin nhắn.",

@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/ko.json — DO NOT EDIT BY HAND
 const ko: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "문의하기",
   "contact.metaDesc": "질문, 피드백 또는 파트너십 문의 — 이메일로 3XVISIBILITY 팀에 연락하세요. 모든 메시지를 읽고 영업일 기준 하루 이내에 답변합니다.",
   "contact.subtitle": "질문, 피드백 또는 파트너십 문의 — 모든 메시지를 읽습니다.",

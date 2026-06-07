@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/uk.json — DO NOT EDIT BY HAND
 const uk: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "Зв'яжіться з нами",
   "contact.metaDesc": "Питання, відгуки або запити щодо партнерства — зв'яжіться з командою 3XVISIBILITY електронною поштою. Ми читаємо кожне повідомлення та відповідаємо протягом одного робочого дня.",
   "contact.subtitle": "Питання, відгуки або запити щодо партнерства — ми читаємо кожне повідомлення.",

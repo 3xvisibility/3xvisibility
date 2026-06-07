@@ -1,5 +1,9 @@
 // Auto-generated from locales-json/hu.json — DO NOT EDIT BY HAND
 const hu: Record<string, string> = {
+  "footer.comingSoon": "Coming Soon",
+  "footer.comingSoonTitle": "Coming Soon",
+  "footer.comingSoonDesc": "PrestaShop integration is under development. Stay tuned!",
+  "footer.prestaShop": "PrestaShop",
   "contact.title": "Lépjen kapcsolatba velünk",
   "contact.metaDesc": "Kérdések, visszajelzések vagy partnerségi megkeresések — vegye fel a kapcsolatot a 3XVISIBILITY csapatával e-mailben. Minden üzenetet elolvasunk és egy munkanapon belül válaszolunk.",
   "contact.subtitle": "Kérdések, visszajelzések vagy partnerségi megkeresések — minden üzenetet elolvasunk.",
