@@ -593,15 +593,15 @@ export default function DashboardPage() {
                 <AreaChart data={pageChartData}>
                   <defs>
                     <linearGradient id="pageGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(239, 84%, 67%)" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="hsl(239, 84%, 67%)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "hsl(220, 9%, 46%)" }} axisLine={false} tickLine={false} width={30} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid hsl(var(--border))", boxShadow: "0 8px 24px rgba(0,0,0,.25)", fontSize: "12px", padding: "8px 12px", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" }} labelStyle={{ color: "hsl(var(--popover-foreground))" }} itemStyle={{ color: "hsl(var(--popover-foreground))" }} />
-                  <Area type="monotone" dataKey="pages" stroke="hsl(239, 84%, 67%)" strokeWidth={2.5} fill="url(#pageGradient)" dot={false} activeDot={{ r: 5, fill: "hsl(239, 84%, 67%)", stroke: "#fff", strokeWidth: 2 }} />
+                  <Area type="monotone" dataKey="pages" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#pageGradient)" dot={false} activeDot={{ r: 5, fill: "hsl(var(--primary))", stroke: "hsl(var(--background))", strokeWidth: 2 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
