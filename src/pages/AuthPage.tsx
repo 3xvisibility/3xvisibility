@@ -233,6 +233,14 @@ export default function AuthPage() {
       toast({ title: t("auth.signupFailed"), description: error.message, variant: "destructive" });
       return;
     }
+    // Supabase returns a user with an empty identities array when the email
+    // already exists (it suppresses the error to prevent email enumeration).
+    // Detect that case and show the "account already exists" notice.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      setLoading(false);
+      setShowRepeatSignupNotice(true);
+      return;
+    }
     // Save AI language preference and company to profile
     if (data.user) {
       await supabase.from("profiles").upsert({
