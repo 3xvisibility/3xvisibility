@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 const hasBuiltinCoverage = (lang: string) =>
   Object.prototype.hasOwnProperty.call(translations, lang);
 
-const CACHE_PREFIX = "auto-tr:";
+const CACHE_PREFIX = "auto-tr2:";
 const BATCH_SIZE = 40;
 const DEBOUNCE_MS = 250;
 
@@ -227,7 +227,12 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         originals.forEach((o, i) => {
           const tr = translations[i] || o;
           result[o] = tr;
-          setCached(lang, o, tr);
+          // Only cache real translations. If the service returned the original
+          // text unchanged (a failed/no-op translation), skip caching so the
+          // string is retried on the next scan instead of being stuck in English.
+          if (tr.trim().toLowerCase() !== o.trim().toLowerCase()) {
+            setCached(lang, o, tr);
+          }
         });
       } catch {
         originals.forEach((o) => (result[o] = o));
@@ -249,15 +254,23 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       }
 
       const needRequest: string[] = [];
+      let skippedInFlight = false;
       for (const [original, ts] of groups) {
         const cached = getCached(lang, original);
         if (cached) {
           ts.forEach((t) => applyTranslation(t, original, cached));
           continue;
         }
-        if (inFlightRef.current.has(`${lang}:${original}`)) continue;
+        if (inFlightRef.current.has(`${lang}:${original}`)) {
+          skippedInFlight = true;
+          continue;
+        }
         needRequest.push(original);
       }
+
+      // Some strings are still being translated by a concurrent batch — once
+      // those resolve and cache, a follow-up scan will apply them. Schedule one.
+      if (skippedInFlight) scheduleRescan();
 
       if (needRequest.length === 0) return;
       needRequest.forEach((o) => inFlightRef.current.add(`${lang}:${o}`));
@@ -277,6 +290,20 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         }
         slice.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
       }
+
+      // After translating, run one more sweep so anything that wasn't matched
+      // during the in-flight window gets applied from cache. Converges quickly
+      // because real translations are now cached.
+      scheduleRescan();
+    };
+
+    let rescanTimer: number | null = null;
+    const scheduleRescan = () => {
+      if (rescanTimer) return;
+      rescanTimer = window.setTimeout(() => {
+        rescanTimer = null;
+        processPending();
+      }, 500);
     };
 
     const scheduleScan = () => {
@@ -289,6 +316,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         processPending();
       }, DEBOUNCE_MS);
     };
+
 
     // Initial scan
     scheduleScan();
@@ -331,6 +359,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     return () => {
       cancelled = true;
       if (debounceTimer) window.clearTimeout(debounceTimer);
+      if (rescanTimer) window.clearTimeout(rescanTimer);
       observer?.disconnect();
     };
   }, [language]);
