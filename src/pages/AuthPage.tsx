@@ -352,10 +352,11 @@ export default function AuthPage() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.15, ease }}
-                  className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 mb-5"
+                  className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 mb-3"
                 >
-                  <Sparkles className="h-6 w-6 text-primary" />
+                  <img src={logo3x} alt="3XVISIBILITY" className="h-8 w-8 object-contain" />
                 </motion.div>
+                <div className="text-sm font-bold tracking-wider text-primary mb-1" data-no-translate translate="no">3XVISIBILITY</div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-[-0.03em]">
                   {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
                 </h1>
