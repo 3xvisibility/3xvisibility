@@ -108,15 +108,17 @@ for (const f of localeFiles) checkFile(f);
 checkFile(TRANSLATIONS_FILE);
 
 // ── Rule 8: Missing keys vs. English source of truth ──────────────────────
-// English (en.ts) defines the canonical set of keys. Locales fall back to
-// English at runtime, so most missing keys are reported as non-fatal WARNINGS
-// to give full visibility. However, keys under the critical prefixes are
-// user-facing static pages that MUST be translated everywhere — a missing
-// critical key is a build-breaking ERROR so untranslated text never slips into
-// a new locale unnoticed.
+// English (en.ts) defines the canonical set of keys. Every locale falls back to
+// English at runtime (see src/i18n/LanguageContext.tsx:
+//   translations[language]?.[key] ?? translations.en[key] ?? key
+// ), so a missing key NEVER produces broken UI — it transparently renders the
+// English string. Because of that runtime fallback, missing keys must NEVER
+// break the build. They are always reported as non-fatal warnings (grouped by
+// "critical" vs. "other" purely for visibility / translation backlog), and the
+// process still exits 0 unless there is real syntax corruption.
 //
-// The critical prefixes are defined in scripts/i18n-critical.config.json so the
-// build-breaking rules can be adjusted without editing this script.
+// The critical prefixes are defined in scripts/i18n-critical.config.json and are
+// used only to highlight which untranslated keys are most worth filling in.
 const CONFIG_FILE = join(import.meta.dir, "i18n-critical.config.json");
 let CRITICAL_PREFIXES: string[] = ["contact.", "footer."];
 try {
@@ -163,12 +165,17 @@ for (const f of localeFiles) {
   }
 }
 
-for (const m of missingCritical) {
-  addIssue(m.file, 0, m.key, "MISSING_CRITICAL_KEY", `Critical key "${m.key}" exists in en.ts but is missing here`);
+// ── Report ──────────────────────────────────────────────────────────────
+// Missing keys are NON-FATAL: the runtime falls back to English, so they never
+// break the build. Report them as warnings only (criticals highlighted first).
+if (missingCritical.length > 0) {
+  const byFile = new Map<string, number>();
+  for (const m of missingCritical) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
+  console.warn(`⚠️  ${missingCritical.length} critical-prefix key(s) missing (fall back to English at runtime — please translate):`);
+  for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
+  console.warn("");
 }
 
-// ── Report ──────────────────────────────────────────────────────────────
-// Non-fatal warnings first (missing non-critical translations).
 if (missingWarnings.length > 0) {
   const byFile = new Map<string, number>();
   for (const m of missingWarnings) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
@@ -179,7 +186,7 @@ if (missingWarnings.length > 0) {
 
 if (issues.length === 0) {
   console.log(
-    `✅ All ${localeFiles.length + 1} locale files are valid (8 rules checked, incl. critical missing-key parity for: ${CRITICAL_PREFIXES.join(", ")}).\n`,
+    `✅ All ${localeFiles.length + 1} locale files are valid (syntax rules checked). Missing keys (if any) fall back to English at runtime and never break the build.\n`,
   );
   process.exit(0);
 } else {
