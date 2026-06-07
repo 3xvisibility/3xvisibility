@@ -51,6 +51,7 @@ import ShopifyOAuthLaunchPage from "./pages/ShopifyOAuthLaunchPage";
 import AboutPage from "./pages/AboutPage";
 import BlogPage from "./pages/BlogPage";
 import ContactPage from "./pages/ContactPage";
+import UnsubscribePage from "./pages/UnsubscribePage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 import ChangelogPage from "./pages/ChangelogPage";
@@ -232,6 +233,7 @@ const App = () => {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/changelog" element={<ChangelogPage />} />
