@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
@@ -26,6 +26,7 @@ import { SystemSettingsPanel } from "@/components/admin/SystemSettingsPanel";
 import { AiAccessAdminPanel } from "@/components/admin/AiAccessAdminPanel";
 import { AiUsageReportPanel } from "@/components/admin/AiUsageReportPanel";
 import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
+import { ContactInboxPanel } from "@/components/admin/ContactInboxPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
 
@@ -762,6 +763,7 @@ export default function AdminPage() {
           <TabsTrigger value="users" className="text-xs">{t("admin.users")}</TabsTrigger>
           <TabsTrigger value="campaigns" className="text-xs">{t("admin.campaignsTab")}</TabsTrigger>
           <TabsTrigger value="pages" className="text-xs gap-1"><FileText className="h-3 w-3" />Pages</TabsTrigger>
+          <TabsTrigger value="inbox" className="text-xs gap-1"><Mail className="h-3 w-3" />Inbox</TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs">{t("admin.subscriptions")}</TabsTrigger>
           <TabsTrigger value="ai-credits" className="text-xs gap-1"><Zap className="h-3 w-3" />AI Credits</TabsTrigger>
           <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
@@ -782,6 +784,10 @@ export default function AdminPage() {
 
 
 
+
+        <TabsContent value="inbox" className="space-y-4">
+          <ContactInboxPanel />
+        </TabsContent>
 
         <TabsContent value="ai-access" className="space-y-4">
           <AiAccessAdminPanel />

@@ -2,6 +2,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import logo3x from "@/assets/logo-3x.png";
 import {
   ShieldCheck,
+  Mail,
   Activity,
   Users,
   Rocket,
@@ -39,6 +40,7 @@ interface AdminNavItem {
 
 const managementNav: AdminNavItem[] = [
   { label: "Overview", section: "overview", icon: BarChart3 },
+  { label: "Inbox", section: "inbox", icon: Mail },
   { label: "Activity", section: "activity", icon: Activity },
   { label: "Users", section: "users", icon: Users },
   { label: "Campaigns", section: "campaigns", icon: Rocket },
