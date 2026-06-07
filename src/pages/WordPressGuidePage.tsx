@@ -100,7 +100,7 @@ export default function WordPressGuidePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground" data-auto-translate>
+    <div className="min-h-screen bg-background text-foreground">
       <Seo
         title="Connect WordPress"
         description="A step-by-step guide to connecting your WordPress website to 3XVISIBILITY using Application Passwords, then publishing programmatic pages."
@@ -108,7 +108,7 @@ export default function WordPressGuidePage() {
       />
       <LandingNav />
 
-      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16">
+      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16" data-auto-translate>
         {/* Hero */}
         <header className="max-w-3xl mx-auto text-center mb-14">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
