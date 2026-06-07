@@ -1,5 +1,22 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { translations, type Language } from "./translations";
+import { translations, type Language, languages } from "./translations";
+
+function detectBrowserLanguage(): Language | null {
+  if (typeof navigator === "undefined") return null;
+  const browserLang = navigator.language || (navigator as unknown as Record<string, string>).userLanguage || "";
+  const code = browserLang.toLowerCase();
+
+  const supported = languages.map((l) => l.code);
+
+  // Exact match
+  if (supported.includes(code as Language)) return code as Language;
+
+  // Prefix match (e.g. "fr-ca" -> "fr")
+  const prefix = code.split("-")[0];
+  if (supported.includes(prefix as Language)) return prefix as Language;
+
+  return null;
+}
 
 interface LanguageContextType {
   language: Language;
@@ -12,7 +29,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = localStorage.getItem("language") as Language | null;
-    return stored && translations[stored] ? stored : "en";
+    if (stored && translations[stored]) return stored;
+    const detected = detectBrowserLanguage();
+    if (detected) {
+      localStorage.setItem("language", detected);
+      document.documentElement.lang = detected;
+      return detected;
+    }
+    return "en";
   });
 
   const setLanguage = useCallback((lang: Language) => {
