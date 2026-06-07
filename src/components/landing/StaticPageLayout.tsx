@@ -10,7 +10,7 @@ interface Props {
 
 export function StaticPageLayout({ title, subtitle, children }: Props) {
   return (
-    <div className="min-h-screen flex flex-col landing-page">
+    <div className="min-h-screen flex flex-col landing-page" data-auto-translate>
       <LandingNav />
       <main className="flex-1">
         <section className="py-16 md:py-24 border-b border-[hsl(96,90%,45%,0.08)]">
