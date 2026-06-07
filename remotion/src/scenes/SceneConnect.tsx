@@ -38,7 +38,7 @@ const PlatformCard: React.FC<{ name: string; icon: string; color: string; delay:
         padding: 28,
         borderRadius: 18,
         border: `1px solid ${selected ? C.primary : C.border}`,
-        background: selected ? "rgba(59,130,246,0.10)" : "rgba(17,27,48,0.6)",
+        background: selected ? "rgba(94,218,12,0.10)" : "rgba(17,27,48,0.6)",
         backdropFilter: "blur(0px)",
         display: "flex",
         flexDirection: "column",
@@ -46,7 +46,7 @@ const PlatformCard: React.FC<{ name: string; icon: string; color: string; delay:
         gap: 14,
         transform: `translateY(${y}px)`,
         opacity: op,
-        boxShadow: selected ? `0 0 ${30 + selectGlow * 30}px rgba(59,130,246,${0.2 + selectGlow * 0.3})` : "none",
+        boxShadow: selected ? `0 0 ${30 + selectGlow * 30}px rgba(94,218,12,${0.2 + selectGlow * 0.3})` : "none",
         transition: "none",
         minWidth: 200,
       }}

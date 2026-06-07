@@ -25,7 +25,7 @@ export const SceneIntro: React.FC = () => {
             padding: "8px 18px",
             borderRadius: 999,
             border: `1px solid ${C.border}`,
-            background: "rgba(59,130,246,0.06)",
+            background: "rgba(94,218,12,0.06)",
             fontSize: 16,
             color: C.primaryGlow,
             letterSpacing: "0.18em",

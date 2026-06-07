@@ -23,10 +23,10 @@ export const C = {
   bg: "#070B14",
   bgSoft: "#0C1322",
   card: "#111B30",
-  border: "rgba(96,165,250,0.18)",
-  primary: "#3B82F6",
-  primaryGlow: "#60A5FA",
-  accent: "#22D3EE",
+  border: "rgba(140,247,69,0.20)",
+  primary: "#5EDA0C",
+  primaryGlow: "#8CF745",
+  accent: "#9EF54A",
   text: "#E6EDF7",
   muted: "#7A8AA6",
   success: "#34D399",
@@ -44,14 +44,14 @@ const PersistentBackground: React.FC = () => {
         style={{
           position: "absolute",
           inset: 0,
-          background: `radial-gradient(circle at ${30 + drift}% ${20 + drift2}%, rgba(59,130,246,0.18), transparent 50%), radial-gradient(circle at ${70 - drift}% ${80 - drift2}%, rgba(34,211,238,0.10), transparent 55%)`,
+          background: `radial-gradient(circle at ${30 + drift}% ${20 + drift2}%, rgba(94,218,12,0.18), transparent 50%), radial-gradient(circle at ${70 - drift}% ${80 - drift2}%, rgba(158,245,74,0.10), transparent 55%)`,
         }}
       />
       {/* Subtle grid */}
       <svg width={width} height={height} style={{ position: "absolute", inset: 0, opacity: 0.06 }}>
         <defs>
           <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#60A5FA" strokeWidth="1" />
+            <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#8CF745" strokeWidth="1" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid)" />
@@ -63,7 +63,7 @@ const PersistentBackground: React.FC = () => {
           width: 400,
           height: 400,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%)",
+          background: "radial-gradient(circle, rgba(94,218,12,0.15), transparent 70%)",
           top: 100 + drift,
           right: 200 + drift2,
           filter: "blur(40px)",
