@@ -36,10 +36,19 @@ interface Referral {
   id: string;
   status: string;
   commission_amount: number;
+  credit_reward: number;
   subscription_plan: string | null;
   converted_at: string | null;
   created_at: string;
 }
+
+// Yearly total price per plan (must match the check-subscription edge function)
+const YEARLY_TOTAL: Record<string, number> = {
+  starter: 192,
+  pro: 588,
+  agency: 1488,
+};
+const COMMISSION_RATE = 0.05; // 5%
 
 interface Payout {
   id: string;
