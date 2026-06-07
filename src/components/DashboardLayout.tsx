@@ -99,7 +99,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
               <LanguageSwitcher
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="h-9 w-auto px-2 rounded-lg text-muted-foreground hover:text-foreground"
               />
               <NotificationsDropdown />
               <DropdownMenu>
