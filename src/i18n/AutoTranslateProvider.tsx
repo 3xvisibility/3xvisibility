@@ -227,7 +227,12 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
         originals.forEach((o, i) => {
           const tr = translations[i] || o;
           result[o] = tr;
-          setCached(lang, o, tr);
+          // Only cache real translations. If the service returned the original
+          // text unchanged (a failed/no-op translation), skip caching so the
+          // string is retried on the next scan instead of being stuck in English.
+          if (tr.trim().toLowerCase() !== o.trim().toLowerCase()) {
+            setCached(lang, o, tr);
+          }
         });
       } catch {
         originals.forEach((o) => (result[o] = o));
