@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "@/i18n/LanguageContext";
 
 // Bump this when the rendered video changes to bust browser/CDN caches.
-const VIDEO_VERSION = "3xvisibility-1";
+const VIDEO_VERSION = "3xvisibility-2";
 const DEFAULT_VIDEO = `/pagegen-demo.mp4?v=${VIDEO_VERSION}`;
 
 export function VideoSection() {

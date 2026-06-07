@@ -10,16 +10,17 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.452",
-    "@remotion/cli": "^4.0.452",
+    "@remotion/bundler": "^4.0.473",
+    "@remotion/cli": "^4.0.473",
     "@remotion/compositor-linux-x64-gnu": "^4.0.452",
-    "@remotion/compositor-linux-x64-musl": "^4.0.452",
-    "@remotion/google-fonts": "^4.0.452",
-    "@remotion/renderer": "^4.0.452",
-    "@remotion/transitions": "^4.0.452",
+    "@remotion/compositor-linux-x64-musl": "^4.0.473",
+    "@remotion/fonts": "^4.0.473",
+    "@remotion/google-fonts": "^4.0.473",
+    "@remotion/renderer": "^4.0.473",
+    "@remotion/transitions": "^4.0.473",
     "@types/react": "^19.2.14",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "remotion": "^4.0.452"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "remotion": "^4.0.473"
   }
 }

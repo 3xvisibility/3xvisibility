@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring, Sequence } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring, Sequence, Img, staticFile } from "remotion";
 import { TransitionSeries, linearTiming, springTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
@@ -74,20 +74,7 @@ const PersistentChrome: React.FC = () => {
     <AbsoluteFill style={{ pointerEvents: "none", opacity }}>
       {/* Top bar with logo */}
       <div style={{ position: "absolute", top: 40, left: 60, display: "flex", alignItems: "center", gap: 14, fontFamily: FONT_DISPLAY }}>
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: `0 0 20px ${C.primary}88`,
-          }}
-        >
-          <div style={{ width: 16, height: 16, borderRadius: 4, background: C.bg }} />
-        </div>
+        <Img src={staticFile("images/logo-3x.png")} style={{ width: 44, height: 44, objectFit: "contain", filter: `drop-shadow(0 0 16px ${C.primary}66)` }} />
         <span style={{ color: C.text, fontWeight: 700, letterSpacing: "-0.02em", fontSize: 20 }}>3XVISIBILITY</span>
       </div>
       {/* Bottom progress bar */}
