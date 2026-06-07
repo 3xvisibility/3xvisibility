@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { Users, Rocket, AlertCircle, CheckCircle2, Search, Pencil, RotateCcw, UserPlus, FileText, Activity, Zap, ShieldAlert, MoreHorizontal, Ban, Trash2, ShieldCheck, ShieldOff, UserCog, BarChart3, ChevronLeft, ChevronRight, Pause, Play, Mail } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AiCreditsAdminPanel } from "@/components/admin/AiCreditsAdminPanel";
 import { AdminConnectionsPanel } from "@/components/admin/AdminConnectionsPanel";
