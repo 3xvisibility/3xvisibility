@@ -117,7 +117,28 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
-    if (hasBuiltinCoverage(language)) return;
+    // English is the source language — nothing to translate.
+    if (language === "en") return;
+
+    // For languages with built-in t() coverage, React handles the UI. Only
+    // translate explicitly opted-in subtrees ([data-auto-translate]) such as
+    // marketing pages that have no t() calls. For languages without built-in
+    // coverage, translate the whole document.
+    const builtin = hasBuiltinCoverage(language);
+    const getRoots = (): ParentNode[] => {
+      if (builtin) {
+        return Array.from(document.querySelectorAll<HTMLElement>("[data-auto-translate]"));
+      }
+      return [document.body];
+    };
+    const collectAll = (): Target[] => {
+      const out: Target[] = [];
+      for (const root of getRoots()) {
+        out.push(...collectTextTargets(root));
+        out.push(...collectAttrTargets(root));
+      }
+      return out;
+    };
 
     let observer: MutationObserver | null = null;
     let debounceTimer: number | null = null;
