@@ -292,6 +292,9 @@ const vi: Record<string, string> = {
   "video.title": "Xem hoạt động thực tế",
   "video.uptimeSLA": "SLA Uptime",
   "video.watchDemo": "Xem demo 2 phút",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default vi;

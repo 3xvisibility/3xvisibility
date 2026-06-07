@@ -1166,6 +1166,9 @@ const pt: Record<string, string> = {
   "workspaceSettings.workspaceDetails": "Detalhes do espaço de trabalho",
   "workspaceSettings.workspaceDetailsDesc": "Atualize o nome do seu espaço de trabalho. Somente proprietários de workspaces podem renomear.",
   "workspaceSettings.workspaceName": "Nome do espaço de trabalho",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default pt;

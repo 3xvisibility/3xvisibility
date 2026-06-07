@@ -292,6 +292,9 @@ const zh: Record<string, string> = {
   "video.title": "查看实际效果",
   "video.uptimeSLA": "正常运行时间SLA",
   "video.watchDemo": "观看2分钟演示",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default zh;

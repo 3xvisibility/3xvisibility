@@ -1167,6 +1167,9 @@ const de: Record<string, string> = {
   "workspaceSettings.workspaceDetails": "Arbeitsbereichsdetails",
   "workspaceSettings.workspaceDetailsDesc": "Aktualisieren Sie den Namen Ihres Arbeitsbereichs. Nur Arbeitsbereichs-Inhaber können den Namen ändern.",
   "workspaceSettings.workspaceName": "Workspace-Name",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default de;

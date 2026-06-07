@@ -291,6 +291,9 @@ const ja: Record<string, string> = {
   "video.title": "実際の動作を見る",
   "video.uptimeSLA": "アップタイムSLA",
   "video.watchDemo": "2分間のデモを見る",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default ja;

@@ -291,6 +291,9 @@ const no: Record<string, string> = {
   "video.title": "Se det i aksjon",
   "video.uptimeSLA": "Uptime SLA",
   "video.watchDemo": "Se 2-minutters demo",
+  "auth.repeatSignupNotice": "If you already have an account, please sign in or reset your password.",
+  "auth.repeatSignupSignIn": "Sign In",
+  "auth.repeatSignupReset": "Reset Password",
 };
 
 export default no;
