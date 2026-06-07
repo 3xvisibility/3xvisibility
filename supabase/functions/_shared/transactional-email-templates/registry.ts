@@ -4,6 +4,8 @@ import { template as contactNotification } from './contact-notification.tsx'
 import { template as contactReply } from './contact-reply.tsx'
 import { template as adminSignupNotification } from './admin-signup-notification.tsx'
 import { template as adminResetNotification } from './admin-reset-notification.tsx'
+import { template as adminResetCompleted } from './admin-reset-completed.tsx'
+
 
 export interface TemplateEntry {
   component: ComponentType<any>
