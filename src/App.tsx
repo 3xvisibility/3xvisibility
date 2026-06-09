@@ -169,7 +169,20 @@ const App = () => {
       }
     });
     supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
+        // Validate the cached session against the server. A locally cached token
+        // can reference a session that no longer exists (e.g. after an admin
+        // password reset), which causes every authenticated call to 401.
+        if (session) {
+          const { error } = await supabase.auth.getUser();
+          if (error) {
+            await supabase.auth.signOut();
+            clearExpiredLocalAuthSession();
+            setSession(null);
+            setLoading(false);
+            return;
+          }
+        }
         setSession(session);
         setLoading(false);
       })
