@@ -589,6 +589,7 @@ export default function AdminPage() {
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<Campaign | null>(null);
   const [detailUserId, setDetailUserId] = useState<string | null>(searchParams.get("userId"));
   const [editProfileUser, setEditProfileUser] = useState<AdminUser | null>(null);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
   // Generated pages state
   const [pageSearch, setPageSearch] = useState("");
   const [pageStatusFilter, setPageStatusFilter] = useState("__all__");
