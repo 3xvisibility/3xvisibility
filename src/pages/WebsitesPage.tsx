@@ -227,6 +227,19 @@ export default function WebsitesPage() {
       });
       return;
     }
+    // Plan-based platform guard (defense in depth — UI also disables these)
+    if (
+      (siteType === "shopify" && !canUseFeature("shopify")) ||
+      (siteType === "woocommerce" && !canUseFeature("woocommerce")) ||
+      (siteType === "prestashop" && !canUseFeature("prestashop"))
+    ) {
+      toast({
+        title: "Upgrade required",
+        description: `${siteType} integration is not available on your current plan.`,
+        variant: "destructive",
+      });
+      return;
+    }
     if (!siteUrl && !(siteType === "shopify" && shopDomain)) {
       toast({ title: "Error", description: "Missing website info", variant: "destructive" });
       return;
