@@ -1038,6 +1038,9 @@ export default function AdminPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Button className="h-9 gap-2 ml-auto" onClick={() => setCreateUserOpen(true)}>
+              <UserPlus className="h-4 w-4" /> Create User
+            </Button>
           </div>
           {isLoading ? (
             <Skeleton className="h-[300px] rounded-xl" />
