@@ -281,6 +281,7 @@ export default function TemplatesPage() {
       if (!tpl) throw new Error("Marketplace template no longer exists");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const version = computeMarketplaceVersion(tpl);
       const { error } = await supabase.from("templates").insert({
         name: `${tpl.name} (Marketplace · ${version})`,
