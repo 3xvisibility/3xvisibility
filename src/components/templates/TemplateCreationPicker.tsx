@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
   ArrowRight, CheckCircle2, Target, Plus, X, Loader2,
-  FileText, ShoppingBag, Briefcase, FolderOpen, Folder, Layers,
+  FileText, ShoppingBag, Briefcase, FolderOpen, Folder, Layers, Lock,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
+import type { FeatureKey } from "@/lib/plan-features";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Website = Tables<"websites">;
