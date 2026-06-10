@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { usePersistedSnapshot } from "@/hooks/use-persisted-state";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw, Image as ImageIcon, Lock } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSubscription } from "@/hooks/use-subscription";
 
 const AI_LANGUAGES = [
   { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
@@ -46,11 +47,12 @@ const BUSINESS_TYPES = [
 ];
 
 const PLATFORMS = [
-  { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor" },
-  { value: "shopify", label: "Shopify", icon: "🛍️", desc: "Liquid-friendly markup" },
-  { value: "prestashop", label: "PrestaShop", icon: "🛒", desc: "Smarty-compatible" },
-  { value: "generic", label: "Universal HTML", icon: "🌐", desc: "Works anywhere" },
+  { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor", feature: "wordpress" as const },
+  { value: "shopify", label: "Shopify", icon: "🛍️", desc: "Liquid-friendly markup", feature: "shopify" as const },
+  { value: "prestashop", label: "PrestaShop", icon: "🛒", desc: "Smarty-compatible", feature: "prestashop" as const, comingSoon: true },
+  { value: "generic", label: "Universal HTML", icon: "🌐", desc: "Works anywhere", feature: "shopify" as const },
 ];
+
 
 const SECTIONS = [
   { value: "hero", label: "Hero Banner" },
@@ -79,6 +81,55 @@ interface AiTemplateBuilderDialogProps {
 export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, onContentGenerated }: AiTemplateBuilderDialogProps) {
   const [mode, setMode] = useState<"builder" | "content">("builder");
   const [step, setStep] = useState<"configure" | "review">("configure");
+  const { features, plan } = useSubscription();
+
+  // Whether a platform can be selected on the current plan.
+  // PrestaShop is always locked (Coming Soon) regardless of plan.
+  const isPlatformLocked = (p: typeof PLATFORMS[number]) =>
+    p.comingSoon || !features[p.feature];
+
+  const renderPlatformPicker = () => (
+    <div>
+      <Label className="flex items-center gap-2 text-sm font-semibold mb-2">
+        <Layers className="h-4 w-4 text-primary" /> Target Platform
+      </Label>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {PLATFORMS.map((p) => {
+          const locked = isPlatformLocked(p);
+          return (
+            <button
+              key={p.value}
+              type="button"
+              disabled={locked}
+              onClick={() => !locked && setPlatform(p.value)}
+              className={`relative flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                locked
+                  ? "border-border bg-muted/40 opacity-60 cursor-not-allowed"
+                  : platform === p.value
+                    ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                    : "border-border bg-card hover:bg-accent"
+              }`}
+            >
+              {p.comingSoon ? (
+                <Badge variant="secondary" className="absolute top-1.5 right-1.5 text-[8px] px-1.5 py-0 h-4">Coming Soon</Badge>
+              ) : locked ? (
+                <Lock className="absolute top-1.5 right-1.5 h-3 w-3 text-muted-foreground" />
+              ) : null}
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{p.icon}</span>
+                <span className="text-xs font-semibold">{p.label}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                {p.comingSoon ? "Coming soon" : locked ? "Upgrade to unlock" : p.desc}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+
 
   // Builder state
   const [businessType, setBusinessType] = useState("");
@@ -90,6 +141,13 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedName, setGeneratedName] = useState("");
   const [platform, setPlatform] = useState("wordpress");
+
+  // Reset to WordPress if the selected platform isn't available on this plan.
+  useEffect(() => {
+    const current = PLATFORMS.find(p => p.value === platform);
+    if (current && isPlatformLocked(current)) setPlatform("wordpress");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform, features]);
 
   // Theme color controls
   const [themeMode, setThemeMode] = useState<"auto" | "website" | "custom">("auto");
@@ -413,31 +471,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             </div>
 
             {/* Platform picker */}
-            <div>
-              <Label className="flex items-center gap-2 text-sm font-semibold mb-2">
-                <Layers className="h-4 w-4 text-primary" /> Target Platform
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PLATFORMS.map((p) => (
-                  <button
-                    key={p.value}
-                    type="button"
-                    onClick={() => setPlatform(p.value)}
-                    className={`flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
-                      platform === p.value
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                        : "border-border bg-card hover:bg-accent"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">{p.icon}</span>
-                      <span className="text-xs font-semibold">{p.label}</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{p.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {renderPlatformPicker()}
 
             <div>
               <Label className="text-sm font-semibold mb-2 block">Sections to include</Label>
@@ -743,31 +777,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               />
             </div>
 
-            <div>
-              <Label className="flex items-center gap-2 text-sm font-semibold mb-2">
-                <Layers className="h-4 w-4 text-primary" /> Target Platform
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PLATFORMS.map((p) => (
-                  <button
-                    key={p.value}
-                    type="button"
-                    onClick={() => setPlatform(p.value)}
-                    className={`flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
-                      platform === p.value
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                        : "border-border bg-card hover:bg-accent"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">{p.icon}</span>
-                      <span className="text-xs font-semibold">{p.label}</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">{p.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+            {renderPlatformPicker()}
 
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Content Type</Label>

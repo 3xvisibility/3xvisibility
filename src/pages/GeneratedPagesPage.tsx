@@ -34,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { logAudit } from "@/lib/audit";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useSubscription } from "@/hooks/use-subscription";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string; publish_type?: string | null } | null;
@@ -84,6 +85,7 @@ export default function GeneratedPagesPage() {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
+  const { pagesUsed, pagesLimit, pagesRemaining, plan } = useSubscription();
   const wsId = currentWorkspace?.id;
 
   const getPublishFailureMessage = (data: any, fallback: string) => {
@@ -552,6 +554,12 @@ export default function GeneratedPagesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("generatedPages.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t("generatedPages.description")}</p>
+          <p className="text-xs mt-1.5">
+            <span className="font-semibold text-foreground">{pagesUsed}</span>
+            <span className="text-muted-foreground"> / {pagesLimit} pages generated · </span>
+            <span className="font-semibold text-primary">{pagesRemaining}</span>
+            <span className="text-muted-foreground"> remaining on the {plan} plan</span>
+          </p>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
           <Select value={publishType} onValueChange={(v) => setPublishType(v as "page" | "product")}>
