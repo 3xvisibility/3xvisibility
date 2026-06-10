@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import {
   Paintbrush, Sparkles, Globe, MonitorSmartphone,
   ArrowRight, CheckCircle2, Target, Plus, X, Loader2,
-  FileText, ShoppingBag, Briefcase, FolderOpen, Folder, Layers,
+  FileText, ShoppingBag, Briefcase, FolderOpen, Folder, Layers, Lock,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
+import type { FeatureKey } from "@/lib/plan-features";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Website = Tables<"websites">;
@@ -71,11 +73,11 @@ const CONTENT_TYPES: { id: ContentType; icon: typeof FileText; label: string; de
   { id: "services", icon: Briefcase, label: "Services", desc: "Service offerings & descriptions" },
 ];
 
-const PLATFORMS: { id: TargetPlatform; icon: string; label: string; desc: string }[] = [
-  { id: "wordpress", icon: "🟦", label: "WordPress / Elementor", desc: "Editable in Elementor page builder" },
-  { id: "shopify", icon: "🛍️", label: "Shopify", desc: "Liquid-friendly, OS 2.0 sections" },
-  { id: "prestashop", icon: "🛒", label: "PrestaShop", desc: "Smarty + Bootstrap grid" },
-  { id: "generic", icon: "🌐", label: "Universal HTML", desc: "Works on any platform" },
+const PLATFORMS: { id: TargetPlatform; icon: string; label: string; desc: string; feature: FeatureKey; comingSoon?: boolean }[] = [
+  { id: "wordpress", icon: "🟦", label: "WordPress / Elementor", desc: "Editable in Elementor page builder", feature: "wordpress" },
+  { id: "shopify", icon: "🛍️", label: "Shopify", desc: "Liquid-friendly, OS 2.0 sections", feature: "shopify" },
+  { id: "prestashop", icon: "🛒", label: "PrestaShop", desc: "Smarty + Bootstrap grid", feature: "prestashop", comingSoon: true },
+  { id: "generic", icon: "🌐", label: "Universal HTML", desc: "Works on any platform", feature: "shopify" },
 ];
 
 const FALLBACK_KEYWORDS = [
@@ -92,6 +94,17 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [contentType, setContentType] = useState<ContentType>("pages");
   const [platform, setPlatform] = useState<TargetPlatform>("wordpress");
   const [folderFilter, setFolderFilter] = useState<string>("__all__");
+
+  const { features } = useSubscription();
+  // PrestaShop is always locked (Coming Soon). Others gated by plan feature flags.
+  const isPlatformLocked = (p: typeof PLATFORMS[number]) => p.comingSoon || !features[p.feature];
+
+  // Reset to WordPress if the selected platform isn't allowed on this plan.
+  useEffect(() => {
+    const current = PLATFORMS.find(p => p.id === platform);
+    if (current && isPlatformLocked(current)) setPlatform("wordpress");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform, features]);
 
   // AI keyword suggestion
   const [businessNiche, setBusinessNiche] = useState("");
@@ -283,24 +296,41 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
                 Choose where this template will be used. The editor will scaffold platform-specific markup so it stays editable in the native page builder.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PLATFORMS.map(p => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setPlatform(p.id)}
-                    className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
-                      platform === p.id
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                        : "border-border bg-card hover:bg-accent"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">{p.icon}</span>
-                      <span className="text-xs font-semibold">{p.label}</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground leading-tight">{p.desc}</span>
-                  </button>
-                ))}
+                {PLATFORMS.map(p => {
+                  const locked = isPlatformLocked(p);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={locked}
+                      onClick={() => !locked && setPlatform(p.id)}
+                      className={`relative flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border-2 text-left transition-all overflow-hidden ${
+                        p.comingSoon
+                          ? "border-amber-500/40 bg-amber-500/5 cursor-not-allowed"
+                          : locked
+                            ? "border-border bg-muted/40 opacity-60 cursor-not-allowed"
+                            : platform === p.id
+                              ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                              : "border-border bg-card hover:bg-accent"
+                      }`}
+                    >
+                      {p.comingSoon ? (
+                        <span className="absolute top-1.5 right-1.5 inline-flex items-center gap-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-black shadow-sm">
+                          <Lock className="h-2.5 w-2.5" /> Coming Soon
+                        </span>
+                      ) : locked ? (
+                        <Lock className="absolute top-1.5 right-1.5 h-3 w-3 text-muted-foreground" />
+                      ) : null}
+                      <div className={`flex items-center gap-1.5 ${p.comingSoon ? "opacity-70" : ""}`}>
+                        <span className="text-base">{p.icon}</span>
+                        <span className="text-xs font-semibold">{p.label}</span>
+                      </div>
+                      <span className={`text-[10px] leading-tight ${p.comingSoon ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                        {p.comingSoon ? "Not available yet" : locked ? "Upgrade to unlock" : p.desc}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
