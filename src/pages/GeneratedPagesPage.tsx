@@ -140,6 +140,9 @@ export default function GeneratedPagesPage() {
           );
           // Toast on terminal publish transitions for the WP/Shopify flow.
           if (prev?.status !== next.status) {
+            // Keep the plan usage counter (remaining pages text) in sync
+            // whenever a page reaches a terminal generation/publish state.
+            queryClient.invalidateQueries({ queryKey: ["user-subscription", wsId] });
             if (next.status === "published") {
               toast({
                 title: "Page published",
@@ -161,6 +164,7 @@ export default function GeneratedPagesPage() {
         () => {
           queryClient.invalidateQueries({ queryKey: ["generated-pages", wsId] });
           queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
+          queryClient.invalidateQueries({ queryKey: ["user-subscription", wsId] });
         }
       )
       .on(

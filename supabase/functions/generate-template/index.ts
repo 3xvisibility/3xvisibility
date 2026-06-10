@@ -22,6 +22,15 @@ serve(async (req) => {
       });
     }
 
+    // PrestaShop is not available yet (Coming Soon) — block on every plan.
+    if (platform === "prestashop") {
+      return new Response(JSON.stringify({ error: "PrestaShop is coming soon and not available yet. Please choose another platform." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
