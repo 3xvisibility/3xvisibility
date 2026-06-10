@@ -256,6 +256,68 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (action === "create-user") {
+      const { email, password, full_name, company, plan, pages_limit, total_credits } = body;
+      const emailStr = String(email || "").trim();
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRe.test(emailStr)) {
+        return new Response(JSON.stringify({ error: "Invalid email address" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const pwd = String(password || "");
+      if (pwd.length < 6) {
+        return new Response(JSON.stringify({ error: "Password must be at least 6 characters" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const { data: created, error: createErr } = await serviceClient.auth.admin.createUser({
+        email: emailStr,
+        password: pwd,
+        email_confirm: true,
+        user_metadata: { full_name: full_name || null, company: company || null },
+      });
+      if (createErr) throw createErr;
+      const newUserId = created.user?.id;
+      if (!newUserId) {
+        return new Response(JSON.stringify({ error: "Failed to create user" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // The handle_new_user trigger seeds profile/subscription/role.
+      // Apply the requested plan + quotas on top of the defaults.
+      const selectedPlan = plan || "free";
+
+      // Wait briefly to allow trigger-created rows to settle, then upsert.
+      const profileUpdates: Record<string, any> = { updated_at: new Date().toISOString() };
+      if (full_name !== undefined) profileUpdates.full_name = full_name;
+      if (company !== undefined) profileUpdates.company = company;
+      await serviceClient.from("profiles").update(profileUpdates).eq("user_id", newUserId);
+
+      const subRow: Record<string, any> = {
+        user_id: newUserId,
+        plan: selectedPlan,
+        updated_at: new Date().toISOString(),
+      };
+      if (pages_limit !== undefined && pages_limit !== null) subRow.pages_limit = Math.max(0, Math.floor(Number(pages_limit)));
+      const { data: existingSub } = await serviceClient.from("subscriptions").select("id").eq("user_id", newUserId).maybeSingle();
+      if (existingSub?.id) {
+        await serviceClient.from("subscriptions").update(subRow).eq("id", existingSub.id);
+      } else {
+        await serviceClient.from("subscriptions").insert(subRow);
+      }
+
+      if (total_credits !== undefined && total_credits !== null) {
+        const total = Math.max(0, Math.floor(Number(total_credits)));
+        await serviceClient.from("ai_credits").upsert({
+          user_id: newUserId,
+          total_credits: total,
+          remaining_credits: total,
+          used_credits: 0,
+          plan: selectedPlan,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+      }
+
+      return new Response(JSON.stringify({ success: true, user_id: newUserId }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // Reset a user's password. Either set a specific new password directly,
     // or generate a recovery link the admin can share with the user.
     if (action === "reset-user-password") {
