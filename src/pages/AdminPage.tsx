@@ -113,19 +113,20 @@ interface ActivityItem {
   user_email?: string;
 }
 
+// Page quota per plan — single source of truth is PLAN_FEATURES (src/lib/plan-features.ts)
 const PLAN_LIMITS: Record<string, number> = {
-  free: 0,
-  starter: 100,
-  pro: 2000,
-  agency: 10000,
+  free: PLAN_FEATURES.free.pagesLimit,
+  starter: PLAN_FEATURES.starter.pagesLimit,
+  pro: PLAN_FEATURES.pro.pagesLimit,
+  agency: PLAN_FEATURES.agency.pagesLimit,
 };
 
 // AI credit quota per plan — kept in sync with the subscription plan
 const PLAN_CREDITS: Record<string, number> = {
-  free: 0,
-  starter: 100,
-  pro: 1000,
-  agency: 5000,
+  free: PLAN_FEATURES.free.aiLimit,
+  starter: PLAN_FEATURES.starter.aiLimit,
+  pro: PLAN_FEATURES.pro.aiLimit,
+  agency: PLAN_FEATURES.agency.aiLimit,
 };
 
 function StatCard({ title, value, icon: Icon, subtitle, variant }: {
