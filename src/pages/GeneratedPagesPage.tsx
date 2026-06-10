@@ -164,6 +164,7 @@ export default function GeneratedPagesPage() {
         () => {
           queryClient.invalidateQueries({ queryKey: ["generated-pages", wsId] });
           queryClient.invalidateQueries({ queryKey: ["dashboard-page-count"] });
+          queryClient.invalidateQueries({ queryKey: ["user-subscription", wsId] });
         }
       )
       .on(
