@@ -99,6 +99,13 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   // PrestaShop is always locked (Coming Soon). Others gated by plan feature flags.
   const isPlatformLocked = (p: typeof PLATFORMS[number]) => p.comingSoon || !features[p.feature];
 
+  // Reset to WordPress if the selected platform isn't allowed on this plan.
+  useEffect(() => {
+    const current = PLATFORMS.find(p => p.id === platform);
+    if (current && isPlatformLocked(current)) setPlatform("wordpress");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform, features]);
+
   // AI keyword suggestion
   const [businessNiche, setBusinessNiche] = useState("");
   const [aiSuggesting, setAiSuggesting] = useState(false);
