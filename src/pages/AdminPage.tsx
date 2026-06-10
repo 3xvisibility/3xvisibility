@@ -29,6 +29,7 @@ import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 import { ContactInboxPanel } from "@/components/admin/ContactInboxPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
+import { PLAN_FEATURES } from "@/lib/plan-features";
 
 interface AdminUser {
   id: string;
