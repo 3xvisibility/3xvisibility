@@ -554,6 +554,12 @@ export default function GeneratedPagesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("generatedPages.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t("generatedPages.description")}</p>
+          <p className="text-xs mt-1.5">
+            <span className="font-semibold text-foreground">{pagesUsed}</span>
+            <span className="text-muted-foreground"> / {pagesLimit} pages generated · </span>
+            <span className="font-semibold text-primary">{pagesRemaining}</span>
+            <span className="text-muted-foreground"> remaining on the {plan} plan</span>
+          </p>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
           <Select value={publishType} onValueChange={(v) => setPublishType(v as "page" | "product")}>
