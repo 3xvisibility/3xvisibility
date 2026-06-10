@@ -254,6 +254,7 @@ export default function TemplatesPage() {
     mutationFn: async (tpl: Template) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const { error } = await supabase.from("templates").insert({
         name: `${tpl.name} (Copy)`, content: tpl.content, variables: tpl.variables,
         user_id: user.id, workspace_id: wsId,
