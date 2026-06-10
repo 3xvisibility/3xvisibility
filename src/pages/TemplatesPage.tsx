@@ -254,6 +254,7 @@ export default function TemplatesPage() {
     mutationFn: async (tpl: Template) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const { error } = await supabase.from("templates").insert({
         name: `${tpl.name} (Copy)`, content: tpl.content, variables: tpl.variables,
         user_id: user.id, workspace_id: wsId,
@@ -280,6 +281,7 @@ export default function TemplatesPage() {
       if (!tpl) throw new Error("Marketplace template no longer exists");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const version = computeMarketplaceVersion(tpl);
       const { error } = await supabase.from("templates").insert({
         name: `${tpl.name} (Marketplace · ${version})`,
@@ -340,6 +342,7 @@ export default function TemplatesPage() {
       if (!data.name || !data.content) throw new Error("Invalid template file.");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const { error } = await supabase.from("templates").insert({ name: data.name, content: data.content, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["templates"] });
