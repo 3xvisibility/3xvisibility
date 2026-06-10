@@ -261,11 +261,18 @@ function EditSubscriptionDialog({
   // Sync state when dialog opens with new data
   useEffect(() => {
     if (!open) return;
-    setPlan(subscription?.plan || user?.plan || "free");
-    setPagesLimit(String(subscription?.pages_limit ?? user?.pages_limit ?? 0));
+    const currentPlan = subscription?.plan || user?.plan || "free";
+    setPlan(currentPlan);
+    // Always align the quota and credit limits with the plan's configured values
+    const planPages = PLAN_LIMITS[currentPlan];
+    const planCredits = PLAN_CREDITS[currentPlan];
+    setPagesLimit(String(planPages ?? subscription?.pages_limit ?? user?.pages_limit ?? 0));
     setPagesUsed(String(subscription?.pages_used ?? user?.pages_used ?? 0));
-    setCreditsTotal(String(user?.credits_total ?? 100));
-    setCreditsRemaining(String(user?.credits_remaining ?? user?.credits_total ?? 100));
+    setCreditsTotal(String(planCredits ?? user?.credits_total ?? 0));
+    // Remaining = limit - already used, clamped to the plan limit
+    const used = Math.max(0, Number(user?.credits_total ?? 0) - Number(user?.credits_remaining ?? user?.credits_total ?? 0));
+    const limit = planCredits ?? Number(user?.credits_total ?? 0);
+    setCreditsRemaining(String(Math.max(0, Math.min(limit, limit - used))));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, user?.id, subscription?.id]);
 
