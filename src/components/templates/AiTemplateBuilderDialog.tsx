@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw, Image as ImageIcon, Lock } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSubscription } from "@/hooks/use-subscription";
 
 const AI_LANGUAGES = [
   { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
