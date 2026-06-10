@@ -394,7 +394,128 @@ function EditSubscriptionDialog({
   );
 }
 
-// --- Per-row actions menu ---
+// --- Create User Dialog ---
+function CreateUserDialog({
+  open,
+  onOpenChange,
+  onCreate,
+  creating,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onCreate: (data: {
+    email: string;
+    password: string;
+    full_name: string;
+    company: string;
+    plan: string;
+    pages_limit: number;
+    total_credits: number;
+  }) => void;
+  creating: boolean;
+}) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [company, setCompany] = useState("");
+  const [plan, setPlan] = useState("free");
+  const [pagesLimit, setPagesLimit] = useState(String(PLAN_LIMITS.free ?? 0));
+  const [creditsTotal, setCreditsTotal] = useState(String(PLAN_CREDITS.free ?? 0));
+
+  useEffect(() => {
+    if (!open) return;
+    setEmail("");
+    setPassword("");
+    setFullName("");
+    setCompany("");
+    setPlan("free");
+    setPagesLimit(String(PLAN_LIMITS.free ?? 0));
+    setCreditsTotal(String(PLAN_CREDITS.free ?? 0));
+  }, [open]);
+
+  const handlePlanChange = (newPlan: string) => {
+    setPlan(newPlan);
+    if (PLAN_LIMITS[newPlan] !== undefined) setPagesLimit(String(PLAN_LIMITS[newPlan]));
+    if (PLAN_CREDITS[newPlan] !== undefined) setCreditsTotal(String(PLAN_CREDITS[newPlan]));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create New User</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Email *</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" />
+          </div>
+          <div className="space-y-2">
+            <Label>Password *</Label>
+            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 characters" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Full Name</Label>
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Company</Label>
+              <Input value={company} onChange={(e) => setCompany(e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Plan</Label>
+            <Select value={plan} onValueChange={handlePlanChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="starter">Starter</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="agency">Agency</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Pages Quota</Label>
+              <Input type="number" min={0} value={pagesLimit} onChange={(e) => setPagesLimit(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>AI Credits</Label>
+              <Input type="number" min={0} value={creditsTotal} onChange={(e) => setCreditsTotal(e.target.value)} />
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={creating}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() =>
+              onCreate({
+                email: email.trim(),
+                password,
+                full_name: fullName.trim(),
+                company: company.trim(),
+                plan,
+                pages_limit: Number(pagesLimit),
+                total_credits: Number(creditsTotal),
+              })
+            }
+            disabled={creating || !email.trim() || password.length < 6}
+          >
+            {creating ? "Creating…" : "Create User"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 function UserActionsMenu({
   u, onViewDetails, onEditPlan, onEditProfile, onSetRole, onToggleBan, onDelete,
 }: {
