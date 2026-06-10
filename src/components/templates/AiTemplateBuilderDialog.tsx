@@ -47,11 +47,12 @@ const BUSINESS_TYPES = [
 ];
 
 const PLATFORMS = [
-  { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor" },
-  { value: "shopify", label: "Shopify", icon: "🛍️", desc: "Liquid-friendly markup" },
-  { value: "prestashop", label: "PrestaShop", icon: "🛒", desc: "Smarty-compatible" },
-  { value: "generic", label: "Universal HTML", icon: "🌐", desc: "Works anywhere" },
+  { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor", feature: "wordpress" as const },
+  { value: "shopify", label: "Shopify", icon: "🛍️", desc: "Liquid-friendly markup", feature: "shopify" as const },
+  { value: "prestashop", label: "PrestaShop", icon: "🛒", desc: "Smarty-compatible", feature: "prestashop" as const, comingSoon: true },
+  { value: "generic", label: "Universal HTML", icon: "🌐", desc: "Works anywhere", feature: "shopify" as const },
 ];
+
 
 const SECTIONS = [
   { value: "hero", label: "Hero Banner" },
