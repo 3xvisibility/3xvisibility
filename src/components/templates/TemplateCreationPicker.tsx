@@ -193,12 +193,18 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
   const handleContinue = () => {
     if (!selected) return;
     const website = websites.find(w => w.id === selectedWebsiteId);
+    // Guarantee the target platform is one this plan can actually use.
+    // Locked platforms (or PrestaShop "Coming Soon") always fall back to
+    // WordPress so "Design Your Own" parses/targets the right markup.
+    const currentPlatform = PLATFORMS.find(p => p.id === platform);
+    const effectivePlatform: TargetPlatform =
+      currentPlatform && !isPlatformLocked(currentPlatform) ? platform : "wordpress";
     onSelect(selected, {
       selectedKeywords,
       targetUrl: selected === "url" ? targetUrl : undefined,
       selectedWebsite: selected === "website" ? website : undefined,
       contentType: selected === "website" ? contentType : undefined,
-      platform: selected === "design" ? platform : undefined,
+      platform: selected === "design" ? effectivePlatform : undefined,
     });
     // Reset
     setSelected(null);
