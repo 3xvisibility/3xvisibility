@@ -123,7 +123,8 @@ export async function createProductConnector(website: WebsiteRecord): Promise<Cm
       return new ShopifyConnector(config);
     }
     case "prestashop":
-      return new PrestaShopConnector(buildConfig(website, creds));
+      // PrestaShop is Coming Soon — publishing is disabled on every plan.
+      throw new Error("PrestaShop publishing is coming soon and not available yet.");
     case "woocommerce":
       return new WooCommerceConnector(buildConfig(website, creds));
     default:
