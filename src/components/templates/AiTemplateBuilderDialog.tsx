@@ -142,6 +142,13 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [generatedName, setGeneratedName] = useState("");
   const [platform, setPlatform] = useState("wordpress");
 
+  // Reset to WordPress if the selected platform isn't available on this plan.
+  useEffect(() => {
+    const current = PLATFORMS.find(p => p.value === platform);
+    if (current && isPlatformLocked(current)) setPlatform("wordpress");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [platform, features]);
+
   // Theme color controls
   const [themeMode, setThemeMode] = useState<"auto" | "website" | "custom">("auto");
   const [websiteId, setWebsiteId] = useState<string>("");
