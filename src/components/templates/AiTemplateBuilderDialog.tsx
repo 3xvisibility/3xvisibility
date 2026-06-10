@@ -81,6 +81,55 @@ interface AiTemplateBuilderDialogProps {
 export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, onContentGenerated }: AiTemplateBuilderDialogProps) {
   const [mode, setMode] = useState<"builder" | "content">("builder");
   const [step, setStep] = useState<"configure" | "review">("configure");
+  const { features, plan } = useSubscription();
+
+  // Whether a platform can be selected on the current plan.
+  // PrestaShop is always locked (Coming Soon) regardless of plan.
+  const isPlatformLocked = (p: typeof PLATFORMS[number]) =>
+    p.comingSoon || !features[p.feature];
+
+  const renderPlatformPicker = () => (
+    <div>
+      <Label className="flex items-center gap-2 text-sm font-semibold mb-2">
+        <Layers className="h-4 w-4 text-primary" /> Target Platform
+      </Label>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {PLATFORMS.map((p) => {
+          const locked = isPlatformLocked(p);
+          return (
+            <button
+              key={p.value}
+              type="button"
+              disabled={locked}
+              onClick={() => !locked && setPlatform(p.value)}
+              className={`relative flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                locked
+                  ? "border-border bg-muted/40 opacity-60 cursor-not-allowed"
+                  : platform === p.value
+                    ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                    : "border-border bg-card hover:bg-accent"
+              }`}
+            >
+              {p.comingSoon ? (
+                <Badge variant="secondary" className="absolute top-1.5 right-1.5 text-[8px] px-1.5 py-0 h-4">Coming Soon</Badge>
+              ) : locked ? (
+                <Lock className="absolute top-1.5 right-1.5 h-3 w-3 text-muted-foreground" />
+              ) : null}
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">{p.icon}</span>
+                <span className="text-xs font-semibold">{p.label}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                {p.comingSoon ? "Coming soon" : locked ? "Upgrade to unlock" : p.desc}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+
 
   // Builder state
   const [businessType, setBusinessType] = useState("");
