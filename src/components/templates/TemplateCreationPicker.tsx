@@ -289,24 +289,41 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
                 Choose where this template will be used. The editor will scaffold platform-specific markup so it stays editable in the native page builder.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {PLATFORMS.map(p => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setPlatform(p.id)}
-                    className={`flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
-                      platform === p.id
-                        ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-                        : "border-border bg-card hover:bg-accent"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-base">{p.icon}</span>
-                      <span className="text-xs font-semibold">{p.label}</span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground leading-tight">{p.desc}</span>
-                  </button>
-                ))}
+                {PLATFORMS.map(p => {
+                  const locked = isPlatformLocked(p);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={locked}
+                      onClick={() => !locked && setPlatform(p.id)}
+                      className={`relative flex flex-col items-start gap-1 px-3 py-2.5 rounded-lg border-2 text-left transition-all overflow-hidden ${
+                        p.comingSoon
+                          ? "border-amber-500/40 bg-amber-500/5 cursor-not-allowed"
+                          : locked
+                            ? "border-border bg-muted/40 opacity-60 cursor-not-allowed"
+                            : platform === p.id
+                              ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                              : "border-border bg-card hover:bg-accent"
+                      }`}
+                    >
+                      {p.comingSoon ? (
+                        <span className="absolute top-1.5 right-1.5 inline-flex items-center gap-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-black shadow-sm">
+                          <Lock className="h-2.5 w-2.5" /> Coming Soon
+                        </span>
+                      ) : locked ? (
+                        <Lock className="absolute top-1.5 right-1.5 h-3 w-3 text-muted-foreground" />
+                      ) : null}
+                      <div className={`flex items-center gap-1.5 ${p.comingSoon ? "opacity-70" : ""}`}>
+                        <span className="text-base">{p.icon}</span>
+                        <span className="text-xs font-semibold">{p.label}</span>
+                      </div>
+                      <span className={`text-[10px] leading-tight ${p.comingSoon ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                        {p.comingSoon ? "Not available yet" : locked ? "Upgrade to unlock" : p.desc}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
