@@ -1566,6 +1566,15 @@ export default function AdminPage() {
         saving={updateMutation.isPending}
       />
 
+      <CreateUserDialog
+        open={createUserOpen}
+        onOpenChange={setCreateUserOpen}
+        onCreate={(d) => createUserMutation.mutate(d)}
+        creating={createUserMutation.isPending}
+      />
+
+
+
       <UserDetailDialog
         userId={detailUserId}
         open={!!detailUserId}
