@@ -706,6 +706,26 @@ export default function AdminPage() {
     onError: (e: any) => toast.error(e.message || "Failed"),
   });
 
+  const createUserMutation = useMutation({
+    mutationFn: (vars: {
+      email: string;
+      password: string;
+      full_name: string;
+      company: string;
+      plan: string;
+      pages_limit: number;
+      total_credits: number;
+    }) => callAction({ action: "create-user", ...vars }),
+    onSuccess: () => {
+      toast.success("User created");
+      setCreateUserOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-panel"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to create user"),
+  });
+
+
+
   const deleteMutation = useMutation({
     mutationFn: (user_id: string) => callAction({ action: "delete-user", target_user_id: user_id }),
     onSuccess: () => {
