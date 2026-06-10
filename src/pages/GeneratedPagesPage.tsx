@@ -34,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { logAudit } from "@/lib/audit";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useSubscription } from "@/hooks/use-subscription";
 
 type GeneratedPage = Tables<"generated_pages"> & {
   campaigns?: { name: string; publish_type?: string | null } | null;
