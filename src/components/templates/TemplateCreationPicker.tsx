@@ -95,6 +95,10 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [platform, setPlatform] = useState<TargetPlatform>("wordpress");
   const [folderFilter, setFolderFilter] = useState<string>("__all__");
 
+  const { features } = useSubscription();
+  // PrestaShop is always locked (Coming Soon). Others gated by plan feature flags.
+  const isPlatformLocked = (p: typeof PLATFORMS[number]) => p.comingSoon || !features[p.feature];
+
   // AI keyword suggestion
   const [businessNiche, setBusinessNiche] = useState("");
   const [aiSuggesting, setAiSuggesting] = useState(false);
