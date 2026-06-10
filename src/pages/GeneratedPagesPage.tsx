@@ -85,6 +85,7 @@ export default function GeneratedPagesPage() {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
+  const { pagesUsed, pagesLimit, pagesRemaining, plan } = useSubscription();
   const wsId = currentWorkspace?.id;
 
   const getPublishFailureMessage = (data: any, fallback: string) => {
