@@ -566,19 +566,49 @@ Deno.serve(async (req) => {
     const plainText = page_content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     const truncatedText = plainText.slice(0, 3000);
 
-    // For content rewriting, strip <style> blocks and limit HTML size to avoid timeouts
+    // ── Reversible design preservation ──────────────────────────────────────
+    // We must NEVER lose the page's <style>/<script> blocks (that's what
+    // destroys the layout on republish). Instead of deleting them before the AI
+    // call, we swap each block for a UNIQUE comment placeholder, then restore
+    // the EXACT original blocks into the AI output afterwards. We also track if
+    // the HTML had to be truncated so we never push a cut-off body.
+    const CONTENT_CAP = 20000;
+    const preservedBlocks: string[] = [];
+    let contentTruncated = false;
     let truncatedHtml = "";
     if (fields.includes("content")) {
-      // Remove <style> blocks and <!-- STYLES --> sections to reduce size
+      const stash = (full: string): string => {
+        const idx = preservedBlocks.length;
+        preservedBlocks.push(full);
+        return `<!--PGP_KEEP_${idx}-->`;
+      };
       truncatedHtml = page_content
-        .replace(/<!--\s*STYLES\s*-->[\s\S]*?<!--\s*\/STYLES\s*-->/gi, "<!-- STYLES PRESERVED -->")
-        .replace(/<style[\s\S]*?<\/style>/gi, "/* styles preserved */")
-        .replace(/<script[\s\S]*?<\/script>/gi, "");
-      // Cap at 8000 chars to stay within token limits
-      if (truncatedHtml.length > 8000) {
-        truncatedHtml = truncatedHtml.slice(0, 8000) + "\n<!-- TRUNCATED -->";
+        .replace(/<!--\s*STYLES\s*-->[\s\S]*?<!--\s*\/STYLES\s*-->/gi, (m) => stash(m))
+        .replace(/<style[\s\S]*?<\/style>/gi, (m) => stash(m))
+        .replace(/<script[\s\S]*?<\/script>/gi, (m) => stash(m));
+      // Cap size to stay within token limits — but remember if we cut anything.
+      if (truncatedHtml.length > CONTENT_CAP) {
+        truncatedHtml = truncatedHtml.slice(0, CONTENT_CAP) + "\n<!-- TRUNCATED -->";
+        contentTruncated = true;
       }
     }
+
+    // Restore the exact original <style>/<script> blocks into AI-optimized HTML.
+    // Returns null when restoration can't be trusted (missing/duplicated/leftover
+    // placeholders) so the caller can safely fall back to the original content.
+    const restorePreservedBlocks = (html: string): string | null => {
+      if (!html) return null;
+      let restored = html;
+      for (let i = 0; i < preservedBlocks.length; i++) {
+        const marker = `<!--PGP_KEEP_${i}-->`;
+        const occurrences = restored.split(marker).length - 1;
+        if (occurrences !== 1) return null; // AI dropped or duplicated a block
+        restored = restored.replace(marker, () => preservedBlocks[i]);
+      }
+      if (/<!--PGP_KEEP_\d+-->/.test(restored)) return null; // stray placeholder
+      return restored;
+    };
+
 
     const systemPrompt = `You are an expert SEO/SEA/GEO content optimizer. Your output MUST score 90+ on ALL THREE scoring dimensions: SEO, SEA (Search Engine Advertising / Landing Page Quality), and GEO (Local/Geographic relevance).
 
@@ -587,6 +617,7 @@ ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
 - NEVER remove or modify: URLs, href links, src attributes, prices, cart elements, forms, buttons, iframes, scripts, images.
 - NEVER change: elementor-*, wp-*, shopify-*, woocommerce-*, product-*, cart-*, price-* classes.
 - NEVER alter: <style> blocks, inline styles, CSS classes, media queries.
+- CRITICAL: The HTML contains comment placeholders like <!--PGP_KEEP_0-->, <!--PGP_KEEP_1-->. These stand for the page's CSS/script blocks. You MUST keep EVERY one of them, byte-for-byte, in the EXACT same position. Never delete, duplicate, rename, move, or add these markers.
 - ONLY change the visible TEXT CONTENT inside HTML elements.
 - Keep EXACT same number of sections, divs, headings, paragraphs, lists.
 - Preserve ALL product data: prices, SKUs, variants, add-to-cart buttons, reviews, ratings.
@@ -777,10 +808,31 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       });
     }
 
+    // ── Rebuild the full design before any repair / save / push ─────────────
+    // The AI worked on a style-stripped (and possibly truncated) copy. We must
+    // restore the EXACT original <style>/<script> blocks, and if anything looks
+    // unsafe (truncated body, missing placeholders) fall back to the untouched
+    // original content so the live page NEVER loses its layout.
+    let designSafeContent: string | null = null;
+    if (includeContent && result.content) {
+      if (contentTruncated) {
+        console.warn("[OPTIMIZE] Content was truncated for AI — keeping original body to preserve full design.");
+        designSafeContent = page_content;
+      } else {
+        const restored = restorePreservedBlocks(result.content);
+        if (restored) {
+          designSafeContent = restored;
+        } else {
+          console.warn("[OPTIMIZE] AI dropped style/script placeholders — falling back to original body to preserve design.");
+          designSafeContent = page_content;
+        }
+      }
+    }
+
     // Auto-repair content to fix missing H1, links, schema, keyword placement,
     // SEA signals (CTA/benefit/trust/offer/urgency), and GEO signals (local/community/availability).
     // Run even when "content" wasn't explicitly requested — we still need the live page to score 10/10.
-    const baseContentForRepair = (includeContent && result.content) ? result.content : page_content;
+    const baseContentForRepair = designSafeContent || page_content;
     if (baseContentForRepair) {
       result.content = autoRepairContent(baseContentForRepair, {
         title: page_title,
