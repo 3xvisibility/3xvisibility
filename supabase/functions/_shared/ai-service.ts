@@ -446,21 +446,32 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   let fallbackUsed = false;
   let response: Response;
 
-  if (provider === "lovable") {
-    response = await callLovable(opts);
-  } else {
-    try {
-      response = await callExternal(provider, opts);
-      if (!response.ok) {
-        console.warn(`[ai-service] ${provider} returned ${response.status}, falling back to lovable`);
+  try {
+    if (provider === "lovable") {
+      response = await callLovable(opts);
+    } else {
+      try {
+        response = await callExternal(provider, opts);
+        if (!response.ok) {
+          console.warn(`[ai-service] ${provider} returned ${response.status}, falling back to lovable`);
+          response = await callLovable(opts);
+          fallbackUsed = true;
+        }
+      } catch (err) {
+        console.warn(`[ai-service] ${provider} failed:`, err, "— falling back to lovable");
         response = await callLovable(opts);
         fallbackUsed = true;
       }
-    } catch (err) {
-      console.warn(`[ai-service] ${provider} failed:`, err, "— falling back to lovable");
-      response = await callLovable(opts);
-      fallbackUsed = true;
     }
+  } catch (err) {
+    // Includes the AbortError → timeout case from fetchWithTimeout.
+    console.error("[ai-service] request failed:", err);
+    return {
+      success: false,
+      content: err instanceof Error ? err.message : "AI request failed. Please try again.",
+      provider: fallbackUsed ? "lovable" : provider,
+      fallback_used: fallbackUsed,
+    };
   }
 
   if (!response.ok) {
