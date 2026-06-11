@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password,
       });
       if (error || !data.user) {
