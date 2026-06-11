@@ -277,7 +277,20 @@ Deno.serve(async (req) => {
         url: p.url || "",
         h1: p.headings.find((h) => h.tag === "h1")?.text || "",
         snippet: p.textSnippet.slice(0, 200),
-      }));
+        }));
+
+      const credit = await deductCreditsForRequest(req, "default", "google/gemini-2.5-flash-lite");
+      if (!credit.allowed) {
+        return new Response(JSON.stringify({
+          error: credit.error === "insufficient_credits"
+            ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`
+            : "Authentication required to use AI features.",
+          remaining: credit.remaining ?? 0,
+        }), {
+          status: credit.error === "insufficient_credits" ? 402 : 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
