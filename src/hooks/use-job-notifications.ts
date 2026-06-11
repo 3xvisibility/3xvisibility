@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,7 +17,9 @@ interface NotificationPrefs {
  */
 export function useJobNotifications() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const handledRef = useRef<Set<string>>(new Set());
+  const usageWarnedRef = useRef<boolean>(false);
   const prefsRef = useRef<NotificationPrefs | null>(null);
 
   // Load notification preferences once
@@ -106,6 +109,54 @@ export function useJobNotifications() {
             type: isSuccess ? "success" : "error",
             campaign_id: job.campaign_id,
           });
+
+          // ── Post-generation usage validation ──────────────
+          // Compare the user's plan limits against their real usage now
+          // that pages have been generated, and warn if AI credits are
+          // close to (or over) the plan limit.
+          if (isSuccess) {
+            try {
+              const { data: sub } = await supabase
+                .from("subscriptions")
+                .select("plan, ai_generations_used, ai_generations_limit, pages_used, pages_limit")
+                .eq("user_id", job.user_id)
+                .maybeSingle();
+
+              // Keep all subscription-driven UI in sync with real usage
+              queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
+
+              const aiUsed = sub?.ai_generations_used ?? 0;
+              const aiLimit = sub?.ai_generations_limit ?? 0;
+              const usageAllowed = (prefsRef.current ?? {}).usage_limit !== false;
+
+              if (usageAllowed && aiLimit > 0) {
+                const aiPercent = aiUsed / aiLimit;
+                const aiRemaining = Math.max(0, aiLimit - aiUsed);
+
+                if (aiUsed >= aiLimit) {
+                  toast({
+                    title: "AI credits exhausted",
+                    description: `You've used all ${aiLimit} AI credits on the ${sub?.plan ?? "current"} plan. Upgrade to keep generating.`,
+                    variant: "destructive",
+                  });
+                  usageWarnedRef.current = true;
+                } else if (aiPercent >= 0.9 && !usageWarnedRef.current) {
+                  toast({
+                    title: "Approaching AI credit limit",
+                    description: `Only ${aiRemaining} of ${aiLimit} AI credits left (${Math.round(aiPercent * 100)}% used). Consider upgrading soon.`,
+                  });
+                  usageWarnedRef.current = true;
+                } else if (aiPercent < 0.9) {
+                  // Reset the warning latch once usage drops back below threshold
+                  usageWarnedRef.current = false;
+                }
+              }
+            } catch (usageErr) {
+              console.warn("Post-generation usage validation failed:", usageErr);
+            }
+          }
+
+
 
           // Fire webhooks for campaign completion events
           try {
