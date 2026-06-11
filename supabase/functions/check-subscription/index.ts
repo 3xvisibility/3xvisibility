@@ -20,9 +20,9 @@ const PRODUCT_TO_PLAN: Record<string, string> = {
 
 // Plan limits
 const PLAN_LIMITS: Record<string, { pages_limit: number; ai_generations_limit: number }> = {
-  free:    { pages_limit: 10,    ai_generations_limit: 5 },
-  starter: { pages_limit: 100,   ai_generations_limit: 50 },
-  pro:     { pages_limit: 1000,  ai_generations_limit: 500 },
+  free:    { pages_limit: 10,    ai_generations_limit: 10 },
+  starter: { pages_limit: 100,   ai_generations_limit: 100 },
+  pro:     { pages_limit: 1000,  ai_generations_limit: 1000 },
   agency:  { pages_limit: 10000, ai_generations_limit: 5000 },
 };
 
