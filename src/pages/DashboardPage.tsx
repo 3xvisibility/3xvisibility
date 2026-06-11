@@ -428,7 +428,7 @@ export default function DashboardPage() {
     }
   };
 
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed: subAiUsed, aiLimit: subAiLimit } = useSubscription();
+  
 
   return (
     <div className="space-y-8">
