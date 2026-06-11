@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useSubscription } from "@/hooks/use-subscription";
+import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
+import { useNavigate } from "react-router-dom";
 import ActiveAiProviderCard from "@/components/settings/ActiveAiProviderCard";
 import LocaleSettingsCard from "@/components/settings/LocaleSettingsCard";
 
