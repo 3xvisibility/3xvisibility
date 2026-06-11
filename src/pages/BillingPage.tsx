@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckoutSuccessOverlay } from "@/components/billing/CheckoutSuccessOverlay";
 import { CheckoutCanceledOverlay } from "@/components/billing/CheckoutCanceledOverlay";
+import { PaymentMethods } from "@/components/billing/PaymentMethods";
 import { logAudit } from "@/lib/audit";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
@@ -176,6 +177,10 @@ export default function BillingPage() {
     const isSuccess = searchParams.get("success") === "true";
     if (searchParams.get("canceled") === "true") {
       setShowCanceled(true);
+    }
+    if (searchParams.get("card_added") === "true") {
+      toast({ title: "Payment method saved", description: "Your card is now on file." });
+      setSearchParams({}, { replace: true });
     }
 
     const syncSubscription = async (retries = 0) => {
@@ -363,6 +368,9 @@ export default function BillingPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment methods */}
+      <PaymentMethods />
 
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-3">
