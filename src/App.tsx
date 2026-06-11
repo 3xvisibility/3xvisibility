@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -151,6 +151,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     clearExpiredLocalAuthSession();
@@ -162,6 +163,16 @@ const App = () => {
       setLoading(false);
     }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Supabase re-fires SIGNED_IN / TOKEN_REFRESHED every time the tab regains
+      // focus. Updating session state on those redundant events causes the whole
+      // app to re-render and can unmount the active page, wiping in-progress work.
+      // Only update when the authenticated user actually changes.
+      const newUserId = session?.user?.id ?? null;
+      if (newUserId === lastUserIdRef.current && event !== "SIGNED_OUT") {
+        setLoading(false);
+        return;
+      }
+      lastUserIdRef.current = newUserId;
       setSession(session);
       setLoading(false);
       if (session?.user && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
@@ -183,6 +194,7 @@ const App = () => {
             return;
           }
         }
+        lastUserIdRef.current = session?.user?.id ?? null;
         setSession(session);
         setLoading(false);
       })
