@@ -107,6 +107,21 @@ export default function TemplatesPage() {
     },
   });
 
+  // Total templates owned by the user across ALL workspaces — the plan limit
+  // is per-account, so this is what we compare against (matches the DB trigger).
+  const { data: userTemplateCount = 0 } = useQuery({
+    queryKey: ["user-template-count"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      const { count } = await supabase
+        .from("templates")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      return count ?? 0;
+    },
+  });
+
   const { data: connectedWebsites = [] } = useQuery({
     queryKey: ["tpl-websites", wsId],
     enabled: !!wsId,
