@@ -247,6 +247,25 @@ const PROVIDERS: Record<Exclude<AiProvider, "lovable">, ProviderConfig> = {
   },
 };
 
+// ── Timed fetch ──────────────────────────────────────────────────────────────
+// The edge runtime aborts the whole request at a 150s idle timeout, producing a
+// hard 504 / blank screen. We abort the AI call earlier (120s) so the caller can
+// return a friendly, structured error instead.
+async function fetchWithTimeout(url: string, init: RequestInit, ms = 120_000): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("AI request timed out. Please try again with a shorter prompt.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── Lovable AI (default) ─────────────────────────────────────────────────────
 
 async function callLovable(
@@ -265,7 +284,7 @@ async function callLovable(
   if (opts.response_format) body.response_format = opts.response_format;
   if (opts.temperature !== undefined) body.temperature = opts.temperature;
 
-  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  return fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
@@ -301,7 +320,7 @@ async function callExternal(
 
   if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
 
-  return fetch(cfg.url, {
+  return fetchWithTimeout(cfg.url, {
     method: "POST",
     headers,
     body: JSON.stringify(cfg.mapBody ? cfg.mapBody(body) : body),
@@ -427,21 +446,32 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
   let fallbackUsed = false;
   let response: Response;
 
-  if (provider === "lovable") {
-    response = await callLovable(opts);
-  } else {
-    try {
-      response = await callExternal(provider, opts);
-      if (!response.ok) {
-        console.warn(`[ai-service] ${provider} returned ${response.status}, falling back to lovable`);
+  try {
+    if (provider === "lovable") {
+      response = await callLovable(opts);
+    } else {
+      try {
+        response = await callExternal(provider, opts);
+        if (!response.ok) {
+          console.warn(`[ai-service] ${provider} returned ${response.status}, falling back to lovable`);
+          response = await callLovable(opts);
+          fallbackUsed = true;
+        }
+      } catch (err) {
+        console.warn(`[ai-service] ${provider} failed:`, err, "— falling back to lovable");
         response = await callLovable(opts);
         fallbackUsed = true;
       }
-    } catch (err) {
-      console.warn(`[ai-service] ${provider} failed:`, err, "— falling back to lovable");
-      response = await callLovable(opts);
-      fallbackUsed = true;
     }
+  } catch (err) {
+    // Includes the AbortError → timeout case from fetchWithTimeout.
+    console.error("[ai-service] request failed:", err);
+    return {
+      success: false,
+      content: err instanceof Error ? err.message : "AI request failed. Please try again.",
+      provider: fallbackUsed ? "lovable" : provider,
+      fallback_used: fallbackUsed,
+    };
   }
 
   if (!response.ok) {
