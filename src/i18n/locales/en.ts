@@ -912,7 +912,7 @@ const en: Record<string, string> = {
   "pagePerformance.visitors": "Visitors",
   "pricing.agency": "Agency",
   "pricing.agencyDesc": "For agencies and multi-client teams",
-  "pricing.aiGenerations": "AI generations",
+  "pricing.aiGenerations": "AI credits",
   "pricing.apiAccess": "API Access",
   "pricing.badge": "Pricing",
   "pricing.billed": "Billed",
