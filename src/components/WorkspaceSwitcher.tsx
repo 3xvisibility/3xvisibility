@@ -39,8 +39,18 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
     navigate(`/w/${ws.slug}/${currentSub}`);
   };
 
+  const canCreateWorkspace = PLAN_FEATURES[(plan as PlanName) ?? "free"]?.teamCollaboration ?? false;
+
   const handleCreate = async () => {
     if (!newName.trim()) return;
+    if (!canCreateWorkspace) {
+      toast({
+        title: "Agency plan required",
+        description: "Creating additional workspaces is available on the Agency plan only.",
+        variant: "destructive",
+      });
+      return;
+    }
     setCreating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
