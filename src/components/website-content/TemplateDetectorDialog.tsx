@@ -31,6 +31,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { applyTemplateVariables, autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
 
 interface ContentItem {
   id: string;
@@ -570,26 +571,25 @@ Rules:
         }
       }
 
-      setVariables(parsedVars);
+      const fallbackVars = autoExtractTemplateVariables(page.content, page.title)
+        .filter((v) => !parsedVars.some((p) => p.original.toLowerCase() === v.original.toLowerCase()));
+      const mergedVars = [...parsedVars, ...fallbackVars].slice(0, 16);
+
+      setVariables(mergedVars);
 
       // Build template HTML
       let html = page.content;
       let elData = page.elementor_data || "";
-      const sortedVars = [...parsedVars].sort((a, b) => b.original.length - a.original.length);
-      for (const v of sortedVars) {
-        if (v.original) {
-          html = html.split(v.original).join(`{${v.name}}`);
-          if (elData) {
-            elData = elData.split(v.original).join(`{${v.name}}`);
-          }
-        }
+      html = applyTemplateVariables(html, mergedVars);
+      if (elData) {
+        elData = applyTemplateVariables(elData, mergedVars);
       }
       setTemplateHtml(html || page.content);
       setTemplateElementorData(elData);
       setStep("edit");
 
-      if (parsedVars.length > 0) {
-        toast({ title: `${parsedVars.length} variables detected!`, description: "Review the detected fields and add the values you want to generate with." });
+      if (mergedVars.length > 0) {
+        toast({ title: `${mergedVars.length} variables detected!`, description: "Review the detected fields and add the values you want to generate with." });
       }
     } catch (err: any) {
       toast({ title: "Detection failed", description: err.message, variant: "destructive" });
