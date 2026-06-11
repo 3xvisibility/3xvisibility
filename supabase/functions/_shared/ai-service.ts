@@ -454,7 +454,28 @@ export async function aiGenerate(opts: AiGenerateOptions): Promise<AiResult> {
     };
   }
 
-  const json = await response.json();
+  const rawText = await response.text().catch(() => "");
+  if (!rawText.trim()) {
+    return {
+      success: false,
+      content: "AI provider returned an empty response. Please try again.",
+      provider: fallbackUsed ? "lovable" : provider,
+      fallback_used: fallbackUsed,
+    };
+  }
+
+  let json: any;
+  try {
+    json = JSON.parse(rawText);
+  } catch (err) {
+    console.error("[ai-service] failed to parse AI response:", err, rawText.slice(0, 500));
+    return {
+      success: false,
+      content: "AI provider returned an invalid response. Please try again.",
+      provider: fallbackUsed ? "lovable" : provider,
+      fallback_used: fallbackUsed,
+    };
+  }
   const content =
     json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ??
     json.choices?.[0]?.message?.content ??
