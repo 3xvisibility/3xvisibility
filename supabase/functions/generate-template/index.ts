@@ -15,7 +15,9 @@ serve(async (req) => {
 
   try {
     const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts, backgroundImage, mode, existingContent, instruction } = await req.json();
-    if (!prompt || typeof prompt !== "string") {
+    // In "improve" mode the page is enhanced in place from existingContent, so a
+    // prompt is NOT required. Every other mode needs a prompt string.
+    if (mode !== "improve" && (!prompt || typeof prompt !== "string")) {
       return new Response(JSON.stringify({ error: "A prompt is required." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
