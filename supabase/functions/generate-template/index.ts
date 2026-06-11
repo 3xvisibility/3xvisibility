@@ -101,7 +101,7 @@ ORIGINAL TEMPLATE (source of truth — improve in place, do not redesign):
 ${source}`;
 
       const improveResult = await aiGenerate({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: improveSystem },
           { role: "user", content: improveUser },
@@ -115,18 +115,19 @@ ${source}`;
       });
 
       if (!improveResult.success) {
-        // Return 200 with a structured error so the client shows the real reason
-        // (a friendly toast) instead of a generic "Edge Function non-2xx" failure.
-        return new Response(JSON.stringify({ error: improveResult.content || "AI improvement failed" }), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        console.warn("generate-template improve AI failed:", improveResult.content);
+        return new Response(
+          JSON.stringify({ content: source, variables: keepVars, suggestedName: "Improved Template", designDirection: "preserved", warning: improveResult.content || "AI improvement failed" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       let improved = (improveResult.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
       if (!improved) {
-        return new Response(JSON.stringify({ error: "AI returned empty content. Please try again." }), {
-          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ content: source, variables: keepVars, suggestedName: "Improved Template", designDirection: "preserved", warning: "AI returned empty content. Original template kept unchanged." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
 
@@ -430,7 +431,7 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
     console.error("generate-template error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
