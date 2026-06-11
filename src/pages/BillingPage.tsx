@@ -178,6 +178,10 @@ export default function BillingPage() {
     if (searchParams.get("canceled") === "true") {
       setShowCanceled(true);
     }
+    if (searchParams.get("card_added") === "true") {
+      toast({ title: "Payment method saved", description: "Your card is now on file." });
+      setSearchParams({}, { replace: true });
+    }
 
     const syncSubscription = async (retries = 0) => {
       try {
