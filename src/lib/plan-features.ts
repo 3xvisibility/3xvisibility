@@ -51,6 +51,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: false,
     templates: 10,
     websites: 2,
+    campaigns: 10,
   },
   pro: {
     label: "Pro",
