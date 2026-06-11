@@ -128,10 +128,24 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setCreateOpen(true)} className="gap-2">
+          <DropdownMenuItem
+            onClick={() =>
+              canCreateWorkspace
+                ? setCreateOpen(true)
+                : toast({
+                    title: "Agency plan required",
+                    description: "Multiple workspaces are available on the Agency plan only.",
+                  })
+            }
+            className="gap-2"
+          >
             <Plus className="h-4 w-4" />
             Create workspace
+            {!canCreateWorkspace && (
+              <Badge variant="secondary" className="ml-auto text-[9px]">Agency</Badge>
+            )}
           </DropdownMenuItem>
+
         </DropdownMenuContent>
       </DropdownMenu>
 
