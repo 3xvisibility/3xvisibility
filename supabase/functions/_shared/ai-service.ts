@@ -284,7 +284,7 @@ async function callLovable(
   if (opts.response_format) body.response_format = opts.response_format;
   if (opts.temperature !== undefined) body.temperature = opts.temperature;
 
-  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  return fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
