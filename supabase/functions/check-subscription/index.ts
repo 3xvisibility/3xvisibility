@@ -183,6 +183,10 @@ async function upsertSubscription(
 ) {
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
+  // Keep ai_credits (the source of truth the UI reads from) in sync with the plan.
+  await syncAiCredits(supabase, userId, limits.ai_generations_limit);
+
+
   // First try to find by user_id alone (trigger may have created without workspace_id)
   const { data: existing } = await supabase
     .from("subscriptions")
