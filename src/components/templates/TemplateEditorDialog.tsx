@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -198,19 +198,35 @@ export function TemplateEditorDialog({
   const seoDescLen = seoDescriptionPattern.replace(/\{[^}]+\}/g, "xxxxx").length;
 
   const generateAiSeo = async () => {
+    if (!content.trim()) {
+      toast({ title: "Add content first", description: "The SEO suggestion is generated from your template content.", variant: "destructive" });
+      return;
+    }
     setAiSeoGenerating(true);
     try {
       const vars = [...new Set(content.match(/\{([a-z_]+)\}/gi) || [])];
       const varNames = vars.map(v => v.replace(/[{}]/g, "")).join(", ");
+      // Derive a plain-text summary of the actual content so the AI suggestion
+      // depends on what's really on the page (not a manually typed niche).
+      const contentText = content
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 2500);
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
-          prompt: `You are an SEO expert. Generate ONLY two lines of text for a "${aiSeoNiche}" business.
-The template has these content variables: ${varNames || "keyword, city"}
+          prompt: `You are an SEO expert. Based ONLY on the actual page content below${aiSeoNiche.trim() ? ` (business niche: ${aiSeoNiche.trim()})` : ""}, write ONLY two lines of meta text.
+Available content variables: ${varNames || "none"}
 
-Line 1: An SEO-optimized meta title pattern (under 60 chars) using relevant variables from the list above.
+Line 1: An SEO-optimized meta title pattern (under 60 chars). Prefer using relevant {variables} from the list when they fit naturally.
 Line 2: An SEO-optimized meta description pattern (120-160 chars) using the same variables.
 
-Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — just two plain text lines.`
+Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — just two plain text lines.
+
+PAGE CONTENT:
+${contentText}`
         },
       });
       if (error) throw error;
@@ -219,7 +235,7 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
       const lines = raw.split("\n").map((l: string) => l.replace(/^(line\s*\d+\s*[:：]\s*)/i, "").replace(/^(meta\s*(title|description)\s*(pattern)?\s*[:：]\s*)/i, "").trim()).filter(Boolean);
       if (lines[0]) setSeoTitlePattern(lines[0]);
       if (lines[1]) setSeoDescriptionPattern(lines[1]);
-      toast({ title: "SEO patterns generated!" });
+      toast({ title: "SEO patterns generated!", description: "Suggested from your template content." });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
     } finally {
@@ -262,6 +278,51 @@ ${content}`
     } finally {
       setAiImproving(false);
     }
+  };
+
+  // ── Images detected inside the template content ──────────────────────
+  // Both <img src="..."> and CSS url(...) backgrounds are picked up so the
+  // Image tab fully depends on what the Content actually uses.
+  const contentImages = useMemo(() => {
+    if (!content) return [] as string[];
+    const urls = new Set<string>();
+    const imgRe = /<img[^>]+src=["']([^"']+)["']/gi;
+    const urlRe = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+    let m: RegExpExecArray | null;
+    while ((m = imgRe.exec(content))) urls.add(m[1]);
+    while ((m = urlRe.exec(content))) {
+      const u = m[1];
+      if (/\.(png|jpe?g|webp|gif|svg|avif)(\?|$)/i.test(u) || /picsum|unsplash|images?|photo|cdn/i.test(u)) urls.add(u);
+    }
+    return [...urls].filter((u) => u && !u.startsWith("data:")).slice(0, 30);
+  }, [content]);
+
+  // Replace every occurrence of an image URL inside the content with a new one.
+  const replaceImageUrl = (oldUrl: string, newUrl: string) => {
+    if (!newUrl.trim() || oldUrl === newUrl) return;
+    setContent((prev) => prev.split(oldUrl).join(newUrl.trim()));
+    toast({ title: "Image replaced", description: "Updated in the template content." });
+  };
+
+  // Build a FREE stock photo (Picsum) from a keyword — no AI credits used.
+  const freeStockUrl = (keyword: string, variant: number) => {
+    const slug = (keyword || name || "page").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "page";
+    return `https://picsum.photos/seed/${slug}-${variant}-${Math.floor(Math.random() * 99999)}/1200/700`;
+  };
+
+  // Per-image draft URLs typed by the user before applying.
+  const [imageDrafts, setImageDrafts] = useState<Record<string, string>>({});
+  const [imageKeyword, setImageKeyword] = useState("");
+
+  // Suggest a slug pattern from the template title / first variables.
+  const suggestSlugFromContent = () => {
+    const base = name || uniqueVars.slice(0, 2).map((v) => v).join("-") || "";
+    if (!base.trim()) {
+      toast({ title: "Add a title first", description: "The permalink is built from your template title/content.", variant: "destructive" });
+      return;
+    }
+    setSlugPattern(normalizeSlug(base));
+    toast({ title: "Slug suggested", description: "Built from your template title." });
   };
 
   return (
@@ -419,24 +480,30 @@ ${content}`
 
             {/* ── SEO Tab ── */}
             <TabsContent value="seo" className="m-0 p-5 space-y-5">
-              {/* AI SEO Generator */}
+              {/* AI SEO Generator — derived from the template content */}
               <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold">AI SEO Generator</span>
+                  <span className="text-sm font-semibold">AI SEO Suggestion</span>
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Generates the meta title &amp; description from your <strong>Content</strong> tab. Add an optional niche hint to steer it.
+                </p>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter your business niche — e.g. plumber, dentist, restaurant"
+                    placeholder="Optional niche hint — e.g. plumber, dentist, restaurant"
                     value={aiSeoNiche}
                     onChange={(e) => setAiSeoNiche(e.target.value)}
                     className="flex-1 h-9 text-sm"
                   />
-                  <Button size="sm" onClick={generateAiSeo} disabled={aiSeoGenerating || !aiSeoNiche.trim()}>
+                  <Button size="sm" onClick={generateAiSeo} disabled={aiSeoGenerating || !content.trim()}>
                     {aiSeoGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
-                    Generate
+                    Suggest
                   </Button>
                 </div>
+                {!content.trim() && (
+                  <p className="text-[11px] text-amber-500">Add template content first — SEO suggestions depend on it.</p>
+                )}
               </div>
 
               {/* Meta Title */}
@@ -528,7 +595,12 @@ ${content}`
             {/* ── Permalink Tab ── */}
             <TabsContent value="permalink" className="m-0 p-5 space-y-5">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Slug Pattern</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold">Slug Pattern</Label>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={suggestSlugFromContent}>
+                    <Sparkles className="h-3 w-3" /> Suggest from content
+                  </Button>
+                </div>
                 <Input
                   placeholder="{service_name}-{city}"
                   value={slugPattern}
@@ -562,9 +634,82 @@ ${content}`
               </div>
             </TabsContent>
 
-            {/* ── Image Tab ── */}
-            <TabsContent value="image" className="m-0 p-5 space-y-5">
-              <div className="space-y-1.5">
+            {/* ── Image Tab — driven by images used in the Content ── */}
+            <TabsContent value="image" className="m-0 p-5 space-y-6">
+              {/* Images detected in the content */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Image className="h-3.5 w-3.5" /> Images in this template
+                  </p>
+                  {contentImages.length > 0 && <Badge variant="secondary" className="text-[10px]">{contentImages.length}</Badge>}
+                </div>
+
+                {contentImages.length === 0 ? (
+                  <p className="text-[12px] text-muted-foreground rounded-lg border border-dashed p-4">
+                    No images found in your content yet. Add images in the <strong>Content</strong> tab and they'll show up here, ready to replace.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={imageKeyword}
+                        onChange={(e) => setImageKeyword(e.target.value)}
+                        placeholder="Keyword for free photos — e.g. vegetables, farm"
+                        className="h-9 text-sm flex-1"
+                      />
+                      <span className="text-[11px] text-muted-foreground">used by “Free photo”</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {contentImages.map((url) => (
+                        <div key={url} className="rounded-xl border p-3 flex gap-3">
+                          <img
+                            src={url}
+                            alt="template asset"
+                            className="h-20 w-28 rounded-lg object-cover bg-muted shrink-0"
+                            loading="lazy"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.3"; }}
+                          />
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <p className="text-[11px] text-muted-foreground truncate font-mono">{url}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Input
+                                value={imageDrafts[url] ?? ""}
+                                onChange={(e) => setImageDrafts((d) => ({ ...d, [url]: e.target.value }))}
+                                placeholder="Paste a new image URL…"
+                                className="h-8 text-xs flex-1 min-w-[160px]"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-8 text-[11px]"
+                                disabled={!(imageDrafts[url] ?? "").trim()}
+                                onClick={() => { replaceImageUrl(url, imageDrafts[url] ?? ""); setImageDrafts((d) => { const n = { ...d }; delete n[url]; return n; }); }}
+                              >
+                                Replace
+                              </Button>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">Free photo:</span>
+                              <Button type="button" variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => replaceImageUrl(url, freeStockUrl(imageKeyword, 1))}>
+                                <Image className="h-3 w-3" /> Option 1
+                              </Button>
+                              <Button type="button" variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => replaceImageUrl(url, freeStockUrl(imageKeyword, 2))}>
+                                <Image className="h-3 w-3" /> Option 2
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">Free photos use Picsum stock images — no AI credits used.</p>
+                  </>
+                )}
+              </div>
+
+              {/* Featured image (publishing) */}
+              <div className="space-y-1.5 border-t pt-5">
                 <Label className="text-xs font-semibold">Featured Image Source</Label>
                 <Select value={featuredImageSource} onValueChange={setFeaturedImageSource}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
