@@ -278,7 +278,7 @@ const en: Record<string, string> = {
   "auth.updatePassword": "Update password",
   "auth.updating": "Updating...",
   "auth.welcomeBack": "Welcome back",
-  "billing.aiGenerations": "AI Generations",
+  "billing.aiGenerations": "AI Credits",
   "billing.billedYearly": "Billed €{amount}/year",
   "billing.compareDesc": "Detailed feature-by-feature comparison",
   "billing.comparePlans": "Compare All Plans",
