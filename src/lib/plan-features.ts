@@ -85,6 +85,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: true,
     templates: -1,
     websites: -1,
+    campaigns: -1,
   },
 };
 
