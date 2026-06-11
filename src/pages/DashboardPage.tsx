@@ -337,8 +337,6 @@ export default function DashboardPage() {
   const campaignChartData = buildCampaignData(campaignPeriod);
 
   const isLoading = loadingCampaigns || loadingPages || loadingWebsites;
-  const aiUsed = aiUsage?.ai_generations_used || 0;
-  const aiLimit = aiUsage?.ai_generations_limit || 50;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   const stats = [
