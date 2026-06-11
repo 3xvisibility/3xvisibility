@@ -15,6 +15,7 @@ export interface PlanFeatures {
   teamCollaboration: boolean;
   templates: number;
   websites: number;
+  campaigns: number;
 }
 
 export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
