@@ -1329,31 +1329,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
               {step === 1 && (
                 <>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-semibold">Campaign Name</Label>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs gap-1.5 text-primary"
-                        onClick={suggestCampaignName}
-                        disabled={aiSuggestingName}
-                      >
-                        {aiSuggestingName ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
-                        AI Suggest
-                      </Button>
-                    </div>
+                    <Label className="text-sm font-semibold">Campaign Name</Label>
                     <Input placeholder="e.g., Python Training Cities" value={campaignName} onChange={(e) => setCampaignName(e.target.value)} className="rounded-xl h-11" />
-                    {aiNameSuggestions.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {aiNameSuggestions.map((name, i) => (
-                          <button key={i} type="button" onClick={() => { setCampaignName(name); setAiNameSuggestions([]); }}
-                            className="px-3 py-1.5 rounded-lg border border-primary/20 bg-primary/5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors">
-                            {name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   {/* Campaign Type inline */}
