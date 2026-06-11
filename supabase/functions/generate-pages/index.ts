@@ -1331,16 +1331,20 @@ Deno.serve(async (req) => {
 
       const used = subscription?.ai_generations_used || 0;
       const limit = subscription?.ai_generations_limit || 50;
+      // NOTE: Do NOT hard-abort the whole campaign when AI credits are short.
+      // The campaign still produces useful pages (template HTML + variable
+      // replacement); only the AI-enrichment blocks need credits, and those
+      // already degrade gracefully per-block. Aborting here left campaigns
+      // stuck at "queued" with zero visible pending pages. Instead we just
+      // log the shortfall and let generation proceed so pages appear as
+      // pending and become publishable.
       if (used + totalAiNeeded > limit) {
-        return new Response(JSON.stringify({
-          error: `AI limit exceeded. Need ${totalAiNeeded}, have ${limit - used} remaining.`,
-          ai_limit_exceeded: true,
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        console.warn(
+          `[GENERATE-PAGES] AI budget short (need ${totalAiNeeded}, have ${limit - used}). Proceeding; AI blocks past the limit will be skipped per-row.`,
+        );
       }
     }
+
 
     // Enforce monthly pages quota (skip for test runs which don't persist pages)
     if (!test_mode) {
