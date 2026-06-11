@@ -119,6 +119,7 @@ export default function CampaignsPage() {
     },
     onSuccess: (_d, id) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
       toast({ title: "Campaign deleted" });
       if (wsId) logAudit(wsId, "campaign_deleted", "campaign", id);
     },
