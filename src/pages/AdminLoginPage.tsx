@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Seo } from "@/components/Seo";
-import { normalizeEmail } from "@/lib/normalize-email";
+import { normalizeEmail, isValidEmail } from "@/lib/normalize-email";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -32,6 +32,10 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    if (!isValidEmail(email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
