@@ -226,7 +226,25 @@ export default function CampaignsPage() {
     },
   });
 
-  const { pagesUsed, pagesLimit } = useSubscription();
+  const { pagesUsed, pagesLimit, features, plan } = useSubscription();
+
+  // Plan-based campaign limit (free: 1, starter: 10, pro/agency: unlimited).
+  const campaignLimit = features.campaigns; // -1 = unlimited
+  const { data: userCampaignCount = 0 } = useQuery({
+    queryKey: ["user-campaign-count"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      const { count, error } = await supabase
+        .from("campaigns")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const campaignLimitReached = campaignLimit >= 0 && userCampaignCount >= campaignLimit;
+  const planLabel = features.label;
 
   const filteredCampaigns = useMemo(() => {
     let result = campaigns;
