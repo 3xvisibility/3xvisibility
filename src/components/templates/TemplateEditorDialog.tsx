@@ -435,24 +435,30 @@ ${content}`
 
             {/* ── SEO Tab ── */}
             <TabsContent value="seo" className="m-0 p-5 space-y-5">
-              {/* AI SEO Generator */}
+              {/* AI SEO Generator — derived from the template content */}
               <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold">AI SEO Generator</span>
+                  <span className="text-sm font-semibold">AI SEO Suggestion</span>
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Generates the meta title &amp; description from your <strong>Content</strong> tab. Add an optional niche hint to steer it.
+                </p>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter your business niche — e.g. plumber, dentist, restaurant"
+                    placeholder="Optional niche hint — e.g. plumber, dentist, restaurant"
                     value={aiSeoNiche}
                     onChange={(e) => setAiSeoNiche(e.target.value)}
                     className="flex-1 h-9 text-sm"
                   />
-                  <Button size="sm" onClick={generateAiSeo} disabled={aiSeoGenerating || !aiSeoNiche.trim()}>
+                  <Button size="sm" onClick={generateAiSeo} disabled={aiSeoGenerating || !content.trim()}>
                     {aiSeoGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
-                    Generate
+                    Suggest
                   </Button>
                 </div>
+                {!content.trim() && (
+                  <p className="text-[11px] text-amber-500">Add template content first — SEO suggestions depend on it.</p>
+                )}
               </div>
 
               {/* Meta Title */}
