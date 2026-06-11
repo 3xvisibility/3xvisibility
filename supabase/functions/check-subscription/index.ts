@@ -235,7 +235,42 @@ async function upsertSubscription(
   }
 }
 
-// Yearly total price per plan (monthly price * (1 - 2/12), rounded, * 12)
+// Sync the ai_credits table (the UI's source of truth for AI limits) to the
+// allowance for the user's current plan. Preserves already-used credits so an
+// upgrade immediately reflects the new total without wiping usage.
+async function syncAiCredits(supabase: any, userId: string, planLimit: number) {
+  try {
+    // Ensure a row exists
+    await supabase
+      .from("ai_credits")
+      .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
+
+    const { data: row } = await supabase
+      .from("ai_credits")
+      .select("total_credits, used_credits")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const used = Number(row?.used_credits ?? 0);
+
+    // Only update when the total differs from the plan allowance.
+    if (Number(row?.total_credits ?? -1) !== planLimit) {
+      const { error } = await supabase
+        .from("ai_credits")
+        .update({
+          total_credits: planLimit,
+          remaining_credits: Math.max(0, planLimit - used),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+      if (error) logStep("Failed to sync ai_credits", { error: error.message });
+      else logStep("Synced ai_credits to plan", { userId, planLimit });
+    }
+  } catch (e) {
+    logStep("syncAiCredits error", { error: e instanceof Error ? e.message : String(e) });
+  }
+}
+
 const YEARLY_TOTAL: Record<string, number> = {
   starter: 192,
   pro: 588,
