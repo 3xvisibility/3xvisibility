@@ -206,6 +206,10 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkEmailFormat(email)) {
+      toast({ title: t("auth.signupFailed"), description: t("auth.invalidEmail"), variant: "destructive" });
+      return;
+    }
     if (!canSignup) {
       if (!termsAccepted) {
         toast({ title: t("auth.signupFailed"), description: t("auth.termsRequired"), variant: "destructive" });
@@ -281,7 +285,7 @@ export default function AuthPage() {
   }, [resetCooldown]);
 
   const handleResetPassword = async () => {
-    if (!email) {
+    if (!checkEmailFormat(email)) {
       toast({ title: t("auth.enterEmail"), description: t("auth.enterEmailDesc"), variant: "destructive" });
       return;
     }
