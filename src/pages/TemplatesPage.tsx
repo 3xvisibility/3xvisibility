@@ -591,17 +591,28 @@ export default function TemplatesPage() {
     html = html.replace(/<!--\s*header\s*-->[\s\S]*?<!--\s*\/header\s*-->/gi, "");
     html = html.replace(/<!--\s*footer\s*-->[\s\S]*?<!--\s*\/footer\s*-->/gi, "");
 
-    // Auto-apply AI variable suggestions first, then deterministic fallback.
+    // Prefer the AI's curated "best keyword" suggestions. These are clean,
+    // business-specific variable names (city, service, product_name, ...).
     const suggestedVariableEntries: { name: string; original: string; values: string[] }[] = [];
+    const seenNames = new Set<string>();
     for (const s of suggestions) {
       if (s.original && s.variable && html.includes(s.original)) {
-        const name = s.variable.replace(/[{}]/g, "").trim();
+        const name = s.variable.replace(/[{}]/g, "").trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/^_+|_+$/g, "");
+        // Skip empty/duplicate names and overly long "sentence" originals that
+        // are clearly body copy rather than a keyword value.
+        if (!name || seenNames.has(name)) continue;
+        if (s.original.trim().split(/\s+/).length > 8) continue;
+        seenNames.add(name);
         suggestedVariableEntries.push({ name, original: s.original, values: [s.original] });
       }
     }
 
-    const fallbackVariableEntries = autoExtractTemplateVariables(html, pageTitle, pendingKeywords)
-      .filter((v) => !suggestedVariableEntries.some((s) => s.original.toLowerCase() === v.original.toLowerCase()));
+    // Only fall back to deterministic text extraction when the AI returned NO
+    // usable keywords — otherwise we'd pollute the list with full sentences.
+    const fallbackVariableEntries =
+      suggestedVariableEntries.length > 0
+        ? []
+        : autoExtractTemplateVariables(html, pageTitle, pendingKeywords);
     const variableEntries = [...suggestedVariableEntries, ...fallbackVariableEntries].slice(0, 16);
     html = applyTemplateVariables(html, variableEntries);
 
