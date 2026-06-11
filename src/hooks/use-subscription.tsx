@@ -148,8 +148,8 @@ export function useSubscription(): SubscriptionData {
   const features = PLAN_FEATURES[plan];
   const pagesUsed = data?.pages_used ?? 0;
   const pagesLimit = data?.pages_limit ?? features.pagesLimit;
-  const aiUsed = data?.ai_generations_used ?? 0;
-  const aiLimit = data?.ai_generations_limit ?? features.aiLimit;
+  const aiUsed = data?.aiCredits?.used_credits ?? data?.ai_generations_used ?? 0;
+  const aiLimit = data?.aiCredits?.total_credits ?? data?.ai_generations_limit ?? features.aiLimit;
   const sitesConnected = data?.sitesConnected ?? 0;
   const sitesLimit = features.websites; // -1 means unlimited
 
