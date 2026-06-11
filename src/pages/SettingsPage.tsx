@@ -130,8 +130,6 @@ export default function SettingsPage() {
     },
   });
 
-  const aiUsed = subscription?.ai_generations_used || 0;
-  const aiLimit = subscription?.ai_generations_limit || 50;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   return (
