@@ -286,6 +286,7 @@ export default function PgpKeywordsPage() {
         body: { prompt: `Generate exactly ${aiCount} unique terms for a keyword called "${kwName || aiTopic}". Topic: ${aiTopic}. Output ONLY the terms, one per line. No numbering, no explanations, no markdown.` },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
       const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter(Boolean);
       setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
@@ -479,6 +480,7 @@ Instructions:
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
       const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, "").trim()).filter(Boolean);
       if (lines.length === 0) throw new Error("Could not extract keywords from this URL");
@@ -508,6 +510,7 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```json?\n?/i, "").replace(/\n?```$/i, "").trim();
       const result = JSON.parse(raw);
 
