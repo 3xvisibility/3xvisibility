@@ -101,17 +101,25 @@ export default function AnalyticsPage() {
     },
   });
 
-  // AI usage
+  // AI usage — read from ai_credits (single source of truth) so the numbers
+  // match the dashboard, billing and settings everywhere.
   const { data: aiUsage } = useQuery({
     queryKey: ["analytics-ai-usage"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("ai_generations_used, ai_generations_limit, plan")
-        .maybeSingle();
-      return data;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const [{ data: credits }, { data: sub }] = await Promise.all([
+        supabase.from("ai_credits").select("used_credits, total_credits").eq("user_id", user.id).maybeSingle(),
+        supabase.from("subscriptions").select("plan").eq("user_id", user.id).maybeSingle(),
+      ]);
+      return {
+        ai_generations_used: credits?.used_credits ?? 0,
+        ai_generations_limit: credits?.total_credits ?? 0,
+        plan: sub?.plan ?? "free",
+      };
     },
   });
+
 
   const isLoading = loadingPages || loadingCampaigns;
 

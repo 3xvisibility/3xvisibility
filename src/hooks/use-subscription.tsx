@@ -120,6 +120,15 @@ export function useSubscription(): SubscriptionData {
       if (wsId) subQuery.eq("workspace_id", wsId);
       const { data: subData } = await subQuery.maybeSingle();
 
+      // Fetch AI credits — the single source of truth for AI usage/limits.
+      // Every AI action deducts from this table via deduct_ai_credits, so all
+      // surfaces (dashboard, settings, billing, widget) stay in sync.
+      const { data: creditsData } = await supabase
+        .from("ai_credits")
+        .select("total_credits, used_credits, remaining_credits")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       // Count connected websites for this workspace
       let sitesConnected = 0;
       if (wsId) {
@@ -130,7 +139,7 @@ export function useSubscription(): SubscriptionData {
         sitesConnected = count ?? 0;
       }
 
-      return { ...subData, sitesConnected };
+      return { ...subData, sitesConnected, aiCredits: creditsData };
     },
     staleTime: 60_000,
   });
@@ -139,8 +148,8 @@ export function useSubscription(): SubscriptionData {
   const features = PLAN_FEATURES[plan];
   const pagesUsed = data?.pages_used ?? 0;
   const pagesLimit = data?.pages_limit ?? features.pagesLimit;
-  const aiUsed = data?.ai_generations_used ?? 0;
-  const aiLimit = data?.ai_generations_limit ?? features.aiLimit;
+  const aiUsed = data?.aiCredits?.used_credits ?? data?.ai_generations_used ?? 0;
+  const aiLimit = data?.aiCredits?.total_credits ?? data?.ai_generations_limit ?? features.aiLimit;
   const sitesConnected = data?.sitesConnected ?? 0;
   const sitesLimit = features.websites; // -1 means unlimited
 
