@@ -20,7 +20,7 @@ const CREDIT_COSTS: Record<string, number> = {
 
 const PLAN_CREDITS: Record<string, number> = {
   free: 10,
-  starter: 10,
+  starter: 100,
   pro: 1000,
   agency: 5000,
 };
