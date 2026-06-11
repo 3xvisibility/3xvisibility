@@ -181,6 +181,26 @@ export function extractAuthToken(req: Request): string | undefined {
   return h ? h.replace("Bearer ", "") : undefined;
 }
 
+/**
+ * Standalone credit gate for functions that call the AI gateway directly
+ * (instead of going through aiGenerate). Resolves the user from the request's
+ * bearer token, then checks AND deducts credits for the given prompt type.
+ * Use this BEFORE making the direct gateway call so every AI tool consumes
+ * credits consistently.
+ */
+export async function deductCreditsForRequest(
+  req: Request,
+  promptType: string,
+  model?: string,
+): Promise<{ allowed: boolean; remaining?: number; error?: string }> {
+  const authToken = extractAuthToken(req);
+  const userId = await resolveUserId({ authToken } as AiGenerateOptions);
+  if (!userId) {
+    return { allowed: false, remaining: 0, error: "unauthorized" };
+  }
+  return await checkAndDeductCredits(userId, promptType, model);
+}
+
 export interface AiResult {
   success: boolean;
   content: string;
