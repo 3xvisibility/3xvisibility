@@ -194,6 +194,7 @@ const App = () => {
             return;
           }
         }
+        lastUserIdRef.current = session?.user?.id ?? null;
         setSession(session);
         setLoading(false);
       })
