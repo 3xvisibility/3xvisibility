@@ -994,6 +994,7 @@ const en: Record<string, string> = {
   "settings.aiTemplateVariablesDesc": "Variables like {service} inside AI prompts are replaced with CSV values before AI generation.",
   "settings.apiKeys": "API Keys",
   "settings.apiKeysDesc": "Use API keys to integrate with external tools and automate page generation.",
+  "settings.apiWebhookLocked": "API access and webhooks are available on the {plan} plan and above. Upgrade to connect external tools and receive event notifications.",
   "settings.appearance": "Appearance",
   "settings.appearanceDesc": "Choose your preferred theme for the application.",
   "settings.arabic": "Arabic",

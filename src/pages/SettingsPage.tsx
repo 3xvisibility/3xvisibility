@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { useSubscription } from "@/hooks/use-subscription";
+import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
+import { useNavigate } from "react-router-dom";
 import ActiveAiProviderCard from "@/components/settings/ActiveAiProviderCard";
 import LocaleSettingsCard from "@/components/settings/LocaleSettingsCard";
 
@@ -67,8 +70,13 @@ export default function SettingsPage() {
   const [initialized, setInitialized] = useState(false);
   const [newWebhookUrl, setNewWebhookUrl] = useState("");
   const [newWebhookSecret, setNewWebhookSecret] = useState("");
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
+  const navigate = useNavigate();
+  const { canUseFeature } = useSubscription();
+  const hasApiAccess = canUseFeature("apiAccess");
+  const apiMinPlan = getMinimumPlanFor("apiAccess");
+  const apiMinPlanLabel = PLAN_FEATURES[apiMinPlan].label;
 
   // Fetch profile
   const { data: profile, isLoading: loadingProfile } = useQuery({
@@ -295,26 +303,47 @@ export default function SettingsPage() {
 
       <Separator />
 
-      {/* Webhooks */}
-      <WebhookSettings wsId={wsId} />
+      {/* Webhooks & API — plan gated */}
+      {hasApiAccess ? (
+        <>
+          <WebhookSettings wsId={wsId} />
 
-      <Separator />
+          <Separator />
 
-      {/* API Keys */}
-      <Card className="shadow-surface">
-        <CardHeader>
-          <CardTitle>{t("settings.apiKeys")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("settings.apiKeysDesc")}
-          </p>
-          <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
-            pgp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-          </div>
-          <Button variant="outline" size="sm">{t("settings.regenerateKey")}</Button>
-        </CardContent>
-      </Card>
+          {/* API Keys */}
+          <Card className="shadow-surface">
+            <CardHeader>
+              <CardTitle>{t("settings.apiKeys")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {t("settings.apiKeysDesc")}
+              </p>
+              <div className="p-3 bg-muted rounded-md font-mono text-xs break-all">
+                pgp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+              </div>
+              <Button variant="outline" size="sm">{t("settings.regenerateKey")}</Button>
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <Card className="shadow-surface border-primary/20">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" />
+              <CardTitle>{t("settings.apiKeys")} &amp; {t("settings.webhooks")}</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {t("settings.apiWebhookLocked", { plan: apiMinPlanLabel })}
+            </p>
+            <Button onClick={() => navigate(`${basePath}/billing?highlight=${apiMinPlan}`)} size="sm">
+              {t("featureGate.upgradeCta", { plan: apiMinPlanLabel })}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Separator />
 
