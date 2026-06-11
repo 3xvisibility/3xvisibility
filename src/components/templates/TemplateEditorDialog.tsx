@@ -561,6 +561,41 @@ ${content}`
                 )}
               </div>
 
+              {/* Detected from content (defaults) */}
+              {(detectedSeo.title || detectedSeo.description) && (
+                <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold flex items-center gap-1.5">
+                      <Globe className="h-3.5 w-3.5 text-primary" /> Detected from your content
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      onClick={() => { setSeoTitlePattern(detectedSeo.title); setSeoDescriptionPattern(detectedSeo.description); toast({ title: "Loaded from content" }); }}
+                    >
+                      Use these
+                    </Button>
+                  </div>
+                  {detectedSeo.title && <p className="text-[11px] text-muted-foreground"><strong className="text-foreground">Title:</strong> {detectedSeo.title}</p>}
+                  {detectedSeo.description && <p className="text-[11px] text-muted-foreground line-clamp-2"><strong className="text-foreground">Description:</strong> {detectedSeo.description}</p>}
+                </div>
+              )}
+
+              {/* Apply current SEO back into the content HTML */}
+              <div className="flex items-center justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-[11px] gap-1.5"
+                  disabled={!content.trim() || (!seoTitlePattern.trim() && !seoDescriptionPattern.trim())}
+                  onClick={applySeoToContent}
+                >
+                  <Code className="h-3.5 w-3.5" /> Replace in content
+                </Button>
+              </div>
+
+
               {/* Meta Title */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Meta Title</Label>
