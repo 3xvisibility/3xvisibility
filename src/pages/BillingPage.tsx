@@ -364,6 +364,9 @@ export default function BillingPage() {
         </Card>
       </div>
 
+      {/* Payment methods */}
+      <PaymentMethods />
+
       {/* Billing toggle */}
       <div className="flex items-center justify-center gap-3">
         <span className={`text-sm font-medium transition-colors ${!isYearly ? "text-foreground" : "text-muted-foreground"}`}>{t("billing.monthly")}</span>
