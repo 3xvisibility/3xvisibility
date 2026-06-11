@@ -592,7 +592,16 @@ Rules:
         toast({ title: `${mergedVars.length} variables detected!`, description: "Review the detected fields and add the values you want to generate with." });
       }
     } catch (err: any) {
-      toast({ title: "Detection failed", description: err.message, variant: "destructive" });
+      const fallbackVars = autoExtractTemplateVariables(page.content, page.title).slice(0, 16);
+      if (fallbackVars.length > 0) {
+        setVariables(fallbackVars);
+        setTemplateHtml(applyTemplateVariables(page.content, fallbackVars));
+        setTemplateElementorData(page.elementor_data ? applyTemplateVariables(page.elementor_data, fallbackVars) : "");
+        setStep("edit");
+        toast({ title: `${fallbackVars.length} variables detected`, description: "AI detection failed, so variables were created from the imported page content." });
+      } else {
+        toast({ title: "Detection failed", description: err.message, variant: "destructive" });
+      }
     } finally {
       setDetecting(false);
     }
