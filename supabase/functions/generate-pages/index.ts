@@ -2164,6 +2164,22 @@ Deno.serve(async (req) => {
           processedCount++;
           successCount++;
           newSuccessCount++;
+
+          // Deduct AI credits for each successfully generated page (skip test runs).
+          if (!test_mode && user?.id) {
+            try {
+              await supabase.rpc("deduct_ai_credits", {
+                p_user_id: user.id,
+                p_credits: 4, // full_page
+                p_prompt_type: "full_page",
+                p_model: "google/gemini-2.5-flash",
+                p_metadata: { campaign_id },
+              });
+            } catch (creditErr) {
+              console.error("[GENERATE-PAGES] credit deduction failed (non-fatal):", creditErr);
+            }
+          }
+
         } catch (err: any) {
           batchPages.push({
             campaign_id,

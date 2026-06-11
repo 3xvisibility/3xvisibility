@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector } from "../_shared/connectors/factory.ts";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -404,6 +404,18 @@ Deno.serve(async (req) => {
       }));
 
       try {
+        const credit = await deductCreditsForRequest(req, "template_scan", "google/gemini-2.5-flash-lite");
+        if (!credit.allowed) {
+          return new Response(JSON.stringify({
+            error: credit.error === "insufficient_credits"
+              ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`
+              : "Authentication required to use AI features.",
+            remaining: credit.remaining ?? 0,
+          }), {
+            status: credit.error === "insufficient_credits" ? 402 : 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {

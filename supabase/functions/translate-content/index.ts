@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -175,6 +175,11 @@ Deno.serve(async (req) => {
           }
           const langName = SUPPORTED_LANGUAGES[target_language];
           const sysPrompt = `Translate to ${langName}. Preserve HTML tags, {variables}, URLs. Return only translated HTML.`;
+          const credit = await deductCreditsForRequest(req, "translation", "google/gemini-2.5-flash-lite");
+          if (!credit.allowed) {
+            errors.push({ page_id: page.id, error: credit.error === "insufficient_credits" ? "AI credits exhausted" : "Authentication required" });
+            continue;
+          }
           const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },

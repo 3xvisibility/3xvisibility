@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { injectNicheImages } from "../_shared/niche-images.ts";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +33,19 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Credit gate — every AI template generation consumes credits.
+    const credit = await deductCreditsForRequest(req, "full_page", "google/gemini-3-flash-preview");
+    if (!credit.allowed) {
+      const status = credit.error === "insufficient_credits" ? 402 : 401;
+      const msg = credit.error === "insufficient_credits"
+        ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`
+        : "Authentication required. Please sign in to use AI features.";
+      return new Response(JSON.stringify({ error: msg, remaining: credit.remaining ?? 0 }), {
+        status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const headerFooterRule = includeHeaderFooter
       ? "13. Include a professional header with navigation and a footer with contact info and links."

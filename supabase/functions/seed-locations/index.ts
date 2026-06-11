@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -320,6 +320,12 @@ Deno.serve(async (req) => {
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         if (!LOVABLE_API_KEY) throw new Error("AI service not configured for dynamic country seeding.");
 
+        const credit = await deductCreditsForRequest(req, "default", "google/gemini-2.5-flash-lite");
+        if (!credit.allowed) {
+          throw new Error(credit.error === "insufficient_credits"
+            ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}).`
+            : "Authentication required to use AI features.");
+        }
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 45_000);
         try {

@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
-import { aiGenerate } from "../_shared/ai-service.ts";
+import { aiGenerate, deductCreditsForRequest } from "../_shared/ai-service.ts";
 import {
   analyzeSeoQuality,
   autoRepairContent,
@@ -682,6 +682,19 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       url: page_url,
       content: page_content,
     };
+
+    const credit = await deductCreditsForRequest(req, "seo_optimization", OPTIMIZATION_MODEL);
+    if (!credit.allowed) {
+      return new Response(JSON.stringify({
+        error: credit.error === "insufficient_credits"
+          ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`
+          : "Authentication required to use AI features.",
+        remaining: credit.remaining ?? 0,
+      }), {
+        status: credit.error === "insufficient_credits" ? 402 : 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let result: Record<string, any> = {};
     try {
