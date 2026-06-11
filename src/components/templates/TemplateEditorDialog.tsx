@@ -634,9 +634,82 @@ ${content}`
               </div>
             </TabsContent>
 
-            {/* ── Image Tab ── */}
-            <TabsContent value="image" className="m-0 p-5 space-y-5">
-              <div className="space-y-1.5">
+            {/* ── Image Tab — driven by images used in the Content ── */}
+            <TabsContent value="image" className="m-0 p-5 space-y-6">
+              {/* Images detected in the content */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Image className="h-3.5 w-3.5" /> Images in this template
+                  </p>
+                  {contentImages.length > 0 && <Badge variant="secondary" className="text-[10px]">{contentImages.length}</Badge>}
+                </div>
+
+                {contentImages.length === 0 ? (
+                  <p className="text-[12px] text-muted-foreground rounded-lg border border-dashed p-4">
+                    No images found in your content yet. Add images in the <strong>Content</strong> tab and they'll show up here, ready to replace.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={imageKeyword}
+                        onChange={(e) => setImageKeyword(e.target.value)}
+                        placeholder="Keyword for free photos — e.g. vegetables, farm"
+                        className="h-9 text-sm flex-1"
+                      />
+                      <span className="text-[11px] text-muted-foreground">used by “Free photo”</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {contentImages.map((url) => (
+                        <div key={url} className="rounded-xl border p-3 flex gap-3">
+                          <img
+                            src={url}
+                            alt="template asset"
+                            className="h-20 w-28 rounded-lg object-cover bg-muted shrink-0"
+                            loading="lazy"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.3"; }}
+                          />
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <p className="text-[11px] text-muted-foreground truncate font-mono">{url}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Input
+                                value={imageDrafts[url] ?? ""}
+                                onChange={(e) => setImageDrafts((d) => ({ ...d, [url]: e.target.value }))}
+                                placeholder="Paste a new image URL…"
+                                className="h-8 text-xs flex-1 min-w-[160px]"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-8 text-[11px]"
+                                disabled={!(imageDrafts[url] ?? "").trim()}
+                                onClick={() => { replaceImageUrl(url, imageDrafts[url] ?? ""); setImageDrafts((d) => { const n = { ...d }; delete n[url]; return n; }); }}
+                              >
+                                Replace
+                              </Button>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">Free photo:</span>
+                              <Button type="button" variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => replaceImageUrl(url, freeStockUrl(imageKeyword, 1))}>
+                                <Image className="h-3 w-3" /> Option 1
+                              </Button>
+                              <Button type="button" variant="outline" size="sm" className="h-7 text-[11px] gap-1" onClick={() => replaceImageUrl(url, freeStockUrl(imageKeyword, 2))}>
+                                <Image className="h-3 w-3" /> Option 2
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">Free photos use Picsum stock images — no AI credits used.</p>
+                  </>
+                )}
+              </div>
+
+              {/* Featured image (publishing) */}
+              <div className="space-y-1.5 border-t pt-5">
                 <Label className="text-xs font-semibold">Featured Image Source</Label>
                 <Select value={featuredImageSource} onValueChange={setFeaturedImageSource}>
                   <SelectTrigger className="h-10 text-sm"><SelectValue /></SelectTrigger>
