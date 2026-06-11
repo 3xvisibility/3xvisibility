@@ -70,6 +70,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
   const used = credits?.used_credits ?? 0;
   const plan = credits?.plan ?? "starter";
   const pct = total > 0 ? Math.round((remaining / total) * 100) : 0;
+  const usedPct = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
 
   // Aggregate usage by prompt_type
   const breakdown = (usageData ?? []).reduce<Record<string, number>>((acc, entry) => {
@@ -105,7 +106,7 @@ export function AiCreditsWidget({ lowThreshold = 10 }: AiCreditsWidgetProps) {
                 <span>Couldn't refresh credits — showing last known balance.</span>
               </div>
             )}
-            <Progress value={pct} className="h-2" />
+            <Progress value={usedPct} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{remaining.toLocaleString()} / {total.toLocaleString()} remaining</span>
               <span className={pct <= lowThreshold ? "text-destructive font-medium" : ""}>{used.toLocaleString()} used</span>
