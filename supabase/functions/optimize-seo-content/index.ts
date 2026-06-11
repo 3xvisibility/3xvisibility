@@ -873,6 +873,30 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       )
       : existingSeoKeywords;
 
+    // Snapshot the current known-good (pre-optimization) content BEFORE pushing,
+    // so the page can be rolled back if the optimization breaks the layout.
+    if (website && page_external_id && !skip_push && (page_content || page_title)) {
+      try {
+        await supabase.from("page_versions").insert({
+          user_id: user.id,
+          workspace_id: workspace_id || website?.workspace_id || null,
+          website_id,
+          external_id: page_external_id,
+          page_type: page_type || "page",
+          title: page_title || null,
+          content: page_content || null,
+          slug: page_slug || null,
+          seo_title: page_seo_title || null,
+          seo_description: page_seo_description || null,
+          seo_keywords: Array.isArray(page_seo_keywords) && page_seo_keywords.length > 0 ? page_seo_keywords : null,
+          source: "pre_optimize",
+        });
+        console.log("[OPTIMIZE] Saved pre-optimization snapshot to page_versions");
+      } catch (snapErr) {
+        console.error("[OPTIMIZE] Failed to save snapshot:", snapErr);
+      }
+    }
+
     if (website && page_external_id && !skip_push) {
       try {
         const isProductContent = page_type === "product";
