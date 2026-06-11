@@ -223,7 +223,7 @@ export default function BillingPage() {
     setLoadingPlan(planName);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId: tier.price_id },
+        body: { priceId: tier.price_id, origin: window.location.origin },
       });
       if (error) throw error;
       if (data?.url) {
