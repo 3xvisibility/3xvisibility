@@ -144,7 +144,24 @@ export function useSubscription(): SubscriptionData {
     staleTime: 60_000,
   });
 
-  const plan = (data?.plan as PlanName) || "free";
+  // Cache the resolved plan per workspace so the correct plan shows instantly on
+  // the next login/load instead of flashing "free" while the query resolves.
+  const planCacheKey = wsId ? `plan-cache:${wsId}` : null;
+  const cachedPlan = (() => {
+    if (!planCacheKey) return null;
+    try { return localStorage.getItem(planCacheKey) as PlanName | null; } catch { return null; }
+  })();
+
+  const resolvedPlan = data?.plan as PlanName | undefined;
+  // While loading, fall back to the cached plan (if any) before defaulting to free.
+  const plan: PlanName = resolvedPlan || (isLoading ? (cachedPlan || "free") : "free");
+
+  useEffect(() => {
+    if (planCacheKey && resolvedPlan) {
+      try { localStorage.setItem(planCacheKey, resolvedPlan); } catch { /* ignore */ }
+    }
+  }, [planCacheKey, resolvedPlan]);
+
   const features = PLAN_FEATURES[plan];
   const pagesUsed = data?.pages_used ?? 0;
   const pagesLimit = data?.pages_limit ?? features.pagesLimit;
