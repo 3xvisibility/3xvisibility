@@ -190,6 +190,7 @@ export default function PgpTermsPage() {
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
       const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter(Boolean);
       setTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
