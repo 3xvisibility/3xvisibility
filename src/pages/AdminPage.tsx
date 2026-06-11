@@ -669,8 +669,10 @@ export default function AdminPage() {
       credits_remaining?: number;
     }) => {
       const { target_user_id, credits_total, credits_remaining, ...subPayload } = payload;
+      // Persist the plan's AI credit limit onto the subscription too so every
+      // surface (dashboard, settings, analytics) reflects the same plan-based value.
       const { data, error } = await supabase.functions.invoke("admin-panel", {
-        body: { action: "update-subscription", ...subPayload },
+        body: { action: "update-subscription", ...subPayload, ai_generations_limit: credits_total },
       });
       if (error) throw error;
 

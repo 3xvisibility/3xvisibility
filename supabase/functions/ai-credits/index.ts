@@ -20,7 +20,7 @@ const CREDIT_COSTS: Record<string, number> = {
 
 const PLAN_CREDITS: Record<string, number> = {
   free: 10,
-  starter: 10,
+  starter: 100,
   pro: 1000,
   agency: 5000,
 };
@@ -62,10 +62,12 @@ Deno.serve(async (req) => {
       const { data: credits } = await supabase.from("ai_credits").select("*").eq("user_id", user.id).maybeSingle();
 
       if (!credits) {
-        // Initialize for existing user
-        const totalCredits = PLAN_CREDITS.starter;
+        // Initialize from the user's actual subscription plan (not a hardcoded default)
+        const { data: sub } = await supabase.from("subscriptions").select("plan").eq("user_id", user.id).maybeSingle();
+        const plan = sub?.plan ?? "free";
+        const totalCredits = PLAN_CREDITS[plan] ?? PLAN_CREDITS.free;
         const { data: newCredits } = await supabase.from("ai_credits").insert({
-          user_id: user.id, plan: "starter", total_credits: totalCredits,
+          user_id: user.id, plan, total_credits: totalCredits,
           used_credits: 0, remaining_credits: totalCredits,
         }).select().single();
         return new Response(JSON.stringify({ success: true, credits: newCredits }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
