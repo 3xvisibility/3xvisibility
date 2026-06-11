@@ -98,7 +98,7 @@ const featureIcons: Record<string, React.ReactNode> = {
 
 const featureRows: { label: string; key: string }[] = [
   { label: "Pages / month", key: "pagesLimit" },
-  { label: "AI generations / month", key: "aiLimit" },
+  { label: "AI credits / month", key: "aiLimit" },
   { label: "Templates", key: "templates" },
   { label: "Websites", key: "websites" },
   { label: "WordPress", key: "wordpress" },
