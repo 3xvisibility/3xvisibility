@@ -254,8 +254,7 @@ export default function TemplatesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       toast({ title: "Template created" });
       setEditorOpen(false);
       setEditingTemplate(null);
@@ -276,8 +275,7 @@ export default function TemplatesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       toast({ title: "Template updated" });
       setEditorOpen(false);
       setEditingTemplate(null);
@@ -301,8 +299,7 @@ export default function TemplatesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       toast({ title: "Template duplicated" });
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -336,8 +333,7 @@ export default function TemplatesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       toast({ title: "Latest version imported", description: "A new pinned snapshot was added. Existing campaigns keep their old version." });
     },
     onError: (err: Error) => toast({ title: "Re-import failed", description: err.message, variant: "destructive" }),
@@ -354,8 +350,7 @@ export default function TemplatesPage() {
       if (force) await supabase.from("campaigns").update({ template_id: null }).eq("template_id", id);
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast({ title: "Template deleted" });
     } catch (err: any) {
@@ -383,8 +378,7 @@ export default function TemplatesPage() {
       if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const { error } = await supabase.from("templates").insert({ name: data.name, content: data.content, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       toast({ title: "Template imported" });
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
@@ -398,8 +392,7 @@ export default function TemplatesPage() {
         await supabase.from("campaigns").update({ template_id: null }).eq("template_id", id);
         await supabase.from("templates").delete().eq("id", id);
       }
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       toast({ title: `${selectedIds.size} template(s) deleted` });
       setSelectedIds(new Set());
     } catch (err: any) {
@@ -444,8 +437,7 @@ export default function TemplatesPage() {
         variables,
       } as any).eq("id", regenTarget.id);
       if (upErr) throw upErr;
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
+      await refreshTemplates();
       toast({
         title: regenMode === "variants-only" ? "Layout updated" : "Design regenerated",
         description: data?.summary || (regenMode === "variants-only" ? `Variants: ${summarizeVariants(regenVariants)}` : `New design applied for ${regenNiche}.`),
