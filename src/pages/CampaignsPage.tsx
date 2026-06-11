@@ -172,6 +172,7 @@ export default function CampaignsPage() {
     },
     onSuccess: (name) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
       toast({ title: "Campaign duplicated", description: `"${name}" cloned.` });
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
