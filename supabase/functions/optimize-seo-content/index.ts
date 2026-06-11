@@ -617,6 +617,7 @@ ABSOLUTE DESIGN PRESERVATION RULES (NEVER VIOLATE):
 - NEVER remove or modify: URLs, href links, src attributes, prices, cart elements, forms, buttons, iframes, scripts, images.
 - NEVER change: elementor-*, wp-*, shopify-*, woocommerce-*, product-*, cart-*, price-* classes.
 - NEVER alter: <style> blocks, inline styles, CSS classes, media queries.
+- CRITICAL: The HTML contains comment placeholders like <!--PGP_KEEP_0-->, <!--PGP_KEEP_1-->. These stand for the page's CSS/script blocks. You MUST keep EVERY one of them, byte-for-byte, in the EXACT same position. Never delete, duplicate, rename, move, or add these markers.
 - ONLY change the visible TEXT CONTENT inside HTML elements.
 - Keep EXACT same number of sections, divs, headings, paragraphs, lists.
 - Preserve ALL product data: prices, SKUs, variants, add-to-cart buttons, reviews, ratings.
