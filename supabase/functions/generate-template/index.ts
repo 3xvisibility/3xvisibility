@@ -37,15 +37,17 @@ serve(async (req) => {
     // Credit gate — every AI template generation consumes credits.
     const credit = await deductCreditsForRequest(req, "full_page", "google/gemini-3-flash-preview");
     if (!credit.allowed) {
-      const status = credit.error === "insufficient_credits" ? 402 : 401;
       const msg = credit.error === "insufficient_credits"
         ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`
         : "Authentication required. Please sign in to use AI features.";
-      return new Response(JSON.stringify({ error: msg, remaining: credit.remaining ?? 0 }), {
-        status,
+      // Return 200 with a structured error so the client can show a friendly
+      // message (toast) instead of triggering a hard runtime/blank-screen error.
+      return new Response(JSON.stringify({ error: msg, remaining: credit.remaining ?? 0, fallback: false }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     const headerFooterRule = includeHeaderFooter
       ? "13. Include a professional header with navigation and a footer with contact info and links."
