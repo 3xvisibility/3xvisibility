@@ -69,6 +69,8 @@ export default function SettingsPage() {
   const [newWebhookSecret, setNewWebhookSecret] = useState("");
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
+  const { canUseFeature } = useSubscription();
+  const hasApiAccess = canUseFeature("apiAccess");
 
   // Fetch profile
   const { data: profile, isLoading: loadingProfile } = useQuery({
