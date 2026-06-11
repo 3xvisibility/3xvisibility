@@ -89,7 +89,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
   },
 };
 
-export type FeatureKey = keyof Omit<PlanFeatures, "label" | "pagesLimit" | "aiLimit" | "templates" | "websites">;
+export type FeatureKey = keyof Omit<PlanFeatures, "label" | "pagesLimit" | "aiLimit" | "templates" | "websites" | "campaigns">;
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   wordpress: "WordPress Integration",
