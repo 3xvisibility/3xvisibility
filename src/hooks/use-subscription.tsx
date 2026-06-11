@@ -59,6 +59,52 @@ export function useSubscription(): SubscriptionData {
     return () => { cancelled = true; clearInterval(interval); };
   }, [wsId, queryClient]);
 
+  // Realtime: auto re-fetch AI credit limits whenever the user's subscription
+  // plan or status changes (e.g. upgrade, downgrade, renewal, usage update).
+  useEffect(() => {
+    let active = true;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !active) return;
+
+      const refresh = () => {
+        queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
+      };
+
+      channel = supabase
+        .channel(`subscription-changes-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "subscriptions",
+            filter: `user_id=eq.${user.id}`,
+          },
+          refresh,
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "ai_credits",
+            filter: `user_id=eq.${user.id}`,
+          },
+          refresh,
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      active = false;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+
   const { data, isLoading } = useQuery({
     queryKey: ["user-subscription", wsId],
     enabled: !!wsId,
