@@ -601,13 +601,8 @@ Rules:
   const rebuildTemplate = () => {
     let html = page.content;
     let elData = page.elementor_data || "";
-    const sorted = [...variables].sort((a, b) => b.original.length - a.original.length);
-    for (const v of sorted) {
-      if (v.original) {
-        html = html.split(v.original).join(`{${v.name}}`);
-        if (elData) elData = elData.split(v.original).join(`{${v.name}}`);
-      }
-    }
+    html = applyTemplateVariables(html, variables);
+    if (elData) elData = applyTemplateVariables(elData, variables);
     setTemplateHtml(html);
     setTemplateElementorData(elData);
   };
