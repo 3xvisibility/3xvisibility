@@ -1074,7 +1074,7 @@ const en: Record<string, string> = {
   "settings.updatePassword": "Update Password",
   "settings.updating": "Updating...",
   "settings.usageLimitWarnings": "Usage Limit Warnings",
-  "settings.usageLimitWarningsDesc": "Notify when approaching page or AI generation limits.",
+  "settings.usageLimitWarningsDesc": "Notify when approaching page or AI credit limits.",
   "settings.used": "{count} used",
   "settings.webhookAdded": "Webhook added",
   "settings.webhookDeleted": "Webhook deleted",
