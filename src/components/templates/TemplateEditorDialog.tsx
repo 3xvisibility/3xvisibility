@@ -295,36 +295,23 @@ ${contentText}`
     if (!content.trim()) return;
     setAiImproving(true);
     try {
-      const vars = [...new Set(content.match(/\{([a-z_]+)\}/gi) || [])];
-      const varNames = vars.map(v => v.replace(/[{}]/g, "")).join(", ");
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
-          prompt: `FULL PREMIUM REDESIGN TASK — rebuild the page below into a stunning, modern, award-winning landing page from scratch, exactly the way a top design agency (Linear / Vercel / Stripe / Framer caliber) would build it. Do NOT just tweak the existing markup — completely re-author the HTML and CSS into a flagship-quality design, fully committing to the DESIGN DIRECTION you were assigned in the system prompt.
-
-ABSOLUTE RULES:
-- Preserve EVERY existing {variable_name} placeholder so dynamic data still works: ${varNames || "none detected"}
-- Keep the same business topic, purpose, and language as the original.
-- Preserve any {{AI:...}} blocks and add 1-2 more for unique hero/about copy if missing.
-- Rebuild the layout with the full design playbook: cinematic multi-layer hero, animated gradient orbs, glassmorphic/gradient cards, fluid clamp() typography, gradient-text section headings, scroll-snap testimonials carousel, styled FAQ, and a dramatic final CTA band.
-- Keep it conversion-optimized and SEO-strong: clear single H1, logical h2/h3 hierarchy, 300+ words of quality content, descriptive image alt text, FAQ + trust signals.
-- Make it fully responsive and accessible (WCAG AA contrast).
-- Return ONLY the finished HTML, no explanations or markdown fences.
-
-ORIGINAL TEMPLATE TO REDESIGN (use its content/variables as the source of truth):
-${content}`
+          mode: "improve",
+          existingContent: content,
+          instruction:
+            "Improve the copy, SEO and clarity of this page. Keep the EXACT same design, layout, structure, CSS classes and topic. Reuse every existing image URL unchanged — never swap to stock or AI images. Only refine the visible text and alt text so it stays relevant to what the client actually offers.",
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       let improved = (data.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
       if (improved) {
-        // Fully replace the old template code with the freshly redesigned HTML.
+        // In-place improvement — keep the user on the same design, just refreshed copy.
         setContent(improved);
-        // Bring the user to the Content tab in the visual Builder so they can
-        // edit text/images and add or delete blocks directly.
         setActiveTab("content");
-        setViewMode("builder");
-        toast({ title: "✨ Design regenerated!", description: "Old code replaced — edit text & images in the Builder, or switch to Code." });
+        setViewMode("preview");
+        toast({ title: "✨ Content improved!", description: "Same design & images kept — copy and SEO refined." });
       } else {
         toast({ title: "Nothing returned", description: "The AI did not return any HTML. Please try again.", variant: "destructive" });
       }
