@@ -151,6 +151,7 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     clearExpiredLocalAuthSession();
