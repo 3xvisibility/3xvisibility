@@ -37,10 +37,49 @@ function preserveBlocks(html: string) {
   };
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Build a regex that tolerates whitespace/newline/entity differences between the
+ * normalized `original` text (what the extractor stored) and the raw HTML.
+ * Each run of whitespace in the original becomes `(?:\s|&nbsp;|<[^>]+>)+` so that
+ * collapsed spacing, line breaks, &nbsp; and simple inline tags still match.
+ */
+function buildFlexibleMatcher(original: string): RegExp | null {
+  const trimmed = original.trim();
+  if (!trimmed) return null;
+  const pattern = trimmed
+    .split(/\s+/)
+    .map(escapeRegExp)
+    .join("(?:\\s|&nbsp;|&#160;|<[^>]+>)+");
+  try {
+    return new RegExp(pattern, "g");
+  } catch {
+    return null;
+  }
+}
+
 function replaceLiteralOutsidePreservedBlocks(html: string, original: string, replacement: string) {
   if (!original.trim() || original === replacement) return html;
   const { safe, restore } = preserveBlocks(html);
-  return restore(safe.split(original).join(replacement));
+
+  // Fast path: exact literal match.
+  if (safe.includes(original)) {
+    return restore(safe.split(original).join(replacement));
+  }
+
+  // Fallback: whitespace/entity/inline-tag tolerant match so normalized text
+  // still maps onto the raw HTML it was extracted from.
+  const matcher = buildFlexibleMatcher(original);
+  if (!matcher) return html;
+  let replaced = false;
+  const next = safe.replace(matcher, () => {
+    replaced = true;
+    return replacement;
+  });
+  return replaced ? restore(next) : html;
 }
 
 export function applyTemplateVariables(html: string, variables: ExtractedTemplateVariable[]) {
