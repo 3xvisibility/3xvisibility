@@ -189,8 +189,17 @@ export function useSubscription(): SubscriptionData {
 
       const pagesPercent = pagesLimit > 0 ? pagesUsed / pagesLimit : 0;
 
-      if (pagesPercent >= 0.9 && !warnedRef.current.pages) {
+      // Persist the "already warned" flag across page navigations / remounts so
+      // the toast fires only ONCE per session for a given usage level, instead
+      // of re-appearing every time a page mounts this hook.
+      const warnKey = `page-limit-warned:${wsId}:${pagesUsed}:${pagesLimit}`;
+      const alreadyWarned = (() => {
+        try { return sessionStorage.getItem(warnKey) === "1"; } catch { return false; }
+      })();
+
+      if (pagesPercent >= 0.9 && !warnedRef.current.pages && !alreadyWarned) {
         warnedRef.current.pages = true;
+        try { sessionStorage.setItem(warnKey, "1"); } catch { /* ignore */ }
         toast({
           title: "Page limit warning",
           description: `You've used ${pagesUsed} of ${pagesLimit} pages (${Math.round(pagesPercent * 100)}%).`,
