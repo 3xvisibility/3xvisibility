@@ -977,7 +977,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         generation_method: generationMethod,
         max_rows: maxRows ? parseInt(maxRows) : null,
         scheduled_at: (scheduleMode === "later" || scheduleMode === "recurring") && scheduledDate ? scheduledDate.toISOString() : null,
-        status: (scheduleMode === "later" || scheduleMode === "recurring") && scheduledDate ? "queued" as any : publishMode === "published" ? "queued" as any : "draft" as any,
+        status: (scheduleMode === "later" || scheduleMode === "recurring") && scheduledDate ? "queued" as any : "draft" as any,
         recurring_schedule: scheduleMode === "recurring" ? { interval: recurringInterval, end_date: recurringEndDate?.toISOString() || null, enabled: true } as any : null,
       } as any).select("id").single();
       if (error) throw error;
@@ -1038,26 +1038,34 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       }
       // Auto-trigger generation if scheduled for "now" (not later/recurring)
       const shouldRunNow = scheduleMode === "now" && campaignId;
+      let generationError: string | null = null;
       if (shouldRunNow) {
         try {
-          await supabase.functions.invoke("generate-pages", { body: { campaign_id: campaignId } });
+          const { data: generationData, error: generationError } = await supabase.functions.invoke("generate-pages", { body: { campaign_id: campaignId } });
+          if (generationError) throw generationError;
+          if (generationData?.error) throw new Error(generationData.error);
         } catch (e) {
           console.warn("Auto-trigger generate-pages failed (campaign saved, can run manually):", e);
+          await supabase.from("campaigns").update({ status: "draft" as any }).eq("id", campaignId);
+          generationError = e instanceof Error ? e.message : "Unknown error";
         }
       }
-      return campaignId;
+      return { campaignId, generationStarted: shouldRunNow && !generationError, generationError };
     },
-    onSuccess: (campaignId) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      const ranNow = scheduleMode === "now";
+      const ranNow = scheduleMode === "now" && result.generationStarted;
       toast({
-        title: ranNow ? "Campaign started" : "Campaign created",
+        title: ranNow ? "Campaign started" : result.generationError ? "Campaign saved" : "Campaign created",
         description: ranNow
           ? `"${campaignName}" is now generating pages.`
+          : result.generationError
+          ? `Generation did not start: ${result.generationError}. Use Retry generation from Campaigns.`
           : `"${campaignName}" has been saved.`,
+        variant: result.generationError ? "destructive" : undefined,
       });
       resetForm();
-      if (campaignId) onCreated?.(campaignId);
+      if (result.campaignId) onCreated?.(result.campaignId);
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });

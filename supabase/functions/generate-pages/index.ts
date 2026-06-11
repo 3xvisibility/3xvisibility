@@ -959,8 +959,10 @@ Deno.serve(async (req) => {
     activeCampaignId = campaign_id ?? null;
     // overwrite_fields: { title?: bool, content?: bool, seo?: bool, images?: bool } — for selective re-generation
     const isOverwriteMode = overwrite_fields && typeof overwrite_fields === "object" && Object.values(overwrite_fields).some(Boolean);
-    // publish_mode: "draft" | "publish" — determines initial page status
-    const effectivePublishMode = publish_mode === "publish" ? "published" : "pending";
+    // Generated pages should start as pending. If the campaign is configured
+    // to publish immediately, we queue publish-pages after insertion and only
+    // mark pages as published after the CMS confirms success.
+    const effectivePublishMode = "pending";
 
     if (!campaign_id) {
       return new Response(JSON.stringify({ error: "campaign_id is required" }), {
@@ -1039,6 +1041,7 @@ Deno.serve(async (req) => {
     }
     console.log("[GENERATE-PAGES] Campaign loaded:", campaign.name, "template:", !!campaign.templates);
     _currentWorkspaceId = campaign.workspace_id || null;
+    const shouldAutoPublish = campaign.publish_mode === "published" || campaign.publish_mode === "publish";
     if (!campaign.templates) {
       return new Response(JSON.stringify({ error: "No template assigned" }), {
         status: 400,
@@ -2286,7 +2289,7 @@ Deno.serve(async (req) => {
                 if (updateError) {
                   throw updateError;
                 }
-                if (campaign.publish_mode === "published" && campaign.website_id) {
+                if (shouldAutoPublish && campaign.website_id) {
                   pageIdsToPublish.push(existing.id);
                 }
               }
@@ -2300,7 +2303,7 @@ Deno.serve(async (req) => {
               if (insertedPageError) {
                 throw insertedPageError;
               }
-              if (campaign.publish_mode === "published" && campaign.website_id && insertedPage?.id) {
+              if (shouldAutoPublish && campaign.website_id && insertedPage?.id) {
                 pageIdsToPublish.push(insertedPage.id);
               }
             }
@@ -2319,7 +2322,7 @@ Deno.serve(async (req) => {
                 `Batch ${batchesCompleted} insert failed: ${insertError.message}`, batchesCompleted);
               failedCount += successfulPages.length;
               successCount = Math.max(0, successCount - successfulPages.length);
-            } else if (campaign.publish_mode === "published" && campaign.website_id) {
+            } else if (shouldAutoPublish && campaign.website_id) {
               pageIdsToPublish.push(...(insertedPages || []).map((page: any) => page.id).filter(Boolean));
             }
           }
@@ -2467,7 +2470,7 @@ Deno.serve(async (req) => {
     });
 
     // Fallback queue for any pending pages that were not already queued during batch processing.
-    if (campaign.publish_mode === "published" && campaign.website_id && successCount > 0 && publishQueuedCount === 0) {
+    if (shouldAutoPublish && campaign.website_id && successCount > 0 && publishQueuedCount === 0) {
       try {
         const { data: pendingPages } = await supabase
           .from("generated_pages")
@@ -2599,7 +2602,7 @@ Deno.serve(async (req) => {
         variables: aiFilledKeys,
       },
       job_id: jobId,
-      publishing_queued: campaign.publish_mode === "published" && campaign.website_id && successCount > 0,
+      publishing_queued: shouldAutoPublish && campaign.website_id && successCount > 0,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
