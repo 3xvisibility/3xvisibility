@@ -102,14 +102,31 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const basePath = currentWorkspace ? `/w/${currentWorkspace.slug}` : "";
 
+  const lastUserIdRef = useRef<string | null>(null);
   useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      lastUserIdRef.current = session?.user?.id ?? null;
+    })();
     fetchWorkspaces();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event) => {
-      // Only refetch on actual sign-in/out — NOT on TOKEN_REFRESHED (fires on tab focus
-      // and would cause forms to unmount and lose user input).
-      if (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Supabase re-fires SIGNED_IN whenever the tab regains focus (it recovers
+      // and refreshes the cached session). Refetching on every focus would set
+      // isLoading=true, unmount the dashboard, and wipe in-progress work like the
+      // AI template builder. Only react when the actual user changes.
+      const newUserId = session?.user?.id ?? null;
+      if (_event === 'SIGNED_OUT') {
+        lastUserIdRef.current = null;
         setIsLoading(true);
         fetchWorkspaces();
+        return;
+      }
+      if (_event === 'SIGNED_IN') {
+        if (newUserId && newUserId !== lastUserIdRef.current) {
+          lastUserIdRef.current = newUserId;
+          setIsLoading(true);
+          fetchWorkspaces();
+        }
       }
     });
     return () => subscription.unsubscribe();
