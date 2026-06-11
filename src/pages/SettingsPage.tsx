@@ -73,7 +73,7 @@ export default function SettingsPage() {
   const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
   const navigate = useNavigate();
-  const { canUseFeature } = useSubscription();
+  const { canUseFeature, aiUsed, aiLimit } = useSubscription();
   const hasApiAccess = canUseFeature("apiAccess");
   const apiMinPlan = getMinimumPlanFor("apiAccess");
   const apiMinPlanLabel = PLAN_FEATURES[apiMinPlan].label;
@@ -101,20 +101,6 @@ export default function SettingsPage() {
     },
   });
 
-  // Fetch subscription for AI usage
-  const { data: subscription, isLoading: loadingSub } = useQuery({
-    queryKey: ["settings-subscription"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("plan, ai_generations_used, ai_generations_limit")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      return data;
-    },
-  });
 
   // Save profile + AI settings
   const saveMutation = useMutation({
@@ -144,8 +130,6 @@ export default function SettingsPage() {
     },
   });
 
-  const aiUsed = subscription?.ai_generations_used || 0;
-  const aiLimit = subscription?.ai_generations_limit || 50;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   return (

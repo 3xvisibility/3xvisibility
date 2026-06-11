@@ -248,16 +248,16 @@ export default function DashboardPage() {
     },
   });
 
-  const { data: aiUsage, isLoading: loadingAi } = useQuery({
-    queryKey: ["dashboard-ai-usage"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("ai_generations_used, ai_generations_limit, plan")
-        .maybeSingle();
-      return data;
-    },
-  });
+  // AI usage comes from the single source of truth (useSubscription) so every
+  // page (Dashboard, Settings, Billing) shows the same plan-based values.
+  const {
+    plan: currentPlan,
+    pagesUsed,
+    pagesLimit,
+    aiUsed,
+    aiLimit,
+    isLoading: loadingAi,
+  } = useSubscription();
 
   // ── Improvement stats ──────────────────────────
   const { data: improvementStats } = useQuery({
@@ -337,8 +337,6 @@ export default function DashboardPage() {
   const campaignChartData = buildCampaignData(campaignPeriod);
 
   const isLoading = loadingCampaigns || loadingPages || loadingWebsites;
-  const aiUsed = aiUsage?.ai_generations_used || 0;
-  const aiLimit = aiUsage?.ai_generations_limit || 50;
   const aiPercent = aiLimit > 0 ? Math.round((aiUsed / aiLimit) * 100) : 0;
 
   const stats = [
@@ -430,13 +428,13 @@ export default function DashboardPage() {
     }
   };
 
-  const { plan: currentPlan, pagesUsed, pagesLimit, aiUsed: subAiUsed, aiLimit: subAiLimit } = useSubscription();
+  
 
   return (
     <div className="space-y-8">
       <PendingInvitationsBanner />
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
-      <UsageLimitBanner type="ai" used={subAiUsed} limit={subAiLimit} />
+      <UsageLimitBanner type="ai" used={aiUsed} limit={aiLimit} />
 
       {/* Usage Overview Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -668,7 +666,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <Badge className="bg-gradient-primary text-primary-foreground border-0 capitalize px-4 py-1.5 text-xs font-semibold self-start sm:self-auto">
-              {aiUsage?.plan || "free"} {t("common.plan")}
+              {currentPlan || "free"} {t("common.plan")}
             </Badge>
           </div>
           {!loadingAi && (
