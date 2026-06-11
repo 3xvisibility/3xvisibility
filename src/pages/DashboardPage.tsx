@@ -666,7 +666,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <Badge className="bg-gradient-primary text-primary-foreground border-0 capitalize px-4 py-1.5 text-xs font-semibold self-start sm:self-auto">
-              {aiUsage?.plan || "free"} {t("common.plan")}
+              {currentPlan || "free"} {t("common.plan")}
             </Badge>
           </div>
           {!loadingAi && (
