@@ -950,6 +950,8 @@ const en: Record<string, string> = {
   "pricing.title": "Simple, transparent pricing",
   "pricing.tryFree": "Try for Free",
   "pricing.unlimited": "Unlimited",
+  "pricing.campaigns": "Campaigns",
+  "pricing.campaignsPerMonth": "campaigns",
   "pricing.websites": "Websites",
   "pricing.wordpress": "WordPress",
   "pricing.year": "year",
