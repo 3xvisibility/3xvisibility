@@ -94,7 +94,7 @@ export default function TemplatesPage() {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
-  const { features } = useSubscription();
+  const { features, plan } = useSubscription();
   const wsId = currentWorkspace?.id;
   const maxTemplates = features.templates;
 
