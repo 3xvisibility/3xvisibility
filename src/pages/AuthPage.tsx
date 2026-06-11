@@ -14,6 +14,7 @@ import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, C
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -172,7 +173,7 @@ export default function AuthPage() {
     for (let attempt = 0; attempt < LOGIN_RETRY_DELAYS_MS.length; attempt += 1) {
       if (LOGIN_RETRY_DELAYS_MS[attempt] > 0) await wait(LOGIN_RETRY_DELAYS_MS[attempt]);
       console.log(`[Auth Debug] Login attempt ${attempt + 1}/${LOGIN_RETRY_DELAYS_MS.length}`);
-      const result = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+      const result = await supabase.auth.signInWithPassword({ email: normalizeEmail(email), password });
       error = result.error;
       if (error) {
         console.error(`[Auth Debug] Attempt ${attempt + 1} error:`, error.message, (error as any).status, (error as any).__isAuthError);
@@ -211,7 +212,7 @@ export default function AuthPage() {
     }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
+      email: normalizeEmail(email),
       password,
       options: {
         emailRedirectTo: window.location.origin,
@@ -289,7 +290,7 @@ export default function AuthPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
