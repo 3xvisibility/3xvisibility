@@ -92,6 +92,17 @@ export default function TemplatesPage() {
   const importFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // Force-refetch the templates list AND the per-account count, including
+  // inactive queries (refetchType: "all"), so the UI is correct even if the
+  // user navigates away and back quickly during a create/delete.
+  const refreshTemplates = useCallback(
+    () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["templates"], refetchType: "all" }),
+        queryClient.invalidateQueries({ queryKey: ["user-template-count"], refetchType: "all" }),
+      ]),
+    [queryClient],
+  );
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
   const { features, plan } = useSubscription();
