@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { workspaces, currentWorkspace, setCurrentWorkspace, refetch, basePath } = useWorkspace();
@@ -39,8 +40,18 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
     navigate(`/w/${ws.slug}/${currentSub}`);
   };
 
+  const canCreateWorkspace = PLAN_FEATURES[(plan as PlanName) ?? "free"]?.teamCollaboration ?? false;
+
   const handleCreate = async () => {
     if (!newName.trim()) return;
+    if (!canCreateWorkspace) {
+      toast({
+        title: "Agency plan required",
+        description: "Creating additional workspaces is available on the Agency plan only.",
+        variant: "destructive",
+      });
+      return;
+    }
     setCreating(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -117,10 +128,24 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setCreateOpen(true)} className="gap-2">
+          <DropdownMenuItem
+            onClick={() =>
+              canCreateWorkspace
+                ? setCreateOpen(true)
+                : toast({
+                    title: "Agency plan required",
+                    description: "Multiple workspaces are available on the Agency plan only.",
+                  })
+            }
+            className="gap-2"
+          >
             <Plus className="h-4 w-4" />
             Create workspace
+            {!canCreateWorkspace && (
+              <Badge variant="secondary" className="ml-auto text-[9px]">Agency</Badge>
+            )}
           </DropdownMenuItem>
+
         </DropdownMenuContent>
       </DropdownMenu>
 
