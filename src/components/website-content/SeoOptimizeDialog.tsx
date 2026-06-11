@@ -11,6 +11,8 @@ import {
   FileText,
   Type,
   RefreshCw,
+  Undo2,
+
 } from "lucide-react";
 import {
   Dialog,
@@ -80,6 +82,29 @@ export function SeoOptimizeDialog({
     external_url?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [rollingBack, setRollingBack] = useState(false);
+  const [rolledBack, setRolledBack] = useState(false);
+
+  const handleRollback = async () => {
+    setRollingBack(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("rollback-page", {
+        body: { website_id: websiteId, page_external_id: page.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setRolledBack(true);
+      toast({
+        title: "Reverted to previous version",
+        description: "The earlier design and text were restored on your live website.",
+      });
+      onOptimized?.();
+    } catch (err: any) {
+      handleApiError(err, { title: "Rollback failed" });
+    } finally {
+      setRollingBack(false);
+    }
+  };
 
   // Persist field selection + instruction per page so users don't lose
   // their tweaks when navigating away.
@@ -112,6 +137,7 @@ export function SeoOptimizeDialog({
 
     setLoading(true);
     setResult(null);
+    setRolledBack(false);
 
     try {
       // Truncate content to avoid edge function timeouts on large pages
@@ -273,6 +299,28 @@ export function SeoOptimizeDialog({
                 {copied ? "Copied" : "Copy"}
               </Button>
             </div>
+
+            {/* Rollback — let the client revert to the previous design/text after previewing */}
+            {result.pushed_to_cms && (
+              <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-amber-600">Don't like the result?</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Preview the live page, then restore the previous design & text in one click.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRollback}
+                  disabled={rollingBack || rolledBack}
+                  className="gap-1.5 h-8 text-xs shrink-0 text-amber-600 border-amber-500/40 hover:bg-amber-500/10"
+                >
+                  {rollingBack ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : rolledBack ? <Check className="h-3.5 w-3.5" /> : <Undo2 className="h-3.5 w-3.5" />}
+                  {rollingBack ? "Reverting..." : rolledBack ? "Reverted" : "Rollback"}
+                </Button>
+              </div>
+            )}
 
             {result.seo_title && (
               <div className="rounded-md border p-3">
