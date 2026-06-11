@@ -118,15 +118,22 @@ export function useJobNotifications() {
             try {
               const { data: sub } = await supabase
                 .from("subscriptions")
-                .select("plan, ai_generations_used, ai_generations_limit, pages_used, pages_limit")
+                .select("plan")
+                .eq("user_id", job.user_id)
+                .maybeSingle();
+
+              // ai_credits is the single source of truth for AI usage/limits.
+              const { data: credits } = await supabase
+                .from("ai_credits")
+                .select("total_credits, used_credits")
                 .eq("user_id", job.user_id)
                 .maybeSingle();
 
               // Keep all subscription-driven UI in sync with real usage
               queryClient.invalidateQueries({ queryKey: ["user-subscription"] });
 
-              const aiUsed = sub?.ai_generations_used ?? 0;
-              const aiLimit = sub?.ai_generations_limit ?? 0;
+              const aiUsed = credits?.used_credits ?? 0;
+              const aiLimit = credits?.total_credits ?? 0;
               const usageAllowed = (prefsRef.current ?? {}).usage_limit !== false;
 
               if (usageAllowed && aiLimit > 0) {
