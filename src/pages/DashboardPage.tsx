@@ -248,16 +248,16 @@ export default function DashboardPage() {
     },
   });
 
-  const { data: aiUsage, isLoading: loadingAi } = useQuery({
-    queryKey: ["dashboard-ai-usage"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("ai_generations_used, ai_generations_limit, plan")
-        .maybeSingle();
-      return data;
-    },
-  });
+  // AI usage comes from the single source of truth (useSubscription) so every
+  // page (Dashboard, Settings, Billing) shows the same plan-based values.
+  const {
+    plan: currentPlan,
+    pagesUsed,
+    pagesLimit,
+    aiUsed,
+    aiLimit,
+    isLoading: loadingAi,
+  } = useSubscription();
 
   // ── Improvement stats ──────────────────────────
   const { data: improvementStats } = useQuery({
