@@ -482,7 +482,7 @@ Deno.serve(async (req) => {
 
 
     if (action === "update-subscription") {
-      const { subscription_id, user_id, plan, pages_limit, pages_used } = body;
+      const { subscription_id, user_id, plan, pages_limit, pages_used, ai_generations_limit } = body;
 
       if (subscription_id) {
         // Update existing subscription
@@ -490,6 +490,9 @@ Deno.serve(async (req) => {
         if (plan !== undefined) updates.plan = plan;
         if (pages_limit !== undefined) updates.pages_limit = pages_limit;
         if (pages_used !== undefined) updates.pages_used = pages_used;
+        if (ai_generations_limit !== undefined && ai_generations_limit !== null) {
+          updates.ai_generations_limit = Math.max(0, Math.floor(Number(ai_generations_limit)));
+        }
         updates.updated_at = new Date().toISOString();
 
         const { error } = await serviceClient
@@ -500,12 +503,16 @@ Deno.serve(async (req) => {
         if (error) throw error;
       } else if (user_id) {
         // Create new subscription for user
-        const { error } = await serviceClient.from("subscriptions").insert({
+        const insertRow: Record<string, any> = {
           user_id,
           plan: plan || "starter",
           pages_limit: pages_limit ?? 100,
           pages_used: pages_used ?? 0,
-        });
+        };
+        if (ai_generations_limit !== undefined && ai_generations_limit !== null) {
+          insertRow.ai_generations_limit = Math.max(0, Math.floor(Number(ai_generations_limit)));
+        }
+        const { error } = await serviceClient.from("subscriptions").insert(insertRow);
         if (error) throw error;
       }
 
