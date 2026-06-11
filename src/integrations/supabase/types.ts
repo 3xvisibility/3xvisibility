@@ -2629,6 +2629,7 @@ export type Database = {
       }
     }
     Functions: {
+      campaign_limit_for_plan: { Args: { _plan: string }; Returns: number }
       deduct_ai_credits: {
         Args: {
           p_credits: number
