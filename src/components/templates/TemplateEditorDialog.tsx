@@ -161,6 +161,54 @@ export function TemplateEditorDialog({
   );
   const uniqueVars = [...new Set(detectedVars)];
 
+  // ── Auto-derive SEO title/description FROM the content ──────────────
+  // Reads <title>, first <h1>/<h2>, <meta description>, or the first
+  // paragraph so the SEO tab reflects what's actually on the page.
+  const detectedSeo = useMemo(() => {
+    if (!content) return { title: "", description: "" };
+    const pick = (re: RegExp) => {
+      const m = content.match(re);
+      return m ? m[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "";
+    };
+    const title =
+      pick(/<title[^>]*>([\s\S]*?)<\/title>/i) ||
+      pick(/<h1[^>]*>([\s\S]*?)<\/h1>/i) ||
+      pick(/<h2[^>]*>([\s\S]*?)<\/h2>/i);
+    let description =
+      (content.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1] || "").trim() ||
+      pick(/<p[^>]*>([\s\S]*?)<\/p>/i);
+    if (description.length > 160) description = description.slice(0, 157).trim() + "…";
+    return { title: title.slice(0, 70), description };
+  }, [content]);
+
+  // Prefill empty SEO fields from the detected content values.
+  useEffect(() => {
+    if (!open) return;
+    setSeoTitlePattern((prev) => (prev.trim() ? prev : detectedSeo.title));
+    setSeoDescriptionPattern((prev) => (prev.trim() ? prev : detectedSeo.description));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detectedSeo.title, detectedSeo.description, open]);
+
+  // Write the current SEO title + description back INTO the content as
+  // <title> and <meta name="description"> tags (replace if present, else prepend).
+  const applySeoToContent = () => {
+    if (!content.trim()) {
+      toast({ title: "No content", description: "Add template content first.", variant: "destructive" });
+      return;
+    }
+    const titleTag = `<title>${seoTitlePattern}</title>`;
+    const descTag = `<meta name="description" content="${seoDescriptionPattern.replace(/"/g, "&quot;")}" />`;
+    let next = content;
+    next = /<title[^>]*>[\s\S]*?<\/title>/i.test(next)
+      ? next.replace(/<title[^>]*>[\s\S]*?<\/title>/i, titleTag)
+      : titleTag + "\n" + next;
+    next = /<meta[^>]+name=["']description["'][^>]*>/i.test(next)
+      ? next.replace(/<meta[^>]+name=["']description["'][^>]*>/i, descTag)
+      : next.replace(titleTag, titleTag + "\n" + descTag);
+    setContent(next);
+    toast({ title: "Applied to content", description: "SEO title & description written into the template." });
+  };
+
   const normalizeSlug = (input: string) =>
     input.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .toLowerCase().replace(/[^a-z0-9{}\-\/]/g, "-").replace(/-{2,}/g, "-").replace(/^-|-$/g, "");
