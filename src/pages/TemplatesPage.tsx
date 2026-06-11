@@ -107,6 +107,21 @@ export default function TemplatesPage() {
     },
   });
 
+  // Total templates owned by the user across ALL workspaces — the plan limit
+  // is per-account, so this is what we compare against (matches the DB trigger).
+  const { data: userTemplateCount = 0 } = useQuery({
+    queryKey: ["user-template-count"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      const { count } = await supabase
+        .from("templates")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      return count ?? 0;
+    },
+  });
+
   const { data: connectedWebsites = [] } = useQuery({
     queryKey: ["tpl-websites", wsId],
     enabled: !!wsId,
@@ -208,7 +223,7 @@ export default function TemplatesPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
-      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates.`);
+      if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates.`);
       const variables = filterDesignVars([...new Set(params.content.match(/\{[^}]+\}/g) || [])]);
       const { error } = await supabase.from("templates").insert({
         name: params.name, content: params.content, variables,
@@ -222,6 +237,7 @@ export default function TemplatesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       toast({ title: "Template created" });
       setEditorOpen(false);
       setEditingTemplate(null);
@@ -243,6 +259,7 @@ export default function TemplatesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       toast({ title: "Template updated" });
       setEditorOpen(false);
       setEditingTemplate(null);
@@ -254,7 +271,7 @@ export default function TemplatesPage() {
     mutationFn: async (tpl: Template) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
-      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
+      if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const { error } = await supabase.from("templates").insert({
         name: `${tpl.name} (Copy)`, content: tpl.content, variables: tpl.variables,
         user_id: user.id, workspace_id: wsId,
@@ -267,6 +284,7 @@ export default function TemplatesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       toast({ title: "Template duplicated" });
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -281,7 +299,7 @@ export default function TemplatesPage() {
       if (!tpl) throw new Error("Marketplace template no longer exists");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
-      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
+      if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const version = computeMarketplaceVersion(tpl);
       const { error } = await supabase.from("templates").insert({
         name: `${tpl.name} (Marketplace · ${version})`,
@@ -301,6 +319,7 @@ export default function TemplatesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       toast({ title: "Latest version imported", description: "A new pinned snapshot was added. Existing campaigns keep their old version." });
     },
     onError: (err: Error) => toast({ title: "Re-import failed", description: err.message, variant: "destructive" }),
@@ -318,6 +337,7 @@ export default function TemplatesPage() {
       const { error } = await supabase.from("templates").delete().eq("id", id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast({ title: "Template deleted" });
     } catch (err: any) {
@@ -342,10 +362,11 @@ export default function TemplatesPage() {
       if (!data.name || !data.content) throw new Error("Invalid template file.");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
-      if (maxTemplates > 0 && templates.length >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
+      if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
       const { error } = await supabase.from("templates").insert({ name: data.name, content: data.content, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       toast({ title: "Template imported" });
     } catch (err: any) {
       toast({ title: "Import failed", description: err.message, variant: "destructive" });
@@ -360,6 +381,7 @@ export default function TemplatesPage() {
         await supabase.from("templates").delete().eq("id", id);
       }
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       toast({ title: `${selectedIds.size} template(s) deleted` });
       setSelectedIds(new Set());
     } catch (err: any) {
@@ -405,6 +427,7 @@ export default function TemplatesPage() {
       } as any).eq("id", regenTarget.id);
       if (upErr) throw upErr;
       queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["user-template-count"] });
       toast({
         title: regenMode === "variants-only" ? "Layout updated" : "Design regenerated",
         description: data?.summary || (regenMode === "variants-only" ? `Variants: ${summarizeVariants(regenVariants)}` : `New design applied for ${regenNiche}.`),
