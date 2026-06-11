@@ -739,14 +739,34 @@ export default function TemplatesPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTemplate(f); }} />
-          <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()}>
+          <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} disabled={limitReached}>
             <Upload className="mr-1.5 h-3.5 w-3.5" /> Import JSON
           </Button>
-          <Button size="sm" onClick={() => setPickerOpen(true)}>
+          <Button size="sm" onClick={() => setPickerOpen(true)} disabled={limitReached}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Template
           </Button>
         </div>
       </div>
+
+      {/* Plan limit reached — inline error */}
+      {limitReached && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Template limit reached</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Your <strong>{planLabel}</strong> plan allows{" "}
+              <strong>{maxTemplates} template{maxTemplates === 1 ? "" : "s"}</strong>{" "}
+              and you've used <strong>{userTemplateCount}</strong>. Delete an existing
+              template or upgrade your plan to create more.
+            </span>
+            <Button asChild size="sm" variant="outline" className="shrink-0">
+              <Link to="/billing"><Crown className="mr-1.5 h-3.5 w-3.5" /> Upgrade plan</Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
