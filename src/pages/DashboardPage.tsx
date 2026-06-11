@@ -434,7 +434,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <PendingInvitationsBanner />
       <UsageLimitBanner type="pages" used={pagesUsed} limit={pagesLimit} />
-      <UsageLimitBanner type="ai" used={subAiUsed} limit={subAiLimit} />
+      <UsageLimitBanner type="ai" used={aiUsed} limit={aiLimit} />
 
       {/* Usage Overview Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
