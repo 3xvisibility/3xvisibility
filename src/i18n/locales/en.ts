@@ -501,7 +501,7 @@ const en: Record<string, string> = {
   "cta.getStarted": "Get started free",
   "cta.title": "Ready to deploy content at scale?",
   "cta.viewPricing": "View pricing",
-  "dashboard.aiGenerationsTitle": "AI Generations",
+  "dashboard.aiGenerationsTitle": "AI Credits",
   "dashboard.aiRemaining": "{remaining} remaining",
   "dashboard.aiUsageCycle": "{used} of {limit} credits used this billing cycle",
   "dashboard.aiUsed": "{used} used",
