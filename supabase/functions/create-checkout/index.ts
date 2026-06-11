@@ -24,8 +24,12 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const { priceId } = await req.json();
+    const { priceId, origin: bodyOrigin } = await req.json();
     if (!priceId) throw new Error("priceId is required");
+
+    // Prefer the explicit origin sent by the client (real app domain),
+    // fall back to the request Origin header.
+    const origin = bodyOrigin || req.headers.get("origin") || "";
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -42,8 +46,8 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/billing?success=true`,
-      cancel_url: `${req.headers.get("origin")}/billing?canceled=true`,
+      success_url: `${origin}/billing?success=true`,
+      cancel_url: `${origin}/billing?canceled=true`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
