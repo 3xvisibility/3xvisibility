@@ -106,21 +106,27 @@ ${source}`;
         ],
         authToken: req.headers.get("Authorization")?.replace(/^Bearer\s+/i, ""),
         promptType: "rewrite",
+        // Credits were already gated/deducted above via deductCreditsForRequest.
+        // Without this, aiGenerate would deduct a SECOND time and low-credit users
+        // would fail the second deduction → 500 → generic "non-2xx" error toast.
+        skipCredits: true,
       });
 
       if (!improveResult.success) {
-        const status = improveResult.content.includes("429") ? 429 : improveResult.content.includes("402") ? 402 : 500;
+        // Return 200 with a structured error so the client shows the real reason
+        // (a friendly toast) instead of a generic "Edge Function non-2xx" failure.
         return new Response(JSON.stringify({ error: improveResult.content || "AI improvement failed" }), {
-          status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       let improved = (improveResult.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
       if (!improved) {
-        return new Response(JSON.stringify({ error: "AI returned empty content" }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ error: "AI returned empty content. Please try again." }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
 
       // Safety net: if the model dropped any original image, the improved output
       // is unreliable — fall back to keeping the original images by leaving the
