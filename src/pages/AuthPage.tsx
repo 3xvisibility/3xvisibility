@@ -14,6 +14,7 @@ import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, C
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Seo } from "@/components/Seo";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -34,7 +35,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+        email: normalizeEmail(email),
         password,
       });
       if (error || !data.user) {
