@@ -172,7 +172,7 @@ export default function AuthPage() {
     for (let attempt = 0; attempt < LOGIN_RETRY_DELAYS_MS.length; attempt += 1) {
       if (LOGIN_RETRY_DELAYS_MS[attempt] > 0) await wait(LOGIN_RETRY_DELAYS_MS[attempt]);
       console.log(`[Auth Debug] Login attempt ${attempt + 1}/${LOGIN_RETRY_DELAYS_MS.length}`);
-      const result = await supabase.auth.signInWithPassword({ email, password });
+      const result = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
       error = result.error;
       if (error) {
         console.error(`[Auth Debug] Attempt ${attempt + 1} error:`, error.message, (error as any).status, (error as any).__isAuthError);
