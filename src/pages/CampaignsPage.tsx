@@ -278,6 +278,7 @@ export default function CampaignsPage() {
 
   const handleCampaignCreated = (campaignId: string) => {
     queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
   };
 
   return (
