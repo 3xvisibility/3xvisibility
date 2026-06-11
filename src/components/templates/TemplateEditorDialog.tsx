@@ -272,10 +272,11 @@ ${content}`
       if (improved) {
         // Fully replace the old template code with the freshly redesigned HTML.
         setContent(improved);
-        // Bring the user to the Content tab so they see the new code/design.
+        // Bring the user to the Content tab in the visual Builder so they can
+        // edit text/images and add or delete blocks directly.
         setActiveTab("content");
-        setViewMode("preview");
-        toast({ title: "✨ Design regenerated!", description: "Old code was replaced with the new redesigned template." });
+        setViewMode("builder");
+        toast({ title: "✨ Design regenerated!", description: "Old code replaced — edit text & images in the Builder, or switch to Code." });
       } else {
         toast({ title: "Nothing returned", description: "The AI did not return any HTML. Please try again.", variant: "destructive" });
       }
