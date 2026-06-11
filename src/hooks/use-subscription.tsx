@@ -120,6 +120,15 @@ export function useSubscription(): SubscriptionData {
       if (wsId) subQuery.eq("workspace_id", wsId);
       const { data: subData } = await subQuery.maybeSingle();
 
+      // Fetch AI credits — the single source of truth for AI usage/limits.
+      // Every AI action deducts from this table via deduct_ai_credits, so all
+      // surfaces (dashboard, settings, billing, widget) stay in sync.
+      const { data: creditsData } = await supabase
+        .from("ai_credits")
+        .select("total_credits, used_credits, remaining_credits")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       // Count connected websites for this workspace
       let sitesConnected = 0;
       if (wsId) {
@@ -130,7 +139,7 @@ export function useSubscription(): SubscriptionData {
         sitesConnected = count ?? 0;
       }
 
-      return { ...subData, sitesConnected };
+      return { ...subData, sitesConnected, aiCredits: creditsData };
     },
     staleTime: 60_000,
   });
