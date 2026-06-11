@@ -280,6 +280,51 @@ ${content}`
     }
   };
 
+  // ── Images detected inside the template content ──────────────────────
+  // Both <img src="..."> and CSS url(...) backgrounds are picked up so the
+  // Image tab fully depends on what the Content actually uses.
+  const contentImages = useMemo(() => {
+    if (!content) return [] as string[];
+    const urls = new Set<string>();
+    const imgRe = /<img[^>]+src=["']([^"']+)["']/gi;
+    const urlRe = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+    let m: RegExpExecArray | null;
+    while ((m = imgRe.exec(content))) urls.add(m[1]);
+    while ((m = urlRe.exec(content))) {
+      const u = m[1];
+      if (/\.(png|jpe?g|webp|gif|svg|avif)(\?|$)/i.test(u) || /picsum|unsplash|images?|photo|cdn/i.test(u)) urls.add(u);
+    }
+    return [...urls].filter((u) => u && !u.startsWith("data:")).slice(0, 30);
+  }, [content]);
+
+  // Replace every occurrence of an image URL inside the content with a new one.
+  const replaceImageUrl = (oldUrl: string, newUrl: string) => {
+    if (!newUrl.trim() || oldUrl === newUrl) return;
+    setContent((prev) => prev.split(oldUrl).join(newUrl.trim()));
+    toast({ title: "Image replaced", description: "Updated in the template content." });
+  };
+
+  // Build a FREE stock photo (Picsum) from a keyword — no AI credits used.
+  const freeStockUrl = (keyword: string, variant: number) => {
+    const slug = (keyword || name || "page").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "page";
+    return `https://picsum.photos/seed/${slug}-${variant}-${Math.floor(Math.random() * 99999)}/1200/700`;
+  };
+
+  // Per-image draft URLs typed by the user before applying.
+  const [imageDrafts, setImageDrafts] = useState<Record<string, string>>({});
+  const [imageKeyword, setImageKeyword] = useState("");
+
+  // Suggest a slug pattern from the template title / first variables.
+  const suggestSlugFromContent = () => {
+    const base = name || uniqueVars.slice(0, 2).map((v) => v).join("-") || "";
+    if (!base.trim()) {
+      toast({ title: "Add a title first", description: "The permalink is built from your template title/content.", variant: "destructive" });
+      return;
+    }
+    setSlugPattern(normalizeSlug(base));
+    toast({ title: "Slug suggested", description: "Built from your template title." });
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="sm:w-[min(96vw,72rem)] sm:max-w-none max-h-[calc(100dvh-1rem)] sm:max-h-[92dvh] flex flex-col overflow-hidden p-0 gap-0">
