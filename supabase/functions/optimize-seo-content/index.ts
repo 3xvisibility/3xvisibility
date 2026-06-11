@@ -808,10 +808,31 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       });
     }
 
+    // ── Rebuild the full design before any repair / save / push ─────────────
+    // The AI worked on a style-stripped (and possibly truncated) copy. We must
+    // restore the EXACT original <style>/<script> blocks, and if anything looks
+    // unsafe (truncated body, missing placeholders) fall back to the untouched
+    // original content so the live page NEVER loses its layout.
+    let designSafeContent: string | null = null;
+    if (includeContent && result.content) {
+      if (contentTruncated) {
+        console.warn("[OPTIMIZE] Content was truncated for AI — keeping original body to preserve full design.");
+        designSafeContent = page_content;
+      } else {
+        const restored = restorePreservedBlocks(result.content);
+        if (restored) {
+          designSafeContent = restored;
+        } else {
+          console.warn("[OPTIMIZE] AI dropped style/script placeholders — falling back to original body to preserve design.");
+          designSafeContent = page_content;
+        }
+      }
+    }
+
     // Auto-repair content to fix missing H1, links, schema, keyword placement,
     // SEA signals (CTA/benefit/trust/offer/urgency), and GEO signals (local/community/availability).
     // Run even when "content" wasn't explicitly requested — we still need the live page to score 10/10.
-    const baseContentForRepair = (includeContent && result.content) ? result.content : page_content;
+    const baseContentForRepair = designSafeContent || page_content;
     if (baseContentForRepair) {
       result.content = autoRepairContent(baseContentForRepair, {
         title: page_title,
