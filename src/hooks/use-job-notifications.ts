@@ -17,7 +17,9 @@ interface NotificationPrefs {
  */
 export function useJobNotifications() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const handledRef = useRef<Set<string>>(new Set());
+  const usageWarnedRef = useRef<boolean>(false);
   const prefsRef = useRef<NotificationPrefs | null>(null);
 
   // Load notification preferences once
