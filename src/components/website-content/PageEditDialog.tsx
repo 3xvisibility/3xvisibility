@@ -149,6 +149,61 @@ export function PageEditDialog({
   const [optimizing, setOptimizing] = useState(false);
   const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(initialSeoResult);
 
+  // Rollback state
+  const [rollingBack, setRollingBack] = useState(false);
+  const [lastVersion, setLastVersion] = useState<{ id: string; created_at: string } | null>(null);
+
+  useEffect(() => {
+    if (!open || !page.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("page_versions")
+        .select("id, created_at")
+        .eq("website_id", websiteId)
+        .eq("external_id", page.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (!cancelled) setLastVersion(data && data.length > 0 ? data[0] : null);
+    })();
+    return () => { cancelled = true; };
+  }, [open, page.id, websiteId, published]);
+
+  const handleRollback = async () => {
+    if (!lastVersion) return;
+    setRollingBack(true);
+    setPushError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("rollback-page", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          version_id: lastVersion.id,
+        },
+      });
+      if (error) {
+        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+
+      setPublished(false);
+      setEditTitle(decodeHtmlEntities(page.title));
+      toast({
+        title: "Page rolled back",
+        description: "The last known-good version was restored on your live website.",
+      });
+      onUpdated?.();
+      onOpenChange(false);
+    } catch (err: any) {
+      setPushError(err.message);
+      toast({ title: "Rollback failed", description: err.message, variant: "destructive" });
+    } finally {
+      setRollingBack(false);
+    }
+  };
+
+
   const originalTitle = decodeHtmlEntities(page.title);
   const originalContent = page.content;
 
