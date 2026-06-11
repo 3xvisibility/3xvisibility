@@ -988,7 +988,7 @@ const en: Record<string, string> = {
   "settings.add": "Add",
   "settings.addWebhook": "Add Webhook",
   "settings.aiContentGeneration": "AI Content Generation",
-  "settings.aiGenerations": "AI Generations",
+  "settings.aiGenerations": "AI Credits",
   "settings.aiTemplateSyntax": "AI Template Syntax",
   "settings.aiTemplateSyntaxDesc": "Use {{AI:your prompt here}} in your templates to generate dynamic AI content.",
   "settings.aiTemplateVariablesDesc": "Variables like {service} inside AI prompts are replaced with CSV values before AI generation.",
