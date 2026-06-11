@@ -39,6 +39,7 @@ import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
+import { applyTemplateVariables, autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
 import {
   type SectionVariants, DEFAULT_VARIANTS, summarizeVariants,
   HERO_VARIANTS, GRID_VARIANTS, CTA_VARIANTS, FAQ_VARIANTS,
@@ -590,16 +591,21 @@ export default function TemplatesPage() {
     html = html.replace(/<!--\s*header\s*-->[\s\S]*?<!--\s*\/header\s*-->/gi, "");
     html = html.replace(/<!--\s*footer\s*-->[\s\S]*?<!--\s*\/footer\s*-->/gi, "");
 
-    // Auto-apply AI variable suggestions
-    const detectedVars: string[] = [];
+    // Auto-apply AI variable suggestions first, then deterministic fallback.
+    const suggestedVariableEntries: { name: string; original: string; values: string[] }[] = [];
     for (const s of suggestions) {
       if (s.original && s.variable && html.includes(s.original)) {
-        html = html.replace(s.original, `{${s.variable}}`);
-        if (!detectedVars.includes(s.variable)) detectedVars.push(s.variable);
+        const name = s.variable.replace(/[{}]/g, "").trim();
+        suggestedVariableEntries.push({ name, original: s.original, values: [s.original] });
       }
     }
 
-    const allVars = [...new Set([...detectedVars, ...pendingKeywords])];
+    const fallbackVariableEntries = autoExtractTemplateVariables(html, pageTitle, pendingKeywords)
+      .filter((v) => !suggestedVariableEntries.some((s) => s.original.toLowerCase() === v.original.toLowerCase()));
+    const variableEntries = [...suggestedVariableEntries, ...fallbackVariableEntries].slice(0, 16);
+    html = applyTemplateVariables(html, variableEntries);
+
+    const allVars = filterDesignVars([...new Set([...variableEntries.map((v) => v.name), ...pendingKeywords])]);
     const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
     setSiteDialogOpen(false); setSitePages([]);
     setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
