@@ -34,6 +34,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: false,
     templates: 1,
     websites: 1,
+    campaigns: 1,
   },
   starter: {
     label: "Starter",
