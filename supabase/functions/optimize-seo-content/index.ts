@@ -683,6 +683,19 @@ If a primary focus keyword is provided, the optimized metadata and rewritten con
       content: page_content,
     };
 
+    const credit = await deductCreditsForRequest(req, "seo_optimization", OPTIMIZATION_MODEL);
+    if (!credit.allowed) {
+      return new Response(JSON.stringify({
+        error: credit.error === "insufficient_credits"
+          ? `Insufficient AI credits (remaining: ${credit.remaining ?? 0}). Please upgrade your plan.`
+          : "Authentication required to use AI features.",
+        remaining: credit.remaining ?? 0,
+      }), {
+        status: credit.error === "insufficient_credits" ? 402 : 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     let result: Record<string, any> = {};
     try {
       result = normalizeOptimizationResult(
