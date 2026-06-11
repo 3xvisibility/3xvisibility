@@ -149,6 +149,61 @@ export function PageEditDialog({
   const [optimizing, setOptimizing] = useState(false);
   const [seoResult, setSeoResult] = useState<PageEditorSeoResult | null>(initialSeoResult);
 
+  // Rollback state
+  const [rollingBack, setRollingBack] = useState(false);
+  const [lastVersion, setLastVersion] = useState<{ id: string; created_at: string } | null>(null);
+
+  useEffect(() => {
+    if (!open || !page.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("page_versions")
+        .select("id, created_at")
+        .eq("website_id", websiteId)
+        .eq("external_id", page.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (!cancelled) setLastVersion(data && data.length > 0 ? data[0] : null);
+    })();
+    return () => { cancelled = true; };
+  }, [open, page.id, websiteId, published]);
+
+  const handleRollback = async () => {
+    if (!lastVersion) return;
+    setRollingBack(true);
+    setPushError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("rollback-page", {
+        body: {
+          website_id: websiteId,
+          page_external_id: page.id,
+          version_id: lastVersion.id,
+        },
+      });
+      if (error) {
+        const msg = typeof error === "object" && error?.message ? error.message : String(error);
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+
+      setPublished(false);
+      setEditTitle(decodeHtmlEntities(page.title));
+      toast({
+        title: "Page rolled back",
+        description: "The last known-good version was restored on your live website.",
+      });
+      onUpdated?.();
+      onOpenChange(false);
+    } catch (err: any) {
+      setPushError(err.message);
+      toast({ title: "Rollback failed", description: err.message, variant: "destructive" });
+    } finally {
+      setRollingBack(false);
+    }
+  };
+
+
   const originalTitle = decodeHtmlEntities(page.title);
   const originalContent = page.content;
 
@@ -814,6 +869,19 @@ export function PageEditDialog({
             {page.url && (
               <Button size="sm" variant="outline" className="gap-1 text-[10px] sm:text-xs h-8 flex-1 sm:flex-initial" onClick={() => window.open(page.url, "_blank")}>
                 <ArrowUpRight className="h-3.5 w-3.5 shrink-0" /> View Page
+              </Button>
+            )}
+            {lastVersion && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRollback}
+                disabled={rollingBack || publishing}
+                title="Restore the last known-good version of this page on your live site"
+                className="gap-1 text-[10px] sm:text-xs h-8 flex-1 sm:flex-initial text-amber-600 border-amber-500/40 hover:bg-amber-500/10"
+              >
+                {rollingBack ? <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" /> : <Undo className="h-3.5 w-3.5 shrink-0" />}
+                {rollingBack ? "Rolling back..." : "Rollback"}
               </Button>
             )}
             <Button

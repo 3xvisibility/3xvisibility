@@ -311,6 +311,42 @@ Deno.serve(async (req) => {
       let pushResult: { external_id?: string; url?: string } | null = null;
       let pushError: string | null = null;
 
+      // Snapshot the previously stored known-good content before overwriting it,
+      // so this page can be rolled back if the new content breaks the layout.
+      if (page_external_id) {
+        try {
+          const { data: prior } = await supabase
+            .from("generated_pages")
+            .select("title, content, slug, seo_title, seo_description, seo_keywords")
+            .eq("website_id", website_id)
+            .eq("external_id", page_external_id)
+            .eq("user_id", user.id)
+            .maybeSingle();
+          const snapTitle = prior?.title ?? page_title ?? null;
+          const snapContent = prior?.content ?? page_content ?? null;
+          if (snapContent || snapTitle) {
+            await supabase.from("page_versions").insert({
+              user_id: user.id,
+              workspace_id: workspace_id || website?.workspace_id || null,
+              website_id,
+              external_id: page_external_id,
+              page_type: page_type || "page",
+              title: snapTitle,
+              content: snapContent,
+              slug: prior?.slug ?? page_slug ?? null,
+              seo_title: prior?.seo_title ?? null,
+              seo_description: prior?.seo_description ?? null,
+              seo_keywords: prior?.seo_keywords ?? null,
+              source: "pre_manual_update",
+            });
+            console.log("[MANUAL] Saved pre-update snapshot to page_versions");
+          }
+        } catch (snapErr) {
+          console.error("[MANUAL] Failed to save snapshot:", snapErr);
+        }
+      }
+
+
       try {
         const isProductContent = page_type === "product";
         const connector = isProductContent
@@ -872,6 +908,30 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       Array.isArray(result.seo_keywords) && result.seo_keywords.length > 0 ? result.seo_keywords : existingSeoKeywords,
       )
       : existingSeoKeywords;
+
+    // Snapshot the current known-good (pre-optimization) content BEFORE pushing,
+    // so the page can be rolled back if the optimization breaks the layout.
+    if (website && page_external_id && !skip_push && (page_content || page_title)) {
+      try {
+        await supabase.from("page_versions").insert({
+          user_id: user.id,
+          workspace_id: workspace_id || website?.workspace_id || null,
+          website_id,
+          external_id: page_external_id,
+          page_type: page_type || "page",
+          title: page_title || null,
+          content: page_content || null,
+          slug: page_slug || null,
+          seo_title: page_seo_title || null,
+          seo_description: page_seo_description || null,
+          seo_keywords: Array.isArray(page_seo_keywords) && page_seo_keywords.length > 0 ? page_seo_keywords : null,
+          source: "pre_optimize",
+        });
+        console.log("[OPTIMIZE] Saved pre-optimization snapshot to page_versions");
+      } catch (snapErr) {
+        console.error("[OPTIMIZE] Failed to save snapshot:", snapErr);
+      }
+    }
 
     if (website && page_external_id && !skip_push) {
       try {
