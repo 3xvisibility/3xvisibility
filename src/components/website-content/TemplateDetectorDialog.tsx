@@ -571,8 +571,10 @@ Rules:
         }
       }
 
-      const fallbackVars = autoExtractTemplateVariables(page.content, page.title)
-        .filter((v) => !parsedVars.some((p) => p.original.toLowerCase() === v.original.toLowerCase()));
+      // Only fall back to deterministic extraction when AI gave no keywords.
+      const fallbackVars = parsedVars.length > 0
+        ? []
+        : autoExtractTemplateVariables(page.content, page.title);
       const mergedVars = [...parsedVars, ...fallbackVars].slice(0, 16);
 
       setVariables(mergedVars);
