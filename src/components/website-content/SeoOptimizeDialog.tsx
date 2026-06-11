@@ -80,6 +80,29 @@ export function SeoOptimizeDialog({
     external_url?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [rollingBack, setRollingBack] = useState(false);
+  const [rolledBack, setRolledBack] = useState(false);
+
+  const handleRollback = async () => {
+    setRollingBack(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("rollback-page", {
+        body: { website_id: websiteId, page_external_id: page.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setRolledBack(true);
+      toast({
+        title: "Reverted to previous version",
+        description: "The earlier design and text were restored on your live website.",
+      });
+      onOptimized?.();
+    } catch (err: any) {
+      handleApiError(err, { title: "Rollback failed" });
+    } finally {
+      setRollingBack(false);
+    }
+  };
 
   // Persist field selection + instruction per page so users don't lose
   // their tweaks when navigating away.
