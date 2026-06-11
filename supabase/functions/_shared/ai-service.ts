@@ -320,7 +320,7 @@ async function callExternal(
 
   if (!headers["Content-Type"]) headers["Content-Type"] = "application/json";
 
-  return fetch(cfg.url, {
+  return fetchWithTimeout(cfg.url, {
     method: "POST",
     headers,
     body: JSON.stringify(cfg.mapBody ? cfg.mapBody(body) : body),
