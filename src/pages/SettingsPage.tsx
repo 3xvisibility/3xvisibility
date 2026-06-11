@@ -70,10 +70,13 @@ export default function SettingsPage() {
   const [initialized, setInitialized] = useState(false);
   const [newWebhookUrl, setNewWebhookUrl] = useState("");
   const [newWebhookSecret, setNewWebhookSecret] = useState("");
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, basePath } = useWorkspace();
   const wsId = currentWorkspace?.id;
+  const navigate = useNavigate();
   const { canUseFeature } = useSubscription();
   const hasApiAccess = canUseFeature("apiAccess");
+  const apiMinPlan = getMinimumPlanFor("apiAccess");
+  const apiMinPlanLabel = PLAN_FEATURES[apiMinPlan].label;
 
   // Fetch profile
   const { data: profile, isLoading: loadingProfile } = useQuery({
