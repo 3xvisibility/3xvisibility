@@ -124,6 +124,11 @@ export default function TemplatesPage() {
     },
   });
 
+  // Plan limit state for inline messaging / disabling create actions.
+  const limitReached = maxTemplates > 0 && userTemplateCount >= maxTemplates;
+  const planLabel = features.label ?? plan;
+
+
   const { data: connectedWebsites = [] } = useQuery({
     queryKey: ["tpl-websites", wsId],
     enabled: !!wsId,
