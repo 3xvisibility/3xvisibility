@@ -180,6 +180,9 @@ export default function CampaignDetailPage() {
   });
 
   const latestJob = jobs[0];
+  const queuedScheduledAt = (campaign as any)?.scheduled_at ? new Date((campaign as any).scheduled_at).getTime() : null;
+  const canRetryQueuedCampaign = campaign?.status === "queued" && (!queuedScheduledAt || queuedScheduledAt <= Date.now());
+  const queuedRetryAction = (campaign?.processed_rows || 0) > 0 || latestJob?.status === "paused" ? "resume" : undefined;
 
   const getPublishFailureMessage = (data: any, fallback: string) => {
     const firstError = data?.results?.find((result: any) => result.status === "failed")?.error;
@@ -548,6 +551,12 @@ export default function CampaignDetailPage() {
                 <XCircle className="mr-1.5 h-4 w-4" /> {t("campaignDetail.abort")}
               </Button>
             </>
+          )}
+          {canRetryQueuedCampaign && (
+            <Button variant="outline" size="sm" onClick={() => executeMutation.mutate({ action: queuedRetryAction })} disabled={executeMutation.isPending} className="rounded-xl border-warning/30 text-warning hover:bg-warning/10">
+              {executeMutation.isPending ? <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" /> : <RotateCcw className="mr-1.5 h-4 w-4" />}
+              Retry generation
+            </Button>
           )}
           {(campaign.status === "completed" || campaign.status === "failed") && (
             <>

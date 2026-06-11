@@ -220,6 +220,16 @@ export default function CampaignsPage() {
     }).map(c => c.id);
   }, [campaigns, generationJobs]);
 
+  const canRetryQueuedCampaign = (campaign: Campaign) => {
+    const scheduledAt = (campaign as any).scheduled_at ? new Date((campaign as any).scheduled_at).getTime() : null;
+    return campaign.status === "queued" && (!scheduledAt || scheduledAt <= Date.now());
+  };
+
+  const getQueuedRetryAction = (campaign: Campaign) => {
+    const job = getLatestJob(campaign.id);
+    return (campaign.processed_rows || 0) > 0 || job?.status === "paused" ? "resume" : undefined;
+  };
+
   const resetStuckMutation = useMutation({
     mutationFn: async () => {
       if (stuckCampaignIds.length === 0) return;
@@ -523,6 +533,7 @@ export default function CampaignsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => navigate(`${basePath}/campaigns/${c.id}`)}><Eye className="h-3.5 w-3.5 mr-2" /> View Details</DropdownMenuItem>
                           {c.status === "draft" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id })}><Play className="h-3.5 w-3.5 mr-2" /> Run Now</DropdownMenuItem>}
+                          {canRetryQueuedCampaign(c) && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: getQueuedRetryAction(c) })}><RotateCcw className="h-3.5 w-3.5 mr-2" /> Retry generation</DropdownMenuItem>}
                           {c.status === "processing" && <DropdownMenuItem onClick={() => executeMutation.mutate({ id: c.id, action: "pause" })}><Pause className="h-3.5 w-3.5 mr-2" /> Pause</DropdownMenuItem>}
                           <DropdownMenuItem onClick={() => duplicateMutation.mutate(c)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -569,6 +580,15 @@ export default function CampaignsPage() {
                       <Button size="sm" variant="outline" className="w-full rounded-lg h-8 text-xs gap-1.5 border-primary/20 text-primary hover:bg-primary/5"
                         onClick={() => executeMutation.mutate({ id: c.id })} disabled={executeMutation.isPending}>
                         <Play className="h-3 w-3" /> Run Campaign
+                      </Button>
+                    </div>
+                  )}
+                  {canRetryQueuedCampaign(c) && (
+                    <div onClick={e => e.stopPropagation()}>
+                      <Button size="sm" variant="outline" className="w-full rounded-lg h-8 text-xs gap-1.5 border-warning/30 text-warning hover:bg-warning/10"
+                        onClick={() => executeMutation.mutate({ id: c.id, action: getQueuedRetryAction(c) })} disabled={executeMutation.isPending}>
+                        {executeMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
+                        Retry generation
                       </Button>
                     </div>
                   )}

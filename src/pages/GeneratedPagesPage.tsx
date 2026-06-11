@@ -458,6 +458,7 @@ export default function GeneratedPagesPage() {
   };
 
   const pendingPages = pages.filter((p) => p.status === "pending");
+  const retryableQueuedPages = pages.filter((p) => p.status === "queued" || p.status === "publishing");
 
   // Unique filters
   const uniqueSites = useMemo(() => {
@@ -584,6 +585,17 @@ export default function GeneratedPagesPage() {
             >
               <Send className="h-3.5 w-3.5 mr-1.5" />
               {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
+            </Button>
+          )}
+          {retryableQueuedPages.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={retryFailedMutation.isPending}
+              onClick={() => handlePublish(retryableQueuedPages.map((p) => p.id), "retry")}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${retryFailedMutation.isPending ? "animate-spin" : ""}`} />
+              Retry queued ({retryableQueuedPages.length})
             </Button>
           )}
           <DropdownMenu>
@@ -721,7 +733,7 @@ export default function GeneratedPagesPage() {
             <div className="flex flex-wrap gap-1.5">
               <Button size="sm" className="h-7 text-xs bg-gradient-primary border-0" disabled={bulkPublishMutation.isPending}
                 onClick={() => {
-                  const publishable = [...selectedIds].filter((id) => { const p = pages.find((pg) => pg.id === id); return p?.status === "pending" || p?.status === "failed"; });
+                  const publishable = [...selectedIds].filter((id) => { const p = pages.find((pg) => pg.id === id); return p?.status === "pending" || p?.status === "failed" || p?.status === "queued" || p?.status === "publishing"; });
                   if (!publishable.length) { toast({ title: "No publishable pages", variant: "destructive" }); return; }
                   handlePublish(publishable, "bulk");
                 }}>
@@ -729,9 +741,9 @@ export default function GeneratedPagesPage() {
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" disabled={retryFailedMutation.isPending}
                 onClick={() => {
-                  const failed = [...selectedIds].filter((id) => pages.find((p) => p.id === id)?.status === "failed");
-                  if (!failed.length) { toast({ title: "No failed pages to retry", variant: "destructive" }); return; }
-                  handlePublish(failed, "retry");
+                  const retryable = [...selectedIds].filter((id) => { const status = pages.find((p) => p.id === id)?.status; return status === "failed" || status === "queued" || status === "publishing"; });
+                  if (!retryable.length) { toast({ title: "No queued or failed pages to retry", variant: "destructive" }); return; }
+                  handlePublish(retryable, "retry");
                 }}>
                 <RefreshCw className="h-3 w-3 mr-1" />Retry
               </Button>
@@ -806,6 +818,7 @@ export default function GeneratedPagesPage() {
                       <DropdownMenuItem onClick={() => setPreviewPage(page)}><Eye className="h-3.5 w-3.5 mr-2" />Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openSeoEditor(page)}><Pencil className="h-3.5 w-3.5 mr-2" />Edit Content</DropdownMenuItem>
                       {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
+                      {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                       {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                       <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
@@ -901,6 +914,7 @@ export default function GeneratedPagesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
                               {page.status === "pending" && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><Send className="h-3.5 w-3.5 mr-2" />Publish</DropdownMenuItem>}
+                              {(page.status === "queued" || page.status === "publishing") && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry publish</DropdownMenuItem>}
                               {page.status === "published" && page.external_id && <DropdownMenuItem onClick={() => handlePublish([page.id], "publish")}><RotateCw className="h-3.5 w-3.5 mr-2" />Re-publish</DropdownMenuItem>}
                               <DropdownMenuItem onClick={() => setSeoAnalysisPage(page)}><BarChart3 className="h-3.5 w-3.5 mr-2" />SEO Analysis</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
