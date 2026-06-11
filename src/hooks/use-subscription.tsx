@@ -154,8 +154,8 @@ export function useSubscription(): SubscriptionData {
       if (aiPercent >= 0.9 && !warnedRef.current.ai) {
         warnedRef.current.ai = true;
         toast({
-          title: "AI generation limit warning",
-          description: `You've used ${aiUsed} of ${aiLimit} AI generations (${Math.round(aiPercent * 100)}%).`,
+          title: "AI credit limit warning",
+          description: `You've used ${aiUsed} of ${aiLimit} AI credits (${Math.round(aiPercent * 100)}%).`,
           action: (
             <button
               className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
