@@ -68,6 +68,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: false,
     templates: -1,
     websites: 10,
+    campaigns: -1,
   },
   agency: {
     label: "Agency",
