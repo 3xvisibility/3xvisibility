@@ -198,19 +198,35 @@ export function TemplateEditorDialog({
   const seoDescLen = seoDescriptionPattern.replace(/\{[^}]+\}/g, "xxxxx").length;
 
   const generateAiSeo = async () => {
+    if (!content.trim()) {
+      toast({ title: "Add content first", description: "The SEO suggestion is generated from your template content.", variant: "destructive" });
+      return;
+    }
     setAiSeoGenerating(true);
     try {
       const vars = [...new Set(content.match(/\{([a-z_]+)\}/gi) || [])];
       const varNames = vars.map(v => v.replace(/[{}]/g, "")).join(", ");
+      // Derive a plain-text summary of the actual content so the AI suggestion
+      // depends on what's really on the page (not a manually typed niche).
+      const contentText = content
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 2500);
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
-          prompt: `You are an SEO expert. Generate ONLY two lines of text for a "${aiSeoNiche}" business.
-The template has these content variables: ${varNames || "keyword, city"}
+          prompt: `You are an SEO expert. Based ONLY on the actual page content below${aiSeoNiche.trim() ? ` (business niche: ${aiSeoNiche.trim()})` : ""}, write ONLY two lines of meta text.
+Available content variables: ${varNames || "none"}
 
-Line 1: An SEO-optimized meta title pattern (under 60 chars) using relevant variables from the list above.
+Line 1: An SEO-optimized meta title pattern (under 60 chars). Prefer using relevant {variables} from the list when they fit naturally.
 Line 2: An SEO-optimized meta description pattern (120-160 chars) using the same variables.
 
-Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — just two plain text lines.`
+Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — just two plain text lines.
+
+PAGE CONTENT:
+${contentText}`
         },
       });
       if (error) throw error;
@@ -219,7 +235,7 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
       const lines = raw.split("\n").map((l: string) => l.replace(/^(line\s*\d+\s*[:：]\s*)/i, "").replace(/^(meta\s*(title|description)\s*(pattern)?\s*[:：]\s*)/i, "").trim()).filter(Boolean);
       if (lines[0]) setSeoTitlePattern(lines[0]);
       if (lines[1]) setSeoDescriptionPattern(lines[1]);
-      toast({ title: "SEO patterns generated!" });
+      toast({ title: "SEO patterns generated!", description: "Suggested from your template content." });
     } catch (err: any) {
       toast({ title: "Failed", description: err.message, variant: "destructive" });
     } finally {
