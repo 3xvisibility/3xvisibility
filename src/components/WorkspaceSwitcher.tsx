@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PLAN_FEATURES, type PlanName } from "@/lib/plan-features";
 
 export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }) {
   const { workspaces, currentWorkspace, setCurrentWorkspace, refetch, basePath } = useWorkspace();
