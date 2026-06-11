@@ -270,8 +270,14 @@ ${content}`
       if (data?.error) throw new Error(data.error);
       let improved = (data.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
       if (improved) {
+        // Fully replace the old template code with the freshly redesigned HTML.
         setContent(improved);
-        toast({ title: "✨ Content improved!", description: "Template has been enhanced for better SEO, SEA & GEO scores." });
+        // Bring the user to the Content tab so they see the new code/design.
+        setActiveTab("content");
+        setViewMode("preview");
+        toast({ title: "✨ Design regenerated!", description: "Old code was replaced with the new redesigned template." });
+      } else {
+        toast({ title: "Nothing returned", description: "The AI did not return any HTML. Please try again.", variant: "destructive" });
       }
     } catch (err: any) {
       toast({ title: "AI improvement failed", description: err.message, variant: "destructive" });
