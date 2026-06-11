@@ -235,23 +235,18 @@ Use {variable_name} syntax. Do NOT output HTML, markdown, or explanations — ju
       const varNames = vars.map(v => v.replace(/[{}]/g, "")).join(", ");
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
-          prompt: `You are a senior SEO and web design expert. Improve the following HTML template to make it more professional, modern, and SEO-friendly while achieving 90+ scores on SEO, SEA, and GEO metrics.
+          prompt: `FULL PREMIUM REDESIGN TASK — rebuild the page below into a stunning, modern, award-winning landing page from scratch, exactly the way a top design agency (Linear / Vercel / Stripe / Framer caliber) would build it. Do NOT just tweak the existing markup — completely re-author the HTML and CSS into a flagship-quality design, fully committing to the DESIGN DIRECTION you were assigned in the system prompt.
 
-CRITICAL RULES:
-- Keep ALL existing {variable_name} placeholders intact: ${varNames || "none detected"}
-- Keep the same topic and purpose
-- Improve HTML structure with semantic tags (header, section, article, aside)
-- Add or improve h1, h2, h3 headings with keywords
-- Ensure 300+ words of quality content
-- Add CTAs with class="btn cta"
-- Add trust signals, testimonials, or FAQ sections if missing
-- Use professional CSS classes: hero-section, card, feature-card, grid, features-grid, testimonial, stars, badge
-- Add alt text to images
-- Include local SEO elements: {city}, {state} references, "near me" phrases
-- Add structured data hints (itemscope, itemprop)
-- Return ONLY the improved HTML, no explanations or markdown fences
+ABSOLUTE RULES:
+- Preserve EVERY existing {variable_name} placeholder so dynamic data still works: ${varNames || "none detected"}
+- Keep the same business topic, purpose, and language as the original.
+- Preserve any {{AI:...}} blocks and add 1-2 more for unique hero/about copy if missing.
+- Rebuild the layout with the full design playbook: cinematic multi-layer hero, animated gradient orbs, glassmorphic/gradient cards, fluid clamp() typography, gradient-text section headings, scroll-snap testimonials carousel, styled FAQ, and a dramatic final CTA band.
+- Keep it conversion-optimized and SEO-strong: clear single H1, logical h2/h3 hierarchy, 300+ words of quality content, descriptive image alt text, FAQ + trust signals.
+- Make it fully responsive and accessible (WCAG AA contrast).
+- Return ONLY the finished HTML, no explanations or markdown fences.
 
-CURRENT HTML:
+ORIGINAL TEMPLATE TO REDESIGN (use its content/variables as the source of truth):
 ${content}`
         },
       });
