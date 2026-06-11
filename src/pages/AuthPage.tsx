@@ -14,7 +14,7 @@ import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, C
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { normalizeEmail, isValidEmail } from "@/lib/normalize-email";
+import { normalizeEmail, isValidEmail as checkEmailFormat } from "@/lib/normalize-email";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -132,7 +132,7 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidEmail(email)) {
+    if (!checkEmailFormat(email)) {
       toast({ title: t("auth.loginFailed"), description: t("auth.invalidEmail"), variant: "destructive" });
       return;
     }
