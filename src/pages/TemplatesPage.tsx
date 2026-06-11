@@ -253,7 +253,7 @@ export default function TemplatesPage() {
       } as any);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       await refreshTemplates();
       toast({ title: "Template created" });
       setEditorOpen(false);
@@ -274,7 +274,7 @@ export default function TemplatesPage() {
       } as any).eq("id", params.id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       await refreshTemplates();
       toast({ title: "Template updated" });
       setEditorOpen(false);
@@ -298,7 +298,7 @@ export default function TemplatesPage() {
       } as any);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       await refreshTemplates();
       toast({ title: "Template duplicated" });
     },
@@ -332,7 +332,7 @@ export default function TemplatesPage() {
       } as any);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       await refreshTemplates();
       toast({ title: "Latest version imported", description: "A new pinned snapshot was added. Existing campaigns keep their old version." });
     },
