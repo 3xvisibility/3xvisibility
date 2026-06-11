@@ -1581,6 +1581,60 @@ export type Database = {
           },
         ]
       }
+      page_versions: {
+        Row: {
+          content: string | null
+          created_at: string
+          external_id: string | null
+          id: string
+          page_id: string | null
+          page_type: string | null
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          slug: string | null
+          source: string
+          title: string | null
+          user_id: string
+          website_id: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          page_id?: string | null
+          page_type?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string | null
+          source?: string
+          title?: string | null
+          user_id: string
+          website_id?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          external_id?: string | null
+          id?: string
+          page_id?: string | null
+          page_type?: string | null
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          slug?: string | null
+          source?: string
+          title?: string | null
+          user_id?: string
+          website_id?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       pgp_keywords: {
         Row: {
           columns: string[] | null
