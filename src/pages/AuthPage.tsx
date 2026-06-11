@@ -132,6 +132,10 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidEmail(email)) {
+      toast({ title: t("auth.loginFailed"), description: t("auth.invalidEmail"), variant: "destructive" });
+      return;
+    }
     clearLocalAuthSession();
     if (Date.now() < loginCooldownUntil) {
       const seconds = Math.ceil((loginCooldownUntil - Date.now()) / 1000);
