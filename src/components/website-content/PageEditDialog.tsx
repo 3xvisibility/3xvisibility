@@ -871,6 +871,19 @@ export function PageEditDialog({
                 <ArrowUpRight className="h-3.5 w-3.5 shrink-0" /> View Page
               </Button>
             )}
+            {lastVersion && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRollback}
+                disabled={rollingBack || publishing}
+                title="Restore the last known-good version of this page on your live site"
+                className="gap-1 text-[10px] sm:text-xs h-8 flex-1 sm:flex-initial text-amber-600 border-amber-500/40 hover:bg-amber-500/10"
+              >
+                {rollingBack ? <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" /> : <Undo className="h-3.5 w-3.5 shrink-0" />}
+                {rollingBack ? "Rolling back..." : "Rollback"}
+              </Button>
+            )}
             <Button
               size="sm"
               onClick={handlePublish}
