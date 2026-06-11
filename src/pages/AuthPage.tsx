@@ -14,7 +14,7 @@ import { ArrowLeft, Mail, Lock, User, Sparkles, Eye, EyeOff, Sun, Moon, Globe, C
 import { lovable } from "@/integrations/lovable/index";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { normalizeEmail } from "@/lib/normalize-email";
+import { normalizeEmail, isValidEmail as checkEmailFormat } from "@/lib/normalize-email";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -132,6 +132,10 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkEmailFormat(email)) {
+      toast({ title: t("auth.loginFailed"), description: t("auth.invalidEmail"), variant: "destructive" });
+      return;
+    }
     clearLocalAuthSession();
     if (Date.now() < loginCooldownUntil) {
       const seconds = Math.ceil((loginCooldownUntil - Date.now()) / 1000);
@@ -202,6 +206,10 @@ export default function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!checkEmailFormat(email)) {
+      toast({ title: t("auth.signupFailed"), description: t("auth.invalidEmail"), variant: "destructive" });
+      return;
+    }
     if (!canSignup) {
       if (!termsAccepted) {
         toast({ title: t("auth.signupFailed"), description: t("auth.termsRequired"), variant: "destructive" });
@@ -277,7 +285,7 @@ export default function AuthPage() {
   }, [resetCooldown]);
 
   const handleResetPassword = async () => {
-    if (!email) {
+    if (!checkEmailFormat(email)) {
       toast({ title: t("auth.enterEmail"), description: t("auth.enterEmailDesc"), variant: "destructive" });
       return;
     }
