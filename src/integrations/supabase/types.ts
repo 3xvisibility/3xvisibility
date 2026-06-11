@@ -2683,6 +2683,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      template_limit_for_plan: { Args: { _plan: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "user"
