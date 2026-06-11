@@ -595,7 +595,12 @@ ${content}`
             {/* ── Permalink Tab ── */}
             <TabsContent value="permalink" className="m-0 p-5 space-y-5">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Slug Pattern</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold">Slug Pattern</Label>
+                  <Button type="button" variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={suggestSlugFromContent}>
+                    <Sparkles className="h-3 w-3" /> Suggest from content
+                  </Button>
+                </div>
                 <Input
                   placeholder="{service_name}-{city}"
                   value={slugPattern}
