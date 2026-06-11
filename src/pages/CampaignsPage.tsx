@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Play, Trash2, Pause, RotateCcw, Clock, Loader2, MoreHorizontal, Eye, Search as SearchIconLucide, Copy, Globe, Sparkles, Zap, TrendingUp, FileText, Target, MapPin } from "lucide-react";
+import { Plus, Play, Trash2, Pause, RotateCcw, Clock, Loader2, MoreHorizontal, Eye, Search as SearchIconLucide, Copy, Globe, Sparkles, Zap, TrendingUp, FileText, Target, MapPin, AlertTriangle, Crown } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { InternalLinkDialog } from "@/components/campaigns/InternalLinkDialog";
 import { GenerationJobDialog } from "@/components/campaigns/GenerationJobDialog";
@@ -119,6 +120,7 @@ export default function CampaignsPage() {
     },
     onSuccess: (_d, id) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
       toast({ title: "Campaign deleted" });
       if (wsId) logAudit(wsId, "campaign_deleted", "campaign", id);
     },
@@ -129,6 +131,9 @@ export default function CampaignsPage() {
     mutationFn: async (campaign: Campaign) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      if (campaignLimitReached) {
+        throw new Error(`Your ${planLabel} plan allows ${campaignLimit} campaign${campaignLimit === 1 ? "" : "s"}. Upgrade your plan to create more.`);
+      }
       const { data: newCampaign, error } = await supabase.from("campaigns").insert({
         name: `${campaign.name} (Copy)`,
         language: (campaign as any).language || "en",
@@ -171,6 +176,7 @@ export default function CampaignsPage() {
     },
     onSuccess: (name) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
       toast({ title: "Campaign duplicated", description: `"${name}" cloned.` });
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
@@ -226,7 +232,25 @@ export default function CampaignsPage() {
     },
   });
 
-  const { pagesUsed, pagesLimit } = useSubscription();
+  const { pagesUsed, pagesLimit, features, plan } = useSubscription();
+
+  // Plan-based campaign limit (free: 1, starter: 10, pro/agency: unlimited).
+  const campaignLimit = features.campaigns; // -1 = unlimited
+  const { data: userCampaignCount = 0 } = useQuery({
+    queryKey: ["user-campaign-count"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+      const { count, error } = await supabase
+        .from("campaigns")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const campaignLimitReached = campaignLimit >= 0 && userCampaignCount >= campaignLimit;
+  const planLabel = features.label;
 
   const filteredCampaigns = useMemo(() => {
     let result = campaigns;
@@ -260,6 +284,7 @@ export default function CampaignsPage() {
 
   const handleCampaignCreated = (campaignId: string) => {
     queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    queryClient.invalidateQueries({ queryKey: ["user-campaign-count"] });
   };
 
   return (
@@ -280,11 +305,32 @@ export default function CampaignsPage() {
               Reset {stuckCampaignIds.length} stuck
             </Button>
           )}
-          <Button onClick={() => setWizardOpen(true)} className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2">
+          <Button
+            onClick={() => setWizardOpen(true)}
+            disabled={campaignLimitReached}
+            className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
+          >
             <Sparkles className="h-4 w-4" /> {t("campaigns.newCampaign")}
           </Button>
         </div>
       </div>
+
+      {/* Plan campaign limit reached — inline upgrade banner */}
+      {campaignLimitReached && (
+        <Alert variant="destructive" className="rounded-xl">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Campaign limit reached</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Your <strong>{planLabel}</strong> plan allows{" "}
+              <strong>{campaignLimit} campaign{campaignLimit === 1 ? "" : "s"}</strong> and you've used {userCampaignCount}. Upgrade to create more.
+            </span>
+            <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => navigate(`${basePath}/billing`)}>
+              <Crown className="h-3.5 w-3.5" /> Upgrade plan
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Friendly "How a campaign works" guide — only show once user has at least 1 campaign */}
       {campaigns.length > 0 && (

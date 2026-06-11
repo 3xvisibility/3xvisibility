@@ -15,6 +15,7 @@ export interface PlanFeatures {
   teamCollaboration: boolean;
   templates: number;
   websites: number;
+  campaigns: number;
 }
 
 export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
@@ -33,6 +34,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: false,
     templates: 1,
     websites: 1,
+    campaigns: 1,
   },
   starter: {
     label: "Starter",
@@ -49,6 +51,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: false,
     templates: 10,
     websites: 2,
+    campaigns: 10,
   },
   pro: {
     label: "Pro",
@@ -65,6 +68,7 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: false,
     templates: -1,
     websites: 10,
+    campaigns: -1,
   },
   agency: {
     label: "Agency",
@@ -81,10 +85,11 @@ export const PLAN_FEATURES: Record<PlanName, PlanFeatures> = {
     teamCollaboration: true,
     templates: -1,
     websites: -1,
+    campaigns: -1,
   },
 };
 
-export type FeatureKey = keyof Omit<PlanFeatures, "label" | "pagesLimit" | "aiLimit" | "templates" | "websites">;
+export type FeatureKey = keyof Omit<PlanFeatures, "label" | "pagesLimit" | "aiLimit" | "templates" | "websites" | "campaigns">;
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   wordpress: "WordPress Integration",
