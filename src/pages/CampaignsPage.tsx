@@ -130,6 +130,9 @@ export default function CampaignsPage() {
     mutationFn: async (campaign: Campaign) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
+      if (campaignLimitReached) {
+        throw new Error(`Your ${planLabel} plan allows ${campaignLimit} campaign${campaignLimit === 1 ? "" : "s"}. Upgrade your plan to create more.`);
+      }
       const { data: newCampaign, error } = await supabase.from("campaigns").insert({
         name: `${campaign.name} (Copy)`,
         language: (campaign as any).language || "en",
