@@ -188,7 +188,6 @@ export function useSubscription(): SubscriptionData {
       if (prefs.usage_limit === false) return;
 
       const pagesPercent = pagesLimit > 0 ? pagesUsed / pagesLimit : 0;
-      const aiPercent = aiLimit > 0 ? aiUsed / aiLimit : 0;
 
       if (pagesPercent >= 0.9 && !warnedRef.current.pages) {
         warnedRef.current.pages = true;
@@ -206,21 +205,12 @@ export function useSubscription(): SubscriptionData {
         });
       }
 
-      if (aiPercent >= 0.9 && !warnedRef.current.ai) {
-        warnedRef.current.ai = true;
-        toast({
-          title: "AI credit limit warning",
-          description: `You've used ${aiUsed} of ${aiLimit} AI credits (${Math.round(aiPercent * 100)}%).`,
-          action: (
-            <button
-              className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              onClick={() => navigate("/billing")}
-            >
-              Upgrade
-            </button>
-          ),
-        });
-      }
+      // NOTE: AI credit warnings are intentionally NOT shown here.
+      // A passive AI-limit toast on every page load (including opening a
+      // campaign that never uses AI) is noisy and fires multiple times.
+      // AI-limit feedback is surfaced only at the moment an AI action is
+      // performed (StartGenerationDialog quota check, edge-function error
+      // responses), so users see it only when AI is actually used.
     };
 
     checkAndWarn();
