@@ -131,7 +131,7 @@ function getFeatureList(name: PlanName): string[] {
   const f = PLAN_FEATURES[name];
   return [
     `${f.pagesLimit.toLocaleString()} pages/month`,
-    `${f.aiLimit.toLocaleString()} AI generations`,
+    `${f.aiLimit.toLocaleString()} AI credits`,
     `${f.templates === -1 ? "Unlimited" : f.templates} templates`,
     `${f.websites === -1 ? "Unlimited" : f.websites} website${f.websites !== 1 ? "s" : ""}`,
     ...(f.shopify ? ["All CMS integrations"] : f.wordpress ? ["WordPress integration"] : []),
