@@ -18,8 +18,10 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
-  Wand2, Eye,
+  Wand2, Eye, AlertTriangle, Crown,
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -92,7 +94,7 @@ export default function TemplatesPage() {
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
-  const { features } = useSubscription();
+  const { features, plan } = useSubscription();
   const wsId = currentWorkspace?.id;
   const maxTemplates = features.templates;
 
@@ -121,6 +123,11 @@ export default function TemplatesPage() {
       return count ?? 0;
     },
   });
+
+  // Plan limit state for inline messaging / disabling create actions.
+  const limitReached = maxTemplates > 0 && userTemplateCount >= maxTemplates;
+  const planLabel = features.label ?? plan;
+
 
   const { data: connectedWebsites = [] } = useQuery({
     queryKey: ["tpl-websites", wsId],
@@ -732,14 +739,34 @@ export default function TemplatesPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTemplate(f); }} />
-          <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()}>
+          <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} disabled={limitReached}>
             <Upload className="mr-1.5 h-3.5 w-3.5" /> Import JSON
           </Button>
-          <Button size="sm" onClick={() => setPickerOpen(true)}>
+          <Button size="sm" onClick={() => setPickerOpen(true)} disabled={limitReached}>
             <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Template
           </Button>
         </div>
       </div>
+
+      {/* Plan limit reached — inline error */}
+      {limitReached && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Template limit reached</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Your <strong>{planLabel}</strong> plan allows{" "}
+              <strong>{maxTemplates} template{maxTemplates === 1 ? "" : "s"}</strong>{" "}
+              and you've used <strong>{userTemplateCount}</strong>. Delete an existing
+              template or upgrade your plan to create more.
+            </span>
+            <Button asChild size="sm" variant="outline" className="shrink-0">
+              <Link to="/billing"><Crown className="mr-1.5 h-3.5 w-3.5" /> Upgrade plan</Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
@@ -806,7 +833,7 @@ export default function TemplatesPage() {
             <p className="text-sm text-muted-foreground mb-4">{templates.length === 0 ? "Create your first template to start generating pages." : "Try adjusting your filters."}</p>
             {templates.length === 0 && (
               <div className="flex justify-center gap-2">
-                <Button onClick={() => setPickerOpen(true)}><Plus className="mr-2 h-4 w-4" /> Create Template</Button>
+                <Button onClick={() => setPickerOpen(true)} disabled={limitReached}><Plus className="mr-2 h-4 w-4" /> Create Template</Button>
               </div>
             )}
           </CardContent>
