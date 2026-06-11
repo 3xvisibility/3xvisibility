@@ -1334,8 +1334,9 @@ Deno.serve(async (req) => {
       if (used + totalAiNeeded > limit) {
         return new Response(JSON.stringify({
           error: `AI limit exceeded. Need ${totalAiNeeded}, have ${limit - used} remaining.`,
+          ai_limit_exceeded: true,
         }), {
-          status: 400,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
