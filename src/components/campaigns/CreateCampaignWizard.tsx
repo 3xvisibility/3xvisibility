@@ -1281,7 +1281,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   return (
     <>
       <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); else onOpenChange(v); }}>
-        <DialogContent className="sm:max-w-[80vw] w-[calc(100%-1rem)] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
+        <DialogContent className="w-[calc(100%-1rem)] sm:w-[92vw] lg:w-[80vw] sm:max-w-[720px] lg:max-w-[1100px] h-[calc(100dvh-1rem)] sm:h-auto max-h-[calc(100dvh-1rem)] sm:max-h-[85vh] rounded-xl sm:rounded-2xl p-0 gap-0 overflow-hidden fixed top-2 left-2 right-2 bottom-2 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] flex flex-col">
           {/* Header */}
           <div className="px-5 pt-5 pb-0 shrink-0">
             <DialogHeader className="pb-0">
