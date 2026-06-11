@@ -421,21 +421,25 @@ Deno.serve(async (req) => {
             messages: [
               {
                 role: "system",
-                content: `You are analyzing a webpage to identify text that should become dynamic template variables. 
-Look for specific values like city names, course names, product names, prices, company names, dates, phone numbers, addresses, etc.
-These are values that would change when generating pages for different items.
-Do NOT suggest variables for generic text like "Learn more", "Contact us", navigation items, or boilerplate text.
-Focus on content that is clearly specific to one instance (one city, one product, one service, etc.).`,
+                content: `You are an SEO expert selecting the BEST dynamic template variables (keywords) from a webpage.
+Only pick SHORT, specific values that genuinely change per generated page: city/location names, service names, product names, category names, brand/company names, prices, dates, phone numbers.
+STRICT RULES:
+- Pick ONLY the highest-value keywords — quality over quantity. Return at most 8.
+- The "original" text must be a SHORT phrase (1-5 words), never a full sentence or paragraph.
+- Never pick body copy, descriptions, headlines that are full sentences, CTAs ("Learn more", "Contact us"), navigation, or boilerplate.
+- Each variable name must be lowercase_snake_case and semantic (city, service_name, product_name, price, brand_name).
+- If a block has no clear keyword, skip it. It is better to return fewer, perfect keywords than many weak ones.`,
               },
               {
                 role: "user",
-                content: `Analyze these content blocks from a webpage and suggest which specific text values should become template variables. For each suggestion, provide the block ID, the exact text to replace, and a descriptive variable name (lowercase, underscores, no braces).
+                content: `From these content blocks, return ONLY the best keyword variables following the rules. For each, give the block ID, the exact SHORT text to replace, and a semantic variable name.
 
 Content blocks:
 ${JSON.stringify(blocksForAi, null, 2)}
 
-Return a JSON array of suggestions.`,
+Return a JSON array of the best suggestions only.`,
               },
+
             ],
             tools: [
               {
