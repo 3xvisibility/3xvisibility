@@ -304,11 +304,32 @@ export default function CampaignsPage() {
               Reset {stuckCampaignIds.length} stuck
             </Button>
           )}
-          <Button onClick={() => setWizardOpen(true)} className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2">
+          <Button
+            onClick={() => setWizardOpen(true)}
+            disabled={campaignLimitReached}
+            className="rounded-xl bg-gradient-primary hover:brightness-110 shadow-sm gap-2"
+          >
             <Sparkles className="h-4 w-4" /> {t("campaigns.newCampaign")}
           </Button>
         </div>
       </div>
+
+      {/* Plan campaign limit reached — inline upgrade banner */}
+      {campaignLimitReached && (
+        <Alert variant="destructive" className="rounded-xl">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Campaign limit reached</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Your <strong>{planLabel}</strong> plan allows{" "}
+              <strong>{campaignLimit} campaign{campaignLimit === 1 ? "" : "s"}</strong> and you've used {userCampaignCount}. Upgrade to create more.
+            </span>
+            <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => navigate(`${basePath}/billing`)}>
+              <Crown className="h-3.5 w-3.5" /> Upgrade plan
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Friendly "How a campaign works" guide — only show once user has at least 1 campaign */}
       {campaigns.length > 0 && (
