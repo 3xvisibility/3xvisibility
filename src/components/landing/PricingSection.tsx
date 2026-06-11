@@ -40,6 +40,7 @@ export function PricingSection() {
   const comparisonFeatures = [
     { label: t("pricing.pagesMonth"), icon: <Layers className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "10", starter: "300", pro: "3,000", agency: "15,000" },
     { label: t("pricing.aiGenerations"), icon: <Sparkles className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "10", starter: "100", pro: "1,000", agency: "5,000" },
+    { label: t("pricing.campaigns"), icon: <Zap className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
     { label: t("pricing.templates"), icon: <FileText className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "1", starter: "10", pro: t("pricing.unlimited"), agency: t("pricing.unlimited") },
     { label: t("pricing.websites"), icon: <Globe className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: "1", starter: "2", pro: "10", agency: t("pricing.unlimited") },
     { label: t("pricing.wordpress"), icon: <Globe className="h-4 w-4 text-[hsl(96,80%,52%)]" />, free: true, starter: true, pro: true, agency: true },
