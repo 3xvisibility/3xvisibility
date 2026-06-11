@@ -137,6 +137,7 @@ export function SeoOptimizeDialog({
 
     setLoading(true);
     setResult(null);
+    setRolledBack(false);
 
     try {
       // Truncate content to avoid edge function timeouts on large pages
