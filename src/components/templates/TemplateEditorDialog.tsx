@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LiveSerpPreview } from "@/components/templates/LiveSerpPreview";
 import type { Tables } from "@/integrations/supabase/types";
+import { extractEdgeError } from "@/lib/edge-function-error";
 
 type Template = Tables<"templates">;
 
@@ -303,7 +304,7 @@ ${contentText}`
             "Improve the copy, SEO and clarity of this page. Keep the EXACT same design, layout, structure, CSS classes and topic. Reuse every existing image URL unchanged — never swap to stock or AI images. Only refine the visible text and alt text so it stays relevant to what the client actually offers.",
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(await extractEdgeError(error, "AI improvement failed"));
       if (data?.error) throw new Error(data.error);
       let improved = (data.content || "").replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
       if (improved) {
@@ -311,7 +312,11 @@ ${contentText}`
         setContent(improved);
         setActiveTab("content");
         setViewMode("preview");
-        toast({ title: "✨ Content improved!", description: "Same design & images kept — copy and SEO refined." });
+        toast({
+          title: data?.warning ? "Template kept safe" : "✨ Content improved!",
+          description: data?.warning || "Same design & images kept — copy and SEO refined.",
+          variant: data?.warning ? "destructive" : undefined,
+        });
       } else {
         toast({ title: "Nothing returned", description: "The AI did not return any HTML. Please try again.", variant: "destructive" });
       }
