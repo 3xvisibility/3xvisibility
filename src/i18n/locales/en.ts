@@ -205,7 +205,7 @@ const en: Record<string, string> = {
   "analytics.title": "Campaign Analytics",
   "analytics.totalPages": "Total Pages",
   "auth.acceptTerms": "I agree to the",
-  "auth.agencyPlanInfo": "All new accounts include the Agency plan with 10,000 pages and 5,000 AI generations. Your workspace will be automatically created from your company name.",
+  "auth.agencyPlanInfo": "All new accounts include the Agency plan with 10,000 pages and 5,000 AI credits. Your workspace will be automatically created from your company name.",
   "auth.and": "and",
   "auth.appleFailed": "Apple sign-in failed",
   "auth.backToLogin": "Back to login",
