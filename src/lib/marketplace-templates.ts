@@ -1420,3 +1420,13 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "Person",
   },
 ];
+
+// Final catalog: each template gets a derived `platform` and, for WordPress /
+// Shopify / PrestaShop entries, a platform-native re-skin + wrapper classes so
+// they look and publish natively on their target CMS.
+export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = RAW_COMMUNITY_TEMPLATES.map((t) => {
+  const platform = platformFromCategory(t.category);
+  return platform === "generic"
+    ? { ...t, platform }
+    : { ...t, platform, content: applyPlatformTheme(t.content, platform) };
+});
