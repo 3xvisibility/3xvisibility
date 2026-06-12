@@ -324,8 +324,9 @@ export default function PgpKeywordsPage() {
       lines = text.split("\n").map(l => l.trim()).filter(Boolean);
     }
 
-    setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-    toast({ title: `${lines.length} terms imported` });
+    const clean = sanitizeKeywordLines(lines);
+    setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${clean.join("\n")}`.split("\n")).join("\n") : clean.join("\n"));
+    toast({ title: `${clean.length} terms imported` });
     if (importRef.current) importRef.current.value = "";
   };
 
