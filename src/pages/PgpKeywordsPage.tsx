@@ -622,24 +622,46 @@ export default function PgpKeywordsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
 
+      // 1) Generate CLEAN keywords via a plain-text AI call (no HTML/CSS contamination).
+      const kwResult = await callAI({
+        model: "google/gemini-3-flash-preview",
+        temperature: 0.3,
+        messages: [
+          { role: "system", content: SEO_KEYWORD_SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: `Service/product: "${wizService}". Target locations: "${wizLocations || "United States"}".
+Return ONLY plain search keywords (no code, tags, styling or symbols), grouped as JSON:
+{ "service_terms": ["15-20 high-intent service keyword variations"], "city_terms": ["15-20 target city/location names"] }
+Output JSON only, nothing else.`,
+          },
+        ],
+      });
+      if (!kwResult.success) throw new Error(kwResult.content || "AI request failed");
+      const kwRaw = (kwResult.content || "").replace(/```json?\s*/gi, "").replace(/```/g, "").trim();
+      let kwParsed: any = {};
+      try { kwParsed = JSON.parse(kwRaw); } catch { kwParsed = {}; }
+      const serviceTerms = sanitizeKeywordLines(
+        Array.isArray(kwParsed.service_terms) ? kwParsed.service_terms : extractKeywordCandidates(kwRaw)
+      );
+      const cityTerms = sanitizeKeywordLines(
+        Array.isArray(kwParsed.city_terms) ? kwParsed.city_terms : []
+      );
+      if (serviceTerms.length === 0) throw new Error("Could not generate clean keywords. Please try again.");
+
+      // 2) Generate the HTML content template separately (HTML stays in the template, never in keywords).
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
-          prompt: `You are a Page Generator Pro assistant. Given the service/product "${wizService}" and target locations "${wizLocations || "United States"}":
-
-1. Generate a keyword group called "service" with 15-20 relevant service variations (one per line).
-2. Generate a keyword group called "city" with 15-20 target city names (one per line).
-3. Generate an HTML content template for a landing page that uses {service} and {city} variables. Include H1, H2 sections, FAQ, and call-to-action. Make it SEO-optimized.
-4. Generate a meta title pattern and meta description pattern using {service} and {city}.
-
-Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": "...", "template_content": "...", "seo_title": "...", "seo_description": "..." }`
+          prompt: `Create an SEO-optimized HTML content template for a landing page about the service "${wizService}" using {service} and {city} variables. Include H1, H2 sections, FAQ, and call-to-action.
+Also provide a meta title pattern and meta description pattern using {service} and {city}.
+Output as JSON: { "template_name": "...", "template_content": "...", "seo_title": "...", "seo_description": "..." }`
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```json?\n?/i, "").replace(/\n?```$/i, "").trim();
-      const result = JSON.parse(raw);
-      const serviceTerms = sanitizeKeywordLines(result.service_terms || []);
-      const cityTerms = sanitizeKeywordLines(result.city_terms || []);
+      let result: any = {};
+      try { result = JSON.parse(raw); } catch { result = {}; }
 
       // Create service keyword
       await supabase.from("pgp_keywords").insert({
