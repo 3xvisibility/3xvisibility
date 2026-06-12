@@ -104,7 +104,7 @@ export class PrestaShopConnector implements CmsConnector {
     <meta_title><language id="${langId}"><![CDATA[${metaTitle}]]></language></meta_title>
     <meta_description><language id="${langId}"><![CDATA[${metaDesc}]]></language></meta_description>
     <name><language id="${langId}"><![CDATA[${payload.title}]]></language></name>
-    <description><language id="${langId}"><![CDATA[${payload.content}]]></language></description>
+    <description><language id="${langId}"><![CDATA[${adaptHtmlForPrestaShopTheme(payload.content || "", "product")}]]></language></description>
     <description_short><language id="${langId}"><![CDATA[${metaDesc}]]></language></description_short>
     <link_rewrite><language id="${langId}"><![CDATA[${linkRewrite}]]></language></link_rewrite>
   </product>
