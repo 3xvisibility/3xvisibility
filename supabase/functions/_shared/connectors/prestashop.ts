@@ -1,5 +1,6 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 import { adaptHtmlForPrestaShopTheme } from "./prestashop-theme-adapter.ts";
+import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
