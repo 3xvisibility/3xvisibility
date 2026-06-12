@@ -124,6 +124,28 @@ function extractKeywordCandidates(raw: string): string[] {
   return sanitizeKeywordLines(candidates);
 }
 
+function stripHtmlForKeywords(html: string): string {
+  return (html || "")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, " ")
+    .replace(/&gt;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractHeadingsFromHtml(html: string): string[] {
+  const headings: string[] = [];
+  const safeHtml = (html || "").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<script\b[\s\S]*?<\/script>/gi, " ");
+  const re = /<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(safeHtml))) headings.push(stripHtmlForKeywords(match[1]));
+  return headings;
+}
+
 function mergeCleanTerms(existing: string, incoming: string[], allowDelimitedRows = false): string {
   const previous = existing.split("\n").map((t) => t.trim()).filter(Boolean);
   const safePrevious = allowDelimitedRows ? previous : sanitizeKeywordLines(previous);
