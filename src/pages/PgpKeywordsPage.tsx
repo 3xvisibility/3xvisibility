@@ -565,30 +565,18 @@ export default function PgpKeywordsPage() {
         formattedUrl = `https://${formattedUrl}`;
       }
 
-      // Use AI to extract keywords from the URL content
-      const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: {
-          prompt: `Analyze this website URL and extract ONLY the main, human-readable keywords from the page.
-
-URL: ${formattedUrl}
-
-Instructions:
-- Extract product names, service names, categories, brand names, and key business phrases ONLY.
-- These are MARKETING KEYWORDS, not code.
-- ABSOLUTELY NO HTML, NO CSS, NO stylesheet rules, NO <style> or <script> blocks, NO class names, NO IDs, NO hex colors, NO CSS variables (like --aurora-1), NO inline styles, NO JavaScript, NO URLs.
-- If the page source contains markup, IGNORE all of it and return only the meaningful words a customer would search for.
-- Output ONLY the keywords/terms, one per line.
-- No numbering, no explanations, no markdown, no code fences.
-- Minimum 10 terms, maximum 50 terms.
-- Each term must be a short readable phrase (1-6 words).`
-        },
+      const result = await callAI({
+        model: "google/gemini-3-flash-preview",
+        temperature: 0.2,
+        messages: [
+          { role: "system", content: SEO_KEYWORD_SYSTEM_PROMPT },
+          { role: "user", content: `Visit/analyze this website URL conceptually and extract 10-50 product names, service names, categories, brand names and high-intent search phrases only. URL: ${formattedUrl}. One keyword per line only.` },
+        ],
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
-      const lines = sanitizeKeywordLines(raw.split("\n"));
+      if (!result.success) throw new Error(result.content || "AI request failed");
+      const lines = extractKeywordCandidates(result.content);
       if (lines.length === 0) throw new Error("Could not extract clean keywords from this URL");
-      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
+      setKwTerms(prev => mergeCleanTerms(prev, lines));
       toast({ title: `${lines.length} keywords detected from URL` });
     } catch (err: any) { toast({ title: "Failed to scan URL", description: err.message, variant: "destructive" }); }
     finally { setScanLoading(false); }
@@ -617,16 +605,18 @@ Output as JSON: { "service_terms": [...], "city_terms": [...], "template_name": 
       if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```json?\n?/i, "").replace(/\n?```$/i, "").trim();
       const result = JSON.parse(raw);
+      const serviceTerms = sanitizeKeywordLines(result.service_terms || []);
+      const cityTerms = sanitizeKeywordLines(result.city_terms || []);
 
       // Create service keyword
       await supabase.from("pgp_keywords").insert({
-        name: "service", source: "ai", terms: result.service_terms || [], term_count: (result.service_terms || []).length,
+        name: "service", source: "ai", terms: serviceTerms, term_count: serviceTerms.length,
         columns: [], delimiter: null, source_config: { auto_generated: true, topic: wizService }, workspace_id: wsId, user_id: user.id,
       } as any);
 
       // Create city keyword
       await supabase.from("pgp_keywords").insert({
-        name: "city", source: "ai", terms: result.city_terms || [], term_count: (result.city_terms || []).length,
+        name: "city", source: "ai", terms: cityTerms, term_count: cityTerms.length,
         columns: [], delimiter: null, source_config: { auto_generated: true, topic: wizLocations }, workspace_id: wsId, user_id: user.id,
       } as any);
 
