@@ -162,9 +162,10 @@ export class WordPressConnector implements CmsConnector {
   }
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
+    const assets = await this.themeAssets();
     const body: Record<string, unknown> = {
       title: resolveWordPressTitle(payload),
-      content: sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page")) || "<p></p>",
+      content: sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page", assets)) || "<p></p>",
       slug: slugify(payload.slug || payload.title),
       status: payload.status === "publish" ? "publish" : "draft",
     };
