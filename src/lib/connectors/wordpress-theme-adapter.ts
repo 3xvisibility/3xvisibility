@@ -8,6 +8,8 @@
  * (Elementor, Gutenberg, Astra, Kadence, GeneratePress, OceanWP, Divi).
  */
 
+import { injectThemeAssets, type ThemeAssets } from "./theme-assets";
+
 export type WpAdaptKind = "page" | "post" | "product";
 
 const STRIP_TAGS = ["html", "head", "body", "script", "title", "meta", "link"] as const;
