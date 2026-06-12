@@ -24,6 +24,8 @@ export interface MarketplaceTemplate {
   seo_title_pattern?: string;
   seo_description_pattern?: string;
   schema_type?: string;
+  /** Target CMS this template is designed + themed for. Derived from category. */
+  platform?: "wordpress" | "shopify" | "prestashop" | "generic";
   isShared?: boolean;
   shared_id?: string;
 }
