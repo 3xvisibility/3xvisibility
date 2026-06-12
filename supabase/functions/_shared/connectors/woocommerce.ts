@@ -93,10 +93,11 @@ export class WooCommerceConnector implements CmsConnector {
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const productSlug = slugify(payload.slug || payload.title);
+    const assets = await this.themeAssets();
     const body: Record<string, unknown> = {
       name: payload.title,
       type: "simple",
-      description: adaptHtmlForWordPressTheme(payload.content || "", "product"),
+      description: adaptHtmlForWordPressTheme(payload.content || "", "product", assets),
       slug: productSlug,
       status: "publish",
     };
