@@ -567,7 +567,7 @@ ${root} .pgp-page :where(.pgp-btn-outline){border:1px solid #2fb5d2;color:#2fb5d
 ${root} .pgp-page :where(.pgp-hero){border-radius:.25rem;box-shadow:none}
 ${root} .pgp-page :where(.pgp-hero-overlay){background:linear-gradient(180deg,rgba(35,35,35,.45),rgba(35,35,35,.62))}
 ${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff;text-shadow:none}
-${root} .pgp-page :where(.pgp-hero::before,.pgp-hero::after){display:none}
+${root} .pgp-page :where(.pgp-hero)::before,${root} .pgp-page :where(.pgp-hero)::after{display:none}
 ${root} .pgp-page :where(.pgp-trust){background:#f6f9fb;border:1px solid #e3eef3;border-radius:.25rem;box-shadow:none;backdrop-filter:none}
 ${root} .pgp-page :where(.pgp-trust .num){background:none;-webkit-text-fill-color:#2fb5d2;color:#2fb5d2}
 ${root} .pgp-page :where(.pgp-tcard){background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);backdrop-filter:none}
