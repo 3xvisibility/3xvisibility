@@ -22,7 +22,24 @@ import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, 
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
+import { PlatformSkinPicker } from "@/components/campaigns/PlatformSkinPicker";
+import { defaultSkinVariant, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { useSubscription } from "@/hooks/use-subscription";
+
+/** Map a connected website type to a themeable platform (woocommerce → wordpress). */
+function platformForWebsiteType(type?: string | null): Exclude<TemplatePlatform, "generic"> | null {
+  switch ((type || "").toLowerCase()) {
+    case "shopify":
+      return "shopify";
+    case "wordpress":
+    case "woocommerce":
+      return "wordpress";
+    case "prestashop":
+      return "prestashop";
+    default:
+      return null;
+  }
+}
 
 interface StartGenerationDialogProps {
   open: boolean;
