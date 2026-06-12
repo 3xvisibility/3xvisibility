@@ -470,7 +470,7 @@ export default function PgpKeywordsPage() {
           return parts.join("|");
         });
         setKwDelimiter("|");
-        setKwTerms(prev => prev ? `${prev}\n${delimTerms.join("\n")}` : delimTerms.join("\n"));
+        setKwTerms(prev => mergeCleanTerms(prev, delimTerms, true));
       } else {
         const terms = finalData.map((loc: any) => {
           let term = locFormat;
@@ -485,7 +485,7 @@ export default function PgpKeywordsPage() {
           term = term.replace(/\{population\}/gi, String(loc.population || ""));
           return term.trim();
         }).filter(Boolean);
-        setKwTerms(prev => prev ? `${prev}\n${terms.join("\n")}` : terms.join("\n"));
+        setKwTerms(prev => mergeCleanTerms(prev, terms));
       }
 
       toast({ title: `${finalData.length} location terms generated` });
@@ -506,17 +506,17 @@ export default function PgpKeywordsPage() {
         if (Array.isArray(json)) rawLines = json.map((item: any) => typeof item === "string" ? item : JSON.stringify(item));
         else if (json.items) rawLines = json.items.map((item: any) => typeof item === "string" ? item : item.title || item.name || JSON.stringify(item));
         const lines = sanitizeKeywordLines(rawLines);
-        if (lines.length > 0) { setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n")); toast({ title: `${lines.length} terms fetched from JSON` }); return; }
+        if (lines.length > 0) { setKwTerms(prev => mergeCleanTerms(prev, lines)); toast({ title: `${lines.length} terms fetched from JSON` }); return; }
       } catch {}
       if (text.includes("<rss") || text.includes("<feed") || text.includes("<item")) {
         const doc = new DOMParser().parseFromString(text, "text/xml");
         const items = doc.querySelectorAll("item title, entry title");
         const lines = sanitizeKeywordLines(Array.from(items).map(el => el.textContent?.trim() || ""));
-        if (lines.length > 0) { setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n")); toast({ title: `${lines.length} terms fetched from RSS` }); return; }
+        if (lines.length > 0) { setKwTerms(prev => mergeCleanTerms(prev, lines)); toast({ title: `${lines.length} terms fetched from RSS` }); return; }
       }
       const lines = sanitizeKeywordLines(text.split("\n"));
       if (lines.length === 0) throw new Error("No clean keywords found at this URL");
-      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
+      setKwTerms(prev => mergeCleanTerms(prev, lines));
       toast({ title: `${lines.length} terms fetched` });
     } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
     finally { setDynLoading(false); }
@@ -550,7 +550,7 @@ export default function PgpKeywordsPage() {
       }
       const lines = sanitizeKeywordLines([...allTerms]);
       if (lines.length === 0) throw new Error("Could not extract clean keywords from website pages");
-      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
+      setKwTerms(prev => mergeCleanTerms(prev, lines));
       toast({ title: `${lines.length} keywords extracted from ${pages.length} pages` });
     } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
     finally { setWebLoading(false); }
