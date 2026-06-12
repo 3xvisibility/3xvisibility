@@ -28,13 +28,39 @@ import * as XLSX from "xlsx";
 const PAGE_SIZE = 15;
 
 const SEO_KEYWORD_SYSTEM_PROMPT = `You are an SEO keyword strategist. Return ONLY clean search keywords that real customers type into Google, Bing, Yahoo and other search engines.
-Never return HTML, CSS, JavaScript, code, tags, classes, IDs, stylesheets, design tokens, font/width/height/color values, variables, URLs, markdown, explanations, numbering, bullets or symbols. One plain keyword phrase per line.`;
+Never return HTML, CSS, JavaScript, code, tags, classes, IDs, stylesheets, design tokens, font/width/height/color values, variables, URLs, markdown, explanations, numbering, bullets or symbols. Never include words like html, css, font-size, width, padding, margin, class, selector, style or script. One plain search keyword phrase per line.`;
 
 const TECHNICAL_NOISE_TERMS = [
   "html", "css", "stylesheet", "style", "styles", "script", "javascript", "code", "markup",
   "class", "classname", "id", "selector", "variable", "token", "font", "font-size", "font size",
-  "px", "rem", "media query", "style block", "div", "span",
+  "width", "height", "margin", "padding", "border radius", "line-height", "letter-spacing",
+  "px", "rem", "vh", "vw", "media query", "style block", "div", "span", "rgba", "hsl",
 ];
+
+const BLOCKED_JSON_KEYS = /(?:html|css|style|styles|script|template|content|code|schema|markdown|class|selector|layout|design)/i;
+const KEYWORD_JSON_KEYS = /(?:keyword|term|phrase|service|product|category|brand|name|title|heading|query|topic)/i;
+
+function isTechnicalKeywordNoise(line: string): boolean {
+  const lower = line.toLowerCase();
+  const hasTechnicalTerm = TECHNICAL_NOISE_TERMS.some((term) => new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i").test(lower));
+  return (
+    hasTechnicalTerm ||
+    line.includes("<") || line.includes(">") ||
+    /[{};]/.test(line) ||
+    /[#.][a-z0-9_-]+\s*\{/i.test(line) ||
+    /^[.#@]/.test(line) ||
+    /^--[a-z0-9-]+\s*:/i.test(line) ||
+    /\b(?:font-size|font-family|font-weight|line-height|letter-spacing|max-width|min-width|width|height|min-height|max-height|margin|padding|border|border-radius|background|color|display|position|top|left|right|bottom|z-index|gap|grid|flex|align-items|justify-content|box-shadow|opacity|transform|transition|animation|overflow)\s*:/i.test(line) ||
+    /\b\d+(?:\.\d+)?\s*(?:px|rem|em|vh|vw|%)\b/i.test(line) ||
+    /#[0-9a-f]{3,8}\b/i.test(line) ||
+    /\b(rgba?|hsla?|var|url|calc|translate|rotate|scale)\s*\(/i.test(line) ||
+    /^(http|https):\/\//i.test(line) ||
+    /[=();]/.test(line) && /[a-z]+\s*\(/i.test(line) ||
+    /\b(important|inherit|initial|unset|none|auto|flex|grid|block|absolute|relative|sticky)\b/i.test(line) && /:/.test(line) ||
+    lower === "style" || lower === "script" || lower.startsWith("style>") ||
+    /^[\d\s.,;:!?@#$%^&*()_+=<>/\\|~`'"-]+$/.test(line)
+  );
+}
 
 /**
  * Keep only real, human-readable keyword phrases.
@@ -52,32 +78,11 @@ function sanitizeKeywordLines(lines: string[]): string[] {
       .trim();
     if (!line) continue;
 
-    const lower = line.toLowerCase();
-    const hasTechnicalNoise = TECHNICAL_NOISE_TERMS.some((term) => new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i").test(lower));
-
-    // Drop obvious markup / code / style noise.
-    const isNoise =
-      hasTechnicalNoise ||
-      line.includes("<") || line.includes(">") ||           // HTML tags
-      /[{}]/.test(line) ||                                   // CSS blocks
-      line.includes(";") ||                                  // CSS/JS statements
-      /[#.][a-z0-9_-]+\s*\{/i.test(line) ||                  // selectors
-      /^[.#@]/.test(line) ||                                 // .class / #id / @media
-      /^--[a-z0-9-]+\s*:/i.test(line) ||                     // CSS custom props
-      /:\s*[^ ]+\s*(;|$)/.test(line) && /(px|rem|em|%|#[0-9a-f]{3,8}|rgba?\(|hsla?\(|var\(|url\()/i.test(line) || // property: value
-      /#[0-9a-f]{3,8}\b/i.test(line) ||                      // hex colors
-      /\b(rgba?|hsla?|var|url|calc|translate|rotate|scale)\s*\(/i.test(line) || // css functions
-      /^(http|https):\/\//i.test(line) ||                    // raw URLs
-      /[=();]/.test(line) && /[a-z]+\s*\(/i.test(line) ||    // JS-ish calls
-      /\b(important|inherit|initial|unset|none|auto|flex|grid|block|absolute|relative|sticky)\b/i.test(line) && /:/.test(line) ||
-      lower === "style" || lower === "script" || lower.startsWith("style>") ||
-      /^[\d\s.,;:!?@#$%^&*()_+=<>/\\|~`'"-]+$/.test(line); // only punctuation/numbers (keeps any-language letters)
-
-    if (isNoise) continue;
+    if (isTechnicalKeywordNoise(line)) continue;
 
     // Trim trailing punctuation noise; keep readable phrases only.
     line = line.replace(/[{}<>;]+/g, "").trim();
-    if (!line || line.length > 80) continue;
+    if (!line || line.length > 100) continue;
     // Must contain at least one letter (skip pure numbers / measurements).
     if (!/[a-z\u00C0-\u024F\u0980-\u09FF]/i.test(line)) continue;
 
@@ -98,9 +103,14 @@ function extractKeywordCandidates(raw: string): string[] {
     .replace(/<[^>]*>/g, "\n");
 
   const candidates: string[] = [];
-  const pushValue = (value: unknown) => {
-    if (Array.isArray(value)) value.forEach(pushValue);
-    else if (value && typeof value === "object") Object.values(value as Record<string, unknown>).forEach(pushValue);
+  const pushValue = (value: unknown, key = "") => {
+    if (BLOCKED_JSON_KEYS.test(key)) return;
+    if (Array.isArray(value)) value.forEach((item) => pushValue(item, key));
+    else if (value && typeof value === "object") {
+      Object.entries(value as Record<string, unknown>).forEach(([childKey, childValue]) => {
+        if (KEYWORD_JSON_KEYS.test(childKey) || KEYWORD_JSON_KEYS.test(key)) pushValue(childValue, childKey);
+      });
+    }
     else if (typeof value === "string") candidates.push(value);
   };
 
@@ -112,6 +122,28 @@ function extractKeywordCandidates(raw: string): string[] {
     .forEach((part) => candidates.push(part));
 
   return sanitizeKeywordLines(candidates);
+}
+
+function stripHtmlForKeywords(html: string): string {
+  return (html || "")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, " ")
+    .replace(/&gt;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractHeadingsFromHtml(html: string): string[] {
+  const headings: string[] = [];
+  const safeHtml = (html || "").replace(/<style\b[\s\S]*?<\/style>/gi, " ").replace(/<script\b[\s\S]*?<\/script>/gi, " ");
+  const re = /<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(safeHtml))) headings.push(stripHtmlForKeywords(match[1]));
+  return headings;
 }
 
 function mergeCleanTerms(existing: string, incoming: string[], allowDelimitedRows = false): string {
@@ -528,25 +560,26 @@ export default function PgpKeywordsPage() {
     try {
       const site = websites.find(w => w.id === webSiteId);
       if (!site) throw new Error("Website not found");
-      const { data, error } = await supabase.functions.invoke("fetch-site-content", { body: { url: site.url, websiteId: site.id } });
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", { body: { website_id: site.id, content_type: "pages" } });
       if (error) throw error;
-      const pages = data?.pages || [];
+      if (data?.error) throw new Error(data.error);
+      const pages = data?.items || data?.pages || [];
       if (pages.length === 0) throw new Error("No pages found on this website");
-      // Extract keywords from page titles, headings, and meta
+      // Extract only visible SEO terms from titles, headings, excerpts and SEO keywords — never raw HTML/CSS.
       const allTerms = new Set<string>();
       for (const page of pages) {
         const title = page.title || "";
         if (title) allTerms.add(title.trim());
-        // Extract from headings if available
-        const headings = page.headings || [];
+        if (page.seo_title) allTerms.add(String(page.seo_title).trim());
+        if (page.excerpt) allTerms.add(stripHtmlForKeywords(String(page.excerpt)));
+        const headings = Array.isArray(page.headings) && page.headings.length ? page.headings : extractHeadingsFromHtml(page.content || "");
         for (const h of headings) {
           if (h && typeof h === "string") allTerms.add(h.trim());
         }
         // Extract meta keywords
-        const metaKw = page.meta_keywords || page.keywords || "";
-        if (metaKw) {
-          metaKw.split(",").map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
-        }
+        const metaKw = page.meta_keywords || page.keywords || page.seo_keywords || "";
+        const metaList = Array.isArray(metaKw) ? metaKw : String(metaKw).split(",");
+        metaList.map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
       }
       const lines = sanitizeKeywordLines([...allTerms]);
       if (lines.length === 0) throw new Error("Could not extract clean keywords from website pages");
