@@ -105,7 +105,12 @@ function splitIntoSectionBlocks(html: string): string[] {
 /** Convert a single section block into an array of Elementor widgets. */
 function blockToWidgets(block: string): Array<Record<string, unknown>> {
   const widgets: Array<Record<string, unknown>> = [];
-  let rest = block;
+  let rest = block.trim();
+
+  // Unwrap a single outer structural container (e.g. <section>...</section>) so
+  // its inner heading/image/text can be promoted to dedicated widgets.
+  const wrapper = rest.match(/^<(section|header|footer|article|div)\b[^>]*>([\s\S]*)<\/\1>\s*$/i);
+  if (wrapper) rest = wrapper[2].trim();
 
   // Promote a single leading heading to a heading widget.
   const headingMatch = rest.match(/^\s*<(h[1-6])\b[^>]*>([\s\S]*?)<\/\1>/i);
