@@ -224,7 +224,7 @@ export class WordPressConnector implements CmsConnector {
     // looks exactly the same — better SEO/title text only.
     if (!preserveDesign) {
       if (typeof payload.content === "string") {
-        body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, payload.product_data ? "product" : "page")) || "<p></p>";
+        body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, payload.product_data ? "product" : "page", await this.themeAssets())) || "<p></p>";
       }
     }
 
