@@ -84,6 +84,13 @@ export class WooCommerceConnector implements CmsConnector {
     return `consumer_key=${encodeURIComponent(this.consumerKey)}&consumer_secret=${encodeURIComponent(this.consumerSecret)}`;
   }
 
+  private assetsPromise?: Promise<ThemeAssets>;
+  /** Lazily fetch + cache the store's theme assets (fonts/styles) once per connector. */
+  private themeAssets(): Promise<ThemeAssets> {
+    if (!this.assetsPromise) this.assetsPromise = getThemeAssets(this.baseUrl);
+    return this.assetsPromise;
+  }
+
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const productSlug = slugify(payload.slug || payload.title);
     const body: Record<string, unknown> = {
