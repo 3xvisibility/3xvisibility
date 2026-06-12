@@ -9,6 +9,8 @@
  * CMS content inside `#cms .page-content.page-cms`.
  */
 
+import { injectThemeAssets, type ThemeAssets } from "./theme-assets.ts";
+
 export type PrestaAdaptKind = "page" | "product";
 
 const STRIP_TAGS = ["html", "head", "body", "script", "title", "meta", "link"] as const;
