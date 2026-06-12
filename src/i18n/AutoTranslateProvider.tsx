@@ -16,7 +16,6 @@
 
 import { useEffect, useRef } from "react";
 import { useLanguage } from "./LanguageContext";
-import { translations } from "./translations";
 import { supabase } from "@/integrations/supabase/client";
 
 
