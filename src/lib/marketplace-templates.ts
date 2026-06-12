@@ -38,7 +38,7 @@ const BASE_STYLES = `<style>
 @keyframes pgp-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes pgp-pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.35),0 12px 32px rgba(0,0,0,.18)}50%{box-shadow:0 0 0 14px rgba(99,102,241,0),0 18px 40px rgba(0,0,0,.22)}}
 .pgp-page{font-family:inherit;color:inherit;line-height:1.7;max-width:100%;position:relative}
-.pgp-page *{box-sizing:border-box}
+.pgp-page :where(*){box-sizing:border-box}
 .pgp-page h1,.pgp-page h2,.pgp-page h3,.pgp-page h4{font-family:inherit;letter-spacing:-.025em;line-height:1.08;margin:0;font-weight:800}
 .pgp-page p{margin:0;font-family:inherit}
 .pgp-page a{color:inherit;text-decoration:none}
