@@ -88,7 +88,7 @@ export class WooCommerceConnector implements CmsConnector {
     const body: Record<string, unknown> = {
       name: payload.title,
       type: "simple",
-      description: payload.content,
+      description: adaptHtmlForWordPressTheme(payload.content || "", "product"),
       slug: productSlug,
       status: "publish",
     };
