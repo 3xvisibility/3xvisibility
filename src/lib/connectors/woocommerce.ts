@@ -109,7 +109,7 @@ export class WooCommerceConnector implements CmsConnector {
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorPage> {
     const body: Record<string, unknown> = {};
     if (payload.title) body.name = payload.title;
-    if (payload.content) body.description = payload.content;
+    if (payload.content) body.description = adaptHtmlForWordPressTheme(payload.content, "product");
     if (payload.slug) body.slug = slugify(payload.slug);
 
     const res = await fetch(
