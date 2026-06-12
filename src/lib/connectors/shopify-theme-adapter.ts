@@ -2,6 +2,8 @@
  * Shopify Theme Adapter (browser mirror).
  * Keep in sync with supabase/functions/_shared/connectors/shopify-theme-adapter.ts
  */
+import { injectThemeAssets, type ThemeAssets } from "./theme-assets";
+
 export type ShopifyAdaptKind = "page" | "product";
 
 const STRIP_TAGS = ["html", "head", "body", "script", "title", "meta", "link"] as const;
