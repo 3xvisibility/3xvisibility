@@ -727,7 +727,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     }
     const unmatchedColumns = headers.filter(h => !matched.some(m => m.column === h));
     return { matched, unmatchedColumns };
-  }, [selectedTemplateVars, effectiveCsvHeaders, manualMappings, customValues]);
+  }, [selectedTemplateVars, effectiveCsvHeaders, manualMappings, customValues, multiCustomVars]);
 
   // --- Wizard steps ---
   const getWizardSteps = () => {
