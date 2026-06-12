@@ -24,6 +24,8 @@ export interface MarketplaceTemplate {
   seo_title_pattern?: string;
   seo_description_pattern?: string;
   schema_type?: string;
+  /** Target CMS this template is designed + themed for. Derived from category. */
+  platform?: "wordpress" | "shopify" | "prestashop" | "generic";
   isShared?: boolean;
   shared_id?: string;
 }
@@ -38,7 +40,7 @@ const BASE_STYLES = `<style>
 @keyframes pgp-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes pgp-pulse-glow{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.35),0 12px 32px rgba(0,0,0,.18)}50%{box-shadow:0 0 0 14px rgba(99,102,241,0),0 18px 40px rgba(0,0,0,.22)}}
 .pgp-page{font-family:inherit;color:inherit;line-height:1.7;max-width:100%;position:relative}
-.pgp-page *{box-sizing:border-box}
+.pgp-page :where(*){box-sizing:border-box}
 .pgp-page h1,.pgp-page h2,.pgp-page h3,.pgp-page h4{font-family:inherit;letter-spacing:-.025em;line-height:1.08;margin:0;font-weight:800}
 .pgp-page p{margin:0;font-family:inherit}
 .pgp-page a{color:inherit;text-decoration:none}
@@ -440,8 +442,103 @@ const page = (sections: string, vibe?: VibeAccent) => {
 </div>`;
 };
 
+// ── Platform-native theming ─────────────────────────────────────────────────
+// WordPress / Shopify / PrestaShop templates are re-skinned so they look + feel
+// native to the target CMS (not the generic "AI vibe" gradient look) and carry
+// the exact wrapper classes the publish theme-adapters expect. This means when a
+// user picks a WordPress template it publishes looking like a clean block theme
+// and stays easy to maintain inside WordPress (Gutenberg/Astra/Kadence). Same
+// idea for Shopify (Dawn) and PrestaShop (Bootstrap).
+//
+// IMPORTANT: these <style> blocks must survive the publish adapters, which strip
+// any <style> that targets html/body or a bare `*{box-sizing}`. We scope every
+// rule to the wrapper class and use `:where(*)` so nothing gets removed.
+
+export type TemplatePlatform = "wordpress" | "shopify" | "prestashop" | "generic";
+
+const PLATFORM_BY_CATEGORY: Record<string, TemplatePlatform> = {
+  wordpress: "wordpress",
+  shopify: "shopify",
+  prestashop: "prestashop",
+};
+
+export const platformFromCategory = (category: string): TemplatePlatform =>
+  PLATFORM_BY_CATEGORY[category] ?? "generic";
+
+// Native wrapper classes — identical to what the theme-adapters emit, so the
+// publish step recognises the content as already-themed and won't double-wrap.
+const PLATFORM_WRAPPER_CLASS: Record<Exclude<TemplatePlatform, "generic">, string> = {
+  wordpress: "entry-content wp-block-post-content is-layout-constrained wp-themed-content",
+  shopify: "page-width rte shopify-themed-content",
+  prestashop: "rte page-content page-cms prestashop-themed-content",
+};
+
+// Per-platform skin: overrides the generic pgp-* look to match the CMS's stock
+// theme. Scoped to `.pgp-skin-<platform>` so it never leaks and always survives.
+const platformSkin = (platform: Exclude<TemplatePlatform, "generic">): string => {
+  const root = `.pgp-skin-${platform}`;
+  if (platform === "wordpress") {
+    return `<style data-platform="wordpress">
+${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:none;padding:0;letter-spacing:.18em;opacity:.7;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-eyebrow)::before{display:none}
+${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:inherit}
+${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);backdrop-filter:none}
+${root} .pgp-page :where(.pgp-card)::before{display:none}
+${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 6px 18px rgba(0,0,0,.08);border-color:#cbd5e1}
+${root} .pgp-page :where(.pgp-card .pgp-icon){background:#f1f5f9;border:1px solid #e2e8f0;box-shadow:none;border-radius:8px}
+${root} .pgp-page :where(.pgp-btn){border-radius:4px}
+${root} .pgp-page :where(.pgp-btn-primary){background:#1e1e1e;background-image:none;color:#fff;box-shadow:none}
+${root} .pgp-page :where(.pgp-btn-primary:hover){background:#000;box-shadow:none;transform:none;filter:none}
+${root} .pgp-page :where(.pgp-hero){border-radius:0;box-shadow:none}
+${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff}
+</style>`;
+  }
+  if (platform === "shopify") {
+    return `<style data-platform="shopify">
+${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:1px solid currentColor;border-radius:0;letter-spacing:.18em;opacity:.7;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-eyebrow)::before{display:none}
+${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:inherit;font-weight:600;letter-spacing:-.01em}
+${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid #e8e8e8;border-radius:12px;box-shadow:none;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-card)::before{display:none}
+${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 8px 24px rgba(0,0,0,.06);border-color:#d4d4d4}
+${root} .pgp-page :where(.pgp-card .pgp-icon){background:#f6f6f6;border:1px solid #e8e8e8;box-shadow:none;border-radius:10px}
+${root} .pgp-page :where(.pgp-btn){border-radius:6px;font-weight:600}
+${root} .pgp-page :where(.pgp-btn-primary){background:#121212;background-image:none;color:#fff;box-shadow:none;animation:none}
+${root} .pgp-page :where(.pgp-btn-primary:hover){background:#000;box-shadow:none;transform:none;filter:none}
+${root} .pgp-page :where(.pgp-hero){border-radius:0;box-shadow:none}
+${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff;font-weight:600}
+${root} .pgp-page :where(.pgp-trust .num){background:none;-webkit-text-fill-color:currentColor;color:inherit}
+</style>`;
+  }
+  // prestashop — Bootstrap-flavoured
+  return `<style data-platform="prestashop">
+${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:none;padding:0;letter-spacing:.16em;opacity:.7;color:#2fb5d2;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-eyebrow)::before{display:none}
+${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:inherit;font-weight:700}
+${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);backdrop-filter:none}
+${root} .pgp-page :where(.pgp-card)::before{display:none}
+${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 6px 16px rgba(0,0,0,.1);border-color:rgba(0,0,0,.12)}
+${root} .pgp-page :where(.pgp-card .pgp-icon){background:#eef7fb;border:1px solid #d4ecf4;box-shadow:none;border-radius:.25rem;color:#2fb5d2}
+${root} .pgp-page :where(.pgp-btn){border-radius:.25rem;font-weight:600}
+${root} .pgp-page :where(.pgp-btn-primary){background:#2fb5d2;background-image:none;color:#fff;box-shadow:none;animation:none}
+${root} .pgp-page :where(.pgp-btn-primary:hover){background:#25a0bb;box-shadow:none;transform:none;filter:none}
+${root} .pgp-page :where(.pgp-hero){border-radius:.25rem;box-shadow:none}
+${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff}
+</style>`;
+};
+
+// Wrap a generic template body so it renders + publishes as native CMS content.
+const applyPlatformTheme = (content: string, platform: TemplatePlatform): string => {
+  if (platform === "generic") return content;
+  const wrapper = PLATFORM_WRAPPER_CLASS[platform];
+  return `${platformSkin(platform)}
+<div class="${wrapper} pgp-skin-${platform}">
+${content}
+</div>`;
+};
+
 // ── Templates ──────────────────────────────────────────────────────────────
-export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
+const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
   {
     id: "local-plumber",
@@ -1323,3 +1420,13 @@ export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "Person",
   },
 ];
+
+// Final catalog: each template gets a derived `platform` and, for WordPress /
+// Shopify / PrestaShop entries, a platform-native re-skin + wrapper classes so
+// they look and publish natively on their target CMS.
+export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = RAW_COMMUNITY_TEMPLATES.map((t) => {
+  const platform = platformFromCategory(t.category);
+  return platform === "generic"
+    ? { ...t, platform }
+    : { ...t, platform, content: applyPlatformTheme(t.content, platform) };
+});
