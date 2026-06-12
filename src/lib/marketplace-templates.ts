@@ -536,7 +536,7 @@ ${root} .pgp-page :where(.pgp-btn-outline){border:1px solid #121212;color:#12121
 ${root} .pgp-page :where(.pgp-hero){border-radius:0;box-shadow:none}
 ${root} .pgp-page :where(.pgp-hero-overlay){background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.5))}
 ${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff;font-weight:600;text-shadow:none}
-${root} .pgp-page :where(.pgp-hero::before,.pgp-hero::after){display:none}
+${root} .pgp-page :where(.pgp-hero)::before,${root} .pgp-page :where(.pgp-hero)::after{display:none}
 ${root} .pgp-page :where(.pgp-trust){background:#fafafa;border:1px solid #e1e1e1;border-radius:8px;box-shadow:none;backdrop-filter:none}
 ${root} .pgp-page :where(.pgp-trust .num){background:none;-webkit-text-fill-color:#121212;color:#121212}
 ${root} .pgp-page :where(.pgp-tcard){background:#fff;border:1px solid #e1e1e1;border-radius:8px;box-shadow:none;backdrop-filter:none}
