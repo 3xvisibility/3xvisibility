@@ -17,6 +17,15 @@ export class PrestaShopConnector implements CmsConnector {
     this.auth = btoa(`${config.api_key}:`);
   }
 
+  private assetsPromise?: Promise<ThemeAssets>;
+  /** Lazily fetch + cache the store's theme assets (fonts/styles) once per connector. */
+  private themeAssets(): Promise<ThemeAssets> {
+    if (!this.assetsPromise) this.assetsPromise = getThemeAssets(this.baseUrl);
+    return this.assetsPromise;
+  }
+
+
+
   async testConnection(): Promise<boolean> {
     try {
       const res = await fetch(`${this.baseUrl}/api/languages?output_format=JSON&limit=1`, {
