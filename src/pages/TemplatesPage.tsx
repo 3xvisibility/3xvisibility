@@ -286,6 +286,23 @@ export default function TemplatesPage() {
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
 
+  // Saves only the content from the visual customizer (hero/colors/section order/skin).
+  const customizeMutation = useMutation({
+    mutationFn: async (params: { id: string; content: string }) => {
+      const variables = filterDesignVars([...new Set(params.content.match(/\{[^}]+\}/g) || [])]);
+      const { error } = await supabase.from("templates").update({
+        content: params.content, variables,
+      } as any).eq("id", params.id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await refreshTemplates();
+      toast({ title: "Template customized" });
+      setCustomizeTemplate(null);
+    },
+    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
   const duplicateMutation = useMutation({
     mutationFn: async (tpl: Template) => {
       const { data: { user } } = await supabase.auth.getUser();
