@@ -94,6 +94,13 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
       '<span style="background:hsl(180 50% 90%);color:hsl(180 60% 30%);padding:1px 5px;border-radius:3px;font-size:0.8em;font-family:monospace;border:1px solid hsl(180 40% 78%)">🔀 {{/$1}}</span>'
     );
 
+    // Restore protected <style>/<script> blocks untouched.
+    if (protectedBlocks.length) {
+      styled = styled.replace(/\u0000BLOCK(\d+)\u0000/g, (_m, i) => protectedBlocks[Number(i)]);
+    }
+
+
+
     // If we have external styles (imported site), use them and skip default styles
     if (hasExternalStyles) {
       return `<!DOCTYPE html>
