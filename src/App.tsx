@@ -223,6 +223,12 @@ const App = () => {
   }, []);
 
   const handleLogout = async () => {
+    // Clear cached plan so the next user never sees the previous user's plan.
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("plan-cache:"))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch { /* ignore */ }
     await supabase.auth.signOut();
   };
 
