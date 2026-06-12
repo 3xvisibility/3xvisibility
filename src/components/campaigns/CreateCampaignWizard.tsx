@@ -2067,7 +2067,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                   {selectedTemplate && selectedTemplateVars.length > 0 && (
                     <FillRulesPanel
                       templateVars={selectedTemplateVars}
-                      csvHeaders={effectiveCsvHeaders}
+                        csvHeaders={baseCsvHeaders}
                       manualMappings={manualMappings}
                       customValues={customValues}
                       rules={fillRules}
