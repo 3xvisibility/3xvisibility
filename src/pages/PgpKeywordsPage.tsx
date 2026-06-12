@@ -516,26 +516,27 @@ export default function PgpKeywordsPage() {
       // Use AI to extract keywords from the URL content
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
-          prompt: `Analyze this website URL and extract relevant keywords, product names, service names, and key phrases from the page content.
+          prompt: `Analyze this website URL and extract ONLY the main, human-readable keywords from the page.
 
 URL: ${formattedUrl}
 
 Instructions:
-- Visit or analyze the URL content
-- Extract product names, service names, categories, brand names, and key business terms
-- Focus on terms that would be useful for SEO page generation
-- Output ONLY the keywords/terms, one per line
-- No numbering, no explanations, no markdown
-- Minimum 10 terms, maximum 50 terms
-- Include variations and related terms`
+- Extract product names, service names, categories, brand names, and key business phrases ONLY.
+- These are MARKETING KEYWORDS, not code.
+- ABSOLUTELY NO HTML, NO CSS, NO stylesheet rules, NO <style> or <script> blocks, NO class names, NO IDs, NO hex colors, NO CSS variables (like --aurora-1), NO inline styles, NO JavaScript, NO URLs.
+- If the page source contains markup, IGNORE all of it and return only the meaningful words a customer would search for.
+- Output ONLY the keywords/terms, one per line.
+- No numbering, no explanations, no markdown, no code fences.
+- Minimum 10 terms, maximum 50 terms.
+- Each term must be a short readable phrase (1-6 words).`
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
-      const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, "").trim()).filter(Boolean);
-      if (lines.length === 0) throw new Error("Could not extract keywords from this URL");
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      const lines = sanitizeKeywordLines(raw.split("\n"));
+      if (lines.length === 0) throw new Error("Could not extract clean keywords from this URL");
+      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
       toast({ title: `${lines.length} keywords detected from URL` });
     } catch (err: any) { toast({ title: "Failed to scan URL", description: err.message, variant: "destructive" }); }
     finally { setScanLoading(false); }
