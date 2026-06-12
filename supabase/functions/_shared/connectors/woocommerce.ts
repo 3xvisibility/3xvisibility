@@ -1,5 +1,6 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
+import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 import {
   buildSeoMetaDataEntries,
   buildSeoMetaRecord,
