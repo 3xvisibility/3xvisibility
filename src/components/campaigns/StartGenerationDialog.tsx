@@ -406,6 +406,19 @@ export function StartGenerationDialog({
             )}
           </div>
 
+          {skinPlatform && (
+            <>
+              <Separator />
+              <PlatformSkinPicker
+                platform={skinPlatform}
+                value={skinVariant}
+                onChange={setSkinVariant}
+              />
+            </>
+          )}
+
+
+
           {websiteType === "shopify" && websiteId && (
             <>
               <Separator />
