@@ -996,8 +996,10 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
       .maybeSingle();
 
     const pageRecord: Record<string, any> = {
-      title: nextSeoTitle || page_title,
-      content: result.content || page_content,
+      // Keep the real page name in tracking — the SEO title is stored separately
+      // in seo_title, never as the page's display name.
+      title: page_title || nextSeoTitle,
+      content: preserveDesign ? page_content : (result.content || page_content),
       slug: page_slug || "",
       seo_title: nextSeoTitle || null,
       seo_description: nextSeoDescription || null,
