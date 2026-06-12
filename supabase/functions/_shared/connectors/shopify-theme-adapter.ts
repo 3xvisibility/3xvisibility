@@ -24,6 +24,8 @@
  *    description CSS (Dawn, Sense) still pick it up.
  */
 
+import { injectThemeAssets, type ThemeAssets } from "./theme-assets.ts";
+
 export type ShopifyAdaptKind = "page" | "product";
 
 const STRIP_TAGS = ["html", "head", "body", "script", "title", "meta", "link"] as const;
