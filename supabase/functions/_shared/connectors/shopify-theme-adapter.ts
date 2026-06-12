@@ -100,7 +100,11 @@ function trimRootStyleBlocks(html: string): string {
   });
 }
 
-export function adaptHtmlForShopifyTheme(html: string, kind: ShopifyAdaptKind = "page"): string {
+export function adaptHtmlForShopifyTheme(
+  html: string,
+  kind: ShopifyAdaptKind = "page",
+  assets?: ThemeAssets | null,
+): string {
   if (!html || typeof html !== "string") return html;
 
   let out = html;
@@ -110,8 +114,9 @@ export function adaptHtmlForShopifyTheme(html: string, kind: ShopifyAdaptKind = 
   out = makeImagesResponsive(out);
 
   // If already wrapped, leave alone.
-  if (/class="[^"]*\bshopify-themed-content\b[^"]*"/.test(out)) return out;
+  if (/class="[^"]*\bshopify-themed-content\b[^"]*"/.test(out)) return injectThemeAssets(out, assets);
 
   const productClass = kind === "product" ? " product__description" : "";
-  return `<div class="page-width rte shopify-themed-content${productClass}">\n${out}\n</div>`;
+  const wrapped = `<div class="page-width rte shopify-themed-content${productClass}">\n${out}\n</div>`;
+  return injectThemeAssets(wrapped, assets);
 }
