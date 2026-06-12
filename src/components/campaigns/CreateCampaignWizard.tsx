@@ -631,16 +631,51 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     });
   }, [selectedTemplate, templates, vibePalette, vibeTypography, vibeDensity]);
 
-  const effectiveCsvData =
+  const baseCsvData =
     dataSource === "website" ? websitePagesAsCsv.rows :
     dataSource === "locations" ? locationData :
     dataSource === "ai" ? aiGeneratedRows :
     csvData;
-  const effectiveCsvHeaders =
+  const baseCsvHeaders =
     dataSource === "website" ? websitePagesAsCsv.headers :
     dataSource === "locations" ? locationHeaders :
     dataSource === "ai" ? (selectedTemplateVars.length > 0 ? selectedTemplateVars : Object.keys(aiGeneratedRows[0] || {})) :
     csvHeaders;
+
+  // Custom values can hold MULTIPLE values (one per line, or comma/semicolon/pipe
+  // separated) — e.g. a client offering several services. Each value becomes its
+  // own generated page. A single value behaves exactly as before.
+  const multiCustomVars = useMemo(() => {
+    const out: Record<string, string[]> = {};
+    for (const [key, raw] of Object.entries(customValues)) {
+      const parts = (raw || "")
+        .split(/[\n,;|]/)
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (parts.length > 1) out[key] = parts;
+    }
+    return out;
+  }, [customValues]);
+
+  // Expand the data set by the cartesian product of every multi-value custom
+  // variable, so N services × existing rows produce N× the pages.
+  const { effectiveCsvData, effectiveCsvHeaders } = useMemo(() => {
+    const multiKeys = Object.keys(multiCustomVars);
+    if (multiKeys.length === 0) {
+      return { effectiveCsvData: baseCsvData, effectiveCsvHeaders: baseCsvHeaders };
+    }
+    let rows: Record<string, string>[] = baseCsvData.length > 0 ? baseCsvData : [{}];
+    for (const key of multiKeys) {
+      const values = multiCustomVars[key];
+      const next: Record<string, string>[] = [];
+      for (const row of rows) for (const value of values) next.push({ ...row, [key]: value });
+      rows = next;
+    }
+    const headers = [...baseCsvHeaders];
+    for (const key of multiKeys) if (!headers.includes(key)) headers.push(key);
+    return { effectiveCsvData: rows, effectiveCsvHeaders: headers };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseCsvData, baseCsvHeaders, multiCustomVars]);
 
   // Auto-clear FAQ pairs whenever the underlying CSV/data-source signature changes,
   // so users don't accidentally carry mappings from a previous CSV into a new upload.
