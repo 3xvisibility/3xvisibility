@@ -103,9 +103,14 @@ function extractKeywordCandidates(raw: string): string[] {
     .replace(/<[^>]*>/g, "\n");
 
   const candidates: string[] = [];
-  const pushValue = (value: unknown) => {
-    if (Array.isArray(value)) value.forEach(pushValue);
-    else if (value && typeof value === "object") Object.values(value as Record<string, unknown>).forEach(pushValue);
+  const pushValue = (value: unknown, key = "") => {
+    if (BLOCKED_JSON_KEYS.test(key)) return;
+    if (Array.isArray(value)) value.forEach((item) => pushValue(item, key));
+    else if (value && typeof value === "object") {
+      Object.entries(value as Record<string, unknown>).forEach(([childKey, childValue]) => {
+        if (KEYWORD_JSON_KEYS.test(childKey) || KEYWORD_JSON_KEYS.test(key)) pushValue(childValue, childKey);
+      });
+    }
     else if (typeof value === "string") candidates.push(value);
   };
 
