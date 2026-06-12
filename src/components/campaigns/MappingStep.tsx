@@ -958,20 +958,35 @@ export function MappingStep({
                       <Check className="h-3 w-3 mr-1" /> Auto-generated
                     </Badge>
                   ) : variable in customValues ? (
-                    <div className="flex items-center gap-1.5">
-                      <Input
-                        className="h-8 text-xs rounded-lg border-primary/30 focus:border-primary flex-1"
-                        placeholder="Custom value…"
-                        value={customValues[variable] || ""}
-                        onChange={e => {
-                          setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
-                          if (e.target.value) setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
-                        }}
-                      />
-                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setCustomValues(prev => { const next = { ...prev }; delete next[variable]; return next; })}>
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    (() => {
+                      const raw = customValues[variable] || "";
+                      const parts = raw.split(/[\n,;|]/).map(p => p.trim()).filter(Boolean);
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex items-start gap-1.5">
+                            <textarea
+                              className="min-h-[34px] w-full flex-1 rounded-lg border border-primary/30 bg-background px-2.5 py-1.5 text-xs focus:border-primary focus:outline-none resize-y"
+                              placeholder={"One value, or many — one per line for multiple services"}
+                              rows={parts.length > 1 ? Math.min(parts.length + 1, 6) : 1}
+                              value={raw}
+                              onChange={e => {
+                                setCustomValues(prev => ({ ...prev, [variable]: e.target.value }));
+                                if (e.target.value) setManualMappings(prev => { const next = { ...prev }; delete next[variable]; return next; });
+                              }}
+                            />
+                            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setCustomValues(prev => { const next = { ...prev }; delete next[variable]; return next; })}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          {parts.length > 1 && (
+                            <p className="text-[10px] text-primary flex items-center gap-1">
+                              <Sparkles className="h-2.5 w-2.5" />
+                              {parts.length} values → {parts.length}× pages (one per value)
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()
                   ) : column ? (
                     <div className="flex items-center gap-1.5">
                       <Badge variant="secondary" className="bg-success/10 text-success font-mono rounded-lg text-[11px] py-1 px-2">
