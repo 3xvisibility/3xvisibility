@@ -18,7 +18,7 @@ import {
   Search as SearchIcon, Pencil, MoreVertical, LayoutGrid, List,
   ArrowUpDown, ArrowUp, ArrowDown, FileSpreadsheet, Link2,
   ChevronLeft, ChevronRight, Loader2, MonitorSmartphone, ShoppingBag, Briefcase,
-  Wand2, Eye, AlertTriangle, Crown,
+  Wand2, Eye, AlertTriangle, Crown, Palette,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
@@ -35,6 +35,7 @@ import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilde
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
 import { TemplatePreviewDialog, type PreviewableTemplate } from "@/components/templates/TemplatePreviewDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
+import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomizerDialog";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
@@ -52,6 +53,7 @@ const PAGE_SIZE = 10;
 export default function TemplatesPage() {
   const [aiOpen, setAiOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [customizeTemplate, setCustomizeTemplate] = useState<Template | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<PreviewableTemplate | null>(null);
   const [previewTemplateRow, setPreviewTemplateRow] = useState<Template | null>(null);
@@ -280,6 +282,23 @@ export default function TemplatesPage() {
       toast({ title: "Template updated" });
       setEditorOpen(false);
       setEditingTemplate(null);
+    },
+    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+  });
+
+  // Saves only the content from the visual customizer (hero/colors/section order/skin).
+  const customizeMutation = useMutation({
+    mutationFn: async (params: { id: string; content: string }) => {
+      const variables = filterDesignVars([...new Set(params.content.match(/\{[^}]+\}/g) || [])]);
+      const { error } = await supabase.from("templates").update({
+        content: params.content, variables,
+      } as any).eq("id", params.id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await refreshTemplates();
+      toast({ title: "Template customized" });
+      setCustomizeTemplate(null);
     },
     onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
   });
@@ -887,6 +906,7 @@ export default function TemplatesPage() {
                     <DropdownMenuContent align="end" className="w-40">
                       <DropdownMenuItem onClick={() => openPreview(tpl)}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
@@ -944,6 +964,7 @@ export default function TemplatesPage() {
                           <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuItem onClick={() => openPreview(tpl)}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setCustomizeTemplate(tpl)}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl)}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openRegenDialog(tpl, "variants-only")}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
@@ -1001,6 +1022,7 @@ export default function TemplatesPage() {
                       <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openPreview(tpl); }}><Eye className="h-3.5 w-3.5 mr-2" /> Preview</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditor(tpl)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setCustomizeTemplate(tpl); }}><Palette className="h-3.5 w-3.5 mr-2" /> Customize</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl); }}><Wand2 className="h-3.5 w-3.5 mr-2" /> Regenerate Design</DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openRegenDialog(tpl, "variants-only"); }}><LayoutGrid className="h-3.5 w-3.5 mr-2" /> Layout Variants</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => duplicateMutation.mutate(tpl)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
@@ -1046,6 +1068,19 @@ export default function TemplatesPage() {
         onSave={handleEditorSave}
         isSaving={createMutation.isPending || updateMutation.isPending}
       />
+
+      {customizeTemplate && (
+        <TemplateCustomizerDialog
+          open={!!customizeTemplate}
+          onOpenChange={(v) => { if (!v) setCustomizeTemplate(null); }}
+          templateName={customizeTemplate.name}
+          content={customizeTemplate.content}
+          isPending={customizeMutation.isPending}
+          onSave={(content) => customizeMutation.mutate({ id: customizeTemplate.id, content })}
+        />
+      )}
+
+
 
       <TemplatePreviewDialog
         open={!!previewTemplate}
