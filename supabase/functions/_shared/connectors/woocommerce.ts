@@ -205,7 +205,7 @@ export class WooCommerceConnector implements CmsConnector {
 
     if (payload.title || payload.seo_title) body.name = payload.title || payload.seo_title;
     // Preserve product description/layout on republish — only meta updates.
-    if (!preserveDesign && typeof payload.content === "string") body.description = adaptHtmlForWordPressTheme(payload.content, "product");
+    if (!preserveDesign && typeof payload.content === "string") body.description = adaptHtmlForWordPressTheme(payload.content, "product", await this.themeAssets());
     if (payload.slug || payload.product_data?.handle) {
       body.slug = slugify(payload.product_data?.handle || payload.slug || externalId);
     }
