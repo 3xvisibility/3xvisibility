@@ -26,6 +26,57 @@ import * as XLSX from "xlsx";
 
 const PAGE_SIZE = 15;
 
+/**
+ * Keep only real, human-readable keyword phrases.
+ * Strips any line that looks like HTML, CSS, a stylesheet rule, JS, a hex color,
+ * a CSS declaration/selector, a URL, or other markup noise — so the Terms box
+ * never fills up with `<style>`, `.pgp-page { ... }`, `--aurora-1: #6366f1;`, etc.
+ */
+function sanitizeKeywordLines(lines: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const rawLine of lines) {
+    let line = (rawLine || "")
+      .replace(/^\d+[.)]\s*/, "")   // "1. ", "2) "
+      .replace(/^[-•*]\s*/, "")      // bullet markers
+      .trim();
+    if (!line) continue;
+
+    const lower = line.toLowerCase();
+
+    // Drop obvious markup / code / style noise.
+    const isNoise =
+      line.includes("<") || line.includes(">") ||           // HTML tags
+      /[{}]/.test(line) ||                                   // CSS blocks
+      line.includes(";") ||                                  // CSS/JS statements
+      /[#.][a-z0-9_-]+\s*\{/i.test(line) ||                  // selectors
+      /^[.#@]/.test(line) ||                                 // .class / #id / @media
+      /^--[a-z0-9-]+\s*:/i.test(line) ||                     // CSS custom props
+      /:\s*[^ ]+\s*(;|$)/.test(line) && /(px|rem|em|%|#[0-9a-f]{3,8}|rgba?\(|hsla?\(|var\(|url\()/i.test(line) || // property: value
+      /#[0-9a-f]{3,8}\b/i.test(line) ||                      // hex colors
+      /\b(rgba?|hsla?|var|url|calc|translate|rotate|scale)\s*\(/i.test(line) || // css functions
+      /^(http|https):\/\//i.test(line) ||                    // raw URLs
+      /[=();]/.test(line) && /[a-z]+\s*\(/i.test(line) ||    // JS-ish calls
+      /\b(important|inherit|initial|unset|none|auto|flex|grid|block|absolute|relative|sticky)\b/i.test(line) && /:/.test(line) ||
+      lower === "style" || lower === "script" || lower.startsWith("style>") ||
+      /^[\d\s.,;:!?@#$%^&*()_+=<>/\\|~`'"-]+$/.test(line); // only punctuation/numbers (keeps any-language letters)
+
+    if (isNoise) continue;
+
+    // Trim trailing punctuation noise; keep readable phrases only.
+    line = line.replace(/[{}<>;]+/g, "").trim();
+    if (!line || line.length > 80) continue;
+    // Must contain at least one letter (skip pure numbers / measurements).
+    if (!/[a-z\u00C0-\u024F\u0980-\u09FF]/i.test(line)) continue;
+
+    const key = line.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(line);
+  }
+  return out;
+}
+
 interface PgpKeyword {
   id: string;
   workspace_id: string;
@@ -273,8 +324,9 @@ export default function PgpKeywordsPage() {
       lines = text.split("\n").map(l => l.trim()).filter(Boolean);
     }
 
-    setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-    toast({ title: `${lines.length} terms imported` });
+    const clean = sanitizeKeywordLines(lines);
+    setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${clean.join("\n")}`.split("\n")).join("\n") : clean.join("\n"));
+    toast({ title: `${clean.length} terms imported` });
     if (importRef.current) importRef.current.value = "";
   };
 
@@ -401,19 +453,21 @@ export default function PgpKeywordsPage() {
       const text = await resp.text();
       try {
         const json = JSON.parse(text);
-        let lines: string[] = [];
-        if (Array.isArray(json)) lines = json.map((item: any) => typeof item === "string" ? item : JSON.stringify(item));
-        else if (json.items) lines = json.items.map((item: any) => typeof item === "string" ? item : item.title || item.name || JSON.stringify(item));
-        if (lines.length > 0) { setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n")); toast({ title: `${lines.length} terms fetched from JSON` }); return; }
+        let rawLines: string[] = [];
+        if (Array.isArray(json)) rawLines = json.map((item: any) => typeof item === "string" ? item : JSON.stringify(item));
+        else if (json.items) rawLines = json.items.map((item: any) => typeof item === "string" ? item : item.title || item.name || JSON.stringify(item));
+        const lines = sanitizeKeywordLines(rawLines);
+        if (lines.length > 0) { setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n")); toast({ title: `${lines.length} terms fetched from JSON` }); return; }
       } catch {}
       if (text.includes("<rss") || text.includes("<feed") || text.includes("<item")) {
         const doc = new DOMParser().parseFromString(text, "text/xml");
         const items = doc.querySelectorAll("item title, entry title");
-        const lines = Array.from(items).map(el => el.textContent?.trim() || "").filter(Boolean);
-        if (lines.length > 0) { setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n")); toast({ title: `${lines.length} terms fetched from RSS` }); return; }
+        const lines = sanitizeKeywordLines(Array.from(items).map(el => el.textContent?.trim() || ""));
+        if (lines.length > 0) { setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n")); toast({ title: `${lines.length} terms fetched from RSS` }); return; }
       }
-      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      const lines = sanitizeKeywordLines(text.split("\n"));
+      if (lines.length === 0) throw new Error("No clean keywords found at this URL");
+      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
       toast({ title: `${lines.length} terms fetched` });
     } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
     finally { setDynLoading(false); }
@@ -445,9 +499,9 @@ export default function PgpKeywordsPage() {
           metaKw.split(",").map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
         }
       }
-      const lines = [...allTerms].filter(Boolean);
-      if (lines.length === 0) throw new Error("Could not extract keywords from website pages");
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      const lines = sanitizeKeywordLines([...allTerms]);
+      if (lines.length === 0) throw new Error("Could not extract clean keywords from website pages");
+      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
       toast({ title: `${lines.length} keywords extracted from ${pages.length} pages` });
     } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
     finally { setWebLoading(false); }
@@ -465,26 +519,27 @@ export default function PgpKeywordsPage() {
       // Use AI to extract keywords from the URL content
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
-          prompt: `Analyze this website URL and extract relevant keywords, product names, service names, and key phrases from the page content.
+          prompt: `Analyze this website URL and extract ONLY the main, human-readable keywords from the page.
 
 URL: ${formattedUrl}
 
 Instructions:
-- Visit or analyze the URL content
-- Extract product names, service names, categories, brand names, and key business terms
-- Focus on terms that would be useful for SEO page generation
-- Output ONLY the keywords/terms, one per line
-- No numbering, no explanations, no markdown
-- Minimum 10 terms, maximum 50 terms
-- Include variations and related terms`
+- Extract product names, service names, categories, brand names, and key business phrases ONLY.
+- These are MARKETING KEYWORDS, not code.
+- ABSOLUTELY NO HTML, NO CSS, NO stylesheet rules, NO <style> or <script> blocks, NO class names, NO IDs, NO hex colors, NO CSS variables (like --aurora-1), NO inline styles, NO JavaScript, NO URLs.
+- If the page source contains markup, IGNORE all of it and return only the meaningful words a customer would search for.
+- Output ONLY the keywords/terms, one per line.
+- No numbering, no explanations, no markdown, no code fences.
+- Minimum 10 terms, maximum 50 terms.
+- Each term must be a short readable phrase (1-6 words).`
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
-      const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").replace(/^[-•]\s*/, "").trim()).filter(Boolean);
-      if (lines.length === 0) throw new Error("Could not extract keywords from this URL");
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      const lines = sanitizeKeywordLines(raw.split("\n"));
+      if (lines.length === 0) throw new Error("Could not extract clean keywords from this URL");
+      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
       toast({ title: `${lines.length} keywords detected from URL` });
     } catch (err: any) { toast({ title: "Failed to scan URL", description: err.message, variant: "destructive" }); }
     finally { setScanLoading(false); }
