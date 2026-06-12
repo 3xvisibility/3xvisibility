@@ -560,25 +560,26 @@ export default function PgpKeywordsPage() {
     try {
       const site = websites.find(w => w.id === webSiteId);
       if (!site) throw new Error("Website not found");
-      const { data, error } = await supabase.functions.invoke("fetch-site-content", { body: { url: site.url, websiteId: site.id } });
+      const { data, error } = await supabase.functions.invoke("fetch-site-content", { body: { website_id: site.id, content_type: "pages" } });
       if (error) throw error;
-      const pages = data?.pages || [];
+      if (data?.error) throw new Error(data.error);
+      const pages = data?.items || data?.pages || [];
       if (pages.length === 0) throw new Error("No pages found on this website");
-      // Extract keywords from page titles, headings, and meta
+      // Extract only visible SEO terms from titles, headings, excerpts and SEO keywords — never raw HTML/CSS.
       const allTerms = new Set<string>();
       for (const page of pages) {
         const title = page.title || "";
         if (title) allTerms.add(title.trim());
-        // Extract from headings if available
-        const headings = page.headings || [];
+        if (page.seo_title) allTerms.add(String(page.seo_title).trim());
+        if (page.excerpt) allTerms.add(stripHtmlForKeywords(String(page.excerpt)));
+        const headings = Array.isArray(page.headings) && page.headings.length ? page.headings : extractHeadingsFromHtml(page.content || "");
         for (const h of headings) {
           if (h && typeof h === "string") allTerms.add(h.trim());
         }
         // Extract meta keywords
-        const metaKw = page.meta_keywords || page.keywords || "";
-        if (metaKw) {
-          metaKw.split(",").map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
-        }
+        const metaKw = page.meta_keywords || page.keywords || page.seo_keywords || "";
+        const metaList = Array.isArray(metaKw) ? metaKw : String(metaKw).split(",");
+        metaList.map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
       }
       const lines = sanitizeKeywordLines([...allTerms]);
       if (lines.length === 0) throw new Error("Could not extract clean keywords from website pages");
