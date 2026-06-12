@@ -473,57 +473,107 @@ const PLATFORM_WRAPPER_CLASS: Record<Exclude<TemplatePlatform, "generic">, strin
   prestashop: "rte page-content page-cms prestashop-themed-content",
 };
 
-// Per-platform skin: overrides the generic pgp-* look to match the CMS's stock
-// theme. Scoped to `.pgp-skin-<platform>` so it never leaks and always survives.
+// Per-platform skin: deeply re-themes the generic pgp-* design so each template
+// looks like an authentic theme on its target CMS — matching typography, spacing,
+// hero treatment, cards, buttons, testimonials, FAQ and forms.
+//   • WordPress → clean block theme (Twenty Twenty-Four / Astra / Kadence)
+//   • Shopify   → Dawn reference theme (whitespace, uppercase CTAs, thin rules)
+//   • PrestaShop→ Classic theme (Bootstrap cards, #2fb5d2 brand blue)
+// Scoped to `.pgp-skin-<platform>` so styles never leak and always survive the
+// publish adapters (no html/body selectors, no bare `*{box-sizing}`).
 const platformSkin = (platform: Exclude<TemplatePlatform, "generic">): string => {
   const root = `.pgp-skin-${platform}`;
   if (platform === "wordpress") {
     return `<style data-platform="wordpress">
-${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:none;padding:0;letter-spacing:.18em;opacity:.7;backdrop-filter:none}
+${root}{--wpx:#1e1e1e;--wpa:#2563eb}
+${root} .pgp-page{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1e1e1e;line-height:1.7}
+${root} .pgp-page :where(h1,h2,h3,h4){font-family:"Helvetica Neue",-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:-.01em;color:#1e1e1e}
+${root} .pgp-page :where(.pgp-section){padding:clamp(3rem,6vw,5.5rem) 0}
+${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:none;padding:0;letter-spacing:.16em;font-size:.72rem;color:#6b7280;opacity:1;backdrop-filter:none}
 ${root} .pgp-page :where(.pgp-eyebrow)::before{display:none}
-${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:inherit}
-${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);backdrop-filter:none}
+${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:#1e1e1e;font-weight:700}
+${root} .pgp-page :where(.pgp-section-head p){opacity:.7}
+${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:none;backdrop-filter:none;padding:1.75rem}
 ${root} .pgp-page :where(.pgp-card)::before{display:none}
-${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 6px 18px rgba(0,0,0,.08);border-color:#cbd5e1}
-${root} .pgp-page :where(.pgp-card .pgp-icon){background:#f1f5f9;border:1px solid #e2e8f0;box-shadow:none;border-radius:8px}
-${root} .pgp-page :where(.pgp-btn){border-radius:4px}
+${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 4px 14px rgba(0,0,0,.06);border-color:#d1d5db}
+${root} .pgp-page :where(.pgp-card .pgp-icon){background:#f3f4f6;border:1px solid #e5e7eb;box-shadow:none;border-radius:6px;color:#1e1e1e}
+${root} .pgp-page :where(.pgp-btn){border-radius:4px;font-weight:600;padding:.85rem 1.8rem}
+${root} .pgp-page :where(.pgp-btn)::after{display:none}
 ${root} .pgp-page :where(.pgp-btn-primary){background:#1e1e1e;background-image:none;color:#fff;box-shadow:none}
 ${root} .pgp-page :where(.pgp-btn-primary:hover){background:#000;box-shadow:none;transform:none;filter:none}
+${root} .pgp-page :where(.pgp-btn-outline){border:1px solid #1e1e1e;color:#1e1e1e}
 ${root} .pgp-page :where(.pgp-hero){border-radius:0;box-shadow:none}
-${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff}
+${root} .pgp-page :where(.pgp-hero-overlay){background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.6))}
+${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff;font-weight:800;text-shadow:none}
+${root} .pgp-page :where(.pgp-hero::before,.pgp-hero::after){display:none}
+${root} .pgp-page :where(.pgp-trust){background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;box-shadow:none;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-trust .num){background:none;-webkit-text-fill-color:#1e1e1e;color:#1e1e1e}
+${root} .pgp-page :where(.pgp-tcard){background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:none;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-faq details){background:#fff;border:1px solid #e5e7eb;border-radius:6px}
+${root} .pgp-page :where(.pgp-form-group input,.pgp-form-group textarea){border:1px solid #d1d5db;border-radius:4px;background:#fff}
+${root} .pgp-page :where(.pgp-cta-band .pgp-hero-overlay){background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.65))}
 </style>`;
   }
   if (platform === "shopify") {
     return `<style data-platform="shopify">
-${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:1px solid currentColor;border-radius:0;letter-spacing:.18em;opacity:.7;backdrop-filter:none}
+${root}{--shx:#121212}
+${root} .pgp-page{font-family:"Assistant",-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;color:#121212;line-height:1.75}
+${root} .pgp-page :where(h1,h2,h3,h4){font-family:"Assistant","Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:600;letter-spacing:-.01em;color:#121212}
+${root} .pgp-page :where(.pgp-section){padding:clamp(3.5rem,7vw,6.5rem) 0}
+${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:none;border-radius:0;padding:0;letter-spacing:.22em;font-size:.7rem;text-transform:uppercase;color:#707070;opacity:1;backdrop-filter:none}
 ${root} .pgp-page :where(.pgp-eyebrow)::before{display:none}
-${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:inherit;font-weight:600;letter-spacing:-.01em}
-${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid #e8e8e8;border-radius:12px;box-shadow:none;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:#121212;font-weight:600;font-size:clamp(1.8rem,3.5vw,2.6rem)}
+${root} .pgp-page :where(.pgp-section-head p){opacity:.72}
+${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid #e1e1e1;border-radius:8px;box-shadow:none;backdrop-filter:none;padding:2rem}
 ${root} .pgp-page :where(.pgp-card)::before{display:none}
-${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 8px 24px rgba(0,0,0,.06);border-color:#d4d4d4}
-${root} .pgp-page :where(.pgp-card .pgp-icon){background:#f6f6f6;border:1px solid #e8e8e8;box-shadow:none;border-radius:10px}
-${root} .pgp-page :where(.pgp-btn){border-radius:6px;font-weight:600}
+${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 6px 20px rgba(0,0,0,.05);border-color:#c9c9c9}
+${root} .pgp-page :where(.pgp-card .pgp-icon){background:#f4f4f4;border:1px solid #e1e1e1;box-shadow:none;border-radius:8px;color:#121212}
+${root} .pgp-page :where(.pgp-btn){border-radius:4px;font-weight:600;text-transform:none;letter-spacing:.02em;padding:.95rem 2rem}
+${root} .pgp-page :where(.pgp-btn)::after{display:none}
 ${root} .pgp-page :where(.pgp-btn-primary){background:#121212;background-image:none;color:#fff;box-shadow:none;animation:none}
-${root} .pgp-page :where(.pgp-btn-primary:hover){background:#000;box-shadow:none;transform:none;filter:none}
+${root} .pgp-page :where(.pgp-btn-primary:hover){background:#404040;box-shadow:none;transform:none;filter:none}
+${root} .pgp-page :where(.pgp-btn-outline){border:1px solid #121212;color:#121212}
 ${root} .pgp-page :where(.pgp-hero){border-radius:0;box-shadow:none}
-${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff;font-weight:600}
-${root} .pgp-page :where(.pgp-trust .num){background:none;-webkit-text-fill-color:currentColor;color:inherit}
+${root} .pgp-page :where(.pgp-hero-overlay){background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.5))}
+${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff;font-weight:600;text-shadow:none}
+${root} .pgp-page :where(.pgp-hero::before,.pgp-hero::after){display:none}
+${root} .pgp-page :where(.pgp-trust){background:#fafafa;border:1px solid #e1e1e1;border-radius:8px;box-shadow:none;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-trust .num){background:none;-webkit-text-fill-color:#121212;color:#121212}
+${root} .pgp-page :where(.pgp-tcard){background:#fff;border:1px solid #e1e1e1;border-radius:8px;box-shadow:none;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-faq details){background:#fff;border:1px solid #e1e1e1;border-radius:8px}
+${root} .pgp-page :where(.pgp-form-group input,.pgp-form-group textarea){border:1px solid #c9c9c9;border-radius:4px;background:#fff}
+${root} .pgp-page :where(.pgp-cta-band .pgp-hero-overlay){background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.55))}
 </style>`;
   }
-  // prestashop — Bootstrap-flavoured
+  // prestashop — Classic theme (Bootstrap, #2fb5d2 brand blue)
   return `<style data-platform="prestashop">
-${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:none;padding:0;letter-spacing:.16em;opacity:.7;color:#2fb5d2;backdrop-filter:none}
+${root}{--psx:#2fb5d2;--pst:#232323}
+${root} .pgp-page{font-family:Roboto,"Open Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#232323;line-height:1.7}
+${root} .pgp-page :where(h1,h2,h3,h4){font-family:Roboto,"Open Sans",Helvetica,Arial,sans-serif;font-weight:700;color:#232323}
+${root} .pgp-page :where(.pgp-section){padding:clamp(3rem,6vw,5.5rem) 0}
+${root} .pgp-page :where(.pgp-eyebrow){background:transparent;border:none;padding:0;letter-spacing:.14em;font-size:.72rem;color:#2fb5d2;opacity:1;backdrop-filter:none}
 ${root} .pgp-page :where(.pgp-eyebrow)::before{display:none}
-${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:inherit;font-weight:700}
-${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);backdrop-filter:none}
+${root} .pgp-page :where(.pgp-section-head h2){background:none;-webkit-text-fill-color:currentColor;color:#232323;font-weight:700}
+${root} .pgp-page :where(.pgp-section-head p){opacity:.7}
+${root} .pgp-page :where(.pgp-card){background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);backdrop-filter:none;padding:1.75rem}
 ${root} .pgp-page :where(.pgp-card)::before{display:none}
 ${root} .pgp-page :where(.pgp-card:hover){transform:none;box-shadow:0 6px 16px rgba(0,0,0,.1);border-color:rgba(0,0,0,.12)}
 ${root} .pgp-page :where(.pgp-card .pgp-icon){background:#eef7fb;border:1px solid #d4ecf4;box-shadow:none;border-radius:.25rem;color:#2fb5d2}
-${root} .pgp-page :where(.pgp-btn){border-radius:.25rem;font-weight:600}
+${root} .pgp-page :where(.pgp-btn){border-radius:.25rem;font-weight:600;padding:.85rem 1.8rem}
+${root} .pgp-page :where(.pgp-btn)::after{display:none}
 ${root} .pgp-page :where(.pgp-btn-primary){background:#2fb5d2;background-image:none;color:#fff;box-shadow:none;animation:none}
 ${root} .pgp-page :where(.pgp-btn-primary:hover){background:#25a0bb;box-shadow:none;transform:none;filter:none}
+${root} .pgp-page :where(.pgp-btn-outline){border:1px solid #2fb5d2;color:#2fb5d2}
 ${root} .pgp-page :where(.pgp-hero){border-radius:.25rem;box-shadow:none}
-${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff}
+${root} .pgp-page :where(.pgp-hero-overlay){background:linear-gradient(180deg,rgba(35,35,35,.45),rgba(35,35,35,.62))}
+${root} .pgp-page :where(.pgp-hero-inner h1){background:none;-webkit-text-fill-color:#fff;text-shadow:none}
+${root} .pgp-page :where(.pgp-hero::before,.pgp-hero::after){display:none}
+${root} .pgp-page :where(.pgp-trust){background:#f6f9fb;border:1px solid #e3eef3;border-radius:.25rem;box-shadow:none;backdrop-filter:none}
+${root} .pgp-page :where(.pgp-trust .num){background:none;-webkit-text-fill-color:#2fb5d2;color:#2fb5d2}
+${root} .pgp-page :where(.pgp-tcard){background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);backdrop-filter:none}
+${root} .pgp-page :where(.pgp-faq details){background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:.25rem}
+${root} .pgp-page :where(.pgp-form-group input,.pgp-form-group textarea){border:1px solid #ced4da;border-radius:.25rem;background:#fff}
+${root} .pgp-page :where(.pgp-cta-band .pgp-hero-overlay){background:linear-gradient(180deg,rgba(47,181,210,.55),rgba(35,35,35,.6))}
 </style>`;
 };
 
