@@ -1069,6 +1069,19 @@ export default function TemplatesPage() {
         isSaving={createMutation.isPending || updateMutation.isPending}
       />
 
+      {customizeTemplate && (
+        <TemplateCustomizerDialog
+          open={!!customizeTemplate}
+          onOpenChange={(v) => { if (!v) setCustomizeTemplate(null); }}
+          templateName={customizeTemplate.name}
+          content={customizeTemplate.content}
+          isPending={customizeMutation.isPending}
+          onSave={(content) => customizeMutation.mutate({ id: customizeTemplate.id, content })}
+        />
+      )}
+
+
+
       <TemplatePreviewDialog
         open={!!previewTemplate}
         onOpenChange={(v) => { if (!v) { setPreviewTemplate(null); setPreviewTemplateRow(null); } }}
