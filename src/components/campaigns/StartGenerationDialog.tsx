@@ -80,6 +80,8 @@ export interface GenerationOptions {
   shopify_page_template_suffix?: string;
   /** Shopify alternate product template suffix (templates/product.<suffix>). */
   shopify_product_template_suffix?: string;
+  /** Per-template platform theme skin variant (e.g. shopify "dawn" / "studio"). */
+  platform_skin_variant?: string;
 }
 
 export function StartGenerationDialog({
