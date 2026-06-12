@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
+import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
