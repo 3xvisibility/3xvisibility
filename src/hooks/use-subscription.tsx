@@ -144,22 +144,31 @@ export function useSubscription(): SubscriptionData {
     staleTime: 60_000,
   });
 
-  // Cache the resolved plan per workspace so the correct plan shows instantly on
-  // the next login/load instead of flashing "free" while the query resolves.
+  // Cache the resolved plan so the correct plan shows instantly on the next
+  // login/load instead of flashing "free" while the query resolves.
+  // We keep BOTH a per-workspace cache and a global "last plan" cache. The
+  // global cache is the fallback used during the brief window right after login
+  // before `wsId` is known, eliminating the free→actual flash.
+  const GLOBAL_PLAN_KEY = "plan-cache:last";
   const planCacheKey = wsId ? `plan-cache:${wsId}` : null;
   const cachedPlan = (() => {
-    if (!planCacheKey) return null;
-    try { return localStorage.getItem(planCacheKey) as PlanName | null; } catch { return null; }
+    try {
+      const wsCached = planCacheKey ? localStorage.getItem(planCacheKey) : null;
+      return (wsCached || localStorage.getItem(GLOBAL_PLAN_KEY)) as PlanName | null;
+    } catch { return null; }
   })();
 
   const resolvedPlan = data?.plan as PlanName | undefined;
-  // While loading, fall back to the cached plan (if any) before defaulting to free.
-  const plan: PlanName = resolvedPlan || (isLoading ? (cachedPlan || "free") : "free");
+  // Before we know the real plan, ALWAYS prefer the cached plan over "free".
+  // Only fall back to "free" when there is genuinely no cached value.
+  const plan: PlanName = resolvedPlan || cachedPlan || "free";
 
   useEffect(() => {
-    if (planCacheKey && resolvedPlan) {
-      try { localStorage.setItem(planCacheKey, resolvedPlan); } catch { /* ignore */ }
-    }
+    if (!resolvedPlan) return;
+    try {
+      if (planCacheKey) localStorage.setItem(planCacheKey, resolvedPlan);
+      localStorage.setItem(GLOBAL_PLAN_KEY, resolvedPlan);
+    } catch { /* ignore */ }
   }, [planCacheKey, resolvedPlan]);
 
   const features = PLAN_FEATURES[plan];
