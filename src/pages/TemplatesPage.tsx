@@ -35,6 +35,7 @@ import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilde
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
 import { TemplatePreviewDialog, type PreviewableTemplate } from "@/components/templates/TemplatePreviewDialog";
 import { TemplateCreationPicker, type CreationMethod, type ContentType } from "@/components/templates/TemplateCreationPicker";
+import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomizerDialog";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
