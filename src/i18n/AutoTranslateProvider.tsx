@@ -16,15 +16,9 @@
 
 import { useEffect, useRef } from "react";
 import { useLanguage } from "./LanguageContext";
-import { translations } from "./translations";
 import { supabase } from "@/integrations/supabase/client";
 
-// Languages that already ship full t() translations. For these, React + t()
-// are the single source of truth — running the DOM translator on top of them
-// fights React and leaves content stuck when switching. Only translate the
-// DOM for languages that have NO built-in t() coverage.
-const hasBuiltinCoverage = (lang: string) =>
-  Object.prototype.hasOwnProperty.call(translations, lang);
+
 
 const CACHE_PREFIX = "auto-tr5:";
 const BATCH_SIZE = 100;
@@ -95,10 +89,10 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
   }, [language]);
 
   useEffect(() => {
-    // Built-in languages (incl. English) are fully handled by t(); undo any
-    // leftover DOM translations so React stays the source of truth.
-    if (!hasBuiltinCoverage(language)) return;
-
+    // On every language switch, wipe stale DOM translations back to their
+    // English originals so the translator re-runs cleanly for the new target.
+    // React-managed t() nodes have no __autoTrOriginal, so they are untouched
+    // and re-render to the new language on their own.
     const restoreEnglish = () => {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
       let node: Node | null;
@@ -130,15 +124,11 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     // English is the source language — nothing to translate.
     if (language === "en") return;
 
-    // For languages with built-in t() coverage, React handles the UI. Only
-    // translate explicitly opted-in subtrees ([data-auto-translate]) such as
-    // marketing pages that have no t() calls. For languages without built-in
-    // coverage, translate the whole document.
-    const builtin = hasBuiltinCoverage(language);
+    // Translate the WHOLE document for every non-English language — including
+    // the built-in t() languages. t() handles the explicit keys, and the DOM
+    // translator fills every remaining hardcoded string (dashboards, modals,
+    // popups, warnings, limit dialogs, tool pages) so nothing stays in English.
     const getRoots = (): ParentNode[] => {
-      if (builtin) {
-        return Array.from(document.querySelectorAll<HTMLElement>("[data-auto-translate]"));
-      }
       return [document.body];
     };
     const collectAll = (): Target[] => {
