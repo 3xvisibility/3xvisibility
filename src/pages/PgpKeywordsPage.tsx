@@ -496,9 +496,9 @@ export default function PgpKeywordsPage() {
           metaKw.split(",").map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
         }
       }
-      const lines = [...allTerms].filter(Boolean);
-      if (lines.length === 0) throw new Error("Could not extract keywords from website pages");
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      const lines = sanitizeKeywordLines([...allTerms]);
+      if (lines.length === 0) throw new Error("Could not extract clean keywords from website pages");
+      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
       toast({ title: `${lines.length} keywords extracted from ${pages.length} pages` });
     } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
     finally { setWebLoading(false); }
