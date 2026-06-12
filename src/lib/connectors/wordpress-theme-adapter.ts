@@ -57,16 +57,6 @@ function trimRootStyleBlocks(html: string): string {
   });
 }
 
-/** Add a class to a tag if it doesn't already have it. */
-function addClass(attrs: string, cls: string): string {
-  if (/\bclass\s*=\s*"/i.test(attrs)) {
-    return attrs.replace(/class\s*=\s*"([^"]*)"/i, (_m, c: string) =>
-      new RegExp(`(^|\\s)${cls}(\\s|$)`).test(c) ? `class="${c}"` : `class="${c.trim()} ${cls}".replace`
-    ).replace('".replace', '"');
-  }
-  return `${attrs} class="${cls}"`;
-}
-
 /** Apply Gutenberg block classes so headings/paragraphs/buttons/images match the editor. */
 function applyGutenbergClasses(html: string): string {
   let out = html;
