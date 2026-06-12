@@ -162,10 +162,11 @@ export class PrestaShopConnector implements CmsConnector {
     // Preserve existing on-site design when republishing — skip body content overwrites.
     if (!preserveDesign && payload.content) {
       const field = isProduct ? "description" : "content";
+      const themed = adaptHtmlForPrestaShopTheme(payload.content, isProduct ? "product" : "page");
       if (Array.isArray(record[field])) {
-        record[field] = record[field].map((l: any) => ({ ...l, value: payload.content }));
+        record[field] = record[field].map((l: any) => ({ ...l, value: themed }));
       } else {
-        record[field] = [{ id: langId, value: payload.content }];
+        record[field] = [{ id: langId, value: themed }];
       }
     }
     if (linkRewrite) {
