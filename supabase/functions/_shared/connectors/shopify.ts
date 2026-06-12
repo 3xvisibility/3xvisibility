@@ -91,9 +91,10 @@ export class ShopifyConnector implements CmsConnector {
   private async createProduct(payload: PagePayload): Promise<ConnectorResult> {
     const pd = payload.product_data!;
     const rawProductHtml = pd.body_html || payload.content || "";
+    const assets = await this.themeAssets();
     const productBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(rawProductHtml, "product"),
+      body_html: adaptHtmlForShopifyTheme(rawProductHtml, "product", assets),
       handle: slugify(pd.handle || payload.slug || payload.title),
       status: pd.product_status || "active",
     };
