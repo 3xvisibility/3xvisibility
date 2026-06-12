@@ -109,7 +109,14 @@ export class WordPressConnector implements CmsConnector {
         "Content-Type": "application/json",
         Authorization: `Basic ${this.authString}`,
       };
-    }
+  }
+
+  private assetsPromise?: Promise<ThemeAssets>;
+  /** Lazily fetch + cache the site's theme assets (fonts/styles) once per connector. */
+  private themeAssets(): Promise<ThemeAssets> {
+    if (!this.assetsPromise) this.assetsPromise = getThemeAssets(this.baseUrl);
+    return this.assetsPromise;
+  }
   }
 
   private async executePageRequest(
