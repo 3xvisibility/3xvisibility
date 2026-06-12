@@ -98,7 +98,9 @@ export function StartGenerationDialog({
   websiteType,
   initialPageTemplateSuffix,
   initialProductTemplateSuffix,
+  initialSkinVariant,
 }: StartGenerationDialogProps) {
+  const skinPlatform = platformForWebsiteType(websiteType);
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
   const [maxRows, setMaxRows] = useState(totalRows);
@@ -109,6 +111,9 @@ export function StartGenerationDialog({
   const [languageOverride, setLanguageOverride] = useState<string>("English");
   const [shopifyPageSuffix, setShopifyPageSuffix] = useState<string>(initialPageTemplateSuffix || "");
   const [shopifyProductSuffix, setShopifyProductSuffix] = useState<string>(initialProductTemplateSuffix || "");
+  const [skinVariant, setSkinVariant] = useState<string>(
+    initialSkinVariant || (skinPlatform ? defaultSkinVariant(skinPlatform) : ""),
+  );
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
