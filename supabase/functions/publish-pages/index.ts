@@ -28,38 +28,136 @@ function stripHeadTagsForCms(content: string): string {
 }
 
 /**
- * Convert HTML content into an Elementor JSON structure (text editor widget).
- * This ensures the page renders correctly in Elementor's visual builder.
+ * Convert HTML content into an Elementor JSON structure.
+ *
+ * Instead of dumping the whole page into a single text-editor widget, the HTML is
+ * split into top-level sections (each `<section>`, `<header>`, `<footer>`, or
+ * heading-delimited block becomes its own Elementor section). Within each section
+ * leading headings and standalone images are promoted to native Elementor
+ * heading/image widgets, and the remaining markup becomes a text-editor widget.
+ * This keeps the layout intact while making every block individually editable and
+ * maintainable inside the Elementor visual builder.
  */
+function elementorTextWidget(html: string) {
+  return {
+    id: generateElementorId(),
+    elType: "widget",
+    widgetType: "text-editor",
+    settings: { editor: html },
+    elements: [],
+  };
+}
+
+function elementorHeadingWidget(text: string, tag: string) {
+  return {
+    id: generateElementorId(),
+    elType: "widget",
+    widgetType: "heading",
+    settings: { title: text, header_size: /^h[1-6]$/i.test(tag) ? tag.toLowerCase() : "h2" },
+    elements: [],
+  };
+}
+
+function elementorImageWidget(src: string, alt: string) {
+  return {
+    id: generateElementorId(),
+    elType: "widget",
+    widgetType: "image",
+    settings: { image: { url: src, alt: alt || "" } },
+    elements: [],
+  };
+}
+
+function stripTags(html: string): string {
+  return html.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
+}
+
+/** Split raw HTML into top-level section-like blocks. */
+function splitIntoSectionBlocks(html: string): string[] {
+  const trimmed = (html || "").trim();
+  if (!trimmed) return [];
+
+  // First try explicit structural containers.
+  const structural = trimmed.match(
+    /<(section|header|footer|article)\b[\s\S]*?<\/\1>/gi
+  );
+  if (structural && structural.length > 1) {
+    // Preserve any leading/trailing markup outside the matched blocks.
+    const blocks: string[] = [];
+    let rest = trimmed;
+    for (const block of structural) {
+      const idx = rest.indexOf(block);
+      const before = rest.slice(0, idx).trim();
+      if (before) blocks.push(before);
+      blocks.push(block);
+      rest = rest.slice(idx + block.length);
+    }
+    if (rest.trim()) blocks.push(rest.trim());
+    return blocks.filter(Boolean);
+  }
+
+  // Fallback: split on top-level <h1>/<h2> boundaries so each major heading
+  // starts a new section.
+  const parts = trimmed.split(/(?=<h[12]\b)/i).map((p) => p.trim()).filter(Boolean);
+  return parts.length > 1 ? parts : [trimmed];
+}
+
+/** Convert a single section block into an array of Elementor widgets. */
+function blockToWidgets(block: string): Array<Record<string, unknown>> {
+  const widgets: Array<Record<string, unknown>> = [];
+  let rest = block;
+
+  // Promote a single leading heading to a heading widget.
+  const headingMatch = rest.match(/^\s*<(h[1-6])\b[^>]*>([\s\S]*?)<\/\1>/i);
+  if (headingMatch) {
+    const text = stripTags(headingMatch[2]);
+    if (text) {
+      widgets.push(elementorHeadingWidget(text, headingMatch[1]));
+      rest = rest.slice(headingMatch[0].length).trim();
+    }
+  }
+
+  // Promote a leading standalone image to an image widget.
+  const imgMatch = rest.match(/^\s*(?:<(?:figure|p|div)[^>]*>\s*)?<img\b[^>]*>/i);
+  if (imgMatch) {
+    const src = imgMatch[0].match(/\bsrc=["']([^"']+)["']/i);
+    const alt = imgMatch[0].match(/\balt=["']([^"']*)["']/i);
+    if (src) {
+      widgets.push(elementorImageWidget(src[1], alt?.[1] || ""));
+      rest = rest.slice(imgMatch[0].length).trim();
+    }
+  }
+
+  if (stripTags(rest)) {
+    widgets.push(elementorTextWidget(rest));
+  }
+
+  // Guarantee at least one widget so the section is never empty.
+  if (widgets.length === 0) widgets.push(elementorTextWidget(block));
+  return widgets;
+}
+
 function buildElementorData(htmlContent: string): string {
-  const elementorStructure = [
-    {
-      id: generateElementorId(),
-      elType: "section",
-      settings: {
-        structure: "10",
-        padding: { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false },
-      },
-      elements: [
-        {
-          id: generateElementorId(),
-          elType: "column",
-          settings: { _column_size: 100, _inline_size: null },
-          elements: [
-            {
-              id: generateElementorId(),
-              elType: "widget",
-              widgetType: "text-editor",
-              settings: {
-                editor: htmlContent,
-              },
-              elements: [],
-            },
-          ],
-        },
-      ],
+  const blocks = splitIntoSectionBlocks(htmlContent || "");
+  const safeBlocks = blocks.length > 0 ? blocks : [htmlContent || "<p></p>"];
+
+  const elementorStructure = safeBlocks.map((block) => ({
+    id: generateElementorId(),
+    elType: "section",
+    settings: {
+      structure: "10",
+      padding: { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false },
     },
-  ];
+    elements: [
+      {
+        id: generateElementorId(),
+        elType: "column",
+        settings: { _column_size: 100, _inline_size: null },
+        elements: blockToWidgets(block),
+      },
+    ],
+  }));
+
   return JSON.stringify(elementorStructure);
 }
 
