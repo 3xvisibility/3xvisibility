@@ -370,7 +370,7 @@ export default function PgpKeywordsPage() {
     }
 
     const clean = sanitizeKeywordLines(lines);
-    setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${clean.join("\n")}`.split("\n")).join("\n") : clean.join("\n"));
+    setKwTerms(prev => mergeCleanTerms(prev, clean));
     toast({ title: `${clean.length} terms imported` });
     if (importRef.current) importRef.current.value = "";
   };
