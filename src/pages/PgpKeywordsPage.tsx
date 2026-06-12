@@ -28,13 +28,39 @@ import * as XLSX from "xlsx";
 const PAGE_SIZE = 15;
 
 const SEO_KEYWORD_SYSTEM_PROMPT = `You are an SEO keyword strategist. Return ONLY clean search keywords that real customers type into Google, Bing, Yahoo and other search engines.
-Never return HTML, CSS, JavaScript, code, tags, classes, IDs, stylesheets, design tokens, font/width/height/color values, variables, URLs, markdown, explanations, numbering, bullets or symbols. One plain keyword phrase per line.`;
+Never return HTML, CSS, JavaScript, code, tags, classes, IDs, stylesheets, design tokens, font/width/height/color values, variables, URLs, markdown, explanations, numbering, bullets or symbols. Never include words like html, css, font-size, width, padding, margin, class, selector, style or script. One plain search keyword phrase per line.`;
 
 const TECHNICAL_NOISE_TERMS = [
   "html", "css", "stylesheet", "style", "styles", "script", "javascript", "code", "markup",
   "class", "classname", "id", "selector", "variable", "token", "font", "font-size", "font size",
-  "px", "rem", "media query", "style block", "div", "span",
+  "width", "height", "margin", "padding", "border radius", "line-height", "letter-spacing",
+  "px", "rem", "vh", "vw", "media query", "style block", "div", "span", "rgba", "hsl",
 ];
+
+const BLOCKED_JSON_KEYS = /(?:html|css|style|styles|script|template|content|code|schema|markdown|class|selector|layout|design)/i;
+const KEYWORD_JSON_KEYS = /(?:keyword|term|phrase|service|product|category|brand|name|title|heading|query|topic)/i;
+
+function isTechnicalKeywordNoise(line: string): boolean {
+  const lower = line.toLowerCase();
+  const hasTechnicalTerm = TECHNICAL_NOISE_TERMS.some((term) => new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i").test(lower));
+  return (
+    hasTechnicalTerm ||
+    line.includes("<") || line.includes(">") ||
+    /[{};]/.test(line) ||
+    /[#.][a-z0-9_-]+\s*\{/i.test(line) ||
+    /^[.#@]/.test(line) ||
+    /^--[a-z0-9-]+\s*:/i.test(line) ||
+    /\b(?:font-size|font-family|font-weight|line-height|letter-spacing|max-width|min-width|width|height|min-height|max-height|margin|padding|border|border-radius|background|color|display|position|top|left|right|bottom|z-index|gap|grid|flex|align-items|justify-content|box-shadow|opacity|transform|transition|animation|overflow)\s*:/i.test(line) ||
+    /\b\d+(?:\.\d+)?\s*(?:px|rem|em|vh|vw|%)\b/i.test(line) ||
+    /#[0-9a-f]{3,8}\b/i.test(line) ||
+    /\b(rgba?|hsla?|var|url|calc|translate|rotate|scale)\s*\(/i.test(line) ||
+    /^(http|https):\/\//i.test(line) ||
+    /[=();]/.test(line) && /[a-z]+\s*\(/i.test(line) ||
+    /\b(important|inherit|initial|unset|none|auto|flex|grid|block|absolute|relative|sticky)\b/i.test(line) && /:/.test(line) ||
+    lower === "style" || lower === "script" || lower.startsWith("style>") ||
+    /^[\d\s.,;:!?@#$%^&*()_+=<>/\\|~`'"-]+$/.test(line)
+  );
+}
 
 /**
  * Keep only real, human-readable keyword phrases.
@@ -52,32 +78,11 @@ function sanitizeKeywordLines(lines: string[]): string[] {
       .trim();
     if (!line) continue;
 
-    const lower = line.toLowerCase();
-    const hasTechnicalNoise = TECHNICAL_NOISE_TERMS.some((term) => new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i").test(lower));
-
-    // Drop obvious markup / code / style noise.
-    const isNoise =
-      hasTechnicalNoise ||
-      line.includes("<") || line.includes(">") ||           // HTML tags
-      /[{}]/.test(line) ||                                   // CSS blocks
-      line.includes(";") ||                                  // CSS/JS statements
-      /[#.][a-z0-9_-]+\s*\{/i.test(line) ||                  // selectors
-      /^[.#@]/.test(line) ||                                 // .class / #id / @media
-      /^--[a-z0-9-]+\s*:/i.test(line) ||                     // CSS custom props
-      /:\s*[^ ]+\s*(;|$)/.test(line) && /(px|rem|em|%|#[0-9a-f]{3,8}|rgba?\(|hsla?\(|var\(|url\()/i.test(line) || // property: value
-      /#[0-9a-f]{3,8}\b/i.test(line) ||                      // hex colors
-      /\b(rgba?|hsla?|var|url|calc|translate|rotate|scale)\s*\(/i.test(line) || // css functions
-      /^(http|https):\/\//i.test(line) ||                    // raw URLs
-      /[=();]/.test(line) && /[a-z]+\s*\(/i.test(line) ||    // JS-ish calls
-      /\b(important|inherit|initial|unset|none|auto|flex|grid|block|absolute|relative|sticky)\b/i.test(line) && /:/.test(line) ||
-      lower === "style" || lower === "script" || lower.startsWith("style>") ||
-      /^[\d\s.,;:!?@#$%^&*()_+=<>/\\|~`'"-]+$/.test(line); // only punctuation/numbers (keeps any-language letters)
-
-    if (isNoise) continue;
+    if (isTechnicalKeywordNoise(line)) continue;
 
     // Trim trailing punctuation noise; keep readable phrases only.
     line = line.replace(/[{}<>;]+/g, "").trim();
-    if (!line || line.length > 80) continue;
+    if (!line || line.length > 100) continue;
     // Must contain at least one letter (skip pure numbers / measurements).
     if (!/[a-z\u00C0-\u024F\u0980-\u09FF]/i.test(line)) continue;
 
