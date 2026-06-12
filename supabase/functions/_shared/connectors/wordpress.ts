@@ -216,7 +216,11 @@ export class WordPressConnector implements CmsConnector {
     const resourcePath = payload.product_data ? "product" : "pages";
     const preserveDesign = payload.preserve_design === true;
 
-    if (payload.title || payload.seo_title) body.title = resolveWordPressTitle(payload);
+    // Design-preservation / pure-SEO updates must NEVER rename the live page.
+    // Only an explicit `title` triggers a rename; the SEO title alone is pushed
+    // into the SEO plugin meta (below), not the post title, when preserving design.
+    if (payload.title) body.title = resolveWordPressTitle(payload);
+    else if (!preserveDesign && payload.seo_title) body.title = resolveWordPressTitle(payload);
 
     // DESIGN-PRESERVATION MODE: when republishing an existing CMS page (e.g. after
     // an AI SEO rewrite), do NOT overwrite the live body content, Elementor data,
