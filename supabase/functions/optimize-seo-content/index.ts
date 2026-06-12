@@ -944,7 +944,11 @@ Revise and return the FULL JSON again. Fix every failed item, keep the exact pri
         const rewrittenContent = result.content && result.content !== page_content ? result.content : null;
         // Always UPDATE existing page — never create a new one
         const updatePayload: Record<string, any> = {
-          title: result.seo_title || page_title,
+          // NEVER rename the live page. The optimized SEO title is metadata only
+          // (handled below via updatePayload.seo_title) — the page's actual name
+          // (post title) must stay exactly as it is on the connected website.
+          // Only fall back to the SEO title when the page genuinely has no name.
+          title: page_title || result.seo_title || undefined,
           slug: page_slug,
           status: "publish",
         };
