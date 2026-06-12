@@ -27,6 +27,15 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
 
     const hasExternalStyles = !!embeddedStyles;
 
+    // Protect <style> (and <script>) blocks from the variable/spintax highlighters
+    // below — CSS rules like `{display:none}` would otherwise be mistaken for
+    // template variables and wrapped in spans, corrupting the stylesheet.
+    const protectedBlocks: string[] = [];
+    contentHtml = contentHtml.replace(/<(style|script)\b[\s\S]*?<\/\1>/gi, (m) => {
+      protectedBlocks.push(m);
+      return `\u0000BLOCK${protectedBlocks.length - 1}\u0000`;
+    });
+
     // Highlight {{AI:...}} blocks
     let styled = contentHtml.replace(
       /\{\{AI:(.*?)\}\}/g,
@@ -84,6 +93,13 @@ export function TemplatePreview({ html, className = "" }: TemplatePreviewProps) 
       /\{\{\/(if|each)\}\}/gi,
       '<span style="background:hsl(180 50% 90%);color:hsl(180 60% 30%);padding:1px 5px;border-radius:3px;font-size:0.8em;font-family:monospace;border:1px solid hsl(180 40% 78%)">🔀 {{/$1}}</span>'
     );
+
+    // Restore protected <style>/<script> blocks untouched.
+    if (protectedBlocks.length) {
+      styled = styled.replace(/\u0000BLOCK(\d+)\u0000/g, (_m, i) => protectedBlocks[Number(i)]);
+    }
+
+
 
     // If we have external styles (imported site), use them and skip default styles
     if (hasExternalStyles) {
