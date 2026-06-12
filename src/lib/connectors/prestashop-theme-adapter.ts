@@ -9,6 +9,8 @@
  * CMS content inside `#cms .page-content.page-cms`.
  */
 
+import { injectThemeAssets, type ThemeAssets } from "./theme-assets";
+
 export type PrestaAdaptKind = "page" | "product";
 
 const STRIP_TAGS = ["html", "head", "body", "script", "title", "meta", "link"] as const;
@@ -86,7 +88,11 @@ function applyButtonClasses(html: string): string {
     });
 }
 
-export function adaptHtmlForPrestaShopTheme(html: string, kind: PrestaAdaptKind = "page"): string {
+export function adaptHtmlForPrestaShopTheme(
+  html: string,
+  kind: PrestaAdaptKind = "page",
+  assets?: ThemeAssets | null,
+): string {
   if (!html || typeof html !== "string") return html;
   let out = html;
   out = stripDocumentChrome(out);
@@ -95,8 +101,9 @@ export function adaptHtmlForPrestaShopTheme(html: string, kind: PrestaAdaptKind 
   out = makeImagesResponsive(out);
   out = applyButtonClasses(out);
 
-  if (/class="[^"]*\bprestashop-themed-content\b[^"]*"/.test(out)) return out;
+  if (/class="[^"]*\bprestashop-themed-content\b[^"]*"/.test(out)) return injectThemeAssets(out, assets);
 
   const kindClass = kind === "product" ? " product-description" : " page-content page-cms";
-  return `<div class="rte${kindClass} prestashop-themed-content">\n${out}\n</div>`;
+  const wrapped = `<div class="rte${kindClass} prestashop-themed-content">\n${out}\n</div>`;
+  return injectThemeAssets(wrapped, assets);
 }

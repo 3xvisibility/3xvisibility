@@ -1,5 +1,6 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
+import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 import {
   buildSeoMetaDataEntries,
   buildSeoMetaRecord,
@@ -83,12 +84,20 @@ export class WooCommerceConnector implements CmsConnector {
     return `consumer_key=${encodeURIComponent(this.consumerKey)}&consumer_secret=${encodeURIComponent(this.consumerSecret)}`;
   }
 
+  private assetsPromise?: Promise<ThemeAssets>;
+  /** Lazily fetch + cache the store's theme assets (fonts/styles) once per connector. */
+  private themeAssets(): Promise<ThemeAssets> {
+    if (!this.assetsPromise) this.assetsPromise = getThemeAssets(this.baseUrl);
+    return this.assetsPromise;
+  }
+
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const productSlug = slugify(payload.slug || payload.title);
+    const assets = await this.themeAssets();
     const body: Record<string, unknown> = {
       name: payload.title,
       type: "simple",
-      description: adaptHtmlForWordPressTheme(payload.content || "", "product"),
+      description: adaptHtmlForWordPressTheme(payload.content || "", "product", assets),
       slug: productSlug,
       status: "publish",
     };
@@ -196,7 +205,7 @@ export class WooCommerceConnector implements CmsConnector {
 
     if (payload.title || payload.seo_title) body.name = payload.title || payload.seo_title;
     // Preserve product description/layout on republish — only meta updates.
-    if (!preserveDesign && typeof payload.content === "string") body.description = adaptHtmlForWordPressTheme(payload.content, "product");
+    if (!preserveDesign && typeof payload.content === "string") body.description = adaptHtmlForWordPressTheme(payload.content, "product", await this.themeAssets());
     if (payload.slug || payload.product_data?.handle) {
       body.slug = slugify(payload.product_data?.handle || payload.slug || externalId);
     }

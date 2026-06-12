@@ -8,6 +8,8 @@
  * (Elementor, Gutenberg, Astra, Kadence, GeneratePress, OceanWP, Divi).
  */
 
+import { injectThemeAssets, type ThemeAssets } from "./theme-assets.ts";
+
 export type WpAdaptKind = "page" | "post" | "product";
 
 const STRIP_TAGS = ["html", "head", "body", "script", "title", "meta", "link"] as const;
@@ -93,7 +95,11 @@ function applyGutenbergClasses(html: string): string {
   return out;
 }
 
-export function adaptHtmlForWordPressTheme(html: string, kind: WpAdaptKind = "page"): string {
+export function adaptHtmlForWordPressTheme(
+  html: string,
+  kind: WpAdaptKind = "page",
+  assets?: ThemeAssets | null,
+): string {
   if (!html || typeof html !== "string") return html;
   let out = html;
   out = stripDocumentChrome(out);
@@ -101,8 +107,9 @@ export function adaptHtmlForWordPressTheme(html: string, kind: WpAdaptKind = "pa
   out = sanitizeOuterStyles(out);
   out = applyGutenbergClasses(out);
 
-  if (/class="[^"]*\bwp-themed-content\b[^"]*"/.test(out)) return out;
+  if (/class="[^"]*\bwp-themed-content\b[^"]*"/.test(out)) return injectThemeAssets(out, assets);
 
   const kindClass = kind === "product" ? " woocommerce-product-details__short-description" : "";
-  return `<div class="entry-content wp-block-post-content is-layout-constrained wp-themed-content${kindClass}">\n${out}\n</div>`;
+  const wrapped = `<div class="entry-content wp-block-post-content is-layout-constrained wp-themed-content${kindClass}">\n${out}\n</div>`;
+  return injectThemeAssets(wrapped, assets);
 }
