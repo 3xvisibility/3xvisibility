@@ -53,6 +53,7 @@ const PAGE_SIZE = 10;
 export default function TemplatesPage() {
   const [aiOpen, setAiOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [customizeTemplate, setCustomizeTemplate] = useState<Template | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<PreviewableTemplate | null>(null);
   const [previewTemplateRow, setPreviewTemplateRow] = useState<Template | null>(null);
