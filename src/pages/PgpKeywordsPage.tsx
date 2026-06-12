@@ -289,7 +289,8 @@ export default function PgpKeywordsPage() {
       if (!user || !wsId) throw new Error("Not authenticated");
       const cleanName = kwName.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
       if (!cleanName) throw new Error("Keyword name is required");
-      const termsArray = kwTerms.split("\n").map(t => t.trim()).filter(Boolean);
+      const termsArray = sanitizeKeywordLines(kwTerms.split("\n").map(t => t.trim()).filter(Boolean));
+      setKwTerms(termsArray.join("\n"));
       const columnsArray = kwColumns ? kwColumns.split(",").map(c => c.trim()).filter(Boolean) : [];
       const sourceConfig: Record<string, any> = {};
       if (kwSource === "location") {
@@ -380,23 +381,18 @@ export default function PgpKeywordsPage() {
     if (!aiTopic.trim()) return;
     setAiGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt: `You are an SEO keyword strategist. Generate exactly ${aiCount} high-value SEO search keywords for a keyword group called "${kwName || aiTopic}". Topic: ${aiTopic}.
-
-STRICT RULES:
-- Output ONLY real human search keywords / phrases that people type into Google, Bing, Yahoo and other search engines.
-- Each keyword must be 1-6 plain words that help a page rank highest and get the best SEO score.
-- Use a natural mix of high-intent, long-tail and local SEO phrases.
-- ABSOLUTELY NO HTML, CSS, code, tags, class names, font-size, width, px, colors, hex codes, style attributes, variables, URLs, numbers-only lines, or symbols.
-- No numbering, no bullets, no quotes, no explanations, no markdown.
-- One keyword per line.` },
+      const result = await callAI({
+        model: "google/gemini-3-flash-preview",
+        temperature: 0.2,
+        messages: [
+          { role: "system", content: SEO_KEYWORD_SYSTEM_PROMPT },
+          { role: "user", content: `Generate exactly ${aiCount} high-value SEO keywords for keyword group "${kwName || aiTopic}". Topic: ${aiTopic}. Use a natural mix of high-intent, long-tail and local SEO phrases. Each keyword must be 1-6 plain words. One keyword per line only.` },
+        ],
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
-      const rawLines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter(Boolean);
-      const lines = sanitizeKeywordLines(rawLines);
-      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
+      if (!result.success) throw new Error(result.content || "AI request failed");
+      const lines = extractKeywordCandidates(result.content);
+      if (lines.length === 0) throw new Error("AI did not return clean SEO keywords. Please try a more specific topic.");
+      setKwTerms(prev => mergeCleanTerms(prev, lines));
       toast({ title: `${lines.length} AI SEO keywords generated` });
     } catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
     finally { setAiGenerating(false); }
