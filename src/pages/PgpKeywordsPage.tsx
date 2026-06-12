@@ -335,14 +335,23 @@ export default function PgpKeywordsPage() {
     setAiGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt: `Generate exactly ${aiCount} unique terms for a keyword called "${kwName || aiTopic}". Topic: ${aiTopic}. Output ONLY the terms, one per line. No numbering, no explanations, no markdown.` },
+        body: { prompt: `You are an SEO keyword strategist. Generate exactly ${aiCount} high-value SEO search keywords for a keyword group called "${kwName || aiTopic}". Topic: ${aiTopic}.
+
+STRICT RULES:
+- Output ONLY real human search keywords / phrases that people type into Google, Bing, Yahoo and other search engines.
+- Each keyword must be 1-6 plain words that help a page rank highest and get the best SEO score.
+- Use a natural mix of high-intent, long-tail and local SEO phrases.
+- ABSOLUTELY NO HTML, CSS, code, tags, class names, font-size, width, px, colors, hex codes, style attributes, variables, URLs, numbers-only lines, or symbols.
+- No numbering, no bullets, no quotes, no explanations, no markdown.
+- One keyword per line.` },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
-      const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter(Boolean);
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-      toast({ title: `${lines.length} AI terms generated` });
+      const rawLines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter(Boolean);
+      const lines = sanitizeKeywordLines(rawLines);
+      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
+      toast({ title: `${lines.length} AI SEO keywords generated` });
     } catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
     finally { setAiGenerating(false); }
   };
