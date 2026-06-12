@@ -74,8 +74,23 @@ function stripTags(html: string): string {
 
 /** Split raw HTML into top-level section-like blocks. */
 function splitIntoSectionBlocks(html: string): string[] {
-  const trimmed = (html || "").trim();
+  let trimmed = (html || "").trim();
   if (!trimmed) return [];
+
+  // Unwrap a single outer page-wrapper container (e.g. <div class="pgp-page">…</div>)
+  // so its leading "<div>" and trailing "</div>" don't become junk fragment sections.
+  let wrapper = trimmed.match(/^<(div|main|article|section)\b[^>]*>([\s\S]*)<\/\1>\s*$/i);
+  while (wrapper) {
+    const inner = wrapper[2].trim();
+    // Only unwrap when the inner content itself holds multiple structural blocks;
+    // otherwise keep the container so genuine single sections are preserved.
+    if (/<(section|header|footer|article)\b[\s\S]*?<\/(section|header|footer|article)>[\s\S]*<(section|header|footer|article)\b/i.test(inner)) {
+      trimmed = inner;
+      wrapper = trimmed.match(/^<(div|main|article|section)\b[^>]*>([\s\S]*)<\/\1>\s*$/i);
+    } else {
+      break;
+    }
+  }
 
   // First try explicit structural containers.
   const structural = trimmed.match(
