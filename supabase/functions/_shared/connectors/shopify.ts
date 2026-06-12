@@ -55,9 +55,10 @@ export class ShopifyConnector implements CmsConnector {
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     if (payload.product_data) return this.createProduct(payload);
 
+    const assets = await this.themeAssets();
     const pageBody: Record<string, unknown> = {
       title: payload.title,
-      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page"),
+      body_html: adaptHtmlForShopifyTheme(payload.content || "", "page", assets),
       handle: slugify(payload.slug || payload.title),
       published: payload.status === "publish",
     };
