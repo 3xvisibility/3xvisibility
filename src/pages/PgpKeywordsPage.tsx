@@ -59,7 +59,7 @@ function sanitizeKeywordLines(lines: string[]): string[] {
       /[=();]/.test(line) && /[a-z]+\s*\(/i.test(line) ||    // JS-ish calls
       /\b(important|inherit|initial|unset|none|auto|flex|grid|block|absolute|relative|sticky)\b/i.test(line) && /:/.test(line) ||
       lower === "style" || lower === "script" || lower.startsWith("style>") ||
-      /^[^a-z0-9]+$/i.test(line);                            // only symbols
+      /^[\d\s.,;:!?@#$%^&*()_+=<>/\\|~`'"-]+$/.test(line); // only punctuation/numbers (keeps any-language letters)
 
     if (isNoise) continue;
 
