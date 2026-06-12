@@ -65,6 +65,8 @@ interface StartGenerationDialogProps {
   initialPageTemplateSuffix?: string | null;
   /** Persisted Shopify product template suffix from the campaign. */
   initialProductTemplateSuffix?: string | null;
+  /** Persisted per-template platform skin variant (e.g. shopify "dawn"). */
+  initialSkinVariant?: string | null;
 }
 
 export interface GenerationOptions {
