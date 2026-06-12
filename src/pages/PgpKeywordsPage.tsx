@@ -33,9 +33,7 @@ Never return HTML, CSS, JavaScript, code, tags, classes, IDs, stylesheets, desig
 const TECHNICAL_NOISE_TERMS = [
   "html", "css", "stylesheet", "style", "styles", "script", "javascript", "code", "markup",
   "class", "classname", "id", "selector", "variable", "token", "font", "font-size", "font size",
-  "width", "height", "px", "rem", "em", "color", "background", "border", "padding", "margin",
-  "display", "position", "flex", "grid", "radius", "shadow", "gradient", "media query",
-  "div", "span", "section", "header", "footer", "button", "container", "style block",
+  "px", "rem", "media query", "style block", "div", "span",
 ];
 
 /**
