@@ -42,6 +42,16 @@ export class ShopifyConnector implements CmsConnector {
     return `https://${this.shopDomain}/admin/api/2024-01`;
   }
 
+  private assetsPromise?: Promise<ThemeAssets>;
+  /** Lazily fetch + cache the storefront's theme assets (fonts/styles) once per connector. */
+  private themeAssets(): Promise<ThemeAssets> {
+    if (!this.assetsPromise) {
+      this.assetsPromise = getThemeAssets(`https://${this.shopDomain}`);
+    }
+    return this.assetsPromise;
+  }
+
+
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     if (payload.product_data) return this.createProduct(payload);
 
