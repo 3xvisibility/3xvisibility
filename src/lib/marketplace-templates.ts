@@ -484,8 +484,9 @@ const PLATFORM_WRAPPER_CLASS: Record<Exclude<TemplatePlatform, "generic">, strin
 // it never leaks and always survives the publish adapters (no html/body
 // selectors, no bare `*{box-sizing}`).
 type SkinRule = [suffix: string, decls: string];
+type SkinConfig = { font: string; head: string; rules: SkinRule[] };
 
-const SKIN_RULES: Record<Exclude<TemplatePlatform, "generic">, { font: string; head: string; rules: SkinRule[] }> = {
+const SKIN_RULES: Record<Exclude<TemplatePlatform, "generic">, SkinConfig> = {
   wordpress: {
     font: `font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#1e1e1e;line-height:1.7`,
     head: `font-family:"Helvetica Neue",-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:-.01em;color:#1e1e1e`,
@@ -578,31 +579,189 @@ const SKIN_RULES: Record<Exclude<TemplatePlatform, "generic">, { font: string; h
   },
 };
 
-const platformSkin = (platform: Exclude<TemplatePlatform, "generic">): string => {
+// ── Skin variants ───────────────────────────────────────────────────────────
+// Each platform ships several authentic theme variants the user can pick before
+// generating pages. Variant #1 is the default. A variant supplies optional
+// font/head overrides plus extra rules that are appended AFTER the base rules
+// (same specificity → later rule wins by source order), so it cleanly retunes
+// typography, colors, radius and button treatment without losing the base reset.
+export interface SkinVariant {
+  id: string;
+  label: string;
+  description: string;
+  font?: string;
+  head?: string;
+  rules?: SkinRule[];
+}
+
+export const PLATFORM_SKIN_VARIANTS: Record<Exclude<TemplatePlatform, "generic">, SkinVariant[]> = {
+  shopify: [
+    { id: "dawn", label: "Dawn", description: "Shopify's default reference theme — airy whitespace, neutral palette, square black CTAs." },
+    {
+      id: "studio",
+      label: "Studio",
+      description: "Editorial Shopify theme — serif headings, warm tones, soft rounded cards.",
+      head: `font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.005em;color:#1a1a1a`,
+      rules: [
+        [".pgp-card", "border-radius:14px;border:1px solid #ece6dd;background:#fbf8f4"],
+        [".pgp-tcard", "border-radius:14px;border:1px solid #ece6dd;background:#fbf8f4"],
+        [".pgp-btn", "border-radius:999px;text-transform:none;letter-spacing:0"],
+        [".pgp-btn-primary", "background:#7a5c3e;color:#fff"],
+        [".pgp-btn-primary:hover", "background:#634a31"],
+        [".pgp-eyebrow", "color:#7a5c3e;text-transform:uppercase"],
+        [".pgp-faq details", "border-radius:14px"],
+      ],
+    },
+    {
+      id: "craft",
+      label: "Craft",
+      description: "Bold, high-contrast Shopify theme — heavy headings, tight corners, vivid CTA.",
+      head: `font-family:"Assistant","Helvetica Neue",Helvetica,Arial,sans-serif;font-weight:800;letter-spacing:-.02em;color:#0a0a0a`,
+      rules: [
+        [".pgp-card", "border-radius:2px;border:1.5px solid #0a0a0a"],
+        [".pgp-tcard", "border-radius:2px;border:1.5px solid #0a0a0a"],
+        [".pgp-btn", "border-radius:2px;text-transform:uppercase;letter-spacing:.08em;font-weight:700"],
+        [".pgp-btn-primary", "background:#0a0a0a;color:#fff"],
+        [".pgp-btn-outline", "border:1.5px solid #0a0a0a;color:#0a0a0a"],
+        [".pgp-faq details", "border-radius:2px;border:1.5px solid #0a0a0a"],
+      ],
+    },
+  ],
+  wordpress: [
+    { id: "twentytwentyfour", label: "Twenty Twenty-Four", description: "WordPress core block theme — clean, neutral, minimal borders, square dark buttons." },
+    {
+      id: "astra",
+      label: "Astra",
+      description: "Astra block theme — friendly blue accent, rounded cards and buttons.",
+      rules: [
+        [".pgp-card", "border-radius:10px;border:1px solid #e2e8f0"],
+        [".pgp-tcard", "border-radius:10px;border:1px solid #e2e8f0"],
+        [".pgp-btn", "border-radius:8px"],
+        [".pgp-btn-primary", "background:#2563eb;color:#fff"],
+        [".pgp-btn-primary:hover", "background:#1d4ed8"],
+        [".pgp-btn-outline", "border:1px solid #2563eb;color:#2563eb"],
+        [".pgp-eyebrow", "color:#2563eb"],
+        [".pgp-section-head h2", "color:#0f172a;-webkit-text-fill-color:#0f172a"],
+      ],
+    },
+    {
+      id: "kadence",
+      label: "Kadence",
+      description: "Kadence block theme — bolder headings, teal brand accent, lifted cards.",
+      head: `font-family:"Helvetica Neue",-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:-.02em;font-weight:800;color:#1a202c`,
+      rules: [
+        [".pgp-card", "border-radius:12px;border:1px solid #e6eef0;box-shadow:0 6px 18px rgba(0,0,0,.05)"],
+        [".pgp-tcard", "border-radius:12px;border:1px solid #e6eef0"],
+        [".pgp-btn", "border-radius:8px;font-weight:700"],
+        [".pgp-btn-primary", "background:#0c8a8a;color:#fff"],
+        [".pgp-btn-primary:hover", "background:#0a7373"],
+        [".pgp-btn-outline", "border:1px solid #0c8a8a;color:#0c8a8a"],
+        [".pgp-eyebrow", "color:#0c8a8a"],
+      ],
+    },
+  ],
+  prestashop: [
+    { id: "classic", label: "Classic", description: "PrestaShop Classic theme — Bootstrap cards, #2fb5d2 brand blue, soft shadows." },
+    {
+      id: "hummingbird",
+      label: "Hummingbird",
+      description: "Modern flat PrestaShop theme — minimal borders, dark CTAs, tight radius.",
+      rules: [
+        [".pgp-card", "border-radius:6px;box-shadow:none;border:1px solid #eaeaea"],
+        [".pgp-tcard", "border-radius:6px;box-shadow:none;border:1px solid #eaeaea"],
+        [".pgp-btn", "border-radius:6px"],
+        [".pgp-btn-primary", "background:#212121;color:#fff"],
+        [".pgp-btn-primary:hover", "background:#000"],
+        [".pgp-btn-outline", "border:1px solid #212121;color:#212121"],
+        [".pgp-eyebrow", "color:#212121"],
+        [".pgp-card .pgp-icon", "background:#f2f2f2;border:1px solid #eaeaea;color:#212121"],
+      ],
+    },
+    {
+      id: "warehouse",
+      label: "Warehouse",
+      description: "Bold commerce PrestaShop theme — orange accent, strong headings, larger radius.",
+      head: `font-family:Roboto,"Open Sans",Helvetica,Arial,sans-serif;font-weight:800;color:#1f2933`,
+      rules: [
+        [".pgp-card", "border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.07)"],
+        [".pgp-btn", "border-radius:8px;font-weight:700"],
+        [".pgp-btn-primary", "background:#f5821f;color:#fff"],
+        [".pgp-btn-primary:hover", "background:#dd6f10"],
+        [".pgp-btn-outline", "border:1px solid #f5821f;color:#f5821f"],
+        [".pgp-eyebrow", "color:#f5821f"],
+        [".pgp-card .pgp-icon", "background:#fff3e8;border:1px solid #ffe0c2;color:#f5821f"],
+      ],
+    },
+  ],
+};
+
+/** First variant is the platform default. */
+export const defaultSkinVariant = (platform: TemplatePlatform): string =>
+  platform === "generic" ? "" : PLATFORM_SKIN_VARIANTS[platform][0].id;
+
+const resolveVariant = (
+  platform: Exclude<TemplatePlatform, "generic">,
+  variantId?: string,
+): SkinVariant => {
+  const list = PLATFORM_SKIN_VARIANTS[platform];
+  return list.find((v) => v.id === variantId) ?? list[0];
+};
+
+const platformSkin = (
+  platform: Exclude<TemplatePlatform, "generic">,
+  variantId?: string,
+): string => {
   const root = `.pgp-skin-${platform}`;
   const base = `${root} .pgp-page`;
   const cfg = SKIN_RULES[platform];
+  const variant = resolveVariant(platform, variantId);
   // Prefix every comma-separated selector part so specificity stays high (>=0,3,0).
   const prefix = (suffix: string) =>
     suffix.split(",").map((s) => `${base} ${s.trim()}`).join(",");
+  const mergedRules: SkinRule[] = [...cfg.rules, ...(variant.rules ?? [])];
   const lines = [
-    `${base}{${cfg.font}}`,
-    `${base} h1,${base} h2,${base} h3,${base} h4{${cfg.head}}`,
-    ...cfg.rules.map(([suffix, decls]) => `${prefix(suffix)}{${decls}}`),
+    `${base}{${variant.font ?? cfg.font}}`,
+    `${base} h1,${base} h2,${base} h3,${base} h4{${variant.head ?? cfg.head}}`,
+    ...mergedRules.map(([suffix, decls]) => `${prefix(suffix)}{${decls}}`),
   ];
-  return `<style data-platform="${platform}">\n${lines.join("\n")}\n</style>`;
+  return `<style data-platform="${platform}" data-skin-variant="${variant.id}">\n${lines.join("\n")}\n</style>`;
 };
 
 // Wrap a generic template body so it renders + publishes as native CMS content.
 // The skin is appended AFTER the body so it also wins on source order, on top of
 // its higher specificity.
-const applyPlatformTheme = (content: string, platform: TemplatePlatform): string => {
+const applyPlatformTheme = (
+  content: string,
+  platform: TemplatePlatform,
+  variantId?: string,
+): string => {
   if (platform === "generic") return content;
   const wrapper = PLATFORM_WRAPPER_CLASS[platform];
-  return `<div class="${wrapper} pgp-skin-${platform}">
+  const variant = resolveVariant(platform, variantId);
+  return `<div class="${wrapper} pgp-skin-${platform}" data-skin-variant="${variant.id}">
 ${content}
-${platformSkin(platform)}
+${platformSkin(platform, variant.id)}
 </div>`;
+};
+
+// Re-skin already-themed (or generic) content with a different platform variant.
+// Idempotent: strips any prior platform <style> block + wrapper, then re-applies.
+// Used by the per-template skin picker before generating pages.
+export const reskinContent = (
+  content: string,
+  platform: TemplatePlatform,
+  variantId?: string,
+): string => {
+  if (platform === "generic") return content;
+  let inner = content;
+  // Unwrap an existing platform wrapper div (outermost only).
+  const wrapMatch = inner.match(
+    /^\s*<div class="[^"]*\bpgp-skin-(?:wordpress|shopify|prestashop)\b[^"]*"[^>]*>\n?([\s\S]*)\n?<\/div>\s*$/,
+  );
+  if (wrapMatch) inner = wrapMatch[1];
+  // Strip any previously injected platform skin style blocks.
+  inner = inner.replace(/<style data-platform="[^"]*"[\s\S]*?<\/style>\s*/g, "").trim();
+  return applyPlatformTheme(inner, platform, variantId);
 };
 
 // ── Templates ──────────────────────────────────────────────────────────────
