@@ -21,10 +21,22 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { callAI } from "@/lib/ai-client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import * as XLSX from "xlsx";
 
 const PAGE_SIZE = 15;
+
+const SEO_KEYWORD_SYSTEM_PROMPT = `You are an SEO keyword strategist. Return ONLY clean search keywords that real customers type into Google, Bing, Yahoo and other search engines.
+Never return HTML, CSS, JavaScript, code, tags, classes, IDs, stylesheets, design tokens, font/width/height/color values, variables, URLs, markdown, explanations, numbering, bullets or symbols. One plain keyword phrase per line.`;
+
+const TECHNICAL_NOISE_TERMS = [
+  "html", "css", "stylesheet", "style", "styles", "script", "javascript", "code", "markup",
+  "class", "classname", "id", "selector", "variable", "token", "font", "font-size", "font size",
+  "width", "height", "px", "rem", "em", "color", "background", "border", "padding", "margin",
+  "display", "position", "flex", "grid", "radius", "shadow", "gradient", "media query",
+  "div", "span", "section", "header", "footer", "button", "container", "style block",
+];
 
 /**
  * Keep only real, human-readable keyword phrases.
@@ -43,9 +55,11 @@ function sanitizeKeywordLines(lines: string[]): string[] {
     if (!line) continue;
 
     const lower = line.toLowerCase();
+    const hasTechnicalNoise = TECHNICAL_NOISE_TERMS.some((term) => new RegExp(`(^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i").test(lower));
 
     // Drop obvious markup / code / style noise.
     const isNoise =
+      hasTechnicalNoise ||
       line.includes("<") || line.includes(">") ||           // HTML tags
       /[{}]/.test(line) ||                                   // CSS blocks
       line.includes(";") ||                                  // CSS/JS statements
@@ -75,6 +89,38 @@ function sanitizeKeywordLines(lines: string[]): string[] {
     out.push(line);
   }
   return out;
+}
+
+function extractKeywordCandidates(raw: string): string[] {
+  const withoutFences = (raw || "")
+    .replace(/```[a-z]*\s*/gi, "\n")
+    .replace(/```/g, "\n")
+    .replace(/<style\b[\s\S]*?<\/style>/gi, "\n")
+    .replace(/<script\b[\s\S]*?<\/script>/gi, "\n")
+    .replace(/<[^>]*>/g, "\n");
+
+  const candidates: string[] = [];
+  const pushValue = (value: unknown) => {
+    if (Array.isArray(value)) value.forEach(pushValue);
+    else if (value && typeof value === "object") Object.values(value as Record<string, unknown>).forEach(pushValue);
+    else if (typeof value === "string") candidates.push(value);
+  };
+
+  try { pushValue(JSON.parse(withoutFences)); } catch {}
+
+  withoutFences
+    .split(/[\n,|]+/)
+    .map((part) => part.replace(/^\s*["'`]*[\w -]{0,24}["'`]*\s*:\s*/i, "").trim())
+    .forEach((part) => candidates.push(part));
+
+  return sanitizeKeywordLines(candidates);
+}
+
+function mergeCleanTerms(existing: string, incoming: string[], allowDelimitedRows = false): string {
+  const previous = existing.split("\n").map((t) => t.trim()).filter(Boolean);
+  const safePrevious = allowDelimitedRows ? previous : sanitizeKeywordLines(previous);
+  const safeIncoming = allowDelimitedRows ? incoming.map((t) => t.trim()).filter(Boolean) : sanitizeKeywordLines(incoming);
+  return [...safePrevious, ...safeIncoming].join("\n");
 }
 
 interface PgpKeyword {
