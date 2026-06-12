@@ -130,15 +130,11 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     // English is the source language — nothing to translate.
     if (language === "en") return;
 
-    // For languages with built-in t() coverage, React handles the UI. Only
-    // translate explicitly opted-in subtrees ([data-auto-translate]) such as
-    // marketing pages that have no t() calls. For languages without built-in
-    // coverage, translate the whole document.
-    const builtin = hasBuiltinCoverage(language);
+    // Translate the WHOLE document for every non-English language — including
+    // the built-in t() languages. t() handles the explicit keys, and the DOM
+    // translator fills every remaining hardcoded string (dashboards, modals,
+    // popups, warnings, limit dialogs, tool pages) so nothing stays in English.
     const getRoots = (): ParentNode[] => {
-      if (builtin) {
-        return Array.from(document.querySelectorAll<HTMLElement>("[data-auto-translate]"));
-      }
       return [document.body];
     };
     const collectAll = (): Target[] => {
