@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
+import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter";
 
 /**
  * WordPress REST API connector.
@@ -158,7 +159,8 @@ export class WordPressConnector implements CmsConnector {
     }
 
     if (isCreate || typeof payload.content === "string") {
-      body.content = sanitizeWordPressContent(payload.content) || "<p></p>";
+      const themed = adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page");
+      body.content = sanitizeWordPressContent(themed) || "<p></p>";
     }
 
     if (isCreate || payload.slug) {

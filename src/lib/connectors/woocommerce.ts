@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
+import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -63,7 +64,7 @@ export class WooCommerceConnector implements CmsConnector {
     const body: Record<string, unknown> = {
       name: payload.title,
       type: "simple",
-      description: payload.content,
+      description: adaptHtmlForWordPressTheme(payload.content || "", "product"),
       slug: productSlug,
       status: "publish",
     };
@@ -108,7 +109,7 @@ export class WooCommerceConnector implements CmsConnector {
   async updatePage(externalId: string, payload: Partial<PagePayload>): Promise<ConnectorPage> {
     const body: Record<string, unknown> = {};
     if (payload.title) body.name = payload.title;
-    if (payload.content) body.description = payload.content;
+    if (payload.content) body.description = adaptHtmlForWordPressTheme(payload.content, "product");
     if (payload.slug) body.slug = slugify(payload.slug);
 
     const res = await fetch(

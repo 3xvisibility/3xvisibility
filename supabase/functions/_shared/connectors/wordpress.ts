@@ -1,5 +1,6 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
+import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -155,7 +156,7 @@ export class WordPressConnector implements CmsConnector {
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const body: Record<string, unknown> = {
       title: resolveWordPressTitle(payload),
-      content: sanitizeWordPressContent(payload.content) || "<p></p>",
+      content: sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page")) || "<p></p>",
       slug: slugify(payload.slug || payload.title),
       status: payload.status === "publish" ? "publish" : "draft",
     };
@@ -214,7 +215,7 @@ export class WordPressConnector implements CmsConnector {
     // looks exactly the same — better SEO/title text only.
     if (!preserveDesign) {
       if (typeof payload.content === "string") {
-        body.content = sanitizeWordPressContent(payload.content) || "<p></p>";
+        body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, payload.product_data ? "product" : "page")) || "<p></p>";
       }
     }
 

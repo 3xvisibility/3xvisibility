@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
+import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 import {
   buildSeoMetaDataEntries,
   buildSeoMetaRecord,
@@ -87,7 +88,7 @@ export class WooCommerceConnector implements CmsConnector {
     const body: Record<string, unknown> = {
       name: payload.title,
       type: "simple",
-      description: payload.content,
+      description: adaptHtmlForWordPressTheme(payload.content || "", "product"),
       slug: productSlug,
       status: "publish",
     };
@@ -195,7 +196,7 @@ export class WooCommerceConnector implements CmsConnector {
 
     if (payload.title || payload.seo_title) body.name = payload.title || payload.seo_title;
     // Preserve product description/layout on republish — only meta updates.
-    if (!preserveDesign && typeof payload.content === "string") body.description = payload.content;
+    if (!preserveDesign && typeof payload.content === "string") body.description = adaptHtmlForWordPressTheme(payload.content, "product");
     if (payload.slug || payload.product_data?.handle) {
       body.slug = slugify(payload.product_data?.handle || payload.slug || externalId);
     }

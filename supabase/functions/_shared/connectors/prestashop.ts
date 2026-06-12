@@ -1,4 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
+import { adaptHtmlForPrestaShopTheme } from "./prestashop-theme-adapter.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -60,7 +61,7 @@ export class PrestaShopConnector implements CmsConnector {
     <meta_description><language id="${langId}"><![CDATA[${metaDesc}]]></language></meta_description>
     <meta_keywords><language id="${langId}"><![CDATA[${(payload.seo_keywords || []).join(", ")}]]></language></meta_keywords>
     <link_rewrite><language id="${langId}"><![CDATA[${linkRewrite}]]></language></link_rewrite>
-    <content><language id="${langId}"><![CDATA[${payload.content}]]></language></content>
+    <content><language id="${langId}"><![CDATA[${adaptHtmlForPrestaShopTheme(payload.content || "", "page")}]]></language></content>
   </cms>
 </prestashop>`;
 
@@ -103,7 +104,7 @@ export class PrestaShopConnector implements CmsConnector {
     <meta_title><language id="${langId}"><![CDATA[${metaTitle}]]></language></meta_title>
     <meta_description><language id="${langId}"><![CDATA[${metaDesc}]]></language></meta_description>
     <name><language id="${langId}"><![CDATA[${payload.title}]]></language></name>
-    <description><language id="${langId}"><![CDATA[${payload.content}]]></language></description>
+    <description><language id="${langId}"><![CDATA[${adaptHtmlForPrestaShopTheme(payload.content || "", "product")}]]></language></description>
     <description_short><language id="${langId}"><![CDATA[${metaDesc}]]></language></description_short>
     <link_rewrite><language id="${langId}"><![CDATA[${linkRewrite}]]></language></link_rewrite>
   </product>
@@ -161,10 +162,11 @@ export class PrestaShopConnector implements CmsConnector {
     // Preserve existing on-site design when republishing — skip body content overwrites.
     if (!preserveDesign && payload.content) {
       const field = isProduct ? "description" : "content";
+      const themed = adaptHtmlForPrestaShopTheme(payload.content, isProduct ? "product" : "page");
       if (Array.isArray(record[field])) {
-        record[field] = record[field].map((l: any) => ({ ...l, value: payload.content }));
+        record[field] = record[field].map((l: any) => ({ ...l, value: themed }));
       } else {
-        record[field] = [{ id: langId, value: payload.content }];
+        record[field] = [{ id: langId, value: themed }];
       }
     }
     if (linkRewrite) {
