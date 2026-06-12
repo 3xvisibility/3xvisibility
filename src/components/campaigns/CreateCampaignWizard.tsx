@@ -703,7 +703,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     const matched: { variable: string; column: string | null; customValue?: string }[] = [];
     for (const v of selectedTemplateVars) {
       if (customValues[v] !== undefined && customValues[v] !== "") {
-        matched.push({ variable: v, column: null, customValue: customValues[v] });
+        // Multiple values → treat as a real (expanded) data column so each value
+        // produces its own page. Single value → static custom substitution.
+        if (multiCustomVars[v]) {
+          matched.push({ variable: v, column: v });
+        } else {
+          matched.push({ variable: v, customValue: customValues[v] });
+        }
         continue;
       }
       if (manualMappings[v] && headers.includes(manualMappings[v])) {
