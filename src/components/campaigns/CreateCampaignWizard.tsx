@@ -708,7 +708,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (multiCustomVars[v]) {
           matched.push({ variable: v, column: v });
         } else {
-          matched.push({ variable: v, customValue: customValues[v] });
+          matched.push({ variable: v, column: null, customValue: customValues[v] });
         }
         continue;
       }
