@@ -22,7 +22,24 @@ import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, 
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
+import { PlatformSkinPicker } from "@/components/campaigns/PlatformSkinPicker";
+import { defaultSkinVariant, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { useSubscription } from "@/hooks/use-subscription";
+
+/** Map a connected website type to a themeable platform (woocommerce → wordpress). */
+function platformForWebsiteType(type?: string | null): Exclude<TemplatePlatform, "generic"> | null {
+  switch ((type || "").toLowerCase()) {
+    case "shopify":
+      return "shopify";
+    case "wordpress":
+    case "woocommerce":
+      return "wordpress";
+    case "prestashop":
+      return "prestashop";
+    default:
+      return null;
+  }
+}
 
 interface StartGenerationDialogProps {
   open: boolean;
@@ -48,6 +65,8 @@ interface StartGenerationDialogProps {
   initialPageTemplateSuffix?: string | null;
   /** Persisted Shopify product template suffix from the campaign. */
   initialProductTemplateSuffix?: string | null;
+  /** Persisted per-template platform skin variant (e.g. shopify "dawn"). */
+  initialSkinVariant?: string | null;
 }
 
 export interface GenerationOptions {
@@ -61,6 +80,8 @@ export interface GenerationOptions {
   shopify_page_template_suffix?: string;
   /** Shopify alternate product template suffix (templates/product.<suffix>). */
   shopify_product_template_suffix?: string;
+  /** Per-template platform theme skin variant (e.g. shopify "dawn" / "studio"). */
+  platform_skin_variant?: string;
 }
 
 export function StartGenerationDialog({
@@ -77,7 +98,9 @@ export function StartGenerationDialog({
   websiteType,
   initialPageTemplateSuffix,
   initialProductTemplateSuffix,
+  initialSkinVariant,
 }: StartGenerationDialogProps) {
+  const skinPlatform = platformForWebsiteType(websiteType);
   const [publishMode, setPublishMode] = useState<"draft" | "publish">("draft");
   const [maxRowsEnabled, setMaxRowsEnabled] = useState(false);
   const [maxRows, setMaxRows] = useState(totalRows);
@@ -88,6 +111,9 @@ export function StartGenerationDialog({
   const [languageOverride, setLanguageOverride] = useState<string>("English");
   const [shopifyPageSuffix, setShopifyPageSuffix] = useState<string>(initialPageTemplateSuffix || "");
   const [shopifyProductSuffix, setShopifyProductSuffix] = useState<string>(initialProductTemplateSuffix || "");
+  const [skinVariant, setSkinVariant] = useState<string>(
+    initialSkinVariant || (skinPlatform ? defaultSkinVariant(skinPlatform) : ""),
+  );
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
@@ -169,6 +195,9 @@ export function StartGenerationDialog({
       const pr = (shopifyProductSuffix || "").trim();
       if (p) options.shopify_page_template_suffix = p;
       if (pr) options.shopify_product_template_suffix = pr;
+    }
+    if (skinPlatform && skinVariant) {
+      options.platform_skin_variant = skinVariant;
     }
     onStart(options);
   };
@@ -376,6 +405,19 @@ export function StartGenerationDialog({
               </Select>
             )}
           </div>
+
+          {skinPlatform && (
+            <>
+              <Separator />
+              <PlatformSkinPicker
+                platform={skinPlatform}
+                value={skinVariant}
+                onChange={setSkinVariant}
+              />
+            </>
+          )}
+
+
 
           {websiteType === "shopify" && websiteId && (
             <>

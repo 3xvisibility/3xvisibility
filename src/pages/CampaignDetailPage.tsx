@@ -6,6 +6,7 @@ import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStruc
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
 import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWorkflow";
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
+import { reskinContent, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
@@ -257,6 +258,35 @@ export default function CampaignDetailPage() {
           shopify_product_template_suffix: opts.shopify_product_template_suffix ?? null,
         } as any).eq("id", id!);
       }
+
+      // Apply the chosen per-template platform theme skin to the template content
+      // so every generated page reflects it (e.g. Shopify Dawn vs Studio vs Craft).
+      if (opts?.platform_skin_variant && campaign?.template_id && !isTest) {
+        const wtype = ((campaign as any)?.websites?.type || "").toLowerCase();
+        const platform: TemplatePlatform =
+          wtype === "shopify" ? "shopify"
+          : wtype === "prestashop" ? "prestashop"
+          : (wtype === "wordpress" || wtype === "woocommerce") ? "wordpress"
+          : "generic";
+        if (platform !== "generic") {
+          const { data: tpl } = await supabase
+            .from("templates")
+            .select("content")
+            .eq("id", campaign.template_id)
+            .single();
+          if (tpl?.content) {
+            const reskinned = reskinContent(tpl.content, platform, opts.platform_skin_variant);
+            if (reskinned !== tpl.content) {
+              await supabase
+                .from("templates")
+                .update({ content: reskinned } as any)
+                .eq("id", campaign.template_id);
+            }
+          }
+        }
+      }
+
+
 
       const { data, error } = await supabase.functions.invoke("generate-pages", {
         body: {
