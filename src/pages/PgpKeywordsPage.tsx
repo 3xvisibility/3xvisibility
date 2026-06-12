@@ -26,6 +26,57 @@ import * as XLSX from "xlsx";
 
 const PAGE_SIZE = 15;
 
+/**
+ * Keep only real, human-readable keyword phrases.
+ * Strips any line that looks like HTML, CSS, a stylesheet rule, JS, a hex color,
+ * a CSS declaration/selector, a URL, or other markup noise — so the Terms box
+ * never fills up with `<style>`, `.pgp-page { ... }`, `--aurora-1: #6366f1;`, etc.
+ */
+function sanitizeKeywordLines(lines: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const rawLine of lines) {
+    let line = (rawLine || "")
+      .replace(/^\d+[.)]\s*/, "")   // "1. ", "2) "
+      .replace(/^[-•*]\s*/, "")      // bullet markers
+      .trim();
+    if (!line) continue;
+
+    const lower = line.toLowerCase();
+
+    // Drop obvious markup / code / style noise.
+    const isNoise =
+      line.includes("<") || line.includes(">") ||           // HTML tags
+      /[{}]/.test(line) ||                                   // CSS blocks
+      line.includes(";") ||                                  // CSS/JS statements
+      /[#.][a-z0-9_-]+\s*\{/i.test(line) ||                  // selectors
+      /^[.#@]/.test(line) ||                                 // .class / #id / @media
+      /^--[a-z0-9-]+\s*:/i.test(line) ||                     // CSS custom props
+      /:\s*[^ ]+\s*(;|$)/.test(line) && /(px|rem|em|%|#[0-9a-f]{3,8}|rgba?\(|hsla?\(|var\(|url\()/i.test(line) || // property: value
+      /#[0-9a-f]{3,8}\b/i.test(line) ||                      // hex colors
+      /\b(rgba?|hsla?|var|url|calc|translate|rotate|scale)\s*\(/i.test(line) || // css functions
+      /^(http|https):\/\//i.test(line) ||                    // raw URLs
+      /[=();]/.test(line) && /[a-z]+\s*\(/i.test(line) ||    // JS-ish calls
+      /\b(important|inherit|initial|unset|none|auto|flex|grid|block|absolute|relative|sticky)\b/i.test(line) && /:/.test(line) ||
+      lower === "style" || lower === "script" || lower.startsWith("style>") ||
+      /^[^a-z0-9]+$/i.test(line);                            // only symbols
+
+    if (isNoise) continue;
+
+    // Trim trailing punctuation noise; keep readable phrases only.
+    line = line.replace(/[{}<>;]+/g, "").trim();
+    if (!line || line.length > 80) continue;
+    // Must contain at least one letter (skip pure numbers / measurements).
+    if (!/[a-z\u00C0-\u024F\u0980-\u09FF]/i.test(line)) continue;
+
+    const key = line.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(line);
+  }
+  return out;
+}
+
 interface PgpKeyword {
   id: string;
   workspace_id: string;
