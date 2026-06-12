@@ -452,19 +452,21 @@ export default function PgpKeywordsPage() {
       const text = await resp.text();
       try {
         const json = JSON.parse(text);
-        let lines: string[] = [];
-        if (Array.isArray(json)) lines = json.map((item: any) => typeof item === "string" ? item : JSON.stringify(item));
-        else if (json.items) lines = json.items.map((item: any) => typeof item === "string" ? item : item.title || item.name || JSON.stringify(item));
-        if (lines.length > 0) { setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n")); toast({ title: `${lines.length} terms fetched from JSON` }); return; }
+        let rawLines: string[] = [];
+        if (Array.isArray(json)) rawLines = json.map((item: any) => typeof item === "string" ? item : JSON.stringify(item));
+        else if (json.items) rawLines = json.items.map((item: any) => typeof item === "string" ? item : item.title || item.name || JSON.stringify(item));
+        const lines = sanitizeKeywordLines(rawLines);
+        if (lines.length > 0) { setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n")); toast({ title: `${lines.length} terms fetched from JSON` }); return; }
       } catch {}
       if (text.includes("<rss") || text.includes("<feed") || text.includes("<item")) {
         const doc = new DOMParser().parseFromString(text, "text/xml");
         const items = doc.querySelectorAll("item title, entry title");
-        const lines = Array.from(items).map(el => el.textContent?.trim() || "").filter(Boolean);
-        if (lines.length > 0) { setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n")); toast({ title: `${lines.length} terms fetched from RSS` }); return; }
+        const lines = sanitizeKeywordLines(Array.from(items).map(el => el.textContent?.trim() || ""));
+        if (lines.length > 0) { setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n")); toast({ title: `${lines.length} terms fetched from RSS` }); return; }
       }
-      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-      setKwTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
+      const lines = sanitizeKeywordLines(text.split("\n"));
+      if (lines.length === 0) throw new Error("No clean keywords found at this URL");
+      setKwTerms(prev => prev ? sanitizeKeywordLines(`${prev}\n${lines.join("\n")}`.split("\n")).join("\n") : lines.join("\n"));
       toast({ title: `${lines.length} terms fetched` });
     } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
     finally { setDynLoading(false); }
