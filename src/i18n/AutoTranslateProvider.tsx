@@ -406,9 +406,41 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       cancelled = true;
       if (debounceTimer) window.clearTimeout(debounceTimer);
       if (rescanTimer) window.clearTimeout(rescanTimer);
+      if (safety) window.clearTimeout(safety);
       observer?.disconnect();
     };
   }, [language]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <TranslatingOverlay show={translating} language={language} />
+    </>
+  );
 }
+
+const OVERLAY_TEXT: Record<string, { title: string; sub: string }> = {
+  fr: { title: "Traduction en cours…", sub: "Préparation de la page dans votre langue" },
+  de: { title: "Übersetzung läuft…", sub: "Die Seite wird in Ihrer Sprache vorbereitet" },
+  en: { title: "Translating…", sub: "Preparing the page in your language" },
+};
+
+function TranslatingOverlay({ show, language }: { show: boolean; language: string }) {
+  if (!show) return null;
+  const copy = OVERLAY_TEXT[language] ?? OVERLAY_TEXT.en;
+  return (
+    <div
+      data-no-translate
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-primary/30 border-t-primary" />
+      <div className="text-center">
+        <p className="text-sm font-semibold text-foreground">{copy.title}</p>
+        <p className="text-xs text-muted-foreground">{copy.sub}</p>
+      </div>
+    </div>
+  );
+}
+
