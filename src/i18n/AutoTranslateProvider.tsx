@@ -80,14 +80,20 @@ type Target = TextTarget | AttrTarget;
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
-  const { language } = useLanguage();
+  const { language, translating, setTranslating } = useLanguage();
   const langRef = useRef(language);
   const scanScheduledRef = useRef(false);
   const inFlightRef = useRef<Set<string>>(new Set());
+  const setTranslatingRef = useRef(setTranslating);
+
+  useEffect(() => {
+    setTranslatingRef.current = setTranslating;
+  }, [setTranslating]);
 
   useEffect(() => {
     langRef.current = language;
   }, [language]);
+
 
   useEffect(() => {
     // On every language switch, wipe stale DOM translations back to their
@@ -123,7 +129,11 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     // English is the source language — nothing to translate.
-    if (language === "en") return;
+    if (language === "en") {
+      setTranslatingRef.current(false);
+      return;
+    }
+
 
     // Translate the WHOLE document for every non-English language — including
     // the built-in t() languages. t() handles the explicit keys, and the DOM
@@ -334,8 +344,24 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     };
 
 
-    // Initial scan
-    scheduleScan();
+    // Initial full translation pass — keep the overlay up until it resolves so
+    // the user sees a loading state while the page is being translated, then
+    // reveal the fully-translated page.
+    let safety: number | null = window.setTimeout(() => {
+      setTranslatingRef.current(false);
+    }, 12000);
+    (async () => {
+      try {
+        await processPending();
+      } finally {
+        if (!cancelled) {
+          if (safety) window.clearTimeout(safety);
+          safety = null;
+          setTranslatingRef.current(false);
+        }
+      }
+    })();
+
 
     // Observe DOM changes (route changes, dialogs, async content)
     observer = new MutationObserver((mutations) => {
@@ -380,9 +406,41 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       cancelled = true;
       if (debounceTimer) window.clearTimeout(debounceTimer);
       if (rescanTimer) window.clearTimeout(rescanTimer);
+      if (safety) window.clearTimeout(safety);
       observer?.disconnect();
     };
   }, [language]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <TranslatingOverlay show={translating} language={language} />
+    </>
+  );
 }
+
+const OVERLAY_TEXT: Record<string, { title: string; sub: string }> = {
+  fr: { title: "Traduction en cours…", sub: "Préparation de la page dans votre langue" },
+  de: { title: "Übersetzung läuft…", sub: "Die Seite wird in Ihrer Sprache vorbereitet" },
+  en: { title: "Translating…", sub: "Preparing the page in your language" },
+};
+
+function TranslatingOverlay({ show, language }: { show: boolean; language: string }) {
+  if (!show) return null;
+  const copy = OVERLAY_TEXT[language] ?? OVERLAY_TEXT.en;
+  return (
+    <div
+      data-no-translate
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-primary/30 border-t-primary" />
+      <div className="text-center">
+        <p className="text-sm font-semibold text-foreground">{copy.title}</p>
+        <p className="text-xs text-muted-foreground">{copy.sub}</p>
+      </div>
+    </div>
+  );
+}
+

@@ -4,32 +4,17 @@
 import enLocale from "./locales/en";
 import frLocale from "./locales/fr";
 import deLocale from "./locales/de";
-import esLocale from "./locales/es";
-import itLocale from "./locales/it";
-import ptLocale from "./locales/pt";
-import nlLocale from "./locales/nl";
-import plLocale from "./locales/pl";
 
-export type Language = "en" | "fr" | "de" | "es" | "it" | "pt" | "nl" | "pl";
+export type Language = "en" | "fr" | "de";
 
 export const languages: { code: Language; label: string; flag: string }[] = [
   { code: "en", label: "English", flag: "🇬🇧" },
   { code: "fr", label: "Français", flag: "🇫🇷" },
   { code: "de", label: "Deutsch", flag: "🇩🇪" },
-  { code: "es", label: "Español", flag: "🇪🇸" },
-  { code: "it", label: "Italiano", flag: "🇮🇹" },
-  { code: "pt", label: "Português", flag: "🇵🇹" },
-  { code: "nl", label: "Nederlands", flag: "🇳🇱" },
-  { code: "pl", label: "Polski", flag: "🇵🇱" },
 ];
 
 export const translations: Record<Language, Record<string, string>> = {
   en: enLocale,
   fr: frLocale,
   de: deLocale,
-  es: esLocale,
-  it: itLocale,
-  pt: ptLocale,
-  nl: nlLocale,
-  pl: plLocale,
 };

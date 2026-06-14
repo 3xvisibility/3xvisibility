@@ -22,6 +22,10 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string, vars?: Record<string, string | number>) => string;
+  /** True while the runtime DOM translator is processing a language switch. */
+  translating: boolean;
+  /** Internal — used by AutoTranslateProvider to signal completion. */
+  setTranslating: (v: boolean) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -39,8 +43,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return "en";
   });
 
+  const [translating, setTranslating] = useState(false);
+
   const setLanguage = useCallback((lang: Language) => {
-    setLanguageState(lang);
+    setLanguageState((prev) => {
+      // Show the translating overlay when switching to a language that needs
+      // runtime DOM translation (anything other than the English source).
+      if (lang !== prev) {
+        setTranslating(lang !== "en");
+      }
+      return lang;
+    });
     localStorage.setItem("language", lang);
     document.documentElement.lang = lang;
   }, []);
@@ -60,7 +73,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translating, setTranslating }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -69,6 +82,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 const fallback: LanguageContextType = {
   language: "en",
   setLanguage: () => {},
+  translating: false,
+  setTranslating: () => {},
   t: (key: string, vars?: Record<string, string | number>) => {
     const template = translations.en[key] ?? key;
 
