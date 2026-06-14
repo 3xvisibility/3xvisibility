@@ -769,17 +769,20 @@ export const reskinContent = (
 // HTML theme (teal + dark-navy palette, "Care for Your Smile" hero, service
 // cards, pricing, doctor, reviews, FAQ, contact). Every image is a REAL dental
 // stock photo (curated Unsplash IDs) so nothing looks generic / AI-made.
+// Exact dental imagery taken from the Dentexa reference theme, hosted on the
+// Lovable CDN so the marketplace template matches the reference 1:1.
 const DXA_IMG = {
-  hero: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1100&h=1200&fit=crop&auto=format&q=80",
-  about: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=900&h=760&fit=crop&auto=format&q=80",
-  doctor: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=900&h=900&fit=crop&auto=format&q=80",
-  cta: "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?w=1920&h=700&fit=crop&auto=format&q=80",
-  g1: "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=600&h=600&fit=crop&auto=format&q=80",
-  g2: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=600&h=600&fit=crop&auto=format&q=80",
-  g3: "https://images.unsplash.com/photo-1581056771107-24ca5f033842?w=600&h=600&fit=crop&auto=format&q=80",
-  g4: "https://images.unsplash.com/photo-1643297654416-05795d62e39c?w=600&h=600&fit=crop&auto=format&q=80",
-  g5: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=600&h=600&fit=crop&auto=format&q=80",
-  g6: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=600&h=600&fit=crop&auto=format&q=80",
+  hero: "/__l5e/assets-v1/270e4b3f-5439-4444-bf4f-e80d0f1a8e20/slides_slide-v1-1.jpg",
+  about: "/__l5e/assets-v1/4c053dd9-6491-48cd-a8e2-17345a9e40c9/about_about-v1-img.jpg",
+  doctor: "/__l5e/assets-v1/5b68b437-5e47-4b17-a90b-677011c026b8/resources_form-style1__image.jpg",
+  cta: "/__l5e/assets-v1/3a31b308-e1c6-485b-822c-a87180a4360f/parallax-background_slogan-bg.jpg",
+  g1: "/__l5e/assets-v1/de8d0ebe-5324-47f1-bfda-a75032e684c5/services_service-v1-1.jpg",
+  g2: "/__l5e/assets-v1/f8130d5d-ffc2-40de-a79e-e1cd77f96e7d/services_service-v1-2.jpg",
+  g3: "/__l5e/assets-v1/eacc371b-19d8-4c55-9409-32b54b466cd3/services_service-v1-3.jpg",
+  g4: "/__l5e/assets-v1/e7a13dea-16a9-458a-97ad-619ea1261758/resources_before-1.jpg",
+  g5: "/__l5e/assets-v1/3e7c6a66-c7c5-4ea2-b666-56a62d69e5ee/resources_after-1.jpg",
+  g6: "/__l5e/assets-v1/ca994f31-732d-482a-b39a-451630f5a271/slides_slide-v1-2.jpg",
+  review: "/__l5e/assets-v1/0aa309e0-d643-4005-ab21-2d44da174249/testimonial_testimonial-v1-1.jpg",
 };
 
 const dentexaTemplate = () => `<style>
@@ -997,9 +1000,9 @@ const dentexaTemplate = () => `<style>
   <section class="dxa-sec"><div class="dxa-wrap">
     <div class="dxa-head"><span class="dxa-eyebrow">Patient Reviews</span><h2 class="dxa-h">Loved by smiles across {city}</h2></div>
     <div class="dxa-revs">
-      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Honestly the most relaxed I've ever felt at a dentist. Gentle, friendly and totally painless."</p><footer><img src="https://i.pravatar.cc/96?img=47" alt=""/><div><b>Sarah Mitchell</b><small>Verified patient</small></div></footer></div>
-      <div class="dxa-rev"><div class="st">★★★★★</div><p>"My whitening results were incredible and the pricing was exactly what they quoted. Highly recommend {clinic_name}."</p><footer><img src="https://i.pravatar.cc/96?img=12" alt=""/><div><b>James Carter</b><small>Verified patient</small></div></footer></div>
-      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Dr. {doctor_name} is wonderful with my kids. They actually ask when our next visit is!"</p><footer><img src="https://i.pravatar.cc/96?img=32" alt=""/><div><b>Aisha Rahman</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Honestly the most relaxed I've ever felt at a dentist. Gentle, friendly and totally painless."</p><footer><img src="${DXA_IMG.review}" alt=""/><div><b>Sarah Mitchell</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"My whitening results were incredible and the pricing was exactly what they quoted. Highly recommend {clinic_name}."</p><footer><img src="${DXA_IMG.review}" alt=""/><div><b>James Carter</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Dr. {doctor_name} is wonderful with my kids. They actually ask when our next visit is!"</p><footer><img src="${DXA_IMG.review}" alt=""/><div><b>Aisha Rahman</b><small>Verified patient</small></div></footer></div>
     </div>
   </div></section>
 
