@@ -72,8 +72,8 @@ export function LandingFooter() {
 
   const handleComingSoon = (e: React.MouseEvent) => {
     e.preventDefault();
-    toast.info(t("footer.comingSoonTitle") || "Coming Soon", {
-      description: t("footer.comingSoonDesc") || "PrestaShop integration is under development. Stay tuned!",
+    toast.info(t("footer.comingSoonTitle"), {
+      description: t("footer.comingSoonDesc"),
     });
   };
 
@@ -108,11 +108,11 @@ export function LandingFooter() {
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2">
               <img src={logo3x} alt="3X Visibility logo" width={28} height={28} loading="lazy" className="h-7 w-7 rounded-lg" />
-              <span className="flex flex-col leading-none" data-no-translate translate="no">
-                <span className="text-sm font-bold tracking-tight">
+              <span className="flex flex-col leading-none">
+                <span className="text-sm font-bold tracking-tight" data-no-translate translate="no">
                   <span className="text-primary">3X</span>visibility
                 </span>
-                <span className="text-[8px] font-semibold uppercase tracking-[0.16em] text-[hsl(250,15%,45%)] mt-0.5">Build Smarter, Ranking Faster</span>
+                <span className="text-[8px] font-semibold uppercase tracking-[0.16em] text-[hsl(250,15%,45%)] mt-0.5">{t("brand.tagline")}</span>
               </span>
             </Link>
             <p className="mt-3 text-xs text-[hsl(250,15%,40%)] leading-relaxed max-w-[200px]">

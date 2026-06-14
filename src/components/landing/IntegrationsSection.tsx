@@ -94,7 +94,7 @@ export function IntegrationsSection() {
                   <div className="relative h-[52px] w-[52px] rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center shadow-lg hover:border-[hsl(96,90%,45%,0.3)] hover:shadow-[0_0_20px_hsl(96,90%,45%,0.1)] transition-all duration-300 cursor-pointer group">
                     <item.icon className="h-5 w-5 text-[hsl(220,10%,70%)] group-hover:text-[hsl(96,80%,52%)] transition-colors" />
                     {"soon" in item && item.soon && (
-                      <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[8px] font-semibold px-1.5 py-0.5 leading-none">Soon</span>
+                      <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[8px] font-semibold px-1.5 py-0.5 leading-none">{t("common.soon")}</span>
                     )}
                   </div>
                   <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>
@@ -110,7 +110,7 @@ export function IntegrationsSection() {
               <div className="relative h-12 w-12 rounded-xl bg-[hsl(220,40%,9%)] border border-[hsl(220,25%,16%)] flex items-center justify-center">
                 <item.icon className="h-5 w-5 text-[hsl(96,80%,52%)]" />
                 {"soon" in item && item.soon && (
-                  <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[8px] font-semibold px-1.5 py-0.5 leading-none">Soon</span>
+                  <span className="absolute -top-2 -right-2 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[8px] font-semibold px-1.5 py-0.5 leading-none">{t("common.soon")}</span>
                 )}
               </div>
               <span className="text-[10px] font-medium text-[hsl(220,10%,70%)]">{item.name}</span>

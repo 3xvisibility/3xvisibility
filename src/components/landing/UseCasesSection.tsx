@@ -143,7 +143,7 @@ export function UseCasesSection() {
                             <div className="h-2 w-2 rounded-full bg-[hsl(140,50%,40%,0.6)]" />
                           </div>
                           <span className="text-[9px] text-[hsl(220,10%,58%)] ml-2 font-mono">
-                            slug pattern
+                            {t("useCases.slugPattern")}
                           </span>
                         </div>
                         <div className="p-4 font-mono text-[12px] text-[hsl(96,80%,52%)] leading-relaxed break-all">

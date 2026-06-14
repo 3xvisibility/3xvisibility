@@ -2,18 +2,20 @@ import { Star } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 import { useLanguage } from "@/i18n/LanguageContext";
 
-const reviews = [
-  { name: "Sarah Chen", role: "SEO Director, GrowthHQ", avatar: "SC", text: "We generated 3,000 location pages in under 2 hours. Organic traffic increased 340% in 3 months." },
-  { name: "Marcus Johnson", role: "Agency Owner, PixelForge", avatar: "MJ", text: "Finally a tool that actually works with WordPress REST API. 12 clients onboarded, insane ROI." },
-  { name: "Emily Rodriguez", role: "Content Manager, TechScale", avatar: "ER", text: "Our team went from manually creating 10 pages/day to generating 500 in one click." },
-  { name: "David Park", role: "Founder, LocalSEO Pro", avatar: "DP", text: "Best investment for our agency. Template variables are incredibly flexible. 50+ campaigns monthly." },
-  { name: "Lisa Thompson", role: "Marketing Lead, ShopifyPlus", avatar: "LT", text: "Shopify integration works flawlessly. 800 product landing pages, 2x conversion increase." },
-  { name: "James Mitchell", role: "Head of Growth, ContentFarm", avatar: "JM", text: "We evaluated 5 tools. 3XVISIBILITY was the only one handling 10,000 pages/month without breaking." },
-  { name: "Anna Kowalski", role: "Digital Strategist, RankRise", avatar: "AK", text: "The field mapping UI is brilliant. Upload, map, generate. Cut workflow time by 90%." },
-  { name: "Robert Kim", role: "CTO, PageStack", avatar: "RK", text: "Clean API, solid WordPress integration, campaign monitoring is top-notch." },
+const reviewConfigs = [
+  { name: "Sarah Chen", roleKey: "reviews.role1", avatar: "SC", textKey: "reviews.text1" },
+  { name: "Marcus Johnson", roleKey: "reviews.role2", avatar: "MJ", textKey: "reviews.text2" },
+  { name: "Emily Rodriguez", roleKey: "reviews.role3", avatar: "ER", textKey: "reviews.text3" },
+  { name: "David Park", roleKey: "reviews.role4", avatar: "DP", textKey: "reviews.text4" },
+  { name: "Lisa Thompson", roleKey: "reviews.role5", avatar: "LT", textKey: "reviews.text5" },
+  { name: "James Mitchell", roleKey: "reviews.role6", avatar: "JM", textKey: "reviews.text6" },
+  { name: "Anna Kowalski", roleKey: "reviews.role7", avatar: "AK", textKey: "reviews.text7" },
+  { name: "Robert Kim", roleKey: "reviews.role8", avatar: "RK", textKey: "reviews.text8" },
 ];
 
-function ReviewCard({ review }: { review: typeof reviews[0] }) {
+type Review = { name: string; role: string; avatar: string; text: string };
+
+function ReviewCard({ review }: { review: Review }) {
   return (
     <div className="flex-shrink-0 w-[300px] rounded-2xl border border-[hsl(96,90%,45%,0.1)] bg-[hsl(220,40%,8%)] p-5 hover:border-[hsl(96,90%,45%,0.2)] transition-all duration-300">
       <div className="flex items-center gap-0.5 mb-3">
@@ -37,6 +39,12 @@ function ReviewCard({ review }: { review: typeof reviews[0] }) {
 
 export function ReviewsSection() {
   const { t } = useLanguage();
+  const reviews = reviewConfigs.map((review) => ({
+    name: review.name,
+    avatar: review.avatar,
+    role: t(review.roleKey),
+    text: t(review.textKey),
+  }));
   const allReviews = [...reviews, ...reviews];
 
   return (
