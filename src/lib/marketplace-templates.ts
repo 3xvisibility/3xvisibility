@@ -1921,64 +1921,12 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "Person",
   },
 
-  // 31. DentalFlow — premium dentist landing (inspired by dentalflowtemplate.webflow.io)
+  // 31. Dentexa — premium dentist landing (modelled on the Dentexa HTML theme)
   {
     id: "dentalflow-dentist",
-    name: "DentalFlow Dentist Studio",
-    description: "Premium, conversion-focused dentist landing page with hero booking, services, smile gallery, dentist team, patient reviews, pricing and FAQ — inspired by the DentalFlow webflow design.",
-    content: page(
-      hero({
-        bgKeywords: "dental clinic modern bright smile",
-        badge: "🦷 Modern dentistry in {city}",
-        title: "A healthier, brighter smile starts at {clinic_name}",
-        subtitle: "Gentle, modern dental care for the whole family in {city}, {state}. Same-day appointments, transparent pricing and a calming, anxiety-free experience.",
-        primaryCta: "📅 Book your visit",
-        secondaryCta: "📞 Call {phone}",
-        sig: 5,
-      }) +
-      trustStrip([
-        { num: "{years_experience}+", lbl: "Years Caring" },
-        { num: "{patients_count}+", lbl: "Happy Patients" },
-        { num: "4.9★", lbl: "Patient Rating" },
-        { num: "Same-Day", lbl: "Appointments" },
-      ]) +
-      featureGrid("Our services", "Complete dental care in {city}", "From routine check-ups to full smile makeovers — everything your family needs under one roof.", [
-        { icon: "🪥", title: "General & preventive", desc: "Cleanings, exams, fluoride and sealants to keep every smile healthy for life." },
-        { icon: "✨", title: "Cosmetic dentistry", desc: "Teeth whitening, veneers and bonding for a confident, camera-ready smile." },
-        { icon: "🦷", title: "Implants & restorative", desc: "Crowns, bridges and dental implants that look, feel and function naturally." },
-        { icon: "😬", title: "Clear aligners", desc: "Invisible, removable aligners to straighten teeth discreetly at any age." },
-        { icon: "🧒", title: "Family & kids", desc: "Friendly, patient care that makes children actually look forward to the dentist." },
-        { icon: "🚨", title: "Emergency care", desc: "In pain? We reserve same-day slots for dental emergencies across {city}." },
-      ]) +
-      aboutSplit("Why {clinic_name}", "Dentistry designed around your comfort", "{clinic_description} We combine the latest digital technology with a warm, judgment-free approach — so every visit feels calm, clear and completely in your control. Serving {city} and {nearby_areas}.", "dental office reception modern", 6) +
-      gallery("Smile gallery", "Real results from our {city} studio", ["happy patient smile", "dentist chair modern", "dental office reception", "teeth whitening result", "dental hygiene clean", "modern dental clinic"]) +
-      aboutSplit("Meet your dentist", "Dr. {doctor_name}", "{doctor_bio}", "dentist doctor friendly portrait", 7) +
-      defaultTestimonials +
-      featureGrid("Simple pricing", "Honest care, no surprises", "Transparent fees and flexible payment plans — we accept most major insurance.", [
-        { icon: "🧼", title: "New patient exam", desc: "Comprehensive exam, digital X-rays and cleaning from {price_checkup}." },
-        { icon: "💎", title: "Teeth whitening", desc: "Professional in-chair whitening from {price_whitening} for a brighter smile." },
-        { icon: "📐", title: "Clear aligners", desc: "Custom aligner treatment plans from {price_aligners}, financing available." },
-      ]) +
-      faq([
-        { q: "Do you accept my insurance?", a: "We accept most major dental insurance plans and offer flexible financing. Call {phone} and we'll verify your coverage in minutes." },
-        { q: "Are you taking new patients?", a: "Yes! {clinic_name} is welcoming new patients of all ages across {city} and {nearby_areas}. Book online or call {phone}." },
-        { q: "I'm nervous about the dentist — can you help?", a: "Absolutely. Our team specialises in anxiety-free care with gentle techniques and sedation options for a calm, comfortable visit." },
-        { q: "Do you offer emergency appointments?", a: "Yes — we hold same-day slots for dental emergencies. If you're in pain, call {phone} right away." },
-      ]) +
-      ctaBand({
-        bgKeywords: "dental smile bright clean",
-        title: "Ready to love your smile again?",
-        subtitle: "Book your appointment at {clinic_name} in {city} today — new patients always welcome.",
-        cta: "📅 Book your visit",
-        sig: 15,
-      }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "📍", label: "Address", value: "{address}" },
-        { icon: "🕐", label: "Hours", value: "Mon–Fri 9am–6pm · Sat 9am–1pm" },
-        { icon: "✉️", label: "Email", value: "{email}" },
-      ])
-    ),
+    name: "Dentexa Dental Studio",
+    description: "Premium, conversion-focused dentist landing page with a Dentexa-style teal design — hero booking, services, smile gallery, dentist profile, patient reviews, transparent pricing and FAQ. Uses real dental photography throughout.",
+    content: dentexaTemplate(),
     variables: [
       "{clinic_name}", "{city}", "{state}", "{phone}", "{email}", "{address}",
       "{clinic_description}", "{doctor_name}", "{doctor_bio}", "{nearby_areas}",
