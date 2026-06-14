@@ -764,6 +764,280 @@ export const reskinContent = (
   return applyPlatformTheme(inner, platform, variantId);
 };
 
+// ── Dentexa-style dentist template ──────────────────────────────────────────
+// A bespoke, self-contained dental landing page modelled closely on the Dentexa
+// HTML theme (teal + dark-navy palette, "Care for Your Smile" hero, service
+// cards, pricing, doctor, reviews, FAQ, contact). Every image is a REAL dental
+// stock photo (curated Unsplash IDs) so nothing looks generic / AI-made.
+const DXA_IMG = {
+  hero: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=1100&h=1200&fit=crop&auto=format&q=80",
+  about: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=900&h=760&fit=crop&auto=format&q=80",
+  doctor: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=900&h=900&fit=crop&auto=format&q=80",
+  cta: "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?w=1920&h=700&fit=crop&auto=format&q=80",
+  g1: "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=600&h=600&fit=crop&auto=format&q=80",
+  g2: "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=600&h=600&fit=crop&auto=format&q=80",
+  g3: "https://images.unsplash.com/photo-1581056771107-24ca5f033842?w=600&h=600&fit=crop&auto=format&q=80",
+  g4: "https://images.unsplash.com/photo-1643297654416-05795d62e39c?w=600&h=600&fit=crop&auto=format&q=80",
+  g5: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=600&h=600&fit=crop&auto=format&q=80",
+  g6: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=600&h=600&fit=crop&auto=format&q=80",
+};
+
+const dentexaTemplate = () => `<style>
+.dxa{--teal:#13b5b5;--teal-d:#0e9a9a;--navy:#16404a;--ink:#274247;--muted:#5d7378;--bg:#f1fafa;--line:rgba(19,181,181,.16);font-family:'Poppins','Segoe UI',system-ui,sans-serif;color:var(--ink);line-height:1.7;max-width:100%;position:relative;background:#fff}
+.dxa :where(*){box-sizing:border-box}
+.dxa h1,.dxa h2,.dxa h3,.dxa h4{font-family:'Playfair Display',Georgia,serif;color:var(--navy);margin:0;line-height:1.12;letter-spacing:-.01em}
+.dxa p{margin:0}
+.dxa a{text-decoration:none;color:inherit}
+.dxa-wrap{max-width:1180px;margin:0 auto;padding:0 1.25rem}
+.dxa-sec{padding:clamp(3.5rem,7vw,6rem) 0;position:relative}
+.dxa-eyebrow{display:inline-flex;align-items:center;gap:.5rem;color:var(--teal-d);font-weight:600;font-size:.95rem;letter-spacing:.04em;font-family:'Poppins',sans-serif;margin-bottom:.9rem}
+.dxa-eyebrow::before{content:'';width:26px;height:2px;background:var(--teal)}
+.dxa-h{font-size:clamp(1.9rem,4vw,3rem);font-weight:700}
+.dxa-lead{color:var(--muted);font-size:1.03rem;max-width:560px}
+.dxa-btn{display:inline-flex;align-items:center;gap:.55rem;background:var(--teal);color:#fff;padding:1rem 2.2rem;border-radius:6px;font-family:'Poppins',sans-serif;font-weight:600;font-size:.95rem;transition:background .25s,transform .25s,box-shadow .25s;box-shadow:0 12px 26px rgba(19,181,181,.28);border:none;cursor:pointer}
+.dxa-btn:hover{background:var(--navy);transform:translateY(-3px);box-shadow:0 16px 34px rgba(22,64,74,.3)}
+.dxa-btn-out{background:transparent;color:var(--navy);border:2px solid var(--line);box-shadow:none}
+.dxa-btn-out:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+/* top bar */
+.dxa-top{background:var(--navy);color:rgba(255,255,255,.85);font-family:'Poppins',sans-serif;font-size:.85rem}
+.dxa-top .dxa-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem 2rem;padding-top:.7rem;padding-bottom:.7rem}
+.dxa-top .dxa-ti{display:inline-flex;align-items:center;gap:.5rem}
+.dxa-top b{color:var(--teal)}
+/* hero */
+.dxa-hero{background:var(--bg);overflow:hidden;position:relative}
+.dxa-hero .dxa-wrap{display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:2.5rem;padding-top:clamp(3rem,6vw,5rem);padding-bottom:clamp(3rem,6vw,5rem)}
+.dxa-hero h1{font-size:clamp(2.4rem,5.2vw,4rem);font-weight:800}
+.dxa-hero h1 .hl{color:var(--teal)}
+.dxa-hero p{margin:1.25rem 0 1.5rem;max-width:480px}
+.dxa-checks{display:flex;flex-wrap:wrap;gap:.75rem 1.75rem;margin-bottom:2rem;font-family:'Poppins',sans-serif;font-weight:600;color:var(--navy)}
+.dxa-checks span{display:inline-flex;align-items:center;gap:.55rem}
+.dxa-checks span::before{content:'✓';display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--teal);color:#fff;font-size:.75rem}
+.dxa-hero-media{position:relative}
+.dxa-hero-media img{width:100%;aspect-ratio:11/12;object-fit:cover;border-radius:240px 240px 18px 18px;box-shadow:0 30px 70px rgba(22,64,74,.22)}
+.dxa-hero-badge{position:absolute;left:-12px;bottom:30px;background:#fff;border-radius:14px;padding:1rem 1.25rem;box-shadow:0 18px 40px rgba(22,64,74,.18);display:flex;align-items:center;gap:.8rem}
+.dxa-hero-badge .n{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--teal)}
+.dxa-hero-badge small{display:block;color:var(--muted);font-family:'Poppins',sans-serif;font-size:.78rem}
+/* features strip */
+.dxa-feat{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-top:-3.5rem;position:relative;z-index:3}
+.dxa-feat .c{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.6rem 1.4rem;box-shadow:0 16px 40px rgba(22,64,74,.08);transition:transform .3s,box-shadow .3s}
+.dxa-feat .c:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(19,181,181,.18)}
+.dxa-feat .ic{width:54px;height:54px;border-radius:14px;background:rgba(19,181,181,.12);color:var(--teal-d);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1rem}
+.dxa-feat h3{font-size:1.1rem;font-family:'Poppins',sans-serif;font-weight:700;color:var(--navy);margin-bottom:.4rem}
+.dxa-feat p{color:var(--muted);font-size:.9rem}
+/* split */
+.dxa-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,4vw,3.5rem);align-items:center}
+.dxa-split-media img{width:100%;border-radius:18px;aspect-ratio:5/4;object-fit:cover;box-shadow:0 26px 60px rgba(22,64,74,.18)}
+.dxa-mini{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.75rem}
+.dxa-mini .m{display:flex;gap:.8rem;align-items:flex-start}
+.dxa-mini .mi{width:42px;height:42px;flex:none;border-radius:10px;background:rgba(19,181,181,.12);color:var(--teal-d);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.dxa-mini b{display:block;color:var(--navy);font-family:'Poppins',sans-serif;font-size:.96rem}
+.dxa-mini small{color:var(--muted);font-size:.83rem}
+/* services */
+.dxa-services{background:var(--bg)}
+.dxa-head{text-align:center;max-width:640px;margin:0 auto 3rem}
+.dxa-head .dxa-eyebrow{justify-content:center}
+.dxa-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.dxa-svc{background:#fff;border-radius:16px;padding:2rem;border:1px solid var(--line);transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden}
+.dxa-svc::after{content:'';position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--teal);transition:width .35s}
+.dxa-svc:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(22,64,74,.12)}
+.dxa-svc:hover::after{width:100%}
+.dxa-svc .ic{width:64px;height:64px;border-radius:18px;background:var(--navy);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin-bottom:1.2rem;transition:background .3s,color .3s}
+.dxa-svc:hover .ic{background:var(--teal);color:#fff}
+.dxa-svc h3{font-size:1.25rem;font-family:'Poppins',sans-serif;font-weight:700;color:var(--navy);margin-bottom:.55rem}
+.dxa-svc p{color:var(--muted);font-size:.95rem}
+/* pricing */
+.dxa-grid3.price .dxa-svc{text-align:left}
+.dxa-pr{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:var(--teal-d);margin:.4rem 0 .2rem}
+.dxa-pr small{font-family:'Poppins',sans-serif;font-size:.85rem;color:var(--muted);font-weight:500}
+/* gallery */
+.dxa-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.dxa-gal img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;transition:transform .4s,box-shadow .4s}
+.dxa-gal img:hover{transform:scale(1.04);box-shadow:0 18px 40px rgba(19,181,181,.25)}
+/* doctor */
+.dxa-doc{background:var(--navy);color:rgba(255,255,255,.85)}
+.dxa-doc h2,.dxa-doc .dxa-mini b{color:#fff}
+.dxa-doc .dxa-eyebrow{color:var(--teal)}
+.dxa-doc-media img{width:100%;border-radius:18px;aspect-ratio:1;object-fit:cover;box-shadow:0 26px 60px rgba(0,0,0,.35)}
+.dxa-doc .dxa-mini small{color:rgba(255,255,255,.6)}
+.dxa-doc .dxa-mini .mi{background:rgba(19,181,181,.2);color:var(--teal)}
+/* reviews */
+.dxa-revs{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.dxa-rev{background:#fff;border:1px solid var(--line);border-radius:16px;padding:2rem;box-shadow:0 14px 36px rgba(22,64,74,.06)}
+.dxa-rev .st{color:#f5b301;letter-spacing:2px;margin-bottom:.9rem}
+.dxa-rev p{color:var(--ink);font-style:italic;line-height:1.75}
+.dxa-rev footer{display:flex;align-items:center;gap:.8rem;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--line)}
+.dxa-rev footer img{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.dxa-rev footer b{display:block;color:var(--navy);font-family:'Poppins',sans-serif}
+.dxa-rev footer small{color:var(--muted)}
+/* faq */
+.dxa-faq{max-width:780px;margin:0 auto}
+.dxa-faq details{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:.85rem;padding:1.1rem 1.4rem;transition:box-shadow .3s}
+.dxa-faq details[open]{box-shadow:0 14px 34px rgba(19,181,181,.12);border-color:var(--teal)}
+.dxa-faq summary{font-family:'Poppins',sans-serif;font-weight:600;color:var(--navy);cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:1rem}
+.dxa-faq summary::after{content:'+';color:var(--teal);font-size:1.4rem;line-height:1}
+.dxa-faq details[open] summary::after{content:'–'}
+.dxa-faq p{margin-top:.9rem;color:var(--muted)}
+/* cta band */
+.dxa-cta{position:relative;border-radius:0;overflow:hidden;text-align:center;background-size:cover;background-position:center}
+.dxa-cta::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(22,64,74,.92),rgba(14,154,154,.82))}
+.dxa-cta .dxa-wrap{position:relative;z-index:2;padding:clamp(3.5rem,7vw,5.5rem) 1.25rem;color:#fff}
+.dxa-cta h2{color:#fff;font-size:clamp(1.8rem,3.6vw,2.8rem)}
+.dxa-cta p{color:rgba(255,255,255,.9);max-width:560px;margin:1rem auto 1.8rem}
+.dxa-cta .dxa-btn{background:#fff;color:var(--navy)}
+.dxa-cta .dxa-btn:hover{background:var(--teal);color:#fff}
+/* contact */
+.dxa-contact{display:grid;grid-template-columns:.9fr 1.1fr;gap:2.5rem;align-items:start}
+.dxa-info{display:flex;flex-direction:column;gap:.4rem}
+.dxa-irow{display:flex;align-items:center;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}
+.dxa-irow .ic{width:48px;height:48px;flex:none;border-radius:12px;background:rgba(19,181,181,.12);color:var(--teal-d);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.dxa-irow small{display:block;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.dxa-irow b{color:var(--navy);font-family:'Poppins',sans-serif;font-weight:600}
+.dxa-form{background:#fff;border:1px solid var(--line);border-radius:18px;padding:2rem;box-shadow:0 18px 44px rgba(22,64,74,.08)}
+.dxa-form label{display:block;font-family:'Poppins',sans-serif;font-size:.85rem;font-weight:600;color:var(--navy);margin-bottom:.4rem}
+.dxa-fg{margin-bottom:1.1rem}
+.dxa-form input,.dxa-form textarea{width:100%;padding:.9rem 1.05rem;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--bg);color:var(--ink)}
+.dxa-form input:focus,.dxa-form textarea:focus{outline:none;border-color:var(--teal);background:#fff}
+@media(max-width:900px){.dxa-hero .dxa-wrap,.dxa-split,.dxa-contact,.dxa-doc .dxa-split{grid-template-columns:1fr}.dxa-feat{grid-template-columns:repeat(2,1fr);margin-top:2rem}.dxa-grid3,.dxa-revs,.dxa-gal{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.dxa-feat,.dxa-grid3,.dxa-revs,.dxa-gal,.dxa-mini{grid-template-columns:1fr}}
+</style>
+<div class="dxa">
+  <div class="dxa-top"><div class="dxa-wrap">
+    <span class="dxa-ti">😀 Welcome to <b>{clinic_name}</b> — Best Quality Dental Care</span>
+    <span class="dxa-ti">📞 <b>{phone}</b> &nbsp; ✉️ {email}</span>
+  </div></div>
+
+  <header class="dxa-hero"><div class="dxa-wrap">
+    <div>
+      <span class="dxa-eyebrow">Care for Your Smile</span>
+      <h1>Quality <span class="hl">Dental</span> Experience in {city}</h1>
+      <p>{clinic_description} Gentle, modern dentistry for the whole family in {city}, {state} — with same-day appointments and a calm, anxiety-free experience.</p>
+      <div class="dxa-checks"><span>Dental Surgery</span><span>Dental Implants</span><span>Cosmetic Care</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:1rem">
+        <a href="#contact" class="dxa-btn">📅 Book An Appointment</a>
+        <a href="#services" class="dxa-btn dxa-btn-out">Explore Services</a>
+      </div>
+    </div>
+    <div class="dxa-hero-media">
+      <img src="${DXA_IMG.hero}" alt="Dentist treating a patient at {clinic_name}"/>
+      <div class="dxa-hero-badge"><span class="n">{years_experience}+</span><div><b style="font-family:'Poppins',sans-serif;color:#16404a">Years</b><small>of trusted dental care</small></div></div>
+    </div>
+  </div></header>
+
+  <div class="dxa-wrap">
+    <div class="dxa-feat">
+      <div class="c"><div class="ic">🦷</div><h3>Modern Equipment</h3><p>Digital X-rays & latest dental technology for precise, comfortable care.</p></div>
+      <div class="c"><div class="ic">👩‍⚕️</div><h3>Expert Dentists</h3><p>Caring, highly-trained specialists for every member of your family.</p></div>
+      <div class="c"><div class="ic">⏰</div><h3>Same-Day Care</h3><p>Emergency slots reserved daily so you're never left in pain.</p></div>
+      <div class="c"><div class="ic">💳</div><h3>Easy Payments</h3><p>Transparent pricing and flexible plans — most insurance accepted.</p></div>
+    </div>
+  </div>
+
+  <section class="dxa-sec"><div class="dxa-wrap"><div class="dxa-split">
+    <div class="dxa-split-media"><img src="${DXA_IMG.about}" alt="Modern dental clinic interior"/></div>
+    <div>
+      <span class="dxa-eyebrow">About {clinic_name}</span>
+      <h2 class="dxa-h">Trusted dental care center for your family</h2>
+      <p class="dxa-lead" style="margin-top:1rem">We combine the latest digital technology with a warm, judgment-free approach — so every visit feels calm, clear and completely in your control. Serving {city} and {nearby_areas}.</p>
+      <div class="dxa-mini">
+        <div class="m"><div class="mi">😁</div><div><b>Gentle Treatment</b><small>Pain-free, relaxing visits</small></div></div>
+        <div class="m"><div class="mi">🏆</div><div><b>{patients_count}+ Patients</b><small>Smiles transformed</small></div></div>
+        <div class="m"><div class="mi">🦷</div><div><b>Full-Service Clinic</b><small>Everything under one roof</small></div></div>
+        <div class="m"><div class="mi">🤝</div><div><b>Personal Care</b><small>Treatment built around you</small></div></div>
+      </div>
+    </div>
+  </div></div></section>
+
+  <section class="dxa-sec dxa-services" id="services"><div class="dxa-wrap">
+    <div class="dxa-head"><span class="dxa-eyebrow">Our Services</span><h2 class="dxa-h">Complete dental care in {city}</h2><p class="dxa-lead" style="margin:1rem auto 0">From routine check-ups to full smile makeovers — everything your family needs under one roof.</p></div>
+    <div class="dxa-grid3">
+      <div class="dxa-svc"><div class="ic">🪥</div><h3>General & Preventive</h3><p>Cleanings, exams, fluoride and sealants to keep every smile healthy for life.</p></div>
+      <div class="dxa-svc"><div class="ic">✨</div><h3>Cosmetic Dentistry</h3><p>Teeth whitening, veneers and bonding for a confident, camera-ready smile.</p></div>
+      <div class="dxa-svc"><div class="ic">🦷</div><h3>Implants & Restorative</h3><p>Crowns, bridges and dental implants that look, feel and function naturally.</p></div>
+      <div class="dxa-svc"><div class="ic">😬</div><h3>Clear Aligners</h3><p>Invisible, removable aligners to straighten teeth discreetly at any age.</p></div>
+      <div class="dxa-svc"><div class="ic">🧒</div><h3>Family & Kids</h3><p>Friendly care that makes children actually look forward to the dentist.</p></div>
+      <div class="dxa-svc"><div class="ic">🚨</div><h3>Emergency Care</h3><p>In pain? We reserve same-day slots for dental emergencies across {city}.</p></div>
+    </div>
+  </div></section>
+
+  <section class="dxa-sec"><div class="dxa-wrap">
+    <div class="dxa-head"><span class="dxa-eyebrow">Smile Gallery</span><h2 class="dxa-h">Real results from our {city} studio</h2></div>
+    <div class="dxa-gal">
+      <img src="${DXA_IMG.g1}" alt="Patient dental checkup"/>
+      <img src="${DXA_IMG.g2}" alt="Bright healthy smile"/>
+      <img src="${DXA_IMG.g3}" alt="Dental treatment in progress"/>
+      <img src="${DXA_IMG.g4}" alt="Dental hygiene cleaning"/>
+      <img src="${DXA_IMG.g5}" alt="Happy patient smile"/>
+      <img src="${DXA_IMG.g6}" alt="Dentist with patient"/>
+    </div>
+  </div></section>
+
+  <section class="dxa-sec dxa-doc"><div class="dxa-wrap"><div class="dxa-split">
+    <div class="dxa-doc-media"><img src="${DXA_IMG.doctor}" alt="Dr. {doctor_name}, lead dentist"/></div>
+    <div>
+      <span class="dxa-eyebrow">Meet Your Dentist</span>
+      <h2 class="dxa-h">Dr. {doctor_name}</h2>
+      <p class="dxa-lead" style="margin-top:1rem;color:rgba(255,255,255,.78)">{doctor_bio}</p>
+      <div class="dxa-mini">
+        <div class="m"><div class="mi">🎓</div><div><b>{years_experience}+ Years</b><small>Clinical experience</small></div></div>
+        <div class="m"><div class="mi">⭐</div><div><b>4.9 Rating</b><small>From {patients_count}+ patients</small></div></div>
+      </div>
+      <a href="#contact" class="dxa-btn" style="margin-top:1.8rem;background:var(--teal);color:#fff">📅 Book With Dr. {doctor_name}</a>
+    </div>
+  </div></div></section>
+
+  <section class="dxa-sec dxa-services"><div class="dxa-wrap">
+    <div class="dxa-head"><span class="dxa-eyebrow">Simple Pricing</span><h2 class="dxa-h">Honest care, no surprises</h2><p class="dxa-lead" style="margin:1rem auto 0">Transparent fees and flexible payment plans — we accept most major insurance.</p></div>
+    <div class="dxa-grid3 price">
+      <div class="dxa-svc"><div class="ic">🧼</div><h3>New Patient Exam</h3><div class="dxa-pr">{price_checkup}</div><p>Comprehensive exam, digital X-rays and a professional cleaning.</p></div>
+      <div class="dxa-svc"><div class="ic">💎</div><h3>Teeth Whitening</h3><div class="dxa-pr">{price_whitening}</div><p>Professional in-chair whitening for a noticeably brighter smile.</p></div>
+      <div class="dxa-svc"><div class="ic">📐</div><h3>Clear Aligners</h3><div class="dxa-pr">{price_aligners}</div><p>Custom aligner treatment plans with flexible financing available.</p></div>
+    </div>
+  </div></section>
+
+  <section class="dxa-sec"><div class="dxa-wrap">
+    <div class="dxa-head"><span class="dxa-eyebrow">Patient Reviews</span><h2 class="dxa-h">Loved by smiles across {city}</h2></div>
+    <div class="dxa-revs">
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Honestly the most relaxed I've ever felt at a dentist. Gentle, friendly and totally painless."</p><footer><img src="https://i.pravatar.cc/96?img=47" alt=""/><div><b>Sarah Mitchell</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"My whitening results were incredible and the pricing was exactly what they quoted. Highly recommend {clinic_name}."</p><footer><img src="https://i.pravatar.cc/96?img=12" alt=""/><div><b>James Carter</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Dr. {doctor_name} is wonderful with my kids. They actually ask when our next visit is!"</p><footer><img src="https://i.pravatar.cc/96?img=32" alt=""/><div><b>Aisha Rahman</b><small>Verified patient</small></div></footer></div>
+    </div>
+  </div></section>
+
+  <section class="dxa-sec dxa-services"><div class="dxa-wrap">
+    <div class="dxa-head"><span class="dxa-eyebrow">FAQ</span><h2 class="dxa-h">Frequently asked questions</h2></div>
+    <div class="dxa-faq">
+      <details open><summary>Do you accept my insurance?</summary><p>We accept most major dental insurance plans and offer flexible financing. Call {phone} and we'll verify your coverage in minutes.</p></details>
+      <details><summary>Are you taking new patients?</summary><p>Yes! {clinic_name} is welcoming new patients of all ages across {city} and {nearby_areas}. Book online or call {phone}.</p></details>
+      <details><summary>I'm nervous about the dentist — can you help?</summary><p>Absolutely. Our team specialises in anxiety-free care with gentle techniques and sedation options for a calm, comfortable visit.</p></details>
+      <details><summary>Do you offer emergency appointments?</summary><p>Yes — we hold same-day slots for dental emergencies. If you're in pain, call {phone} right away.</p></details>
+    </div>
+  </div></section>
+
+  <section class="dxa-cta" style="background-image:url('${DXA_IMG.cta}')"><div class="dxa-wrap">
+    <h2>Ready to love your smile again?</h2>
+    <p>Book your appointment at {clinic_name} in {city} today — new patients are always welcome.</p>
+    <a href="#contact" class="dxa-btn">📅 Book Your Visit</a>
+  </div></section>
+
+  <section class="dxa-sec" id="contact"><div class="dxa-wrap">
+    <div class="dxa-head"><span class="dxa-eyebrow">Contact</span><h2 class="dxa-h">Get in touch with {clinic_name}</h2></div>
+    <div class="dxa-contact">
+      <div class="dxa-info">
+        <div class="dxa-irow"><div class="ic">📞</div><div><small>Phone</small><b>{phone}</b></div></div>
+        <div class="dxa-irow"><div class="ic">📍</div><div><small>Address</small><b>{address}</b></div></div>
+        <div class="dxa-irow"><div class="ic">🕐</div><div><small>Hours</small><b>Mon–Fri 9am–6pm · Sat 9am–1pm</b></div></div>
+        <div class="dxa-irow"><div class="ic">✉️</div><div><small>Email</small><b>{email}</b></div></div>
+      </div>
+      <div class="dxa-form">
+        <div class="dxa-fg"><label>Name</label><input type="text" placeholder="Your name"/></div>
+        <div class="dxa-fg"><label>Email</label><input type="email" placeholder="you@email.com"/></div>
+        <div class="dxa-fg"><label>Message</label><textarea rows="4" placeholder="How can we help your smile?"></textarea></div>
+        <button class="dxa-btn" style="width:100%;justify-content:center">Send Message</button>
+      </div>
+    </div>
+  </div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
@@ -1647,64 +1921,12 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "Person",
   },
 
-  // 31. DentalFlow — premium dentist landing (inspired by dentalflowtemplate.webflow.io)
+  // 31. Dentexa — premium dentist landing (modelled on the Dentexa HTML theme)
   {
     id: "dentalflow-dentist",
-    name: "DentalFlow Dentist Studio",
-    description: "Premium, conversion-focused dentist landing page with hero booking, services, smile gallery, dentist team, patient reviews, pricing and FAQ — inspired by the DentalFlow webflow design.",
-    content: page(
-      hero({
-        bgKeywords: "dental clinic modern bright smile",
-        badge: "🦷 Modern dentistry in {city}",
-        title: "A healthier, brighter smile starts at {clinic_name}",
-        subtitle: "Gentle, modern dental care for the whole family in {city}, {state}. Same-day appointments, transparent pricing and a calming, anxiety-free experience.",
-        primaryCta: "📅 Book your visit",
-        secondaryCta: "📞 Call {phone}",
-        sig: 5,
-      }) +
-      trustStrip([
-        { num: "{years_experience}+", lbl: "Years Caring" },
-        { num: "{patients_count}+", lbl: "Happy Patients" },
-        { num: "4.9★", lbl: "Patient Rating" },
-        { num: "Same-Day", lbl: "Appointments" },
-      ]) +
-      featureGrid("Our services", "Complete dental care in {city}", "From routine check-ups to full smile makeovers — everything your family needs under one roof.", [
-        { icon: "🪥", title: "General & preventive", desc: "Cleanings, exams, fluoride and sealants to keep every smile healthy for life." },
-        { icon: "✨", title: "Cosmetic dentistry", desc: "Teeth whitening, veneers and bonding for a confident, camera-ready smile." },
-        { icon: "🦷", title: "Implants & restorative", desc: "Crowns, bridges and dental implants that look, feel and function naturally." },
-        { icon: "😬", title: "Clear aligners", desc: "Invisible, removable aligners to straighten teeth discreetly at any age." },
-        { icon: "🧒", title: "Family & kids", desc: "Friendly, patient care that makes children actually look forward to the dentist." },
-        { icon: "🚨", title: "Emergency care", desc: "In pain? We reserve same-day slots for dental emergencies across {city}." },
-      ]) +
-      aboutSplit("Why {clinic_name}", "Dentistry designed around your comfort", "{clinic_description} We combine the latest digital technology with a warm, judgment-free approach — so every visit feels calm, clear and completely in your control. Serving {city} and {nearby_areas}.", "dental office reception modern", 6) +
-      gallery("Smile gallery", "Real results from our {city} studio", ["happy patient smile", "dentist chair modern", "dental office reception", "teeth whitening result", "dental hygiene clean", "modern dental clinic"]) +
-      aboutSplit("Meet your dentist", "Dr. {doctor_name}", "{doctor_bio}", "dentist doctor friendly portrait", 7) +
-      defaultTestimonials +
-      featureGrid("Simple pricing", "Honest care, no surprises", "Transparent fees and flexible payment plans — we accept most major insurance.", [
-        { icon: "🧼", title: "New patient exam", desc: "Comprehensive exam, digital X-rays and cleaning from {price_checkup}." },
-        { icon: "💎", title: "Teeth whitening", desc: "Professional in-chair whitening from {price_whitening} for a brighter smile." },
-        { icon: "📐", title: "Clear aligners", desc: "Custom aligner treatment plans from {price_aligners}, financing available." },
-      ]) +
-      faq([
-        { q: "Do you accept my insurance?", a: "We accept most major dental insurance plans and offer flexible financing. Call {phone} and we'll verify your coverage in minutes." },
-        { q: "Are you taking new patients?", a: "Yes! {clinic_name} is welcoming new patients of all ages across {city} and {nearby_areas}. Book online or call {phone}." },
-        { q: "I'm nervous about the dentist — can you help?", a: "Absolutely. Our team specialises in anxiety-free care with gentle techniques and sedation options for a calm, comfortable visit." },
-        { q: "Do you offer emergency appointments?", a: "Yes — we hold same-day slots for dental emergencies. If you're in pain, call {phone} right away." },
-      ]) +
-      ctaBand({
-        bgKeywords: "dental smile bright clean",
-        title: "Ready to love your smile again?",
-        subtitle: "Book your appointment at {clinic_name} in {city} today — new patients always welcome.",
-        cta: "📅 Book your visit",
-        sig: 15,
-      }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "📍", label: "Address", value: "{address}" },
-        { icon: "🕐", label: "Hours", value: "Mon–Fri 9am–6pm · Sat 9am–1pm" },
-        { icon: "✉️", label: "Email", value: "{email}" },
-      ])
-    ),
+    name: "Dentexa Dental Studio",
+    description: "Premium, conversion-focused dentist landing page with a Dentexa-style teal design — hero booking, services, smile gallery, dentist profile, patient reviews, transparent pricing and FAQ. Uses real dental photography throughout.",
+    content: dentexaTemplate(),
     variables: [
       "{clinic_name}", "{city}", "{state}", "{phone}", "{email}", "{address}",
       "{clinic_description}", "{doctor_name}", "{doctor_bio}", "{nearby_areas}",
