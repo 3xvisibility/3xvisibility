@@ -129,7 +129,11 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     // English is the source language — nothing to translate.
-    if (language === "en") return;
+    if (language === "en") {
+      setTranslatingRef.current(false);
+      return;
+    }
+
 
     // Translate the WHOLE document for every non-English language — including
     // the built-in t() languages. t() handles the explicit keys, and the DOM
