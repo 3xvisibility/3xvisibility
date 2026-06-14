@@ -1000,9 +1000,9 @@ const dentexaTemplate = () => `<style>
   <section class="dxa-sec"><div class="dxa-wrap">
     <div class="dxa-head"><span class="dxa-eyebrow">Patient Reviews</span><h2 class="dxa-h">Loved by smiles across {city}</h2></div>
     <div class="dxa-revs">
-      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Honestly the most relaxed I've ever felt at a dentist. Gentle, friendly and totally painless."</p><footer><img src="https://i.pravatar.cc/96?img=47" alt=""/><div><b>Sarah Mitchell</b><small>Verified patient</small></div></footer></div>
-      <div class="dxa-rev"><div class="st">★★★★★</div><p>"My whitening results were incredible and the pricing was exactly what they quoted. Highly recommend {clinic_name}."</p><footer><img src="https://i.pravatar.cc/96?img=12" alt=""/><div><b>James Carter</b><small>Verified patient</small></div></footer></div>
-      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Dr. {doctor_name} is wonderful with my kids. They actually ask when our next visit is!"</p><footer><img src="https://i.pravatar.cc/96?img=32" alt=""/><div><b>Aisha Rahman</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Honestly the most relaxed I've ever felt at a dentist. Gentle, friendly and totally painless."</p><footer><img src="${DXA_IMG.review}" alt=""/><div><b>Sarah Mitchell</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"My whitening results were incredible and the pricing was exactly what they quoted. Highly recommend {clinic_name}."</p><footer><img src="${DXA_IMG.review}" alt=""/><div><b>James Carter</b><small>Verified patient</small></div></footer></div>
+      <div class="dxa-rev"><div class="st">★★★★★</div><p>"Dr. {doctor_name} is wonderful with my kids. They actually ask when our next visit is!"</p><footer><img src="${DXA_IMG.review}" alt=""/><div><b>Aisha Rahman</b><small>Verified patient</small></div></footer></div>
     </div>
   </div></section>
 
