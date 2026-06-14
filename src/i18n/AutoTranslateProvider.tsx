@@ -344,8 +344,24 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     };
 
 
-    // Initial scan
-    scheduleScan();
+    // Initial full translation pass — keep the overlay up until it resolves so
+    // the user sees a loading state while the page is being translated, then
+    // reveal the fully-translated page.
+    let safety: number | null = window.setTimeout(() => {
+      setTranslatingRef.current(false);
+    }, 12000);
+    (async () => {
+      try {
+        await processPending();
+      } finally {
+        if (!cancelled) {
+          if (safety) window.clearTimeout(safety);
+          safety = null;
+          setTranslatingRef.current(false);
+        }
+      }
+    })();
+
 
     // Observe DOM changes (route changes, dialogs, async content)
     observer = new MutationObserver((mutations) => {
