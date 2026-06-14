@@ -328,7 +328,7 @@ export function HeroSection() {
                               <span className="text-[10px] text-[hsl(220,10%,78%)]">{item.name}</span>
                             </div>
                             {item.soon ? (
-                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 font-medium">Coming Soon</span>
+                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 font-medium">{t("footer.comingSoon")}</span>
                             ) : item.connected ? (
                               <span className="text-[8px] px-2 py-0.5 rounded-full bg-[hsl(142,76%,36%,0.15)] text-[hsl(142,76%,50%)] font-medium">{t("common.connected")}</span>
                             ) : (

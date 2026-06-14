@@ -52,7 +52,7 @@ export function BrandLogos() {
                 {logo.name}
               </span>
               {"soon" in logo && logo.soon && (
-                <span className="rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[9px] font-semibold px-1.5 py-0.5 leading-none whitespace-nowrap">Soon</span>
+                <span className="rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 text-[9px] font-semibold px-1.5 py-0.5 leading-none whitespace-nowrap">{t("common.soon")}</span>
               )}
             </div>
           ))}

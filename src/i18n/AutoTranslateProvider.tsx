@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 
 
-const CACHE_PREFIX = "auto-tr5:";
+const CACHE_PREFIX = "auto-tr6:";
 const BATCH_SIZE = 100;
 const DEBOUNCE_MS = 250;
 
@@ -34,6 +34,7 @@ const SHOULD_SKIP_TEXT = (s: string): boolean => {
   const t = s.trim();
   if (!t) return true;
   if (t.length < 2) return true;
+  if (isProtectedNoop(t)) return true;
   // Only digits, punctuation, currency, etc.
   if (!/[A-Za-z\u00C0-\u024F]/.test(t)) return true;
   return false;
