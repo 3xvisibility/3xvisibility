@@ -80,14 +80,20 @@ type Target = TextTarget | AttrTarget;
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
-  const { language } = useLanguage();
+  const { language, translating, setTranslating } = useLanguage();
   const langRef = useRef(language);
   const scanScheduledRef = useRef(false);
   const inFlightRef = useRef<Set<string>>(new Set());
+  const setTranslatingRef = useRef(setTranslating);
+
+  useEffect(() => {
+    setTranslatingRef.current = setTranslating;
+  }, [setTranslating]);
 
   useEffect(() => {
     langRef.current = language;
   }, [language]);
+
 
   useEffect(() => {
     // On every language switch, wipe stale DOM translations back to their
