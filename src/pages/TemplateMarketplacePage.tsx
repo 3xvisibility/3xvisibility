@@ -55,6 +55,9 @@ export default function TemplateMarketplacePage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
+  // Reset uploaded CSV when switching templates.
+  useEffect(() => { setUploadedCsv([]); }, [previewTemplate?.id]);
+
   const handleCsvUpload = async (file: File) => {
     try {
       const { rowData } = await parseUploadedFile(file);
