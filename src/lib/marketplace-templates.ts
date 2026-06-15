@@ -2017,7 +2017,7 @@ const refitTemplate = () => `<style>
       <a href="#contact" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
     </div>
     <div class="rf-shot">
-      <img src="${RF_IMG.hero}" alt="Home renovation by {company_name}"/>
+      <img src="{hero_image}" alt="Home renovation by {company_name}"/>
       <div class="rf-quote"><div class="st">★★★★★</div>"{hero_quote}"</div>
     </div>
   </div></header>
