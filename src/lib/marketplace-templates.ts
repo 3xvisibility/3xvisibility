@@ -28,6 +28,20 @@ export interface MarketplaceTemplate {
   platform?: "wordpress" | "shopify" | "prestashop" | "generic";
   isShared?: boolean;
   shared_id?: string;
+  /** Sensible default values used to fill {variables} in the preview so no section looks empty. */
+  defaultValues?: Record<string, string>;
+}
+
+/**
+ * Replace simple {variable} placeholders with provided default values for preview
+ * rendering. Leaves transforms, spintax, conditionals and dynamic blocks untouched
+ * (those contain `|`, `:`, or `{{`), and keeps unknown variables as-is.
+ */
+export function applyTemplateDefaults(content: string, defaults?: Record<string, string>): string {
+  if (!defaults) return content;
+  return content.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (match, name: string) =>
+    Object.prototype.hasOwnProperty.call(defaults, name) ? defaults[name] : match
+  );
 }
 
 // ── Shared base styles ─────────────────────────────────────────────────────
@@ -1543,6 +1557,98 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     seo_title_pattern: "{headline} | {product_name}",
     seo_description_pattern: "{subheadline}",
     schema_type: "WebPage",
+    defaultValues: {
+      product_name: "LanderX",
+      headline: "Launch your SaaS faster than ever before",
+      subheadline: "The all-in-one platform that helps startups ship, scale and convert — with zero engineering overhead.",
+      cta_text: "Get Started Free",
+      secondary_cta_text: "Book a Demo",
+      customers_count: "15,374+",
+      customers_label: "other loving customers",
+      benefits_eyebrow: "Benefits",
+      benefits_title: "Why Choose LanderX?",
+      benefits_subtitle: "Innovative tools and powerful insights designed to elevate your business.",
+      feature_1_title: "Affordable Pricing",
+      feature_1_desc: "Transparent, flexible plans that scale with you — no hidden fees, no surprises.",
+      feature_2_title: "Powerful Analytics",
+      feature_2_desc: "Track every metric that matters with real-time dashboards and actionable insights.",
+      feature_3_title: "Scalable Plans",
+      feature_3_desc: "Choose plans that adapt to your business needs, offering unparalleled scalability and cost-effectiveness.",
+      feature_4_title: "Secure Transactions",
+      feature_4_desc: "Prioritize safety with cutting-edge encryption and robust security features for every interaction.",
+      feature_5_title: "Adaptive Systems",
+      feature_5_desc: "Leverage AI-driven systems that evolve with your business, ensuring efficiency at every step.",
+      feature_6_title: "Dedicated Support",
+      feature_6_desc: "Access expert assistance 24/7 to ensure you're never alone on your growth journey.",
+      reviews_eyebrow: "Wall of love",
+      reviews_title: "Loved by thinkers",
+      reviews_subtitle: "Here's what people worldwide are saying about us.",
+      review_1_text: "\"Highly intuitive and polished. It's everything we needed and more!\"",
+      review_1_name: "Alex Jonas",
+      review_1_role: "JS Marketing",
+      review_2_text: "\"This is truly incredible and has saved us countless hours!\"",
+      review_2_name: "John Robert",
+      review_2_role: "SM Strategy",
+      review_3_text: "\"Pure brilliance! This has streamlined our workflow massively.\"",
+      review_3_name: "Maggie Hue",
+      review_3_role: "BS Growth CEO",
+      review_4_text: "\"A top-notch solution! It's been transformative for our entire team.\"",
+      review_4_name: "Tappo Kao",
+      review_4_role: "PO Marketing",
+      review_5_text: "\"Amazing product! It's made our processes seamless and effective.\"",
+      review_5_name: "Jack Hanma",
+      review_5_role: "JK Finance",
+      review_6_text: "\"Incredible design and functionality! This has exceeded our expectations.\"",
+      review_6_name: "John Robert",
+      review_6_role: "JO Strategy",
+      pricing_eyebrow: "Pricing & plans",
+      pricing_title: "Flexible Pricing Plans",
+      pricing_subtitle: "Choose a plan that fits your business needs and unlock the full potential of our platform.",
+      price_period: "month",
+      plan_cta_text: "Get Started Now",
+      plan_starter_name: "Starter",
+      price_starter: "$19",
+      plan_starter_feature_1: "Unlimited AI usage",
+      plan_starter_feature_2: "Premium support",
+      plan_starter_feature_3: "Customer care on point",
+      plan_starter_feature_4: "Collaboration tools",
+      plan_starter_feature_5: "Regular updates",
+      plan_pro_badge: "Popular",
+      plan_pro_name: "Pro",
+      price_pro: "$49",
+      plan_pro_feature_1: "Integrations with 3rd-party",
+      plan_pro_feature_2: "Advanced analytics",
+      plan_pro_feature_3: "Team performance tracking",
+      plan_pro_feature_4: "Top grade security",
+      plan_pro_feature_5: "Priority customer support",
+      plan_pro_feature_6: "Detailed usage reports",
+      plan_enterprise_name: "Enterprise",
+      price_enterprise: "Custom",
+      plan_enterprise_feature_1: "Dedicated account manager",
+      plan_enterprise_feature_2: "Custom reports & dashboards",
+      plan_enterprise_feature_3: "Tailored onboarding & training",
+      plan_enterprise_feature_4: "Customizable API access",
+      plan_enterprise_feature_5: "Dedicated success manager",
+      founder_eyebrow: "Founder's note",
+      founder_quote: "\"We gather your site data. We know your target audience & how your brand can stand out from the crowd. Best part is we also help you with solutions.\"",
+      founder_name: "Daniel Carter",
+      founder_role: "Co-founder & ex-Google designer",
+      faq_eyebrow: "FAQ's section",
+      faq_title: "Some Common FAQ's",
+      faq_subtitle: "Get answers to your questions and learn about our platform.",
+      faq_1_question: "What makes LanderX unique?",
+      faq_1_answer: "LanderX is designed to streamline your SaaS or startup's online presence with modern, user-centric design and seamless functionality, ensuring you stand out from competitors.",
+      faq_2_question: "Can I customize it to match my brand?",
+      faq_2_answer: "Absolutely! Everything is fully customizable, allowing you to change colors, fonts, images, and content to perfectly align with your brand identity.",
+      faq_3_question: "Is it optimized for SEO and speed?",
+      faq_3_answer: "Yes — built for exceptional performance, fast loading times, and SEO-friendly structure to boost your online visibility.",
+      faq_4_question: "Is it mobile-friendly?",
+      faq_4_answer: "Yes, fully responsive, ensuring a seamless user experience across desktop, tablet, and mobile devices.",
+      faq_5_question: "Can I use this for commercial projects?",
+      faq_5_answer: "Yes. You're free to use it for both personal and commercial projects — no attribution required.",
+      bottom_cta_headline: "Ready to grow your business?",
+      bottom_cta_description: "Join thousands of teams already shipping faster with LanderX. Start your free trial today.",
+    },
   },
 
   // 4. SEO Blog post

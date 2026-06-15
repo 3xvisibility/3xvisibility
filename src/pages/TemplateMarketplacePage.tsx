@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
-import { COMMUNITY_TEMPLATES, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
 const CATEGORIES = [
   { id: "all", label: "All", icon: Store },
@@ -424,7 +424,7 @@ export default function TemplateMarketplacePage() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="preview" className="mt-3">
-                    <TemplatePreview html={previewTemplate.content} />
+                    <TemplatePreview html={applyTemplateDefaults(previewTemplate.content, previewTemplate.defaultValues)} />
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">
                     <pre className="p-4 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-64 overflow-y-auto">
