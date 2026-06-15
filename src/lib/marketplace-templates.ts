@@ -1473,6 +1473,225 @@ const landerxTemplate = () => `<style>
   </div></section>
 </div>`;
 
+// ── Gardener template (modelled 1:1 on gardener.framer.media) ────────────────
+const GD_IMG = {
+  hero: "https://framerusercontent.com/images/dGs9I4fFD3z07PjQGZam073cvBI.jpg?width=2400",
+  av1: "https://framerusercontent.com/images/2P677JVBYBa5pR56rBXMpoFqCH8.jpg?width=120&height=120",
+  av2: "https://framerusercontent.com/images/kAftuUN9iRKwIt9M6RqZo9NS314.jpg?width=120&height=120",
+  av3: "https://framerusercontent.com/images/d4SpmpLmhUfMZkWsTOukrdAmhg.jpg?width=120&height=120",
+  ceo: "https://framerusercontent.com/images/kU2IUHPPHC3DtV3Cd7MgZ055bI.jpg?width=1200",
+  build: "https://framerusercontent.com/images/JnzpL9nzjuWsjzizAHeLtSfZu4.jpg?width=1600",
+  svc1: "https://framerusercontent.com/images/1hoeTb0nEw9VjtGI7wdWgDAtYqI.jpg?width=1200",
+  svc2: "https://framerusercontent.com/images/9Syh2h9HhSW0nhT5FyWZhXwPo.jpg?width=1200",
+  svc3: "https://framerusercontent.com/images/14AlFtJGEWHlEG8yxNaW1TICn3U.jpg?width=1200",
+  faq: "https://framerusercontent.com/images/GTv5gTqKeKCdZ1nSwA9FIUiHw8.jpg?width=1200",
+  g1: "https://framerusercontent.com/images/Fm175vcZy3kPuIpCIGCWdqjeUO8.jpg?width=1000",
+  g2: "https://framerusercontent.com/images/7BUOCWCrAsIFAHLDv2m14i2fXEI.jpg?width=1000",
+  g3: "https://framerusercontent.com/images/raNIyVphZvA6apdujFjEwGI7ck.jpg?width=1000",
+  g4: "https://framerusercontent.com/images/eMlaTBn8rqRm5o3mSWmgOiprs.jpg?width=1000",
+  g5: "https://framerusercontent.com/images/JEwCgM7FbUjpY6O5ZiQ0JLv7rKA.jpg?width=1000",
+  g6: "https://framerusercontent.com/images/KrULMONCNvEgKD83moCcfUuPpLc.jpg?width=1000",
+  rAlex: "https://framerusercontent.com/images/cwlKlWbNZtFsmbDitfwu6yJvvY.jpg?width=120&height=120",
+  rJohn: "https://framerusercontent.com/images/Y9KmJAQ4w53hsc4jJojfokLZ7D8.jpg?width=120&height=120",
+  rMichael: "https://framerusercontent.com/images/16FpqHSDpMP5wk238yiG6KHI6cY.jpg?width=120&height=120",
+  rDavid: "https://framerusercontent.com/images/vHMSEWw5B42ZyOnn7b3crhvXwSY.jpg?width=120&height=120",
+  b1: "https://framerusercontent.com/images/NxFe2Pi86c9sronDNi6WkDxqhas.jpg?width=800",
+  b2: "https://framerusercontent.com/images/BjZBdUJegU8BxUNuc4e6eawkrs.jpg?width=800",
+  b3: "https://framerusercontent.com/images/3EOOlITexXofKhwrwAOVP3WOSE.jpg?width=800",
+};
+
+const gardenerTemplate = () => `<style>
+.gd{--grn:#3a9d4e;--grn-d:#2f8240;--ink:#16291b;--body:#46554a;--muted:#7a857d;--bg:#f3f6f2;--line:#e2e8e0;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--body);line-height:1.7;background:#fff;max-width:100%;position:relative}
+.gd :where(*){box-sizing:border-box}
+.gd h1,.gd h2,.gd h3,.gd h4{color:var(--ink);margin:0;line-height:1.1;letter-spacing:-.02em;font-weight:600}
+.gd p{margin:0}
+.gd a{text-decoration:none;color:inherit}
+.gd-wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+.gd-sec{padding:clamp(3.5rem,7vw,6rem) 0}
+.gd-eyebrow{display:inline-block;color:var(--grn);font-weight:600;font-size:.92rem;margin-bottom:.85rem}
+.gd-h{font-size:clamp(1.9rem,4vw,3rem)}
+.gd-lead{color:var(--muted);font-size:1.05rem;max-width:600px}
+.gd-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--grn);color:#fff;padding:.95rem 1.7rem;border-radius:10px;font-weight:600;font-size:.95rem;transition:background .25s,transform .25s;border:none;cursor:pointer}
+.gd-btn:hover{background:var(--grn-d);transform:translateY(-2px)}
+/* nav */
+.gd-nav{position:absolute;top:0;left:0;right:0;z-index:5}
+.gd-nav .bar{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.5rem;color:#fff}
+.gd-nav .logo{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:1.2rem;color:#fff}
+.gd-nav .logo .dot{width:22px;height:22px;border-radius:50%;background:var(--grn);display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.gd-nav .links{display:flex;gap:1.7rem;font-size:.95rem;color:rgba(255,255,255,.9)}
+.gd-nav .links a:hover{color:#fff}
+.gd-nav .pill{background:var(--grn);color:#fff;padding:.6rem 1.3rem;border-radius:10px;font-weight:600;font-size:.9rem}
+/* hero */
+.gd-hero{position:relative;min-height:94vh;display:flex;align-items:center;background-size:cover;background-position:center;color:#fff;overflow:hidden}
+.gd-hero::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,20,12,.55),rgba(10,20,12,.3))}
+.gd-hero .gd-wrap{position:relative;z-index:2;padding-top:7rem;padding-bottom:4rem;width:100%;display:grid;grid-template-columns:1.3fr .9fr;gap:2.5rem;align-items:center}
+.gd-hero h1{color:#fff;font-size:clamp(2.6rem,6vw,5rem);font-weight:600;max-width:12ch}
+.gd-hero p{color:rgba(255,255,255,.9);font-size:1.15rem;max-width:480px;margin:1.4rem 0 2rem}
+.gd-rate{display:flex;align-items:center;gap:.8rem}
+.gd-rate .avs{display:flex}
+.gd-rate .avs img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-12px}
+.gd-rate .avs img:first-child{margin-left:0}
+.gd-rate .st{color:#f5b301;letter-spacing:2px;font-size:.85rem}
+.gd-rate small{color:rgba(255,255,255,.85);font-size:.85rem;display:block}
+/* booking card */
+.gd-book{background:rgba(255,255,255,.14);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.28);border-radius:18px;padding:1.8rem}
+.gd-book h3{color:#fff;text-align:center;font-size:1.25rem;margin-bottom:1.2rem}
+.gd-book input,.gd-book select{width:100%;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.35);border-radius:10px;background:rgba(255,255,255,.12);color:#fff;font:inherit;margin-bottom:.8rem}
+.gd-book input::placeholder{color:rgba(255,255,255,.7)}
+.gd-book .gd-btn{width:100%;justify-content:center;margin-top:.4rem}
+/* head */
+.gd-head{max-width:680px;margin:0 auto 3rem;text-align:center}
+.gd-head .gd-eyebrow{display:block}
+/* build split */
+.gd-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+.gd-split img{width:100%;border-radius:18px;aspect-ratio:4/3;object-fit:cover}
+.gd-feat{display:flex;flex-direction:column;gap:.9rem;margin-top:1.6rem}
+.gd-feat .f{display:flex;gap:.75rem;align-items:center;font-weight:600;color:var(--ink)}
+.gd-feat .f::before{content:'✓';flex:none;width:26px;height:26px;border-radius:50%;background:rgba(58,157,78,.14);color:var(--grn);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+/* services */
+.gd-svc{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.gd-card{border-radius:18px;overflow:hidden;position:relative;display:block;aspect-ratio:3/4}
+.gd-card img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.gd-card:hover img{transform:scale(1.05)}
+.gd-card .lbl{position:absolute;left:1rem;bottom:1rem;right:1rem;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:12px;padding:.85rem 1.1rem;display:flex;align-items:center;justify-content:space-between;font-weight:700;color:var(--ink)}
+.gd-card .lbl .arr{color:var(--grn)}
+/* faq */
+.gd-faq{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,3.5rem);align-items:center}
+.gd-faq img{width:100%;border-radius:18px;aspect-ratio:4/5;object-fit:cover}
+.gd-acc details{border-bottom:1px solid var(--line);padding:1.1rem 0}
+.gd-acc summary{font-weight:600;color:var(--ink);cursor:pointer;list-style:none;font-size:1.05rem}
+.gd-acc summary::-webkit-details-marker{display:none}
+.gd-acc p{color:var(--muted);margin-top:.7rem}
+/* gallery */
+.gd-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.gd-gal img{width:100%;border-radius:14px;aspect-ratio:1;object-fit:cover}
+/* reviews */
+.gd-revs{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+.gd-rev{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:1.8rem}
+.gd-rev .st{color:#f5b301;letter-spacing:2px;margin-bottom:.9rem}
+.gd-rev p{color:var(--ink);line-height:1.7}
+.gd-rev footer{display:flex;align-items:center;gap:.85rem;margin-top:1.4rem}
+.gd-rev footer img{width:46px;height:46px;border-radius:50%;object-fit:cover}
+.gd-rev footer b{display:block;color:var(--ink)}
+.gd-rev footer small{color:var(--muted)}
+.gd-score{display:flex;align-items:baseline;gap:.6rem;justify-content:center;margin-bottom:.4rem}
+.gd-score b{font-size:3rem;color:var(--ink);font-weight:700}
+/* blog */
+.gd-blog{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.gd-post{border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.gd-post:hover{transform:translateY(-5px);box-shadow:0 20px 46px rgba(16,41,27,.1)}
+.gd-post img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.gd-post .b{padding:1.3rem}
+.gd-post .b small{color:var(--grn);font-weight:600}
+.gd-post .b h3{font-size:1.1rem;margin-top:.5rem}
+/* cta */
+.gd-cta{position:relative;border-radius:24px;overflow:hidden;text-align:center;background-size:cover;background-position:center}
+.gd-cta::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(47,130,64,.9),rgba(16,41,27,.8))}
+.gd-cta .in{position:relative;z-index:2;padding:clamp(3rem,6vw,5rem) 1.5rem;color:#fff}
+.gd-cta h2{color:#fff;font-size:clamp(1.9rem,3.8vw,3rem)}
+.gd-cta p{color:rgba(255,255,255,.9);max-width:560px;margin:1rem auto 1.8rem}
+.gd-cta .gd-btn{background:#fff;color:var(--ink)}
+@media(max-width:900px){.gd-nav .links{display:none}.gd-hero .gd-wrap,.gd-svc,.gd-split,.gd-faq,.gd-revs,.gd-blog,.gd-gal{grid-template-columns:1fr}.gd-gal{grid-template-columns:1fr 1fr}}
+</style>
+<div class="gd">
+  <nav class="gd-nav"><div class="bar">
+    <div class="logo"><span class="dot">🌿</span>{company_name}</div>
+    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#blog">Blog</a><a href="#contact">Contact</a></div>
+    <a href="#contact" class="pill">{cta_text}</a>
+  </div></nav>
+
+  <header class="gd-hero" id="home" style="background-image:url('${GD_IMG.hero}')"><div class="gd-wrap">
+    <div>
+      <h1>{headline}</h1>
+      <p>{subheadline}</p>
+      <div class="gd-rate">
+        <div class="avs"><img src="${GD_IMG.av1}" alt="Customer"/><img src="${GD_IMG.av2}" alt="Customer"/><img src="${GD_IMG.av3}" alt="Customer"/></div>
+        <div><div class="st">★★★★★</div><small>From {ratings_count} ratings</small></div>
+      </div>
+    </div>
+    <div class="gd-book">
+      <h3>Book Your Free Appointment</h3>
+      <input type="text" placeholder="Jane Smith"/>
+      <input type="email" placeholder="jane@email.com"/>
+      <input type="tel" placeholder="555-0123"/>
+      <select><option>Select Your Location…</option><option>Long Island</option><option>Brooklyn</option></select>
+      <button class="gd-btn">{cta_text}</button>
+    </div>
+  </div></header>
+
+  <section class="gd-sec" id="about"><div class="gd-wrap"><div class="gd-split">
+    <img src="${GD_IMG.build}" alt="Garden landscaping by {company_name}"/>
+    <div>
+      <span class="gd-eyebrow">About {company_name}</span>
+      <h2 class="gd-h">{about_title}</h2>
+      <p class="gd-lead" style="margin-top:1rem">{about_body}</p>
+      <div class="gd-feat">
+        <div class="f">{feature_1}</div>
+        <div class="f">{feature_2}</div>
+        <div class="f">Available Monday to Friday, 9am to 5pm</div>
+      </div>
+      <a href="#contact" class="gd-btn" style="margin-top:1.8rem">📞 {phone}</a>
+    </div>
+  </div></div></section>
+
+  <section class="gd-sec" id="services" style="background:var(--bg)"><div class="gd-wrap">
+    <div class="gd-head"><span class="gd-eyebrow">Our Services</span><h2 class="gd-h">{services_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{services_subtitle}</p></div>
+    <div class="gd-svc">
+      <a class="gd-card"><img src="${GD_IMG.svc1}" alt="{service_1_title}"/><div class="lbl"><span>{service_1_title}</span><span class="arr">→</span></div></a>
+      <a class="gd-card"><img src="${GD_IMG.svc2}" alt="{service_2_title}"/><div class="lbl"><span>{service_2_title}</span><span class="arr">→</span></div></a>
+      <a class="gd-card"><img src="${GD_IMG.svc3}" alt="{service_3_title}"/><div class="lbl"><span>{service_3_title}</span><span class="arr">→</span></div></a>
+    </div>
+  </div></div></section>
+
+  <section class="gd-sec"><div class="gd-wrap"><div class="gd-faq">
+    <img src="${GD_IMG.faq}" alt="Beautiful garden"/>
+    <div>
+      <span class="gd-eyebrow">FAQ</span>
+      <h2 class="gd-h" style="margin-bottom:1.4rem">Frequently asked questions</h2>
+      <div class="gd-acc">
+        <details open><summary>{faq_1_question}</summary><p>{faq_1_answer}</p></details>
+        <details><summary>{faq_2_question}</summary><p>{faq_2_answer}</p></details>
+        <details><summary>{faq_3_question}</summary><p>{faq_3_answer}</p></details>
+      </div>
+    </div>
+  </div></div></section>
+
+  <section class="gd-sec" style="background:var(--bg)"><div class="gd-wrap">
+    <div class="gd-head"><span class="gd-eyebrow">Our Recent Works</span><h2 class="gd-h">A reflection of our clients' vision</h2><p class="gd-lead" style="margin:1rem auto 0">We take a personalized approach to every project, ensuring each garden reflects our client's unique vision and lifestyle.</p></div>
+    <div class="gd-gal">
+      <img src="${GD_IMG.g1}" alt="Recent work"/><img src="${GD_IMG.g2}" alt="Recent work"/><img src="${GD_IMG.g3}" alt="Recent work"/>
+      <img src="${GD_IMG.g4}" alt="Recent work"/><img src="${GD_IMG.g5}" alt="Recent work"/><img src="${GD_IMG.g6}" alt="Recent work"/>
+    </div>
+  </div></div></section>
+
+  <section class="gd-sec"><div class="gd-wrap">
+    <div class="gd-head"><span class="gd-eyebrow">Loved By Our Customers</span><div class="gd-score"><b>{rating_value}</b><span class="st" style="color:#f5b301">★★★★★</span></div><p class="gd-lead" style="margin:0 auto">From {ratings_count} ratings</p></div>
+    <div class="gd-revs">
+      <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${GD_IMG.rAlex}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>Review on Trustpilot</small></div></footer></div>
+      <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${GD_IMG.rJohn}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>Review on Trustpilot</small></div></footer></div>
+      <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="${GD_IMG.rMichael}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>Review on Google</small></div></footer></div>
+      <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_4_text}"</p><footer><img src="${GD_IMG.rDavid}" alt="{review_4_name}"/><div><b>{review_4_name}</b><small>Review on Trustpilot</small></div></footer></div>
+    </div>
+  </div></div></section>
+
+  <section class="gd-sec" id="blog" style="background:var(--bg)"><div class="gd-wrap">
+    <div class="gd-head"><span class="gd-eyebrow">Explore Our Blog</span><h2 class="gd-h">{blog_title}</h2><p class="gd-lead" style="margin:1rem auto 0">Whether you're a seasoned gardener or just getting started, our blog is your go-to resource for all things gardening.</p></div>
+    <div class="gd-blog">
+      <a class="gd-post"><img src="${GD_IMG.b1}" alt="{post_1_title}"/><div class="b"><small>Apr 8, 2022</small><h3>{post_1_title}</h3></div></a>
+      <a class="gd-post"><img src="${GD_IMG.b2}" alt="{post_2_title}"/><div class="b"><small>Mar 15, 2022</small><h3>{post_2_title}</h3></div></a>
+      <a class="gd-post"><img src="${GD_IMG.b3}" alt="{post_3_title}"/><div class="b"><small>Feb 28, 2022</small><h3>{post_3_title}</h3></div></a>
+    </div>
+  </div></div></section>
+
+  <section class="gd-sec" id="contact"><div class="gd-wrap">
+    <div class="gd-cta" style="background-image:url('${GD_IMG.ceo}')"><div class="in">
+      <h2>{bottom_cta_headline}</h2>
+      <p>{bottom_cta_description}</p>
+      <a href="#home" class="gd-btn">{cta_text}</a>
+    </div></div>
+  </div></div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
@@ -2471,6 +2690,70 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     seo_title_pattern: "{company_name} — Business Consulting | {headline}",
     seo_description_pattern: "{subheadline} Work with {company_name} to grow your business. Call {phone}.",
     schema_type: "WebPage",
+  },
+
+  // 33. Gardener — landscaping & garden service landing (modelled on gardener.framer.media)
+  {
+    id: "gardener-landscaping",
+    name: "Gardener Landscaping",
+    description: "Beautiful gardening & landscaping landing page — full-bleed hero with a glass booking form, about split, services gallery, FAQ, recent works grid, customer reviews, blog highlights and a closing CTA. Modelled 1:1 on the gardener.framer.media design with real photography.",
+    content: gardenerTemplate(),
+    variables: [
+      "{company_name}", "{headline}", "{subheadline}", "{cta_text}", "{phone}",
+      "{ratings_count}", "{rating_value}",
+      "{about_title}", "{about_body}", "{feature_1}", "{feature_2}",
+      "{services_title}", "{services_subtitle}",
+      "{service_1_title}", "{service_2_title}", "{service_3_title}",
+      "{faq_1_question}", "{faq_1_answer}", "{faq_2_question}", "{faq_2_answer}", "{faq_3_question}", "{faq_3_answer}",
+      "{review_1_text}", "{review_1_name}", "{review_2_text}", "{review_2_name}",
+      "{review_3_text}", "{review_3_name}", "{review_4_text}", "{review_4_name}",
+      "{blog_title}", "{post_1_title}", "{post_2_title}", "{post_3_title}",
+      "{bottom_cta_headline}", "{bottom_cta_description}",
+    ],
+    category: "professional",
+    tags: ["gardener", "landscaping", "garden", "lawn", "outdoor", "local", "booking"],
+    author: "Community", downloads: 0, rating: 5.0,
+    seo_title_pattern: "{company_name} — Garden & Landscaping | {headline}",
+    seo_description_pattern: "{subheadline} Book your free appointment with {company_name}. Call {phone}.",
+    schema_type: "LocalBusiness",
+    defaultValues: {
+      company_name: "Gardener",
+      headline: "Your Outdoor Space, Rebuilt",
+      subheadline: "With our expert team of gardeners and landscapers, we turn ordinary gardens into extraordinary havens of beauty.",
+      cta_text: "Book Your Call",
+      phone: "(595) 555-0123",
+      ratings_count: "2000+",
+      rating_value: "4.9",
+      about_title: "Build a Space That Matches Your Home",
+      about_body: "Whether you have a sprawling backyard or a cozy balcony, our team of experienced gardeners and landscapers is dedicated to bringing your green dreams to life.",
+      feature_1: "Sustainable Gardening Practices",
+      feature_2: "Personalized Services Available",
+      services_title: "Our Services",
+      services_subtitle: "Our team combines expertise with creativity to transform outdoor spaces into breathtaking landscapes that enhance the beauty of any property.",
+      service_1_title: "Landscaping Works",
+      service_2_title: "Garden Design",
+      service_3_title: "Seasonal Planting",
+      faq_1_question: "Do you offer maintenance services?",
+      faq_1_answer: "Yes, we provide comprehensive landscape maintenance services to keep your garden looking its best year-round. We offer tailored maintenance plans to suit your schedule and budget.",
+      faq_2_question: "Do you use organic gardening methods?",
+      faq_2_answer: "Absolutely. We prioritise sustainable, organic practices that protect your soil, plants and local wildlife while keeping your garden thriving.",
+      faq_3_question: "Are your gardeners licensed and insured?",
+      faq_3_answer: "Yes, every member of our team is fully licensed and insured, so you can have complete peace of mind throughout your project.",
+      review_1_text: "Despite the tight deadline, they completed the project on time and within budget, exceeding my expectations every step of the way. I highly recommend!",
+      review_1_name: "Alex Stokes",
+      review_2_text: "I'm so grateful to have found Gardener. Their team not only transformed my neglected garden into a lush oasis but also provided great advice on how to maintain it.",
+      review_2_name: "John Smith",
+      review_3_text: "I've been using Gardener for years now, and I couldn't be happier with the results. Their team always go above and beyond to ensure that my garden looks its best.",
+      review_3_name: "Michael Harrison",
+      review_4_text: "Gardener completely exceeded my expectations. From the initial consultation to the final touches, their team was professional and attentive to every detail.",
+      review_4_name: "David Peterson",
+      blog_title: "Explore Our Blog",
+      post_1_title: "The Art of Designing Gardens: A Detailed Step-by-Step Guide",
+      post_2_title: "Plant Spotlight: 10 Must-Have Perennials for Every Garden",
+      post_3_title: "Garden Pest Control: Useful Strategies for a Healthy Garden",
+      bottom_cta_headline: "Need a Gardener?",
+      bottom_cta_description: "Let our expert team rebuild your outdoor space into a beautiful, thriving garden. Request your free quote today.",
+    },
   },
 ];
 
