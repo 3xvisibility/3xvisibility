@@ -1622,7 +1622,7 @@ const gardenerTemplate = () => `<style>
   <section class="gd-sec" id="about"><div class="gd-wrap"><div class="gd-split">
     <img src="${GD_IMG.build}" alt="Garden landscaping by {company_name}"/>
     <div>
-      <span class="gd-eyebrow">About {company_name}</span>
+      <span class="gd-eyebrow">{about_eyebrow}</span>
       <h2 class="gd-h">{about_title}</h2>
       <p class="gd-lead" style="margin-top:1rem">{about_body}</p>
       <div class="gd-feat">
