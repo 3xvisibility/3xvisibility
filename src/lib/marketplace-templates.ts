@@ -2032,7 +2032,7 @@ const refitTemplate = () => `<style>
   </div></section>
 
   <section class="rf-sec" id="about"><div class="rf-wrap"><div class="rf-split">
-    <div class="rf-grid2"><img src="${RF_IMG.about1}" alt="Renovation detail"/><img src="${RF_IMG.about2}" alt="Kitchen build"/><img src="${RF_IMG.about3}" alt="Interior craftsmanship"/><img src="${RF_IMG.about4}" alt="Finished room"/></div>
+    <div class="rf-grid2"><img src="{about_image_1}" alt="Renovation detail"/><img src="{about_image_2}" alt="Kitchen build"/><img src="{about_image_3}" alt="Interior craftsmanship"/><img src="{about_image_4}" alt="Finished room"/></div>
     <div>
       <span class="rf-eyebrow"><span class="dot"></span>{about_eyebrow}</span>
       <h2 class="rf-h">{about_title}</h2>
