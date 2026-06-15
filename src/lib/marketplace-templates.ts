@@ -28,6 +28,20 @@ export interface MarketplaceTemplate {
   platform?: "wordpress" | "shopify" | "prestashop" | "generic";
   isShared?: boolean;
   shared_id?: string;
+  /** Sensible default values used to fill {variables} in the preview so no section looks empty. */
+  defaultValues?: Record<string, string>;
+}
+
+/**
+ * Replace simple {variable} placeholders with provided default values for preview
+ * rendering. Leaves transforms, spintax, conditionals and dynamic blocks untouched
+ * (those contain `|`, `:`, or `{{`), and keeps unknown variables as-is.
+ */
+export function applyTemplateDefaults(content: string, defaults?: Record<string, string>): string {
+  if (!defaults) return content;
+  return content.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (match, name: string) =>
+    Object.prototype.hasOwnProperty.call(defaults, name) ? defaults[name] : match
+  );
 }
 
 // ── Shared base styles ─────────────────────────────────────────────────────
