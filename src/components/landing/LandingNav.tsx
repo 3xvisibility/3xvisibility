@@ -37,16 +37,16 @@ export function LandingNav() {
       >
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
           <Link to="/" className="flex items-center">
-            <img src={logo3x} alt="3X Visibility logo" width={309} height={65} className="h-9 sm:h-10 w-auto object-contain" />
+            <img src={logo3x} alt="3X Visibility logo" width={40} height={40} className="h-10 w-10 object-contain" />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((l) => (
               <a key={l.href} href={l.href} className="text-sm text-[hsl(220,10%,78%)] hover:text-foreground px-4 py-2 rounded-lg transition-colors duration-200 font-medium">{l.label}</a>
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <LanguageSwitcher variant="ghost" size="icon" className="h-9 w-auto px-2 text-[hsl(220,10%,74%)] hover:text-foreground rounded-lg" />
             <Button variant="ghost" size="sm" className="text-sm h-9 px-4 rounded-lg font-medium text-[hsl(220,10%,78%)] hover:text-foreground hover:bg-[hsl(96,90%,45%,0.08)]" asChild>
               <Link to="/auth">{t("nav.login")}</Link>
@@ -56,14 +56,14 @@ export function LandingNav() {
             </Button>
           </div>
 
-          <Button variant="ghost" size="icon" className="lg:hidden h-9 w-9 text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+          <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
 
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="lg:hidden border-t border-[hsl(96,90%,45%,0.1)] overflow-hidden bg-[hsl(220,60%,4%)]/95 backdrop-blur-2xl">
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="md:hidden border-t border-[hsl(96,90%,45%,0.1)] overflow-hidden bg-[hsl(220,60%,4%)]/95 backdrop-blur-2xl">
               <div className="px-4 py-4 space-y-1">
                 {navLinks.map((l) => (
                   <a key={l.href} href={l.href} className="block text-sm text-[hsl(220,10%,78%)] hover:text-foreground py-2.5 px-3 rounded-lg hover:bg-[hsl(96,90%,45%,0.08)] transition-all" onClick={() => setMobileOpen(false)}>{l.label}</a>
