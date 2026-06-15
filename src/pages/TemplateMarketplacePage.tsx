@@ -21,6 +21,9 @@ import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoDefaultsEditor } from "@/components/templates/SeoDefaultsEditor";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
+import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
+import { downloadStarterCsv } from "@/lib/csv-starter";
+import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
 const CATEGORIES = [
