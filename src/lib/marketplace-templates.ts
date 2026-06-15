@@ -1610,7 +1610,7 @@ const gardenerTemplate = () => `<style>
       </div>
     </div>
     <div class="gd-book">
-      <h3>Book Your Free Appointment</h3>
+      <h3>{booking_title}</h3>
       <input type="text" placeholder="Jane Smith"/>
       <input type="email" placeholder="jane@email.com"/>
       <input type="tel" placeholder="555-0123"/>
