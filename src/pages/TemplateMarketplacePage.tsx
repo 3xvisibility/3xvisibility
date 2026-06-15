@@ -55,6 +55,20 @@ export default function TemplateMarketplacePage() {
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
+  const handleCsvUpload = async (file: File) => {
+    try {
+      const { rowData } = await parseUploadedFile(file);
+      if (!rowData.length) {
+        toast({ title: "Empty file", description: "No data rows found in that file.", variant: "destructive" });
+        return;
+      }
+      setUploadedCsv(rowData);
+      toast({ title: "CSV loaded", description: `${rowData.length} row(s) mapped to template variables.` });
+    } catch (e) {
+      toast({ title: "Could not read file", description: e instanceof Error ? e.message : "Unsupported file.", variant: "destructive" });
+    }
+  };
+
   // Fetch user's templates for sharing
   const { data: userTemplates = [] } = useQuery({
     queryKey: ["user-templates-share", wsId],
