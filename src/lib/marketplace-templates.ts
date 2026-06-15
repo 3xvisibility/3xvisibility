@@ -1675,7 +1675,7 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 
   <section class="gd-sec" id="blog" style="background:var(--bg)"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Explore Our Blog</span><h2 class="gd-h">{blog_title}</h2><p class="gd-lead" style="margin:1rem auto 0">Whether you're a seasoned gardener or just getting started, our blog is your go-to resource for all things gardening.</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{blog_eyebrow}</span><h2 class="gd-h">{blog_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{blog_subtitle}</p></div>
     <div class="gd-blog">
       <a class="gd-post"><img src="${GD_IMG.b1}" alt="{post_1_title}"/><div class="b"><small>Apr 8, 2022</small><h3>{post_1_title}</h3></div></a>
       <a class="gd-post"><img src="${GD_IMG.b2}" alt="{post_2_title}"/><div class="b"><small>Mar 15, 2022</small><h3>{post_2_title}</h3></div></a>
