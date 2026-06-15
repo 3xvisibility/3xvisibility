@@ -1186,10 +1186,15 @@ const consultingTemplate = () => `<style>
   </div></section>
 
   <section class="con-sec" id="about" style="background:var(--bg)"><div class="con-wrap"><div class="con-split">
-    <img src="${CON_IMG.meeting}" alt="Business meeting at {company_name}"/>
+    <div class="con-about-pic">
+      <img src="${CON_IMG.meeting}" alt="Business meeting at {company_name}"/>
+      <div class="con-badge"><b>{years_experience}+</b><span>Years of expertise</span></div>
+    </div>
     <div>
-      <span class="con-eyebrow">Our approach</span>
-      <h2 class="con-h">Innovative approach to consulting</h2>
+      <h2 class="con-about-name">{company_name}</h2>
+      <div class="con-about-rule"></div>
+      <span class="con-eyebrow" style="margin-top:.4rem">Our approach</span>
+      <h3 class="con-h" style="font-size:clamp(1.5rem,3vw,2.1rem)">Innovative approach to consulting</h3>
       <p class="con-lead" style="margin-top:1rem">{about_body}</p>
       <div class="con-feat">
         <div class="f">We believe in fostering long-term partnerships</div>
