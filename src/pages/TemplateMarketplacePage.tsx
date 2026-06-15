@@ -502,9 +502,17 @@ export default function TemplateMarketplacePage() {
                     {uploadedCsv.length > 0 && (
                       <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
                     )}
-                    <LiveVariablePreview
+                    <ImageVariablePanel
                       templateContent={previewTemplate.content}
-                      csvData={uploadedCsv.length > 0 ? uploadedCsv : (previewTemplate.defaultValues ? [previewTemplate.defaultValues] : [])}
+                      defaultValues={previewTemplate.defaultValues}
+                      values={imageOverrides}
+                      onChange={(v, url) => setImageOverrides((prev) => ({ ...prev, [v]: url }))}
+                      onReset={() => setImageOverrides({})}
+                    />
+                    <LiveVariablePreview
+                      key={Object.keys(imageOverrides).join(",")}
+                      templateContent={previewTemplate.content}
+                      csvData={previewRows}
                     />
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">
