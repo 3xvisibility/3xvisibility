@@ -1692,6 +1692,221 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 </div>`;
 
+// ── Plumbing template (modelled 1:1 on plumbing.framer.media) ────────────────
+const PL_IMG = {
+  hero: "https://framerusercontent.com/images/niaKhcoeeMwMqwujQZ0s9CUm9yQ.jpg?width=1620&height=1876",
+  av1: "https://framerusercontent.com/images/2Jb3R1TsXDLHBYLq9HplxoY8uFA.jpg?width=120&height=120",
+  av2: "https://framerusercontent.com/images/nl1IkzaeBKFdkrdBOKZvZNaVXmE.jpg?width=120&height=120",
+  av3: "https://framerusercontent.com/images/APvpNMGmN7Y0aXS0UesFkD2Ucq8.jpg?width=120&height=120",
+  about1: "https://framerusercontent.com/images/SpHegeWzpyJPqNFSYbZX2CCCE.jpg?width=1200",
+  about2: "https://framerusercontent.com/images/DCzBtRC3pxWe3MbSiE3qndn1f8s.jpg?width=1200",
+  rRyan: "https://framerusercontent.com/images/Wu3jIIXne7CD8oB2WuVqxx1Wfk.jpg?width=120&height=120",
+  rMichael: "https://framerusercontent.com/images/rsJ7qH7Mbs7CJkuvl24AzIdFM8Y.jpg?width=120&height=120",
+  rDavid: "https://framerusercontent.com/images/iABb6ejla3A5ZzE4zgxiPqBaYHI.jpg?width=120&height=120",
+  rJohn: "https://framerusercontent.com/images/tPYkIwImGTYNrIWUAK9mkYyUgw.jpg?width=120&height=120",
+  b1: "https://framerusercontent.com/images/x7lS4XuvHu1RSTzTeLxbNGTRCn4.jpg?width=800",
+  b2: "https://framerusercontent.com/images/L5gj2d18BFZqSR8WenUtG2r6OxA.jpg?width=800",
+  b3: "https://framerusercontent.com/images/2Y9AudTUlCYjJHZIzka6i0dEE.jpg?width=800",
+};
+
+const plumberTemplate = () => `<style>
+.pl{--blue:#2563eb;--blue-d:#1d4ed8;--ylw:#facc15;--ink:#0f1c3f;--body:#475467;--muted:#8a93a6;--bg:#eef3fb;--line:#dde5f1;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--body);line-height:1.7;background:#fff;max-width:100%;position:relative}
+.pl :where(*){box-sizing:border-box}
+.pl h1,.pl h2,.pl h3,.pl h4{color:var(--ink);margin:0;line-height:1.08;letter-spacing:-.02em;font-weight:700}
+.pl p{margin:0}.pl a{text-decoration:none;color:inherit}
+.pl-wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+.pl-sec{padding:clamp(3.5rem,7vw,6rem) 0}
+.pl-eyebrow{display:inline-block;color:var(--blue);font-weight:600;font-size:.92rem;margin-bottom:.85rem}
+.pl-h{font-size:clamp(1.9rem,4vw,3rem)}
+.pl-lead{color:var(--muted);font-size:1.05rem;max-width:640px}
+.pl-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--ylw);color:var(--ink);padding:.95rem 1.7rem;border-radius:40px;font-weight:700;font-size:.95rem;transition:transform .25s,filter .25s;border:none;cursor:pointer}
+.pl-btn:hover{filter:brightness(.95);transform:translateY(-2px)}
+.pl-btn.ghost{background:#fff;color:var(--ink)}
+/* nav */
+.pl-nav{position:absolute;top:0;left:0;right:0;z-index:5}
+.pl-nav .bar{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.5rem;color:#fff}
+.pl-nav .logo{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:1.2rem;color:#fff}
+.pl-nav .logo .dot{width:26px;height:26px;border-radius:8px;background:var(--ylw);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.pl-nav .links{display:flex;gap:1.7rem;font-size:.95rem;color:rgba(255,255,255,.92);background:rgba(255,255,255,.12);padding:.7rem 1.4rem;border-radius:40px;backdrop-filter:blur(6px)}
+.pl-nav .links a:hover{color:#fff}
+.pl-nav .right{display:flex;align-items:center;gap:1.2rem}
+.pl-nav .phone{color:#fff;font-weight:600;font-size:.95rem}
+.pl-nav .pill{background:var(--ylw);color:var(--ink);padding:.6rem 1.4rem;border-radius:40px;font-weight:700;font-size:.9rem}
+/* hero */
+.pl-hero{position:relative;background:radial-gradient(120% 120% at 80% 0,#3b6fe0,#1e40af 60%);color:#fff;overflow:hidden}
+.pl-hero .pl-wrap{position:relative;z-index:2;padding-top:8rem;padding-bottom:4.5rem;display:grid;grid-template-columns:1.1fr .9fr;gap:2.5rem;align-items:center}
+.pl-hero h1{color:#fff;font-size:clamp(2.6rem,6vw,4.6rem);font-weight:700;max-width:13ch}
+.pl-hero p{color:rgba(255,255,255,.88);font-size:1.12rem;max-width:480px;margin:1.4rem 0 2rem}
+.pl-hero .cta-row{display:flex;align-items:center;gap:1.3rem;flex-wrap:wrap}
+.pl-rate{display:flex;align-items:center;gap:.7rem}
+.pl-rate .avs{display:flex}
+.pl-rate .avs img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-12px}
+.pl-rate .avs img:first-child{margin-left:0}
+.pl-rate .st{color:var(--ylw);letter-spacing:2px;font-size:.85rem}
+.pl-rate small{color:rgba(255,255,255,.9);font-size:.85rem;display:block;font-weight:600}
+.pl-shot{background:var(--ylw);border-radius:24px;padding:0;overflow:hidden;aspect-ratio:5/6;display:flex;align-items:flex-end;justify-content:center;border:5px solid rgba(255,255,255,.85)}
+.pl-shot img{width:100%;height:100%;object-fit:cover;object-position:center top}
+/* feature strip */
+.pl-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:-2.5rem;position:relative;z-index:3}
+.pl-strip .it{background:#fff;border:1px solid var(--line);border-radius:18px;padding:1.6rem;box-shadow:0 22px 48px rgba(15,28,63,.08)}
+.pl-strip .it h4{color:var(--ink);font-size:1.05rem;margin-bottom:.3rem}
+.pl-strip .it small{color:var(--muted)}
+.pl-strip .it .ic{width:42px;height:42px;border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.9rem}
+/* head */
+.pl-head{max-width:680px;margin:0 auto 3rem;text-align:center}
+.pl-head .pl-eyebrow{display:block}
+/* about split */
+.pl-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+.pl-imgs{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.pl-imgs img{width:100%;border-radius:18px;aspect-ratio:3/4;object-fit:cover}
+.pl-imgs img:first-child{margin-top:1.6rem}
+.pl-feat{display:flex;flex-direction:column;gap:.9rem;margin-top:1.6rem}
+.pl-feat .f{display:flex;gap:.75rem;align-items:center;font-weight:600;color:var(--ink)}
+.pl-feat .f::before{content:'✓';flex:none;width:26px;height:26px;border-radius:50%;background:rgba(37,99,235,.12);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+/* services */
+.pl-svc{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+.pl-scard{border:1px solid var(--line);border-radius:18px;padding:1.7rem;background:#fff;transition:transform .3s,box-shadow .3s}
+.pl-scard:hover{transform:translateY(-5px);box-shadow:0 22px 48px rgba(15,28,63,.1)}
+.pl-scard .ic{width:48px;height:48px;border-radius:14px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1rem}
+.pl-scard h3{font-size:1.15rem;margin-bottom:.5rem}
+.pl-scard p{color:var(--muted);font-size:.95rem}
+/* emergency band */
+.pl-band{background:var(--blue);border-radius:22px;padding:clamp(2.2rem,4vw,3rem);display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;color:#fff}
+.pl-band h3{color:#fff;font-size:clamp(1.5rem,3vw,2.2rem)}
+/* faq */
+.pl-faq{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(2rem,5vw,3.5rem);align-items:start}
+.pl-acc details{border-bottom:1px solid var(--line);padding:1.1rem 0}
+.pl-acc summary{font-weight:700;color:var(--ink);cursor:pointer;list-style:none;font-size:1.05rem}
+.pl-acc summary::-webkit-details-marker{display:none}
+.pl-acc p{color:var(--muted);margin-top:.7rem}
+/* reviews */
+.pl-revs{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+.pl-rev{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:1.8rem}
+.pl-rev .st{color:var(--ylw);letter-spacing:2px;margin-bottom:.9rem}
+.pl-rev p{color:var(--ink);line-height:1.7}
+.pl-rev footer{display:flex;align-items:center;gap:.85rem;margin-top:1.4rem}
+.pl-rev footer img{width:46px;height:46px;border-radius:50%;object-fit:cover}
+.pl-rev footer b{display:block;color:var(--ink)}
+.pl-rev footer small{color:var(--muted)}
+/* blog */
+.pl-blog{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.pl-post{border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.pl-post:hover{transform:translateY(-5px);box-shadow:0 20px 46px rgba(15,28,63,.1)}
+.pl-post img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.pl-post .b{padding:1.3rem}
+.pl-post .b small{color:var(--blue);font-weight:600}
+.pl-post .b h3{font-size:1.08rem;margin-top:.5rem}
+/* cta */
+.pl-cta{position:relative;border-radius:24px;overflow:hidden;text-align:center;background:radial-gradient(120% 120% at 50% 0,#3b6fe0,#1e3a8a)}
+.pl-cta .in{position:relative;z-index:2;padding:clamp(3rem,6vw,5rem) 1.5rem;color:#fff}
+.pl-cta h2{color:#fff;font-size:clamp(1.9rem,3.8vw,3rem)}
+.pl-cta p{color:rgba(255,255,255,.9);max-width:560px;margin:1rem auto 1.8rem}
+@media(max-width:900px){.pl-nav .links{display:none}.pl-hero .pl-wrap,.pl-svc,.pl-split,.pl-faq,.pl-revs,.pl-blog,.pl-strip{grid-template-columns:1fr}}
+</style>
+<div class="pl">
+  <nav class="pl-nav"><div class="bar">
+    <div class="logo"><span class="dot">🔧</span>{company_name}</div>
+    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#blog">Blog</a></div>
+    <div class="right"><span class="phone">📞 {phone}</span><a href="#contact" class="pill">{cta_text}</a></div>
+  </div></nav>
+
+  <header class="pl-hero" id="home"><div class="pl-wrap">
+    <div>
+      <h1>{headline}</h1>
+      <p>{subheadline}</p>
+      <div class="cta-row">
+        <a href="#contact" class="pl-btn">{cta_text}</a>
+        <div class="pl-rate">
+          <div class="avs"><img src="${PL_IMG.av1}" alt="Customer"/><img src="${PL_IMG.av2}" alt="Customer"/><img src="${PL_IMG.av3}" alt="Customer"/></div>
+          <div><div class="st">★★★★★</div><small>{ratings_count} ratings</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="pl-shot"><img src="${PL_IMG.hero}" alt="Professional plumber from {company_name}"/></div>
+  </div></header>
+
+  <section style="background:var(--bg)"><div class="pl-wrap" style="padding-bottom:clamp(3.5rem,7vw,6rem)">
+    <div class="pl-strip">
+      <div class="it"><div class="ic">📞</div><h4>{feature_1_title}</h4><small>{feature_1_desc}</small></div>
+      <div class="it"><div class="ic">🔍</div><h4>{feature_2_title}</h4><small>{feature_2_desc}</small></div>
+      <div class="it"><div class="ic">⏱️</div><h4>{feature_3_title}</h4><small>{feature_3_desc}</small></div>
+    </div>
+  </div></section>
+
+  <section class="pl-sec" id="about" style="background:var(--bg)"><div class="pl-wrap"><div class="pl-split">
+    <div class="pl-imgs"><img src="${PL_IMG.about1}" alt="Plumbing work by {company_name}"/><img src="${PL_IMG.about2}" alt="Bathroom plumbing"/></div>
+    <div>
+      <span class="pl-eyebrow">{about_eyebrow}</span>
+      <h2 class="pl-h">{about_title}</h2>
+      <p class="pl-lead" style="margin-top:1rem">{about_body}</p>
+      <div class="pl-feat">
+        <div class="f">{about_feature_1}</div>
+        <div class="f">{about_feature_2}</div>
+        <div class="f">{about_feature_3}</div>
+      </div>
+      <a href="#contact" class="pl-btn" style="margin-top:1.8rem">📞 {phone}</a>
+    </div>
+  </div></div></section>
+
+  <section class="pl-sec" id="services"><div class="pl-wrap">
+    <div class="pl-head"><span class="pl-eyebrow">{services_eyebrow}</span><h2 class="pl-h">{services_title}</h2><p class="pl-lead" style="margin:1rem auto 0">{services_subtitle}</p></div>
+    <div class="pl-svc">
+      <div class="pl-scard"><div class="ic">💧</div><h3>{service_1_title}</h3><p>{service_1_desc}</p></div>
+      <div class="pl-scard"><div class="ic">🚿</div><h3>{service_2_title}</h3><p>{service_2_desc}</p></div>
+      <div class="pl-scard"><div class="ic">🔥</div><h3>{service_3_title}</h3><p>{service_3_desc}</p></div>
+      <div class="pl-scard"><div class="ic">🛁</div><h3>{service_4_title}</h3><p>{service_4_desc}</p></div>
+      <div class="pl-scard"><div class="ic">🌊</div><h3>{service_5_title}</h3><p>{service_5_desc}</p></div>
+      <div class="pl-scard"><div class="ic">🔧</div><h3>{service_6_title}</h3><p>{service_6_desc}</p></div>
+    </div>
+    <div class="pl-band" style="margin-top:2.5rem">
+      <h3>{emergency_title}</h3>
+      <a href="#contact" class="pl-btn ghost">{cta_text}</a>
+    </div>
+  </div></section>
+
+  <section class="pl-sec" style="background:var(--bg)"><div class="pl-wrap"><div class="pl-faq">
+    <div>
+      <span class="pl-eyebrow">{faq_eyebrow}</span>
+      <h2 class="pl-h">{faq_title}</h2>
+      <p class="pl-lead" style="margin-top:1rem">{faq_subtitle}</p>
+      <a href="#contact" class="pl-btn" style="margin-top:1.6rem">{cta_text}</a>
+    </div>
+    <div class="pl-acc">
+      <details open><summary>{faq_1_question}</summary><p>{faq_1_answer}</p></details>
+      <details><summary>{faq_2_question}</summary><p>{faq_2_answer}</p></details>
+      <details><summary>{faq_3_question}</summary><p>{faq_3_answer}</p></details>
+      <details><summary>{faq_4_question}</summary><p>{faq_4_answer}</p></details>
+    </div>
+  </div></div></section>
+
+  <section class="pl-sec"><div class="pl-wrap">
+    <div class="pl-head"><span class="pl-eyebrow">{reviews_eyebrow}</span><h2 class="pl-h">{reviews_title}</h2><p class="pl-lead" style="margin:1rem auto 0">{reviews_subtitle}</p></div>
+    <div class="pl-revs">
+      <div class="pl-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${PL_IMG.rRyan}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>Review on Trustpilot</small></div></footer></div>
+      <div class="pl-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${PL_IMG.rMichael}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>Review on Facebook</small></div></footer></div>
+      <div class="pl-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="${PL_IMG.rDavid}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>Review on Trustpilot</small></div></footer></div>
+      <div class="pl-rev"><div class="st">★★★★★</div><p>"{review_4_text}"</p><footer><img src="${PL_IMG.rJohn}" alt="{review_4_name}"/><div><b>{review_4_name}</b><small>Review on Google</small></div></footer></div>
+    </div>
+  </div></section>
+
+  <section class="pl-sec" id="blog" style="background:var(--bg)"><div class="pl-wrap">
+    <div class="pl-head"><span class="pl-eyebrow">{blog_eyebrow}</span><h2 class="pl-h">{blog_title}</h2><p class="pl-lead" style="margin:1rem auto 0">{blog_subtitle}</p></div>
+    <div class="pl-blog">
+      <a class="pl-post"><img src="${PL_IMG.b1}" alt="{post_1_title}"/><div class="b"><small>Apr 8, 2022</small><h3>{post_1_title}</h3></div></a>
+      <a class="pl-post"><img src="${PL_IMG.b2}" alt="{post_2_title}"/><div class="b"><small>Mar 15, 2022</small><h3>{post_2_title}</h3></div></a>
+      <a class="pl-post"><img src="${PL_IMG.b3}" alt="{post_3_title}"/><div class="b"><small>Feb 28, 2022</small><h3>{post_3_title}</h3></div></a>
+    </div>
+  </div></section>
+
+  <section class="pl-sec" id="contact"><div class="pl-wrap">
+    <div class="pl-cta"><div class="in">
+      <h2>{bottom_cta_headline}</h2>
+      <p>{bottom_cta_description}</p>
+      <a href="tel:{phone}" class="pl-btn">📞 {cta_text} {phone}</a>
+    </div></div>
+  </div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
