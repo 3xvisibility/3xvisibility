@@ -1657,7 +1657,7 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 
   <section class="gd-sec" style="background:var(--bg)"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Our Recent Works</span><h2 class="gd-h">A reflection of our clients' vision</h2><p class="gd-lead" style="margin:1rem auto 0">We take a personalized approach to every project, ensuring each garden reflects our client's unique vision and lifestyle.</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{works_eyebrow}</span><h2 class="gd-h">{works_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{works_subtitle}</p></div>
     <div class="gd-gal">
       <img src="${GD_IMG.g1}" alt="Recent work"/><img src="${GD_IMG.g2}" alt="Recent work"/><img src="${GD_IMG.g3}" alt="Recent work"/>
       <img src="${GD_IMG.g4}" alt="Recent work"/><img src="${GD_IMG.g5}" alt="Recent work"/><img src="${GD_IMG.g6}" alt="Recent work"/>
