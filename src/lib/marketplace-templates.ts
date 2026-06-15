@@ -1610,7 +1610,7 @@ const gardenerTemplate = () => `<style>
       </div>
     </div>
     <div class="gd-book">
-      <h3>Book Your Free Appointment</h3>
+      <h3>{booking_title}</h3>
       <input type="text" placeholder="Jane Smith"/>
       <input type="email" placeholder="jane@email.com"/>
       <input type="tel" placeholder="555-0123"/>
@@ -1622,20 +1622,20 @@ const gardenerTemplate = () => `<style>
   <section class="gd-sec" id="about"><div class="gd-wrap"><div class="gd-split">
     <img src="${GD_IMG.build}" alt="Garden landscaping by {company_name}"/>
     <div>
-      <span class="gd-eyebrow">About {company_name}</span>
+      <span class="gd-eyebrow">{about_eyebrow}</span>
       <h2 class="gd-h">{about_title}</h2>
       <p class="gd-lead" style="margin-top:1rem">{about_body}</p>
       <div class="gd-feat">
         <div class="f">{feature_1}</div>
         <div class="f">{feature_2}</div>
-        <div class="f">Available Monday to Friday, 9am to 5pm</div>
+        <div class="f">{feature_3}</div>
       </div>
       <a href="#contact" class="gd-btn" style="margin-top:1.8rem">📞 {phone}</a>
     </div>
   </div></div></section>
 
   <section class="gd-sec" id="services" style="background:var(--bg)"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Our Services</span><h2 class="gd-h">{services_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{services_subtitle}</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{services_eyebrow}</span><h2 class="gd-h">{services_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{services_subtitle}</p></div>
     <div class="gd-svc">
       <a class="gd-card"><img src="${GD_IMG.svc1}" alt="{service_1_title}"/><div class="lbl"><span>{service_1_title}</span><span class="arr">→</span></div></a>
       <a class="gd-card"><img src="${GD_IMG.svc2}" alt="{service_2_title}"/><div class="lbl"><span>{service_2_title}</span><span class="arr">→</span></div></a>
@@ -1646,8 +1646,8 @@ const gardenerTemplate = () => `<style>
   <section class="gd-sec"><div class="gd-wrap"><div class="gd-faq">
     <img src="${GD_IMG.faq}" alt="Beautiful garden"/>
     <div>
-      <span class="gd-eyebrow">FAQ</span>
-      <h2 class="gd-h" style="margin-bottom:1.4rem">Frequently asked questions</h2>
+      <span class="gd-eyebrow">{faq_eyebrow}</span>
+      <h2 class="gd-h" style="margin-bottom:1.4rem">{faq_title}</h2>
       <div class="gd-acc">
         <details open><summary>{faq_1_question}</summary><p>{faq_1_answer}</p></details>
         <details><summary>{faq_2_question}</summary><p>{faq_2_answer}</p></details>
@@ -1657,7 +1657,7 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 
   <section class="gd-sec" style="background:var(--bg)"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Our Recent Works</span><h2 class="gd-h">A reflection of our clients' vision</h2><p class="gd-lead" style="margin:1rem auto 0">We take a personalized approach to every project, ensuring each garden reflects our client's unique vision and lifestyle.</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{works_eyebrow}</span><h2 class="gd-h">{works_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{works_subtitle}</p></div>
     <div class="gd-gal">
       <img src="${GD_IMG.g1}" alt="Recent work"/><img src="${GD_IMG.g2}" alt="Recent work"/><img src="${GD_IMG.g3}" alt="Recent work"/>
       <img src="${GD_IMG.g4}" alt="Recent work"/><img src="${GD_IMG.g5}" alt="Recent work"/><img src="${GD_IMG.g6}" alt="Recent work"/>
@@ -1665,7 +1665,7 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 
   <section class="gd-sec"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Loved By Our Customers</span><div class="gd-score"><b>{rating_value}</b><span class="st" style="color:#f5b301">★★★★★</span></div><p class="gd-lead" style="margin:0 auto">From {ratings_count} ratings</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{reviews_eyebrow}</span><div class="gd-score"><b>{rating_value}</b><span class="st" style="color:#f5b301">★★★★★</span></div><p class="gd-lead" style="margin:0 auto">From {ratings_count} ratings</p></div>
     <div class="gd-revs">
       <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${GD_IMG.rAlex}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>Review on Trustpilot</small></div></footer></div>
       <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${GD_IMG.rJohn}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>Review on Trustpilot</small></div></footer></div>
@@ -1675,7 +1675,7 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 
   <section class="gd-sec" id="blog" style="background:var(--bg)"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Explore Our Blog</span><h2 class="gd-h">{blog_title}</h2><p class="gd-lead" style="margin:1rem auto 0">Whether you're a seasoned gardener or just getting started, our blog is your go-to resource for all things gardening.</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{blog_eyebrow}</span><h2 class="gd-h">{blog_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{blog_subtitle}</p></div>
     <div class="gd-blog">
       <a class="gd-post"><img src="${GD_IMG.b1}" alt="{post_1_title}"/><div class="b"><small>Apr 8, 2022</small><h3>{post_1_title}</h3></div></a>
       <a class="gd-post"><img src="${GD_IMG.b2}" alt="{post_2_title}"/><div class="b"><small>Mar 15, 2022</small><h3>{post_2_title}</h3></div></a>
@@ -2699,15 +2699,18 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     description: "Beautiful gardening & landscaping landing page — full-bleed hero with a glass booking form, about split, services gallery, FAQ, recent works grid, customer reviews, blog highlights and a closing CTA. Modelled 1:1 on the gardener.framer.media design with real photography.",
     content: gardenerTemplate(),
     variables: [
-      "{company_name}", "{headline}", "{subheadline}", "{cta_text}", "{phone}",
+      "{company_name}", "{headline}", "{subheadline}", "{cta_text}", "{phone}", "{booking_title}",
       "{ratings_count}", "{rating_value}",
-      "{about_title}", "{about_body}", "{feature_1}", "{feature_2}",
-      "{services_title}", "{services_subtitle}",
+      "{about_eyebrow}", "{about_title}", "{about_body}", "{feature_1}", "{feature_2}", "{feature_3}",
+      "{services_eyebrow}", "{services_title}", "{services_subtitle}",
       "{service_1_title}", "{service_2_title}", "{service_3_title}",
+      "{faq_eyebrow}", "{faq_title}",
       "{faq_1_question}", "{faq_1_answer}", "{faq_2_question}", "{faq_2_answer}", "{faq_3_question}", "{faq_3_answer}",
+      "{works_eyebrow}", "{works_title}", "{works_subtitle}",
+      "{reviews_eyebrow}",
       "{review_1_text}", "{review_1_name}", "{review_2_text}", "{review_2_name}",
       "{review_3_text}", "{review_3_name}", "{review_4_text}", "{review_4_name}",
-      "{blog_title}", "{post_1_title}", "{post_2_title}", "{post_3_title}",
+      "{blog_eyebrow}", "{blog_title}", "{blog_subtitle}", "{post_1_title}", "{post_2_title}", "{post_3_title}",
       "{bottom_cta_headline}", "{bottom_cta_description}",
     ],
     category: "professional",
@@ -2722,17 +2725,23 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
       subheadline: "With our expert team of gardeners and landscapers, we turn ordinary gardens into extraordinary havens of beauty.",
       cta_text: "Book Your Call",
       phone: "(595) 555-0123",
+      booking_title: "Book Your Free Appointment",
       ratings_count: "2000+",
       rating_value: "4.9",
+      about_eyebrow: "About Us",
       about_title: "Build a Space That Matches Your Home",
       about_body: "Whether you have a sprawling backyard or a cozy balcony, our team of experienced gardeners and landscapers is dedicated to bringing your green dreams to life.",
       feature_1: "Sustainable Gardening Practices",
       feature_2: "Personalized Services Available",
+      feature_3: "Available Monday to Friday, 9am to 5pm",
+      services_eyebrow: "Our Services",
       services_title: "Our Services",
       services_subtitle: "Our team combines expertise with creativity to transform outdoor spaces into breathtaking landscapes that enhance the beauty of any property.",
       service_1_title: "Landscaping Works",
       service_2_title: "Garden Design",
       service_3_title: "Seasonal Planting",
+      faq_eyebrow: "FAQ",
+      faq_title: "Frequently asked questions",
       faq_1_question: "Do you offer maintenance services?",
       faq_1_answer: "Yes, we provide comprehensive landscape maintenance services to keep your garden looking its best year-round. We offer tailored maintenance plans to suit your schedule and budget.",
       faq_2_question: "Do you use organic gardening methods?",
@@ -2747,7 +2756,13 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
       review_3_name: "Michael Harrison",
       review_4_text: "Gardener completely exceeded my expectations. From the initial consultation to the final touches, their team was professional and attentive to every detail.",
       review_4_name: "David Peterson",
+      works_eyebrow: "Our Recent Works",
+      works_title: "A reflection of our clients' vision",
+      works_subtitle: "We take a personalized approach to every project, ensuring each garden reflects our client's unique vision and lifestyle.",
+      reviews_eyebrow: "Loved By Our Customers",
+      blog_eyebrow: "Explore Our Blog",
       blog_title: "Explore Our Blog",
+      blog_subtitle: "Whether you're a seasoned gardener or just getting started, our blog is your go-to resource for all things gardening.",
       post_1_title: "The Art of Designing Gardens: A Detailed Step-by-Step Guide",
       post_2_title: "Plant Spotlight: 10 Must-Have Perennials for Every Garden",
       post_3_title: "Garden Pest Control: Useful Strategies for a Healthy Garden",
