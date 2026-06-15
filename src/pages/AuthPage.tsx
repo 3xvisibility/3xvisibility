@@ -412,7 +412,7 @@ export default function AuthPage() {
                   transition={{ duration: 0.5, delay: 0.15, ease }}
                   className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 mb-3"
                 >
-                  <img src={logo3x} alt="3XVISIBILITY" className="h-9 w-9 object-contain" />
+                  <img src={logo3x} alt="3XVISIBILITY" className="h-9 w-auto object-contain" />
                 </motion.div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-[-0.03em]">
                   {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
