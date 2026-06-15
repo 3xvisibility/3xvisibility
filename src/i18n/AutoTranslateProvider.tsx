@@ -79,6 +79,33 @@ type Target = TextTarget | AttrTarget;
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 
+// Wipe every auto-translated text node / attribute back to its English
+// original. Used both when switching languages (to re-translate cleanly) and
+// when switching back to English (to reveal the source language).
+function restoreToEnglish() {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const textNode = node as Text & { __autoTrOriginal?: string; __autoTrLang?: string };
+    if (!textNode.__autoTrOriginal) continue;
+    const raw = textNode.nodeValue || "";
+    const leading = raw.match(/^\s*/)?.[0] ?? "";
+    const trailing = raw.match(/\s*$/)?.[0] ?? "";
+    textNode.nodeValue = `${leading}${textNode.__autoTrOriginal}${trailing}`;
+    textNode.__autoTrLang = "en";
+  }
+
+  const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
+  document.body.querySelectorAll(selector).forEach((el) => {
+    for (const attr of TRANSLATABLE_ATTRS) {
+      const original = (el as any)[`__autoTr_${attr}_orig`];
+      if (!original) continue;
+      el.setAttribute(attr, original);
+      (el as any)[`__autoTr_${attr}_lang`] = "en";
+    }
+  });
+}
+
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
   const { language, translating, setTranslating } = useLanguage();
   const langRef = useRef(language);
