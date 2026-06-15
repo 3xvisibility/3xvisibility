@@ -137,20 +137,53 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     // switch happening, then reveal the fully-English page.
     if (language === "en") {
       setTranslatingRef.current(true);
+
+      // Restore immediately, then keep restoring for a short window so that
+      // late-mounting / async content (data fetched after the switch) that may
+      // still carry translated text is reverted to English as well.
+      restoreToEnglish();
+
+      const enObserver = new MutationObserver(() => {
+        restoreToEnglish();
+      });
+      enObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: [...TRANSLATABLE_ATTRS],
+      });
+
+      // A few synchronous passes across animation frames to catch anything that
+      // renders within the first moments after the switch.
       let frames = 0;
       let raf = 0;
       const pass = () => {
         restoreToEnglish();
         frames += 1;
-        if (frames < 3) {
+        if (frames < 6) {
           raf = window.requestAnimationFrame(pass);
-        } else {
-          setTranslatingRef.current(false);
         }
       };
       raf = window.requestAnimationFrame(pass);
+
+      // Hide the overlay once the page has settled into English.
+      const hideTimer = window.setTimeout(() => {
+        restoreToEnglish();
+        setTranslatingRef.current(false);
+      }, 600);
+
+      // Stop the restore observer a bit later so very-late async content is
+      // still reverted, then disconnect to avoid running forever.
+      const stopTimer = window.setTimeout(() => {
+        enObserver.disconnect();
+      }, 4000);
+
       return () => {
         if (raf) window.cancelAnimationFrame(raf);
+        window.clearTimeout(hideTimer);
+        window.clearTimeout(stopTimer);
+        enObserver.disconnect();
         setTranslatingRef.current(false);
       };
     }
