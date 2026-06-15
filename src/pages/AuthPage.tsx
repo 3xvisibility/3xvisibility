@@ -225,7 +225,7 @@ export default function AuthPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, ai_language: aiLanguage },
+        data: { full_name: fullName, ai_language: aiLanguage, salutation },
       },
     });
     if (error) {
