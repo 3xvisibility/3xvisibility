@@ -442,8 +442,7 @@ export default function DashboardPage() {
         <AiCreditsWidget />
       </div>
 
-      {/* Usage History */}
-      <UsageHistoryWidget />
+
 
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary-glow to-secondary p-6 sm:p-8 text-primary-foreground">
