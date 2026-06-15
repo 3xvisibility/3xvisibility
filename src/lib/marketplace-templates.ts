@@ -1372,22 +1372,16 @@ const landerxTemplate = () => `<style>
 @media(max-width:560px){.lx-revs{columns:1}}
 </style>
 <div class="lx">
-  <nav class="lx-nav"><div class="lx-wrap"><div class="bar">
-    <div class="logo"><span class="dot"></span>{product_name}</div>
-    <div class="links"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#reviews">Reviews</a><a href="#contact">Contact</a></div>
-    <a href="#pricing" class="lx-btn">Get Template</a>
-  </div></div></nav>
-
   <header class="lx-hero"><div class="lx-wrap">
     <div class="lx-join">
       <div class="lx-avs"><img src="${LX_IMG.a1}" alt=""/><img src="${LX_IMG.a2}" alt=""/><img src="${LX_IMG.a3}" alt=""/><img src="${LX_IMG.a4}" alt=""/></div>
-      <span>Join <b>15,374+</b> other loving customers</span>
+      <span>Join <b>{customers_count}</b> {customers_label}</span>
     </div>
     <h1>{headline}</h1>
     <p>{subheadline}</p>
     <div class="cta">
       <a href="#pricing" class="lx-btn">{cta_text}</a>
-      <a href="#contact" class="lx-btn lx-btn-ghost">Book a Demo</a>
+      <a href="#contact" class="lx-btn lx-btn-ghost">{secondary_cta_text}</a>
     </div>
     <div class="lx-logos">
       <img src="https://framerusercontent.com/images/otv1rEDn2X7h8TFtKPCksQmAEKQ.svg?width=75&height=17" alt="Logo"/>
@@ -1399,57 +1393,57 @@ const landerxTemplate = () => `<style>
   </div></header>
 
   <section class="lx-sec" id="features"><div class="lx-wrap">
-    <div class="lx-head"><span class="lx-eyebrow">Benefits</span><h2 class="lx-h">Why Choose {product_name}?</h2><p class="lx-lead" style="margin:1rem auto 0">Innovative tools and powerful insights designed to elevate your business.</p></div>
+    <div class="lx-head"><span class="lx-eyebrow">{benefits_eyebrow}</span><h2 class="lx-h">{benefits_title}</h2><p class="lx-lead" style="margin:1rem auto 0">{benefits_subtitle}</p></div>
     <div class="lx-grid3">
       <div class="lx-card"><div class="ic">💸</div><h3>{feature_1_title}</h3><p>{feature_1_desc}</p></div>
       <div class="lx-card"><div class="ic">📊</div><h3>{feature_2_title}</h3><p>{feature_2_desc}</p></div>
-      <div class="lx-card"><div class="ic">🧩</div><h3>{feature_3_title}</h3><p>Choose plans that adapt to your business needs, offering unparalleled scalability and cost-effectiveness.</p></div>
-      <div class="lx-card"><div class="ic">🔒</div><h3>Secure Transactions</h3><p>Prioritize safety with cutting-edge encryption and robust security features for every interaction.</p></div>
-      <div class="lx-card"><div class="ic">🤖</div><h3>Adaptive Systems</h3><p>Leverage AI-driven systems that evolve with your business, ensuring efficiency at every step.</p></div>
-      <div class="lx-card"><div class="ic">🎧</div><h3>Dedicated Support</h3><p>Access expert assistance 24/7 to ensure you're never alone on your growth journey.</p></div>
+      <div class="lx-card"><div class="ic">🧩</div><h3>{feature_3_title}</h3><p>{feature_3_desc}</p></div>
+      <div class="lx-card"><div class="ic">🔒</div><h3>{feature_4_title}</h3><p>{feature_4_desc}</p></div>
+      <div class="lx-card"><div class="ic">🤖</div><h3>{feature_5_title}</h3><p>{feature_5_desc}</p></div>
+      <div class="lx-card"><div class="ic">🎧</div><h3>{feature_6_title}</h3><p>{feature_6_desc}</p></div>
     </div>
   </div></section>
 
   <section class="lx-sec" id="reviews"><div class="lx-wrap">
-    <div class="lx-head"><span class="lx-eyebrow">Wall of love</span><h2 class="lx-h">Loved by thinkers</h2><p class="lx-lead" style="margin:1rem auto 0">Here's what people worldwide are saying about us.</p></div>
+    <div class="lx-head"><span class="lx-eyebrow">{reviews_eyebrow}</span><h2 class="lx-h">{reviews_title}</h2><p class="lx-lead" style="margin:1rem auto 0">{reviews_subtitle}</p></div>
     <div class="lx-revs">
-      <div class="lx-rev"><div class="st">★★★★★</div><p>"Highly intuitive and polished. It's everything we needed and more!"</p><footer><img src="${LX_IMG.t1}" alt="Alex jonas"/><div><b>Alex jonas</b><small>JS Marketing</small></div></footer></div>
-      <div class="lx-rev"><div class="st">★★★★★</div><p>"This is truly incredible and has saved us countless hours!"</p><footer><img src="${LX_IMG.t2}" alt="John Robert"/><div><b>John Robert</b><small>SM Strategy</small></div></footer></div>
-      <div class="lx-rev"><div class="st">★★★★★</div><p>"Pure brilliance! This has streamlined our workflow massively."</p><footer><img src="${LX_IMG.t3}" alt="Maggie Hue"/><div><b>Maggie Hue</b><small>BS Growth CEO</small></div></footer></div>
-      <div class="lx-rev"><div class="st">★★★★★</div><p>"A top-notch solution! It's been transformative for our entire team."</p><footer><img src="${LX_IMG.t4}" alt="Tappo kao"/><div><b>Tappo kao</b><small>PO Marketing</small></div></footer></div>
-      <div class="lx-rev"><div class="st">★★★★★</div><p>"Amazing product! It's made our processes seamless and effective."</p><footer><img src="${LX_IMG.t5}" alt="jack hanma"/><div><b>jack hanma</b><small>JK Finance</small></div></footer></div>
-      <div class="lx-rev"><div class="st">★★★★★</div><p>"Incredible design and functionality! This has exceeded our expectations."</p><footer><img src="${LX_IMG.t6}" alt="John Robert"/><div><b>John Robert</b><small>JO Strategy</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>{review_1_text}</p><footer><img src="${LX_IMG.t1}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>{review_1_role}</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>{review_2_text}</p><footer><img src="${LX_IMG.t2}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>{review_2_role}</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>{review_3_text}</p><footer><img src="${LX_IMG.t3}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>{review_3_role}</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>{review_4_text}</p><footer><img src="${LX_IMG.t4}" alt="{review_4_name}"/><div><b>{review_4_name}</b><small>{review_4_role}</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>{review_5_text}</p><footer><img src="${LX_IMG.t5}" alt="{review_5_name}"/><div><b>{review_5_name}</b><small>{review_5_role}</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>{review_6_text}</p><footer><img src="${LX_IMG.t6}" alt="{review_6_name}"/><div><b>{review_6_name}</b><small>{review_6_role}</small></div></footer></div>
     </div>
   </div></section>
 
   <section class="lx-sec" id="pricing"><div class="lx-wrap">
-    <div class="lx-head"><span class="lx-eyebrow">Pricing & plans</span><h2 class="lx-h">Flexible Pricing Plans</h2><p class="lx-lead" style="margin:1rem auto 0">Choose a plan that fits your business needs and unlock the full potential of our platform.</p></div>
+    <div class="lx-head"><span class="lx-eyebrow">{pricing_eyebrow}</span><h2 class="lx-h">{pricing_title}</h2><p class="lx-lead" style="margin:1rem auto 0">{pricing_subtitle}</p></div>
     <div class="lx-price">
-      <div class="lx-plan"><div class="nm">Starter</div><div class="pr">{price_starter}<small> / month</small></div><ul><li>Unlimited AI usage</li><li>Premium support</li><li>Customer care on point</li><li>Collaboration tools</li><li>Regular updates</li></ul><a href="#contact" class="lx-btn lx-btn-ghost">Get Started Now</a></div>
-      <div class="lx-plan pop"><span class="tag">Popular</span><div class="nm">Pro</div><div class="pr">{price_pro}<small> / month</small></div><ul><li>Integrations with 3rd-party</li><li>Advanced analytics</li><li>Team performance tracking</li><li>Top grade security</li><li>Priority customer support</li><li>Detailed usage reports</li></ul><a href="#contact" class="lx-btn">Get Started Now</a></div>
-      <div class="lx-plan"><div class="nm">Enterprise</div><div class="pr">Custom</div><ul><li>Dedicated account manager</li><li>Custom reports & dashboards</li><li>Tailored onboarding & training</li><li>Customizable API access</li><li>Dedicated success manager</li></ul><a href="#contact" class="lx-btn lx-btn-ghost">Get Started Now</a></div>
+      <div class="lx-plan"><div class="nm">{plan_starter_name}</div><div class="pr">{price_starter}<small> / {price_period}</small></div><ul><li>{plan_starter_feature_1}</li><li>{plan_starter_feature_2}</li><li>{plan_starter_feature_3}</li><li>{plan_starter_feature_4}</li><li>{plan_starter_feature_5}</li></ul><a href="#contact" class="lx-btn lx-btn-ghost">{plan_cta_text}</a></div>
+      <div class="lx-plan pop"><span class="tag">{plan_pro_badge}</span><div class="nm">{plan_pro_name}</div><div class="pr">{price_pro}<small> / {price_period}</small></div><ul><li>{plan_pro_feature_1}</li><li>{plan_pro_feature_2}</li><li>{plan_pro_feature_3}</li><li>{plan_pro_feature_4}</li><li>{plan_pro_feature_5}</li><li>{plan_pro_feature_6}</li></ul><a href="#contact" class="lx-btn">{plan_cta_text}</a></div>
+      <div class="lx-plan"><div class="nm">{plan_enterprise_name}</div><div class="pr">{price_enterprise}</div><ul><li>{plan_enterprise_feature_1}</li><li>{plan_enterprise_feature_2}</li><li>{plan_enterprise_feature_3}</li><li>{plan_enterprise_feature_4}</li><li>{plan_enterprise_feature_5}</li></ul><a href="#contact" class="lx-btn lx-btn-ghost">{plan_cta_text}</a></div>
     </div>
   </div></section>
 
   <section class="lx-sec"><div class="lx-wrap">
-    <span class="lx-eyebrow" style="display:block;text-align:center;margin-bottom:1.5rem">Founder's note</span>
+    <span class="lx-eyebrow" style="display:block;text-align:center;margin-bottom:1.5rem">{founder_eyebrow}</span>
     <div class="lx-split">
-      <img src="${LX_IMG.founder}" alt="Co-founder"/>
+      <img src="${LX_IMG.founder}" alt="{founder_name}"/>
       <div>
-        <q>"We gather your site data. We know your target audience & how your brand can stand out from the crowd. Best part is we also help you with solutions."</q>
-        <small>Co-founder & ex-Google designer</small>
+        <q>{founder_quote}</q>
+        <small>{founder_name} — {founder_role}</small>
       </div>
     </div>
   </div></section>
 
   <section class="lx-sec" id="contact"><div class="lx-wrap">
-    <div class="lx-head"><span class="lx-eyebrow">FAQ's section</span><h2 class="lx-h">Some Common FAQ's</h2><p class="lx-lead" style="margin:1rem auto 0">Get answers to your questions and learn about our platform.</p></div>
+    <div class="lx-head"><span class="lx-eyebrow">{faq_eyebrow}</span><h2 class="lx-h">{faq_title}</h2><p class="lx-lead" style="margin:1rem auto 0">{faq_subtitle}</p></div>
     <div class="lx-faq">
-      <details open><summary>What makes {product_name} unique?</summary><p>{product_name} is designed to streamline your SaaS or startup's online presence with modern, user-centric design and seamless functionality, ensuring you stand out from competitors.</p></details>
-      <details><summary>Can I customize it to match my brand?</summary><p>Absolutely! Everything is fully customizable, allowing you to change colors, fonts, images, and content to perfectly align with your brand identity.</p></details>
-      <details><summary>Is it optimized for SEO and speed?</summary><p>Yes — built for exceptional performance, fast loading times, and SEO-friendly structure to boost your online visibility.</p></details>
-      <details><summary>Is it mobile-friendly?</summary><p>Yes, fully responsive, ensuring a seamless user experience across desktop, tablet, and mobile devices.</p></details>
-      <details><summary>Can I use this for commercial projects?</summary><p>Yes. You're free to use it for both personal and commercial projects — no attribution required.</p></details>
+      <details open><summary>{faq_1_question}</summary><p>{faq_1_answer}</p></details>
+      <details><summary>{faq_2_question}</summary><p>{faq_2_answer}</p></details>
+      <details><summary>{faq_3_question}</summary><p>{faq_3_answer}</p></details>
+      <details><summary>{faq_4_question}</summary><p>{faq_4_answer}</p></details>
+      <details><summary>{faq_5_question}</summary><p>{faq_5_answer}</p></details>
     </div>
   </div></section>
 
@@ -1459,7 +1453,7 @@ const landerxTemplate = () => `<style>
       <p>{bottom_cta_description}</p>
       <div class="cta">
         <a href="#pricing" class="lx-btn">{cta_text}</a>
-        <a href="#contact" class="lx-btn lx-btn-ghost">Book a Demo</a>
+        <a href="#contact" class="lx-btn lx-btn-ghost">{secondary_cta_text}</a>
       </div>
     </div>
   </div></section>
