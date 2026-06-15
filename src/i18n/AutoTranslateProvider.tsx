@@ -127,39 +127,34 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
     // English originals so the translator re-runs cleanly for the new target.
     // React-managed t() nodes have no __autoTrOriginal, so they are untouched
     // and re-render to the new language on their own.
-    const restoreEnglish = () => {
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      let node: Node | null;
-      while ((node = walker.nextNode())) {
-        const textNode = node as Text & { __autoTrOriginal?: string; __autoTrLang?: string };
-        if (!textNode.__autoTrOriginal) continue;
-        const raw = textNode.nodeValue || "";
-        const leading = raw.match(/^\s*/)?.[0] ?? "";
-        const trailing = raw.match(/\s*$/)?.[0] ?? "";
-        textNode.nodeValue = `${leading}${textNode.__autoTrOriginal}${trailing}`;
-        textNode.__autoTrLang = "en";
-      }
-
-      const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
-      document.body.querySelectorAll(selector).forEach((el) => {
-        for (const attr of TRANSLATABLE_ATTRS) {
-          const original = (el as any)[`__autoTr_${attr}_orig`];
-          if (!original) continue;
-          el.setAttribute(attr, original);
-          (el as any)[`__autoTr_${attr}_lang`] = "en";
-        }
-      });
-    };
-
-    restoreEnglish();
+    restoreToEnglish();
   }, [language]);
 
   useEffect(() => {
-    // English is the source language — nothing to translate.
+    // English is the source language — nothing to translate. Restore any
+    // remaining auto-translated nodes (including ones that mounted late) over
+    // a few animation frames, keeping the overlay up so the user sees the
+    // switch happening, then reveal the fully-English page.
     if (language === "en") {
-      setTranslatingRef.current(false);
-      return;
+      setTranslatingRef.current(true);
+      let frames = 0;
+      let raf = 0;
+      const pass = () => {
+        restoreToEnglish();
+        frames += 1;
+        if (frames < 3) {
+          raf = window.requestAnimationFrame(pass);
+        } else {
+          setTranslatingRef.current(false);
+        }
+      };
+      raf = window.requestAnimationFrame(pass);
+      return () => {
+        if (raf) window.cancelAnimationFrame(raf);
+        setTranslatingRef.current(false);
+      };
     }
+
 
 
     // Translate the WHOLE document for every non-English language — including
