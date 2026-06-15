@@ -1525,32 +1525,15 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "Product",
   },
 
-  // 3. SaaS landing
+  // 3. SaaS landing (LanderX-style dark SaaS)
   {
     id: "saas-landing",
-    name: "SaaS Feature Landing",
-    description: "Modern SaaS landing with hero image, feature grid, testimonials, FAQ and final CTA.",
-    content: page(
-      hero({ bgKeywords: "modern saas dashboard team office", badge: "🚀 New for teams", title: "{headline}", subtitle: "{subheadline}", primaryCta: "{cta_text} →", secondaryCta: "Watch Demo", sig: 3 }) +
-      trustStrip([{ num: "10K+", lbl: "Active Users" }, { num: "99.9%", lbl: "Uptime" }, { num: "50M+", lbl: "API Calls/Day" }, { num: "4.9★", lbl: "User Rating" }]) +
-      featureGrid("Features", "Why {product_name}?", "Everything you need to scale your business, all in one platform.", [
-        { icon: "⚡", title: "{feature_1_title}", desc: "{feature_1_desc}" },
-        { icon: "📊", title: "{feature_2_title}", desc: "{feature_2_desc}" },
-        { icon: "🔒", title: "{feature_3_title}", desc: "{feature_3_desc}" },
-      ]) +
-      aboutSplit("Built for teams", "Powerful collaboration, simple workflows", "Bring everyone together in one workspace. Real-time updates, granular permissions, and integrations with the tools you already use.", "team collaboration laptop modern", 8) +
-      gallery("Product tour", "See {product_name} in action", ["software dashboard", "data analytics", "team collaboration", "remote work", "saas interface", "mobile app"]) +
-      defaultTestimonials +
-      faq([
-        { q: "Is there a free trial?", a: "Yes — 14 days, no credit card required. Cancel anytime." },
-        { q: "Can I change plans later?", a: "Absolutely. Upgrade or downgrade in one click from your account settings." },
-        { q: "Do you offer SSO?", a: "Yes, SSO and SAML are available on our Business and Enterprise plans." },
-      ]) +
-      ctaBand({ bgKeywords: "futuristic technology gradient", title: "{bottom_cta_headline}", subtitle: "{bottom_cta_description}", cta: "{cta_text} →", sig: 13 })
-    ),
-    variables: ["{headline}", "{subheadline}", "{product_name}", "{cta_text}", "{feature_1_title}", "{feature_1_desc}", "{feature_2_title}", "{feature_2_desc}", "{feature_3_title}", "{feature_3_desc}", "{bottom_cta_headline}", "{bottom_cta_description}"],
+    name: "LanderX SaaS Startup",
+    description: "Sleek dark-mode SaaS / startup landing page with a glowing blue hero, social-proof avatars, client logos, benefits grid, wall-of-love testimonials, flexible pricing plans, founder's note and FAQ. Modelled on the LanderX (LanX) design.",
+    content: landerxTemplate(),
+    variables: ["{headline}", "{subheadline}", "{product_name}", "{cta_text}", "{feature_1_title}", "{feature_1_desc}", "{feature_2_title}", "{feature_2_desc}", "{feature_3_title}", "{feature_3_desc}", "{price_starter}", "{price_pro}", "{bottom_cta_headline}", "{bottom_cta_description}"],
     category: "saas",
-    tags: ["saas", "landing", "features", "startup"],
+    tags: ["saas", "landing", "startup", "dark", "pricing", "ai"],
     author: "Community", downloads: 1563, rating: 4.9,
     seo_title_pattern: "{headline} | {product_name}",
     seo_description_pattern: "{subheadline}",
