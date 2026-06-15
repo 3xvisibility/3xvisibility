@@ -50,13 +50,23 @@ export default function TemplateMarketplacePage() {
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
+  const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
-  // Reset uploaded CSV when switching templates.
-  useEffect(() => { setUploadedCsv([]); }, [previewTemplate?.id]);
+  // Reset uploaded CSV + image overrides when switching templates.
+  useEffect(() => { setUploadedCsv([]); setImageOverrides({}); }, [previewTemplate?.id]);
+
+  // Build preview rows with image overrides merged into every row.
+  const previewRows = useMemo(() => {
+    const base = uploadedCsv.length > 0
+      ? uploadedCsv
+      : (previewTemplate?.defaultValues ? [previewTemplate.defaultValues] : []);
+    if (Object.keys(imageOverrides).length === 0) return base;
+    return base.map((row) => ({ ...row, ...imageOverrides }));
+  }, [uploadedCsv, previewTemplate, imageOverrides]);
 
   const handleCsvUpload = async (file: File) => {
     try {
