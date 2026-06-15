@@ -102,11 +102,10 @@ export function AdminSidebar({ onLogout }: AdminSidebarProps) {
       <SidebarContent className="px-3 py-4">
         {/* Admin header */}
         <div className="mb-4 px-3 flex items-center gap-2.5">
-          <img src={logo3x} alt="3XVISIBILITY" className="h-7 w-7 rounded-lg object-contain shrink-0" />
+          <img src={logo3x} alt="3XVISIBILITY" className="h-8 w-8 object-contain shrink-0" />
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate">Admin Panel</p>
-              <p className="text-[11px] text-muted-foreground truncate">Platform control</p>
             </div>
           )}
         </div>

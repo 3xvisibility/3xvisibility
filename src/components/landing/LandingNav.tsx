@@ -36,15 +36,8 @@ export function LandingNav() {
         className={`transition-all duration-500 ${scrolled ? "bg-[hsl(220,60%,4%)]/80 backdrop-blur-2xl border-b border-[hsl(96,90%,45%,0.08)]" : "bg-transparent"}`}
       >
         <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img src={logo3x} alt="3X Visibility logo" width={32} height={32} className="h-8 w-8 rounded-xl" />
-            <span className="flex flex-col leading-none">
-              <span className="text-base font-bold tracking-tight" data-no-translate translate="no">
-                <span className="text-primary">3X</span>
-                <span className="text-foreground">visibility</span>
-              </span>
-              <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[hsl(220,10%,60%)] mt-0.5">{t("brand.tagline")}</span>
-            </span>
+          <Link to="/" className="flex items-center">
+            <img src={logo3x} alt="3X Visibility logo" width={40} height={40} className="h-10 w-10 object-contain" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
