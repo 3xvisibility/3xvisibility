@@ -47,10 +47,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState((prev) => {
-      // Show the translating overlay when switching to a language that needs
-      // runtime DOM translation (anything other than the English source).
+      // Show the translating overlay whenever the language actually changes —
+      // including switching back to English, where we restore the source text.
       if (lang !== prev) {
-        setTranslating(lang !== "en");
+        setTranslating(true);
       }
       return lang;
     });
