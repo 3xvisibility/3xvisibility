@@ -2061,9 +2061,9 @@ const refitTemplate = () => `<style>
   <section class="rf-sec" id="work"><div class="rf-wrap">
     <div class="rf-head"><span class="rf-eyebrow"><span class="dot"></span>{work_eyebrow}</span><h2 class="rf-h">{work_title}</h2><p class="rf-lead" style="margin-top:1rem">{work_subtitle}</p></div>
     <div class="rf-work">
-      <div class="rf-wcard"><img src="${RF_IMG.work1}" alt="{work_1_title}"/><div class="b"><span class="tag">{work_1_tag}</span><h3>{work_1_title}</h3><p>{work_1_desc}</p></div></div>
-      <div class="rf-wcard"><img src="${RF_IMG.work2}" alt="{work_2_title}"/><div class="b"><span class="tag">{work_2_tag}</span><h3>{work_2_title}</h3><p>{work_2_desc}</p></div></div>
-      <div class="rf-wcard"><img src="${RF_IMG.work3}" alt="{work_3_title}"/><div class="b"><span class="tag">{work_3_tag}</span><h3>{work_3_title}</h3><p>{work_3_desc}</p></div></div>
+      <div class="rf-wcard"><img src="{work_1_image}" alt="{work_1_title}"/><div class="b"><span class="tag">{work_1_tag}</span><h3>{work_1_title}</h3><p>{work_1_desc}</p></div></div>
+      <div class="rf-wcard"><img src="{work_2_image}" alt="{work_2_title}"/><div class="b"><span class="tag">{work_2_tag}</span><h3>{work_2_title}</h3><p>{work_2_desc}</p></div></div>
+      <div class="rf-wcard"><img src="{work_3_image}" alt="{work_3_title}"/><div class="b"><span class="tag">{work_3_tag}</span><h3>{work_3_title}</h3><p>{work_3_desc}</p></div></div>
     </div>
   </div></section>
 
