@@ -13,12 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Store, Search, Download, Upload, Eye, Code, Star, Users, FileText,
   Tag, Globe, ShoppingBag, MapPin, Megaphone, Briefcase, GraduationCap,
-  Heart, Loader2, Share2, MessageSquare,
+  Heart, Loader2, Share2, MessageSquare, SlidersHorizontal,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
+import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
 const CATEGORIES = [
