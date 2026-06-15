@@ -1909,6 +1909,204 @@ const plumberTemplate = () => `<style>
   </div></section>
 </div>`;
 
+// ── Refit renovation template (modelled 1:1 on refit.framer.website) ─────────
+const RF_IMG = {
+  hero: "https://framerusercontent.com/images/bwP8CYttC1lINgPtK7lQja0.png?width=1200&height=1200",
+  about1: "https://framerusercontent.com/images/RbmRrHiT87wxDx7Cox6FOA1sM3k.png?width=896&height=1200",
+  about2: "https://framerusercontent.com/images/tWbl1rD5H93nV4ujsuqC2FUaqKM.png?width=1200&height=1200",
+  about3: "https://framerusercontent.com/images/A7yE2PBsrF4l2EgA4yTO9HiAcPQ.png?width=960&height=1200",
+  about4: "https://framerusercontent.com/images/uIxBIlcieM1DRX71NtmymFxTUI.png?width=1200&height=1200",
+  work1: "https://framerusercontent.com/images/ffCQ9kReUH25ZCu6Q8kZxqQmMSY.png?width=960&height=1200",
+  work2: "https://framerusercontent.com/images/7MZ40PhO3RLhot6UT21CZFk09Ck.jpg?width=1200&height=800",
+  work3: "https://framerusercontent.com/images/ww0GmyZcc1yAIo8GBgwRahYQjtc.png?width=1200&height=1200",
+  av1: "https://framerusercontent.com/images/7fL4QJDsuimM3GmAxnTxB58Lrw.jpg?width=120&height=120",
+  av2: "https://framerusercontent.com/images/AqDU62U0ILWH6uLvadot2OfuggA.jpg?width=120&height=120",
+  av3: "https://framerusercontent.com/images/OuUloSm0m69zkSLax5gEBHqD8Y.png?width=120&height=120",
+};
+
+const refitTemplate = () => `<style>
+.rf{--bg:#0d0d0f;--panel:#16161a;--panel2:#1d1d22;--ink:#f5f3ef;--body:#a7a39c;--muted:#76726c;--line:#2a2a30;--accent:#c9886a;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--body);line-height:1.7;background:var(--bg);max-width:100%;position:relative}
+.rf :where(*){box-sizing:border-box}
+.rf h1,.rf h2,.rf h3,.rf h4{color:var(--ink);margin:0;line-height:1.05;letter-spacing:-.02em;font-weight:600}
+.rf p{margin:0}.rf a{text-decoration:none;color:inherit}
+.rf-wrap{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.rf-sec{padding:clamp(3.5rem,7vw,6.5rem) 0}
+.rf-eyebrow{display:inline-flex;align-items:center;gap:.5rem;color:var(--body);font-weight:500;font-size:.85rem;letter-spacing:.02em;padding:.45rem 1rem;border:1px solid var(--line);border-radius:40px;margin-bottom:1.2rem}
+.rf-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.rf-h{font-size:clamp(2rem,4.2vw,3.4rem);font-weight:600}
+.rf-lead{color:var(--body);font-size:1.05rem;max-width:620px}
+.rf-btn{display:inline-flex;align-items:center;gap:.6rem;background:var(--ink);color:#111;padding:.95rem 1.6rem;border-radius:40px;font-weight:600;font-size:.95rem;transition:transform .25s,opacity .25s;border:none;cursor:pointer}
+.rf-btn:hover{opacity:.9;transform:translateY(-2px)}
+.rf-btn .ar{width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.rf-btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.rf-nav{position:absolute;top:0;left:0;right:0;z-index:5}
+.rf-nav .bar{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.6rem 1.5rem}
+.rf-nav .logo{font-weight:700;font-size:1.4rem;color:var(--ink);letter-spacing:-.01em}
+.rf-nav .links{display:flex;gap:1.8rem;font-size:.95rem;color:var(--body)}
+.rf-nav .links a:hover{color:var(--ink)}
+.rf-nav .pill{background:var(--ink);color:#111;padding:.6rem 1.3rem;border-radius:40px;font-weight:600;font-size:.9rem}
+.rf-hero .rf-wrap{padding-top:9rem;padding-bottom:2rem;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.rf-hero h1{font-size:clamp(2.6rem,5.5vw,4.4rem);max-width:12ch}
+.rf-hero p{margin:1.6rem 0 2rem;max-width:440px}
+.rf-shot{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:4/5}
+.rf-shot img{width:100%;height:100%;object-fit:cover}
+.rf-quote{position:absolute;left:1rem;right:1rem;bottom:1rem;background:rgba(13,13,15,.7);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;color:var(--ink);font-size:.92rem}
+.rf-quote .st{color:var(--accent);letter-spacing:2px;font-size:.8rem;margin-bottom:.4rem}
+.rf-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+.rf-stat{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.8rem}
+.rf-stat .n{font-size:clamp(2.2rem,4vw,3rem);color:var(--ink);font-weight:600;letter-spacing:-.02em}
+.rf-stat h4{color:var(--ink);font-size:1.02rem;margin:.6rem 0 .3rem}
+.rf-stat small{color:var(--muted)}
+.rf-head{max-width:620px;margin-bottom:3rem}
+.rf-head.ctr{margin-left:auto;margin-right:auto;text-align:center}
+.rf-split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+.rf-grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.rf-grid2 img{width:100%;border-radius:16px;aspect-ratio:3/4;object-fit:cover}
+.rf-grid2 img:nth-child(2),.rf-grid2 img:nth-child(3){margin-top:1.4rem}
+.rf-feat{display:flex;flex-direction:column;gap:.85rem;margin:1.6rem 0}
+.rf-feat .f{display:flex;gap:.7rem;align-items:center;font-weight:500;color:var(--ink)}
+.rf-feat .f::before{content:'✓';flex:none;width:24px;height:24px;border-radius:50%;background:rgba(201,136,106,.18);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.rf-svc{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.rf-scard{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.8rem;transition:transform .3s,border-color .3s}
+.rf-scard:hover{transform:translateY(-5px);border-color:var(--accent)}
+.rf-scard .ic{width:48px;height:48px;border-radius:13px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.1rem}
+.rf-scard h3{font-size:1.2rem;margin-bottom:.6rem}
+.rf-scard p{color:var(--muted);font-size:.94rem}
+.rf-work{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+.rf-wcard{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .3s}
+.rf-wcard:hover{transform:translateY(-5px)}
+.rf-wcard img{width:100%;aspect-ratio:4/5;object-fit:cover}
+.rf-wcard .b{padding:1.4rem}
+.rf-wcard .tag{display:inline-block;font-size:.78rem;color:var(--accent);border:1px solid var(--line);border-radius:30px;padding:.25rem .8rem;margin-bottom:.7rem}
+.rf-wcard h3{font-size:1.15rem;margin-bottom:.5rem}
+.rf-wcard p{color:var(--muted);font-size:.9rem}
+.rf-revs{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+.rf-rev{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.8rem;display:flex;flex-direction:column;gap:1.2rem}
+.rf-rev .st{color:var(--accent);letter-spacing:2px}
+.rf-rev p{color:var(--ink);line-height:1.7;flex:1}
+.rf-rev footer{display:flex;align-items:center;gap:.8rem}
+.rf-rev footer img{width:46px;height:46px;border-radius:50%;object-fit:cover}
+.rf-rev footer b{display:block;color:var(--ink)}
+.rf-rev footer small{color:var(--muted)}
+.rf-faq{display:grid;grid-template-columns:.85fr 1.15fr;gap:clamp(2rem,5vw,3.5rem);align-items:start}
+.rf-acc details{border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.3rem;margin-bottom:.9rem;background:var(--panel)}
+.rf-acc summary{font-weight:600;color:var(--ink);cursor:pointer;list-style:none;font-size:1.02rem;display:flex;justify-content:space-between;gap:1rem}
+.rf-acc summary::-webkit-details-marker{display:none}
+.rf-acc summary::after{content:'+';color:var(--accent);font-size:1.3rem;line-height:1}
+.rf-acc details[open] summary::after{content:'−'}
+.rf-acc p{color:var(--muted);margin-top:.8rem}
+.rf-cta{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:clamp(2.5rem,5vw,4rem);text-align:center}
+.rf-cta h2{font-size:clamp(1.9rem,3.8vw,3rem);margin-bottom:1rem}
+.rf-cta p{max-width:540px;margin:0 auto 1.8rem}
+.rf-info{display:flex;justify-content:center;gap:2.5rem;flex-wrap:wrap;margin-top:2.2rem;color:var(--body);font-size:.95rem}
+.rf-info b{display:block;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem;color:var(--muted)}
+@media(max-width:900px){.rf-nav .links{display:none}.rf-hero .rf-wrap,.rf-svc,.rf-split,.rf-faq,.rf-work,.rf-revs,.rf-stats{grid-template-columns:1fr}.rf-stats{grid-template-columns:1fr 1fr}}
+</style>
+<div class="rf">
+  <nav class="rf-nav"><div class="bar">
+    <div class="logo">{company_name}</div>
+    <div class="links"><a href="#about">About</a><a href="#services">Services</a><a href="#work">Our work</a><a href="#faqs">FAQs</a><a href="#contact">Contact</a></div>
+    <a href="#contact" class="pill">{cta_text}</a>
+  </div></nav>
+
+  <header class="rf-hero" id="home"><div class="rf-wrap">
+    <div>
+      <span class="rf-eyebrow"><span class="dot"></span>{availability_label}</span>
+      <h1>{headline}</h1>
+      <p>{subheadline}</p>
+      <a href="#contact" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
+    </div>
+    <div class="rf-shot">
+      <img src="${RF_IMG.hero}" alt="Home renovation by {company_name}"/>
+      <div class="rf-quote"><div class="st">★★★★★</div>"{hero_quote}"</div>
+    </div>
+  </div></header>
+
+  <section class="rf-sec" style="padding-top:2rem"><div class="rf-wrap">
+    <div class="rf-stats">
+      <div class="rf-stat"><div class="n">{stat_1_value}</div><h4>{stat_1_label}</h4><small>{stat_1_desc}</small></div>
+      <div class="rf-stat"><div class="n">{stat_2_value}</div><h4>{stat_2_label}</h4><small>{stat_2_desc}</small></div>
+      <div class="rf-stat"><div class="n">{stat_3_value}</div><h4>{stat_3_label}</h4><small>{stat_3_desc}</small></div>
+      <div class="rf-stat"><div class="n">{stat_4_value}</div><h4>{stat_4_label}</h4><small>{stat_4_desc}</small></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec" id="about"><div class="rf-wrap"><div class="rf-split">
+    <div class="rf-grid2"><img src="${RF_IMG.about1}" alt="Renovation detail"/><img src="${RF_IMG.about2}" alt="Kitchen build"/><img src="${RF_IMG.about3}" alt="Interior craftsmanship"/><img src="${RF_IMG.about4}" alt="Finished room"/></div>
+    <div>
+      <span class="rf-eyebrow"><span class="dot"></span>{about_eyebrow}</span>
+      <h2 class="rf-h">{about_title}</h2>
+      <p class="rf-lead" style="margin-top:1rem">{about_body}</p>
+      <div class="rf-feat">
+        <div class="f">{about_feature_1}</div>
+        <div class="f">{about_feature_2}</div>
+        <div class="f">{about_feature_3}</div>
+      </div>
+      <a href="#contact" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
+    </div>
+  </div></div></section>
+
+  <section class="rf-sec" id="services"><div class="rf-wrap">
+    <div class="rf-head"><span class="rf-eyebrow"><span class="dot"></span>{services_eyebrow}</span><h2 class="rf-h">{services_title}</h2><p class="rf-lead" style="margin-top:1rem">{services_subtitle}</p></div>
+    <div class="rf-svc">
+      <div class="rf-scard"><div class="ic">🍳</div><h3>{service_1_title}</h3><p>{service_1_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🏠</div><h3>{service_2_title}</h3><p>{service_2_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🛁</div><h3>{service_3_title}</h3><p>{service_3_desc}</p></div>
+      <div class="rf-scard"><div class="ic">📐</div><h3>{service_4_title}</h3><p>{service_4_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🧱</div><h3>{service_5_title}</h3><p>{service_5_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🌳</div><h3>{service_6_title}</h3><p>{service_6_desc}</p></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec" id="work"><div class="rf-wrap">
+    <div class="rf-head"><span class="rf-eyebrow"><span class="dot"></span>{work_eyebrow}</span><h2 class="rf-h">{work_title}</h2><p class="rf-lead" style="margin-top:1rem">{work_subtitle}</p></div>
+    <div class="rf-work">
+      <div class="rf-wcard"><img src="${RF_IMG.work1}" alt="{work_1_title}"/><div class="b"><span class="tag">{work_1_tag}</span><h3>{work_1_title}</h3><p>{work_1_desc}</p></div></div>
+      <div class="rf-wcard"><img src="${RF_IMG.work2}" alt="{work_2_title}"/><div class="b"><span class="tag">{work_2_tag}</span><h3>{work_2_title}</h3><p>{work_2_desc}</p></div></div>
+      <div class="rf-wcard"><img src="${RF_IMG.work3}" alt="{work_3_title}"/><div class="b"><span class="tag">{work_3_tag}</span><h3>{work_3_title}</h3><p>{work_3_desc}</p></div></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec"><div class="rf-wrap">
+    <div class="rf-head ctr"><span class="rf-eyebrow"><span class="dot"></span>{reviews_eyebrow}</span><h2 class="rf-h">{reviews_title}</h2><p class="rf-lead" style="margin:1rem auto 0">{reviews_subtitle}</p></div>
+    <div class="rf-revs">
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${RF_IMG.av1}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>{review_1_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${RF_IMG.av2}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>{review_2_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="${RF_IMG.av3}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>{review_3_role}</small></div></footer></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec" id="faqs"><div class="rf-wrap"><div class="rf-faq">
+    <div>
+      <span class="rf-eyebrow"><span class="dot"></span>{faq_eyebrow}</span>
+      <h2 class="rf-h">{faq_title}</h2>
+      <p class="rf-lead" style="margin-top:1rem">{faq_subtitle}</p>
+      <a href="#contact" class="rf-btn" style="margin-top:1.6rem">{cta_text}<span class="ar">↗</span></a>
+    </div>
+    <div class="rf-acc">
+      <details open><summary>{faq_1_question}</summary><p>{faq_1_answer}</p></details>
+      <details><summary>{faq_2_question}</summary><p>{faq_2_answer}</p></details>
+      <details><summary>{faq_3_question}</summary><p>{faq_3_answer}</p></details>
+      <details><summary>{faq_4_question}</summary><p>{faq_4_answer}</p></details>
+      <details><summary>{faq_5_question}</summary><p>{faq_5_answer}</p></details>
+    </div>
+  </div></div></section>
+
+  <section class="rf-sec" id="contact"><div class="rf-wrap">
+    <div class="rf-cta">
+      <span class="rf-eyebrow"><span class="dot"></span>{contact_eyebrow}</span>
+      <h2>{bottom_cta_headline}</h2>
+      <p>{bottom_cta_description}</p>
+      <a href="tel:{phone}" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
+      <div class="rf-info">
+        <div><b>Office</b>{address}</div>
+        <div><b>Email</b>{email}</div>
+        <div><b>Telephone</b>{phone}</div>
+      </div>
+    </div>
+  </div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
@@ -2005,6 +2203,121 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
       post_3_title: "Eco-Friendly Solutions to Reduce Your Water Bill",
       bottom_cta_headline: "Need a plumber fast?",
       bottom_cta_description: "Our licensed plumbers are available 24/7 to handle any emergency. Get in touch for fast, reliable service you can trust.",
+    },
+  },
+
+  // 1b. Home & Kitchen Renovation (Refit)
+  {
+    id: "refit-renovation",
+    name: "Refit Home Renovation",
+    description: "Sleek dark-theme landing page for a home & kitchen renovation company — bold hero with a real kitchen photo and floating review, stats strip, about gallery, 6-service grid, project showcase, client testimonials, FAQ accordion and a contact CTA. Modelled 1:1 on the refit.framer.website design.",
+    content: refitTemplate(),
+    variables: [
+      "{company_name}", "{availability_label}", "{headline}", "{subheadline}", "{cta_text}", "{hero_quote}", "{phone}", "{email}", "{address}",
+      "{stat_1_value}", "{stat_1_label}", "{stat_1_desc}", "{stat_2_value}", "{stat_2_label}", "{stat_2_desc}",
+      "{stat_3_value}", "{stat_3_label}", "{stat_3_desc}", "{stat_4_value}", "{stat_4_label}", "{stat_4_desc}",
+      "{about_eyebrow}", "{about_title}", "{about_body}", "{about_feature_1}", "{about_feature_2}", "{about_feature_3}",
+      "{services_eyebrow}", "{services_title}", "{services_subtitle}",
+      "{service_1_title}", "{service_1_desc}", "{service_2_title}", "{service_2_desc}", "{service_3_title}", "{service_3_desc}",
+      "{service_4_title}", "{service_4_desc}", "{service_5_title}", "{service_5_desc}", "{service_6_title}", "{service_6_desc}",
+      "{work_eyebrow}", "{work_title}", "{work_subtitle}",
+      "{work_1_tag}", "{work_1_title}", "{work_1_desc}", "{work_2_tag}", "{work_2_title}", "{work_2_desc}", "{work_3_tag}", "{work_3_title}", "{work_3_desc}",
+      "{reviews_eyebrow}", "{reviews_title}", "{reviews_subtitle}",
+      "{review_1_text}", "{review_1_name}", "{review_1_role}", "{review_2_text}", "{review_2_name}", "{review_2_role}", "{review_3_text}", "{review_3_name}", "{review_3_role}",
+      "{faq_eyebrow}", "{faq_title}", "{faq_subtitle}",
+      "{faq_1_question}", "{faq_1_answer}", "{faq_2_question}", "{faq_2_answer}", "{faq_3_question}", "{faq_3_answer}", "{faq_4_question}", "{faq_4_answer}", "{faq_5_question}", "{faq_5_answer}",
+      "{contact_eyebrow}", "{bottom_cta_headline}", "{bottom_cta_description}",
+    ],
+    category: "local-seo",
+    tags: ["renovation", "kitchen", "home-improvement", "construction", "landing"],
+    author: "Community", downloads: 932, rating: 4.9,
+    seo_title_pattern: "{company_name} — Home & Kitchen Renovation Specialists",
+    seo_description_pattern: "{subheadline} Contact {company_name} at {phone} for expert kitchens, bathrooms, extensions and renovations.",
+    slug_pattern: "{company_name}-home-renovation",
+    schema_type: "LocalBusiness",
+    defaultValues: {
+      company_name: "Refit",
+      availability_label: "Available for work",
+      headline: "Your trusted partner for quality home improvement",
+      subheadline: "Refit delivers expert home improvements, creating beautiful and functional spaces with quality craftsmanship.",
+      cta_text: "Work with us",
+      hero_quote: "Refit has been a game-changer for my home. Their ability to blend functionality with exquisite design is unparalleled.",
+      phone: "07716 534984",
+      email: "hello@refit.com",
+      address: "150 Old Park Ln, London W1K 1QZ",
+      stat_1_value: "15+",
+      stat_1_label: "Years experience",
+      stat_1_desc: "Improving homes with expert craftsmanship for years",
+      stat_2_value: "250+",
+      stat_2_label: "Projects completed",
+      stat_2_desc: "Over 250 successful projects delivered with quality and care",
+      stat_3_value: "30",
+      stat_3_label: "Skilled tradespeople",
+      stat_3_desc: "Our team of 30 experts ensures top-quality results",
+      stat_4_value: "100%",
+      stat_4_label: "Client satisfaction",
+      stat_4_desc: "All of our clients are satisfied with our work and service",
+      about_eyebrow: "About us",
+      about_title: "Home improvement specialists",
+      about_body: "Welcome to Refit, your trusted home improvement experts, dedicated to transforming homes with precision and care. With years of experience in building kitchens, bathrooms, garages, and more, we take pride in delivering top-quality craftsmanship and a seamless customer experience.",
+      about_feature_1: "Quality craftsmanship guaranteed",
+      about_feature_2: "Clear communication at every step",
+      about_feature_3: "Trusted, experienced tradespeople",
+      services_eyebrow: "Services",
+      services_title: "What we do",
+      services_subtitle: "Find out which one of our services fit the needs of your project.",
+      service_1_title: "Kitchens",
+      service_1_desc: "We design and build stunning kitchens tailored to your style and needs, delivering high-quality craftsmanship, functionality and attention to detail.",
+      service_2_title: "Loft Conversions",
+      service_2_desc: "Maximise your home's potential with a bespoke loft conversion, transforming underused lofts into stylish, functional living spaces that add value.",
+      service_3_title: "Bathrooms",
+      service_3_desc: "From luxurious en-suites to practical family bathrooms, we deliver beautifully designed spaces that combine style with everyday functionality.",
+      service_4_title: "Extensions",
+      service_4_desc: "Expand your living space with a seamless home extension, expertly crafted to enhance your home's flow, value and usability.",
+      service_5_title: "Restorations",
+      service_5_desc: "Bring your home's character back to life with expert restoration, preserving original details while ensuring modern durability.",
+      service_6_title: "External Works",
+      service_6_desc: "From driveways and patios to fencing and brickwork, we enhance your home's exterior with durable, high-quality craftsmanship.",
+      work_eyebrow: "Our work",
+      work_title: "Get inspired by our work",
+      work_subtitle: "See how we've transformed homes with our expert craftsmanship and attention to detail.",
+      work_1_tag: "Kitchen",
+      work_1_title: "Modern kitchen refit",
+      work_1_desc: "Custom cabinetry, high-quality worktops and state-of-the-art appliances created a stylish yet practical space perfect for cooking and entertaining.",
+      work_2_tag: "External Works",
+      work_2_title: "External garden path build",
+      work_2_desc: "A durable, visually appealing garden path built with premium materials that blends naturally with the landscape.",
+      work_3_tag: "Bathroom",
+      work_3_title: "Bathroom renovation",
+      work_3_desc: "A fresh, modern design with high-end tiling, sleek fixtures and efficient lighting, optimised to maximise space and comfort.",
+      reviews_eyebrow: "Testimonials",
+      reviews_title: "Hear from our clients",
+      reviews_subtitle: "Hear from our happy clients about their experience working with us and the quality of our craftsmanship.",
+      review_1_text: "Refit did an incredible job on our kitchen. The craftsmanship was top-notch, and the team was professional from start to finish. Highly recommend!",
+      review_1_name: "Emily Carter",
+      review_1_role: "Kitchen renovation",
+      review_2_text: "Brilliant service from start to finish. The team was professional, communicative, and the results exceeded my expectations. My new bathroom looks amazing!",
+      review_2_name: "James Richardson",
+      review_2_role: "Bathroom renovation",
+      review_3_text: "I couldn't be happier with my loft conversion. The attention to detail and quality of work were outstanding. Refit made the whole process smooth and stress-free!",
+      review_3_name: "Sophie Williams",
+      review_3_role: "Loft conversion",
+      faq_eyebrow: "FAQs",
+      faq_title: "Answering your questions",
+      faq_subtitle: "Got more questions? Send us your enquiry below.",
+      faq_1_question: "What area are you based in?",
+      faq_1_answer: "We primarily serve London and surrounding areas, but depending on the project, we may be able to travel further. Get in touch to discuss your location and project needs.",
+      faq_2_question: "How long does a typical project take?",
+      faq_2_answer: "Project timelines vary depending on the scope of work. A kitchen or bathroom renovation can take a few weeks, while larger projects like extensions or loft conversions may take several months. We provide clear timelines before starting any work.",
+      faq_3_question: "Do you offer free quotes?",
+      faq_3_answer: "Yes! We offer free, no-obligation quotes. After an initial consultation, we'll assess your project needs and provide a detailed estimate so you know exactly what to expect.",
+      faq_4_question: "Will I need planning permission for my project?",
+      faq_4_answer: "Some projects, such as extensions and loft conversions, may require planning permission, while others fall under permitted development. We can advise on the necessary permissions and help with the process if needed.",
+      faq_5_question: "Do you provide a guarantee for your work?",
+      faq_5_answer: "Absolutely! We stand by the quality of our craftsmanship and offer guarantees on our work to give you peace of mind. Specific warranties may vary depending on the type of project—just ask us for details.",
+      contact_eyebrow: "Contact",
+      bottom_cta_headline: "Get in touch",
+      bottom_cta_description: "For any inquiries or to explore your vision further, we invite you to contact our professional team using the details below.",
     },
   },
 
