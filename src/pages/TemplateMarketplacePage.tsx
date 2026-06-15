@@ -49,6 +49,7 @@ export default function TemplateMarketplacePage() {
   const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
