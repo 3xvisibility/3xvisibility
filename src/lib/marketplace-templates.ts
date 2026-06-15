@@ -1909,6 +1909,204 @@ const plumberTemplate = () => `<style>
   </div></section>
 </div>`;
 
+// ── Refit renovation template (modelled 1:1 on refit.framer.website) ─────────
+const RF_IMG = {
+  hero: "https://framerusercontent.com/images/bwP8CYttC1lINgPtK7lQja0.png?width=1200&height=1200",
+  about1: "https://framerusercontent.com/images/RbmRrHiT87wxDx7Cox6FOA1sM3k.png?width=896&height=1200",
+  about2: "https://framerusercontent.com/images/tWbl1rD5H93nV4ujsuqC2FUaqKM.png?width=1200&height=1200",
+  about3: "https://framerusercontent.com/images/A7yE2PBsrF4l2EgA4yTO9HiAcPQ.png?width=960&height=1200",
+  about4: "https://framerusercontent.com/images/uIxBIlcieM1DRX71NtmymFxTUI.png?width=1200&height=1200",
+  work1: "https://framerusercontent.com/images/ffCQ9kReUH25ZCu6Q8kZxqQmMSY.png?width=960&height=1200",
+  work2: "https://framerusercontent.com/images/7MZ40PhO3RLhot6UT21CZFk09Ck.jpg?width=1200&height=800",
+  work3: "https://framerusercontent.com/images/ww0GmyZcc1yAIo8GBgwRahYQjtc.png?width=1200&height=1200",
+  av1: "https://framerusercontent.com/images/7fL4QJDsuimM3GmAxnTxB58Lrw.jpg?width=120&height=120",
+  av2: "https://framerusercontent.com/images/AqDU62U0ILWH6uLvadot2OfuggA.jpg?width=120&height=120",
+  av3: "https://framerusercontent.com/images/OuUloSm0m69zkSLax5gEBHqD8Y.png?width=120&height=120",
+};
+
+const refitTemplate = () => `<style>
+.rf{--bg:#0d0d0f;--panel:#16161a;--panel2:#1d1d22;--ink:#f5f3ef;--body:#a7a39c;--muted:#76726c;--line:#2a2a30;--accent:#c9886a;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--body);line-height:1.7;background:var(--bg);max-width:100%;position:relative}
+.rf :where(*){box-sizing:border-box}
+.rf h1,.rf h2,.rf h3,.rf h4{color:var(--ink);margin:0;line-height:1.05;letter-spacing:-.02em;font-weight:600}
+.rf p{margin:0}.rf a{text-decoration:none;color:inherit}
+.rf-wrap{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.rf-sec{padding:clamp(3.5rem,7vw,6.5rem) 0}
+.rf-eyebrow{display:inline-flex;align-items:center;gap:.5rem;color:var(--body);font-weight:500;font-size:.85rem;letter-spacing:.02em;padding:.45rem 1rem;border:1px solid var(--line);border-radius:40px;margin-bottom:1.2rem}
+.rf-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.rf-h{font-size:clamp(2rem,4.2vw,3.4rem);font-weight:600}
+.rf-lead{color:var(--body);font-size:1.05rem;max-width:620px}
+.rf-btn{display:inline-flex;align-items:center;gap:.6rem;background:var(--ink);color:#111;padding:.95rem 1.6rem;border-radius:40px;font-weight:600;font-size:.95rem;transition:transform .25s,opacity .25s;border:none;cursor:pointer}
+.rf-btn:hover{opacity:.9;transform:translateY(-2px)}
+.rf-btn .ar{width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.rf-btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.rf-nav{position:absolute;top:0;left:0;right:0;z-index:5}
+.rf-nav .bar{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.6rem 1.5rem}
+.rf-nav .logo{font-weight:700;font-size:1.4rem;color:var(--ink);letter-spacing:-.01em}
+.rf-nav .links{display:flex;gap:1.8rem;font-size:.95rem;color:var(--body)}
+.rf-nav .links a:hover{color:var(--ink)}
+.rf-nav .pill{background:var(--ink);color:#111;padding:.6rem 1.3rem;border-radius:40px;font-weight:600;font-size:.9rem}
+.rf-hero .rf-wrap{padding-top:9rem;padding-bottom:2rem;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.rf-hero h1{font-size:clamp(2.6rem,5.5vw,4.4rem);max-width:12ch}
+.rf-hero p{margin:1.6rem 0 2rem;max-width:440px}
+.rf-shot{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:4/5}
+.rf-shot img{width:100%;height:100%;object-fit:cover}
+.rf-quote{position:absolute;left:1rem;right:1rem;bottom:1rem;background:rgba(13,13,15,.7);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:1.1rem 1.2rem;color:var(--ink);font-size:.92rem}
+.rf-quote .st{color:var(--accent);letter-spacing:2px;font-size:.8rem;margin-bottom:.4rem}
+.rf-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+.rf-stat{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.8rem}
+.rf-stat .n{font-size:clamp(2.2rem,4vw,3rem);color:var(--ink);font-weight:600;letter-spacing:-.02em}
+.rf-stat h4{color:var(--ink);font-size:1.02rem;margin:.6rem 0 .3rem}
+.rf-stat small{color:var(--muted)}
+.rf-head{max-width:620px;margin-bottom:3rem}
+.rf-head.ctr{margin-left:auto;margin-right:auto;text-align:center}
+.rf-split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+.rf-grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.rf-grid2 img{width:100%;border-radius:16px;aspect-ratio:3/4;object-fit:cover}
+.rf-grid2 img:nth-child(2),.rf-grid2 img:nth-child(3){margin-top:1.4rem}
+.rf-feat{display:flex;flex-direction:column;gap:.85rem;margin:1.6rem 0}
+.rf-feat .f{display:flex;gap:.7rem;align-items:center;font-weight:500;color:var(--ink)}
+.rf-feat .f::before{content:'✓';flex:none;width:24px;height:24px;border-radius:50%;background:rgba(201,136,106,.18);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.rf-svc{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.rf-scard{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.8rem;transition:transform .3s,border-color .3s}
+.rf-scard:hover{transform:translateY(-5px);border-color:var(--accent)}
+.rf-scard .ic{width:48px;height:48px;border-radius:13px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.1rem}
+.rf-scard h3{font-size:1.2rem;margin-bottom:.6rem}
+.rf-scard p{color:var(--muted);font-size:.94rem}
+.rf-work{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+.rf-wcard{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .3s}
+.rf-wcard:hover{transform:translateY(-5px)}
+.rf-wcard img{width:100%;aspect-ratio:4/5;object-fit:cover}
+.rf-wcard .b{padding:1.4rem}
+.rf-wcard .tag{display:inline-block;font-size:.78rem;color:var(--accent);border:1px solid var(--line);border-radius:30px;padding:.25rem .8rem;margin-bottom:.7rem}
+.rf-wcard h3{font-size:1.15rem;margin-bottom:.5rem}
+.rf-wcard p{color:var(--muted);font-size:.9rem}
+.rf-revs{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem}
+.rf-rev{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.8rem;display:flex;flex-direction:column;gap:1.2rem}
+.rf-rev .st{color:var(--accent);letter-spacing:2px}
+.rf-rev p{color:var(--ink);line-height:1.7;flex:1}
+.rf-rev footer{display:flex;align-items:center;gap:.8rem}
+.rf-rev footer img{width:46px;height:46px;border-radius:50%;object-fit:cover}
+.rf-rev footer b{display:block;color:var(--ink)}
+.rf-rev footer small{color:var(--muted)}
+.rf-faq{display:grid;grid-template-columns:.85fr 1.15fr;gap:clamp(2rem,5vw,3.5rem);align-items:start}
+.rf-acc details{border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.3rem;margin-bottom:.9rem;background:var(--panel)}
+.rf-acc summary{font-weight:600;color:var(--ink);cursor:pointer;list-style:none;font-size:1.02rem;display:flex;justify-content:space-between;gap:1rem}
+.rf-acc summary::-webkit-details-marker{display:none}
+.rf-acc summary::after{content:'+';color:var(--accent);font-size:1.3rem;line-height:1}
+.rf-acc details[open] summary::after{content:'−'}
+.rf-acc p{color:var(--muted);margin-top:.8rem}
+.rf-cta{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:clamp(2.5rem,5vw,4rem);text-align:center}
+.rf-cta h2{font-size:clamp(1.9rem,3.8vw,3rem);margin-bottom:1rem}
+.rf-cta p{max-width:540px;margin:0 auto 1.8rem}
+.rf-info{display:flex;justify-content:center;gap:2.5rem;flex-wrap:wrap;margin-top:2.2rem;color:var(--body);font-size:.95rem}
+.rf-info b{display:block;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem;color:var(--muted)}
+@media(max-width:900px){.rf-nav .links{display:none}.rf-hero .rf-wrap,.rf-svc,.rf-split,.rf-faq,.rf-work,.rf-revs,.rf-stats{grid-template-columns:1fr}.rf-stats{grid-template-columns:1fr 1fr}}
+</style>
+<div class="rf">
+  <nav class="rf-nav"><div class="bar">
+    <div class="logo">{company_name}</div>
+    <div class="links"><a href="#about">About</a><a href="#services">Services</a><a href="#work">Our work</a><a href="#faqs">FAQs</a><a href="#contact">Contact</a></div>
+    <a href="#contact" class="pill">{cta_text}</a>
+  </div></nav>
+
+  <header class="rf-hero" id="home"><div class="rf-wrap">
+    <div>
+      <span class="rf-eyebrow"><span class="dot"></span>{availability_label}</span>
+      <h1>{headline}</h1>
+      <p>{subheadline}</p>
+      <a href="#contact" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
+    </div>
+    <div class="rf-shot">
+      <img src="${RF_IMG.hero}" alt="Home renovation by {company_name}"/>
+      <div class="rf-quote"><div class="st">★★★★★</div>"{hero_quote}"</div>
+    </div>
+  </div></header>
+
+  <section class="rf-sec" style="padding-top:2rem"><div class="rf-wrap">
+    <div class="rf-stats">
+      <div class="rf-stat"><div class="n">{stat_1_value}</div><h4>{stat_1_label}</h4><small>{stat_1_desc}</small></div>
+      <div class="rf-stat"><div class="n">{stat_2_value}</div><h4>{stat_2_label}</h4><small>{stat_2_desc}</small></div>
+      <div class="rf-stat"><div class="n">{stat_3_value}</div><h4>{stat_3_label}</h4><small>{stat_3_desc}</small></div>
+      <div class="rf-stat"><div class="n">{stat_4_value}</div><h4>{stat_4_label}</h4><small>{stat_4_desc}</small></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec" id="about"><div class="rf-wrap"><div class="rf-split">
+    <div class="rf-grid2"><img src="${RF_IMG.about1}" alt="Renovation detail"/><img src="${RF_IMG.about2}" alt="Kitchen build"/><img src="${RF_IMG.about3}" alt="Interior craftsmanship"/><img src="${RF_IMG.about4}" alt="Finished room"/></div>
+    <div>
+      <span class="rf-eyebrow"><span class="dot"></span>{about_eyebrow}</span>
+      <h2 class="rf-h">{about_title}</h2>
+      <p class="rf-lead" style="margin-top:1rem">{about_body}</p>
+      <div class="rf-feat">
+        <div class="f">{about_feature_1}</div>
+        <div class="f">{about_feature_2}</div>
+        <div class="f">{about_feature_3}</div>
+      </div>
+      <a href="#contact" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
+    </div>
+  </div></div></section>
+
+  <section class="rf-sec" id="services"><div class="rf-wrap">
+    <div class="rf-head"><span class="rf-eyebrow"><span class="dot"></span>{services_eyebrow}</span><h2 class="rf-h">{services_title}</h2><p class="rf-lead" style="margin-top:1rem">{services_subtitle}</p></div>
+    <div class="rf-svc">
+      <div class="rf-scard"><div class="ic">🍳</div><h3>{service_1_title}</h3><p>{service_1_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🏠</div><h3>{service_2_title}</h3><p>{service_2_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🛁</div><h3>{service_3_title}</h3><p>{service_3_desc}</p></div>
+      <div class="rf-scard"><div class="ic">📐</div><h3>{service_4_title}</h3><p>{service_4_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🧱</div><h3>{service_5_title}</h3><p>{service_5_desc}</p></div>
+      <div class="rf-scard"><div class="ic">🌳</div><h3>{service_6_title}</h3><p>{service_6_desc}</p></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec" id="work"><div class="rf-wrap">
+    <div class="rf-head"><span class="rf-eyebrow"><span class="dot"></span>{work_eyebrow}</span><h2 class="rf-h">{work_title}</h2><p class="rf-lead" style="margin-top:1rem">{work_subtitle}</p></div>
+    <div class="rf-work">
+      <div class="rf-wcard"><img src="${RF_IMG.work1}" alt="{work_1_title}"/><div class="b"><span class="tag">{work_1_tag}</span><h3>{work_1_title}</h3><p>{work_1_desc}</p></div></div>
+      <div class="rf-wcard"><img src="${RF_IMG.work2}" alt="{work_2_title}"/><div class="b"><span class="tag">{work_2_tag}</span><h3>{work_2_title}</h3><p>{work_2_desc}</p></div></div>
+      <div class="rf-wcard"><img src="${RF_IMG.work3}" alt="{work_3_title}"/><div class="b"><span class="tag">{work_3_tag}</span><h3>{work_3_title}</h3><p>{work_3_desc}</p></div></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec"><div class="rf-wrap">
+    <div class="rf-head ctr"><span class="rf-eyebrow"><span class="dot"></span>{reviews_eyebrow}</span><h2 class="rf-h">{reviews_title}</h2><p class="rf-lead" style="margin:1rem auto 0">{reviews_subtitle}</p></div>
+    <div class="rf-revs">
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${RF_IMG.av1}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>{review_1_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${RF_IMG.av2}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>{review_2_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="${RF_IMG.av3}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>{review_3_role}</small></div></footer></div>
+    </div>
+  </div></section>
+
+  <section class="rf-sec" id="faqs"><div class="rf-wrap"><div class="rf-faq">
+    <div>
+      <span class="rf-eyebrow"><span class="dot"></span>{faq_eyebrow}</span>
+      <h2 class="rf-h">{faq_title}</h2>
+      <p class="rf-lead" style="margin-top:1rem">{faq_subtitle}</p>
+      <a href="#contact" class="rf-btn" style="margin-top:1.6rem">{cta_text}<span class="ar">↗</span></a>
+    </div>
+    <div class="rf-acc">
+      <details open><summary>{faq_1_question}</summary><p>{faq_1_answer}</p></details>
+      <details><summary>{faq_2_question}</summary><p>{faq_2_answer}</p></details>
+      <details><summary>{faq_3_question}</summary><p>{faq_3_answer}</p></details>
+      <details><summary>{faq_4_question}</summary><p>{faq_4_answer}</p></details>
+      <details><summary>{faq_5_question}</summary><p>{faq_5_answer}</p></details>
+    </div>
+  </div></div></section>
+
+  <section class="rf-sec" id="contact"><div class="rf-wrap">
+    <div class="rf-cta">
+      <span class="rf-eyebrow"><span class="dot"></span>{contact_eyebrow}</span>
+      <h2>{bottom_cta_headline}</h2>
+      <p>{bottom_cta_description}</p>
+      <a href="tel:{phone}" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
+      <div class="rf-info">
+        <div><b>Office</b>{address}</div>
+        <div><b>Email</b>{email}</div>
+        <div><b>Telephone</b>{phone}</div>
+      </div>
+    </div>
+  </div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
