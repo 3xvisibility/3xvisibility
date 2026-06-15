@@ -1628,7 +1628,7 @@ const gardenerTemplate = () => `<style>
       <div class="gd-feat">
         <div class="f">{feature_1}</div>
         <div class="f">{feature_2}</div>
-        <div class="f">Available Monday to Friday, 9am to 5pm</div>
+        <div class="f">{feature_3}</div>
       </div>
       <a href="#contact" class="gd-btn" style="margin-top:1.8rem">📞 {phone}</a>
     </div>
