@@ -1938,6 +1938,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 1247, rating: 4.8,
     seo_title_pattern: "{company_name} — Trusted Plumbing Solutions | {headline}",
     seo_description_pattern: "{subheadline} Call {company_name} at {phone} for fast, professional plumbing service available 24/7.",
+    slug_pattern: "{company_name}-plumbing-services",
     schema_type: "LocalBusiness",
     defaultValues: {
       company_name: "Plumbing",
