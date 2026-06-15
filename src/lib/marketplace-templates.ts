@@ -2166,29 +2166,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "consulting-agency",
     name: "Consulting Agency",
     description: "Clean, professional business consulting landing page — bold hero ('Grow your business faster'), trusted-by logos, services grid, about split, results stats, client testimonials, FAQ and contact. Modelled on the consulting.framer.media design.",
-    content: page(
-      hero({ bgKeywords: "business consultant professional woman office meeting", badge: "📈 Trusted business consultants", title: "{headline}", subtitle: "{subheadline}", primaryCta: "{cta_text} →", secondaryCta: "Our Services", sig: 2 }) +
-      trustStrip([{ num: "{years_experience}+", lbl: "Years experience" }, { num: "{clients_count}+", lbl: "Clients served" }, { num: "{success_rate}%", lbl: "Success rate" }, { num: "4.9★", lbl: "Client rating" }]) +
-      featureGrid("Services", "How {company_name} helps you grow", "With our expertise and dedication, we'll help you navigate challenges, seize opportunities, and achieve your business goals.", [
-        { icon: "🎯", title: "{service_1_title}", desc: "{service_1_desc}" },
-        { icon: "📊", title: "{service_2_title}", desc: "{service_2_desc}" },
-        { icon: "🚀", title: "{service_3_title}", desc: "{service_3_desc}" },
-      ]) +
-      aboutSplit("About us", "Strategy and execution, side by side", "{about_body}", "business strategy meeting handshake professional", 6) +
-      gallery("Our work", "Results we're proud of", ["business meeting", "team strategy session", "office collaboration", "data analytics chart", "corporate presentation", "professional handshake"]) +
-      defaultTestimonials +
-      faq([
-        { q: "How does the consultation work?", a: "We start with a free discovery call to understand your goals, then build a tailored roadmap with clear milestones." },
-        { q: "What industries do you work with?", a: "We partner with startups, scale-ups and established companies across a wide range of sectors." },
-        { q: "How long until I see results?", a: "Most clients see measurable improvements within the first 90 days of working together." },
-      ]) +
-      ctaBand({ bgKeywords: "business success growth city skyline", title: "{bottom_cta_headline}", subtitle: "{bottom_cta_description}", cta: "📞 {phone}", sig: 12 }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "✉️", label: "Email", value: "{email}" },
-        { icon: "📍", label: "Office", value: "{address}" },
-      ])
-    ),
+    content: consultingTemplate(),
     variables: [
       "{headline}", "{subheadline}", "{company_name}", "{cta_text}",
       "{years_experience}", "{clients_count}", "{success_rate}",
