@@ -2740,6 +2740,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
       service_1_title: "Landscaping Works",
       service_2_title: "Garden Design",
       service_3_title: "Seasonal Planting",
+      faq_eyebrow: "FAQ",
+      faq_title: "Frequently asked questions",
       faq_1_question: "Do you offer maintenance services?",
       faq_1_answer: "Yes, we provide comprehensive landscape maintenance services to keep your garden looking its best year-round. We offer tailored maintenance plans to suit your schedule and budget.",
       faq_2_question: "Do you use organic gardening methods?",
