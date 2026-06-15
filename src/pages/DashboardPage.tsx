@@ -47,7 +47,7 @@ import { PendingInvitationsBanner } from "@/components/workspace/PendingInvitati
 import { useLanguage } from "@/i18n/LanguageContext";
 import { AiCreditsWidget } from "@/components/dashboard/AiCreditsWidget";
 import { PagesUsageWidget } from "@/components/dashboard/PagesUsageWidget";
-import { UsageHistoryWidget } from "@/components/dashboard/UsageHistoryWidget";
+
 
 
 const statusColors: Record<string, string> = {
