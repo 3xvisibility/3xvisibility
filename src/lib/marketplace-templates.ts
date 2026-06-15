@@ -1041,6 +1041,223 @@ const dentexaTemplate = () => `<style>
   </div></section>
 </div>`;
 
+// ── Consulting template (modelled 1:1 on consulting.framer.media) ────────────
+const CON_IMG = {
+  hero: "https://framerusercontent.com/images/7MARqQztqNevdDLwevn1REQ1Suk.jpg?width=1600&height=1067",
+  svc1: "https://framerusercontent.com/images/Ks478GmT2s9Ewl2BhCGGJWDqdKo.jpg?width=1200&height=800",
+  svc2: "https://framerusercontent.com/images/wnUzv0z9hQsQucujSeLpZ5hwOY.jpg?width=1200&height=800",
+  svc3: "https://framerusercontent.com/images/zTN763RqqgJAjH4qtwjuKBx3jt8.jpg?width=1200&height=800",
+  meeting: "https://framerusercontent.com/images/ImUfonalQMOKWjsL2OcxwGINE.jpg?width=1200&height=800",
+  approach: "https://framerusercontent.com/images/5HKlRNWxRP9pKorHGF6OWxCVdmM.jpg?width=1200&height=675",
+  growth: "https://framerusercontent.com/images/umz1vAsNQy3hz5TGm8mgalWPqq4.jpg?width=1200&height=800",
+  t1: "https://framerusercontent.com/images/vHMSEWw5B42ZyOnn7b3crhvXwSY.jpg?width=200&height=200",
+  t2: "https://framerusercontent.com/images/vZW3QExeafY8ogiiWnlsg3Z00.jpg?width=200&height=200",
+  t3: "https://framerusercontent.com/images/6YEx3JiYIJRZsLw9TyBaZ8jK1kM.jpg?width=200&height=200",
+};
+
+const consultingTemplate = () => `<style>
+.con{--blue:#2563eb;--blue-d:#1d4ed8;--ink:#0b1220;--body:#3f4754;--muted:#6b7280;--bg:#f6f7f9;--line:#e6e8ec;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--body);line-height:1.7;background:#fff;max-width:100%;position:relative}
+.con :where(*){box-sizing:border-box}
+.con h1,.con h2,.con h3,.con h4{color:var(--ink);margin:0;line-height:1.1;letter-spacing:-.02em;font-weight:600}
+.con p{margin:0}
+.con a{text-decoration:none;color:inherit}
+.con-wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+.con-sec{padding:clamp(3.5rem,7vw,6rem) 0}
+.con-eyebrow{display:inline-block;color:var(--blue);font-weight:600;font-size:.92rem;letter-spacing:.02em;margin-bottom:.85rem}
+.con-h{font-size:clamp(1.9rem,4vw,3rem)}
+.con-lead{color:var(--muted);font-size:1.05rem;max-width:600px}
+.con-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--blue);color:#fff;padding:.95rem 1.7rem;border-radius:999px;font-weight:600;font-size:.95rem;transition:background .25s,transform .25s;border:none;cursor:pointer}
+.con-btn:hover{background:var(--blue-d);transform:translateY(-2px)}
+.con-btn-ghost{background:rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.35)}
+.con-btn-ghost:hover{background:rgba(255,255,255,.22)}
+/* nav */
+.con-nav{position:absolute;top:1.25rem;left:0;right:0;z-index:5}
+.con-nav .bar{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;background:rgba(20,22,28,.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:.7rem 1.4rem;color:#fff}
+.con-nav .logo{display:flex;align-items:center;gap:.5rem;font-weight:700;color:#fff}
+.con-nav .logo .dot{width:18px;height:18px;border-radius:5px;background:var(--blue)}
+.con-nav .links{display:flex;gap:1.6rem;font-size:.92rem;color:rgba(255,255,255,.85)}
+.con-nav .links a:hover{color:#fff}
+.con-nav .pill{background:#fff;color:var(--ink);padding:.55rem 1.3rem;border-radius:999px;font-weight:600;font-size:.9rem}
+/* hero */
+.con-hero{position:relative;min-height:92vh;display:flex;align-items:center;background-size:cover;background-position:center;color:#fff;overflow:hidden}
+.con-hero::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,11,18,.78) 0%,rgba(8,11,18,.45) 55%,rgba(8,11,18,.2) 100%)}
+.con-hero .con-wrap{position:relative;z-index:2;padding-top:8rem;padding-bottom:4rem}
+.con-hero h1{color:#fff;font-size:clamp(2.6rem,6vw,5rem);font-weight:600;max-width:14ch}
+.con-hero p{color:rgba(255,255,255,.88);font-size:1.15rem;max-width:540px;margin:1.4rem 0 2rem}
+.con-hero .cta{display:flex;flex-wrap:wrap;gap:.9rem}
+/* logos */
+.con-logos{border-bottom:1px solid var(--line)}
+.con-logos .con-wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2.5rem 3.5rem;padding-top:2.5rem;padding-bottom:2.5rem}
+.con-logos img{height:30px;width:auto;opacity:.55;filter:grayscale(1)}
+/* head */
+.con-head{max-width:680px;margin:0 auto 3rem;text-align:center}
+.con-head .con-eyebrow{display:block}
+/* services */
+.con-svc{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.con-card{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;transition:transform .3s,box-shadow .3s}
+.con-card:hover{transform:translateY(-6px);box-shadow:0 26px 60px rgba(11,18,32,.12)}
+.con-card img{width:100%;aspect-ratio:3/2;object-fit:cover}
+.con-card .b{padding:1.4rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.con-card .b h3{font-size:1.15rem}
+.con-card .b .arr{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--blue);flex:none}
+/* split */
+.con-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+.con-split img{width:100%;border-radius:20px;aspect-ratio:4/3;object-fit:cover;box-shadow:0 26px 60px rgba(11,18,32,.14)}
+.con-feat{display:flex;flex-direction:column;gap:1rem;margin-top:1.6rem}
+.con-feat .f{display:flex;gap:.85rem;align-items:flex-start;font-weight:600;color:var(--ink)}
+.con-feat .f::before{content:'✓';flex:none;width:24px;height:24px;border-radius:50%;background:rgba(37,99,235,.12);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.8rem}
+/* stats */
+.con-stats{background:var(--ink);color:#fff;border-radius:24px;overflow:hidden}
+.con-stats .inner{display:grid;grid-template-columns:1.2fr 1fr;gap:0}
+.con-stats .pic{background-size:cover;background-position:center;min-height:320px}
+.con-stats .nums{padding:clamp(2rem,4vw,3.5rem);display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-content:center}
+.con-stats .nums h3{color:#fff;font-size:clamp(2.4rem,4vw,3.4rem);font-weight:600}
+.con-stats .nums small{color:rgba(255,255,255,.7);font-size:.95rem}
+/* process */
+.con-proc{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem}
+.con-step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:1.6rem 1.4rem;transition:transform .3s,box-shadow .3s}
+.con-step:hover{transform:translateY(-5px);box-shadow:0 20px 46px rgba(11,18,32,.1)}
+.con-step .n{font-size:1.6rem;font-weight:700;color:var(--blue);margin-bottom:.6rem}
+.con-step h3{font-size:1.1rem;margin-bottom:.5rem}
+.con-step p{color:var(--muted);font-size:.92rem}
+/* testimonials */
+.con-revs{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.con-rev{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:2rem}
+.con-rev .st{color:#f5b301;letter-spacing:2px;margin-bottom:1rem}
+.con-rev p{color:var(--ink);line-height:1.7}
+.con-rev footer{display:flex;align-items:center;gap:.85rem;margin-top:1.6rem}
+.con-rev footer img{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.con-rev footer b{display:block;color:var(--ink)}
+.con-rev footer small{color:var(--muted)}
+/* cta */
+.con-cta{position:relative;border-radius:24px;overflow:hidden;text-align:center;background-size:cover;background-position:center}
+.con-cta::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,rgba(37,99,235,.92),rgba(11,18,32,.82))}
+.con-cta .in{position:relative;z-index:2;padding:clamp(3rem,6vw,5rem) 1.5rem;color:#fff}
+.con-cta h2{color:#fff;font-size:clamp(1.8rem,3.6vw,2.8rem)}
+.con-cta p{color:rgba(255,255,255,.9);max-width:560px;margin:1rem auto 1.8rem}
+.con-cta .con-btn{background:#fff;color:var(--ink)}
+.con-cta .con-btn:hover{background:var(--bg)}
+/* contact */
+.con-contact{display:grid;grid-template-columns:.9fr 1.1fr;gap:2.5rem;align-items:start}
+.con-irow{display:flex;align-items:center;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}
+.con-irow .ic{width:46px;height:46px;flex:none;border-radius:12px;background:rgba(37,99,235,.1);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.con-irow small{display:block;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.con-irow b{color:var(--ink);font-weight:600}
+.con-form{background:#fff;border:1px solid var(--line);border-radius:20px;padding:2rem;box-shadow:0 18px 44px rgba(11,18,32,.06)}
+.con-fg{margin-bottom:1.1rem}
+.con-form label{display:block;font-size:.85rem;font-weight:600;color:var(--ink);margin-bottom:.4rem}
+.con-form input,.con-form textarea{width:100%;padding:.9rem 1.05rem;border:1px solid var(--line);border-radius:12px;font:inherit;background:var(--bg);color:var(--ink)}
+.con-form input:focus,.con-form textarea:focus{outline:none;border-color:var(--blue);background:#fff}
+@media(max-width:900px){.con-nav .links{display:none}.con-svc,.con-proc,.con-revs,.con-split,.con-contact,.con-stats .inner{grid-template-columns:1fr}.con-proc{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.con-proc,.con-stats .nums{grid-template-columns:1fr}}
+</style>
+<div class="con">
+  <nav class="con-nav"><div class="bar">
+    <div class="logo"><span class="dot"></span>{company_name}</div>
+    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#process">Process</a></div>
+    <a href="#contact" class="pill">Contact</a>
+  </div></nav>
+
+  <header class="con-hero" id="home" style="background-image:url('${CON_IMG.hero}')"><div class="con-wrap">
+    <h1>{headline}</h1>
+    <p>{subheadline}</p>
+    <div class="cta">
+      <a href="#contact" class="con-btn">{cta_text}</a>
+      <a href="#services" class="con-btn con-btn-ghost">Our Services</a>
+    </div>
+  </div></header>
+
+  <section class="con-logos"><div class="con-wrap">
+    <img src="https://framerusercontent.com/images/u9M8UmTkdOTylINg9VFaom3OOyQ.png?width=292&height=72" alt="Client logo"/>
+    <img src="https://framerusercontent.com/images/RR7w5BtK4jl3VxQCmwfd2ziOe8o.png?width=216&height=72" alt="Client logo"/>
+    <img src="https://framerusercontent.com/images/xVwUn1pAAZzVoqlsp4BmZ9XZbI.png?width=220&height=72" alt="Client logo"/>
+    <img src="https://framerusercontent.com/images/C74rJldf1AX4ml3glGIfUaSeSk.png?width=302&height=72" alt="Client logo"/>
+    <img src="https://framerusercontent.com/images/tYYUVQNdDSm9oBSCAvxf1G8Voe8.png?width=272&height=72" alt="Client logo"/>
+  </div></section>
+
+  <section class="con-sec" id="services"><div class="con-wrap">
+    <div class="con-head"><span class="con-eyebrow">Our services</span><h2 class="con-h">We offer a wide range of services</h2><p class="con-lead" style="margin:1rem auto 0">By combining our industry knowledge with cutting-edge tools and methodologies, we develop strategies that drive measurable results.</p></div>
+    <div class="con-svc">
+      <a class="con-card"><img src="${CON_IMG.svc1}" alt="{service_1_title}"/><div class="b"><h3>{service_1_title}</h3><div class="arr">→</div></div></a>
+      <a class="con-card"><img src="${CON_IMG.svc2}" alt="{service_2_title}"/><div class="b"><h3>{service_2_title}</h3><div class="arr">→</div></div></a>
+      <a class="con-card"><img src="${CON_IMG.svc3}" alt="{service_3_title}"/><div class="b"><h3>{service_3_title}</h3><div class="arr">→</div></div></a>
+    </div>
+    <div style="text-align:center;margin-top:2.5rem"><a href="#contact" class="con-btn">Request a personalized service</a></div>
+  </div></section>
+
+  <section class="con-sec" id="about" style="background:var(--bg)"><div class="con-wrap"><div class="con-split">
+    <img src="${CON_IMG.meeting}" alt="Business meeting at {company_name}"/>
+    <div>
+      <span class="con-eyebrow">Our approach</span>
+      <h2 class="con-h">Innovative approach to consulting</h2>
+      <p class="con-lead" style="margin-top:1rem">{about_body}</p>
+      <div class="con-feat">
+        <div class="f">We believe in fostering long-term partnerships</div>
+        <div class="f">We develop actionable plans to achieve your goals</div>
+        <div class="f">{years_experience}+ years of measurable client results</div>
+      </div>
+      <a href="#process" class="con-btn" style="margin-top:1.8rem">Read our story</a>
+    </div>
+  </div></div></section>
+
+  <section class="con-sec"><div class="con-wrap">
+    <div class="con-stats"><div class="inner">
+      <div class="pic" style="background-image:url('${CON_IMG.growth}')"></div>
+      <div class="nums">
+        <div><h3>{success_rate}%</h3><small>Growth measured</small></div>
+        <div><h3>25%</h3><small>Cost savings</small></div>
+        <div><h3>{clients_count}+</h3><small>Clients served</small></div>
+        <div><h3>{years_experience}+</h3><small>Years of experience</small></div>
+      </div>
+    </div></div>
+  </div></section>
+
+  <section class="con-sec" id="process" style="background:var(--bg)"><div class="con-wrap">
+    <div class="con-head"><span class="con-eyebrow">Our process</span><h2 class="con-h">A flexible process built around you</h2><p class="con-lead" style="margin:1rem auto 0">We developed an innovative and flexible process that allows us to understand your business better.</p></div>
+    <div class="con-proc">
+      <div class="con-step"><div class="n">01.</div><h3>Discovery</h3><p>The first step is to gain a deep understanding of your business.</p></div>
+      <div class="con-step"><div class="n">02.</div><h3>Development</h3><p>We'll work with you to develop a strategy that fits your objectives.</p></div>
+      <div class="con-step"><div class="n">03.</div><h3>Implementation</h3><p>We work closely with your team to implement the changes.</p></div>
+      <div class="con-step"><div class="n">04.</div><h3>Monitoring</h3><p>We monitor key performance indicators and gather feedback.</p></div>
+    </div>
+  </div></section>
+
+  <section class="con-sec"><div class="con-wrap">
+    <div class="con-head"><span class="con-eyebrow">Testimonials</span><h2 class="con-h">Trusted by 10k+ customers</h2><p class="con-lead" style="margin:1rem auto 0">Whether you're a small startup or a multinational corporation, let us be your trusted advisor on the path to success.</p></div>
+    <div class="con-revs">
+      <div class="con-rev"><div class="st">★★★★★</div><p>"Their collaborative approach, attention to detail, and commitment to delivering results set them apart from other consulting firms."</p><footer><img src="${CON_IMG.t1}" alt="Ryan Johnson"/><div><b>Ryan Johnson</b><small>Tech Solutions</small></div></footer></div>
+      <div class="con-rev"><div class="st">★★★★★</div><p>"The impact of {company_name}'s work on our organization has been transformative. Their dedication helped us achieve remarkable growth."</p><footer><img src="${CON_IMG.t2}" alt="Alex Peterson"/><div><b>Alex Peterson</b><small>Thompson Industries</small></div></footer></div>
+      <div class="con-rev"><div class="st">★★★★★</div><p>"Their team's depth of knowledge, strategic thinking, and commitment to excellence have been instrumental in navigating complex challenges."</p><footer><img src="${CON_IMG.t3}" alt="David Martinez"/><div><b>David Martinez</b><small>Johnson Enterprises</small></div></footer></div>
+    </div>
+  </div></section>
+
+  <section class="con-sec"><div class="con-wrap">
+    <div class="con-cta" style="background-image:url('${CON_IMG.approach}')"><div class="in">
+      <h2>{bottom_cta_headline}</h2>
+      <p>{bottom_cta_description}</p>
+      <a href="#contact" class="con-btn">📞 {phone}</a>
+    </div></div>
+  </div></section>
+
+  <section class="con-sec" id="contact" style="background:var(--bg)"><div class="con-wrap">
+    <div class="con-head"><span class="con-eyebrow">Contact</span><h2 class="con-h">Grow your business with {company_name}</h2></div>
+    <div class="con-contact">
+      <div>
+        <div class="con-irow"><div class="ic">📞</div><div><small>Phone</small><b>{phone}</b></div></div>
+        <div class="con-irow"><div class="ic">✉️</div><div><small>Email</small><b>{email}</b></div></div>
+        <div class="con-irow"><div class="ic">📍</div><div><small>Office</small><b>{address}</b></div></div>
+        <div class="con-irow"><div class="ic">🕐</div><div><small>Hours</small><b>Mon–Fri 9am–6pm</b></div></div>
+      </div>
+      <div class="con-form">
+        <div class="con-fg"><label>Name</label><input type="text" placeholder="Your name"/></div>
+        <div class="con-fg"><label>Email</label><input type="email" placeholder="you@email.com"/></div>
+        <div class="con-fg"><label>Message</label><textarea rows="4" placeholder="How can we help your business?"></textarea></div>
+        <button class="con-btn" style="width:100%;justify-content:center">Send message</button>
+      </div>
+    </div>
+  </div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
@@ -1949,29 +2166,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     id: "consulting-agency",
     name: "Consulting Agency",
     description: "Clean, professional business consulting landing page — bold hero ('Grow your business faster'), trusted-by logos, services grid, about split, results stats, client testimonials, FAQ and contact. Modelled on the consulting.framer.media design.",
-    content: page(
-      hero({ bgKeywords: "business consultant professional woman office meeting", badge: "📈 Trusted business consultants", title: "{headline}", subtitle: "{subheadline}", primaryCta: "{cta_text} →", secondaryCta: "Our Services", sig: 2 }) +
-      trustStrip([{ num: "{years_experience}+", lbl: "Years experience" }, { num: "{clients_count}+", lbl: "Clients served" }, { num: "{success_rate}%", lbl: "Success rate" }, { num: "4.9★", lbl: "Client rating" }]) +
-      featureGrid("Services", "How {company_name} helps you grow", "With our expertise and dedication, we'll help you navigate challenges, seize opportunities, and achieve your business goals.", [
-        { icon: "🎯", title: "{service_1_title}", desc: "{service_1_desc}" },
-        { icon: "📊", title: "{service_2_title}", desc: "{service_2_desc}" },
-        { icon: "🚀", title: "{service_3_title}", desc: "{service_3_desc}" },
-      ]) +
-      aboutSplit("About us", "Strategy and execution, side by side", "{about_body}", "business strategy meeting handshake professional", 6) +
-      gallery("Our work", "Results we're proud of", ["business meeting", "team strategy session", "office collaboration", "data analytics chart", "corporate presentation", "professional handshake"]) +
-      defaultTestimonials +
-      faq([
-        { q: "How does the consultation work?", a: "We start with a free discovery call to understand your goals, then build a tailored roadmap with clear milestones." },
-        { q: "What industries do you work with?", a: "We partner with startups, scale-ups and established companies across a wide range of sectors." },
-        { q: "How long until I see results?", a: "Most clients see measurable improvements within the first 90 days of working together." },
-      ]) +
-      ctaBand({ bgKeywords: "business success growth city skyline", title: "{bottom_cta_headline}", subtitle: "{bottom_cta_description}", cta: "📞 {phone}", sig: 12 }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "✉️", label: "Email", value: "{email}" },
-        { icon: "📍", label: "Office", value: "{address}" },
-      ])
-    ),
+    content: consultingTemplate(),
     variables: [
       "{headline}", "{subheadline}", "{company_name}", "{cta_text}",
       "{years_experience}", "{clients_count}", "{success_rate}",
