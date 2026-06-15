@@ -510,7 +510,6 @@ export default function TemplateMarketplacePage() {
                       onReset={() => setImageOverrides({})}
                     />
                     <LiveVariablePreview
-                      key={Object.keys(imageOverrides).join(",")}
                       templateContent={previewTemplate.content}
                       csvData={previewRows}
                     />
