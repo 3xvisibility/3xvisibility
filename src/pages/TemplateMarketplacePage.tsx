@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,9 @@ import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoDefaultsEditor } from "@/components/templates/SeoDefaultsEditor";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
+import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
+import { downloadStarterCsv } from "@/lib/csv-starter";
+import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
 const CATEGORIES = [
@@ -46,10 +49,28 @@ export default function TemplateMarketplacePage() {
   const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
+
+  // Reset uploaded CSV when switching templates.
+  useEffect(() => { setUploadedCsv([]); }, [previewTemplate?.id]);
+
+  const handleCsvUpload = async (file: File) => {
+    try {
+      const { rowData } = await parseUploadedFile(file);
+      if (!rowData.length) {
+        toast({ title: "Empty file", description: "No data rows found in that file.", variant: "destructive" });
+        return;
+      }
+      setUploadedCsv(rowData);
+      toast({ title: "CSV loaded", description: `${rowData.length} row(s) mapped to template variables.` });
+    } catch (e) {
+      toast({ title: "Could not read file", description: e instanceof Error ? e.message : "Unsupported file.", variant: "destructive" });
+    }
+  };
 
   // Fetch user's templates for sharing
   const { data: userTemplates = [] } = useQuery({
@@ -425,10 +446,54 @@ export default function TemplateMarketplacePage() {
                   <TabsContent value="preview" className="mt-3">
                     <TemplatePreview html={applyTemplateDefaults(previewTemplate.content, previewTemplate.defaultValues)} />
                   </TabsContent>
-                  <TabsContent value="customize" className="mt-3">
+                  <TabsContent value="customize" className="mt-3 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
+                      <span className="text-xs text-muted-foreground mr-auto">
+                        Map your data: download the starter CSV (one column per variable), fill it in, then upload to auto-populate every section.
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => downloadStarterCsv({
+                          templateName: previewTemplate.name,
+                          variables: previewTemplate.variables,
+                          defaultValues: previewTemplate.defaultValues,
+                        })}
+                      >
+                        <Download className="h-3.5 w-3.5 mr-1.5" /> Starter CSV
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => document.getElementById("mkt-csv-upload")?.click()}
+                      >
+                        <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
+                      </Button>
+                      {uploadedCsv.length > 0 && (
+                        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setUploadedCsv([])}>
+                          Clear ({uploadedCsv.length})
+                        </Button>
+                      )}
+                      <input
+                        id="mkt-csv-upload"
+                        type="file"
+                        accept=".csv,.tsv,.txt,.json,.xlsx,.xls"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleCsvUpload(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                    {uploadedCsv.length > 0 && (
+                      <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
+                    )}
                     <LiveVariablePreview
                       templateContent={previewTemplate.content}
-                      csvData={previewTemplate.defaultValues ? [previewTemplate.defaultValues] : []}
+                      csvData={uploadedCsv.length > 0 ? uploadedCsv : (previewTemplate.defaultValues ? [previewTemplate.defaultValues] : [])}
                     />
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">

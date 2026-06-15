@@ -63,10 +63,16 @@ export interface StarterCsvOptions {
   variables: string[];
   /** Number of example rows to include (default 1). */
   exampleRows?: number;
+  /**
+   * Optional template default values keyed by variable name. When provided,
+   * each column is pre-filled with the real template content (services, stats,
+   * testimonials, FAQ, contact text, etc.) so an uploaded CSV auto-maps 1:1.
+   */
+  defaultValues?: Record<string, string>;
 }
 
 /** Trigger a download of a starter CSV containing the template's variable headers + example rows. */
-export function downloadStarterCsv({ templateName, variables, exampleRows = 1 }: StarterCsvOptions) {
+export function downloadStarterCsv({ templateName, variables, exampleRows = 1, defaultValues }: StarterCsvOptions) {
   const cleaned = Array.from(
     new Set(
       variables
@@ -80,10 +86,23 @@ export function downloadStarterCsv({ templateName, variables, exampleRows = 1 }:
     cleaned.push("title", "city", "service", "description", "price");
   }
 
+  // Case-insensitive lookup of a variable's default value.
+  const defaultsLower: Record<string, string> = {};
+  if (defaultValues) {
+    for (const [k, v] of Object.entries(defaultValues)) {
+      defaultsLower[k.toLowerCase()] = String(v ?? "");
+    }
+  }
+  const exampleFor = (v: string): string => {
+    const fromDefaults = defaultsLower[v.toLowerCase()];
+    if (fromDefaults !== undefined && fromDefaults !== "") return fromDefaults;
+    return fallbackExample(v);
+  };
+
   const rows: Record<string, string>[] = [];
   for (let i = 0; i < Math.max(1, exampleRows); i++) {
     const row: Record<string, string> = {};
-    cleaned.forEach((v) => (row[v] = fallbackExample(v)));
+    cleaned.forEach((v) => (row[v] = exampleFor(v)));
     rows.push(row);
   }
 
