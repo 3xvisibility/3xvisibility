@@ -1103,6 +1103,12 @@ const consultingTemplate = () => `<style>
 /* split */
 .con-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,4rem);align-items:center}
 .con-split img{width:100%;border-radius:20px;aspect-ratio:4/3;object-fit:cover;box-shadow:0 26px 60px rgba(11,18,32,.14)}
+.con-about-pic{position:relative}
+.con-badge{position:absolute;left:-12px;bottom:-12px;background:var(--blue);color:#fff;border-radius:16px;padding:1rem 1.3rem;box-shadow:0 18px 40px rgba(37,99,235,.4);display:flex;flex-direction:column;line-height:1.1}
+.con-badge b{font-size:1.7rem;font-weight:700}
+.con-badge span{font-size:.78rem;opacity:.85}
+.con-about-name{font-size:clamp(2rem,4.2vw,3rem);font-weight:700}
+.con-about-rule{width:64px;height:4px;border-radius:4px;background:var(--blue);margin:1rem 0 .4rem}
 .con-feat{display:flex;flex-direction:column;gap:1rem;margin-top:1.6rem}
 .con-feat .f{display:flex;gap:.85rem;align-items:flex-start;font-weight:600;color:var(--ink)}
 .con-feat .f::before{content:'✓';flex:none;width:24px;height:24px;border-radius:50%;background:rgba(37,99,235,.12);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.8rem}
