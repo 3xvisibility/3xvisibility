@@ -1635,7 +1635,7 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 
   <section class="gd-sec" id="services" style="background:var(--bg)"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Our Services</span><h2 class="gd-h">{services_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{services_subtitle}</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{services_eyebrow}</span><h2 class="gd-h">{services_title}</h2><p class="gd-lead" style="margin:1rem auto 0">{services_subtitle}</p></div>
     <div class="gd-svc">
       <a class="gd-card"><img src="${GD_IMG.svc1}" alt="{service_1_title}"/><div class="lbl"><span>{service_1_title}</span><span class="arr">→</span></div></a>
       <a class="gd-card"><img src="${GD_IMG.svc2}" alt="{service_2_title}"/><div class="lbl"><span>{service_2_title}</span><span class="arr">→</span></div></a>
