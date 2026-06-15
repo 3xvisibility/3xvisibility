@@ -67,7 +67,7 @@ export function DashboardLayout({ children, onLogout }: DashboardLayoutProps) {
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <SidebarTrigger className="shrink-0 lg:hidden" />
               <Link to={`${basePath}/dashboard`} className="flex items-center shrink-0" data-no-translate translate="no">
-                <img src={logo3x} alt="3XVISIBILITY" className="h-9 w-9 object-contain" />
+                <img src={logo3x} alt="3XVISIBILITY" width={309} height={65} className="h-9 w-auto object-contain" />
               </Link>
               <Button
                 variant="ghost"
