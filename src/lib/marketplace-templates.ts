@@ -1646,8 +1646,8 @@ const gardenerTemplate = () => `<style>
   <section class="gd-sec"><div class="gd-wrap"><div class="gd-faq">
     <img src="${GD_IMG.faq}" alt="Beautiful garden"/>
     <div>
-      <span class="gd-eyebrow">FAQ</span>
-      <h2 class="gd-h" style="margin-bottom:1.4rem">Frequently asked questions</h2>
+      <span class="gd-eyebrow">{faq_eyebrow}</span>
+      <h2 class="gd-h" style="margin-bottom:1.4rem">{faq_title}</h2>
       <div class="gd-acc">
         <details open><summary>{faq_1_question}</summary><p>{faq_1_answer}</p></details>
         <details><summary>{faq_2_question}</summary><p>{faq_2_answer}</p></details>
