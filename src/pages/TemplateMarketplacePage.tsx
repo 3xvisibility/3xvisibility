@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoDefaultsEditor } from "@/components/templates/SeoDefaultsEditor";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
+import { ImageVariablePanel } from "@/components/templates/ImageVariablePanel";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { parseUploadedFile } from "@/lib/export-csv";
@@ -50,13 +51,23 @@ export default function TemplateMarketplacePage() {
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
+  const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
-  // Reset uploaded CSV when switching templates.
-  useEffect(() => { setUploadedCsv([]); }, [previewTemplate?.id]);
+  // Reset uploaded CSV + image overrides when switching templates.
+  useEffect(() => { setUploadedCsv([]); setImageOverrides({}); }, [previewTemplate?.id]);
+
+  // Build preview rows with image overrides merged into every row.
+  const previewRows = useMemo(() => {
+    const base = uploadedCsv.length > 0
+      ? uploadedCsv
+      : (previewTemplate?.defaultValues ? [previewTemplate.defaultValues] : []);
+    if (Object.keys(imageOverrides).length === 0) return base;
+    return base.map((row) => ({ ...row, ...imageOverrides }));
+  }, [uploadedCsv, previewTemplate, imageOverrides]);
 
   const handleCsvUpload = async (file: File) => {
     try {
@@ -491,9 +502,16 @@ export default function TemplateMarketplacePage() {
                     {uploadedCsv.length > 0 && (
                       <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
                     )}
+                    <ImageVariablePanel
+                      templateContent={previewTemplate.content}
+                      defaultValues={previewTemplate.defaultValues}
+                      values={imageOverrides}
+                      onChange={(v, url) => setImageOverrides((prev) => ({ ...prev, [v]: url }))}
+                      onReset={() => setImageOverrides({})}
+                    />
                     <LiveVariablePreview
                       templateContent={previewTemplate.content}
-                      csvData={uploadedCsv.length > 0 ? uploadedCsv : (previewTemplate.defaultValues ? [previewTemplate.defaultValues] : [])}
+                      csvData={previewRows}
                     />
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">

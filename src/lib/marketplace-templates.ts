@@ -2017,7 +2017,7 @@ const refitTemplate = () => `<style>
       <a href="#contact" class="rf-btn">{cta_text}<span class="ar">↗</span></a>
     </div>
     <div class="rf-shot">
-      <img src="${RF_IMG.hero}" alt="Home renovation by {company_name}"/>
+      <img src="{hero_image}" alt="Home renovation by {company_name}"/>
       <div class="rf-quote"><div class="st">★★★★★</div>"{hero_quote}"</div>
     </div>
   </div></header>
@@ -2032,7 +2032,7 @@ const refitTemplate = () => `<style>
   </div></section>
 
   <section class="rf-sec" id="about"><div class="rf-wrap"><div class="rf-split">
-    <div class="rf-grid2"><img src="${RF_IMG.about1}" alt="Renovation detail"/><img src="${RF_IMG.about2}" alt="Kitchen build"/><img src="${RF_IMG.about3}" alt="Interior craftsmanship"/><img src="${RF_IMG.about4}" alt="Finished room"/></div>
+    <div class="rf-grid2"><img src="{about_image_1}" alt="Renovation detail"/><img src="{about_image_2}" alt="Kitchen build"/><img src="{about_image_3}" alt="Interior craftsmanship"/><img src="{about_image_4}" alt="Finished room"/></div>
     <div>
       <span class="rf-eyebrow"><span class="dot"></span>{about_eyebrow}</span>
       <h2 class="rf-h">{about_title}</h2>
@@ -2061,18 +2061,18 @@ const refitTemplate = () => `<style>
   <section class="rf-sec" id="work"><div class="rf-wrap">
     <div class="rf-head"><span class="rf-eyebrow"><span class="dot"></span>{work_eyebrow}</span><h2 class="rf-h">{work_title}</h2><p class="rf-lead" style="margin-top:1rem">{work_subtitle}</p></div>
     <div class="rf-work">
-      <div class="rf-wcard"><img src="${RF_IMG.work1}" alt="{work_1_title}"/><div class="b"><span class="tag">{work_1_tag}</span><h3>{work_1_title}</h3><p>{work_1_desc}</p></div></div>
-      <div class="rf-wcard"><img src="${RF_IMG.work2}" alt="{work_2_title}"/><div class="b"><span class="tag">{work_2_tag}</span><h3>{work_2_title}</h3><p>{work_2_desc}</p></div></div>
-      <div class="rf-wcard"><img src="${RF_IMG.work3}" alt="{work_3_title}"/><div class="b"><span class="tag">{work_3_tag}</span><h3>{work_3_title}</h3><p>{work_3_desc}</p></div></div>
+      <div class="rf-wcard"><img src="{work_1_image}" alt="{work_1_title}"/><div class="b"><span class="tag">{work_1_tag}</span><h3>{work_1_title}</h3><p>{work_1_desc}</p></div></div>
+      <div class="rf-wcard"><img src="{work_2_image}" alt="{work_2_title}"/><div class="b"><span class="tag">{work_2_tag}</span><h3>{work_2_title}</h3><p>{work_2_desc}</p></div></div>
+      <div class="rf-wcard"><img src="{work_3_image}" alt="{work_3_title}"/><div class="b"><span class="tag">{work_3_tag}</span><h3>{work_3_title}</h3><p>{work_3_desc}</p></div></div>
     </div>
   </div></section>
 
   <section class="rf-sec"><div class="rf-wrap">
     <div class="rf-head ctr"><span class="rf-eyebrow"><span class="dot"></span>{reviews_eyebrow}</span><h2 class="rf-h">{reviews_title}</h2><p class="rf-lead" style="margin:1rem auto 0">{reviews_subtitle}</p></div>
     <div class="rf-revs">
-      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${RF_IMG.av1}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>{review_1_role}</small></div></footer></div>
-      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${RF_IMG.av2}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>{review_2_role}</small></div></footer></div>
-      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="${RF_IMG.av3}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>{review_3_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="{review_1_avatar}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>{review_1_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="{review_2_avatar}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>{review_2_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="{review_3_avatar}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>{review_3_role}</small></div></footer></div>
     </div>
   </div></section>
 
@@ -2227,6 +2227,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
       "{faq_eyebrow}", "{faq_title}", "{faq_subtitle}",
       "{faq_1_question}", "{faq_1_answer}", "{faq_2_question}", "{faq_2_answer}", "{faq_3_question}", "{faq_3_answer}", "{faq_4_question}", "{faq_4_answer}", "{faq_5_question}", "{faq_5_answer}",
       "{contact_eyebrow}", "{bottom_cta_headline}", "{bottom_cta_description}",
+      "{hero_image}", "{about_image_1}", "{about_image_2}", "{about_image_3}", "{about_image_4}",
+      "{work_1_image}", "{work_2_image}", "{work_3_image}",
+      "{review_1_avatar}", "{review_2_avatar}", "{review_3_avatar}",
     ],
     category: "local-seo",
     tags: ["renovation", "kitchen", "home-improvement", "construction", "landing"],
@@ -2318,6 +2321,17 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
       contact_eyebrow: "Contact",
       bottom_cta_headline: "Get in touch",
       bottom_cta_description: "For any inquiries or to explore your vision further, we invite you to contact our professional team using the details below.",
+      hero_image: RF_IMG.hero,
+      about_image_1: RF_IMG.about1,
+      about_image_2: RF_IMG.about2,
+      about_image_3: RF_IMG.about3,
+      about_image_4: RF_IMG.about4,
+      work_1_image: RF_IMG.work1,
+      work_2_image: RF_IMG.work2,
+      work_3_image: RF_IMG.work3,
+      review_1_avatar: RF_IMG.av1,
+      review_2_avatar: RF_IMG.av2,
+      review_3_avatar: RF_IMG.av3,
     },
   },
 
