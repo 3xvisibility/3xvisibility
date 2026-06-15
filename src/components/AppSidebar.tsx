@@ -200,7 +200,7 @@ export function AppSidebar({ onLogout }: AppSidebarProps) {
             {logoUrl ? (
               <img src={logoUrl} alt={appName} className="h-7 w-7 rounded-lg object-contain shrink-0" />
             ) : (
-              <img src={logo3x} alt={appName} width={309} height={65} className="h-7 w-auto object-contain shrink-0" />
+              <img src={logo3x} alt={appName} width={1107} height={261} className="h-7 w-auto object-contain shrink-0" />
             )}
             {isWhitelabeled && (
               <span className="text-sm font-semibold truncate">{appName}</span>
