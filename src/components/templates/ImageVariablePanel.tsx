@@ -101,7 +101,6 @@ export function ImageVariablePanel({
                   }`}
                 >
                   {url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={url}
                       alt={prettify(v)}
