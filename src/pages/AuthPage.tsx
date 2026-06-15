@@ -64,6 +64,7 @@ export default function AuthPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [salutation, setSalutation] = useState("none");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
@@ -224,7 +225,7 @@ export default function AuthPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName, ai_language: aiLanguage },
+        data: { full_name: fullName, ai_language: aiLanguage, salutation },
       },
     });
     if (error) {
@@ -451,6 +452,24 @@ export default function AuthPage() {
                     onSubmit={mode === "login" ? handleLogin : handleSignup}
                     className="space-y-4"
                   >
+                    {mode === "signup" && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-muted-foreground">
+                          {t("auth.title")}
+                        </Label>
+                        <Select value={salutation} onValueChange={setSalutation}>
+                          <SelectTrigger className="h-11 bg-background/50 border-border/60 focus:border-primary/40 focus:ring-primary/20 rounded-xl transition-all">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mr">{t("auth.titleMr")}</SelectItem>
+                            <SelectItem value="mrs">{t("auth.titleMrs")}</SelectItem>
+                            <SelectItem value="none">{t("auth.titleNone")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     {mode === "signup" && (
                       <div className="space-y-1.5">
                         <Label htmlFor="signup-name" className="text-xs font-medium text-muted-foreground">
