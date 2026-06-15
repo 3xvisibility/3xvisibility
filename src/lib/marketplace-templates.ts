@@ -1258,6 +1258,202 @@ const consultingTemplate = () => `<style>
   </div></section>
 </div>`;
 
+// ── LanderX template (modelled 1:1 on landerx.framer.website) ────────────────
+const LX_IMG = {
+  a1: "https://framerusercontent.com/images/ETgoVdeITLLIYCHTFNeVuZDMyQY.png?width=96&height=96",
+  a2: "https://framerusercontent.com/images/bnJJiW5Vfixlrz7M2pzoeyHBU.png?width=96&height=96",
+  a3: "https://framerusercontent.com/images/rlizSNVuxrrqd6I5hGaSxwqn0Os.png?width=96&height=96",
+  a4: "https://framerusercontent.com/images/X0pqhTmlK8gdYqPbljhuLXlyd0I.png?width=96&height=96",
+  t1: "https://framerusercontent.com/images/ETgoVdeITLLIYCHTFNeVuZDMyQY.png?width=120&height=120",
+  t2: "https://framerusercontent.com/images/QmmaDSjXyuZNNDsZdt23lDVXI.png?width=120&height=120",
+  t3: "https://framerusercontent.com/images/0zuVQ2JmvxEtdnpdOq5FtRJxmNY.png?width=120&height=160",
+  t4: "https://framerusercontent.com/images/4EiFhjIPXbRF4y7hS6k9U484AQM.jpg?width=120&height=140",
+  t5: "https://framerusercontent.com/images/7qBFv2WmuOwj4qUFS7XUzQSFL4.jpg?width=120&height=140",
+  t6: "https://framerusercontent.com/images/tvip64h9JcqV1xA68gzm2QrLSM.png?width=120&height=120",
+  founder: "https://framerusercontent.com/images/W7xYkGKzPzvnPv58ZBNzxS3JZI.jpg?width=200&height=200",
+};
+
+const landerxTemplate = () => `<style>
+.lx{--bg:#05060c;--bg2:#0a0d1a;--card:#0e1222;--line:rgba(255,255,255,.08);--blue:#3b5bff;--blue2:#5b7bff;--ink:#f4f6ff;--body:#9aa3c0;--muted:#6b7494;font-family:'Inter','Segoe UI',system-ui,sans-serif;color:var(--body);line-height:1.7;background:var(--bg);max-width:100%;position:relative;overflow:hidden}
+.lx :where(*){box-sizing:border-box}
+.lx h1,.lx h2,.lx h3,.lx h4{color:var(--ink);margin:0;line-height:1.08;letter-spacing:-.02em;font-weight:600}
+.lx p{margin:0}
+.lx a{text-decoration:none;color:inherit}
+.lx-wrap{max-width:1140px;margin:0 auto;padding:0 1.5rem}
+.lx-sec{padding:clamp(3.5rem,7vw,6.5rem) 0;position:relative}
+.lx-eyebrow{display:inline-block;color:var(--blue2);font-weight:600;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:1rem}
+.lx-h{font-size:clamp(2rem,4.5vw,3.4rem)}
+.lx-lead{color:var(--body);font-size:1.05rem;max-width:560px}
+.lx-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--blue);color:#fff;padding:.9rem 1.7rem;border-radius:12px;font-weight:600;font-size:.95rem;transition:transform .25s,box-shadow .25s;border:none;cursor:pointer;box-shadow:0 0 0 1px rgba(91,123,255,.5),0 14px 40px rgba(59,91,255,.45)}
+.lx-btn:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(91,123,255,.7),0 18px 50px rgba(59,91,255,.6)}
+.lx-btn-ghost{background:rgba(255,255,255,.06);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.lx-btn-ghost:hover{background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+/* nav */
+.lx-nav .bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.4rem 0}
+.lx-nav .logo{display:flex;align-items:center;gap:.55rem;font-weight:700;color:var(--ink);font-size:1.15rem}
+.lx-nav .logo .dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--blue),#8aa0ff);box-shadow:0 6px 18px rgba(59,91,255,.5)}
+.lx-nav .links{display:flex;gap:2rem;font-size:.92rem}
+.lx-nav .links a:hover{color:var(--ink)}
+/* hero */
+.lx-hero{position:relative;text-align:center;padding-top:1rem;padding-bottom:clamp(3rem,6vw,5rem)}
+.lx-hero::before{content:'';position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:760px;height:520px;background:radial-gradient(ellipse at center,rgba(59,91,255,.4),transparent 65%);filter:blur(20px);z-index:0}
+.lx-hero .lx-wrap{position:relative;z-index:1}
+.lx-join{display:inline-flex;align-items:center;gap:.7rem;margin-bottom:1.8rem}
+.lx-avs{display:flex}
+.lx-avs img{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--bg);margin-left:-10px}
+.lx-avs img:first-child{margin-left:0}
+.lx-join span{font-size:.92rem}.lx-join b{color:var(--ink)}
+.lx-hero h1{font-size:clamp(2.6rem,6.5vw,5rem);font-weight:600;max-width:16ch;margin:0 auto;background:linear-gradient(180deg,#fff 30%,#9fb0ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lx-hero p{font-size:1.1rem;max-width:520px;margin:1.6rem auto 2.2rem}
+.lx-hero .cta{display:flex;flex-wrap:wrap;gap:.9rem;justify-content:center}
+/* logos */
+.lx-logos{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2rem 3.5rem;padding:3rem 0 1rem;opacity:.6}
+.lx-logos img{height:22px;width:auto;filter:brightness(0) invert(1)}
+/* benefits */
+.lx-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem}
+.lx-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.9rem;transition:transform .3s,border-color .3s,box-shadow .3s}
+.lx-card:hover{transform:translateY(-5px);border-color:rgba(91,123,255,.45);box-shadow:0 26px 60px rgba(0,0,0,.5)}
+.lx-card .ic{width:50px;height:50px;border-radius:13px;background:linear-gradient(135deg,rgba(59,91,255,.25),rgba(59,91,255,.05));display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.1rem;box-shadow:inset 0 0 0 1px rgba(91,123,255,.3)}
+.lx-card h3{font-size:1.15rem;margin-bottom:.5rem}
+.lx-card p{font-size:.93rem}
+/* head */
+.lx-head{max-width:620px;margin:0 auto 3rem;text-align:center}
+/* testimonials */
+.lx-revs{columns:3;column-gap:1.25rem}
+.lx-rev{break-inside:avoid;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.6rem;margin-bottom:1.25rem}
+.lx-rev .st{color:#f5b301;font-size:.85rem;letter-spacing:1px;margin-bottom:.8rem}
+.lx-rev p{color:var(--ink);font-size:.96rem}
+.lx-rev footer{display:flex;align-items:center;gap:.75rem;margin-top:1.2rem}
+.lx-rev footer img{width:42px;height:42px;border-radius:50%;object-fit:cover}
+.lx-rev footer b{display:block;color:var(--ink);font-size:.92rem}
+.lx-rev footer small{color:var(--muted);font-size:.82rem}
+/* pricing */
+.lx-price{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;align-items:start}
+.lx-plan{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:2rem}
+.lx-plan.pop{border-color:rgba(91,123,255,.6);box-shadow:0 0 0 1px rgba(91,123,255,.3),0 30px 70px rgba(59,91,255,.18);position:relative}
+.lx-plan .tag{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue2);background:rgba(59,91,255,.14);padding:.3rem .7rem;border-radius:999px;margin-bottom:1rem}
+.lx-plan .nm{color:var(--ink);font-weight:600;font-size:1.05rem;margin-bottom:.4rem}
+.lx-plan .pr{color:var(--ink);font-size:2.6rem;font-weight:700;letter-spacing:-.02em}
+.lx-plan .pr small{font-size:.9rem;color:var(--muted);font-weight:500}
+.lx-plan ul{list-style:none;padding:0;margin:1.4rem 0 1.6rem;display:flex;flex-direction:column;gap:.7rem}
+.lx-plan li{display:flex;gap:.6rem;align-items:flex-start;font-size:.92rem}
+.lx-plan li::before{content:'✓';flex:none;color:var(--blue2);font-weight:700}
+.lx-plan .lx-btn{width:100%;justify-content:center}
+/* founder / split */
+.lx-split{display:grid;grid-template-columns:.8fr 1.2fr;gap:2.5rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:clamp(1.8rem,4vw,3rem)}
+.lx-split img{width:100%;max-width:200px;border-radius:18px;aspect-ratio:1;object-fit:cover}
+.lx-split q{display:block;color:var(--ink);font-size:clamp(1.1rem,2vw,1.5rem);line-height:1.5;font-weight:500;quotes:none}
+.lx-split small{display:block;color:var(--muted);margin-top:1.2rem}
+/* faq */
+.lx-faq{max-width:780px;margin:0 auto}
+.lx-faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:.85rem;padding:1.1rem 1.4rem}
+.lx-faq details[open]{border-color:rgba(91,123,255,.5)}
+.lx-faq summary{color:var(--ink);font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:1rem}
+.lx-faq summary::after{content:'+';color:var(--blue2);font-size:1.4rem;line-height:1}
+.lx-faq details[open] summary::after{content:'–'}
+.lx-faq p{margin-top:.9rem;font-size:.95rem}
+/* final cta */
+.lx-final{text-align:center;background:radial-gradient(ellipse at top,rgba(59,91,255,.3),transparent 60%),var(--bg2);border:1px solid var(--line);border-radius:24px;padding:clamp(3rem,6vw,5rem) 1.5rem}
+.lx-final h2{font-size:clamp(2rem,4vw,3rem)}
+.lx-final p{max-width:520px;margin:1.1rem auto 2rem}
+.lx-final .cta{display:flex;flex-wrap:wrap;gap:.9rem;justify-content:center}
+@media(max-width:900px){.lx-nav .links{display:none}.lx-grid3,.lx-price,.lx-split{grid-template-columns:1fr}.lx-revs{columns:2}}
+@media(max-width:560px){.lx-revs{columns:1}}
+</style>
+<div class="lx">
+  <nav class="lx-nav"><div class="lx-wrap"><div class="bar">
+    <div class="logo"><span class="dot"></span>{product_name}</div>
+    <div class="links"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#reviews">Reviews</a><a href="#contact">Contact</a></div>
+    <a href="#pricing" class="lx-btn">Get Template</a>
+  </div></div></nav>
+
+  <header class="lx-hero"><div class="lx-wrap">
+    <div class="lx-join">
+      <div class="lx-avs"><img src="${LX_IMG.a1}" alt=""/><img src="${LX_IMG.a2}" alt=""/><img src="${LX_IMG.a3}" alt=""/><img src="${LX_IMG.a4}" alt=""/></div>
+      <span>Join <b>15,374+</b> other loving customers</span>
+    </div>
+    <h1>{headline}</h1>
+    <p>{subheadline}</p>
+    <div class="cta">
+      <a href="#pricing" class="lx-btn">{cta_text}</a>
+      <a href="#contact" class="lx-btn lx-btn-ghost">Book a Demo</a>
+    </div>
+    <div class="lx-logos">
+      <img src="https://framerusercontent.com/images/otv1rEDn2X7h8TFtKPCksQmAEKQ.svg?width=75&height=17" alt="Logo"/>
+      <img src="https://framerusercontent.com/images/rrRoFs4icQtustYbIGm5r5DXREI.svg?width=50&height=17" alt="Logo"/>
+      <img src="https://framerusercontent.com/images/hhTRf8RciR9bakkAgIckAkEiQM.svg?width=57&height=18" alt="Logo"/>
+      <img src="https://framerusercontent.com/images/1ph1389RD4RtUDEfqVhWbujyF7s.svg?width=56&height=20" alt="Logo"/>
+      <img src="https://framerusercontent.com/images/Yn3MOOL9rTXhK9U8MLvSnEoNP8.svg?width=45&height=14" alt="Logo"/>
+    </div>
+  </div></header>
+
+  <section class="lx-sec" id="features"><div class="lx-wrap">
+    <div class="lx-head"><span class="lx-eyebrow">Benefits</span><h2 class="lx-h">Why Choose {product_name}?</h2><p class="lx-lead" style="margin:1rem auto 0">Innovative tools and powerful insights designed to elevate your business.</p></div>
+    <div class="lx-grid3">
+      <div class="lx-card"><div class="ic">💸</div><h3>{feature_1_title}</h3><p>{feature_1_desc}</p></div>
+      <div class="lx-card"><div class="ic">📊</div><h3>{feature_2_title}</h3><p>{feature_2_desc}</p></div>
+      <div class="lx-card"><div class="ic">🧩</div><h3>{feature_3_title}</h3><p>Choose plans that adapt to your business needs, offering unparalleled scalability and cost-effectiveness.</p></div>
+      <div class="lx-card"><div class="ic">🔒</div><h3>Secure Transactions</h3><p>Prioritize safety with cutting-edge encryption and robust security features for every interaction.</p></div>
+      <div class="lx-card"><div class="ic">🤖</div><h3>Adaptive Systems</h3><p>Leverage AI-driven systems that evolve with your business, ensuring efficiency at every step.</p></div>
+      <div class="lx-card"><div class="ic">🎧</div><h3>Dedicated Support</h3><p>Access expert assistance 24/7 to ensure you're never alone on your growth journey.</p></div>
+    </div>
+  </div></section>
+
+  <section class="lx-sec" id="reviews"><div class="lx-wrap">
+    <div class="lx-head"><span class="lx-eyebrow">Wall of love</span><h2 class="lx-h">Loved by thinkers</h2><p class="lx-lead" style="margin:1rem auto 0">Here's what people worldwide are saying about us.</p></div>
+    <div class="lx-revs">
+      <div class="lx-rev"><div class="st">★★★★★</div><p>"Highly intuitive and polished. It's everything we needed and more!"</p><footer><img src="${LX_IMG.t1}" alt="Alex jonas"/><div><b>Alex jonas</b><small>JS Marketing</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>"This is truly incredible and has saved us countless hours!"</p><footer><img src="${LX_IMG.t2}" alt="John Robert"/><div><b>John Robert</b><small>SM Strategy</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>"Pure brilliance! This has streamlined our workflow massively."</p><footer><img src="${LX_IMG.t3}" alt="Maggie Hue"/><div><b>Maggie Hue</b><small>BS Growth CEO</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>"A top-notch solution! It's been transformative for our entire team."</p><footer><img src="${LX_IMG.t4}" alt="Tappo kao"/><div><b>Tappo kao</b><small>PO Marketing</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>"Amazing product! It's made our processes seamless and effective."</p><footer><img src="${LX_IMG.t5}" alt="jack hanma"/><div><b>jack hanma</b><small>JK Finance</small></div></footer></div>
+      <div class="lx-rev"><div class="st">★★★★★</div><p>"Incredible design and functionality! This has exceeded our expectations."</p><footer><img src="${LX_IMG.t6}" alt="John Robert"/><div><b>John Robert</b><small>JO Strategy</small></div></footer></div>
+    </div>
+  </div></section>
+
+  <section class="lx-sec" id="pricing"><div class="lx-wrap">
+    <div class="lx-head"><span class="lx-eyebrow">Pricing & plans</span><h2 class="lx-h">Flexible Pricing Plans</h2><p class="lx-lead" style="margin:1rem auto 0">Choose a plan that fits your business needs and unlock the full potential of our platform.</p></div>
+    <div class="lx-price">
+      <div class="lx-plan"><div class="nm">Starter</div><div class="pr">{price_starter}<small> / month</small></div><ul><li>Unlimited AI usage</li><li>Premium support</li><li>Customer care on point</li><li>Collaboration tools</li><li>Regular updates</li></ul><a href="#contact" class="lx-btn lx-btn-ghost">Get Started Now</a></div>
+      <div class="lx-plan pop"><span class="tag">Popular</span><div class="nm">Pro</div><div class="pr">{price_pro}<small> / month</small></div><ul><li>Integrations with 3rd-party</li><li>Advanced analytics</li><li>Team performance tracking</li><li>Top grade security</li><li>Priority customer support</li><li>Detailed usage reports</li></ul><a href="#contact" class="lx-btn">Get Started Now</a></div>
+      <div class="lx-plan"><div class="nm">Enterprise</div><div class="pr">Custom</div><ul><li>Dedicated account manager</li><li>Custom reports & dashboards</li><li>Tailored onboarding & training</li><li>Customizable API access</li><li>Dedicated success manager</li></ul><a href="#contact" class="lx-btn lx-btn-ghost">Get Started Now</a></div>
+    </div>
+  </div></section>
+
+  <section class="lx-sec"><div class="lx-wrap">
+    <span class="lx-eyebrow" style="display:block;text-align:center;margin-bottom:1.5rem">Founder's note</span>
+    <div class="lx-split">
+      <img src="${LX_IMG.founder}" alt="Co-founder"/>
+      <div>
+        <q>"We gather your site data. We know your target audience & how your brand can stand out from the crowd. Best part is we also help you with solutions."</q>
+        <small>Co-founder & ex-Google designer</small>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="lx-sec" id="contact"><div class="lx-wrap">
+    <div class="lx-head"><span class="lx-eyebrow">FAQ's section</span><h2 class="lx-h">Some Common FAQ's</h2><p class="lx-lead" style="margin:1rem auto 0">Get answers to your questions and learn about our platform.</p></div>
+    <div class="lx-faq">
+      <details open><summary>What makes {product_name} unique?</summary><p>{product_name} is designed to streamline your SaaS or startup's online presence with modern, user-centric design and seamless functionality, ensuring you stand out from competitors.</p></details>
+      <details><summary>Can I customize it to match my brand?</summary><p>Absolutely! Everything is fully customizable, allowing you to change colors, fonts, images, and content to perfectly align with your brand identity.</p></details>
+      <details><summary>Is it optimized for SEO and speed?</summary><p>Yes — built for exceptional performance, fast loading times, and SEO-friendly structure to boost your online visibility.</p></details>
+      <details><summary>Is it mobile-friendly?</summary><p>Yes, fully responsive, ensuring a seamless user experience across desktop, tablet, and mobile devices.</p></details>
+      <details><summary>Can I use this for commercial projects?</summary><p>Yes. You're free to use it for both personal and commercial projects — no attribution required.</p></details>
+    </div>
+  </div></section>
+
+  <section class="lx-sec"><div class="lx-wrap">
+    <div class="lx-final">
+      <h2>{bottom_cta_headline}</h2>
+      <p>{bottom_cta_description}</p>
+      <div class="cta">
+        <a href="#pricing" class="lx-btn">{cta_text}</a>
+        <a href="#contact" class="lx-btn lx-btn-ghost">Book a Demo</a>
+      </div>
+    </div>
+  </div></section>
+</div>`;
+
 // ── Templates ──────────────────────────────────────────────────────────────
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
@@ -1329,32 +1525,15 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "Product",
   },
 
-  // 3. SaaS landing
+  // 3. SaaS landing (LanderX-style dark SaaS)
   {
     id: "saas-landing",
-    name: "SaaS Feature Landing",
-    description: "Modern SaaS landing with hero image, feature grid, testimonials, FAQ and final CTA.",
-    content: page(
-      hero({ bgKeywords: "modern saas dashboard team office", badge: "🚀 New for teams", title: "{headline}", subtitle: "{subheadline}", primaryCta: "{cta_text} →", secondaryCta: "Watch Demo", sig: 3 }) +
-      trustStrip([{ num: "10K+", lbl: "Active Users" }, { num: "99.9%", lbl: "Uptime" }, { num: "50M+", lbl: "API Calls/Day" }, { num: "4.9★", lbl: "User Rating" }]) +
-      featureGrid("Features", "Why {product_name}?", "Everything you need to scale your business, all in one platform.", [
-        { icon: "⚡", title: "{feature_1_title}", desc: "{feature_1_desc}" },
-        { icon: "📊", title: "{feature_2_title}", desc: "{feature_2_desc}" },
-        { icon: "🔒", title: "{feature_3_title}", desc: "{feature_3_desc}" },
-      ]) +
-      aboutSplit("Built for teams", "Powerful collaboration, simple workflows", "Bring everyone together in one workspace. Real-time updates, granular permissions, and integrations with the tools you already use.", "team collaboration laptop modern", 8) +
-      gallery("Product tour", "See {product_name} in action", ["software dashboard", "data analytics", "team collaboration", "remote work", "saas interface", "mobile app"]) +
-      defaultTestimonials +
-      faq([
-        { q: "Is there a free trial?", a: "Yes — 14 days, no credit card required. Cancel anytime." },
-        { q: "Can I change plans later?", a: "Absolutely. Upgrade or downgrade in one click from your account settings." },
-        { q: "Do you offer SSO?", a: "Yes, SSO and SAML are available on our Business and Enterprise plans." },
-      ]) +
-      ctaBand({ bgKeywords: "futuristic technology gradient", title: "{bottom_cta_headline}", subtitle: "{bottom_cta_description}", cta: "{cta_text} →", sig: 13 })
-    ),
-    variables: ["{headline}", "{subheadline}", "{product_name}", "{cta_text}", "{feature_1_title}", "{feature_1_desc}", "{feature_2_title}", "{feature_2_desc}", "{feature_3_title}", "{feature_3_desc}", "{bottom_cta_headline}", "{bottom_cta_description}"],
+    name: "LanderX SaaS Startup",
+    description: "Sleek dark-mode SaaS / startup landing page with a glowing blue hero, social-proof avatars, client logos, benefits grid, wall-of-love testimonials, flexible pricing plans, founder's note and FAQ. Modelled on the LanderX (LanX) design.",
+    content: landerxTemplate(),
+    variables: ["{headline}", "{subheadline}", "{product_name}", "{cta_text}", "{feature_1_title}", "{feature_1_desc}", "{feature_2_title}", "{feature_2_desc}", "{feature_3_title}", "{feature_3_desc}", "{price_starter}", "{price_pro}", "{bottom_cta_headline}", "{bottom_cta_description}"],
     category: "saas",
-    tags: ["saas", "landing", "features", "startup"],
+    tags: ["saas", "landing", "startup", "dark", "pricing", "ai"],
     author: "Community", downloads: 1563, rating: 4.9,
     seo_title_pattern: "{headline} | {product_name}",
     seo_description_pattern: "{subheadline}",
