@@ -1665,7 +1665,7 @@ const gardenerTemplate = () => `<style>
   </div></div></section>
 
   <section class="gd-sec"><div class="gd-wrap">
-    <div class="gd-head"><span class="gd-eyebrow">Loved By Our Customers</span><div class="gd-score"><b>{rating_value}</b><span class="st" style="color:#f5b301">★★★★★</span></div><p class="gd-lead" style="margin:0 auto">From {ratings_count} ratings</p></div>
+    <div class="gd-head"><span class="gd-eyebrow">{reviews_eyebrow}</span><div class="gd-score"><b>{rating_value}</b><span class="st" style="color:#f5b301">★★★★★</span></div><p class="gd-lead" style="margin:0 auto">From {ratings_count} ratings</p></div>
     <div class="gd-revs">
       <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${GD_IMG.rAlex}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>Review on Trustpilot</small></div></footer></div>
       <div class="gd-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${GD_IMG.rJohn}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>Review on Trustpilot</small></div></footer></div>
