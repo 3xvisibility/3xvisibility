@@ -2070,9 +2070,9 @@ const refitTemplate = () => `<style>
   <section class="rf-sec"><div class="rf-wrap">
     <div class="rf-head ctr"><span class="rf-eyebrow"><span class="dot"></span>{reviews_eyebrow}</span><h2 class="rf-h">{reviews_title}</h2><p class="rf-lead" style="margin:1rem auto 0">{reviews_subtitle}</p></div>
     <div class="rf-revs">
-      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="${RF_IMG.av1}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>{review_1_role}</small></div></footer></div>
-      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="${RF_IMG.av2}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>{review_2_role}</small></div></footer></div>
-      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="${RF_IMG.av3}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>{review_3_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_1_text}"</p><footer><img src="{review_1_avatar}" alt="{review_1_name}"/><div><b>{review_1_name}</b><small>{review_1_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_2_text}"</p><footer><img src="{review_2_avatar}" alt="{review_2_name}"/><div><b>{review_2_name}</b><small>{review_2_role}</small></div></footer></div>
+      <div class="rf-rev"><div class="st">★★★★★</div><p>"{review_3_text}"</p><footer><img src="{review_3_avatar}" alt="{review_3_name}"/><div><b>{review_3_name}</b><small>{review_3_role}</small></div></footer></div>
     </div>
   </div></section>
 
