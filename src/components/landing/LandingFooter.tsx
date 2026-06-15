@@ -107,7 +107,7 @@ export function LandingFooter() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center">
-              <img src={logo3x} alt="3X Visibility logo" height={36} loading="lazy" className="h-9 w-auto object-contain" />
+              <img src={logo3x} alt="3X Visibility logo" width={309} height={65} loading="lazy" className="h-9 w-auto object-contain" />
             </Link>
             <p className="mt-3 text-xs text-[hsl(250,15%,40%)] leading-relaxed max-w-[200px]">
               {t("footer.description")}

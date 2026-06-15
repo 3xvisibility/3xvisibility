@@ -102,7 +102,7 @@ export function AdminSidebar({ onLogout }: AdminSidebarProps) {
       <SidebarContent className="px-3 py-4">
         {/* Admin header */}
         <div className="mb-4 px-3 flex items-center gap-2.5">
-          <img src={logo3x} alt="3XVISIBILITY" className="h-8 w-auto object-contain shrink-0" />
+          <img src={logo3x} alt="3XVISIBILITY" width={309} height={65} className="h-8 w-auto object-contain shrink-0" />
           {!collapsed && (
             <div className="min-w-0">
               <p className="text-sm font-semibold truncate">Admin Panel</p>
