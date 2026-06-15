@@ -406,14 +406,8 @@ export default function TemplateMarketplacePage() {
                   ))}
                 </div>
 
-                {previewTemplate.seo_title_pattern && (
-                  <div className="text-xs space-y-1 p-3 bg-muted/50 rounded-lg">
-                    <p><strong>SEO Title Pattern:</strong> {previewTemplate.seo_title_pattern}</p>
-                    {previewTemplate.seo_description_pattern && (
-                      <p><strong>SEO Description Pattern:</strong> {previewTemplate.seo_description_pattern}</p>
-                    )}
-                  </div>
-                )}
+                <SeoDefaultsEditor template={previewTemplate} />
+
 
                 <Tabs defaultValue="preview" className="w-full">
                   <TabsList className="w-full grid grid-cols-3">
