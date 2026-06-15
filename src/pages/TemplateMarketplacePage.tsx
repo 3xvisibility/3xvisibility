@@ -443,10 +443,54 @@ export default function TemplateMarketplacePage() {
                   <TabsContent value="preview" className="mt-3">
                     <TemplatePreview html={applyTemplateDefaults(previewTemplate.content, previewTemplate.defaultValues)} />
                   </TabsContent>
-                  <TabsContent value="customize" className="mt-3">
+                  <TabsContent value="customize" className="mt-3 space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
+                      <span className="text-xs text-muted-foreground mr-auto">
+                        Map your data: download the starter CSV (one column per variable), fill it in, then upload to auto-populate every section.
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => downloadStarterCsv({
+                          templateName: previewTemplate.name,
+                          variables: previewTemplate.variables,
+                          defaultValues: previewTemplate.defaultValues,
+                        })}
+                      >
+                        <Download className="h-3.5 w-3.5 mr-1.5" /> Starter CSV
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => document.getElementById("mkt-csv-upload")?.click()}
+                      >
+                        <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
+                      </Button>
+                      {uploadedCsv.length > 0 && (
+                        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setUploadedCsv([])}>
+                          Clear ({uploadedCsv.length})
+                        </Button>
+                      )}
+                      <input
+                        id="mkt-csv-upload"
+                        type="file"
+                        accept=".csv,.tsv,.txt,.json,.xlsx,.xls"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleCsvUpload(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                    {uploadedCsv.length > 0 && (
+                      <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
+                    )}
                     <LiveVariablePreview
                       templateContent={previewTemplate.content}
-                      csvData={previewTemplate.defaultValues ? [previewTemplate.defaultValues] : []}
+                      csvData={uploadedCsv.length > 0 ? uploadedCsv : (previewTemplate.defaultValues ? [previewTemplate.defaultValues] : [])}
                     />
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">
