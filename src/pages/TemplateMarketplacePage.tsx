@@ -416,9 +416,12 @@ export default function TemplateMarketplacePage() {
                 )}
 
                 <Tabs defaultValue="preview" className="w-full">
-                  <TabsList className="w-full grid grid-cols-2">
+                  <TabsList className="w-full grid grid-cols-3">
                     <TabsTrigger value="preview" className="flex items-center gap-1.5">
                       <Eye className="h-3.5 w-3.5" /> Preview
+                    </TabsTrigger>
+                    <TabsTrigger value="customize" className="flex items-center gap-1.5">
+                      <SlidersHorizontal className="h-3.5 w-3.5" /> Customize
                     </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5" /> Code
@@ -427,12 +430,19 @@ export default function TemplateMarketplacePage() {
                   <TabsContent value="preview" className="mt-3">
                     <TemplatePreview html={applyTemplateDefaults(previewTemplate.content, previewTemplate.defaultValues)} />
                   </TabsContent>
+                  <TabsContent value="customize" className="mt-3">
+                    <LiveVariablePreview
+                      templateContent={previewTemplate.content}
+                      csvData={previewTemplate.defaultValues ? [previewTemplate.defaultValues] : []}
+                    />
+                  </TabsContent>
                   <TabsContent value="code" className="mt-3">
                     <pre className="p-4 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-64 overflow-y-auto">
                       {previewTemplate.content}
                     </pre>
                   </TabsContent>
                 </Tabs>
+
 
                 {/* Rating section for shared templates */}
                 {previewTemplate.isShared && previewTemplate.shared_id && (
