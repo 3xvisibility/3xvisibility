@@ -3196,41 +3196,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
 
   // 8. Restaurant
-  {
-    id: "restaurant-local",
-    name: "Restaurant Location Page",
-    description: "Mouth-watering restaurant page with hero, menu highlights, gallery, testimonials and reservations.",
-    content: page(
-      hero({ bgKeywords: "{cuisine_type} restaurant fine dining ambient", badge: "🍽️ Fine dining in {city}", title: "{restaurant_name}", subtitle: "{cuisine_type} cuisine crafted with passion in {city}, {state}.", primaryCta: "Reserve a Table", secondaryCta: "View Menu", sig: 8 }) +
-      trustStrip([{ num: "4.9★", lbl: "Diner Rating" }, { num: "1K+", lbl: "Reviews" }, { num: "{cuisine_type}", lbl: "Cuisine" }, { num: "Daily", lbl: "Fresh" }]) +
-      featureGrid("Specialties", "Signature dishes", "Crafted by our chef using locally-sourced ingredients.", [
-        { icon: "🥩", title: "{dish_1}", desc: "{dish_1_desc}" },
-        { icon: "🍝", title: "{dish_2}", desc: "{dish_2_desc}" },
-        { icon: "🍰", title: "{dish_3}", desc: "{dish_3_desc}" },
-      ]) +
-      aboutSplit("Our story", "Passion on every plate", "Born from a love of {cuisine_type} cuisine and a commitment to fresh, seasonal ingredients. {restaurant_name} brings authentic flavors to the heart of {city}.", "chef cooking restaurant kitchen", 9) +
-      gallery("Gallery", "A taste of the experience", ["{cuisine_type} food plating", "restaurant interior cozy", "chef cooking", "wine glass dinner", "dessert plate", "restaurant table candle"]) +
-      defaultTestimonials +
-      faq([
-        { q: "Do you take reservations?", a: "Yes — call {phone} or book online. Walk-ins welcome based on availability." },
-        { q: "Is there a dress code?", a: "Smart casual — come comfortable, dine elegantly." },
-        { q: "Do you cater for dietary needs?", a: "Absolutely — vegan, gluten-free and allergy options available. Just let us know." },
-      ]) +
-      ctaBand({ bgKeywords: "dinner table elegant restaurant", title: "Reserve your table at {restaurant_name}", subtitle: "📞 Call {phone} or book online. Walk-ins welcome.", cta: "Make a Reservation", sig: 18 }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "📍", label: "Address", value: "{address}" },
-        { icon: "🕐", label: "Hours", value: "{hours}" },
-      ])
-    ),
-    variables: ["{restaurant_name}", "{cuisine_type}", "{city}", "{state}", "{address}", "{hours}", "{phone}", "{dish_1}", "{dish_1_desc}", "{dish_2}", "{dish_2_desc}", "{dish_3}", "{dish_3_desc}"],
-    category: "local-seo",
-    tags: ["restaurant", "food", "local", "dining"],
-    author: "Community", downloads: 1034, rating: 4.7,
-    seo_title_pattern: "{restaurant_name} — {cuisine_type} Restaurant in {city}",
-    seo_description_pattern: "Enjoy {cuisine_type} dining at {restaurant_name} in {city}, {state}. Reservations: {phone}.",
-    schema_type: "Restaurant",
-  },
+  heavenPalateRestaurant(),
 
   // 9. Real estate
   {
