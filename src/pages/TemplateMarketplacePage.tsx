@@ -178,11 +178,16 @@ export default function TemplateMarketplacePage() {
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
       // Bake the user's edited content + image overrides into the imported HTML
-      // (only for the template currently open in the preview dialog).
+      // (only for the template currently open in the preview dialog) and also
+      // persist them as structured data so they survive refresh and export.
       const overrides = tpl.id === previewTemplate?.id
         ? { ...contentOverrides, ...imageOverrides }
         : {};
-      const content = Object.keys(overrides).length > 0
+      const hasOverrides = Object.keys(overrides).length > 0;
+      // Merge edits over the template's defaults so the saved default values
+      // also reflect the customisation (used by the editor + CSV export).
+      const mergedDefaults = { ...(tpl.defaultValues ?? {}), ...overrides };
+      const content = hasOverrides
         ? applyTemplateDefaults(tpl.content, overrides)
         : tpl.content;
       const { error } = await supabase.from("templates").insert({
@@ -194,7 +199,12 @@ export default function TemplateMarketplacePage() {
         seo_title_pattern: tpl.seo_title_pattern || "",
         seo_description_pattern: tpl.seo_description_pattern || "",
         schema_type: tpl.schema_type || "WebPage",
-        schema_config: {},
+        schema_config: {
+          default_values: mergedDefaults,
+          ...(hasOverrides
+            ? { content_overrides: contentOverrides, image_overrides: imageOverrides }
+            : {}),
+        },
       } as any);
       if (error) throw error;
     },
