@@ -53,6 +53,7 @@ export default function TemplateMarketplacePage() {
   const [reviewText, setReviewText] = useState("");
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
+  const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
