@@ -22,6 +22,7 @@ import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoDefaultsEditor } from "@/components/templates/SeoDefaultsEditor";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { ImageVariablePanel } from "@/components/templates/ImageVariablePanel";
+import { ContentFieldsPanel } from "@/components/templates/ContentFieldsPanel";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { parseUploadedFile } from "@/lib/export-csv";
