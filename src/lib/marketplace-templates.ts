@@ -3008,40 +3008,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   },
 
   // 7. Law firm
-  {
-    id: "law-firm",
-    name: "Law Firm Practice Area",
-    description: "Authoritative law firm page with hero, results, testimonials and free consultation CTA.",
-    content: page(
-      hero({ bgKeywords: "law firm office books professional", badge: "⚖️ Experienced legal counsel", title: "{practice_area} attorney in {city}", subtitle: "{firm_name} — experienced {practice_area} lawyers protecting your rights in {city}, {state}.", primaryCta: "Free Consultation — {phone}", secondaryCta: "Our Results", sig: 7 }) +
-      trustStrip([{ num: "{years_experience}+", lbl: "Years Experience" }, { num: "{cases_won}+", lbl: "Cases Won" }, { num: "5★", lbl: "Client Rating" }, { num: "$0", lbl: "Unless We Win" }]) +
-      featureGrid("How we help", "{practice_area} legal services", "{practice_description}", [
-        { icon: "🏛️", title: "Proven track record", desc: "{cases_won}+ successful outcomes in {practice_area} cases across {state}." },
-        { icon: "🤝", title: "Personal attention", desc: "Direct access to your attorney. No runaround, no junior associates." },
-        { icon: "💼", title: "No fee unless we win", desc: "Contingency-based representation. You pay nothing upfront." },
-      ]) +
-      aboutSplit("About the firm", "{firm_name}", "Founded with a single mission: to provide every client with the same quality of representation that big-firm clients receive — without the big-firm price tag.", "lawyer office portrait professional", 8) +
-      defaultTestimonials +
-      faq([
-        { q: "Is the consultation really free?", a: "Yes — your initial case review is 100% free with no obligation." },
-        { q: "How long do these cases take?", a: "Every case is unique, but we'll give you a realistic timeline at your free consultation." },
-        { q: "Do you handle cases outside {city}?", a: "We serve clients throughout {state}." },
-      ]) +
-      ctaBand({ bgKeywords: "courthouse justice scales", title: "Get your free {practice_area} consultation", subtitle: "Serving {city}, {state} and surrounding communities. Available 24/7 for emergencies.", cta: "📞 Call {phone}", sig: 17 }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "📍", label: "Office", value: "{city}, {state}" },
-        { icon: "💬", label: "Free", value: "Case Review" },
-      ])
-    ),
-    variables: ["{practice_area}", "{city}", "{state}", "{firm_name}", "{phone}", "{practice_description}", "{years_experience}", "{cases_won}"],
-    category: "professional",
-    tags: ["law", "attorney", "legal", "professional"],
-    author: "Community", downloads: 621, rating: 4.4,
-    seo_title_pattern: "{practice_area} Lawyer in {city}, {state} | {firm_name}",
-    seo_description_pattern: "Experienced {practice_area} attorney in {city}. Call {phone} for a free consultation.",
-    schema_type: "LocalBusiness",
-  },
+  nobleLawFirm(),
+
 
   // 8. Restaurant
   {
