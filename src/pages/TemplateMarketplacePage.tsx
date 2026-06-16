@@ -513,6 +513,13 @@ export default function TemplateMarketplacePage() {
                     {uploadedCsv.length > 0 && (
                       <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
                     )}
+                    <ContentFieldsPanel
+                      templateContent={previewTemplate.content}
+                      defaultValues={previewTemplate.defaultValues}
+                      values={contentOverrides}
+                      onChange={(v, val) => setContentOverrides((prev) => ({ ...prev, [v]: val }))}
+                      onReset={() => setContentOverrides({})}
+                    />
                     <ImageVariablePanel
                       templateContent={previewTemplate.content}
                       defaultValues={previewTemplate.defaultValues}
