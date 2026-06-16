@@ -662,6 +662,215 @@ const lumsSeoLanding = (): MarketplaceTemplate => {
   };
 };
 
+// ── NobleLaw — premium law firm template (modelled 1:1 on noblelaw.webflow.io)
+const nobleLawFirm = (): MarketplaceTemplate => {
+  const hero = img("law firm lawyers courthouse hallway professional", 1600, 1000, 71);
+  const about = img("law firm office meeting professional", 900, 760, 72);
+  const s1 = img("business legal consultation handshake", 700, 520, 73);
+  const s2 = img("courtroom dispute resolution justice", 700, 520, 74);
+  const s3 = img("contract signing licensing documents", 700, 520, 75);
+  const s4 = img("intellectual property patent law", 700, 520, 76);
+  const t1 = img("professional woman portrait business", 120, 120, 77);
+  const t2 = img("professional man portrait business", 120, 120, 78);
+  const t3 = img("professional woman portrait corporate", 120, 120, 79);
+  const content = `<style>
+@keyframes nbl-up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.noble-page{--nb:#0e2a4f;--nb2:#0a1f3c;--ng:#c08a4e;--ng2:#d6a468;--nt:#16243a;--nm:#5a6b82;--nl:#f5f1ea;font-family:Georgia,'Times New Roman',serif;color:var(--nt);line-height:1.7;background:#fff;overflow:hidden}
+.noble-page *{box-sizing:border-box}
+.noble-page h1,.noble-page h2,.noble-page h3{margin:0;font-weight:600;line-height:1.15;letter-spacing:-.01em}
+.noble-page p{margin:0;font-family:'Helvetica Neue',Arial,sans-serif}
+.noble-page a{text-decoration:none;color:inherit}
+.nbl-wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+.nbl-sec{padding:clamp(3.5rem,7vw,6rem) 0;position:relative}
+.nbl-eyebrow{display:inline-block;color:var(--ng);font-family:'Helvetica Neue',Arial,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.22em;font-size:.74rem;margin-bottom:1rem}
+.nbl-h{font-size:clamp(1.9rem,4vw,2.9rem);color:var(--nb)}
+.nbl-lead{color:var(--nm);max-width:620px;font-size:1.02rem}
+.nbl-btn{display:inline-block;background:var(--ng);color:#fff;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:.95rem;padding:.95rem 2rem;border-radius:8px;transition:transform .25s ease,background .25s ease}
+.nbl-btn:hover{transform:translateY(-2px);background:var(--ng2)}
+.nbl-btn-o{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)}
+.nbl-btn-o:hover{background:rgba(255,255,255,.1)}
+/* nav + hero */
+.nbl-hero{position:relative;background:var(--nb2);color:#fff;min-height:88vh;display:flex;flex-direction:column}
+.nbl-hero-bg{position:absolute;inset:0;background:url('${hero}') center/cover;opacity:.32}
+.nbl-hero-ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,31,60,.85) 0%,rgba(10,31,60,.55) 45%,rgba(10,31,60,.9) 100%)}
+.nbl-nav{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.4rem 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.nbl-logo{font-size:1.55rem;font-weight:700;letter-spacing:.02em;color:#fff;display:flex;align-items:center;gap:.55rem}
+.nbl-logo span{color:var(--ng)}
+.nbl-menu{display:flex;gap:2rem;font-family:'Helvetica Neue',Arial,sans-serif;font-size:.92rem;font-weight:500;opacity:.92}
+.nbl-menu a:hover{color:var(--ng2)}
+.nbl-hero-in{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 0}
+.nbl-hero h1{font-size:clamp(2.4rem,5.6vw,4.2rem);color:#fff;max-width:14ch;margin:0 auto 1.5rem;animation:nbl-up .8s ease both}
+.nbl-hero p{color:rgba(255,255,255,.82);max-width:46ch;margin:0 auto 2.25rem;font-size:1.08rem}
+.nbl-hero-cta{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+/* stats */
+.nbl-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;text-align:center}
+.nbl-stat b{display:block;font-size:clamp(2rem,4vw,3rem);color:var(--nb);font-weight:700}
+.nbl-stat span{font-family:'Helvetica Neue',Arial,sans-serif;color:var(--nm);font-size:.9rem;letter-spacing:.03em}
+/* about split */
+.nbl-split{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;align-items:center}
+.nbl-split img{width:100%;border-radius:14px;box-shadow:0 30px 60px rgba(14,42,79,.18)}
+/* services */
+.nbl-grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+.nbl-svc{position:relative;border-radius:14px;overflow:hidden;min-height:300px;display:flex;align-items:flex-end;color:#fff}
+.nbl-svc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.nbl-svc-ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,31,60,.1) 0%,rgba(10,31,60,.92) 100%)}
+.nbl-svc-c{position:relative;z-index:2;padding:1.75rem}
+.nbl-svc-c h3{font-size:1.35rem;margin-bottom:.6rem}
+.nbl-svc-c p{font-size:.9rem;color:rgba(255,255,255,.82)}
+.nbl-svc-c a{display:inline-block;margin-top:.85rem;color:var(--ng2);font-family:'Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:.85rem}
+/* why */
+.nbl-why{background:var(--nl)}
+.nbl-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.nbl-feat{background:#fff;border-radius:14px;padding:2rem 1.6rem;border:1px solid rgba(14,42,79,.07)}
+.nbl-feat .nbl-ic{width:54px;height:54px;border-radius:12px;display:grid;place-items:center;font-size:1.5rem;background:linear-gradient(135deg,rgba(192,138,78,.16),rgba(192,138,78,.06));margin-bottom:1.1rem}
+.nbl-feat h3{font-size:1.2rem;color:var(--nb);margin-bottom:.6rem}
+.nbl-feat p{color:var(--nm);font-size:.92rem}
+/* testimonials */
+.nbl-tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.nbl-quote{background:#fff;border:1px solid rgba(14,42,79,.08);border-radius:14px;padding:2rem 1.75rem;box-shadow:0 18px 40px rgba(14,42,79,.06)}
+.nbl-quote p{font-style:italic;color:var(--nt);margin-bottom:1.4rem}
+.nbl-qa{display:flex;align-items:center;gap:.85rem}
+.nbl-qa img{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.nbl-qa b{display:block;color:var(--nb);font-family:'Helvetica Neue',Arial,sans-serif;font-size:.95rem}
+.nbl-qa span{font-family:'Helvetica Neue',Arial,sans-serif;color:var(--nm);font-size:.82rem}
+/* cta band */
+.nbl-cta{background:var(--nb2);color:#fff;text-align:center}
+.nbl-cta h2{font-size:clamp(1.8rem,3.5vw,2.6rem);color:#fff;margin-bottom:1rem}
+.nbl-cta p{color:rgba(255,255,255,.78);max-width:48ch;margin:0 auto 2rem}
+/* footer */
+.nbl-foot{background:#081830;color:rgba(255,255,255,.7);padding:3rem 0;text-align:center;font-family:'Helvetica Neue',Arial,sans-serif;font-size:.85rem}
+@media(max-width:860px){.nbl-menu{display:none}.nbl-stats{grid-template-columns:repeat(2,1fr)}.nbl-split,.nbl-grid2,.nbl-grid3,.nbl-tgrid{grid-template-columns:1fr}}
+</style>
+<div class="noble-page">
+  <header class="nbl-hero">
+    <div class="nbl-hero-bg"></div>
+    <div class="nbl-hero-ov"></div>
+    <div class="nbl-wrap nbl-nav">
+      <div class="nbl-logo">⚖ {firm_name}</div>
+      <nav class="nbl-menu"><a href="#about">About</a><a href="#services">Services</a><a href="#why">Why Us</a><a href="#contact">Contact</a></nav>
+      <a href="#contact" class="nbl-btn">Book Consultant</a>
+    </div>
+    <div class="nbl-wrap nbl-hero-in">
+      <h1>{hero_title}</h1>
+      <p>{hero_subtitle}</p>
+      <div class="nbl-hero-cta"><a href="#contact" class="nbl-btn">Book Consultant</a><a href="#services" class="nbl-btn nbl-btn-o">Our Services</a></div>
+    </div>
+  </header>
+
+  <section class="nbl-sec" id="about">
+    <div class="nbl-wrap nbl-split">
+      <div>
+        <span class="nbl-eyebrow">About Us</span>
+        <h2 class="nbl-h">Your Trusted Partner for Reliable Legal Solutions</h2>
+        <p class="nbl-lead" style="margin-top:1.25rem">{about_text}</p>
+        <a href="#contact" class="nbl-btn" style="margin-top:2rem">Learn More</a>
+      </div>
+      <img src="${about}" alt="{firm_name} office" loading="lazy">
+    </div>
+  </section>
+
+  <section class="nbl-sec" style="padding-top:0">
+    <div class="nbl-wrap nbl-stats">
+      <div class="nbl-stat"><b>{stat_years}</b><span>Years Experience</span></div>
+      <div class="nbl-stat"><b>{stat_clients}</b><span>Clients Worldwide</span></div>
+      <div class="nbl-stat"><b>{stat_awards}</b><span>Awards &amp; Honors</span></div>
+      <div class="nbl-stat"><b>{stat_happy}</b><span>Happy Clients</span></div>
+    </div>
+  </section>
+
+  <section class="nbl-sec nbl-why" id="services">
+    <div class="nbl-wrap">
+      <div style="text-align:center;max-width:640px;margin:0 auto 3rem">
+        <span class="nbl-eyebrow">Our Services</span>
+        <h2 class="nbl-h">Expertly Tailored Legal Solutions for Your Every Need</h2>
+      </div>
+      <div class="nbl-grid2">
+        <div class="nbl-svc"><img src="${s1}" alt="{service_1_title}" loading="lazy"><div class="nbl-svc-ov"></div><div class="nbl-svc-c"><h3>{service_1_title}</h3><p>{service_1_desc}</p><a href="#contact">Learn More →</a></div></div>
+        <div class="nbl-svc"><img src="${s2}" alt="{service_2_title}" loading="lazy"><div class="nbl-svc-ov"></div><div class="nbl-svc-c"><h3>{service_2_title}</h3><p>{service_2_desc}</p><a href="#contact">Learn More →</a></div></div>
+        <div class="nbl-svc"><img src="${s3}" alt="{service_3_title}" loading="lazy"><div class="nbl-svc-ov"></div><div class="nbl-svc-c"><h3>{service_3_title}</h3><p>{service_3_desc}</p><a href="#contact">Learn More →</a></div></div>
+        <div class="nbl-svc"><img src="${s4}" alt="{service_4_title}" loading="lazy"><div class="nbl-svc-ov"></div><div class="nbl-svc-c"><h3>{service_4_title}</h3><p>{service_4_desc}</p><a href="#contact">Learn More →</a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="nbl-sec" id="why">
+    <div class="nbl-wrap">
+      <div style="text-align:center;max-width:640px;margin:0 auto 3rem">
+        <span class="nbl-eyebrow">Why Choose Us</span>
+        <h2 class="nbl-h">Trusted Legal Expertise for Your Peace of Mind</h2>
+      </div>
+      <div class="nbl-grid3">
+        <div class="nbl-feat"><div class="nbl-ic">🏛️</div><h3>Proven Expertise</h3><p>Our team of seasoned legal experts brings extensive knowledge to navigate complex regulatory challenges effectively.</p></div>
+        <div class="nbl-feat"><div class="nbl-ic">🏆</div><h3>Proven Track Record</h3><p>With years of success in complex legal matters, we have earned a reputation for delivering effective, timely results.</p></div>
+        <div class="nbl-feat"><div class="nbl-ic">🎯</div><h3>Tailored Approach</h3><p>Solutions designed to meet your unique, specific needs and drive meaningful outcomes for every client.</p></div>
+        <div class="nbl-feat"><div class="nbl-ic">🤝</div><h3>Integrity</h3><p>We prioritize transparency and honesty, ensuring clear communication and trust in every aspect of our work.</p></div>
+        <div class="nbl-feat"><div class="nbl-ic">⭐</div><h3>Dedication to Excellence</h3><p>Our focus is on delivering impactful and sustainable outcomes that drive lasting success for our clients.</p></div>
+        <div class="nbl-feat"><div class="nbl-ic">📈</div><h3>Real Results</h3><p>Strategic, results-driven representation that protects your business and personal interests.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="nbl-sec nbl-why">
+    <div class="nbl-wrap">
+      <div style="text-align:center;max-width:640px;margin:0 auto 3rem">
+        <span class="nbl-eyebrow">Testimonial</span>
+        <h2 class="nbl-h">Hear Directly from Our Valued Clients and Partners</h2>
+      </div>
+      <div class="nbl-tgrid">
+        <div class="nbl-quote"><p>"The legal team at {firm_name} provided exceptional service. Their deep understanding of our needs helped us navigate complex challenges with confidence."</p><div class="nbl-qa"><img src="${t1}" alt="Client" loading="lazy"><div><b>Christine Hohmann</b><span>Managing Director</span></div></div></div>
+        <div class="nbl-quote"><p>"From the very beginning, {firm_name} demonstrated a clear commitment to understanding our needs. Their advice was instrumental in driving our success."</p><div class="nbl-qa"><img src="${t2}" alt="Client" loading="lazy"><div><b>Arthur Kopp</b><span>CEO, Kopp Group</span></div></div></div>
+        <div class="nbl-quote"><p>"We are incredibly grateful for the professionalism of {firm_name}. Their strategic approach ensured our business remained compliant and well-protected."</p><div class="nbl-qa"><img src="${t3}" alt="Client" loading="lazy"><div><b>Astrid Wallraben</b><span>Founder</span></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="nbl-sec nbl-cta" id="contact">
+    <div class="nbl-wrap">
+      <h2>Ready to Protect What Matters Most?</h2>
+      <p>Book your free consultation today and let {firm_name} craft a legal strategy tailored to your goals. Call {phone}.</p>
+      <a href="tel:{phone}" class="nbl-btn">📞 {phone}</a>
+    </div>
+  </section>
+
+  <footer class="nbl-foot">© {year} {firm_name}. All rights reserved.</footer>
+</div>`;
+  return {
+    id: "law-firm",
+    name: "NobleLaw Law Firm",
+    description: "Premium, authoritative law firm landing page with cinematic hero, stats, service grid, why-us, testimonials and consultation CTA — modelled 1:1 on the NobleLaw theme.",
+    content,
+    variables: ["{firm_name}", "{hero_title}", "{hero_subtitle}", "{about_text}", "{stat_years}", "{stat_clients}", "{stat_awards}", "{stat_happy}", "{service_1_title}", "{service_1_desc}", "{service_2_title}", "{service_2_desc}", "{service_3_title}", "{service_3_desc}", "{service_4_title}", "{service_4_desc}", "{phone}", "{year}"],
+    category: "professional",
+    tags: ["law", "attorney", "legal", "professional", "firm"],
+    author: "Community", downloads: 874, rating: 4.7, ratingCount: 96,
+    seo_title_pattern: "{hero_title} | {firm_name}",
+    seo_description_pattern: "{hero_subtitle}",
+    slug_pattern: "{firm_name}-law-firm",
+    schema_type: "LocalBusiness",
+    platform: "generic",
+    defaultValues: {
+      firm_name: "NobleLaw",
+      hero_title: "Expertise, Integrity, Results — Tailored Legal Solutions",
+      hero_subtitle: "With proven expertise and strategic approaches, we stand as your trusted legal partner to support your success.",
+      about_text: "As a law firm with a solid reputation, we are committed to providing reliable and solution-oriented legal services. Focused on our clients' needs, we ensure every solution is crafted to safeguard both business and personal interests.",
+      stat_years: "15+",
+      stat_clients: "86k",
+      stat_awards: "28",
+      stat_happy: "98%",
+      service_1_title: "Business Legal Consultation",
+      service_1_desc: "Expert legal guidance in corporate regulations and investment matters, helping businesses achieve compliance and foster sustainable growth.",
+      service_2_title: "Dispute Resolution",
+      service_2_desc: "Strategic representation in litigation and arbitration to resolve disputes efficiently while protecting your interests.",
+      service_3_title: "Licensing and Contracts",
+      service_3_desc: "Drafting, reviewing and negotiating contracts and licenses that mitigate risk and protect your assets.",
+      service_4_title: "Intellectual Property Protection",
+      service_4_desc: "Comprehensive IP strategy — trademarks, patents and copyrights — to safeguard your most valuable assets.",
+      phone: "(555) 010-2025",
+      year: "2026",
+    },
+  };
+};
+
 
 
 // ── Vibe accent palettes ──────────────────────────────────────────────────
@@ -2799,40 +3008,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   },
 
   // 7. Law firm
-  {
-    id: "law-firm",
-    name: "Law Firm Practice Area",
-    description: "Authoritative law firm page with hero, results, testimonials and free consultation CTA.",
-    content: page(
-      hero({ bgKeywords: "law firm office books professional", badge: "⚖️ Experienced legal counsel", title: "{practice_area} attorney in {city}", subtitle: "{firm_name} — experienced {practice_area} lawyers protecting your rights in {city}, {state}.", primaryCta: "Free Consultation — {phone}", secondaryCta: "Our Results", sig: 7 }) +
-      trustStrip([{ num: "{years_experience}+", lbl: "Years Experience" }, { num: "{cases_won}+", lbl: "Cases Won" }, { num: "5★", lbl: "Client Rating" }, { num: "$0", lbl: "Unless We Win" }]) +
-      featureGrid("How we help", "{practice_area} legal services", "{practice_description}", [
-        { icon: "🏛️", title: "Proven track record", desc: "{cases_won}+ successful outcomes in {practice_area} cases across {state}." },
-        { icon: "🤝", title: "Personal attention", desc: "Direct access to your attorney. No runaround, no junior associates." },
-        { icon: "💼", title: "No fee unless we win", desc: "Contingency-based representation. You pay nothing upfront." },
-      ]) +
-      aboutSplit("About the firm", "{firm_name}", "Founded with a single mission: to provide every client with the same quality of representation that big-firm clients receive — without the big-firm price tag.", "lawyer office portrait professional", 8) +
-      defaultTestimonials +
-      faq([
-        { q: "Is the consultation really free?", a: "Yes — your initial case review is 100% free with no obligation." },
-        { q: "How long do these cases take?", a: "Every case is unique, but we'll give you a realistic timeline at your free consultation." },
-        { q: "Do you handle cases outside {city}?", a: "We serve clients throughout {state}." },
-      ]) +
-      ctaBand({ bgKeywords: "courthouse justice scales", title: "Get your free {practice_area} consultation", subtitle: "Serving {city}, {state} and surrounding communities. Available 24/7 for emergencies.", cta: "📞 Call {phone}", sig: 17 }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "📍", label: "Office", value: "{city}, {state}" },
-        { icon: "💬", label: "Free", value: "Case Review" },
-      ])
-    ),
-    variables: ["{practice_area}", "{city}", "{state}", "{firm_name}", "{phone}", "{practice_description}", "{years_experience}", "{cases_won}"],
-    category: "professional",
-    tags: ["law", "attorney", "legal", "professional"],
-    author: "Community", downloads: 621, rating: 4.4,
-    seo_title_pattern: "{practice_area} Lawyer in {city}, {state} | {firm_name}",
-    seo_description_pattern: "Experienced {practice_area} attorney in {city}. Call {phone} for a free consultation.",
-    schema_type: "LocalBusiness",
-  },
+  nobleLawFirm(),
+
 
   // 8. Restaurant
   {
