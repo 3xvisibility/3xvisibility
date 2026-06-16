@@ -2938,42 +2938,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 4. Lums — SEO Landing Page (modelled 1:1 on the Lums Vue/Nuxt SEO template)
   lumsSeoLanding(),
 
-  // 5. Dental clinic
-  {
-    id: "dental-clinic",
-    name: "Dental Clinic Location",
-    description: "Modern dental practice page with services, doctor profile, gallery and booking CTA.",
-    content: page(
-      hero({ bgKeywords: "dental clinic modern bright", badge: "🦷 Trusted dental care", title: "{clinic_name} — Your dentist in {city}", subtitle: "Comprehensive dental care for the whole family in {city}, {state}. Gentle, modern dentistry you can trust.", primaryCta: "📞 Call {phone}", secondaryCta: "Book Online", sig: 5 }) +
-      trustStrip([{ num: "15+", lbl: "Years Experience" }, { num: "5K+", lbl: "Patients" }, { num: "4.9★", lbl: "Patient Rating" }, { num: "100%", lbl: "Insurance Friendly" }]) +
-      featureGrid("Our services", "Dental services in {city}", "Everything you need to keep your family smiling.", [
-        { icon: "😁", title: "General dentistry", desc: "Cleanings, fillings, and preventive care for healthy smiles." },
-        { icon: "✨", title: "Cosmetic dentistry", desc: "Whitening, veneers and smile makeovers for a confident you." },
-        { icon: "🔧", title: "Restorative", desc: "Crowns, bridges and implants to restore your smile's function." },
-      ]) +
-      aboutSplit("Meet your doctor", "Dr. {doctor_name}", "{doctor_bio}", "dentist doctor friendly portrait", 6) +
-      gallery("Our clinic", "A modern, calming environment", ["dental office reception", "dentist chair modern", "dental tools sterile", "happy patient smile", "dental hygiene", "dental xray clean"]) +
-      defaultTestimonials +
-      faq([
-        { q: "Do you accept insurance?", a: "Yes — we accept most major dental insurance plans. Contact us to verify your coverage." },
-        { q: "Do you offer emergency appointments?", a: "Same-day emergency appointments are available. Call {phone} immediately." },
-        { q: "Is sedation dentistry available?", a: "Yes, for nervous patients we offer multiple safe sedation options." },
-      ]) +
-      ctaBand({ bgKeywords: "dental smile bright clean", title: "Ready for a healthier smile?", subtitle: "Book your appointment at {clinic_name} in {city} today.", cta: "📞 Call {phone}", sig: 15 }) +
-      contactSection([
-        { icon: "📞", label: "Phone", value: "{phone}" },
-        { icon: "📍", label: "Address", value: "{address}" },
-        { icon: "🕐", label: "Hours", value: "Mon–Fri 9am–6pm" },
-      ])
-    ),
-    variables: ["{clinic_name}", "{city}", "{state}", "{phone}", "{address}", "{services_list}", "{doctor_name}", "{doctor_bio}", "{nearby_areas}"],
-    category: "health",
-    tags: ["dental", "clinic", "local", "health"],
-    author: "Community", downloads: 734, rating: 4.5,
-    seo_title_pattern: "{clinic_name} — Dentist in {city}, {state}",
-    seo_description_pattern: "Visit {clinic_name} for quality dental care in {city}. Call {phone} to book.",
-    schema_type: "LocalBusiness",
-  },
+
+
 
   // 6. Online course
   {
