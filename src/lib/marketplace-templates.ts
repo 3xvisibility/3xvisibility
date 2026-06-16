@@ -872,6 +872,224 @@ const nobleLawFirm = (): MarketplaceTemplate => {
 };
 
 
+// ── Heaven Palate — fine-dining restaurant template (1:1 of heavenpalate.framer.website) ──
+const FU = "https://framerusercontent.com/images";
+const heavenPalateRestaurant = (): MarketplaceTemplate => {
+  const content = `<style>
+@keyframes hp-up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.hp-page{--hp-bg:#10261b;--hp-bg2:#0b1c14;--hp-gold:#d8b15a;--hp-gold2:#e8c876;--hp-cream:#f4ecd8;--hp-mut:#b9c5b6;font-family:Georgia,'Times New Roman',serif;color:var(--hp-cream);line-height:1.7;background:var(--hp-bg);overflow:hidden}
+.hp-page *{box-sizing:border-box}
+.hp-page h1,.hp-page h2,.hp-page h3{margin:0;font-weight:600;line-height:1.1;letter-spacing:-.01em}
+.hp-page p{margin:0;font-family:'Helvetica Neue',Arial,sans-serif}
+.hp-page a{text-decoration:none;color:inherit}
+.hp-page img{display:block}
+.hp-wrap{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.hp-sec{padding:clamp(3.5rem,7vw,6rem) 0;position:relative}
+.hp-eye{display:inline-block;color:var(--hp-gold);font-family:'Helvetica Neue',Arial,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.24em;font-size:.72rem;margin-bottom:1rem}
+.hp-h{font-size:clamp(1.9rem,4vw,3rem);color:var(--hp-cream)}
+.hp-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--hp-gold);color:#10261b;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:.95rem;padding:.95rem 2rem;border-radius:6px;transition:transform .25s ease,background .25s ease}
+.hp-btn:hover{transform:translateY(-2px);background:var(--hp-gold2)}
+.hp-btn-o{background:transparent;color:var(--hp-cream);border:1px solid var(--hp-gold)}
+.hp-btn-o:hover{background:rgba(216,177,90,.12)}
+/* nav */
+.hp-nav{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.5rem 0}
+.hp-logo{font-family:'Snell Roundhand','Brush Script MT',cursive;font-size:1.9rem;color:var(--hp-gold);font-weight:500}
+.hp-menu{display:flex;gap:2.25rem;font-family:'Helvetica Neue',Arial,sans-serif;font-size:.92rem;font-weight:500;opacity:.92}
+.hp-menu a:hover{color:var(--hp-gold)}
+/* hero */
+.hp-hero-grid{display:grid;grid-template-columns:1.05fr 1.1fr;gap:3rem;align-items:center;padding:2.5rem 0 4rem}
+.hp-hero h1{font-size:clamp(2.8rem,6vw,5rem);color:var(--hp-cream);margin-bottom:2rem;animation:hp-up .8s ease both}
+.hp-hero-cust{margin-top:2.25rem;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--hp-mut);display:flex;align-items:center;gap:.5rem;font-size:1rem}
+.hp-hero-cust b{color:var(--hp-gold);font-weight:700}
+.hp-collage{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1rem;height:clamp(380px,42vw,540px)}
+.hp-collage img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.hp-collage .hp-tall{grid-row:span 2;height:100%}
+/* menu */
+.hp-menu-sec{background:var(--hp-bg2)}
+.hp-menu-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1.5rem;margin-bottom:3rem}
+.hp-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.hp-card{position:relative;border-radius:12px;overflow:hidden;min-height:340px;display:flex;align-items:flex-end;color:#fff}
+.hp-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.hp-card:hover img{transform:scale(1.06)}
+.hp-card-ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,28,20,0) 30%,rgba(11,28,20,.88) 100%)}
+.hp-card-c{position:relative;z-index:2;padding:1.75rem;width:100%}
+.hp-card-c h3{font-size:1.5rem;margin-bottom:.4rem}
+.hp-card-c a{font-family:'Helvetica Neue',Arial,sans-serif;color:var(--hp-gold);font-weight:600;font-size:.88rem}
+/* stats */
+.hp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;text-align:center}
+.hp-stat b{display:block;font-size:clamp(2rem,4vw,3.2rem);color:var(--hp-gold);font-weight:700}
+.hp-stat span{font-family:'Helvetica Neue',Arial,sans-serif;color:var(--hp-mut);font-size:.9rem;letter-spacing:.04em}
+.hp-split{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;align-items:center}
+.hp-split img{width:100%;border-radius:14px;object-fit:cover}
+/* testimonial */
+.hp-quote-wrap{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.hp-quote p{font-size:1.1rem;color:var(--hp-cream);font-style:italic;margin:1.5rem 0}
+.hp-quote .hp-by{font-family:'Helvetica Neue',Arial,sans-serif;color:var(--hp-gold);font-weight:600}
+.hp-quote img{width:100%;border-radius:14px;object-fit:cover;max-height:420px}
+/* cta */
+.hp-cta{background:var(--hp-bg2);text-align:center}
+.hp-cta h2{font-size:clamp(1.9rem,4vw,2.8rem);margin-bottom:1.5rem;max-width:18ch;margin-inline:auto}
+.hp-faq{max-width:640px;margin:2rem auto 0;text-align:left}
+.hp-faq div{font-family:'Helvetica Neue',Arial,sans-serif;border-bottom:1px solid rgba(216,177,90,.2);padding:1rem 0;color:var(--hp-cream)}
+/* book */
+.hp-book{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.hp-book img{width:100%;border-radius:14px;object-fit:cover;max-height:460px}
+.hp-book p{font-family:'Helvetica Neue',Arial,sans-serif;color:var(--hp-mut);margin:1rem 0}
+.hp-book a.hp-link{color:var(--hp-gold)}
+/* footer */
+.hp-foot{background:#081610;color:var(--hp-mut);padding:2.5rem 0;text-align:center;font-family:'Helvetica Neue',Arial,sans-serif;font-size:.85rem}
+@media(max-width:880px){.hp-menu{display:none}.hp-hero-grid,.hp-split,.hp-quote-wrap,.hp-book{grid-template-columns:1fr}.hp-grid3{grid-template-columns:1fr}.hp-stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+<div class="hp-page">
+  <header class="hp-wrap hp-nav">
+    <div class="hp-logo">{restaurant_name}</div>
+    <nav class="hp-menu"><a href="#menu">Restaurant Menu</a><a href="#about">About Us</a><a href="#book">Find Us</a></nav>
+    <a href="#book" class="hp-btn">Reserve Table</a>
+  </header>
+
+  <section class="hp-wrap hp-hero hp-hero-grid">
+    <div>
+      <h1>{hero_title}</h1>
+      <a href="#book" class="hp-btn">Make Reservation 🍽</a>
+      <div class="hp-hero-cust">We served over <b>{customers_count}</b> 😊 {customers_label}</div>
+    </div>
+    <div class="hp-collage">
+      <img class="hp-tall" src="{hero_image_1}" alt="restaurant table" loading="lazy">
+      <img src="{hero_image_2}" alt="restaurant interior" loading="lazy">
+      <img src="{hero_image_3}" alt="serving food" loading="lazy">
+    </div>
+  </section>
+
+  <section class="hp-sec hp-menu-sec" id="menu">
+    <div class="hp-wrap">
+      <div class="hp-menu-head">
+        <div>
+          <span class="hp-eye">{menu_kicker}</span>
+          <h2 class="hp-h">{menu_title}</h2>
+        </div>
+        <a href="#menu" class="hp-btn hp-btn-o">Check Menu →</a>
+      </div>
+      <div class="hp-grid3">
+        <div class="hp-card"><img src="{menu_1_image}" alt="{menu_1_title}" loading="lazy"><div class="hp-card-ov"></div><div class="hp-card-c"><h3>{menu_1_title}</h3><a href="#menu">{menu_1_title} →</a></div></div>
+        <div class="hp-card"><img src="{menu_2_image}" alt="{menu_2_title}" loading="lazy"><div class="hp-card-ov"></div><div class="hp-card-c"><h3>{menu_2_title}</h3><a href="#menu">{menu_2_title} →</a></div></div>
+        <div class="hp-card"><img src="{menu_3_image}" alt="{menu_3_title}" loading="lazy"><div class="hp-card-ov"></div><div class="hp-card-c"><h3>{menu_3_title}</h3><a href="#menu">{menu_3_title} →</a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hp-sec" id="about">
+    <div class="hp-wrap hp-split">
+      <img src="{chef_image}" alt="chef serving" loading="lazy">
+      <div>
+        <span class="hp-eye">Our Story</span>
+        <div class="hp-stats" style="text-align:left;grid-template-columns:1fr 1fr;gap:2rem 1.5rem">
+          <div class="hp-stat" style="text-align:left"><b>{stat_1_num}</b><span>{stat_1_label}</span></div>
+          <div class="hp-stat" style="text-align:left"><b>{stat_2_num}</b><span>{stat_2_label}</span></div>
+          <div class="hp-stat" style="text-align:left"><b>{stat_3_num}</b><span>{stat_3_label}</span></div>
+          <div class="hp-stat" style="text-align:left"><b>{stat_4_num}</b><span>{stat_4_label}</span></div>
+        </div>
+        <a href="#about" class="hp-btn" style="margin-top:2rem">Check Our Story →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="hp-sec hp-menu-sec">
+    <div class="hp-wrap hp-quote-wrap">
+      <div class="hp-quote">
+        <span class="hp-eye">Our Customer Says</span>
+        <h2 class="hp-h">{testimonial_heading}</h2>
+        <p>"{testimonial_text}"</p>
+        <div class="hp-by">— {testimonial_author}</div>
+      </div>
+      <img src="{testimonial_image}" alt="happy customer" loading="lazy">
+    </div>
+  </section>
+
+  <section class="hp-sec hp-cta">
+    <div class="hp-wrap">
+      <h2>{cta_title}</h2>
+      <div class="hp-faq">
+        <div>{faq_1}</div>
+        <div>{faq_2}</div>
+        <div>{faq_3}</div>
+        <div>Still have any questions? <a class="hp-link" href="mailto:{email}">{email}</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hp-sec" id="book">
+    <div class="hp-wrap hp-book">
+      <img src="{book_image}" alt="book a table" loading="lazy">
+      <div>
+        <span class="hp-eye">Reservation</span>
+        <h2 class="hp-h">Book Your Table</h2>
+        <p>{book_text}</p>
+        <p>Dial <b style="color:var(--hp-gold)">{phone}</b> or visit us at {address}, {city}.</p>
+        <a href="tel:{phone}" class="hp-btn">📞 {phone}</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="hp-foot">© {year} {restaurant_name}. All rights reserved.</footer>
+</div>`;
+  return {
+    id: "restaurant-local",
+    name: "Heaven Palate Restaurant",
+    description: "Elegant fine-dining restaurant landing page with cinematic hero collage, menu highlights, stats, testimonials and table reservation — modelled 1:1 on the Heaven Palate theme.",
+    content,
+    variables: ["{restaurant_name}", "{hero_title}", "{customers_count}", "{customers_label}", "{menu_kicker}", "{menu_title}", "{menu_1_title}", "{menu_2_title}", "{menu_3_title}", "{stat_1_num}", "{stat_1_label}", "{stat_2_num}", "{stat_2_label}", "{stat_3_num}", "{stat_3_label}", "{stat_4_num}", "{stat_4_label}", "{testimonial_heading}", "{testimonial_text}", "{testimonial_author}", "{cta_title}", "{faq_1}", "{faq_2}", "{faq_3}", "{email}", "{book_text}", "{phone}", "{address}", "{city}", "{year}", "{hero_image_1}", "{hero_image_2}", "{hero_image_3}", "{menu_1_image}", "{menu_2_image}", "{menu_3_image}", "{chef_image}", "{testimonial_image}", "{book_image}"],
+    category: "local-seo",
+    tags: ["restaurant", "food", "local", "dining", "fine-dining"],
+    author: "Community", downloads: 1034, rating: 4.7,
+    seo_title_pattern: "{restaurant_name} — Fine Dining Restaurant in {city}",
+    seo_description_pattern: "{hero_title}. Reserve your table at {restaurant_name} in {city}. Call {phone}.",
+    slug_pattern: "{restaurant_name}-restaurant",
+    schema_type: "Restaurant",
+    platform: "generic",
+    defaultValues: {
+      restaurant_name: "Heaven Palate",
+      hero_title: "A haven for discerning palates",
+      customers_count: "5000 +",
+      customers_label: "Happy Customers",
+      menu_kicker: "MICHELIN STAR qualified Restaurant Menu",
+      menu_title: "Enjoy Our Exquisite Flavors",
+      menu_1_title: "Appetizers",
+      menu_2_title: "Main Dish",
+      menu_3_title: "Beverages",
+      stat_1_num: "2",
+      stat_1_label: "Michelin Stars",
+      stat_2_num: "5000+",
+      stat_2_label: "Served Customers",
+      stat_3_num: "15000+",
+      stat_3_label: "Served Dishes",
+      stat_4_num: "5",
+      stat_4_label: "Total Chefs",
+      testimonial_heading: "Exquisite Elegance, Culinary Delight!",
+      testimonial_text: "The sophisticated ambiance, impeccable service. Every dish is a masterpiece, beautifully presented and bursting with flavor. Highly recommend for those seeking a taste of culinary perfection in an opulent setting.",
+      testimonial_author: "Sofia Romus",
+      cta_title: "Embark on a Gastronomic Adventure at Heaven Palate",
+      faq_1: "Reservation cancellation policy",
+      faq_2: "Do you offer catering services?",
+      faq_3: "Are pets allowed?",
+      email: "heavenpalate@mail.com",
+      book_text: "Reserve your table in real time online, or complete the form below. Walk-ins welcome based on availability.",
+      phone: "+1 (212) 555-1212",
+      address: "120 Gourmet Avenue",
+      city: "New York",
+      year: "2026",
+      hero_image_1: FU + "/PzbeWTitqiNzqlbT1K3cdeQPmE.png",
+      hero_image_2: FU + "/fLwK6j7U6E521wMPTuo0VK3RBUo.png",
+      hero_image_3: FU + "/QH8YYvfYC2LJd1N2FLTV2oElSI.png",
+      menu_1_image: FU + "/c1aPErEjP8hKDyK2tV6NK5TR7Q.jpg",
+      menu_2_image: FU + "/U881zGzxFlGaorCJC5RQB4NFC6E.jpg",
+      menu_3_image: FU + "/iMooFY3jTCQ1TzCRoGRt2jJOYs.jpg",
+      chef_image: FU + "/vIxsWu78p1VvatxicJYet0ftjw8.png",
+      testimonial_image: FU + "/RaNW5PEM2c7qIHDj8J5TQBBXWh8.jpg",
+      book_image: FU + "/11C0kRPAlmywnm3cT86miykQOfA.png",
+    },
+  };
+};
+
 
 // ── Vibe accent palettes ──────────────────────────────────────────────────
 // Each template gets one of these flavors so the marketplace feels varied.
