@@ -177,9 +177,17 @@ export default function TemplateMarketplacePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
+      // Bake the user's edited content + image overrides into the imported HTML
+      // (only for the template currently open in the preview dialog).
+      const overrides = tpl.id === previewTemplate?.id
+        ? { ...contentOverrides, ...imageOverrides }
+        : {};
+      const content = Object.keys(overrides).length > 0
+        ? applyTemplateDefaults(tpl.content, overrides)
+        : tpl.content;
       const { error } = await supabase.from("templates").insert({
         name: tpl.name,
-        content: tpl.content,
+        content,
         variables: tpl.variables,
         user_id: user.id,
         workspace_id: wsId,
