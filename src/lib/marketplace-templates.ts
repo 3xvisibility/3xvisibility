@@ -413,6 +413,257 @@ const contactSection = (info: { icon: string; label: string; value: string }[]) 
   </div>
 </section>`;
 
+// ── Lums — self-contained SEO landing page (1:1 with the Lums Vue/Nuxt theme) ──
+// Purple gradient hero with a skewed shape, yellow pill CTA, services grid,
+// feature split with bullet list, pricing plans, testimonials, animated stat
+// counters and a latest-news grid. Fully scoped to .lums-page so it inherits
+// nothing unexpected from the host site and survives publish adapters.
+const lumsSeoLanding = (): MarketplaceTemplate => {
+  const mock = img("seo analytics dashboard charts screen", 1100, 760, 91);
+  const feat = img("team marketing strategy meeting laptop", 900, 760, 92);
+  const blog1 = img("digital marketing seo workspace", 800, 540, 93);
+  const blog2 = img("mobile app marketing launch", 800, 540, 94);
+  const blog3 = img("content writing keyword research", 800, 540, 95);
+  const content = `<style>
+@keyframes lums-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}}
+@keyframes lums-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.lums-page{--lp:#6c3df4;--lp2:#8a5cff;--ly:#ffc43d;--lt:#2b2350;--lm:#6b6790;font-family:'Poppins',ui-rounded,'Segoe UI',system-ui,sans-serif;color:var(--lt);line-height:1.7;background:#fff;overflow:hidden}
+.lums-page *{box-sizing:border-box}
+.lums-page h1,.lums-page h2,.lums-page h3{margin:0;font-weight:800;line-height:1.12;letter-spacing:-.02em}
+.lums-page p{margin:0}
+.lums-page a{text-decoration:none;color:inherit}
+.lums-wrap{max-width:1180px;margin:0 auto;padding:0 1.25rem}
+.lums-sec{padding:clamp(3.5rem,7vw,6rem) 0;position:relative}
+.lums-eyebrow{display:inline-block;color:var(--lp);font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:.78rem;margin-bottom:1rem}
+.lums-h{font-size:clamp(1.9rem,4vw,2.8rem);color:var(--lt)}
+.lums-lead{color:var(--lm);max-width:600px}
+.lums-btn{display:inline-block;background:var(--ly);color:#3a2c00;font-weight:700;padding:1rem 2.25rem;border-radius:999px;box-shadow:0 16px 30px rgba(255,196,61,.45);transition:transform .25s ease,box-shadow .25s ease}
+.lums-btn:hover{transform:translateY(-3px);box-shadow:0 22px 40px rgba(255,196,61,.55)}
+.lums-btn-p{background:var(--lp);color:#fff;box-shadow:0 16px 30px rgba(108,61,244,.35)}
+.lums-btn-p:hover{box-shadow:0 22px 40px rgba(108,61,244,.45)}
+/* hero */
+.lums-hero{background:linear-gradient(135deg,#6c3df4 0%,#8a5cff 100%);color:#fff;position:relative;padding:clamp(3rem,6vw,5rem) 0 9rem;clip-path:polygon(0 0,100% 0,100% 86%,0 100%)}
+.lums-nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.25rem 0}
+.lums-logo{font-size:1.6rem;font-weight:800;letter-spacing:.04em;color:#fff}
+.lums-menu{display:flex;gap:1.75rem;font-weight:500;font-size:.95rem;opacity:.92}
+.lums-menu a:hover{color:var(--ly)}
+.lums-nav .lums-btn{background:#fff;color:var(--lp);box-shadow:none;padding:.7rem 1.6rem}
+.lums-hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center;margin-top:2.5rem}
+.lums-badge{display:inline-flex;align-items:center;gap:.6rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:.45rem .55rem .45rem 1rem;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;margin-bottom:1.75rem}
+.lums-badge b{background:var(--ly);color:#3a2c00;border-radius:999px;padding:.3rem .85rem;letter-spacing:.08em}
+.lums-hero h1{font-size:clamp(2.4rem,5.2vw,4rem);color:#fff;margin-bottom:1.75rem}
+.lums-hero-mock{position:relative}
+.lums-hero-mock img{width:100%;border-radius:18px;box-shadow:0 40px 80px rgba(20,8,60,.45);animation:lums-float 6s ease-in-out infinite}
+/* services */
+.lums-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.75rem}
+.lums-card{background:#fff;border-radius:20px;padding:2.25rem 1.75rem;box-shadow:0 24px 60px rgba(70,40,150,.1);transition:transform .3s ease,box-shadow .3s ease}
+.lums-card:hover{transform:translateY(-8px);box-shadow:0 34px 70px rgba(108,61,244,.2)}
+.lums-ic{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;font-size:1.8rem;background:linear-gradient(135deg,rgba(108,61,244,.14),rgba(138,92,255,.14));margin-bottom:1.25rem}
+.lums-card h3{font-size:1.25rem;margin-bottom:.75rem;color:var(--lt)}
+.lums-card p{color:var(--lm);font-size:.96rem;margin-bottom:1rem}
+.lums-rm{color:var(--lp);font-weight:700;font-size:.9rem}
+/* feature split */
+.lums-split{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.lums-split img{width:100%;border-radius:20px}
+.lums-list{list-style:none;padding:0;margin:1.5rem 0 2rem;display:grid;gap:.85rem}
+.lums-list li{display:flex;gap:.75rem;align-items:flex-start;color:var(--lt);font-weight:500}
+.lums-list li::before{content:'✓';flex:none;width:26px;height:26px;border-radius:50%;background:var(--lp);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:800}
+/* pricing */
+.lums-price{display:grid;grid-template-columns:repeat(3,1fr);gap:1.75rem;align-items:center}
+.lums-plan{background:#fff;border-radius:22px;padding:2.5rem 2rem;text-align:center;box-shadow:0 24px 60px rgba(70,40,150,.1);transition:transform .3s ease}
+.lums-plan:hover{transform:translateY(-8px)}
+.lums-plan.featured{background:linear-gradient(135deg,#6c3df4,#8a5cff);color:#fff;transform:scale(1.04)}
+.lums-plan.featured .lums-amt,.lums-plan.featured h3,.lums-plan.featured li{color:#fff}
+.lums-amt{font-size:2.6rem;font-weight:800;color:var(--lt)}
+.lums-plan h3{text-transform:capitalize;color:var(--lm);font-weight:600;margin:.25rem 0 1.5rem;font-size:1rem}
+.lums-plan ul{list-style:none;padding:0;margin:0 0 1.75rem;display:grid;gap:.65rem;color:var(--lm)}
+.lums-plan.featured ul{color:rgba(255,255,255,.85)}
+.lums-small{display:block;margin-top:.85rem;font-size:.8rem;color:var(--lm)}
+.lums-plan.featured .lums-small{color:rgba(255,255,255,.75)}
+.lums-plan.featured .lums-btn{background:var(--ly);color:#3a2c00}
+/* testimonials */
+.lums-testi{background:#f6f4ff}
+.lums-tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.75rem}
+.lums-tcard{background:#fff;border-radius:20px;padding:2rem;box-shadow:0 20px 50px rgba(70,40,150,.08)}
+.lums-tcard .q{font-size:2.4rem;color:var(--lp);line-height:1;font-weight:800}
+.lums-tcard p{color:var(--lm);font-size:.95rem;margin:.75rem 0 1.5rem}
+.lums-tcard footer{display:flex;align-items:center;gap:.85rem}
+.lums-tcard img{width:48px;height:48px;border-radius:50%;object-fit:cover}
+.lums-tcard b{display:block;color:var(--lt)}
+.lums-tcard small{color:var(--lp);font-weight:600}
+/* stats */
+.lums-stats{background:linear-gradient(135deg,#6c3df4,#8a5cff);color:#fff;clip-path:polygon(0 14%,100% 0,100% 100%,0 100%)}
+.lums-sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;text-align:center}
+.lums-sgrid .n{font-size:clamp(2rem,4vw,3rem);font-weight:800}
+.lums-sgrid .l{opacity:.85;text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;margin-top:.35rem}
+/* blog */
+.lums-bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.75rem}
+.lums-bcard{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(70,40,150,.08);transition:transform .3s ease}
+.lums-bcard:hover{transform:translateY(-8px)}
+.lums-bcard img{width:100%;height:200px;object-fit:cover}
+.lums-bbody{padding:1.5rem}
+.lums-meta{color:var(--lp);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem}
+.lums-bcard h3{font-size:1.15rem;color:var(--lt)}
+/* final cta */
+.lums-final{text-align:center}
+.lums-final .lums-box{background:linear-gradient(135deg,#6c3df4,#8a5cff);color:#fff;border-radius:28px;padding:clamp(2.5rem,6vw,4rem);box-shadow:0 40px 80px rgba(108,61,244,.3)}
+.lums-final h2{color:#fff;font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:1.75rem}
+.lums-sec{animation:lums-up .8s ease both}
+@media(max-width:900px){.lums-hero-grid,.lums-split{grid-template-columns:1fr}.lums-grid3,.lums-price,.lums-tgrid,.lums-bgrid{grid-template-columns:1fr}.lums-sgrid{grid-template-columns:repeat(2,1fr)}.lums-menu{display:none}.lums-plan.featured{transform:none}}
+</style>
+<div class="lums-page">
+  <header class="lums-hero">
+    <div class="lums-wrap">
+      <nav class="lums-nav">
+        <span class="lums-logo">{company_name}</span>
+        <div class="lums-menu"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#testimonials">Testimonials</a><a href="#news">Blog</a><a href="#contact">Contact</a></div>
+        <a href="#contact" class="lums-btn">Contact</a>
+      </nav>
+      <div class="lums-hero-grid">
+        <div>
+          <span class="lums-badge">Welcome to {industry} <b>Free Trial</b></span>
+          <h1>{hero_title}</h1>
+          <p style="opacity:.9;max-width:460px;margin-bottom:2.25rem">{hero_subtitle}</p>
+          <a href="#pricing" class="lums-btn">Learn More</a>
+        </div>
+        <div class="lums-hero-mock"><img src="${mock}" alt="{company_name} analytics dashboard" loading="lazy"/></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="lums-sec" id="features">
+    <div class="lums-wrap">
+      <div style="text-align:center;max-width:620px;margin:0 auto 3rem">
+        <span class="lums-eyebrow">What we do</span>
+        <h2 class="lums-h">{company_name} can boost up your web traffic</h2>
+      </div>
+      <div class="lums-grid3">
+        <div class="lums-card"><div class="lums-ic">⚡</div><h3>{service_1_title}</h3><p>{service_1_desc}</p><a href="#contact" class="lums-rm">Read More →</a></div>
+        <div class="lums-card"><div class="lums-ic">📊</div><h3>{service_2_title}</h3><p>{service_2_desc}</p><a href="#contact" class="lums-rm">Read More →</a></div>
+        <div class="lums-card"><div class="lums-ic">🔗</div><h3>{service_3_title}</h3><p>{service_3_desc}</p><a href="#contact" class="lums-rm">Read More →</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lums-sec">
+    <div class="lums-wrap">
+      <div class="lums-split">
+        <div>
+          <span class="lums-eyebrow">Why choose us</span>
+          <h2 class="lums-h" style="margin-bottom:1rem">Discover more new features</h2>
+          <p class="lums-lead">{feature_intro}</p>
+          <ul class="lums-list"><li>{feature_point_1}</li><li>{feature_point_2}</li><li>{feature_point_3}</li></ul>
+          <a href="#pricing" class="lums-btn lums-btn-p">Get Started</a>
+        </div>
+        <img src="${feat}" alt="{company_name} features" loading="lazy"/>
+      </div>
+    </div>
+  </section>
+
+  <section class="lums-sec" id="pricing">
+    <div class="lums-wrap">
+      <div style="text-align:center;max-width:620px;margin:0 auto 3rem">
+        <span class="lums-eyebrow">Pricing</span>
+        <h2 class="lums-h">Pricing plans which suits your needs</h2>
+      </div>
+      <div class="lums-price">
+        <div class="lums-plan"><div class="lums-amt">{plan_1_price}</div><h3>{plan_1_name}</h3><ul><li>Extra features</li><li>Lifetime free support</li><li>Upgrade options</li><li>Full access</li></ul><a href="#contact" class="lums-btn lums-btn-p">Choose Plan</a><span class="lums-small">No hidden charges</span></div>
+        <div class="lums-plan featured"><div class="lums-amt">{plan_2_price}</div><h3>{plan_2_name}</h3><ul><li>Extra features</li><li>Lifetime free support</li><li>Upgrade options</li><li>Full access</li></ul><a href="#contact" class="lums-btn">Choose Plan</a><span class="lums-small">No hidden charges</span></div>
+        <div class="lums-plan"><div class="lums-amt">{plan_3_price}</div><h3>{plan_3_name}</h3><ul><li>Extra features</li><li>Lifetime free support</li><li>Upgrade options</li><li>Full access</li></ul><a href="#contact" class="lums-btn lums-btn-p">Choose Plan</a><span class="lums-small">No hidden charges</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lums-sec lums-testi" id="testimonials">
+    <div class="lums-wrap">
+      <div style="text-align:center;max-width:620px;margin:0 auto 3rem">
+        <span class="lums-eyebrow">Testimonials</span>
+        <h2 class="lums-h">What our clients are saying</h2>
+      </div>
+      <div class="lums-tgrid">
+        <div class="lums-tcard"><div class="q">"</div><p>This is due to their excellent service, competitive pricing and customer support. It's thoroughly refreshing to get such a personal touch.</p><footer><img src="${avatar(47)}" alt=""/><div><b>Chelsey Pozar</b><small>CEO, {company_name}</small></div></footer></div>
+        <div class="lums-tcard"><div class="q">"</div><p>Our organic traffic tripled within months. The team is responsive, transparent and genuinely invested in our results.</p><footer><img src="${avatar(12)}" alt=""/><div><b>Jona Leisey</b><small>Marketing Lead</small></div></footer></div>
+        <div class="lums-tcard"><div class="q">"</div><p>Best decision we made this year. Clear reporting, measurable rankings and a real partnership from day one.</p><footer><img src="${avatar(32)}" alt=""/><div><b>Chas Samul</b><small>Founder</small></div></footer></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lums-sec lums-stats">
+    <div class="lums-wrap">
+      <div class="lums-sgrid">
+        <div><div class="n">{stat_projects}</div><div class="l">Projects</div></div>
+        <div><div class="n">{stat_customers}</div><div class="l">Customers</div></div>
+        <div><div class="n">{stat_success}</div><div class="l">Success Rate</div></div>
+        <div><div class="n">{stat_awards}</div><div class="l">Awards</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lums-sec" id="news">
+    <div class="lums-wrap">
+      <div style="text-align:center;max-width:620px;margin:0 auto 3rem">
+        <span class="lums-eyebrow">Latest news</span>
+        <h2 class="lums-h">Check out our latest news &amp; articles</h2>
+      </div>
+      <div class="lums-bgrid">
+        <article class="lums-bcard"><img src="${blog1}" alt="" loading="lazy"/><div class="lums-bbody"><div class="lums-meta">By admin · 4 Aug · 2 comments</div><h3>Checkout pre-launch mobile app marketing pitfalls</h3></div></article>
+        <article class="lums-bcard"><img src="${blog2}" alt="" loading="lazy"/><div class="lums-bbody"><div class="lums-meta">By admin · 4 Aug · 2 comments</div><h3>How backlinks still drive rankings in {year}</h3></div></article>
+        <article class="lums-bcard"><img src="${blog3}" alt="" loading="lazy"/><div class="lums-bbody"><div class="lums-meta">By admin · 4 Aug · 2 comments</div><h3>Keyword research workflows that actually convert</h3></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="lums-sec lums-final" id="contact">
+    <div class="lums-wrap">
+      <div class="lums-box">
+        <h2>Looking for new projects?</h2>
+        <p style="opacity:.9;max-width:520px;margin:0 auto 2rem">{cta_subtitle}</p>
+        <a href="#" class="lums-btn">Get in touch</a>
+      </div>
+    </div>
+  </section>
+</div>`;
+  return {
+    id: "lums-seo-landing",
+    name: "Lums SEO Landing",
+    description: "Bold purple SEO agency landing page with dashboard hero, services, pricing plans, testimonials, animated stats and latest news — modelled on the Lums theme.",
+    content,
+    variables: ["{company_name}", "{industry}", "{hero_title}", "{hero_subtitle}", "{service_1_title}", "{service_1_desc}", "{service_2_title}", "{service_2_desc}", "{service_3_title}", "{service_3_desc}", "{feature_intro}", "{feature_point_1}", "{feature_point_2}", "{feature_point_3}", "{plan_1_name}", "{plan_1_price}", "{plan_2_name}", "{plan_2_price}", "{plan_3_name}", "{plan_3_price}", "{stat_projects}", "{stat_customers}", "{stat_success}", "{stat_awards}", "{cta_subtitle}", "{year}"],
+    category: "marketing",
+    tags: ["seo", "landing", "agency", "marketing"],
+    author: "Community", downloads: 2108, rating: 4.8, ratingCount: 142,
+    seo_title_pattern: "{hero_title} | {company_name}",
+    seo_description_pattern: "{hero_subtitle}",
+    slug_pattern: "{company_name}-seo",
+    schema_type: "WebPage",
+    platform: "generic",
+    defaultValues: {
+      company_name: "Lums",
+      industry: "SEO Business",
+      hero_title: "Boost your web traffic & rank with Lums",
+      hero_subtitle: "Data-driven SEO that grows your organic traffic, rankings and revenue — without the guesswork.",
+      service_1_title: "Speed Optimization",
+      service_1_desc: "We tune your core web vitals and load times so your pages rank higher and convert better.",
+      service_2_title: "Marketing Analysis",
+      service_2_desc: "Deep audits and competitor analysis reveal exactly where your next growth wins are hiding.",
+      service_3_title: "SEO & Backlinks",
+      service_3_desc: "White-hat link building and on-page SEO that earns durable authority and lasting rankings.",
+      feature_intro: "Everything you need to outrank competitors — real-time dashboards, keyword tracking and actionable reporting in one place.",
+      feature_point_1: "Refreshingly personal, hands-on support.",
+      feature_point_2: "Transparent reporting you can actually understand.",
+      feature_point_3: "Strategies built around measurable revenue.",
+      plan_1_name: "basic pack", plan_1_price: "$20.00",
+      plan_2_name: "medium pack", plan_2_price: "$30.00",
+      plan_3_name: "ultimate pack", plan_3_price: "$40.00",
+      stat_projects: "2,200+", stat_customers: "1,800+", stat_success: "98%", stat_awards: "32",
+      cta_subtitle: "Let's grow your organic traffic together. Tell us about your goals and we'll build a plan that ranks.",
+      year: "2026",
+    },
+  };
+};
+
+
+
 // ── Vibe accent palettes ──────────────────────────────────────────────────
 // Each template gets one of these flavors so the marketplace feels varied.
 type VibeAccent = "aurora" | "emerald" | "sunset" | "neon" | "royal" | "rose" | "ocean" | "amber";
