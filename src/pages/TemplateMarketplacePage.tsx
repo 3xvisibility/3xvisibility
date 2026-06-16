@@ -22,6 +22,7 @@ import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoDefaultsEditor } from "@/components/templates/SeoDefaultsEditor";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { ImageVariablePanel } from "@/components/templates/ImageVariablePanel";
+import { ContentFieldsPanel } from "@/components/templates/ContentFieldsPanel";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { parseUploadedFile } from "@/lib/export-csv";
@@ -52,22 +53,24 @@ export default function TemplateMarketplacePage() {
   const [reviewText, setReviewText] = useState("");
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
+  const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
 
   // Reset uploaded CSV + image overrides when switching templates.
-  useEffect(() => { setUploadedCsv([]); setImageOverrides({}); }, [previewTemplate?.id]);
+  useEffect(() => { setUploadedCsv([]); setImageOverrides({}); setContentOverrides({}); }, [previewTemplate?.id]);
 
-  // Build preview rows with image overrides merged into every row.
+  // Build preview rows with content + image overrides merged into every row.
   const previewRows = useMemo(() => {
     const base = uploadedCsv.length > 0
       ? uploadedCsv
       : (previewTemplate?.defaultValues ? [previewTemplate.defaultValues] : []);
-    if (Object.keys(imageOverrides).length === 0) return base;
-    return base.map((row) => ({ ...row, ...imageOverrides }));
-  }, [uploadedCsv, previewTemplate, imageOverrides]);
+    const overrides = { ...contentOverrides, ...imageOverrides };
+    if (Object.keys(overrides).length === 0) return base;
+    return base.map((row) => ({ ...row, ...overrides }));
+  }, [uploadedCsv, previewTemplate, imageOverrides, contentOverrides]);
 
   const handleCsvUpload = async (file: File) => {
     try {
@@ -174,9 +177,17 @@ export default function TemplateMarketplacePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       if (!wsId) throw new Error("No workspace selected");
+      // Bake the user's edited content + image overrides into the imported HTML
+      // (only for the template currently open in the preview dialog).
+      const overrides = tpl.id === previewTemplate?.id
+        ? { ...contentOverrides, ...imageOverrides }
+        : {};
+      const content = Object.keys(overrides).length > 0
+        ? applyTemplateDefaults(tpl.content, overrides)
+        : tpl.content;
       const { error } = await supabase.from("templates").insert({
         name: tpl.name,
-        content: tpl.content,
+        content,
         variables: tpl.variables,
         user_id: user.id,
         workspace_id: wsId,
@@ -502,6 +513,13 @@ export default function TemplateMarketplacePage() {
                     {uploadedCsv.length > 0 && (
                       <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
                     )}
+                    <ContentFieldsPanel
+                      templateContent={previewTemplate.content}
+                      defaultValues={previewTemplate.defaultValues}
+                      values={contentOverrides}
+                      onChange={(v, val) => setContentOverrides((prev) => ({ ...prev, [v]: val }))}
+                      onReset={() => setContentOverrides({})}
+                    />
                     <ImageVariablePanel
                       templateContent={previewTemplate.content}
                       defaultValues={previewTemplate.defaultValues}
