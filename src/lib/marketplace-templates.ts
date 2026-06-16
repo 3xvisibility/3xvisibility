@@ -2475,48 +2475,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     },
   },
 
-  // 4. SEO Blog post
-  {
-    id: "blog-post",
-    name: "SEO Blog Post",
-    description: "Magazine-style blog post with hero image, structured sections and author bio.",
-    content: page(
-      hero({ bgKeywords: "{category} editorial photography", badge: "{category}", title: "{title}", subtitle: "{intro_paragraph}", primaryCta: "Read article ↓", sig: 4 }) +
-      `<section class="pgp-section">
-        <div style="max-width:760px;margin:0 auto">
-          <div style="display:flex;align-items:center;gap:1rem;padding:1rem 0 1.5rem;border-bottom:1px solid rgba(128,128,128,.15);margin-bottom:2rem">
-            <img src="${avatar(11)}" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover"/>
-            <div><strong style="display:block">{author_name}</strong><span style="font-size:.85rem;opacity:.65">{publish_date} · 📖 {read_time} min read</span></div>
-          </div>
-          <div style="background:rgba(128,128,128,.05);border:1px solid rgba(128,128,128,.14);padding:1.5rem;border-radius:14px;margin-bottom:2.5rem">
-            <strong style="font-size:.92rem">📋 In this article</strong>
-            <ol style="margin:.75rem 0 0 1.25rem;line-height:2;font-size:.95rem">
-              <li>{section_1_title}</li><li>{section_2_title}</li><li>{section_3_title}</li>
-            </ol>
-          </div>
-          <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:1rem">{section_1_title}</h2>
-          <p style="line-height:1.9;opacity:.86;margin-bottom:2rem">{section_1_content}</p>
-          <img src="${img("{category} illustration", 1200, 600, 14)}" alt="" loading="lazy" style="width:100%;border-radius:14px;margin-bottom:2rem"/>
-          <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:1rem">{section_2_title}</h2>
-          <p style="line-height:1.9;opacity:.86;margin-bottom:2rem">{section_2_content}</p>
-          <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:1rem">{section_3_title}</h2>
-          <p style="line-height:1.9;opacity:.86;margin-bottom:2rem">{section_3_content}</p>
-          <div class="pgp-card" style="display:flex;gap:1.25rem;align-items:center;margin-top:3rem">
-            <img src="${avatar(11)}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;flex-shrink:0"/>
-            <div><strong>{author_name}</strong><p style="font-size:.9rem;opacity:.75;margin-top:.25rem;line-height:1.6">{author_bio}</p></div>
-          </div>
-        </div>
-      </section>` +
-      defaultTestimonials
-    ),
-    variables: ["{title}", "{category}", "{author_name}", "{publish_date}", "{read_time}", "{intro_paragraph}", "{section_1_title}", "{section_1_content}", "{section_2_title}", "{section_2_content}", "{section_3_title}", "{section_3_content}", "{author_bio}"],
-    category: "marketing",
-    tags: ["blog", "content", "seo", "article"],
-    author: "Community", downloads: 2108, rating: 4.7,
-    seo_title_pattern: "{title} | {category}",
-    seo_description_pattern: "{intro_paragraph}",
-    schema_type: "Article",
-  },
+  // 4. Lums — SEO Landing Page (modelled 1:1 on the Lums Vue/Nuxt SEO template)
+  lumsSeoLanding(),
 
   // 5. Dental clinic
   {
