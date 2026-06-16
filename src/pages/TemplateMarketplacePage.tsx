@@ -60,16 +60,17 @@ export default function TemplateMarketplacePage() {
   const wsId = currentWorkspace?.id;
 
   // Reset uploaded CSV + image overrides when switching templates.
-  useEffect(() => { setUploadedCsv([]); setImageOverrides({}); }, [previewTemplate?.id]);
+  useEffect(() => { setUploadedCsv([]); setImageOverrides({}); setContentOverrides({}); }, [previewTemplate?.id]);
 
-  // Build preview rows with image overrides merged into every row.
+  // Build preview rows with content + image overrides merged into every row.
   const previewRows = useMemo(() => {
     const base = uploadedCsv.length > 0
       ? uploadedCsv
       : (previewTemplate?.defaultValues ? [previewTemplate.defaultValues] : []);
-    if (Object.keys(imageOverrides).length === 0) return base;
-    return base.map((row) => ({ ...row, ...imageOverrides }));
-  }, [uploadedCsv, previewTemplate, imageOverrides]);
+    const overrides = { ...contentOverrides, ...imageOverrides };
+    if (Object.keys(overrides).length === 0) return base;
+    return base.map((row) => ({ ...row, ...overrides }));
+  }, [uploadedCsv, previewTemplate, imageOverrides, contentOverrides]);
 
   const handleCsvUpload = async (file: File) => {
     try {
