@@ -660,12 +660,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               <Label htmlFor="ai-hf" className="text-sm cursor-pointer">Include header & footer (uncheck to use your website's)</Label>
             </div>
 
-            {(businessType || niche) && (
-              <div className="p-3 rounded-xl bg-muted/50 border border-border">
-                <p className="text-xs text-muted-foreground mb-1 font-medium">AI will generate based on:</p>
-                <p className="text-sm text-foreground">{buildPrompt()}</p>
-              </div>
-            )}
+
 
             <Button
               onClick={() => generateMutation.mutate(buildPrompt())}
