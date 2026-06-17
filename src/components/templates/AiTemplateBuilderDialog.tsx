@@ -849,7 +849,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               </div>
             </div>
 
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-2 border-t border-border">
               <Button variant="ghost" onClick={() => { setStep("configure"); setGeneratedContent(""); setGeneratedName(""); }}>
+
                 <ArrowLeft className="mr-1.5 h-4 w-4" /> Back & Regenerate
               </Button>
               <div className="flex gap-2 sm:justify-end">
