@@ -2287,11 +2287,6 @@ const consultingTemplate = () => `<style>
 @media(max-width:560px){.con-proc,.con-stats .nums{grid-template-columns:1fr}}
 </style>
 <div class="con">
-  <nav class="con-nav"><div class="bar">
-    <div class="logo"><span class="dot"></span>{company_name}</div>
-    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#process">Process</a></div>
-    <a href="#contact" class="pill">Contact</a>
-  </div></nav>
 
   <header class="con-hero" id="home" style="background-image:url('${CON_IMG.hero}')"><div class="con-wrap">
     <h1>{headline}</h1>
