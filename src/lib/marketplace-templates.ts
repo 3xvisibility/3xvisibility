@@ -11,6 +11,7 @@
 
 import { FRAMER_TEMPLATES } from "@/lib/marketplace-framer-templates";
 import { FRAMER_BATCH1_TEMPLATES } from "@/lib/marketplace-framer-batch1";
+import { FRAMER_BATCH2_TEMPLATES } from "@/lib/marketplace-framer-batch2";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -3593,6 +3594,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // Batch 1 — Framer featured clones (Nexa, Lumen, Orbit, Verde, Studio Mono, Pulse)
   ...FRAMER_BATCH1_TEMPLATES,
+
+  // Batch 2 — Framer featured clones (Aurora, Savora, Cira, Nova, Evena, Terra)
+  ...FRAMER_BATCH2_TEMPLATES,
 
 
 
