@@ -120,14 +120,33 @@ export function ImageVariablePanel({
     const variable = cropState.variable;
     setUploadingVar(variable);
     try {
-      const { data: auth } = await supabase.auth.getUser();
+      if (blob.size === 0) {
+        throw new Error("The cropped image is empty. Try re-cropping the photo.");
+      }
+      if (blob.size > 10 * 1024 * 1024) {
+        throw new Error("Cropped image is larger than 10MB. Zoom out or pick a smaller photo.");
+      }
+      const { data: auth, error: authErr } = await supabase.auth.getUser();
+      if (authErr) throw new Error("Could not verify your session. Please sign in again.");
       const uid = auth.user?.id;
-      if (!uid) throw new Error("Please sign in to upload images.");
+      if (!uid) throw new Error("You're not signed in. Please sign in to upload images.");
       const path = `${uid}/template-images/${variable}-${Date.now()}.jpg`;
       const { error } = await supabase.storage
         .from("ai-images")
         .upload(path, blob, { contentType: "image/jpeg", upsert: true });
-      if (error) throw error;
+      if (error) {
+        const msg = error.message || "";
+        if (/exceeded|too large|payload/i.test(msg)) {
+          throw new Error("File exceeds the storage size limit. Try a smaller image.");
+        }
+        if (/permission|unauthorized|row-level|policy/i.test(msg)) {
+          throw new Error("You don't have permission to upload here. Please sign in again.");
+        }
+        if (/network|fetch|failed to/i.test(msg)) {
+          throw new Error("Network error during upload. Check your connection and retry.");
+        }
+        throw new Error(msg || "Storage upload failed.");
+      }
       const { data } = supabase.storage.from("ai-images").getPublicUrl(path);
       onChange(variable, data.publicUrl);
       toast({ title: "Image updated", description: "Your cropped image was uploaded." });
@@ -139,6 +158,8 @@ export function ImageVariablePanel({
         description: err instanceof Error ? err.message : "Could not upload image.",
         variant: "destructive",
       });
+      // Re-throw so the crop dialog surfaces the error inline with a Retry button.
+      throw err instanceof Error ? err : new Error("Could not upload image.");
     } finally {
       setUploadingVar(null);
     }

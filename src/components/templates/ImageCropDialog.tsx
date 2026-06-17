@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Crop } from "lucide-react";
+import { Crop, AlertTriangle, RefreshCcw } from "lucide-react";
 
 interface ImageCropDialogProps {
   open: boolean;
@@ -76,15 +76,50 @@ export function ImageCropDialog({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [areaPixels, setAreaPixels] = useState<Area | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const onCropComplete = useCallback((_: Area, areaPx: Area) => {
     setAreaPixels(areaPx);
   }, []);
 
+  // Probe whether the source image can actually be loaded for cropping.
+  useEffect(() => {
+    if (!open || !imageSrc) return;
+    setImageError(false);
+    setError(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onerror = () => setImageError(true);
+    img.src = imageSrc;
+    return () => {
+      img.onerror = null;
+    };
+  }, [open, imageSrc]);
+
   const handleConfirm = async () => {
     if (!areaPixels) return;
-    const blob = await getCroppedBlob(imageSrc, areaPixels);
-    await onCropped(blob);
+    setError(null);
+    let blob: Blob;
+    try {
+      blob = await getCroppedBlob(imageSrc, areaPixels);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Couldn't crop this image: ${err.message}. Try a different image or reduce the zoom.`
+          : "Couldn't crop this image. The file may be corrupt or blocked by CORS — try a different image.",
+      );
+      return;
+    }
+    try {
+      await onCropped(blob);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Upload failed: ${err.message}`
+          : "Upload failed. Check your connection and try again.",
+      );
+    }
   };
 
   return (
@@ -101,16 +136,28 @@ export function ImageCropDialog({
         </DialogHeader>
 
         <div className="relative h-[360px] bg-muted/40">
-          <Cropper
-            image={imageSrc}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspect}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-            restrictPosition
-          />
+          {imageError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+              <p className="text-sm text-muted-foreground max-w-sm">
+                This image couldn't be loaded for cropping. It may be blocked by the
+                source server (CORS) or no longer available. Try downloading it and
+                uploading the file directly.
+              </p>
+            </div>
+          ) : (
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspect}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+              onMediaLoaded={() => setImageError(false)}
+              restrictPosition
+            />
+          )}
         </div>
 
         <div className="px-6 py-4 space-y-2">
@@ -121,8 +168,16 @@ export function ImageCropDialog({
             step={0.01}
             value={[zoom]}
             onValueChange={([v]) => setZoom(v)}
+            disabled={imageError}
           />
         </div>
+
+        {error && (
+          <div className="mx-6 mb-2 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+            <AlertTriangle className="h-4 w-4 flex-none mt-0.5" />
+            <span className="flex-1">{error}</span>
+          </div>
+        )}
 
         <DialogFooter className="px-6 py-4 border-t border-border">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
@@ -130,11 +185,11 @@ export function ImageCropDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={isSaving || !areaPixels}
+            disabled={isSaving || !areaPixels || imageError}
             className="bg-gradient-primary hover:brightness-110 gap-2"
           >
-            <Crop className="h-4 w-4" />
-            {isSaving ? "Saving…" : "Apply crop"}
+            {error ? <RefreshCcw className="h-4 w-4" /> : <Crop className="h-4 w-4" />}
+            {isSaving ? "Saving…" : error ? "Retry" : "Apply crop"}
           </Button>
         </DialogFooter>
       </DialogContent>
