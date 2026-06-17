@@ -488,7 +488,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                       onValueChange={(id) => {
                         const tpl = categoryTemplates.find((t) => t.id === id) || null;
                         setPickedDesign(tpl);
+                        setNiche(tpl?.name ?? "");
                       }}
+
                     >
                       <SelectTrigger className={`h-10 ${!pickedDesign ? "border-primary/40 ring-1 ring-primary/20" : ""}`}>
                         <SelectValue placeholder="Choose a template design" />
@@ -662,7 +664,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
             <Button
               onClick={() => generateMutation.mutate(buildPrompt())}
-              disabled={!businessType || !niche.trim() || generateMutation.isPending}
+              disabled={!businessType || (designCategory ? !pickedDesign : !niche.trim()) || generateMutation.isPending}
               className="w-full"
               size="lg"
             >
@@ -672,9 +674,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                 <><Sparkles className="mr-2 h-4 w-4" /> Generate Template</>
               )}
             </Button>
-            {(!businessType || !niche.trim()) && (
+            {(!businessType || (designCategory ? !pickedDesign : !niche.trim())) && (
               <p className="text-[11px] text-center text-muted-foreground">
-                ⚠️ Please pick a template type and enter your business niche so AI can generate matching images.
+                ⚠️ Please pick a template type and a template design.
               </p>
             )}
           </TabsContent>
