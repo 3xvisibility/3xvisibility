@@ -1017,7 +1017,7 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
     </div>
   </section>
 
-  <footer class="hp-foot">© {year} {restaurant_name}. All rights reserved.</footer>
+  
 </div>`;
   return {
     id: "restaurant-local",
