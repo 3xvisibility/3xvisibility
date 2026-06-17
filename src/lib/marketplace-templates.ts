@@ -2704,11 +2704,6 @@ const gardenerTemplate = () => `<style>
 @media(max-width:900px){.gd-nav .links{display:none}.gd-hero .gd-wrap,.gd-svc,.gd-split,.gd-faq,.gd-revs,.gd-blog,.gd-gal{grid-template-columns:1fr}.gd-gal{grid-template-columns:1fr 1fr}}
 </style>
 <div class="gd">
-  <nav class="gd-nav"><div class="bar">
-    <div class="logo"><span class="dot">🌿</span>{company_name}</div>
-    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#blog">Blog</a><a href="#contact">Contact</a></div>
-    <a href="#contact" class="pill">{cta_text}</a>
-  </div></nav>
 
   <header class="gd-hero" id="home" style="background-image:url('${GD_IMG.hero}')"><div class="gd-wrap">
     <div>
