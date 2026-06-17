@@ -516,11 +516,6 @@ const lumsSeoLanding = (): MarketplaceTemplate => {
 <div class="lums-page">
   <header class="lums-hero">
     <div class="lums-wrap">
-      <nav class="lums-nav">
-        <span class="lums-logo">{company_name}</span>
-        <div class="lums-menu"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#testimonials">Testimonials</a><a href="#news">Blog</a><a href="#contact">Contact</a></div>
-        <a href="#contact" class="lums-btn">Contact</a>
-      </nav>
       <div class="lums-hero-grid">
         <div>
           <span class="lums-badge">Welcome to {industry} <b>Free Trial</b></span>
