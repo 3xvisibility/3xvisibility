@@ -1,9 +1,34 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImageIcon, RotateCcw } from "lucide-react";
+import { ImageIcon, RotateCcw, Upload, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ImageCropDialog } from "@/components/templates/ImageCropDialog";
+
+/**
+ * Target aspect ratios (width / height) per image slot so cropping matches the
+ * rendered layout. Falls back to 4:3 for any unknown image variable.
+ */
+const ASPECT_RATIOS: Record<string, number> = {
+  hero_image_1: 3 / 4,
+  hero_image_2: 1,
+  hero_image_3: 1,
+  menu_1_image: 3 / 4,
+  menu_2_image: 3 / 4,
+  menu_3_image: 3 / 4,
+  chef_image: 4 / 5,
+  testimonial_image: 1,
+  book_image: 4 / 3,
+};
+
+const aspectFor = (v: string) => {
+  if (ASPECT_RATIOS[v]) return ASPECT_RATIOS[v];
+  if (/avatar|thumbnail|thumb/i.test(v)) return 1;
+  return 4 / 3;
+};
 
 interface ImageVariablePanelProps {
   /** Raw template HTML — used to detect which image variables are present. */
@@ -56,6 +81,12 @@ export function ImageVariablePanel({
   onReset,
   className = "",
 }: ImageVariablePanelProps) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeVarRef = useRef<string | null>(null);
+  const [cropState, setCropState] = useState<{ variable: string; src: string } | null>(null);
+  const [uploadingVar, setUploadingVar] = useState<string | null>(null);
+
   const imageVars = useMemo(() => {
     const matches = templateContent.match(/\{([a-z_][a-z0-9_]*?)(?::[\w()., ]+)?\}/gi) || [];
     const set = new Set<string>();
@@ -65,6 +96,53 @@ export function ImageVariablePanel({
     });
     return Array.from(set);
   }, [templateContent]);
+
+  const pickFile = (variable: string) => {
+    activeVarRef.current = variable;
+    fileInputRef.current?.click();
+  };
+
+  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const variable = activeVarRef.current;
+    e.target.value = "";
+    if (!file || !variable) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Not an image", description: "Please choose an image file.", variant: "destructive" });
+      return;
+    }
+    const src = URL.createObjectURL(file);
+    setCropState({ variable, src });
+  };
+
+  const handleCropped = async (blob: Blob) => {
+    if (!cropState) return;
+    const variable = cropState.variable;
+    setUploadingVar(variable);
+    try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) throw new Error("Please sign in to upload images.");
+      const path = `${uid}/template-images/${variable}-${Date.now()}.jpg`;
+      const { error } = await supabase.storage
+        .from("ai-images")
+        .upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("ai-images").getPublicUrl(path);
+      onChange(variable, data.publicUrl);
+      toast({ title: "Image updated", description: "Your cropped image was uploaded." });
+      URL.revokeObjectURL(cropState.src);
+      setCropState(null);
+    } catch (err) {
+      toast({
+        title: "Upload failed",
+        description: err instanceof Error ? err.message : "Could not upload image.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingVar(null);
+    }
+  };
 
   if (imageVars.length === 0) return null;
 
@@ -87,10 +165,18 @@ export function ImageVariablePanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onFileSelected}
+        />
         <p className="text-xs text-muted-foreground">
-          Paste a new image URL to replace the hero photo, gallery shots or review thumbnails. The preview updates instantly.
+          Upload &amp; crop a new image, or paste an image URL. Each slot crops to the right aspect ratio so the layout stays intact.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
           {imageVars.map((v) => {
             const url = values[v] ?? defaultValues[v] ?? "";
             return (
@@ -118,11 +204,26 @@ export function ImageVariablePanel({
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex-1 min-w-0 space-y-1.5">
                   <Label className="text-[11px] font-medium text-foreground block truncate">
                     {prettify(v)}
                   </Label>
                   <code className="text-[10px] text-muted-foreground font-mono block truncate">{`{${v}}`}</code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 w-full text-[11px]"
+                    disabled={uploadingVar === v}
+                    onClick={() => pickFile(v)}
+                  >
+                    {uploadingVar === v ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Upload className="h-3 w-3 mr-1" />
+                    )}
+                    {uploadingVar === v ? "Uploading…" : "Upload & crop"}
+                  </Button>
                   <Input
                     className="h-7 text-xs"
                     value={url}
@@ -135,6 +236,23 @@ export function ImageVariablePanel({
           })}
         </div>
       </CardContent>
+
+      {cropState && (
+        <ImageCropDialog
+          open={!!cropState}
+          onOpenChange={(o) => {
+            if (!o) {
+              URL.revokeObjectURL(cropState.src);
+              setCropState(null);
+            }
+          }}
+          imageSrc={cropState.src}
+          aspect={aspectFor(cropState.variable)}
+          label={prettify(cropState.variable)}
+          onCropped={handleCropped}
+          isSaving={uploadingVar === cropState.variable}
+        />
+      )}
     </Card>
   );
 }
