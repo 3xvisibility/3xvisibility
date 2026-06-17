@@ -674,9 +674,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                 <><Sparkles className="mr-2 h-4 w-4" /> Generate Template</>
               )}
             </Button>
-            {(!businessType || !niche.trim()) && (
+            {(!businessType || (designCategory ? !pickedDesign : !niche.trim())) && (
               <p className="text-[11px] text-center text-muted-foreground">
-                ⚠️ Please pick a template type and enter your business niche so AI can generate matching images.
+                ⚠️ Please pick a template type and a template design.
               </p>
             )}
           </TabsContent>
