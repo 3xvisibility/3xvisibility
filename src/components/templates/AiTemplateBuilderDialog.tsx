@@ -167,6 +167,14 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     setPickedDesign(next);
   };
 
+  // Templates that belong to the currently chosen category (for the dropdown).
+  const categoryTemplates = useMemo(
+    () => (designCategory ? COMMUNITY_TEMPLATES.filter((t) => t.category === designCategory) : []),
+    [designCategory],
+  );
+
+
+
 
 
   // Reset to WordPress if the selected platform isn't available on this plan.
