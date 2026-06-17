@@ -181,7 +181,7 @@ const pulseFitness = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "pulse-fitness", name: "Pulse — Fitness Gym", description: "High-energy gym & fitness landing with classes, pricing plans and bold type.",
+    id: "forge-fitness", name: "Forge — Fitness Gym", description: "High-energy gym & fitness landing with classes, pricing plans and bold type.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_accent}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",
