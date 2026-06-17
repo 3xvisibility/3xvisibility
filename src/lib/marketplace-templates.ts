@@ -824,7 +824,7 @@ const nobleLawFirm = (): MarketplaceTemplate => {
     </div>
   </section>
 
-  <footer class="nbl-foot">© {year} {firm_name}. All rights reserved.</footer>
+  
 </div>`;
   return {
     id: "law-firm",
