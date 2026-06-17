@@ -3478,37 +3478,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   },
 
 
-  // 2. E-commerce Product
-  {
-    id: "product-page",
-    name: "E-Commerce Product Page",
-    description: "Premium product detail page with hero image, features, testimonials, and gallery.",
-    content: page(
-      hero({ bgKeywords: "{category} product premium studio", badge: "✨ {category}", title: "{product_name}", subtitle: "{description}", primaryCta: "🛒 Buy now — {price}", secondaryCta: "Add to wishlist", sig: 2 }) +
-      trustStrip([{ num: "4.9★", lbl: "Customer Rating" }, { num: "10K+", lbl: "Happy Buyers" }, { num: "30-Day", lbl: "Returns" }, { num: "Free", lbl: "Shipping" }]) +
-      featureGrid("Why you'll love it", "Designed with care, built to last", "{features}", [
-        { icon: "🎯", title: "Premium quality", desc: "Crafted from carefully sourced materials for lasting performance." },
-        { icon: "🚚", title: "Free shipping", desc: "On orders over $50 — delivered to your door in 2–5 business days." },
-        { icon: "↩️", title: "Easy returns", desc: "Not a perfect fit? Send it back within 30 days, no questions asked." },
-      ]) +
-      aboutSplit("Product story", "More than just a {category}", "{long_description}", "{category} lifestyle product", 7) +
-      gallery("Gallery", "See it in action", ["{category} closeup", "{category} lifestyle", "{category} detail", "{category} packaging", "{category} unboxing", "{category} use"]) +
-      defaultTestimonials +
-      faq([
-        { q: "What's included in the box?", a: "Each {product_name} ships with full accessories, a quick-start guide and our warranty card." },
-        { q: "How long does shipping take?", a: "Standard delivery is 2–5 business days. Expedited options are available at checkout." },
-        { q: "What's your return policy?", a: "30-day no-questions-asked returns. We even cover the return shipping." },
-      ]) +
-      ctaBand({ bgKeywords: "premium {category} hero", title: "Ready to upgrade?", subtitle: "Join thousands of happy customers who chose {product_name}.", cta: "🛒 Buy now — {price}", sig: 12 })
-    ),
-    variables: ["{product_name}", "{category}", "{price}", "{compare_price}", "{discount}", "{description}", "{features}", "{long_description}"],
-    category: "ecommerce",
-    tags: ["product", "shop", "ecommerce"],
-    author: "Community", downloads: 892, rating: 4.6,
-    seo_title_pattern: "{product_name} — Buy Online | {category}",
-    seo_description_pattern: "{description}",
-    schema_type: "Product",
-  },
+
+
 
   // 3. SaaS landing (LanderX-style dark SaaS)
   {
@@ -3670,102 +3641,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
 
 
-  // 27. Shopify supplement
-  {
-    id: "shopify-supplement",
-    name: "Shopify Health & Supplement",
-    description: "Trustworthy health supplement page with hero, ingredients, benefits and subscription option.",
-    content: page(
-      hero({ bgKeywords: "natural supplement health wellness organic", badge: "🌿 {brand_name}", title: "{product_name}", subtitle: "{tagline}", primaryCta: "Buy Now — {price}", secondaryCta: "Subscribe & Save 15%", sig: 50 }) +
-      trustStrip([{ num: "{review_count}", lbl: "Reviews" }, { num: "4.9★", lbl: "Rating" }, { num: "Lab", lbl: "Tested" }, { num: "USA", lbl: "Made" }]) +
-      featureGrid("Benefits", "Why {product_name}?", "Carefully formulated for results you can feel.", [
-        { icon: "✅", title: "{benefit_1}", desc: "Backed by science and trusted by thousands of customers." },
-        { icon: "✅", title: "{benefit_2}", desc: "Pure, potent, and free from unnecessary fillers." },
-        { icon: "✅", title: "{benefit_3}", desc: "Third-party lab tested for purity and potency." },
-      ]) +
-      aboutSplit("Ingredients", "Made with care", "{ingredients}. Every batch is tested by a third-party lab and we publish the results — so you know exactly what's in every bottle.", "natural ingredients herbs supplement", 26) +
-      gallery("Inside the bottle", "Pure & potent", ["supplement bottle", "natural ingredients", "wellness lifestyle", "healthy person", "vitamins capsules", "organic herbs"]) +
-      defaultTestimonials +
-      faq([
-        { q: "Are there side effects?", a: "{product_name} is made from natural ingredients and is generally well-tolerated. As with any supplement, consult your doctor if you have a medical condition." },
-        { q: "How fast will I see results?", a: "Most customers report noticeable benefits within 2–4 weeks of consistent daily use." },
-        { q: "Is there a money-back guarantee?", a: "Yes — we offer a 60-day full refund if you're not satisfied." },
-      ]) +
-      ctaBand({ bgKeywords: "wellness lifestyle natural healthy", title: "Feel the difference", subtitle: "Join thousands who chose {product_name}.", cta: "Buy Now — {price}", sig: 51 })
-    ),
-    variables: ["{brand_name}", "{product_name}", "{tagline}", "{price}", "{benefit_1}", "{benefit_2}", "{benefit_3}", "{description}", "{ingredients}", "{review_count}"],
-    category: "shopify",
-    tags: ["shopify", "health", "supplement", "product"],
-    author: "Community", downloads: 987, rating: 4.7,
-    seo_title_pattern: "{product_name} — {brand_name} | Natural Health Supplement",
-    seo_description_pattern: "{tagline}. {benefit_1}, {benefit_2}, {benefit_3}.",
-    schema_type: "Product",
-  },
 
-  // 30. Personal portfolio (WordPress / generic websites)
-  {
-    id: "wp-personal-portfolio",
-    name: "Personal Portfolio",
-    description: "Modern personal portfolio with hero, projects gallery, skills, testimonials and contact CTA. Works on WordPress or any generic website.",
-    content: page(
-      hero({
-        bgKeywords: "{profession} workspace creative portrait",
-        badge: "👋 Hi, I'm {full_name}",
-        title: "{headline}",
-        subtitle: "{tagline}",
-        primaryCta: "View my work",
-        secondaryCta: "Get in touch",
-        sig: 60,
-      }) +
-      trustStrip([
-        { num: "{years_experience}+", lbl: "Years experience" },
-        { num: "{projects_count}+", lbl: "Projects shipped" },
-        { num: "{clients_count}+", lbl: "Happy clients" },
-        { num: "{awards_count}", lbl: "Awards" },
-      ]) +
-      aboutSplit("About me", "Hi, I'm {full_name}", "{about_bio}", "{profession} portrait professional", 13) +
-      featureGrid("What I do", "Services & expertise", "I help brands and teams ship beautiful, high-impact work.", [
-        { icon: "🎨", title: "{service_1_name}", desc: "{service_1_desc}" },
-        { icon: "⚡", title: "{service_2_name}", desc: "{service_2_desc}" },
-        { icon: "🚀", title: "{service_3_name}", desc: "{service_3_desc}" },
-      ]) +
-      gallery("Selected work", "Recent projects", [
-        "{profession} project showcase",
-        "design portfolio piece",
-        "creative work mockup",
-        "branding case study",
-        "modern web design",
-        "creative portfolio image",
-      ]) +
-      defaultTestimonials +
-      faq([
-        { q: "What's your typical project timeline?", a: "Most projects ship in 2–6 weeks depending on scope. I'll give you a clear timeline after our first call." },
-        { q: "How do we get started?", a: "Drop me a message at {email} or book a call. I reply within 24 hours and we'll scope the project together." },
-        { q: "Do you work with clients outside {location}?", a: "Yes — I work remotely with clients worldwide and have shipped projects across {timezone_coverage}." },
-      ]) +
-      ctaBand({
-        bgKeywords: "creative collaboration meeting workspace",
-        title: "Let's build something great together",
-        subtitle: "Have a project in mind? I'd love to hear about it.",
-        cta: "✉️ {email}",
-        sig: 61,
-      })
-    ),
-    variables: [
-      "{full_name}", "{profession}", "{headline}", "{tagline}", "{about_bio}",
-      "{years_experience}", "{projects_count}", "{clients_count}", "{awards_count}",
-      "{service_1_name}", "{service_1_desc}",
-      "{service_2_name}", "{service_2_desc}",
-      "{service_3_name}", "{service_3_desc}",
-      "{email}", "{location}", "{timezone_coverage}",
-    ],
-    category: "wordpress",
-    tags: ["wordpress", "portfolio", "personal", "freelancer", "resume", "about-me"],
-    author: "Community", downloads: 1340, rating: 4.9,
-    seo_title_pattern: "{full_name} — {profession} | Portfolio",
-    seo_description_pattern: "{tagline} View selected work, services and contact details.",
-    schema_type: "Person",
-  },
 
   // 31. Dentexa — premium dentist landing (modelled on the Dentexa HTML theme)
   {
