@@ -514,11 +514,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                       onChange={(e) => setNiche(e.target.value)}
                       className={!niche ? "border-primary/40 ring-1 ring-primary/20" : ""}
                     />
-                    <p className="text-[11px] text-muted-foreground">
-                      🎨 AI will generate niche-relevant images matching your business — be specific!
-                    </p>
                   </>
                 )}
+
               </div>
             </div>
 
