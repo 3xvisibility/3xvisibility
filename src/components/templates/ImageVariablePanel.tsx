@@ -30,6 +30,40 @@ const ASPECT_RATIOS: Record<string, number> = {
   service_3_image: 7 / 5,
   service_4_image: 7 / 5,
   cta_image: 16 / 9,
+  // Astralab agency
+  hero_bg: 16 / 9,
+  founder_avatar: 1,
+  project_1_image: 4 / 3,
+  project_2_image: 4 / 3,
+  project_3_image: 4 / 3,
+  project_4_image: 4 / 3,
+  price_1_image: 1,
+  price_2_image: 1,
+  // Powder AI agent
+  feature_shot_1: 16 / 9,
+  feature_shot_2: 16 / 9,
+  feature_shot_3: 16 / 9,
+  feature_shot_4: 16 / 9,
+  split_1_image: 1,
+  split_2_image: 1,
+  // Fabrica studio
+  why_image: 3 / 4,
+  // Hanzo design studio
+  gallery_1: 3 / 2,
+  gallery_2: 3 / 2,
+  gallery_3: 3 / 2,
+  work_1_image: 4 / 3,
+  work_2_image: 4 / 3,
+  work_3_image: 4 / 3,
+  work_4_image: 4 / 3,
+  founder_image: 3 / 2,
+  avatar_1: 1,
+  avatar_2: 1,
+  avatar_3: 1,
+  avatar_4: 1,
+  review_1_avatar: 1,
+  review_2_avatar: 1,
+  review_3_avatar: 1,
 };
 
 const aspectFor = (v: string) => {
