@@ -9,6 +9,8 @@
 // This matches the style of AI-generated templates, ensuring visual consistency
 // across the whole product.
 
+import { FRAMER_TEMPLATES } from "@/lib/marketplace-framer-templates";
+
 export interface MarketplaceTemplate {
   id: string;
   name: string;
