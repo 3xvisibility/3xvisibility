@@ -317,7 +317,12 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `${prompt}\n\n(Aesthetic for this build: ${direction.name})` },
+            {
+              role: "user",
+              content: hasDesignRef
+                ? `${prompt}\n\nMatch the visual style and layout of this REFERENCE DESIGN (recreate the look, write fresh niche copy — do not reuse its text):\n\n<reference_design>\n${designRefHtml}\n</reference_design>`
+                : `${prompt}\n\n(Aesthetic for this build: ${direction.name})`,
+            },
           ],
         }),
       }
