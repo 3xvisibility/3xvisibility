@@ -56,6 +56,12 @@ const NICHE_TAGS = [
   { tag: "blog", label: "✍️ Quill" },
   { tag: "travel", label: "🧭 Trek" },
   { tag: "accounting", label: "📊 Mint" },
+  { tag: "auto", label: "🚗 Drive" },
+  { tag: "dental", label: "🦷 Smile" },
+  { tag: "landscaping", label: "🌿 Lush" },
+  { tag: "electrician", label: "⚡ Spark" },
+  { tag: "coffee", label: "☕ Aroma" },
+  { tag: "agency", label: "🎨 Pixel" },
 ];
 
 export default function TemplateMarketplacePage() {
