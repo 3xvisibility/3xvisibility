@@ -3101,11 +3101,6 @@ const refitTemplate = () => `<style>
 @media(max-width:900px){.rf-nav .links{display:none}.rf-hero .rf-wrap,.rf-svc,.rf-split,.rf-faq,.rf-work,.rf-revs,.rf-stats{grid-template-columns:1fr}.rf-stats{grid-template-columns:1fr 1fr}}
 </style>
 <div class="rf">
-  <nav class="rf-nav"><div class="bar">
-    <div class="logo">{company_name}</div>
-    <div class="links"><a href="#about">About</a><a href="#services">Services</a><a href="#work">Our work</a><a href="#faqs">FAQs</a><a href="#contact">Contact</a></div>
-    <a href="#contact" class="pill">{cta_text}</a>
-  </div></nav>
 
   <header class="rf-hero" id="home"><div class="rf-wrap">
     <div>
