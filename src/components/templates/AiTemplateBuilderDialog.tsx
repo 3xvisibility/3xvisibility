@@ -488,7 +488,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                       onValueChange={(id) => {
                         const tpl = categoryTemplates.find((t) => t.id === id) || null;
                         setPickedDesign(tpl);
+                        setNiche(tpl?.name ?? "");
                       }}
+
                     >
                       <SelectTrigger className={`h-10 ${!pickedDesign ? "border-primary/40 ring-1 ring-primary/20" : ""}`}>
                         <SelectValue placeholder="Choose a template design" />
