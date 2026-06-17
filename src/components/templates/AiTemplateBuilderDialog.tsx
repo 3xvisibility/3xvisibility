@@ -336,7 +336,13 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       const theme = buildThemePayload();
       const bg = buildBackgroundPayload();
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche, ...theme, ...bg },
+        body: {
+          prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche,
+          designReference: pickedDesign?.content,
+          designName: pickedDesign?.name,
+          designCategory: pickedDesign ? designCategory : undefined,
+          ...theme, ...bg,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
