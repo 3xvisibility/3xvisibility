@@ -428,10 +428,6 @@ const fabricaStudio = (): MarketplaceTemplate => {
 @media(max-width:900px){.fb-proj,.fb-why,.fb-stats{grid-template-columns:1fr}.fb-srv{grid-template-columns:1fr}.fb-nav nav{display:none}}
 </style>
 <div class="fb-page">
-  <div class="fb-wrap fb-nav">
-    <div class="brand">{company_name}®</div>
-    <nav><span>Studio</span><span>Projects ({projects_count})</span><span>Contact</span></nav>
-  </div>
   <section class="fb-hero">
     <div class="big">{company_name}<sup>®</sup></div>
     <div class="lbl">{hero_label}</div>
