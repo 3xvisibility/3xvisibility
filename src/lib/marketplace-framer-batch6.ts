@@ -65,7 +65,7 @@ const pawsVet = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "paws-vet", name: "Veterinary Clinic Template", description: "Warm pet care / veterinary landing with services and a friendly CTA.",
+    id: "veterinary-clinic", name: "Veterinary Clinic Template", description: "Warm pet care / veterinary landing with services and a friendly CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -154,7 +154,7 @@ const vowWedding = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "vow-wedding", name: "Wedding Planner Template", description: "Elegant serif wedding planner landing with steps and a photo gallery.",
+    id: "wedding-planner", name: "Wedding Planner Template", description: "Elegant serif wedding planner landing with steps and a photo gallery.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{hero_image}",
@@ -244,7 +244,7 @@ const azureResort = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "azure-resort", name: "Resort & Hotel Template", description: "Coastal resort / hotel landing with room listings, pricing and a booking CTA.",
+    id: "resort-and-hotel", name: "Resort & Hotel Template", description: "Coastal resort / hotel landing with room listings, pricing and a booking CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -342,7 +342,7 @@ const shieldSecurity = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "shield-security", name: "Cybersecurity Template", description: "Modern cybersecurity SaaS landing with features, stats and a gradient hero.",
+    id: "cybersecurity", name: "Cybersecurity Template", description: "Modern cybersecurity SaaS landing with features, stats and a gradient hero.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_accent}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",
@@ -431,7 +431,7 @@ const petalFlorist = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "petal-florist", name: "Florist & Flowers Template", description: "Charming florist shop landing with a product grid and warm CTA.",
+    id: "florist-and-flowers", name: "Florist & Flowers Template", description: "Charming florist shop landing with a product grid and warm CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -521,7 +521,7 @@ const hireRecruit = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "hire-recruit", name: "Recruitment & Careers Template", description: "Recruitment / careers landing with a job listings board and hiring CTA.",
+    id: "recruitment-and-careers", name: "Recruitment & Careers Template", description: "Recruitment / careers landing with a job listings board and hiring CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",

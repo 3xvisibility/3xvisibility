@@ -62,7 +62,7 @@ const driveAuto = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "drive-auto", name: "Auto Repair & Detailing Template", description: "Bold auto repair / detailing landing with service cards and a strong CTA.",
+    id: "auto-repair-and-detailing", name: "Auto Repair & Detailing Template", description: "Bold auto repair / detailing landing with service cards and a strong CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -147,7 +147,7 @@ const smileDental = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "smile-dental", name: "Dental Clinic Template", description: "Clean, trustworthy dental clinic landing with treatment cards and a booking CTA.",
+    id: "dental-clinic", name: "Dental Clinic Template", description: "Clean, trustworthy dental clinic landing with treatment cards and a booking CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -232,7 +232,7 @@ const lushLandscaping = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "lush-landscaping", name: "Landscaping & Garden Template", description: "Fresh landscaping / garden care landing with service cards and a green CTA.",
+    id: "landscaping-and-garden", name: "Landscaping & Garden Template", description: "Fresh landscaping / garden care landing with service cards and a green CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -316,7 +316,7 @@ const sparkElectrician = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "spark-electrician", name: "Electrician & Home Services Template", description: "High-energy electrician / home-services landing with service cards and a clear CTA.",
+    id: "electrician-and-home-services", name: "Electrician & Home Services Template", description: "High-energy electrician / home-services landing with service cards and a clear CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -402,7 +402,7 @@ const aromaCoffee = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "aroma-coffee", name: "Coffee Roastery Template", description: "Warm coffee roastery landing with a product grid and a cozy CTA.",
+    id: "coffee-roastery", name: "Coffee Roastery Template", description: "Warm coffee roastery landing with a product grid and a cozy CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -485,7 +485,7 @@ const pixelAgency = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "pixel-agency", name: "Creative & Design Agency Template", description: "Bold gradient creative/design agency landing with centered hero and service cards.",
+    id: "creative-and-design-agency", name: "Creative & Design Agency Template", description: "Bold gradient creative/design agency landing with centered hero and service cards.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",

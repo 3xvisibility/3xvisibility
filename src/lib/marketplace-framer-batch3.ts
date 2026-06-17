@@ -69,7 +69,7 @@ const sonicPodcast = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "sonic-podcast",
+    id: "podcast-show",
     name: "Podcast Show Template",
     description: "Vibrant podcast landing — gradient split hero with cover art, an episode list with play buttons and a glowing subscribe CTA. Modelled on Framer podcast templates.",
     content,
@@ -171,7 +171,7 @@ const wanderTravel = (): MarketplaceTemplate => {
   </div></div></div></section>
 </div>`;
   return {
-    id: "wander-travel",
+    id: "travel-and-tours",
     name: "Travel & Tours Template",
     description: "Earthy travel / tour-operator page — full-bleed destination hero, three trip cards with location, price and a closing booking CTA over a scenic backdrop. Modelled on Framer travel templates.",
     content,
@@ -279,7 +279,7 @@ const bloomCharity = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "bloom-charity",
+    id: "charity-and-nonprofit",
     name: "Charity & Nonprofit Template",
     description: "Warm nonprofit / charity page — split hero with donate CTA, an impact stat row, three program cards and a bold donation CTA banner. Modelled on Framer nonprofit templates.",
     content,
@@ -387,7 +387,7 @@ const fadeBarber = (): MarketplaceTemplate => {
   </div></div></div></section>
 </div>`;
   return {
-    id: "fade-barber",
+    id: "barber-and-grooming",
     name: "Barber & Grooming Template",
     description: "Bold barbershop / salon page — cinematic dark hero, a two-column price list, a four-up gallery grid and a booking CTA over a backdrop. Modelled on Framer barbershop templates.",
     content,
@@ -503,7 +503,7 @@ const roastCoffee = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "roast-coffee",
+    id: "coffee-brand",
     name: "Coffee Brand Template",
     description: "Rich coffee-brand / e-commerce page — split hero with shop CTA, three product cards with prices, a three-up benefits row and a warm closing CTA. Modelled on Framer coffee templates.",
     content,
@@ -619,7 +619,7 @@ const ledgerFinance = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "ledger-finance",
+    id: "finance-app",
     name: "Finance App Template",
     description: "Sleek fintech / banking app page — gradient split hero with app card, a six-feature grid, a stat panel and a glowing sign-up CTA. Modelled on Framer fintech templates.",
     content,

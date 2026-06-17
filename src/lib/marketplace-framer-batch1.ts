@@ -106,7 +106,7 @@ const nexaSaas = (): MarketplaceTemplate => {
   </div></section>
 </div>`;
   return {
-    id: "nexa-saas",
+    id: "saas-startup",
     name: "SaaS Startup Template",
     description: "Dark, gradient SaaS startup landing — badge hero with product screenshot, stat band, six-feature grid, three-tier pricing and a glowing final CTA. Modelled on modern Framer SaaS templates.",
     content,
@@ -243,7 +243,7 @@ const lumenPortfolio = (): MarketplaceTemplate => {
   </div></section>
 </div>`;
   return {
-    id: "lumen-portfolio",
+    id: "personal-portfolio",
     name: "Personal Portfolio Template",
     description: "Warm, editorial personal portfolio — serif headline hero with avatar, two-column project gallery, about split, services grid and a big contact CTA. Modelled on minimal Framer portfolio templates.",
     content,
@@ -373,7 +373,7 @@ const orbitAi = (): MarketplaceTemplate => {
   </div></section>
 </div>`;
   return {
-    id: "orbit-ai",
+    id: "ai-product",
     name: "AI Product Template",
     description: "Deep-space AI product launch — glowing gradient hero with prompt bar, six-capability grid, numbered how-it-works and a radiant final CTA. Modelled on Framer AI templates.",
     content,
@@ -503,7 +503,7 @@ const verdeApp = (): MarketplaceTemplate => {
   </div></section>
 </div>`;
   return {
-    id: "verde-app",
+    id: "mobile-app",
     name: "Mobile App Template",
     description: "Fresh, green mobile-app landing — split phone hero with store buttons and rating, three-feature grid, image showcase with checklist and a final download CTA. Modelled on Framer app templates.",
     content,
@@ -612,7 +612,7 @@ const studioMono = (): MarketplaceTemplate => {
   </div></section>
 </div>`;
   return {
-    id: "studio-mono-photography",
+    id: "photography-portfolio",
     name: "Photography Portfolio Template",
     description: "Bold black gallery-first photography portfolio — oversized name hero, full-bleed feature image, hover-caption grid, about split and an editorial contact CTA. Modelled on minimal Framer photography templates.",
     content,
@@ -746,7 +746,7 @@ const pulseFitness = (): MarketplaceTemplate => {
   </div></section>
 </div>`;
   return {
-    id: "pulse-fitness",
+    id: "fitness-gym",
     name: "Fitness Gym Template",
     description: "High-energy fitness gym landing — full-bleed image hero, bold stat band, image-card program grid, three membership tiers and an immersive final CTA. Modelled on Framer fitness templates.",
     content,
