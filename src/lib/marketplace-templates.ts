@@ -3499,6 +3499,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 8b. Cleaning service
   ceviraCleaning(),
 
+  // 8c-8f. Framer-modelled designs (Astralab, Powder, Fabrica, Hanzo)
+  ...FRAMER_TEMPLATES,
+
 
   // 9. Real estate
   {
