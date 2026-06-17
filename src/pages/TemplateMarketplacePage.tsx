@@ -329,10 +329,8 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  const categoryIcon = (cat: string) => {
-    const found = CATEGORIES.find((c) => c.id === cat);
-    return found?.label || cat;
-  };
+  const categoryIcon = (cat: string) => categoryMeta(cat).label;
+
 
   return (
     <div className="space-y-6">
