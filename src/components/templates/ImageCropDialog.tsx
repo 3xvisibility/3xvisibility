@@ -76,6 +76,8 @@ export function ImageCropDialog({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [areaPixels, setAreaPixels] = useState<Area | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const onCropComplete = useCallback((_: Area, areaPx: Area) => {
     setAreaPixels(areaPx);
@@ -83,8 +85,27 @@ export function ImageCropDialog({
 
   const handleConfirm = async () => {
     if (!areaPixels) return;
-    const blob = await getCroppedBlob(imageSrc, areaPixels);
-    await onCropped(blob);
+    setError(null);
+    let blob: Blob;
+    try {
+      blob = await getCroppedBlob(imageSrc, areaPixels);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Couldn't crop this image: ${err.message}. Try a different image or reduce the zoom.`
+          : "Couldn't crop this image. The file may be corrupt or blocked by CORS — try a different image.",
+      );
+      return;
+    }
+    try {
+      await onCropped(blob);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? `Upload failed: ${err.message}`
+          : "Upload failed. Check your connection and try again.",
+      );
+    }
   };
 
   return (
