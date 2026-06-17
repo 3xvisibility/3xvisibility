@@ -756,11 +756,11 @@ export default function TemplateMarketplacePage() {
                 <Select value={shareForm.category} onValueChange={(v) => setShareForm(f => ({ ...f, category: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.filter(c => c.id !== "all").map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+                    {Object.keys(CATEGORY_META).filter(id => id !== "all").map((id) => (
+                      <SelectItem key={id} value={id}>
                         <span className="flex items-center gap-2">
-                          {c.label}
-                          {c.id === "prestashop" && (
+                          {categoryMeta(id).label}
+                          {id === "prestashop" && (
                             <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
                           )}
                         </span>
