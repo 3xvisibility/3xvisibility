@@ -164,13 +164,6 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [extracting, setExtracting] = useState(false);
 
   // Background image controls
-  const ASPECT_RATIOS = [
-    { v: "21/9", label: "21:9", desc: "Cinematic" },
-    { v: "16/9", label: "16:9", desc: "Widescreen" },
-    { v: "4/3", label: "4:3", desc: "Classic" },
-    { v: "1/1", label: "1:1", desc: "Square" },
-    { v: "auto", label: "Auto", desc: "Min-height" },
-  ];
   const [heroAspectDesktop, setHeroAspectDesktop] = useState<string>("auto");
   const [heroAspectMobile, setHeroAspectMobile] = useState<string>("4/3");
   // Focal point: percentage from top-left (50/50 = center)
