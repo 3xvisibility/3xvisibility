@@ -401,6 +401,8 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
           )}
 
           {/* Step 2 (Smart Keywords) and Quality Target removed per user request */}
+        </div>
+
 
         {/* Footer */}
         <div className="px-6 py-4 border-t bg-muted/20 flex items-center justify-between">
