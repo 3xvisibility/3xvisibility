@@ -29,19 +29,35 @@ import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
-const CATEGORIES = [
-  { id: "all", label: "All", icon: Store },
-  { id: "local-seo", label: "Local SEO", icon: MapPin },
-  { id: "ecommerce", label: "E-Commerce", icon: ShoppingBag },
-  { id: "saas", label: "SaaS / Tech", icon: Globe },
-  { id: "marketing", label: "Marketing", icon: Megaphone },
-  { id: "professional", label: "Professional", icon: Briefcase },
-  { id: "education", label: "Education", icon: GraduationCap },
-  { id: "health", label: "Health", icon: Heart },
-  { id: "wordpress", label: "WordPress", icon: FileText },
-  { id: "shopify", label: "Shopify", icon: ShoppingBag },
-  { id: "prestashop", label: "PrestaShop", icon: Tag },
-];
+// Known category metadata (icons + nice labels). Any category found on a
+// template that isn't listed here still gets a pill automatically, so future
+// niches/categories show up without code changes.
+const CATEGORY_META: Record<string, { label: string; icon: typeof Store }> = {
+  all: { label: "All", icon: Store },
+  "local-seo": { label: "Local SEO", icon: MapPin },
+  ecommerce: { label: "E-Commerce", icon: ShoppingBag },
+  saas: { label: "SaaS / Tech", icon: Globe },
+  marketing: { label: "Marketing", icon: Megaphone },
+  professional: { label: "Professional", icon: Briefcase },
+  education: { label: "Education", icon: GraduationCap },
+  health: { label: "Health", icon: Heart },
+  wordpress: { label: "WordPress", icon: FileText },
+  shopify: { label: "Shopify", icon: ShoppingBag },
+  prestashop: { label: "PrestaShop", icon: Tag },
+  general: { label: "General", icon: Tag },
+};
+
+// Turn an arbitrary category id into a human-friendly label.
+function categoryLabel(id: string): string {
+  if (CATEGORY_META[id]) return CATEGORY_META[id].label;
+  return id
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function categoryMeta(id: string) {
+  return CATEGORY_META[id] || { label: categoryLabel(id), icon: Tag };
+}
 
 const NICHE_TAGS = [
   { tag: "veterinary", label: "🐾 Vet" },
@@ -181,6 +197,26 @@ export default function TemplateMarketplacePage() {
     return [...COMMUNITY_TEMPLATES, ...communityTemplates];
   }, [communityTemplates]);
 
+  // Build the category pill list dynamically from whatever templates exist on
+  // the active tab. "All" is always first; every category present in the data
+  // gets a pill (with a count), so newly added niches appear automatically.
+  const displayCategories = useMemo(() => {
+    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const counts = new Map<string, number>();
+    for (const tpl of source) {
+      if (!tpl.category) continue;
+      counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
+    }
+    const ids = Array.from(counts.keys()).sort((a, b) =>
+      categoryMeta(a).label.localeCompare(categoryMeta(b).label)
+    );
+    return [
+      { id: "all", ...categoryMeta("all"), count: source.length },
+      ...ids.map((id) => ({ id, ...categoryMeta(id), count: counts.get(id) || 0 })),
+    ];
+  }, [activeTab, allTemplates, communityTemplates]);
+
+
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     return source.filter((tpl) => {
@@ -293,10 +329,8 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  const categoryIcon = (cat: string) => {
-    const found = CATEGORIES.find((c) => c.id === cat);
-    return found?.label || cat;
-  };
+  const categoryIcon = (cat: string) => categoryMeta(cat).label;
+
 
   return (
     <div className="space-y-6">
@@ -368,7 +402,7 @@ export default function TemplateMarketplacePage() {
 
       {/* Category pills */}
       <div className="flex flex-wrap gap-2">
-        {CATEGORIES.map((cat) => (
+        {displayCategories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
@@ -380,6 +414,7 @@ export default function TemplateMarketplacePage() {
           >
             <cat.icon className="h-3.5 w-3.5" />
             {cat.label}
+            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5">{cat.count}</Badge>
             {cat.id === "prestashop" && (
               <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
             )}
@@ -721,11 +756,11 @@ export default function TemplateMarketplacePage() {
                 <Select value={shareForm.category} onValueChange={(v) => setShareForm(f => ({ ...f, category: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.filter(c => c.id !== "all").map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+                    {Object.keys(CATEGORY_META).filter(id => id !== "all").map((id) => (
+                      <SelectItem key={id} value={id}>
                         <span className="flex items-center gap-2">
-                          {c.label}
-                          {c.id === "prestashop" && (
+                          {categoryMeta(id).label}
+                          {id === "prestashop" && (
                             <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
                           )}
                         </span>
