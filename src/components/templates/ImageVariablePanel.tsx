@@ -201,11 +201,26 @@ export function ImageVariablePanel({
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex-1 min-w-0 space-y-1.5">
                   <Label className="text-[11px] font-medium text-foreground block truncate">
                     {prettify(v)}
                   </Label>
                   <code className="text-[10px] text-muted-foreground font-mono block truncate">{`{${v}}`}</code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 w-full text-[11px]"
+                    disabled={uploadingVar === v}
+                    onClick={() => pickFile(v)}
+                  >
+                    {uploadingVar === v ? (
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    ) : (
+                      <Upload className="h-3 w-3 mr-1" />
+                    )}
+                    {uploadingVar === v ? "Uploading…" : "Upload & crop"}
+                  </Button>
                   <Input
                     className="h-7 text-xs"
                     value={url}
@@ -218,6 +233,23 @@ export function ImageVariablePanel({
           })}
         </div>
       </CardContent>
+
+      {cropState && (
+        <ImageCropDialog
+          open={!!cropState}
+          onOpenChange={(o) => {
+            if (!o) {
+              URL.revokeObjectURL(cropState.src);
+              setCropState(null);
+            }
+          }}
+          imageSrc={cropState.src}
+          aspect={aspectFor(cropState.variable)}
+          label={prettify(cropState.variable)}
+          onCropped={handleCropped}
+          isSaving={uploadingVar === cropState.variable}
+        />
+      )}
     </Card>
   );
 }
