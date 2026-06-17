@@ -859,7 +859,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                   Discard
                 </Button>
                 <Button
-                  onClick={() => onSave(generatedName, generatedContent)}
+                  onClick={() => onSave(generatedName, generatedContent, { _preserveImages: preserveImages })}
                   disabled={!generatedName || !generatedContent || isSaving}
                   className="min-w-[140px]"
                 >
