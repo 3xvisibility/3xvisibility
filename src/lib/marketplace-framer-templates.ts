@@ -257,11 +257,6 @@ const powderAiAgent = (): MarketplaceTemplate => {
 @media(max-width:900px){.pw-grid,.pw-price,.pw-shots{grid-template-columns:1fr}.pw-split{grid-template-columns:1fr}.pw-nav nav{display:none}}
 </style>
 <div class="pw-page">
-  <div class="pw-wrap pw-nav">
-    <div class="logo"><span class="mk"></span>{company_name}</div>
-    <nav><span>About</span><span>Changelog</span><span>Pricing</span><span>Blog</span></nav>
-    <a class="pw-btn" href="#">{cta_text}</a>
-  </div>
   <section class="pw-hero">
     <div class="pw-wrap">
       <div class="pw-chip">✦ {hero_chip}</div>
