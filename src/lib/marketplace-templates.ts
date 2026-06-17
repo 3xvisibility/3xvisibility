@@ -933,11 +933,6 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
 @media(max-width:880px){.hp-menu{display:none}.hp-hero-grid,.hp-split,.hp-quote-wrap,.hp-book{grid-template-columns:1fr}.hp-grid3{grid-template-columns:1fr}.hp-stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 <div class="hp-page">
-  <header class="hp-wrap hp-nav">
-    <div class="hp-logo">{restaurant_name}</div>
-    <nav class="hp-menu"><a href="#menu">Restaurant Menu</a><a href="#about">About Us</a><a href="#book">Find Us</a></nav>
-    <a href="#book" class="hp-btn">Reserve Table</a>
-  </header>
 
   <section class="hp-wrap hp-hero hp-hero-grid">
     <div>
