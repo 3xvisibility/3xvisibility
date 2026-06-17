@@ -9,6 +9,8 @@
 // This matches the style of AI-generated templates, ensuring visual consistency
 // across the whole product.
 
+import { FRAMER_TEMPLATES } from "@/lib/marketplace-framer-templates";
+
 export interface MarketplaceTemplate {
   id: string;
   name: string;
@@ -3496,6 +3498,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 8b. Cleaning service
   ceviraCleaning(),
+
+  // 8c-8f. Framer-modelled designs (Astralab, Powder, Fabrica, Hanzo)
+  ...FRAMER_TEMPLATES,
 
 
   // 9. Real estate
