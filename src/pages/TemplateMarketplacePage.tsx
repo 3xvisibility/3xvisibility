@@ -25,6 +25,7 @@ import { ImageVariablePanel } from "@/components/templates/ImageVariablePanel";
 import { ContentFieldsPanel } from "@/components/templates/ContentFieldsPanel";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
+import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
