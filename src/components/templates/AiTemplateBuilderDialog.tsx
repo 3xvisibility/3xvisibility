@@ -68,7 +68,7 @@ const SECTIONS = [
 interface AiTemplateBuilderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (name: string, content: string) => void;
+  onSave: (name: string, content: string, schemaConfig?: Record<string, any>) => void;
   isSaving: boolean;
   /** Called when AI Content mode generates — opens editor with result */
   onContentGenerated?: (data: { name: string; content: string; variables: string[]; seoTitle: string; seoDescription: string }) => void;
