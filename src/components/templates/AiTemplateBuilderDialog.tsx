@@ -13,10 +13,18 @@ import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerCl
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { filterDesignVars } from "@/lib/design-vars-filter";
+import { COMMUNITY_TEMPLATES, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useSubscription } from "@/hooks/use-subscription";
+
+// Human-friendly label for an arbitrary marketplace category id.
+const designCategoryLabel = (id: string) =>
+  id
+    .split(/[-_]/)
+    .map((w) => (w.length <= 3 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
 
 const AI_LANGUAGES = [
   { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
