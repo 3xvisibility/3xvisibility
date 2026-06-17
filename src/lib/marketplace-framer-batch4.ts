@@ -93,6 +93,7 @@ const mediClinic = (): MarketplaceTemplate => {
     category: "business", tags: ["health", "clinic", "medical", "dental", "wellness"],
     author: "Community", downloads: 512, rating: 4.8,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-clinic",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "MedicalOrganization", platform: "generic",
     defaultValues: {
       eyebrow: "Trusted care", hero_title: "Healthcare that puts you first",
@@ -192,6 +193,7 @@ const lexLaw = (): MarketplaceTemplate => {
     category: "business", tags: ["law", "legal", "firm", "attorney", "dark"],
     author: "Community", downloads: 467, rating: 4.9,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-law-firm",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "",
     schema_type: "LegalService", platform: "generic",
     defaultValues: {
       eyebrow: "Established 1998", hero_title: "Justice, pursued with precision",
@@ -293,6 +295,7 @@ const nestInterior = (): MarketplaceTemplate => {
     category: "business", tags: ["interior", "design", "studio", "architecture", "portfolio"],
     author: "Community", downloads: 534, rating: 4.9,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-interior-design",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Organization", platform: "generic",
     defaultValues: {
       eyebrow: "Interior studio", hero_title: "Spaces that feel like home",
@@ -384,6 +387,7 @@ const glowBeauty = (): MarketplaceTemplate => {
     category: "shopify", tags: ["beauty", "cosmetics", "skincare", "ecommerce", "brand"],
     author: "Community", downloads: 689, rating: 4.9,
     seo_title_pattern: "{hero_title_a} {hero_title_b}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{hero_title_b}-beauty",
+    og_title_pattern: "{hero_title_a} {hero_title_b}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Product", platform: "shopify",
     defaultValues: {
       eyebrow: "Clean beauty", hero_title_a: "Skin that", hero_title_b: "glows from within",
@@ -475,6 +479,7 @@ const driveAuto = (): MarketplaceTemplate => {
     category: "business", tags: ["auto", "car", "dealership", "vehicles", "dark"],
     author: "Community", downloads: 445, rating: 4.8,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-auto",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "AutoDealer", platform: "generic",
     defaultValues: {
       eyebrow: "Premium dealership", hero_title: "Find your perfect drive",
@@ -563,6 +568,7 @@ const raveMusic = (): MarketplaceTemplate => {
     category: "business", tags: ["music", "artist", "dj", "tour", "dark", "neon"],
     author: "Community", downloads: 578, rating: 4.9,
     seo_title_pattern: "{hero_title_a} {hero_title_b}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{hero_title_b}-tour",
+    og_title_pattern: "{hero_title_a} {hero_title_b}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "",
     schema_type: "MusicGroup", platform: "generic",
     defaultValues: {
       eyebrow: "World tour 2026", hero_title_a: "Feel the", hero_title_b: "frequency",

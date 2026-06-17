@@ -641,6 +641,7 @@ const lumsSeoLanding = (): MarketplaceTemplate => {
     author: "Community", downloads: 2108, rating: 4.8, ratingCount: 142,
     seo_title_pattern: "{hero_title} | {company_name}",
     seo_description_pattern: "{hero_subtitle}",
+    og_title_pattern: "{hero_title} | {company_name}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "",
     slug_pattern: "{company_name}-seo",
     schema_type: "WebPage",
     platform: "generic",
@@ -847,6 +848,7 @@ const nobleLawFirm = (): MarketplaceTemplate => {
     author: "Community", downloads: 874, rating: 4.7, ratingCount: 96,
     seo_title_pattern: "{hero_title} | {firm_name}",
     seo_description_pattern: "{hero_subtitle}",
+    og_title_pattern: "{hero_title} | {firm_name}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "",
     slug_pattern: "{firm_name}-law-firm",
     schema_type: "LocalBusiness",
     platform: "generic",
@@ -1040,6 +1042,7 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
     author: "Community", downloads: 1034, rating: 4.7,
     seo_title_pattern: "{restaurant_name} — Fine Dining Restaurant in {city}",
     seo_description_pattern: "{hero_title}. Reserve your table at {restaurant_name} in {city}. Call {phone}.",
+    og_title_pattern: "{restaurant_name} — Fine Dining Restaurant in {city}", og_description_pattern: "{hero_title}. Reserve your table at {restaurant_name} in {city}. Call {phone}.", og_image_pattern: "{menu_1_image}",
     slug_pattern: "{restaurant_name}-restaurant",
     schema_type: "Restaurant",
     platform: "generic",
@@ -1282,6 +1285,7 @@ const ceviraCleaning = (): MarketplaceTemplate => {
     author: "Community", downloads: 912, rating: 4.8,
     seo_title_pattern: "{company_name} — Professional Cleaning Services in {city}",
     seo_description_pattern: "{hero_subtitle} Book {company_name} in {city}. Call {phone}.",
+    og_title_pattern: "{company_name} — Professional Cleaning Services in {city}", og_description_pattern: "{hero_subtitle} Book {company_name} in {city}. Call {phone}.", og_image_pattern: "{about_image}",
     slug_pattern: "{company_name}-cleaning",
     schema_type: "LocalBusiness",
     platform: "generic",
@@ -1484,6 +1488,7 @@ const estelleCollection = (): MarketplaceTemplate => {
     author: "Community", downloads: 1678, rating: 4.9,
     seo_title_pattern: "{hero_title} | {brand_name}",
     seo_description_pattern: "{hero_subtitle} Shop the new {brand_name} collection online.",
+    og_title_pattern: "{hero_title} | {brand_name}", og_description_pattern: "{hero_subtitle} Shop the new {brand_name} collection online.", og_image_pattern: "{product_1_image}",
     schema_type: "CollectionPage",
     platform: "shopify",
     defaultValues: {
@@ -3239,6 +3244,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 1247, rating: 4.8,
     seo_title_pattern: "{company_name} — Trusted Plumbing Solutions | {headline}",
     seo_description_pattern: "{subheadline} Call {company_name} at {phone} for fast, professional plumbing service available 24/7.",
+    og_title_pattern: "{company_name} — Trusted Plumbing Solutions | {headline}", og_description_pattern: "{subheadline} Call {company_name} at {phone} for fast, professional plumbing service available 24/7.", og_image_pattern: "{work_1_image}",
     slug_pattern: "{company_name}-plumbing-services",
     schema_type: "LocalBusiness",
     defaultValues: {
@@ -3339,6 +3345,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 932, rating: 4.9,
     seo_title_pattern: "{company_name} — Home & Kitchen Renovation Specialists",
     seo_description_pattern: "{subheadline} Contact {company_name} at {phone} for expert kitchens, bathrooms, extensions and renovations.",
+    og_title_pattern: "{company_name} — Home & Kitchen Renovation Specialists", og_description_pattern: "{subheadline} Contact {company_name} at {phone} for expert kitchens, bathrooms, extensions and renovations.", og_image_pattern: "{hero_image}",
     slug_pattern: "{company_name}-home-renovation",
     schema_type: "LocalBusiness",
     defaultValues: {
@@ -3454,6 +3461,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 1563, rating: 4.9,
     seo_title_pattern: "{headline} | {product_name}",
     seo_description_pattern: "{subheadline}",
+    og_title_pattern: "{headline} | {product_name}", og_description_pattern: "{subheadline}", og_image_pattern: "",
     schema_type: "WebPage",
     defaultValues: {
       product_name: "LanderX",
@@ -3584,6 +3592,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 956, rating: 4.7,
     seo_title_pattern: "{course_title} — Online Course | {category}",
     seo_description_pattern: "{course_subtitle}. {lessons_count} lessons, {duration}.",
+    og_title_pattern: "{course_title} — Online Course | {category}", og_description_pattern: "{course_subtitle}. {lessons_count} lessons, {duration}.", og_image_pattern: "",
     schema_type: "Course",
   },
 
@@ -3637,6 +3646,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 0, rating: 5.0,
     seo_title_pattern: "{clinic_name} — Dentist in {city}, {state} | Book Online",
     seo_description_pattern: "Modern dental care at {clinic_name} in {city}, {state}. Cosmetic, family & emergency dentistry. Call {phone} or book online today.",
+    og_title_pattern: "{clinic_name} — Dentist in {city}, {state} | Book Online", og_description_pattern: "Modern dental care at {clinic_name} in {city}, {state}. Cosmetic, family & emergency dentistry. Call {phone} or book online today.", og_image_pattern: "",
     schema_type: "Dentist",
   },
 
@@ -3659,6 +3669,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 0, rating: 5.0,
     seo_title_pattern: "{company_name} — Business Consulting | {headline}",
     seo_description_pattern: "{subheadline} Work with {company_name} to grow your business. Call {phone}.",
+    og_title_pattern: "{company_name} — Business Consulting | {headline}", og_description_pattern: "{subheadline} Work with {company_name} to grow your business. Call {phone}.", og_image_pattern: "",
     schema_type: "WebPage",
   },
 
@@ -3688,6 +3699,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     author: "Community", downloads: 0, rating: 5.0,
     seo_title_pattern: "{company_name} — Garden & Landscaping | {headline}",
     seo_description_pattern: "{subheadline} Book your free appointment with {company_name}. Call {phone}.",
+    og_title_pattern: "{company_name} — Garden & Landscaping | {headline}", og_description_pattern: "{subheadline} Book your free appointment with {company_name}. Call {phone}.", og_image_pattern: "",
     schema_type: "LocalBusiness",
     defaultValues: {
       company_name: "Gardener",
