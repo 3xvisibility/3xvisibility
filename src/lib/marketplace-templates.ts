@@ -742,11 +742,6 @@ const nobleLawFirm = (): MarketplaceTemplate => {
   <header class="nbl-hero">
     <div class="nbl-hero-bg"></div>
     <div class="nbl-hero-ov"></div>
-    <div class="nbl-wrap nbl-nav">
-      <div class="nbl-logo">⚖ {firm_name}</div>
-      <nav class="nbl-menu"><a href="#about">About</a><a href="#services">Services</a><a href="#why">Why Us</a><a href="#contact">Contact</a></nav>
-      <a href="#contact" class="nbl-btn">Book Consultant</a>
-    </div>
     <div class="nbl-wrap nbl-hero-in">
       <h1>{hero_title}</h1>
       <p>{hero_subtitle}</p>
