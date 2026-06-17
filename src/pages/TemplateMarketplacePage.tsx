@@ -410,6 +410,28 @@ export default function TemplateMarketplacePage() {
         ))}
       </div>
 
+      {/* Category pills */}
+      <div className="flex flex-wrap gap-2">
+        {displayCategories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setSelectedCategory(cat.id)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              selectedCategory === cat.id
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            }`}
+          >
+            <cat.icon className="h-3.5 w-3.5" />
+            {cat.label}
+            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5">{cat.count}</Badge>
+            {cat.id === "prestashop" && (
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
+            )}
+          </button>
+        ))}
+      </div>
+
       {/* Template grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTemplates.map((tpl) => (
