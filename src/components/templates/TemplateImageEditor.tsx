@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { ImageIcon, Upload, Check, RotateCcw } from "lucide-react";
+import { ImageIcon, Upload, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
 
 interface TemplateImageEditorProps {
   html: string;
