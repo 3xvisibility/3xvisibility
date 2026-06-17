@@ -158,7 +158,7 @@ const astralabAgency = (): MarketplaceTemplate => {
 
   return {
     id: "astralab-agency",
-    name: "Astralab Creative Agency",
+    name: "Creative Agency Template",
     description: "Dark, cinematic 'space of creative solutions' agency landing — split planet hero with giant logotype, stats, animated services list, project grid, dual pricing, testimonials and CTA. Modelled 1:1 on the Astralab Framer template.",
     content,
     variables: [
@@ -327,7 +327,7 @@ const powderAiAgent = (): MarketplaceTemplate => {
 
   return {
     id: "powder-ai-agent",
-    name: "Powder AI Agent SaaS",
+    name: "AI Agent SaaS Template",
     description: "Sleek dark AI-agent SaaS landing with sunset-gradient hero, chat mockup, feature screenshot grid, 'why' cards, alternating feature splits and 3-tier pricing. Modelled 1:1 on the Powder Framer template.",
     content,
     variables: [
@@ -487,7 +487,7 @@ const fabricaStudio = (): MarketplaceTemplate => {
 
   return {
     id: "fabrica-studio",
-    name: "Fabrica Creative Studio",
+    name: "Creative Studio Template",
     description: "Bold black-and-white brutalist creative-studio site — oversized logotype hero, statement, client strip, project grid, why-choose split with stats and a numbered services list. Modelled 1:1 on the Fabrica Framer template.",
     content,
     variables: [
@@ -660,7 +660,7 @@ const hanzoDesignStudio = (): MarketplaceTemplate => {
 
   return {
     id: "hanzo-design-studio",
-    name: "Hanzo Design Subscription",
+    name: "Design Subscription Template",
     description: "Light, premium 'unlimited design' studio subscription landing — soft hero with trust avatars, image gallery, 3-step process, testimonials, case-study grid, founder bio and a single bold pricing card. Modelled 1:1 on the Hanzo Framer template.",
     content,
     variables: [

@@ -634,7 +634,7 @@ const lumsSeoLanding = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "lums-seo-landing",
-    name: "Lums SEO Landing",
+    name: "SEO Landing Template",
     description: "Bold purple SEO agency landing page with dashboard hero, services, pricing plans, testimonials, animated stats and latest news — modelled on the Lums theme.",
     content,
     variables: ["{company_name}", "{industry}", "{hero_title}", "{hero_subtitle}", "{service_1_title}", "{service_1_desc}", "{service_2_title}", "{service_2_desc}", "{service_3_title}", "{service_3_desc}", "{feature_intro}", "{feature_point_1}", "{feature_point_2}", "{feature_point_3}", "{plan_1_name}", "{plan_1_price}", "{plan_2_name}", "{plan_2_price}", "{plan_3_name}", "{plan_3_price}", "{stat_projects}", "{stat_customers}", "{stat_success}", "{stat_awards}", "{cta_subtitle}", "{year}"],
@@ -841,7 +841,7 @@ const nobleLawFirm = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "law-firm",
-    name: "NobleLaw Law Firm",
+    name: "Law Firm Template",
     description: "Premium, authoritative law firm landing page with cinematic hero, stats, service grid, why-us, testimonials and consultation CTA — modelled 1:1 on the NobleLaw theme.",
     content,
     variables: ["{firm_name}", "{hero_title}", "{hero_subtitle}", "{about_text}", "{stat_years}", "{stat_clients}", "{stat_awards}", "{stat_happy}", "{service_1_title}", "{service_1_desc}", "{service_2_title}", "{service_2_desc}", "{service_3_title}", "{service_3_desc}", "{service_4_title}", "{service_4_desc}", "{phone}", "{year}"],
@@ -1035,7 +1035,7 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "restaurant-local",
-    name: "Heaven Palate Restaurant",
+    name: "Restaurant Template",
     description: "Elegant fine-dining restaurant landing page with cinematic hero collage, menu highlights, stats, testimonials and table reservation — modelled 1:1 on the Heaven Palate theme.",
     content,
     variables: ["{restaurant_name}", "{hero_title}", "{customers_count}", "{customers_label}", "{menu_kicker}", "{menu_title}", "{menu_1_title}", "{menu_2_title}", "{menu_3_title}", "{stat_1_num}", "{stat_1_label}", "{stat_2_num}", "{stat_2_label}", "{stat_3_num}", "{stat_3_label}", "{stat_4_num}", "{stat_4_label}", "{testimonial_heading}", "{testimonial_text}", "{testimonial_author}", "{cta_title}", "{faq_1}", "{faq_2}", "{faq_3}", "{email}", "{book_text}", "{phone}", "{address}", "{city}", "{year}", "{hero_image_1}", "{hero_image_2}", "{hero_image_3}", "{menu_1_image}", "{menu_2_image}", "{menu_3_image}", "{chef_image}", "{testimonial_image}", "{book_image}"],
@@ -1278,7 +1278,7 @@ const ceviraCleaning = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "cleaning-service",
-    name: "Cevira Cleaning Service",
+    name: "Cleaning Service Template",
     description: "Modern cleaning company landing page with cinematic hero, floating trust card, stats, service grid, pricing plans, testimonial and FAQ — modelled 1:1 on the Cevira theme.",
     content,
     variables: ["{company_name}", "{hero_badge}", "{hero_title}", "{hero_subtitle}", "{hero_cta}", "{trust_rate}", "{trust_label}", "{reviews_count}", "{stat_1_num}", "{stat_1_label}", "{stat_2_num}", "{stat_2_label}", "{stat_3_num}", "{stat_3_label}", "{about_title}", "{about_text}", "{services_title}", "{services_subtitle}", "{service_1_title}", "{service_1_desc}", "{service_1_tag_1}", "{service_1_tag_2}", "{service_2_title}", "{service_2_desc}", "{service_2_tag_1}", "{service_2_tag_2}", "{service_3_title}", "{service_3_desc}", "{service_3_tag_1}", "{service_3_tag_2}", "{service_4_title}", "{service_4_desc}", "{service_4_tag_1}", "{service_4_tag_2}", "{pricing_title}", "{pricing_subtitle}", "{plan_1_name}", "{plan_1_desc}", "{plan_1_price}", "{plan_1_period}", "{plan_1_f1}", "{plan_1_f2}", "{plan_1_f3}", "{plan_1_f4}", "{plan_2_name}", "{plan_2_desc}", "{plan_2_price}", "{plan_2_period}", "{plan_2_f1}", "{plan_2_f2}", "{plan_2_f3}", "{plan_2_f4}", "{plan_3_name}", "{plan_3_desc}", "{plan_3_price}", "{plan_3_period}", "{plan_3_f1}", "{plan_3_f2}", "{plan_3_f3}", "{plan_3_f4}", "{testimonial_heading}", "{testimonial_text}", "{testimonial_author}", "{testimonial_role}", "{faq_title}", "{faq_1_q}", "{faq_1_a}", "{faq_2_q}", "{faq_2_a}", "{faq_3_q}", "{faq_3_a}", "{faq_4_q}", "{faq_4_a}", "{cta_title}", "{cta_subtitle}", "{phone}", "{address}", "{city}", "{year}", "{hero_image}", "{about_image}", "{service_1_image}", "{service_2_image}", "{service_3_image}", "{service_4_image}", "{testimonial_image}", "{cta_image}"],
@@ -1481,7 +1481,7 @@ const estelleCollection = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "shopify-collection",
-    name: "Estelle Jewelry Collection",
+    name: "Jewelry Collection Template",
     description: "Editorial dark-luxe jewelry collection page with oversized serif hero, product grid, lifestyle image, brand story and category tiles — modelled 1:1 on the Estelle Framer template.",
     content,
     variables: ["{brand_name}", "{season_label}", "{hero_title}", "{hero_subtitle}", "{hero_cta}", "{hero_btn_1}", "{hero_btn_2}", "{products_label}", "{products_cta}", "{product_1_name}", "{product_1_material}", "{product_1_category}", "{product_1_price}", "{product_1_image}", "{product_2_name}", "{product_2_material}", "{product_2_category}", "{product_2_price}", "{product_2_image}", "{product_3_name}", "{product_3_material}", "{product_3_category}", "{product_3_price}", "{product_3_image}", "{product_4_name}", "{product_4_material}", "{product_4_category}", "{product_4_price}", "{product_4_image}", "{lifestyle_image}", "{lifestyle_caption}", "{house_title}", "{house_text}", "{house_cta}", "{cat_1_name}", "{cat_1_image}", "{cat_2_name}", "{cat_2_image}", "{cat_3_name}", "{cat_3_image}", "{cat_4_name}", "{cat_4_image}", "{year}", "{footer_note}"],
@@ -3222,7 +3222,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
   {
     id: "local-plumber",
-    name: "Local Plumber Landing",
+    name: "Plumber Landing Template",
     description: "High-converting plumbing landing page — blue & yellow hero with a real plumber photo, trust strip, about split, 6-service grid, emergency band, FAQ, customer reviews, blog highlights and a closing call CTA. Modelled 1:1 on the plumbing.framer.media design.",
     content: plumberTemplate(),
     variables: [
@@ -3320,7 +3320,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1b. Home & Kitchen Renovation (Refit)
   {
     id: "refit-renovation",
-    name: "Refit Home Renovation",
+    name: "Home Renovation Template",
     description: "Sleek dark-theme landing page for a home & kitchen renovation company — bold hero with a real kitchen photo and floating review, stats strip, about gallery, 6-service grid, project showcase, client testimonials, FAQ accordion and a contact CTA. Modelled 1:1 on the refit.framer.website design.",
     content: refitTemplate(),
     variables: [
@@ -3454,7 +3454,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 3. SaaS landing (LanderX-style dark SaaS)
   {
     id: "saas-landing",
-    name: "LanderX SaaS Startup",
+    name: "SaaS Startup Template",
     description: "Sleek dark-mode SaaS / startup landing page with a glowing blue hero, social-proof avatars, client logos, benefits grid, wall-of-love testimonials, flexible pricing plans, founder's note and FAQ. Modelled on the LanderX (LanX) design.",
     content: landerxTemplate(),
     variables: ["{headline}", "{subheadline}", "{product_name}", "{cta_text}", "{secondary_cta_text}", "{customers_count}", "{customers_label}", "{benefits_eyebrow}", "{benefits_title}", "{benefits_subtitle}", "{feature_1_title}", "{feature_1_desc}", "{feature_2_title}", "{feature_2_desc}", "{feature_3_title}", "{feature_3_desc}", "{feature_4_title}", "{feature_4_desc}", "{feature_5_title}", "{feature_5_desc}", "{feature_6_title}", "{feature_6_desc}", "{reviews_eyebrow}", "{reviews_title}", "{reviews_subtitle}", "{review_1_text}", "{review_1_name}", "{review_1_role}", "{review_2_text}", "{review_2_name}", "{review_2_role}", "{review_3_text}", "{review_3_name}", "{review_3_role}", "{review_4_text}", "{review_4_name}", "{review_4_role}", "{review_5_text}", "{review_5_name}", "{review_5_role}", "{review_6_text}", "{review_6_name}", "{review_6_role}", "{pricing_eyebrow}", "{pricing_title}", "{pricing_subtitle}", "{price_period}", "{plan_cta_text}", "{plan_starter_name}", "{price_starter}", "{plan_starter_feature_1}", "{plan_starter_feature_2}", "{plan_starter_feature_3}", "{plan_starter_feature_4}", "{plan_starter_feature_5}", "{plan_pro_badge}", "{plan_pro_name}", "{price_pro}", "{plan_pro_feature_1}", "{plan_pro_feature_2}", "{plan_pro_feature_3}", "{plan_pro_feature_4}", "{plan_pro_feature_5}", "{plan_pro_feature_6}", "{plan_enterprise_name}", "{price_enterprise}", "{plan_enterprise_feature_1}", "{plan_enterprise_feature_2}", "{plan_enterprise_feature_3}", "{plan_enterprise_feature_4}", "{plan_enterprise_feature_5}", "{founder_eyebrow}", "{founder_quote}", "{founder_name}", "{founder_role}", "{faq_eyebrow}", "{faq_title}", "{faq_subtitle}", "{faq_1_question}", "{faq_1_answer}", "{faq_2_question}", "{faq_2_answer}", "{faq_3_question}", "{faq_3_answer}", "{faq_4_question}", "{faq_4_answer}", "{faq_5_question}", "{faq_5_answer}", "{bottom_cta_headline}", "{bottom_cta_description}"],
@@ -3568,7 +3568,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 6. Online course
   {
     id: "course-landing",
-    name: "Online Course Landing",
+    name: "Online Course Template",
     description: "Conversion-focused online course landing with hero, curriculum, instructor and FAQ.",
     content: page(
       hero({ bgKeywords: "online learning student laptop", badge: "{category}", title: "{course_title}", subtitle: "{course_subtitle}", primaryCta: "Enroll now — {price}", secondaryCta: "Watch Preview", sig: 6 }) +
@@ -3640,7 +3640,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 31. Dentexa — premium dentist landing (modelled on the Dentexa HTML theme)
   {
     id: "dentalflow-dentist",
-    name: "Dentexa Dental Studio",
+    name: "Dental Studio Template",
     description: "Premium, conversion-focused dentist landing page with a Dentexa-style teal design — hero booking, services, smile gallery, dentist profile, patient reviews, transparent pricing and FAQ. Uses real dental photography throughout.",
     content: dentexaTemplate(),
     variables: [
@@ -3661,7 +3661,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 32. Consulting — business consulting landing (modelled on consulting.framer.media)
   {
     id: "consulting-agency",
-    name: "Consulting Agency",
+    name: "Consulting Agency Template",
     description: "Clean, professional business consulting landing page — bold hero ('Grow your business faster'), trusted-by logos, services grid, about split, results stats, client testimonials, FAQ and contact. Modelled on the consulting.framer.media design.",
     content: consultingTemplate(),
     variables: [
@@ -3684,7 +3684,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 33. Gardener — landscaping & garden service landing (modelled on gardener.framer.media)
   {
     id: "gardener-landscaping",
-    name: "Gardener Landscaping",
+    name: "Landscaping Template",
     description: "Beautiful gardening & landscaping landing page — full-bleed hero with a glass booking form, about split, services gallery, FAQ, recent works grid, customer reviews, blog highlights and a closing CTA. Modelled 1:1 on the gardener.framer.media design with real photography.",
     content: gardenerTemplate(),
     variables: [

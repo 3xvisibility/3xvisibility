@@ -79,7 +79,7 @@ const estateRealty = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "estate-realty", name: "Estate — Real Estate", description: "Premium real estate landing with property listings, pricing and stats.",
+    id: "estate-realty", name: "Real Estate Template", description: "Premium real estate landing with property listings, pricing and stats.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -182,7 +182,7 @@ const pulseFitness = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "forge-fitness", name: "Forge — Fitness Gym", description: "High-energy gym & fitness landing with classes, pricing plans and bold type.",
+    id: "forge-fitness", name: "Fitness Gym Template", description: "High-energy gym & fitness landing with classes, pricing plans and bold type.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_accent}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",
@@ -279,7 +279,7 @@ const stackSaas = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "stack-saas", name: "Stack — SaaS App", description: "Clean SaaS product landing with app screenshot and feature grid.",
+    id: "stack-saas", name: "SaaS App Template", description: "Clean SaaS product landing with app screenshot and feature grid.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -379,7 +379,7 @@ const savorRestaurant = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "savor-restaurant", name: "Savor — Restaurant", description: "Warm fine-dining restaurant landing with full menu, gallery and reservations.",
+    id: "savor-restaurant", name: "Restaurant Template", description: "Warm fine-dining restaurant landing with full menu, gallery and reservations.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -470,7 +470,7 @@ const framePhoto = (): MarketplaceTemplate => {
   </div></section>
 </div>`;
   return {
-    id: "frame-photography", name: "Frame — Photography", description: "Minimal masonry portfolio for photographers with gallery and stats.",
+    id: "frame-photography", name: "Photography Template", description: "Minimal masonry portfolio for photographers with gallery and stats.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",
@@ -570,7 +570,7 @@ const learnCourse = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "learn-course", name: "Learn — Online Course", description: "Friendly online course landing with curriculum modules, stats and enrollment.",
+    id: "learn-course", name: "Online Course Template", description: "Friendly online course landing with curriculum modules, stats and enrollment.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
