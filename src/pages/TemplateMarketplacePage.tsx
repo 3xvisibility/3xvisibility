@@ -513,6 +513,14 @@ export default function TemplateMarketplacePage() {
                         variant="outline"
                         size="sm"
                         className="h-8 text-xs"
+                        onClick={() => exportTemplateZip(previewTemplate)}
+                      >
+                        <Download className="h-3.5 w-3.5 mr-1.5" /> Export design (.zip)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
                         onClick={() => document.getElementById("mkt-csv-upload")?.click()}
                       >
                         <Upload className="h-3.5 w-3.5 mr-1.5" /> Upload CSV
