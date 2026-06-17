@@ -43,6 +43,15 @@ const CATEGORIES = [
   { id: "prestashop", label: "PrestaShop", icon: Tag },
 ];
 
+const NICHE_TAGS = [
+  { tag: "veterinary", label: "🐾 Vet" },
+  { tag: "wedding", label: "💍 Wedding" },
+  { tag: "resort", label: "🏝️ Resort" },
+  { tag: "cybersecurity", label: "🛡️ Cybersecurity" },
+  { tag: "florist", label: "🌸 Florist" },
+  { tag: "recruitment", label: "💼 Recruitment" },
+];
+
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -326,6 +335,23 @@ export default function TemplateMarketplacePage() {
             className="pl-9"
           />
         </div>
+      </div>
+
+      {/* Quick niche tag filters */}
+      <div className="flex flex-wrap gap-2">
+        {NICHE_TAGS.map((nt) => (
+          <button
+            key={nt.tag}
+            onClick={() => setSearchQuery(searchQuery.toLowerCase() === nt.tag ? "" : nt.tag)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+              searchQuery.toLowerCase() === nt.tag
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-muted/50 text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
+            }`}
+          >
+            {nt.label}
+          </button>
+        ))}
       </div>
 
       {/* Category pills */}

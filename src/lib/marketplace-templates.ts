@@ -31,6 +31,10 @@ export interface MarketplaceTemplate {
   ratingCount?: number;
   seo_title_pattern?: string;
   seo_description_pattern?: string;
+  /** Open Graph / social share starter fields. */
+  og_title_pattern?: string;
+  og_description_pattern?: string;
+  og_image_pattern?: string;
   /** URL slug pattern (lowercase, hyphenated) for the generated page. */
   slug_pattern?: string;
   schema_type?: string;
