@@ -2037,10 +2037,6 @@ const dentexaTemplate = () => `<style>
 @media(max-width:560px){.dxa-feat,.dxa-grid3,.dxa-revs,.dxa-gal,.dxa-mini{grid-template-columns:1fr}}
 </style>
 <div class="dxa">
-  <div class="dxa-top"><div class="dxa-wrap">
-    <span class="dxa-ti">😀 Welcome to <b>{clinic_name}</b> — Best Quality Dental Care</span>
-    <span class="dxa-ti">📞 <b>{phone}</b> &nbsp; ✉️ {email}</span>
-  </div></div>
 
   <header class="dxa-hero"><div class="dxa-wrap">
     <div>
