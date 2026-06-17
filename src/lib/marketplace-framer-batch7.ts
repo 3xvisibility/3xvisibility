@@ -76,7 +76,7 @@ const zenYoga = (): MarketplaceTemplate => {
     category: "health", tags: ["yoga", "wellness", "studio", "meditation", "light"],
     author: "Community", downloads: 421, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-yoga",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1545205597-3d9d02c29597", 1200, 630),
     schema_type: "ExerciseGym", platform: "generic",
     defaultValues: {
       eyebrow: "Yoga studio", hero_title: "Find your calm, one breath at a time",
