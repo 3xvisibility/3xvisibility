@@ -22,6 +22,14 @@ const ASPECT_RATIOS: Record<string, number> = {
   chef_image: 4 / 5,
   testimonial_image: 1,
   book_image: 4 / 3,
+  // Cevira cleaning
+  hero_image: 16 / 9,
+  about_image: 3 / 4,
+  service_1_image: 7 / 5,
+  service_2_image: 7 / 5,
+  service_3_image: 7 / 5,
+  service_4_image: 7 / 5,
+  cta_image: 16 / 9,
 };
 
 const aspectFor = (v: string) => {
