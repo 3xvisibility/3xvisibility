@@ -83,6 +83,20 @@ export function ImageCropDialog({
     setAreaPixels(areaPx);
   }, []);
 
+  // Probe whether the source image can actually be loaded for cropping.
+  useEffect(() => {
+    if (!open || !imageSrc) return;
+    setImageError(false);
+    setError(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onerror = () => setImageError(true);
+    img.src = imageSrc;
+    return () => {
+      img.onerror = null;
+    };
+  }, [open, imageSrc]);
+
   const handleConfirm = async () => {
     if (!areaPixels) return;
     setError(null);
