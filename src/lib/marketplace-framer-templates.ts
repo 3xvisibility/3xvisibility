@@ -589,10 +589,6 @@ const hanzoDesignStudio = (): MarketplaceTemplate => {
 @media(max-width:900px){.hz-gallery,.hz-steps{grid-template-columns:1fr}.hz-rev,.hz-work{grid-template-columns:1fr}.hz-founder{grid-template-columns:1fr}}
 </style>
 <div class="hz-page">
-  <div class="hz-wrap hz-nav">
-    <div class="brand">{company_name}</div>
-    <div class="hz-burger">☰</div>
-  </div>
   <section class="hz-hero"><div class="hz-wrap">
     <div class="hz-chip"><span class="dot"></span>{hero_chip}</div>
     <h1>{hero_line_1} <span class="g">{hero_line_2}</span></h1>
