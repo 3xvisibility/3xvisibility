@@ -808,6 +808,10 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                   💡 Click any element (heading, text, button, image) to edit its content, colors, fonts and spacing. Changes save automatically.
                 </p>
               </TabsContent>
+              <TabsContent value="images" className="mt-3">
+                <TemplateImageEditor html={generatedContent} onChange={setGeneratedContent} />
+              </TabsContent>
+
               <TabsContent value="preview" className="mt-3">
                 <TemplatePreview html={generatedContent} />
               </TabsContent>
