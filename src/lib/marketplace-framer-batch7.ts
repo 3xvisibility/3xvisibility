@@ -76,7 +76,7 @@ const zenYoga = (): MarketplaceTemplate => {
     category: "health", tags: ["yoga", "wellness", "studio", "meditation", "light"],
     author: "Community", downloads: 421, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-yoga",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1545205597-3d9d02c29597", 1200, 630),
     schema_type: "ExerciseGym", platform: "generic",
     defaultValues: {
       eyebrow: "Yoga studio", hero_title: "Find your calm, one breath at a time",
@@ -166,7 +166,7 @@ const craftBakery = (): MarketplaceTemplate => {
     category: "local-seo", tags: ["bakery", "cafe", "food", "coffee", "light"],
     author: "Community", downloads: 478, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-bakery",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1509440159596-0249088772ff", 1200, 630),
     schema_type: "Bakery", platform: "generic",
     defaultValues: {
       eyebrow: "Artisan bakery", hero_title: "Baked fresh, every single morning",
@@ -266,7 +266,7 @@ const buildConstruction = (): MarketplaceTemplate => {
     category: "local-seo", tags: ["construction", "contractor", "building", "trades", "dark"],
     author: "Community", downloads: 503, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-construction",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1503387762-abc9d0c8e2dd", 1200, 630),
     schema_type: "GeneralContractor", platform: "generic",
     defaultValues: {
       eyebrow: "Since 1998", hero_title: "We build it right, the first time",
@@ -352,7 +352,7 @@ const quillBlog = (): MarketplaceTemplate => {
     category: "marketing", tags: ["blog", "magazine", "editorial", "news", "light"],
     author: "Community", downloads: 446, rating: 4.7,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-blog",
-    og_title_pattern: "{feature_title}", og_description_pattern: "{feature_excerpt}", og_image_pattern: "{feature_image}",
+    og_title_pattern: "{feature_title}", og_description_pattern: "{feature_excerpt}", og_image_pattern: U("1499750310107-5fef28a66643", 1200, 630),
     schema_type: "Blog", platform: "generic",
     defaultValues: {
       eyebrow: "The journal", hero_title: "Stories, ideas and inspiration worth your time",
@@ -441,7 +441,7 @@ const trekTour = (): MarketplaceTemplate => {
     category: "business", tags: ["travel", "tours", "adventure", "destinations", "dark"],
     author: "Community", downloads: 531, rating: 4.9,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-tours",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{trip_1_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1469854523086-cc02fe5d8800", 1200, 630),
     schema_type: "TravelAgency", platform: "generic",
     defaultValues: {
       eyebrow: "Guided adventures", hero_title: "Go further than the map",
@@ -539,7 +539,7 @@ const mintAccounting = (): MarketplaceTemplate => {
     category: "professional", tags: ["accounting", "bookkeeping", "finance", "tax", "light"],
     author: "Community", downloads: 467, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-accounting",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1454165804606-c3d57bc86b40", 1200, 630),
     schema_type: "AccountingService", platform: "generic",
     defaultValues: {
       eyebrow: "Accounting firm", hero_title: "Numbers handled, so you can grow",
