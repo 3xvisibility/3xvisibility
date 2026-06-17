@@ -1173,11 +1173,6 @@ const ceviraCleaning = (): MarketplaceTemplate => {
 @media(max-width:880px){.cv-menu{display:none}.cv-split,.cv-grid4,.cv-grid3{grid-template-columns:1fr}.cv-stats{grid-template-columns:1fr}.cv-card-float{position:static;margin:1.5rem auto 0;max-width:100%}}
 </style>
 <div class="cv-page">
-  <header class="cv-wrap cv-nav">
-    <div class="cv-logo"><i></i>{company_name}</div>
-    <nav class="cv-menu"><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></nav>
-    <a href="#contact" class="cv-btn">Book Now <span class="cv-ar">→</span></a>
-  </header>
 
   <section class="cv-hero">
     <img class="cv-hero-bg" src="{hero_image}" alt="professional cleaning" loading="lazy">
