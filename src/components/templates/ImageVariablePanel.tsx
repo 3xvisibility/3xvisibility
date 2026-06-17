@@ -1,9 +1,34 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImageIcon, RotateCcw } from "lucide-react";
+import { ImageIcon, RotateCcw, Upload, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ImageCropDialog } from "@/components/templates/ImageCropDialog";
+
+/**
+ * Target aspect ratios (width / height) per image slot so cropping matches the
+ * rendered layout. Falls back to 4:3 for any unknown image variable.
+ */
+const ASPECT_RATIOS: Record<string, number> = {
+  hero_image_1: 3 / 4,
+  hero_image_2: 1,
+  hero_image_3: 1,
+  menu_1_image: 3 / 4,
+  menu_2_image: 3 / 4,
+  menu_3_image: 3 / 4,
+  chef_image: 4 / 5,
+  testimonial_image: 1,
+  book_image: 4 / 3,
+};
+
+const aspectFor = (v: string) => {
+  if (ASPECT_RATIOS[v]) return ASPECT_RATIOS[v];
+  if (/avatar|thumbnail|thumb/i.test(v)) return 1;
+  return 4 / 3;
+};
 
 interface ImageVariablePanelProps {
   /** Raw template HTML — used to detect which image variables are present. */
