@@ -122,16 +122,28 @@ export function ImageCropDialog({
         </DialogHeader>
 
         <div className="relative h-[360px] bg-muted/40">
-          <Cropper
-            image={imageSrc}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspect}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-            restrictPosition
-          />
+          {imageError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+              <p className="text-sm text-muted-foreground max-w-sm">
+                This image couldn't be loaded for cropping. It may be blocked by the
+                source server (CORS) or no longer available. Try downloading it and
+                uploading the file directly.
+              </p>
+            </div>
+          ) : (
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspect}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+              onMediaLoaded={() => setImageError(false)}
+              restrictPosition
+            />
+          )}
         </div>
 
         <div className="px-6 py-4 space-y-2">
@@ -142,8 +154,16 @@ export function ImageCropDialog({
             step={0.01}
             value={[zoom]}
             onValueChange={([v]) => setZoom(v)}
+            disabled={imageError}
           />
         </div>
+
+        {error && (
+          <div className="mx-6 mb-2 flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+            <AlertTriangle className="h-4 w-4 flex-none mt-0.5" />
+            <span className="flex-1">{error}</span>
+          </div>
+        )}
 
         <DialogFooter className="px-6 py-4 border-t border-border">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
@@ -151,11 +171,11 @@ export function ImageCropDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={isSaving || !areaPixels}
+            disabled={isSaving || !areaPixels || imageError}
             className="bg-gradient-primary hover:brightness-110 gap-2"
           >
-            <Crop className="h-4 w-4" />
-            {isSaving ? "Saving…" : "Apply crop"}
+            {error ? <RefreshCcw className="h-4 w-4" /> : <Crop className="h-4 w-4" />}
+            {isSaving ? "Saving…" : error ? "Retry" : "Apply crop"}
           </Button>
         </DialogFooter>
       </DialogContent>
