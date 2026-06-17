@@ -1460,7 +1460,7 @@ const estelleCollection = (): MarketplaceTemplate => {
       <a class="es-cat"><img src="{cat_3_image}" alt="{cat_3_name}"/><span>{cat_3_name}</span></a>
       <a class="es-cat"><img src="{cat_4_image}" alt="{cat_4_name}"/><span>{cat_4_name}</span></a>
     </div>
-    <div class="es-foot"><span>© {year} {brand_name}</span><span>{footer_note}</span></div>
+    
   </section>
 </div>`;
   return {
