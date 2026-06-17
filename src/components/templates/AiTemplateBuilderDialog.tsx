@@ -39,20 +39,6 @@ const AI_LANGUAGES = [
   { code: "ms", label: "Malay" }, { code: "bn", label: "Bengali" },
 ];
 
-const BUSINESS_TYPES = [
-  { value: "service page", label: "Service Page", icon: "🔧" },
-  { value: "product page", label: "Product Page", icon: "🛍️" },
-  { value: "local business page", label: "Local Business", icon: "📍" },
-  { value: "e-commerce store page", label: "E-Commerce", icon: "🛒" },
-  { value: "portfolio page", label: "Portfolio", icon: "🎨" },
-  { value: "landing page", label: "Landing Page", icon: "🚀" },
-  { value: "restaurant page", label: "Restaurant", icon: "🍽️" },
-  { value: "real estate listing page", label: "Real Estate", icon: "🏠" },
-  { value: "course landing page", label: "Online Course", icon: "🎓" },
-  { value: "blog post page", label: "Blog Post", icon: "📝" },
-  { value: "event page", label: "Event Page", icon: "🎫" },
-  { value: "booking/appointment page", label: "Booking", icon: "📅" },
-];
 
 const PLATFORMS = [
   { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor", feature: "wordpress" as const },
@@ -458,25 +444,29 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
           {/* ─── Full Builder Mode ─── */}
           <TabsContent value="builder" className="space-y-5 mt-4">
             <div>
-              <Label className="text-sm font-semibold mb-2 block">What type of template do you need?</Label>
+              <Label className="text-sm font-semibold mb-2 block">Choose a template category</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                {BUSINESS_TYPES.map((bt) => (
+                {designCategoryOptions.map((id) => (
                   <button
-                    key={bt.value}
+                    key={id}
                     type="button"
-                    onClick={() => setBusinessType(bt.value)}
+                    onClick={() => {
+                      setDesignCategory(id);
+                      setBusinessType(designCategoryLabel(id));
+                      pickRandomDesign(id);
+                    }}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${
-                      businessType === bt.value
+                      designCategory === id
                         ? "border-primary bg-primary/10 text-primary font-medium ring-1 ring-primary/30"
                         : "border-border bg-card hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
-                    <span className="text-lg">{bt.icon}</span>
-                    <span>{bt.label}</span>
+                    <span>{designCategoryLabel(id)}</span>
                   </button>
                 ))}
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -513,52 +503,34 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             {/* Platform picker */}
             {renderPlatformPicker()}
 
-            {/* Design inspiration from marketplace category */}
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-              <Label className="flex items-center gap-2 text-sm font-semibold">
-                <Palette className="h-4 w-4 text-primary" /> Design inspiration (optional)
-              </Label>
-              <p className="text-[11px] text-muted-foreground -mt-1">
-                Pick a category and we'll base the look on a random design from it. Click the dice again for a different one.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Select
-                  value={designCategory || "__none__"}
-                  onValueChange={(v) => {
-                    const cat = v === "__none__" ? "" : v;
-                    setDesignCategory(cat);
-                    if (cat) pickRandomDesign(cat);
-                    else setPickedDesign(null);
-                  }}
-                >
-                  <SelectTrigger className="h-10 sm:flex-1">
-                    <SelectValue placeholder="Choose a design category" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    <SelectItem value="__none__">No inspiration (AI picks)</SelectItem>
-                    {designCategoryOptions.map((id) => (
-                      <SelectItem key={id} value={id}>{designCategoryLabel(id)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 gap-1.5"
-                  disabled={!designCategory}
-                  onClick={() => designCategory && pickRandomDesign(designCategory)}
-                >
-                  <RefreshCw className="h-4 w-4" /> Random design
-                </Button>
-              </div>
-              {pickedDesign && (
-                <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
-                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-muted-foreground">Base design:</span>
-                  <span className="font-medium truncate">{pickedDesign.name}</span>
+            {/* Random design from the chosen category */}
+            {designCategory && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <Label className="flex items-center gap-2 text-sm font-semibold">
+                  <Palette className="h-4 w-4 text-primary" /> Base design
+                </Label>
+                <p className="text-[11px] text-muted-foreground -mt-1">
+                  A random design from <span className="font-medium">{designCategoryLabel(designCategory)}</span> is used as the look. Click the dice for a different one.
+                </p>
+                <div className="flex items-center gap-2">
+                  {pickedDesign && (
+                    <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs min-w-0">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      <span className="font-medium truncate">{pickedDesign.name}</span>
+                    </div>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 gap-1.5 shrink-0"
+                    onClick={() => pickRandomDesign(designCategory)}
+                  >
+                    <RefreshCw className="h-4 w-4" /> Random design
+                  </Button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
 
 
 
