@@ -2909,11 +2909,6 @@ const plumberTemplate = () => `<style>
 @media(max-width:900px){.pl-nav .links{display:none}.pl-hero .pl-wrap,.pl-svc,.pl-split,.pl-faq,.pl-revs,.pl-blog,.pl-strip{grid-template-columns:1fr}}
 </style>
 <div class="pl">
-  <nav class="pl-nav"><div class="bar">
-    <div class="logo"><span class="dot">🔧</span>{company_name}</div>
-    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#blog">Blog</a></div>
-    <div class="right"><span class="phone">📞 {phone}</span><a href="#contact" class="pill">{cta_text}</a></div>
-  </div></nav>
 
   <header class="pl-hero" id="home"><div class="pl-wrap">
     <div>
