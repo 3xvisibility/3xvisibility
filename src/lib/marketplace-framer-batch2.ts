@@ -96,7 +96,7 @@ const auroraWeb3 = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "aurora-web3",
-    name: "Aurora Web3 Platform",
+    name: "Web3 Platform Template",
     description: "Neon, glassy Web3 / crypto platform landing — gradient hero with live stat panel, six-feature grid, numbered steps and a glowing final CTA. Modelled on Framer Web3 templates.",
     content,
     variables: [
@@ -237,7 +237,7 @@ const savoraRestaurant = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "savora-restaurant",
-    name: "Savora Fine Dining",
+    name: "Fine Dining Restaurant Template",
     description: "Warm, elegant fine-dining restaurant page — full-bleed serif hero, story split, two-column à la carte menu with prices, dish gallery and a reservation CTA. Modelled on Framer restaurant templates.",
     content,
     variables: [
@@ -378,7 +378,7 @@ const ciraAgency = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "cira-agency",
-    name: "Cira Marketing Agency",
+    name: "Marketing Agency Template",
     description: "Clean, confident marketing agency page — bold light hero with client logos, three-service grid, two-up case studies, big testimonial and a dark final CTA. Modelled on Framer agency templates.",
     content,
     variables: [
@@ -526,7 +526,7 @@ const novaCourse = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "nova-course",
-    name: "Nova Online Course",
+    name: "Online Course Template",
     description: "Vibrant online-course / e-learning landing — split hero with video card and stats, what-you'll-learn grid, curriculum accordion list, instructor bio and an enrol CTA. Modelled on Framer course templates.",
     content,
     variables: [
@@ -664,7 +664,7 @@ const evenaEvent = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "evena-event",
-    name: "Evena Conference Event",
+    name: "Conference Event Template",
     description: "Energetic conference / event landing — gradient hero with date, location and live counters, speaker grid, timed agenda list and a register CTA. Modelled on Framer event templates.",
     content,
     variables: [
@@ -796,7 +796,7 @@ const terraRealEstate = (): MarketplaceTemplate => {
 </div>`;
   return {
     id: "terra-real-estate",
-    name: "Terra Real Estate",
+    name: "Real Estate Template",
     description: "Refined real-estate / property page — full-bleed hero, three-card property listings with specs, a featured-property split with checklist and a contact CTA. Modelled on Framer real-estate templates.",
     content,
     variables: [
