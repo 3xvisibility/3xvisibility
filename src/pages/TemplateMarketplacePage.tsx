@@ -197,6 +197,26 @@ export default function TemplateMarketplacePage() {
     return [...COMMUNITY_TEMPLATES, ...communityTemplates];
   }, [communityTemplates]);
 
+  // Build the category pill list dynamically from whatever templates exist on
+  // the active tab. "All" is always first; every category present in the data
+  // gets a pill (with a count), so newly added niches appear automatically.
+  const displayCategories = useMemo(() => {
+    const source = activeTab === "community" ? communityTemplates : allTemplates;
+    const counts = new Map<string, number>();
+    for (const tpl of source) {
+      if (!tpl.category) continue;
+      counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
+    }
+    const ids = Array.from(counts.keys()).sort((a, b) =>
+      categoryMeta(a).label.localeCompare(categoryMeta(b).label)
+    );
+    return [
+      { id: "all", ...categoryMeta("all"), count: source.length },
+      ...ids.map((id) => ({ id, ...categoryMeta(id), count: counts.get(id) || 0 })),
+    ];
+  }, [activeTab, allTemplates, communityTemplates]);
+
+
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     return source.filter((tpl) => {
