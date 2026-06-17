@@ -50,6 +50,12 @@ const NICHE_TAGS = [
   { tag: "cybersecurity", label: "🛡️ Cybersecurity" },
   { tag: "florist", label: "🌸 Florist" },
   { tag: "recruitment", label: "💼 Recruitment" },
+  { tag: "yoga", label: "🧘 Zen" },
+  { tag: "bakery", label: "🥐 Craft" },
+  { tag: "construction", label: "🏗️ Build" },
+  { tag: "blog", label: "✍️ Quill" },
+  { tag: "travel", label: "🧭 Trek" },
+  { tag: "accounting", label: "📊 Mint" },
 ];
 
 export default function TemplateMarketplacePage() {
