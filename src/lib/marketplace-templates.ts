@@ -3790,32 +3790,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "LocalBusiness",
   },
 
-  // 13. Shopify collection
-  {
-    id: "shopify-collection",
-    name: "Shopify Collection Page",
-    description: "Beautiful Shopify collection landing with hero, products gallery and brand story.",
-    content: page(
-      hero({ bgKeywords: "{collection_name} fashion shop premium", badge: "🛍️ {brand_name}", title: "{collection_name}", subtitle: "{collection_description}", primaryCta: "Shop the collection", sig: 25 }) +
-      trustStrip([{ num: "10K+", lbl: "Happy Customers" }, { num: "4.9★", lbl: "Avg Rating" }, { num: "Free", lbl: "Shipping 50+" }, { num: "30-Day", lbl: "Returns" }]) +
-      gallery("Featured", "Shop the collection", ["{collection_name} product", "{brand_name} packaging", "lifestyle product", "minimalist product", "premium product", "product detail"]) +
-      aboutSplit("About {brand_name}", "Our story", "{brand_story}", "{brand_name} brand lifestyle", 12) +
-      featureGrid("Why shop with us", "Built on trust", "Quality you can feel, service you can rely on.", [
-        { icon: "✨", title: "Premium quality", desc: "Carefully sourced materials and rigorous quality control on every product." },
-        { icon: "🚚", title: "Fast shipping", desc: "Free on orders over $50, delivered in 2–5 business days." },
-        { icon: "🔒", title: "Secure checkout", desc: "256-bit encryption and trusted payment providers — your data is safe." },
-      ]) +
-      defaultTestimonials +
-      ctaBand({ bgKeywords: "shopping bags premium retail", title: "Discover the {collection_name}", subtitle: "Free shipping on every order over $50.", cta: "Shop now", sig: 26 })
-    ),
-    variables: ["{brand_name}", "{collection_name}", "{collection_description}", "{product_1_name}", "{product_1_price}", "{product_2_name}", "{product_2_price}", "{product_3_name}", "{product_3_price}", "{brand_story}"],
-    category: "shopify",
-    tags: ["shopify", "collection", "ecommerce", "products"],
-    author: "Community", downloads: 1678, rating: 4.8,
-    seo_title_pattern: "{collection_name} | {brand_name} — Shop Online",
-    seo_description_pattern: "Shop {collection_name} by {brand_name}. {collection_description}",
-    schema_type: "CollectionPage",
-  },
+  // 13. Shopify collection (Estelle jewelry, 1:1 Framer design)
+  estelleCollection(),
 
   // 14. Shopify product detail
   {
