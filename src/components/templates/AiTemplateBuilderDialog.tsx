@@ -458,25 +458,29 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
           {/* ─── Full Builder Mode ─── */}
           <TabsContent value="builder" className="space-y-5 mt-4">
             <div>
-              <Label className="text-sm font-semibold mb-2 block">What type of template do you need?</Label>
+              <Label className="text-sm font-semibold mb-2 block">Choose a template category</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                {BUSINESS_TYPES.map((bt) => (
+                {designCategoryOptions.map((id) => (
                   <button
-                    key={bt.value}
+                    key={id}
                     type="button"
-                    onClick={() => setBusinessType(bt.value)}
+                    onClick={() => {
+                      setDesignCategory(id);
+                      setBusinessType(designCategoryLabel(id));
+                      pickRandomDesign(id);
+                    }}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${
-                      businessType === bt.value
+                      designCategory === id
                         ? "border-primary bg-primary/10 text-primary font-medium ring-1 ring-primary/30"
                         : "border-border bg-card hover:bg-accent hover:text-accent-foreground"
                     }`}
                   >
-                    <span className="text-lg">{bt.icon}</span>
-                    <span>{bt.label}</span>
+                    <span>{designCategoryLabel(id)}</span>
                   </button>
                 ))}
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
