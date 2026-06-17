@@ -837,7 +837,18 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               </div>
             )}
 
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-2 border-t border-border">
+            <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-3">
+              <Switch checked={preserveImages} onCheckedChange={setPreserveImages} id="preserve-images" className="mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <Label htmlFor="preserve-images" className="text-sm font-semibold cursor-pointer flex items-center gap-1.5">
+                  <ImageIcon className="h-3.5 w-3.5 text-primary" /> Keep original design images
+                </Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Every generated page reuses this template's images instead of swapping to AI/stock photos. Turn off to let the generator insert stock images when an image is missing.
+                </p>
+              </div>
+            </div>
+
               <Button variant="ghost" onClick={() => { setStep("configure"); setGeneratedContent(""); setGeneratedName(""); }}>
                 <ArrowLeft className="mr-1.5 h-4 w-4" /> Back & Regenerate
               </Button>
