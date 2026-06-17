@@ -257,11 +257,6 @@ const powderAiAgent = (): MarketplaceTemplate => {
 @media(max-width:900px){.pw-grid,.pw-price,.pw-shots{grid-template-columns:1fr}.pw-split{grid-template-columns:1fr}.pw-nav nav{display:none}}
 </style>
 <div class="pw-page">
-  <div class="pw-wrap pw-nav">
-    <div class="logo"><span class="mk"></span>{company_name}</div>
-    <nav><span>About</span><span>Changelog</span><span>Pricing</span><span>Blog</span></nav>
-    <a class="pw-btn" href="#">{cta_text}</a>
-  </div>
   <section class="pw-hero">
     <div class="pw-wrap">
       <div class="pw-chip">✦ {hero_chip}</div>
@@ -433,10 +428,6 @@ const fabricaStudio = (): MarketplaceTemplate => {
 @media(max-width:900px){.fb-proj,.fb-why,.fb-stats{grid-template-columns:1fr}.fb-srv{grid-template-columns:1fr}.fb-nav nav{display:none}}
 </style>
 <div class="fb-page">
-  <div class="fb-wrap fb-nav">
-    <div class="brand">{company_name}®</div>
-    <nav><span>Studio</span><span>Projects ({projects_count})</span><span>Contact</span></nav>
-  </div>
   <section class="fb-hero">
     <div class="big">{company_name}<sup>®</sup></div>
     <div class="lbl">{hero_label}</div>
@@ -598,10 +589,6 @@ const hanzoDesignStudio = (): MarketplaceTemplate => {
 @media(max-width:900px){.hz-gallery,.hz-steps{grid-template-columns:1fr}.hz-rev,.hz-work{grid-template-columns:1fr}.hz-founder{grid-template-columns:1fr}}
 </style>
 <div class="hz-page">
-  <div class="hz-wrap hz-nav">
-    <div class="brand">{company_name}</div>
-    <div class="hz-burger">☰</div>
-  </div>
   <section class="hz-hero"><div class="hz-wrap">
     <div class="hz-chip"><span class="dot"></span>{hero_chip}</div>
     <h1>{hero_line_1} <span class="g">{hero_line_2}</span></h1>

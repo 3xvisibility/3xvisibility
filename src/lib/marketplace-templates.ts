@@ -516,11 +516,6 @@ const lumsSeoLanding = (): MarketplaceTemplate => {
 <div class="lums-page">
   <header class="lums-hero">
     <div class="lums-wrap">
-      <nav class="lums-nav">
-        <span class="lums-logo">{company_name}</span>
-        <div class="lums-menu"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#testimonials">Testimonials</a><a href="#news">Blog</a><a href="#contact">Contact</a></div>
-        <a href="#contact" class="lums-btn">Contact</a>
-      </nav>
       <div class="lums-hero-grid">
         <div>
           <span class="lums-badge">Welcome to {industry} <b>Free Trial</b></span>
@@ -747,11 +742,6 @@ const nobleLawFirm = (): MarketplaceTemplate => {
   <header class="nbl-hero">
     <div class="nbl-hero-bg"></div>
     <div class="nbl-hero-ov"></div>
-    <div class="nbl-wrap nbl-nav">
-      <div class="nbl-logo">⚖ {firm_name}</div>
-      <nav class="nbl-menu"><a href="#about">About</a><a href="#services">Services</a><a href="#why">Why Us</a><a href="#contact">Contact</a></nav>
-      <a href="#contact" class="nbl-btn">Book Consultant</a>
-    </div>
     <div class="nbl-wrap nbl-hero-in">
       <h1>{hero_title}</h1>
       <p>{hero_subtitle}</p>
@@ -834,7 +824,7 @@ const nobleLawFirm = (): MarketplaceTemplate => {
     </div>
   </section>
 
-  <footer class="nbl-foot">© {year} {firm_name}. All rights reserved.</footer>
+  
 </div>`;
   return {
     id: "law-firm",
@@ -943,11 +933,6 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
 @media(max-width:880px){.hp-menu{display:none}.hp-hero-grid,.hp-split,.hp-quote-wrap,.hp-book{grid-template-columns:1fr}.hp-grid3{grid-template-columns:1fr}.hp-stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 <div class="hp-page">
-  <header class="hp-wrap hp-nav">
-    <div class="hp-logo">{restaurant_name}</div>
-    <nav class="hp-menu"><a href="#menu">Restaurant Menu</a><a href="#about">About Us</a><a href="#book">Find Us</a></nav>
-    <a href="#book" class="hp-btn">Reserve Table</a>
-  </header>
 
   <section class="hp-wrap hp-hero hp-hero-grid">
     <div>
@@ -1032,7 +1017,7 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
     </div>
   </section>
 
-  <footer class="hp-foot">© {year} {restaurant_name}. All rights reserved.</footer>
+  
 </div>`;
   return {
     id: "restaurant-local",
@@ -1188,11 +1173,6 @@ const ceviraCleaning = (): MarketplaceTemplate => {
 @media(max-width:880px){.cv-menu{display:none}.cv-split,.cv-grid4,.cv-grid3{grid-template-columns:1fr}.cv-stats{grid-template-columns:1fr}.cv-card-float{position:static;margin:1.5rem auto 0;max-width:100%}}
 </style>
 <div class="cv-page">
-  <header class="cv-wrap cv-nav">
-    <div class="cv-logo"><i></i>{company_name}</div>
-    <nav class="cv-menu"><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></nav>
-    <a href="#contact" class="cv-btn">Book Now <span class="cv-ar">→</span></a>
-  </header>
 
   <section class="cv-hero">
     <img class="cv-hero-bg" src="{hero_image}" alt="professional cleaning" loading="lazy">
@@ -1279,7 +1259,7 @@ const ceviraCleaning = (): MarketplaceTemplate => {
     </div>
   </div></section>
 
-  <footer class="cv-foot">© {year} {company_name}. All rights reserved. · {address}, {city}</footer>
+  
 </div>`;
   return {
     id: "cleaning-service",
@@ -1442,11 +1422,6 @@ const estelleCollection = (): MarketplaceTemplate => {
 @media(max-width:560px){.es-grid,.es-cats{grid-template-columns:1fr}}
 </style>
 <div class="es-page">
-  <nav class="es-nav">
-    <div class="es-ic"><span></span><span></span></div>
-    <div class="es-logo">{brand_name}</div>
-    <div class="es-cart">CART (0)</div>
-  </nav>
   <header class="es-hero es-wrap">
     <div class="es-eye">{season_label}</div>
     <h1>{hero_title}</h1>
@@ -1485,7 +1460,7 @@ const estelleCollection = (): MarketplaceTemplate => {
       <a class="es-cat"><img src="{cat_3_image}" alt="{cat_3_name}"/><span>{cat_3_name}</span></a>
       <a class="es-cat"><img src="{cat_4_image}" alt="{cat_4_name}"/><span>{cat_4_name}</span></a>
     </div>
-    <div class="es-foot"><span>© {year} {brand_name}</span><span>{footer_note}</span></div>
+    
   </section>
 </div>`;
   return {
@@ -2062,10 +2037,6 @@ const dentexaTemplate = () => `<style>
 @media(max-width:560px){.dxa-feat,.dxa-grid3,.dxa-revs,.dxa-gal,.dxa-mini{grid-template-columns:1fr}}
 </style>
 <div class="dxa">
-  <div class="dxa-top"><div class="dxa-wrap">
-    <span class="dxa-ti">😀 Welcome to <b>{clinic_name}</b> — Best Quality Dental Care</span>
-    <span class="dxa-ti">📞 <b>{phone}</b> &nbsp; ✉️ {email}</span>
-  </div></div>
 
   <header class="dxa-hero"><div class="dxa-wrap">
     <div>
@@ -2316,11 +2287,6 @@ const consultingTemplate = () => `<style>
 @media(max-width:560px){.con-proc,.con-stats .nums{grid-template-columns:1fr}}
 </style>
 <div class="con">
-  <nav class="con-nav"><div class="bar">
-    <div class="logo"><span class="dot"></span>{company_name}</div>
-    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#process">Process</a></div>
-    <a href="#contact" class="pill">Contact</a>
-  </div></nav>
 
   <header class="con-hero" id="home" style="background-image:url('${CON_IMG.hero}')"><div class="con-wrap">
     <h1>{headline}</h1>
@@ -2738,11 +2704,6 @@ const gardenerTemplate = () => `<style>
 @media(max-width:900px){.gd-nav .links{display:none}.gd-hero .gd-wrap,.gd-svc,.gd-split,.gd-faq,.gd-revs,.gd-blog,.gd-gal{grid-template-columns:1fr}.gd-gal{grid-template-columns:1fr 1fr}}
 </style>
 <div class="gd">
-  <nav class="gd-nav"><div class="bar">
-    <div class="logo"><span class="dot">🌿</span>{company_name}</div>
-    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#blog">Blog</a><a href="#contact">Contact</a></div>
-    <a href="#contact" class="pill">{cta_text}</a>
-  </div></nav>
 
   <header class="gd-hero" id="home" style="background-image:url('${GD_IMG.hero}')"><div class="gd-wrap">
     <div>
@@ -2948,11 +2909,6 @@ const plumberTemplate = () => `<style>
 @media(max-width:900px){.pl-nav .links{display:none}.pl-hero .pl-wrap,.pl-svc,.pl-split,.pl-faq,.pl-revs,.pl-blog,.pl-strip{grid-template-columns:1fr}}
 </style>
 <div class="pl">
-  <nav class="pl-nav"><div class="bar">
-    <div class="logo"><span class="dot">🔧</span>{company_name}</div>
-    <div class="links"><a href="#home">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#blog">Blog</a></div>
-    <div class="right"><span class="phone">📞 {phone}</span><a href="#contact" class="pill">{cta_text}</a></div>
-  </div></nav>
 
   <header class="pl-hero" id="home"><div class="pl-wrap">
     <div>
@@ -3145,11 +3101,6 @@ const refitTemplate = () => `<style>
 @media(max-width:900px){.rf-nav .links{display:none}.rf-hero .rf-wrap,.rf-svc,.rf-split,.rf-faq,.rf-work,.rf-revs,.rf-stats{grid-template-columns:1fr}.rf-stats{grid-template-columns:1fr 1fr}}
 </style>
 <div class="rf">
-  <nav class="rf-nav"><div class="bar">
-    <div class="logo">{company_name}</div>
-    <div class="links"><a href="#about">About</a><a href="#services">Services</a><a href="#work">Our work</a><a href="#faqs">FAQs</a><a href="#contact">Contact</a></div>
-    <a href="#contact" class="pill">{cta_text}</a>
-  </div></nav>
 
   <header class="rf-hero" id="home"><div class="rf-wrap">
     <div>
