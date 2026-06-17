@@ -43,6 +43,15 @@ const CATEGORIES = [
   { id: "prestashop", label: "PrestaShop", icon: Tag },
 ];
 
+const NICHE_TAGS = [
+  { tag: "veterinary", label: "🐾 Vet" },
+  { tag: "wedding", label: "💍 Wedding" },
+  { tag: "resort", label: "🏝️ Resort" },
+  { tag: "cybersecurity", label: "🛡️ Cybersecurity" },
+  { tag: "florist", label: "🌸 Florist" },
+  { tag: "recruitment", label: "💼 Recruitment" },
+];
+
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
