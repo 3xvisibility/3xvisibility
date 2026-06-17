@@ -13,10 +13,18 @@ import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerCl
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { filterDesignVars } from "@/lib/design-vars-filter";
+import { COMMUNITY_TEMPLATES, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useSubscription } from "@/hooks/use-subscription";
+
+// Human-friendly label for an arbitrary marketplace category id.
+const designCategoryLabel = (id: string) =>
+  id
+    .split(/[-_]/)
+    .map((w) => (w.length <= 3 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
 
 const AI_LANGUAGES = [
   { code: "en", label: "English" }, { code: "es", label: "Spanish" }, { code: "fr", label: "French" },
@@ -145,6 +153,35 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedName, setGeneratedName] = useState("");
   const [platform, setPlatform] = useState("wordpress");
+
+  // Marketplace design inspiration: pick a category, then a random design from
+  // that category is used as the base look for the generated template.
+  const [designCategory, setDesignCategory] = useState("");
+  const [pickedDesign, setPickedDesign] = useState<MarketplaceTemplate | null>(null);
+
+  // All marketplace categories that actually have templates.
+  const designCategoryOptions = useMemo(() => {
+    const ids = Array.from(new Set(COMMUNITY_TEMPLATES.map((t) => t.category).filter(Boolean)));
+    return ids.sort((a, b) => designCategoryLabel(a).localeCompare(designCategoryLabel(b)));
+  }, []);
+
+  // Pick a fresh random design from the chosen category (re-randomizes each click).
+  const pickRandomDesign = (category: string) => {
+    const pool = COMMUNITY_TEMPLATES.filter((t) => t.category === category);
+    if (pool.length === 0) {
+      setPickedDesign(null);
+      return;
+    }
+    // Avoid repeating the same design twice in a row when possible.
+    let next = pool[Math.floor(Math.random() * pool.length)];
+    if (pool.length > 1 && pickedDesign && next.id === pickedDesign.id) {
+      const others = pool.filter((t) => t.id !== pickedDesign.id);
+      next = others[Math.floor(Math.random() * others.length)];
+    }
+    setPickedDesign(next);
+  };
+
+
 
   // Reset to WordPress if the selected platform isn't available on this plan.
   useEffect(() => {
@@ -299,7 +336,13 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       const theme = buildThemePayload();
       const bg = buildBackgroundPayload();
       const { data, error } = await supabase.functions.invoke("generate-template", {
-        body: { prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche, ...theme, ...bg },
+        body: {
+          prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche,
+          designReference: pickedDesign?.content,
+          designName: pickedDesign?.name,
+          designCategory: pickedDesign ? designCategory : undefined,
+          ...theme, ...bg,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -469,6 +512,55 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
             {/* Platform picker */}
             {renderPlatformPicker()}
+
+            {/* Design inspiration from marketplace category */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+              <Label className="flex items-center gap-2 text-sm font-semibold">
+                <Palette className="h-4 w-4 text-primary" /> Design inspiration (optional)
+              </Label>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Pick a category and we'll base the look on a random design from it. Click the dice again for a different one.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select
+                  value={designCategory || "__none__"}
+                  onValueChange={(v) => {
+                    const cat = v === "__none__" ? "" : v;
+                    setDesignCategory(cat);
+                    if (cat) pickRandomDesign(cat);
+                    else setPickedDesign(null);
+                  }}
+                >
+                  <SelectTrigger className="h-10 sm:flex-1">
+                    <SelectValue placeholder="Choose a design category" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    <SelectItem value="__none__">No inspiration (AI picks)</SelectItem>
+                    {designCategoryOptions.map((id) => (
+                      <SelectItem key={id} value={id}>{designCategoryLabel(id)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 gap-1.5"
+                  disabled={!designCategory}
+                  onClick={() => designCategory && pickRandomDesign(designCategory)}
+                >
+                  <RefreshCw className="h-4 w-4" /> Random design
+                </Button>
+              </div>
+              {pickedDesign && (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">Base design:</span>
+                  <span className="font-medium truncate">{pickedDesign.name}</span>
+                </div>
+              )}
+            </div>
+
+
 
             <div>
               <Label className="text-sm font-semibold mb-2 block">Sections to include</Label>

@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts, backgroundImage, mode, existingContent, instruction } = await req.json();
+    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts, backgroundImage, mode, existingContent, instruction, designReference, designName, designCategory } = await req.json();
     // In "improve" mode the page is enhanced in place from existingContent, so a
     // prompt is NOT required. Every other mode needs a prompt string.
     if (mode !== "improve" && (!prompt || typeof prompt !== "string")) {
@@ -239,7 +239,15 @@ ${themeFonts && themeFonts.length ? `- Use "${themeFonts[0]}" as the primary fon
 
     const direction = DESIGN_DIRECTIONS[Math.floor(Math.random() * DESIGN_DIRECTIONS.length)];
 
-    const directionRule = `
+    // When the user picked a marketplace design as inspiration, we replicate its
+    // layout + visual style instead of using one of the random built-in directions.
+    const hasDesignRef = typeof designReference === "string" && designReference.trim().length > 0;
+    const designRefHtml = hasDesignRef ? String(designReference).slice(0, 12000) : "";
+
+    const directionRule = hasDesignRef ? `
+
+🎨 DESIGN INSPIRATION (mandatory — match this reference design):
+You are given a REFERENCE DESIGN${designName ? ` called "${designName}"` : ""}${designCategory ? ` from the "${designCategory}" category` : ""}. Recreate a NEW page that closely matches the reference's visual language: its color palette, typography feel, section layout/order, spacing rhythm, card and button styling, and overall aesthetic. Do NOT copy its text content — write fresh copy for the requested niche. Keep the same high-quality look and structural approach. Re-scope all CSS under .pgp-page.` : `
 
 🎨 DESIGN DIRECTION FOR THIS GENERATION (mandatory — fully commit, do NOT blend):
 DIRECTION NAME: "${direction.name}"
@@ -309,7 +317,12 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `${prompt}\n\n(Aesthetic for this build: ${direction.name})` },
+            {
+              role: "user",
+              content: hasDesignRef
+                ? `${prompt}\n\nMatch the visual style and layout of this REFERENCE DESIGN (recreate the look, write fresh niche copy — do not reuse its text):\n\n<reference_design>\n${designRefHtml}\n</reference_design>`
+                : `${prompt}\n\n(Aesthetic for this build: ${direction.name})`,
+            },
           ],
         }),
       }
