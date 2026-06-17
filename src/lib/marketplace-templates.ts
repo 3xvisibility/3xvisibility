@@ -1422,11 +1422,6 @@ const estelleCollection = (): MarketplaceTemplate => {
 @media(max-width:560px){.es-grid,.es-cats{grid-template-columns:1fr}}
 </style>
 <div class="es-page">
-  <nav class="es-nav">
-    <div class="es-ic"><span></span><span></span></div>
-    <div class="es-logo">{brand_name}</div>
-    <div class="es-cart">CART (0)</div>
-  </nav>
   <header class="es-hero es-wrap">
     <div class="es-eye">{season_label}</div>
     <h1>{hero_title}</h1>
