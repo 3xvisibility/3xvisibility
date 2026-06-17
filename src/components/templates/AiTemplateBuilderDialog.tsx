@@ -151,21 +151,6 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     return ids.sort((a, b) => designCategoryLabel(a).localeCompare(designCategoryLabel(b)));
   }, []);
 
-  // Pick a fresh random design from the chosen category (re-randomizes each click).
-  const pickRandomDesign = (category: string) => {
-    const pool = COMMUNITY_TEMPLATES.filter((t) => t.category === category);
-    if (pool.length === 0) {
-      setPickedDesign(null);
-      return;
-    }
-    // Avoid repeating the same design twice in a row when possible.
-    let next = pool[Math.floor(Math.random() * pool.length)];
-    if (pool.length > 1 && pickedDesign && next.id === pickedDesign.id) {
-      const others = pool.filter((t) => t.id !== pickedDesign.id);
-      next = others[Math.floor(Math.random() * others.length)];
-    }
-    setPickedDesign(next);
-  };
 
   // Templates that belong to the currently chosen category (for the dropdown).
   const categoryTemplates = useMemo(
