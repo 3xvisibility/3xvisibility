@@ -141,6 +141,9 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
   const [generatedContent, setGeneratedContent] = useState("");
   const [generatedName, setGeneratedName] = useState("");
   const [platform, setPlatform] = useState("wordpress");
+  // Keep the original design's images on every generated page (no AI/stock swap).
+  const [preserveImages, setPreserveImages] = useState(true);
+
 
   // Marketplace design inspiration: pick a category, then a random design from
   // that category is used as the base look for the generated template.
