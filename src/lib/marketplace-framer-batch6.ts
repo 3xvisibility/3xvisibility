@@ -75,7 +75,8 @@ const pawsVet = (): MarketplaceTemplate => {
     ],
     category: "business", tags: ["veterinary", "pets", "clinic", "animals", "light"],
     author: "Community", downloads: 411, rating: 4.8,
-    seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-vet",
+    seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-vet",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "VeterinaryCare", platform: "generic",
     defaultValues: {
       eyebrow: "Caring vets", hero_title: "Gentle care for the pets you love",
@@ -164,7 +165,8 @@ const vowWedding = (): MarketplaceTemplate => {
     ],
     category: "business", tags: ["wedding", "planner", "events", "elegant", "serif"],
     author: "Community", downloads: 489, rating: 4.9,
-    seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-wedding",
+    seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-wedding",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Service", platform: "generic",
     defaultValues: {
       eyebrow: "Wedding planning", hero_title: "The day you'll always remember",
@@ -254,7 +256,8 @@ const azureResort = (): MarketplaceTemplate => {
     ],
     category: "business", tags: ["hotel", "resort", "travel", "hospitality", "dark"],
     author: "Community", downloads: 567, rating: 4.8,
-    seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-resort",
+    seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-resort",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Resort", platform: "generic",
     defaultValues: {
       eyebrow: "Seaside escape", hero_title: "Where the ocean meets effortless luxury",
@@ -351,6 +354,7 @@ const shieldSecurity = (): MarketplaceTemplate => {
     category: "technology", tags: ["security", "cybersecurity", "saas", "tech", "dark"],
     author: "Community", downloads: 612, rating: 4.9,
     seo_title_pattern: "{hero_title} {hero_accent}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-security",
+    og_title_pattern: "{hero_title} {hero_accent}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "",
     schema_type: "SoftwareApplication", platform: "generic",
     defaultValues: {
       eyebrow: "Zero-trust security", hero_title: "Protect everything,", hero_accent: "trust nothing",
@@ -439,7 +443,8 @@ const petalFlorist = (): MarketplaceTemplate => {
     ],
     category: "ecommerce", tags: ["florist", "flowers", "shop", "gifts", "light"],
     author: "Community", downloads: 398, rating: 4.7,
-    seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-flowers",
+    seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-flowers",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Florist", platform: "generic",
     defaultValues: {
       eyebrow: "Fresh blooms daily", hero_title: "Flowers that say it perfectly",
@@ -529,7 +534,8 @@ const hireRecruit = (): MarketplaceTemplate => {
     ],
     category: "business", tags: ["recruitment", "careers", "jobs", "hr", "dark"],
     author: "Community", downloads: 452, rating: 4.8,
-    seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-careers",
+    seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-careers",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Organization", platform: "generic",
     defaultValues: {
       eyebrow: "We're hiring", hero_title: "Build your career with people who get it",
