@@ -239,7 +239,15 @@ ${themeFonts && themeFonts.length ? `- Use "${themeFonts[0]}" as the primary fon
 
     const direction = DESIGN_DIRECTIONS[Math.floor(Math.random() * DESIGN_DIRECTIONS.length)];
 
-    const directionRule = `
+    // When the user picked a marketplace design as inspiration, we replicate its
+    // layout + visual style instead of using one of the random built-in directions.
+    const hasDesignRef = typeof designReference === "string" && designReference.trim().length > 0;
+    const designRefHtml = hasDesignRef ? String(designReference).slice(0, 12000) : "";
+
+    const directionRule = hasDesignRef ? `
+
+🎨 DESIGN INSPIRATION (mandatory — match this reference design):
+You are given a REFERENCE DESIGN${designName ? ` called "${designName}"` : ""}${designCategory ? ` from the "${designCategory}" category` : ""}. Recreate a NEW page that closely matches the reference's visual language: its color palette, typography feel, section layout/order, spacing rhythm, card and button styling, and overall aesthetic. Do NOT copy its text content — write fresh copy for the requested niche. Keep the same high-quality look and structural approach. Re-scope all CSS under .pgp-page.` : `
 
 🎨 DESIGN DIRECTION FOR THIS GENERATION (mandatory — fully commit, do NOT blend):
 DIRECTION NAME: "${direction.name}"
