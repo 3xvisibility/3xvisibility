@@ -93,6 +93,7 @@ const estateRealty = (): MarketplaceTemplate => {
     category: "business", tags: ["real-estate", "property", "homes", "realty", "dark"],
     author: "Community", downloads: 538, rating: 4.8,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-real-estate",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "RealEstateAgent", platform: "generic",
     defaultValues: {
       eyebrow: "Find your home", hero_title: "Homes that match the way you live",
@@ -196,6 +197,7 @@ const pulseFitness = (): MarketplaceTemplate => {
     category: "business", tags: ["fitness", "gym", "workout", "sport", "dark"],
     author: "Community", downloads: 604, rating: 4.9,
     seo_title_pattern: "{hero_title} {hero_accent}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-gym",
+    og_title_pattern: "{hero_title} {hero_accent}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{class_1_image}",
     schema_type: "ExerciseGym", platform: "generic",
     defaultValues: {
       eyebrow: "Train hard", hero_title: "Push your", hero_accent: "limits",
@@ -289,6 +291,7 @@ const stackSaas = (): MarketplaceTemplate => {
     category: "saas", tags: ["saas", "software", "app", "product", "startup"],
     author: "Community", downloads: 721, rating: 4.9,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-saas",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "SoftwareApplication", platform: "generic",
     defaultValues: {
       eyebrow: "New release", hero_title: "Run your whole workflow in one place",
@@ -390,6 +393,7 @@ const savorRestaurant = (): MarketplaceTemplate => {
     category: "business", tags: ["restaurant", "food", "dining", "menu", "cafe"],
     author: "Community", downloads: 489, rating: 4.8,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-restaurant",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Restaurant", platform: "generic",
     defaultValues: {
       eyebrow: "Est. 2009", hero_title: "Flavors worth savoring",
@@ -477,6 +481,7 @@ const framePhoto = (): MarketplaceTemplate => {
     category: "portfolio", tags: ["photography", "portfolio", "gallery", "creative", "dark"],
     author: "Community", downloads: 553, rating: 4.9,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-photography",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{photo_1}",
     schema_type: "WebSite", platform: "generic",
     defaultValues: {
       eyebrow: "Visual storyteller", hero_title: "Moments, beautifully captured",
@@ -578,6 +583,7 @@ const learnCourse = (): MarketplaceTemplate => {
     category: "education", tags: ["course", "education", "learning", "online", "training"],
     author: "Community", downloads: 612, rating: 4.9,
     seo_title_pattern: "{hero_title}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-course",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
     schema_type: "Course", platform: "generic",
     defaultValues: {
       eyebrow: "Self-paced course", hero_title: "Master new skills, on your schedule",
