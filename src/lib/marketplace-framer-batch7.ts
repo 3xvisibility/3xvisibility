@@ -441,7 +441,7 @@ const trekTour = (): MarketplaceTemplate => {
     category: "business", tags: ["travel", "tours", "adventure", "destinations", "dark"],
     author: "Community", downloads: 531, rating: 4.9,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-tours",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{trip_1_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1469854523086-cc02fe5d8800", 1200, 630),
     schema_type: "TravelAgency", platform: "generic",
     defaultValues: {
       eyebrow: "Guided adventures", hero_title: "Go further than the map",
