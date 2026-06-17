@@ -513,6 +513,55 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             {/* Platform picker */}
             {renderPlatformPicker()}
 
+            {/* Design inspiration from marketplace category */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+              <Label className="flex items-center gap-2 text-sm font-semibold">
+                <Palette className="h-4 w-4 text-primary" /> Design inspiration (optional)
+              </Label>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                Pick a category and we'll base the look on a random design from it. Click the dice again for a different one.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Select
+                  value={designCategory || "__none__"}
+                  onValueChange={(v) => {
+                    const cat = v === "__none__" ? "" : v;
+                    setDesignCategory(cat);
+                    if (cat) pickRandomDesign(cat);
+                    else setPickedDesign(null);
+                  }}
+                >
+                  <SelectTrigger className="h-10 sm:flex-1">
+                    <SelectValue placeholder="Choose a design category" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    <SelectItem value="__none__">No inspiration (AI picks)</SelectItem>
+                    {designCategoryOptions.map((id) => (
+                      <SelectItem key={id} value={id}>{designCategoryLabel(id)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 gap-1.5"
+                  disabled={!designCategory}
+                  onClick={() => designCategory && pickRandomDesign(designCategory)}
+                >
+                  <RefreshCw className="h-4 w-4" /> Random design
+                </Button>
+              </div>
+              {pickedDesign && (
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">Base design:</span>
+                  <span className="font-medium truncate">{pickedDesign.name}</span>
+                </div>
+              )}
+            </div>
+
+
+
             <div>
               <Label className="text-sm font-semibold mb-2 block">Sections to include</Label>
               <div className="flex flex-wrap gap-2">
