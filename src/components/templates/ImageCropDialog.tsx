@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Crop } from "lucide-react";
+import { Crop, AlertTriangle, RefreshCcw } from "lucide-react";
 
 interface ImageCropDialogProps {
   open: boolean;
