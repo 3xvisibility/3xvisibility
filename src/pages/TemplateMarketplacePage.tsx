@@ -426,7 +426,7 @@ export default function TemplateMarketplacePage() {
               <div className="border border-border rounded-md overflow-hidden bg-muted/30 h-32">
                 <div
                   className="transform scale-[0.25] origin-top-left w-[400%] h-[400%] pointer-events-none"
-                  dangerouslySetInnerHTML={{ __html: tpl.content }}
+                  dangerouslySetInnerHTML={{ __html: applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
                 />
               </div>
 
