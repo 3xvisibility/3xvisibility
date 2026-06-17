@@ -1053,7 +1053,7 @@ export default function TemplatesPage() {
       <AiTemplateBuilderDialog
         open={aiOpen}
         onOpenChange={setAiOpen}
-        onSave={(name, content) => createMutation.mutate({ name, content })}
+        onSave={(name, content, schemaConfig) => createMutation.mutate({ name, content, schemaConfig })}
         isSaving={createMutation.isPending}
         onContentGenerated={(data) => {
           setEditingTemplate({ id: "", name: data.name, content: data.content, variables: data.variables || [], user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: data.seoTitle || "", seo_description_pattern: data.seoDescription || "" } as any);
