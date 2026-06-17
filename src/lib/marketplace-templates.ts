@@ -1090,6 +1090,302 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
   };
 };
 
+const ceviraCleaning = (): MarketplaceTemplate => {
+  const content = `<style>
+@keyframes cv-up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.cv-page{--cv-blue:#1d4ed8;--cv-blue2:#2563eb;--cv-dark:#0b1a3a;--cv-ink:#0f172a;--cv-mut:#5b6b8c;--cv-bg:#f3f6fc;--cv-card:#fff;font-family:'Helvetica Neue',Arial,sans-serif;color:var(--cv-ink);line-height:1.65;background:var(--cv-card);overflow:hidden}
+.cv-page *{box-sizing:border-box}
+.cv-page h1,.cv-page h2,.cv-page h3,.cv-page h4{margin:0;font-weight:800;line-height:1.08;letter-spacing:-.02em}
+.cv-page p{margin:0}
+.cv-page a{text-decoration:none;color:inherit}
+.cv-page img{display:block}
+.cv-wrap{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.cv-sec{padding:clamp(3.5rem,7vw,6rem) 0;position:relative}
+.cv-eye{display:inline-flex;align-items:center;gap:.5rem;background:rgba(37,99,235,.1);color:var(--cv-blue);font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;padding:.45rem 1rem;border-radius:100px;margin-bottom:1.1rem}
+.cv-h{font-size:clamp(1.9rem,4vw,3rem);color:var(--cv-ink)}
+.cv-sub{color:var(--cv-mut);font-size:1.02rem;max-width:60ch}
+.cv-btn{display:inline-flex;align-items:center;gap:.7rem;background:var(--cv-blue2);color:#fff;font-weight:700;font-size:.95rem;padding:.85rem 1rem .85rem 1.6rem;border-radius:100px;transition:transform .25s,background .25s}
+.cv-btn .cv-ar{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff;color:var(--cv-blue2);font-size:1rem}
+.cv-btn:hover{transform:translateY(-2px);background:var(--cv-blue)}
+/* nav */
+.cv-nav{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:1rem;background:#fff;border-radius:100px;padding:.65rem .7rem .65rem 1.6rem;margin:1.2rem auto 0;max-width:1180px;box-shadow:0 12px 30px rgba(15,23,42,.1)}
+.cv-logo{display:flex;align-items:center;gap:.6rem;font-size:1.4rem;font-weight:800}
+.cv-logo i{width:34px;height:34px;border-radius:50%;background:var(--cv-blue2);display:inline-block}
+.cv-menu{display:flex;gap:2rem;font-size:.95rem;font-weight:600;color:var(--cv-ink)}
+.cv-menu a:hover{color:var(--cv-blue2)}
+/* hero */
+.cv-hero{position:relative;color:#fff;min-height:640px;display:flex;align-items:center;border-radius:0 0 28px 28px;overflow:hidden}
+.cv-hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cv-hero-ov{position:absolute;inset:0;background:linear-gradient(100deg,rgba(11,26,58,.86) 0%,rgba(11,26,58,.45) 45%,rgba(11,26,58,.1) 100%)}
+.cv-hero-in{position:relative;z-index:2;padding:5rem 0;max-width:640px;animation:cv-up .8s ease both}
+.cv-hero h1{font-size:clamp(2.6rem,6vw,4.6rem);color:#fff;margin:1rem 0 1.4rem}
+.cv-hero .cv-sub{color:rgba(255,255,255,.85)}
+.cv-hero .cv-btn{background:#fff;color:var(--cv-ink);margin-top:2rem}
+.cv-hero .cv-btn .cv-ar{background:var(--cv-blue2);color:#fff}
+.cv-card-float{position:absolute;right:1.5rem;bottom:2.5rem;z-index:3;background:var(--cv-blue2);color:#fff;border-radius:18px;padding:1.5rem 1.8rem;max-width:360px;box-shadow:0 24px 60px rgba(11,26,58,.4)}
+.cv-card-float b{font-size:2.6rem;font-weight:800}
+.cv-card-float .cv-rate{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
+.cv-card-float .cv-stars{color:#fbbf24;letter-spacing:2px}
+/* logos */
+.cv-logos{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2.5rem;opacity:.55;padding-top:.5rem}
+.cv-logos img{height:26px}
+/* stats */
+.cv-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;text-align:center}
+.cv-stat b{display:block;font-size:clamp(2rem,4vw,3rem);color:var(--cv-blue2);font-weight:800}
+.cv-stat span{color:var(--cv-mut);font-size:.95rem}
+.cv-split{display:grid;grid-template-columns:.9fr 1.1fr;gap:3.5rem;align-items:center}
+.cv-split img{width:100%;border-radius:18px;object-fit:cover}
+/* services */
+.cv-svc-sec{background:var(--cv-bg)}
+.cv-grid4{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:3rem}
+.cv-svc{background:var(--cv-card);border-radius:18px;overflow:hidden;box-shadow:0 12px 30px rgba(15,23,42,.06);transition:transform .3s,box-shadow .3s}
+.cv-svc:hover{transform:translateY(-6px);box-shadow:0 24px 50px rgba(15,23,42,.12)}
+.cv-svc img{width:100%;height:240px;object-fit:cover}
+.cv-svc-c{padding:1.6rem}
+.cv-svc-c h3{font-size:1.35rem;margin-bottom:.5rem}
+.cv-svc-c p{color:var(--cv-mut);font-size:.95rem;margin-bottom:1rem}
+.cv-tags{display:flex;flex-wrap:wrap;gap:.5rem}
+.cv-tags span{font-size:.78rem;font-weight:600;color:var(--cv-blue2);background:rgba(37,99,235,.1);padding:.3rem .8rem;border-radius:100px}
+/* pricing */
+.cv-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;align-items:stretch}
+.cv-price{background:var(--cv-card);border:1px solid #e6ecf7;border-radius:20px;padding:2rem;display:flex;flex-direction:column}
+.cv-price.pop{background:var(--cv-dark);color:#fff;border-color:var(--cv-dark)}
+.cv-price h4{font-size:1.1rem;margin-bottom:.4rem}
+.cv-price .cv-amt{font-size:2.8rem;font-weight:800;margin:.6rem 0}
+.cv-price .cv-amt small{font-size:.9rem;font-weight:600;color:var(--cv-mut)}
+.cv-price.pop .cv-amt small{color:rgba(255,255,255,.7)}
+.cv-price ul{list-style:none;padding:0;margin:1.4rem 0 1.6rem;display:grid;gap:.7rem;font-size:.92rem}
+.cv-price li{display:flex;gap:.6rem;align-items:flex-start}
+.cv-price li::before{content:"✓";color:var(--cv-blue2);font-weight:800}
+.cv-price.pop li::before{color:#7dd3fc}
+.cv-price .cv-btn{margin-top:auto;justify-content:center}
+/* testimonial */
+.cv-quote-sec{background:var(--cv-bg)}
+.cv-quote{max-width:760px;margin:0 auto;text-align:center}
+.cv-quote .cv-big{font-size:clamp(1.4rem,2.6vw,2rem);font-weight:700;color:var(--cv-ink);margin:1.4rem 0}
+.cv-quote .cv-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;margin:1.5rem auto .6rem}
+.cv-quote .cv-name{font-weight:700}
+.cv-quote .cv-role{color:var(--cv-mut);font-size:.9rem}
+/* faq */
+.cv-faq{max-width:760px;margin:2.5rem auto 0;display:grid;gap:.9rem}
+.cv-faq details{background:var(--cv-card);border:1px solid #e6ecf7;border-radius:14px;padding:1.1rem 1.4rem}
+.cv-faq summary{font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:1rem}
+.cv-faq summary::after{content:"+";color:var(--cv-blue2);font-weight:800}
+.cv-faq details[open] summary::after{content:"–"}
+.cv-faq p{color:var(--cv-mut);margin-top:.8rem;font-size:.95rem}
+/* cta */
+.cv-cta{position:relative;color:#fff;border-radius:24px;overflow:hidden;padding:clamp(2.5rem,5vw,4rem);text-align:center;margin:0 1.5rem}
+.cv-cta-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cv-cta-ov{position:absolute;inset:0;background:linear-gradient(120deg,rgba(11,26,58,.9),rgba(37,99,235,.7))}
+.cv-cta-in{position:relative;z-index:2}
+.cv-cta h2{font-size:clamp(1.8rem,4vw,2.8rem);color:#fff;margin-bottom:1rem}
+.cv-cta .cv-btn{background:#fff;color:var(--cv-ink);margin-top:1.5rem}
+.cv-cta .cv-btn .cv-ar{background:var(--cv-blue2);color:#fff}
+/* footer */
+.cv-foot{background:var(--cv-dark);color:rgba(255,255,255,.6);padding:2.5rem 0;text-align:center;font-size:.85rem}
+@media(max-width:880px){.cv-menu{display:none}.cv-split,.cv-grid4,.cv-grid3{grid-template-columns:1fr}.cv-stats{grid-template-columns:1fr}.cv-card-float{position:static;margin:1.5rem auto 0;max-width:100%}}
+</style>
+<div class="cv-page">
+  <header class="cv-wrap cv-nav">
+    <div class="cv-logo"><i></i>{company_name}</div>
+    <nav class="cv-menu"><a href="#services">Services</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></nav>
+    <a href="#contact" class="cv-btn">Book Now <span class="cv-ar">→</span></a>
+  </header>
+
+  <section class="cv-hero">
+    <img class="cv-hero-bg" src="{hero_image}" alt="professional cleaning" loading="lazy">
+    <div class="cv-hero-ov"></div>
+    <div class="cv-wrap cv-hero-in">
+      <span class="cv-eye">{hero_badge}</span>
+      <h1>{hero_title}</h1>
+      <p class="cv-sub">{hero_subtitle}</p>
+      <a href="#contact" class="cv-btn">{hero_cta} <span class="cv-ar">→</span></a>
+    </div>
+    <div class="cv-card-float">
+      <div class="cv-rate"><b>{trust_rate}</b><span>{trust_label}</span></div>
+      <div class="cv-stars">★★★★★</div>
+      <div>{reviews_count}</div>
+    </div>
+  </section>
+
+  <section class="cv-sec"><div class="cv-wrap cv-stats">
+    <div class="cv-stat"><b>{stat_1_num}</b><span>{stat_1_label}</span></div>
+    <div class="cv-stat"><b>{stat_2_num}</b><span>{stat_2_label}</span></div>
+    <div class="cv-stat"><b>{stat_3_num}</b><span>{stat_3_label}</span></div>
+  </div></section>
+
+  <section class="cv-sec" id="about"><div class="cv-wrap cv-split">
+    <img src="{about_image}" alt="our cleaning team" loading="lazy">
+    <div>
+      <span class="cv-eye">About Us</span>
+      <h2 class="cv-h">{about_title}</h2>
+      <p class="cv-sub" style="margin-top:1rem">{about_text}</p>
+      <a href="#contact" class="cv-btn" style="margin-top:2rem">{hero_cta} <span class="cv-ar">→</span></a>
+    </div>
+  </div></section>
+
+  <section class="cv-sec cv-svc-sec" id="services"><div class="cv-wrap">
+    <span class="cv-eye">Our Services</span>
+    <h2 class="cv-h">{services_title}</h2>
+    <p class="cv-sub" style="margin-top:1rem">{services_subtitle}</p>
+    <div class="cv-grid4">
+      <div class="cv-svc"><img src="{service_1_image}" alt="{service_1_title}" loading="lazy"><div class="cv-svc-c"><h3>{service_1_title}</h3><p>{service_1_desc}</p><div class="cv-tags"><span>{service_1_tag_1}</span><span>{service_1_tag_2}</span></div></div></div>
+      <div class="cv-svc"><img src="{service_2_image}" alt="{service_2_title}" loading="lazy"><div class="cv-svc-c"><h3>{service_2_title}</h3><p>{service_2_desc}</p><div class="cv-tags"><span>{service_2_tag_1}</span><span>{service_2_tag_2}</span></div></div></div>
+      <div class="cv-svc"><img src="{service_3_image}" alt="{service_3_title}" loading="lazy"><div class="cv-svc-c"><h3>{service_3_title}</h3><p>{service_3_desc}</p><div class="cv-tags"><span>{service_3_tag_1}</span><span>{service_3_tag_2}</span></div></div></div>
+      <div class="cv-svc"><img src="{service_4_image}" alt="{service_4_title}" loading="lazy"><div class="cv-svc-c"><h3>{service_4_title}</h3><p>{service_4_desc}</p><div class="cv-tags"><span>{service_4_tag_1}</span><span>{service_4_tag_2}</span></div></div></div>
+    </div>
+  </div></section>
+
+  <section class="cv-sec" id="pricing"><div class="cv-wrap">
+    <span class="cv-eye">Pricing Plan</span>
+    <h2 class="cv-h">{pricing_title}</h2>
+    <p class="cv-sub" style="margin-top:1rem">{pricing_subtitle}</p>
+    <div class="cv-grid3">
+      <div class="cv-price"><h4>{plan_1_name}</h4><p class="cv-sub">{plan_1_desc}</p><div class="cv-amt">{plan_1_price}<small> / {plan_1_period}</small></div><ul><li>{plan_1_f1}</li><li>{plan_1_f2}</li><li>{plan_1_f3}</li><li>{plan_1_f4}</li></ul><a href="#contact" class="cv-btn">{hero_cta} <span class="cv-ar">→</span></a></div>
+      <div class="cv-price pop"><h4>{plan_2_name}</h4><p class="cv-sub" style="color:rgba(255,255,255,.7)">{plan_2_desc}</p><div class="cv-amt">{plan_2_price}<small> / {plan_2_period}</small></div><ul><li>{plan_2_f1}</li><li>{plan_2_f2}</li><li>{plan_2_f3}</li><li>{plan_2_f4}</li></ul><a href="#contact" class="cv-btn" style="background:#fff;color:var(--cv-ink)">{hero_cta} <span class="cv-ar">→</span></a></div>
+      <div class="cv-price"><h4>{plan_3_name}</h4><p class="cv-sub">{plan_3_desc}</p><div class="cv-amt">{plan_3_price}<small> / {plan_3_period}</small></div><ul><li>{plan_3_f1}</li><li>{plan_3_f2}</li><li>{plan_3_f3}</li><li>{plan_3_f4}</li></ul><a href="#contact" class="cv-btn">{hero_cta} <span class="cv-ar">→</span></a></div>
+    </div>
+  </div></section>
+
+  <section class="cv-sec cv-quote-sec"><div class="cv-wrap cv-quote">
+    <span class="cv-eye">Testimonial</span>
+    <h2 class="cv-h">{testimonial_heading}</h2>
+    <p class="cv-big">"{testimonial_text}"</p>
+    <img class="cv-avatar" src="{testimonial_image}" alt="{testimonial_author}" loading="lazy">
+    <div class="cv-name">{testimonial_author}</div>
+    <div class="cv-role">{testimonial_role}</div>
+  </div></section>
+
+  <section class="cv-sec" id="faq"><div class="cv-wrap">
+    <span class="cv-eye">FAQ</span>
+    <h2 class="cv-h">{faq_title}</h2>
+    <div class="cv-faq">
+      <details open><summary>{faq_1_q}</summary><p>{faq_1_a}</p></details>
+      <details><summary>{faq_2_q}</summary><p>{faq_2_a}</p></details>
+      <details><summary>{faq_3_q}</summary><p>{faq_3_a}</p></details>
+      <details><summary>{faq_4_q}</summary><p>{faq_4_a}</p></details>
+    </div>
+  </div></section>
+
+  <section class="cv-sec" id="contact"><div class="cv-cta">
+    <img class="cv-cta-bg" src="{cta_image}" alt="book a cleaning" loading="lazy">
+    <div class="cv-cta-ov"></div>
+    <div class="cv-cta-in">
+      <h2>{cta_title}</h2>
+      <p class="cv-sub" style="color:rgba(255,255,255,.85);margin-inline:auto">{cta_subtitle}</p>
+      <a href="tel:{phone}" class="cv-btn">📞 {phone} <span class="cv-ar">→</span></a>
+    </div>
+  </div></section>
+
+  <footer class="cv-foot">© {year} {company_name}. All rights reserved. · {address}, {city}</footer>
+</div>`;
+  return {
+    id: "cleaning-service",
+    name: "Cevira Cleaning Service",
+    description: "Modern cleaning company landing page with cinematic hero, floating trust card, stats, service grid, pricing plans, testimonial and FAQ — modelled 1:1 on the Cevira theme.",
+    content,
+    variables: ["{company_name}", "{hero_badge}", "{hero_title}", "{hero_subtitle}", "{hero_cta}", "{trust_rate}", "{trust_label}", "{reviews_count}", "{stat_1_num}", "{stat_1_label}", "{stat_2_num}", "{stat_2_label}", "{stat_3_num}", "{stat_3_label}", "{about_title}", "{about_text}", "{services_title}", "{services_subtitle}", "{service_1_title}", "{service_1_desc}", "{service_1_tag_1}", "{service_1_tag_2}", "{service_2_title}", "{service_2_desc}", "{service_2_tag_1}", "{service_2_tag_2}", "{service_3_title}", "{service_3_desc}", "{service_3_tag_1}", "{service_3_tag_2}", "{service_4_title}", "{service_4_desc}", "{service_4_tag_1}", "{service_4_tag_2}", "{pricing_title}", "{pricing_subtitle}", "{plan_1_name}", "{plan_1_desc}", "{plan_1_price}", "{plan_1_period}", "{plan_1_f1}", "{plan_1_f2}", "{plan_1_f3}", "{plan_1_f4}", "{plan_2_name}", "{plan_2_desc}", "{plan_2_price}", "{plan_2_period}", "{plan_2_f1}", "{plan_2_f2}", "{plan_2_f3}", "{plan_2_f4}", "{plan_3_name}", "{plan_3_desc}", "{plan_3_price}", "{plan_3_period}", "{plan_3_f1}", "{plan_3_f2}", "{plan_3_f3}", "{plan_3_f4}", "{testimonial_heading}", "{testimonial_text}", "{testimonial_author}", "{testimonial_role}", "{faq_title}", "{faq_1_q}", "{faq_1_a}", "{faq_2_q}", "{faq_2_a}", "{faq_3_q}", "{faq_3_a}", "{faq_4_q}", "{faq_4_a}", "{cta_title}", "{cta_subtitle}", "{phone}", "{address}", "{city}", "{year}", "{hero_image}", "{about_image}", "{service_1_image}", "{service_2_image}", "{service_3_image}", "{service_4_image}", "{testimonial_image}", "{cta_image}"],
+    category: "local-seo",
+    tags: ["cleaning", "local", "service", "home", "office"],
+    author: "Community", downloads: 912, rating: 4.8,
+    seo_title_pattern: "{company_name} — Professional Cleaning Services in {city}",
+    seo_description_pattern: "{hero_subtitle} Book {company_name} in {city}. Call {phone}.",
+    slug_pattern: "{company_name}-cleaning",
+    schema_type: "LocalBusiness",
+    platform: "generic",
+    defaultValues: {
+      company_name: "Cevira",
+      hero_badge: "Trusted Cleaning Solutions",
+      hero_title: "Cleaning Made Simple, Fast & Reliable",
+      hero_subtitle: "Book expert cleaners in minutes. Transparent pricing, flexible scheduling, and guaranteed results.",
+      hero_cta: "Schedule Now",
+      trust_rate: "98.99%",
+      trust_label: "Trusted Rate",
+      reviews_count: "50K+ Verified Reviews",
+      stat_1_num: "1.2k",
+      stat_1_label: "Homes & Offices Cleaned",
+      stat_2_num: "850",
+      stat_2_label: "Gardens Maintained",
+      stat_3_num: "3.5k",
+      stat_3_label: "Items Delivered",
+      about_title: "We're a team of dedicated cleaning professionals",
+      about_text: "Our mission is simple — to make your space cleaner, healthier, and more comfortable without adding stress to your day. We deliver spotless results with every visit.",
+      services_title: "Best Cleaning Services",
+      services_subtitle: "We take pride in delivering consistent, high-quality cleaning services that our clients rely on every day.",
+      service_1_title: "Home Cleaning",
+      service_1_desc: "Keep your home fresh, organized, and spotless with our regular cleaning services daily.",
+      service_1_tag_1: "Deep Clean",
+      service_1_tag_2: "Apartment",
+      service_2_title: "Office Cleaning",
+      service_2_desc: "Maintain a healthy and productive environment with our comprehensive office sanitization.",
+      service_2_tag_1: "Workspace",
+      service_2_tag_2: "Sanitization",
+      service_3_title: "Deep Cleaning",
+      service_3_desc: "Ensure every corner is spotless with our thorough, detail-oriented deep cleaning service.",
+      service_3_tag_1: "Move-Out",
+      service_3_tag_2: "Intensive",
+      service_4_title: "Workplace Cleaning",
+      service_4_desc: "Make sure your space is pristine and ready with our detailed professional cleaning.",
+      service_4_tag_1: "Exit Cleaning",
+      service_4_tag_2: "Commercial",
+      pricing_title: "Professional Cleaning, Clearly Priced",
+      pricing_subtitle: "Choose the plan that fits your needs. No hidden fees — just reliable, high-quality cleaning you can trust.",
+      plan_1_name: "Basic Clean",
+      plan_1_desc: "Enhanced cleaning with extra care.",
+      plan_1_price: "$49",
+      plan_1_period: "Per Month",
+      plan_1_f1: "General dusting & wiping",
+      plan_1_f2: "Floor cleaning & vacuuming",
+      plan_1_f3: "Bathroom & kitchen cleaning",
+      plan_1_f4: "Window and mirror polishing",
+      plan_2_name: "Standard Clean",
+      plan_2_desc: "Everything in Basic Plan.",
+      plan_2_price: "$79",
+      plan_2_period: "Per Month",
+      plan_2_f1: "Trash removal",
+      plan_2_f2: "Window and mirror polishing",
+      plan_2_f3: "Furniture dusting and polishing",
+      plan_2_f4: "Floor cleaning & vacuuming",
+      plan_3_name: "Business Plan",
+      plan_3_desc: "Everything in Basic & Standard Plan.",
+      plan_3_price: "$99",
+      plan_3_period: "Per Month",
+      plan_3_f1: "Floor cleaning & vacuuming",
+      plan_3_f2: "General dusting & wiping",
+      plan_3_f3: "Bathroom & kitchen cleaning",
+      plan_3_f4: "Trash removal",
+      testimonial_heading: "Our Reputation, Built on Client Trust",
+      testimonial_text: "Fast, reliable, and always spotless. The best cleaning service we've used so far.",
+      testimonial_author: "Cody Fisher",
+      testimonial_role: "Manager",
+      faq_title: "Common Questions, Clearly Answered",
+      faq_1_q: "What services do you offer?",
+      faq_1_a: "We provide a range of cleaning services including residential cleaning, office cleaning, deep cleaning, and specialized services like sofa, carpet, and window cleaning.",
+      faq_2_q: "How do I book a cleaning service?",
+      faq_2_a: "Simply schedule online or give us a call. Choose your service, pick a time that works for you, and our team will handle the rest.",
+      faq_3_q: "Do I need to provide cleaning supplies?",
+      faq_3_a: "No — our professional cleaners arrive fully equipped with eco-friendly supplies and equipment.",
+      faq_4_q: "Are your cleaners trained and insured?",
+      faq_4_a: "Yes. Every cleaner is fully vetted, professionally trained, and insured for your peace of mind.",
+      cta_title: "Stay consistent with your cleaning routine",
+      cta_subtitle: "A better home starts with better cleaning. Schedule your service today.",
+      phone: "+1 (212) 555-0199",
+      address: "120 Sparkle Avenue",
+      city: "New York",
+      year: "2026",
+      hero_image: FU + "/T5ZwdF4fAv939hZRY9sN4JOX50.png",
+      about_image: FU + "/RPiugULV1heoeVCjDfb9MXnVk.png",
+      service_1_image: FU + "/BHtyXThekWm38efWvDJkVyqbLVM.png",
+      service_2_image: FU + "/56ZqtDbQrIjdTAh4EfEp6NzsCS0.png",
+      service_3_image: FU + "/re8cwwnrRcBWlS63TvqlvS01NY.png",
+      service_4_image: FU + "/6Paa4KhXEnAGF8Wm4oBiuJj7Rxw.png",
+      testimonial_image: FU + "/wdpdbLQu1F6oAUX7W0gwIxxako.png",
+      cta_image: FU + "/6SpPNtvaL0e5EOLPwsQeQZL9718.png",
+    },
+  };
+};
+
+
 
 // ── Vibe accent palettes ──────────────────────────────────────────────────
 // Each template gets one of these flavors so the marketplace feels varied.
@@ -3197,6 +3493,10 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 8. Restaurant
   heavenPalateRestaurant(),
+
+  // 8b. Cleaning service
+  ceviraCleaning(),
+
 
   // 9. Real estate
   {
