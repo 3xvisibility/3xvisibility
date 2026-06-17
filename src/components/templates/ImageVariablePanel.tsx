@@ -81,6 +81,12 @@ export function ImageVariablePanel({
   onReset,
   className = "",
 }: ImageVariablePanelProps) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeVarRef = useRef<string | null>(null);
+  const [cropState, setCropState] = useState<{ variable: string; src: string } | null>(null);
+  const [uploadingVar, setUploadingVar] = useState<string | null>(null);
+
   const imageVars = useMemo(() => {
     const matches = templateContent.match(/\{([a-z_][a-z0-9_]*?)(?::[\w()., ]+)?\}/gi) || [];
     const set = new Set<string>();
@@ -90,6 +96,50 @@ export function ImageVariablePanel({
     });
     return Array.from(set);
   }, [templateContent]);
+
+  const pickFile = (variable: string) => {
+    activeVarRef.current = variable;
+    fileInputRef.current?.click();
+  };
+
+  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const variable = activeVarRef.current;
+    e.target.value = "";
+    if (!file || !variable) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Not an image", description: "Please choose an image file.", variant: "destructive" });
+      return;
+    }
+    const src = URL.createObjectURL(file);
+    setCropState({ variable, src });
+  };
+
+  const handleCropped = async (blob: Blob) => {
+    if (!cropState) return;
+    const variable = cropState.variable;
+    setUploadingVar(variable);
+    try {
+      const path = `template-images/${variable}-${Date.now()}.jpg`;
+      const { error } = await supabase.storage
+        .from("ai-images")
+        .upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("ai-images").getPublicUrl(path);
+      onChange(variable, data.publicUrl);
+      toast({ title: "Image updated", description: "Your cropped image was uploaded." });
+      URL.revokeObjectURL(cropState.src);
+      setCropState(null);
+    } catch (err) {
+      toast({
+        title: "Upload failed",
+        description: err instanceof Error ? err.message : "Could not upload image.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingVar(null);
+    }
+  };
 
   if (imageVars.length === 0) return null;
 
@@ -112,10 +162,18 @@ export function ImageVariablePanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onFileSelected}
+        />
         <p className="text-xs text-muted-foreground">
-          Paste a new image URL to replace the hero photo, gallery shots or review thumbnails. The preview updates instantly.
+          Upload &amp; crop a new image, or paste an image URL. Each slot crops to the right aspect ratio so the layout stays intact.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
           {imageVars.map((v) => {
             const url = values[v] ?? defaultValues[v] ?? "";
             return (
