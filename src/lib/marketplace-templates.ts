@@ -10,6 +10,7 @@
 // across the whole product.
 
 import { FRAMER_TEMPLATES } from "@/lib/marketplace-framer-templates";
+import { FRAMER_BATCH1_TEMPLATES } from "@/lib/marketplace-framer-batch1";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -3589,6 +3590,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 8c-8f. Framer-modelled designs (Astralab, Powder, Fabrica, Hanzo)
   ...FRAMER_TEMPLATES,
+
+  // Batch 1 — Framer featured clones (Nexa, Lumen, Orbit, Verde, Studio Mono, Pulse)
+  ...FRAMER_BATCH1_TEMPLATES,
 
 
 
