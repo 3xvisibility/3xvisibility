@@ -461,7 +461,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                     onClick={() => {
                       setDesignCategory(id);
                       setBusinessType(designCategoryLabel(id));
-                      pickRandomDesign(id);
+                      setPickedDesign(null);
                     }}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${
                       designCategory === id
