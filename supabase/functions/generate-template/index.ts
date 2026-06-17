@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts, backgroundImage, mode, existingContent, instruction } = await req.json();
+    const { prompt, includeHeaderFooter, platform, niche, businessType, keywords, themeColors, themeFonts, backgroundImage, mode, existingContent, instruction, designReference, designName, designCategory } = await req.json();
     // In "improve" mode the page is enhanced in place from existingContent, so a
     // prompt is NOT required. Every other mode needs a prompt string.
     if (mode !== "improve" && (!prompt || typeof prompt !== "string")) {
