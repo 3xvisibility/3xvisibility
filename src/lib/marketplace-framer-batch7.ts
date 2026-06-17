@@ -166,7 +166,7 @@ const craftBakery = (): MarketplaceTemplate => {
     category: "local-seo", tags: ["bakery", "cafe", "food", "coffee", "light"],
     author: "Community", downloads: 478, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-bakery",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1509440159596-0249088772ff", 1200, 630),
     schema_type: "Bakery", platform: "generic",
     defaultValues: {
       eyebrow: "Artisan bakery", hero_title: "Baked fresh, every single morning",
