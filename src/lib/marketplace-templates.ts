@@ -13,6 +13,7 @@ import { FRAMER_TEMPLATES } from "@/lib/marketplace-framer-templates";
 import { FRAMER_BATCH1_TEMPLATES } from "@/lib/marketplace-framer-batch1";
 import { FRAMER_BATCH2_TEMPLATES } from "@/lib/marketplace-framer-batch2";
 import { FRAMER_BATCH3_TEMPLATES } from "@/lib/marketplace-framer-batch3";
+import { FRAMER_BATCH4_TEMPLATES } from "@/lib/marketplace-framer-batch4";
 
 export interface MarketplaceTemplate {
   id: string;
