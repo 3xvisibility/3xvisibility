@@ -3494,6 +3494,10 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 8. Restaurant
   heavenPalateRestaurant(),
 
+  // 8b. Cleaning service
+  ceviraCleaning(),
+
+
   // 9. Real estate
   {
     id: "real-estate-listing",
