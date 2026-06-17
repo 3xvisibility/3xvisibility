@@ -3478,37 +3478,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   },
 
 
-  // 2. E-commerce Product
-  {
-    id: "product-page",
-    name: "E-Commerce Product Page",
-    description: "Premium product detail page with hero image, features, testimonials, and gallery.",
-    content: page(
-      hero({ bgKeywords: "{category} product premium studio", badge: "✨ {category}", title: "{product_name}", subtitle: "{description}", primaryCta: "🛒 Buy now — {price}", secondaryCta: "Add to wishlist", sig: 2 }) +
-      trustStrip([{ num: "4.9★", lbl: "Customer Rating" }, { num: "10K+", lbl: "Happy Buyers" }, { num: "30-Day", lbl: "Returns" }, { num: "Free", lbl: "Shipping" }]) +
-      featureGrid("Why you'll love it", "Designed with care, built to last", "{features}", [
-        { icon: "🎯", title: "Premium quality", desc: "Crafted from carefully sourced materials for lasting performance." },
-        { icon: "🚚", title: "Free shipping", desc: "On orders over $50 — delivered to your door in 2–5 business days." },
-        { icon: "↩️", title: "Easy returns", desc: "Not a perfect fit? Send it back within 30 days, no questions asked." },
-      ]) +
-      aboutSplit("Product story", "More than just a {category}", "{long_description}", "{category} lifestyle product", 7) +
-      gallery("Gallery", "See it in action", ["{category} closeup", "{category} lifestyle", "{category} detail", "{category} packaging", "{category} unboxing", "{category} use"]) +
-      defaultTestimonials +
-      faq([
-        { q: "What's included in the box?", a: "Each {product_name} ships with full accessories, a quick-start guide and our warranty card." },
-        { q: "How long does shipping take?", a: "Standard delivery is 2–5 business days. Expedited options are available at checkout." },
-        { q: "What's your return policy?", a: "30-day no-questions-asked returns. We even cover the return shipping." },
-      ]) +
-      ctaBand({ bgKeywords: "premium {category} hero", title: "Ready to upgrade?", subtitle: "Join thousands of happy customers who chose {product_name}.", cta: "🛒 Buy now — {price}", sig: 12 })
-    ),
-    variables: ["{product_name}", "{category}", "{price}", "{compare_price}", "{discount}", "{description}", "{features}", "{long_description}"],
-    category: "ecommerce",
-    tags: ["product", "shop", "ecommerce"],
-    author: "Community", downloads: 892, rating: 4.6,
-    seo_title_pattern: "{product_name} — Buy Online | {category}",
-    seo_description_pattern: "{description}",
-    schema_type: "Product",
-  },
+
+
 
   // 3. SaaS landing (LanderX-style dark SaaS)
   {
