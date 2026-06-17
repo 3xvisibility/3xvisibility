@@ -3605,6 +3605,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   ...FRAMER_BATCH3_TEMPLATES,
   ...FRAMER_BATCH4_TEMPLATES,
 
+  // Batch 5 — Framer featured clones (Estate, Pulse, Stack, Savor, Frame, Learn)
+  ...FRAMER_BATCH5_TEMPLATES,
+
 
 
 
