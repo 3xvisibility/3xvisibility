@@ -3595,6 +3595,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // Batch 1 — Framer featured clones (Nexa, Lumen, Orbit, Verde, Studio Mono, Pulse)
   ...FRAMER_BATCH1_TEMPLATES,
 
+  // Batch 2 — Framer featured clones (Aurora, Savora, Cira, Nova, Evena, Terra)
+  ...FRAMER_BATCH2_TEMPLATES,
+
 
 
 
