@@ -559,33 +559,6 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
             {/* Platform picker */}
             {renderPlatformPicker()}
 
-            {/* Random design from the chosen category */}
-            {designCategory && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-                <Label className="flex items-center gap-2 text-sm font-semibold">
-                  <Palette className="h-4 w-4 text-primary" /> Base design
-                </Label>
-                <p className="text-[11px] text-muted-foreground -mt-1">
-                  A random design from <span className="font-medium">{designCategoryLabel(designCategory)}</span> is used as the look. Click the dice for a different one.
-                </p>
-                <div className="flex items-center gap-2">
-                  {pickedDesign && (
-                    <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs min-w-0">
-                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                      <span className="font-medium truncate">{pickedDesign.name}</span>
-                    </div>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-10 gap-1.5 shrink-0"
-                    onClick={() => pickRandomDesign(designCategory)}
-                  >
-                    <RefreshCw className="h-4 w-4" /> Random design
-                  </Button>
-                </div>
-              </div>
-            )}
 
 
 
