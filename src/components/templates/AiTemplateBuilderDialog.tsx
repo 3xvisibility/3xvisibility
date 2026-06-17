@@ -532,28 +532,6 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
 
 
-            <div>
-              <Label className="text-sm font-semibold mb-2 block">Sections to include</Label>
-              <div className="flex flex-wrap gap-2">
-                {SECTIONS.map((sec) => {
-                  const selected = sections.includes(sec.value);
-                  return (
-                    <button
-                      key={sec.value}
-                      type="button"
-                      onClick={() => setSections(prev => selected ? prev.filter(s => s !== sec.value) : [...prev, sec.value])}
-                      className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
-                        selected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-muted/50 text-muted-foreground hover:bg-accent"
-                      }`}
-                    >
-                      {selected ? "✓ " : ""}{sec.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
 
 
             {/* ─── Theme Colors ─── */}
