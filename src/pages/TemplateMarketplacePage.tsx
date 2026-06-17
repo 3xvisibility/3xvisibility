@@ -396,17 +396,30 @@ export default function TemplateMarketplacePage() {
                 <span className="text-xs text-muted-foreground">
                   {tpl.variables.length} variables
                 </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    importMutation.mutate(tpl);
-                  }}
-                >
-                  <Download className="h-3 w-3 mr-1" /> Import
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportTemplateZip(tpl);
+                    }}
+                  >
+                    <Download className="h-3 w-3 mr-1" /> Export
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      importMutation.mutate(tpl);
+                    }}
+                  >
+                    <Download className="h-3 w-3 mr-1" /> Import
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
