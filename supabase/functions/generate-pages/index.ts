@@ -1777,7 +1777,12 @@ Deno.serve(async (req) => {
           // insert a relevant FREE Unsplash hero image based on page context.
           // No AI credits consumed.
           // ═══════════════════════════════════════════════════════════
-          {
+          // Per-template image mapping: when the template opts to keep its
+          // original design images, never swap/insert stock or AI images.
+          const preserveTemplateImages =
+            ((campaign.templates?.schema_config || {}) as Record<string, any>)._preserveImages === true;
+          if (!preserveTemplateImages) {
+
             const imgTags = pageContent.match(/<img\b[^>]*src\s*=\s*["']([^"']+)["'][^>]*>/gi) || [];
             const realImages = imgTags.filter((tag: string) => {
               const srcMatch = tag.match(/src\s*=\s*["']([^"']+)["']/i);
