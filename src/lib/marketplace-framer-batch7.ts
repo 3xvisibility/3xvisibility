@@ -539,7 +539,7 @@ const mintAccounting = (): MarketplaceTemplate => {
     category: "professional", tags: ["accounting", "bookkeeping", "finance", "tax", "light"],
     author: "Community", downloads: 467, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-accounting",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1454165804606-c3d57bc86b40", 1200, 630),
     schema_type: "AccountingService", platform: "generic",
     defaultValues: {
       eyebrow: "Accounting firm", hero_title: "Numbers handled, so you can grow",
