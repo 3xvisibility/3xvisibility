@@ -266,7 +266,7 @@ const buildConstruction = (): MarketplaceTemplate => {
     category: "local-seo", tags: ["construction", "contractor", "building", "trades", "dark"],
     author: "Community", downloads: 503, rating: 4.8,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-construction",
-    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: "{hero_image}",
+    og_title_pattern: "{hero_title}", og_description_pattern: "{hero_subtitle}", og_image_pattern: U("1503387762-abc9d0c8e2dd", 1200, 630),
     schema_type: "GeneralContractor", platform: "generic",
     defaultValues: {
       eyebrow: "Since 1998", hero_title: "We build it right, the first time",
