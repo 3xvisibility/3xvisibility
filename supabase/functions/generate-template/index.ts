@@ -247,7 +247,10 @@ ${themeFonts && themeFonts.length ? `- Use "${themeFonts[0]}" as the primary fon
     const directionRule = hasDesignRef ? `
 
 🎨 DESIGN INSPIRATION (mandatory — match this reference design):
-You are given a REFERENCE DESIGN${designName ? ` called "${designName}"` : ""}${designCategory ? ` from the "${designCategory}" category` : ""}. Recreate a NEW page that closely matches the reference's visual language: its color palette, typography feel, section layout/order, spacing rhythm, card and button styling, and overall aesthetic. Do NOT copy its text content — write fresh copy for the requested niche. Keep the same high-quality look and structural approach. Re-scope all CSS under .pgp-page.` : `
+You are given a REFERENCE DESIGN${designName ? ` called "${designName}"` : ""}${designCategory ? ` from the "${designCategory}" category` : ""}. Recreate a NEW page that closely matches the reference's visual language: its color palette, typography feel, section layout/order, spacing rhythm, card and button styling, and overall aesthetic. Do NOT copy its text content — write fresh copy for the requested niche. Keep the same high-quality look and structural approach. Re-scope all CSS under .pgp-page.
+
+🖼️ IMAGES — CRITICAL: Reuse the EXACT image URLs that already exist in the reference design (both <img src="..."> and CSS url(...) backgrounds). NEVER swap them for picsum.photos, stock, or AI images. NEVER invent new image URLs. NEVER remove images. The reference design's own images are the source of truth — the client will change them later if they want. Copy every image src URL verbatim from the reference into your output.` : `
+
 
 🎨 DESIGN DIRECTION FOR THIS GENERATION (mandatory — fully commit, do NOT blend):
 DIRECTION NAME: "${direction.name}"
