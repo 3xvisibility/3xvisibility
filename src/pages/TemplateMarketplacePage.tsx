@@ -216,6 +216,16 @@ export default function TemplateMarketplacePage() {
     ];
   }, [activeTab, allTemplates, communityTemplates]);
 
+  const shareCategories = useMemo(() => {
+    const ids = new Set(Object.keys(CATEGORY_META).filter((id) => id !== "all"));
+    for (const tpl of allTemplates) {
+      if (tpl.category) ids.add(tpl.category);
+    }
+    return Array.from(ids).sort((a, b) =>
+      categoryMeta(a).label.localeCompare(categoryMeta(b).label)
+    );
+  }, [allTemplates]);
+
 
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
@@ -756,7 +766,7 @@ export default function TemplateMarketplacePage() {
                 <Select value={shareForm.category} onValueChange={(v) => setShareForm(f => ({ ...f, category: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.keys(CATEGORY_META).filter(id => id !== "all").map((id) => (
+                    {shareCategories.map((id) => (
                       <SelectItem key={id} value={id}>
                         <span className="flex items-center gap-2">
                           {categoryMeta(id).label}
