@@ -1259,7 +1259,7 @@ const ceviraCleaning = (): MarketplaceTemplate => {
     </div>
   </div></section>
 
-  <footer class="cv-foot">© {year} {company_name}. All rights reserved. · {address}, {city}</footer>
+  
 </div>`;
   return {
     id: "cleaning-service",
