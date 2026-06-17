@@ -29,19 +29,35 @@ import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 
-const CATEGORIES = [
-  { id: "all", label: "All", icon: Store },
-  { id: "local-seo", label: "Local SEO", icon: MapPin },
-  { id: "ecommerce", label: "E-Commerce", icon: ShoppingBag },
-  { id: "saas", label: "SaaS / Tech", icon: Globe },
-  { id: "marketing", label: "Marketing", icon: Megaphone },
-  { id: "professional", label: "Professional", icon: Briefcase },
-  { id: "education", label: "Education", icon: GraduationCap },
-  { id: "health", label: "Health", icon: Heart },
-  { id: "wordpress", label: "WordPress", icon: FileText },
-  { id: "shopify", label: "Shopify", icon: ShoppingBag },
-  { id: "prestashop", label: "PrestaShop", icon: Tag },
-];
+// Known category metadata (icons + nice labels). Any category found on a
+// template that isn't listed here still gets a pill automatically, so future
+// niches/categories show up without code changes.
+const CATEGORY_META: Record<string, { label: string; icon: typeof Store }> = {
+  all: { label: "All", icon: Store },
+  "local-seo": { label: "Local SEO", icon: MapPin },
+  ecommerce: { label: "E-Commerce", icon: ShoppingBag },
+  saas: { label: "SaaS / Tech", icon: Globe },
+  marketing: { label: "Marketing", icon: Megaphone },
+  professional: { label: "Professional", icon: Briefcase },
+  education: { label: "Education", icon: GraduationCap },
+  health: { label: "Health", icon: Heart },
+  wordpress: { label: "WordPress", icon: FileText },
+  shopify: { label: "Shopify", icon: ShoppingBag },
+  prestashop: { label: "PrestaShop", icon: Tag },
+  general: { label: "General", icon: Tag },
+};
+
+// Turn an arbitrary category id into a human-friendly label.
+function categoryLabel(id: string): string {
+  if (CATEGORY_META[id]) return CATEGORY_META[id].label;
+  return id
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function categoryMeta(id: string) {
+  return CATEGORY_META[id] || { label: categoryLabel(id), icon: Tag };
+}
 
 const NICHE_TAGS = [
   { tag: "veterinary", label: "🐾 Vet" },
