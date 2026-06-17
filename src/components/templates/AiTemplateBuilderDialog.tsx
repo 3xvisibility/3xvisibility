@@ -331,7 +331,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       setGeneratedContent(data.content);
       setGeneratedName(data.suggestedName);
       setStep("review");
-      toast({ title: "Template generated", description: "Niche-relevant images included. Review, edit and save." });
+      toast({ title: "Template generated", description: pickedDesign ? "Your template's own images were kept. Review, edit and save." : "Niche-relevant images included. Review, edit and save." });
     },
     onError: (err: Error) => {
       // Centralised credit/error handling with "Top up" CTA
