@@ -3602,6 +3602,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // Batch 3 — Framer featured clones (Sonic, Wander, Bloom, Fade, Roast, Ledger)
   ...FRAMER_BATCH3_TEMPLATES,
+  ...FRAMER_BATCH4_TEMPLATES,
 
 
 
