@@ -493,6 +493,53 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                 </Select>
               </div>
               <div className="space-y-1.5">
+                {designCategory ? (
+                  <>
+                    <Label className="text-sm font-semibold flex items-center gap-1">
+                      Template design <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={pickedDesign?.id ?? ""}
+                      onValueChange={(id) => {
+                        const tpl = categoryTemplates.find((t) => t.id === id) || null;
+                        setPickedDesign(tpl);
+                      }}
+                    >
+                      <SelectTrigger className={`h-10 ${!pickedDesign ? "border-primary/40 ring-1 ring-primary/20" : ""}`}>
+                        <SelectValue placeholder="Choose a template design" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        {categoryTemplates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">
+                      🎨 The generated template will use this design's look.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Label className="text-sm font-semibold flex items-center gap-1">
+                      Business niche / products / services <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      placeholder="e.g., Dental clinic, Organic skincare, Plumbing repair, Yoga classes..."
+                      value={niche}
+                      onChange={(e) => setNiche(e.target.value)}
+                      className={!niche ? "border-primary/40 ring-1 ring-primary/20" : ""}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      🎨 AI will generate niche-relevant images matching your business — be specific!
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Business niche — required for AI copy + niche images */}
+            {designCategory && (
+              <div className="space-y-1.5">
                 <Label className="text-sm font-semibold flex items-center gap-1">
                   Business niche / products / services <span className="text-destructive">*</span>
                 </Label>
@@ -506,7 +553,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                   🎨 AI will generate niche-relevant images matching your business — be specific!
                 </p>
               </div>
-            </div>
+            )}
+
 
             {/* Platform picker */}
             {renderPlatformPicker()}
