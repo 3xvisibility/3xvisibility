@@ -39,20 +39,6 @@ const AI_LANGUAGES = [
   { code: "ms", label: "Malay" }, { code: "bn", label: "Bengali" },
 ];
 
-const BUSINESS_TYPES = [
-  { value: "service page", label: "Service Page", icon: "🔧" },
-  { value: "product page", label: "Product Page", icon: "🛍️" },
-  { value: "local business page", label: "Local Business", icon: "📍" },
-  { value: "e-commerce store page", label: "E-Commerce", icon: "🛒" },
-  { value: "portfolio page", label: "Portfolio", icon: "🎨" },
-  { value: "landing page", label: "Landing Page", icon: "🚀" },
-  { value: "restaurant page", label: "Restaurant", icon: "🍽️" },
-  { value: "real estate listing page", label: "Real Estate", icon: "🏠" },
-  { value: "course landing page", label: "Online Course", icon: "🎓" },
-  { value: "blog post page", label: "Blog Post", icon: "📝" },
-  { value: "event page", label: "Event Page", icon: "🎫" },
-  { value: "booking/appointment page", label: "Booking", icon: "📅" },
-];
 
 const PLATFORMS = [
   { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor", feature: "wordpress" as const },
