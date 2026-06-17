@@ -355,12 +355,17 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
     // Strip markdown fences if present
     content = content.replace(/^```html?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
 
-    // Replace generic placeholder images with niche-relevant AI-generated images
-    try {
-      content = await injectNicheImages(content, { niche, businessType, keywords }, LOVABLE_API_KEY);
-    } catch (imgErr) {
-      console.error("Niche image injection failed (non-fatal):", imgErr);
+    // When a reference design is selected, keep the template's own existing
+    // images untouched (the client can change them later). Only swap generic
+    // placeholder images for niche-relevant ones when generating from scratch.
+    if (!hasDesignRef) {
+      try {
+        content = await injectNicheImages(content, { niche, businessType, keywords }, LOVABLE_API_KEY);
+      } catch (imgErr) {
+        console.error("Niche image injection failed (non-fatal):", imgErr);
+      }
     }
+
 
     // Inject background image aspect ratio + focal point overrides so the
     // user's choices reliably apply to every .pgp-hero / .pgp-cta-band block.
