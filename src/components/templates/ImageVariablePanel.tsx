@@ -120,7 +120,10 @@ export function ImageVariablePanel({
     const variable = cropState.variable;
     setUploadingVar(variable);
     try {
-      const path = `template-images/${variable}-${Date.now()}.jpg`;
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) throw new Error("Please sign in to upload images.");
+      const path = `${uid}/template-images/${variable}-${Date.now()}.jpg`;
       const { error } = await supabase.storage
         .from("ai-images")
         .upload(path, blob, { contentType: "image/jpeg", upsert: true });
