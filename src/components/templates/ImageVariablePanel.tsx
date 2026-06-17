@@ -64,6 +64,16 @@ const ASPECT_RATIOS: Record<string, number> = {
   review_1_avatar: 1,
   review_2_avatar: 1,
   review_3_avatar: 1,
+  // Estelle jewelry collection
+  product_1_image: 7 / 8,
+  product_2_image: 7 / 8,
+  product_3_image: 7 / 8,
+  product_4_image: 7 / 8,
+  lifestyle_image: 3 / 2,
+  cat_1_image: 3 / 4,
+  cat_2_image: 3 / 4,
+  cat_3_image: 3 / 4,
+  cat_4_image: 3 / 4,
 };
 
 const aspectFor = (v: string) => {

@@ -1388,6 +1388,172 @@ const ceviraCleaning = (): MarketplaceTemplate => {
 };
 
 
+// ── Estelle jewelry collection (Framer "estelle" template, 1:1) ──────────────
+const estelleCollection = (): MarketplaceTemplate => {
+  const content = `<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter:wght@400;500;600&display=swap');
+@keyframes es-up{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
+.es-page{--es-bg:#0d0d0d;--es-ink:#f4f1ec;--es-mut:#a7a39c;--es-line:rgba(244,241,236,.14);font-family:'Inter',system-ui,sans-serif;background:var(--es-bg);color:var(--es-ink);line-height:1.6;overflow:hidden}
+.es-page *{box-sizing:border-box}
+.es-page h1,.es-page h2,.es-page h3{margin:0;font-family:'Playfair Display',Georgia,serif;font-weight:500;line-height:1.02}
+.es-page p{margin:0}
+.es-page a{text-decoration:none;color:inherit}
+.es-page img{display:block;width:100%;height:100%;object-fit:cover}
+.es-wrap{max-width:1280px;margin:0 auto;padding:0 1.8rem}
+.es-serif{font-family:'Playfair Display',Georgia,serif}
+.es-nav{display:flex;align-items:center;justify-content:space-between;padding:1.6rem 1.8rem;max-width:1280px;margin:0 auto}
+.es-nav .es-ic{display:flex;flex-direction:column;gap:5px;cursor:pointer}
+.es-nav .es-ic span{width:26px;height:1.5px;background:var(--es-ink)}
+.es-logo{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:1.9rem;letter-spacing:.02em}
+.es-cart{font-size:.9rem;letter-spacing:.04em}
+.es-hero{padding:clamp(2rem,6vw,5rem) 0 clamp(3rem,7vw,6rem)}
+.es-eye{text-transform:uppercase;letter-spacing:.22em;font-size:.74rem;color:var(--es-mut);margin-bottom:1.4rem}
+.es-hero h1{font-size:clamp(2.8rem,11vw,10rem);font-style:italic;letter-spacing:-.01em}
+.es-hero-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:2rem;margin-top:2.4rem}
+.es-hero-sub{max-width:34ch;color:var(--es-mut);font-size:1.02rem}
+.es-link{display:inline-block;margin-top:1.1rem;text-transform:uppercase;letter-spacing:.16em;font-size:.78rem;border-bottom:1px solid var(--es-ink);padding-bottom:3px}
+.es-btns{display:flex;gap:.8rem;flex-wrap:wrap}
+.es-btn{padding:.95rem 1.8rem;border-radius:100px;font-size:.85rem;letter-spacing:.03em;border:1px solid var(--es-line);transition:.25s}
+.es-btn.alt{background:var(--es-ink);color:var(--es-bg)}
+.es-btn:hover{transform:translateY(-2px)}
+.es-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.4rem}
+.es-card{animation:es-up .7s ease both}
+.es-card .es-ph{position:relative;aspect-ratio:7/8;border-radius:8px;overflow:hidden;background:#151515}
+.es-card .es-ph img{transition:transform .7s ease}
+.es-card:hover .es-ph img{transform:scale(1.05)}
+.es-card h3{font-family:'Inter',sans-serif;font-weight:600;font-size:1rem;margin-top:1rem}
+.es-card .es-meta{color:var(--es-mut);font-size:.85rem;margin-top:.15rem}
+.es-card .es-price{font-size:.95rem;margin-top:.5rem}
+.es-sec-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.8rem}
+.es-sec-head .es-t{text-transform:uppercase;letter-spacing:.18em;font-size:.78rem;color:var(--es-mut)}
+.es-sec{padding:clamp(2.5rem,6vw,5rem) 0}
+.es-life{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;margin:1rem 0}
+.es-life .es-cap{position:absolute;left:1.4rem;bottom:1.2rem;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.es-house{text-align:center;max-width:760px;margin:0 auto;padding:clamp(3rem,7vw,6rem) 1rem}
+.es-house h2{font-size:clamp(2rem,5vw,3.4rem);font-style:italic;margin-bottom:1.4rem}
+.es-house p{color:var(--es-mut);font-size:1.08rem;max-width:46ch;margin:0 auto}
+.es-cats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+.es-cat{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:3/4}
+.es-cat img{transition:transform .7s ease}
+.es-cat:hover img{transform:scale(1.06)}
+.es-cat span{position:absolute;left:0;right:0;bottom:0;padding:1.4rem 1.2rem;font-family:'Playfair Display',serif;font-style:italic;font-size:1.4rem;background:linear-gradient(transparent,rgba(0,0,0,.65))}
+.es-foot{border-top:1px solid var(--es-line);margin-top:3rem;padding:2.4rem 0;display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;color:var(--es-mut);font-size:.82rem;letter-spacing:.04em}
+@media(max-width:900px){.es-grid,.es-cats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.es-grid,.es-cats{grid-template-columns:1fr}}
+</style>
+<div class="es-page">
+  <nav class="es-nav">
+    <div class="es-ic"><span></span><span></span></div>
+    <div class="es-logo">{brand_name}</div>
+    <div class="es-cart">CART (0)</div>
+  </nav>
+  <header class="es-hero es-wrap">
+    <div class="es-eye">{season_label}</div>
+    <h1>{hero_title}</h1>
+    <div class="es-hero-row">
+      <div>
+        <p class="es-hero-sub">{hero_subtitle}</p>
+        <a class="es-link" href="#collection">{hero_cta}</a>
+      </div>
+      <div class="es-btns">
+        <a class="es-btn" href="#collection">{hero_btn_1}</a>
+        <a class="es-btn alt" href="#collection">{hero_btn_2}</a>
+      </div>
+    </div>
+  </header>
+  <section class="es-sec es-wrap" id="collection">
+    <div class="es-sec-head"><div class="es-t">{products_label}</div><a class="es-link" href="#categories">{products_cta}</a></div>
+    <div class="es-grid">
+      <a class="es-card"><div class="es-ph"><img src="{product_1_image}" alt="{product_1_name}"/></div><h3>{product_1_name}</h3><div class="es-meta">{product_1_material} · {product_1_category}</div><div class="es-price">{product_1_price}</div></a>
+      <a class="es-card"><div class="es-ph"><img src="{product_2_image}" alt="{product_2_name}"/></div><h3>{product_2_name}</h3><div class="es-meta">{product_2_material} · {product_2_category}</div><div class="es-price">{product_2_price}</div></a>
+      <a class="es-card"><div class="es-ph"><img src="{product_3_image}" alt="{product_3_name}"/></div><h3>{product_3_name}</h3><div class="es-meta">{product_3_material} · {product_3_category}</div><div class="es-price">{product_3_price}</div></a>
+      <a class="es-card"><div class="es-ph"><img src="{product_4_image}" alt="{product_4_name}"/></div><h3>{product_4_name}</h3><div class="es-meta">{product_4_material} · {product_4_category}</div><div class="es-price">{product_4_price}</div></a>
+    </div>
+  </section>
+  <section class="es-wrap">
+    <div class="es-life"><img src="{lifestyle_image}" alt="{lifestyle_caption}"/><div class="es-cap">{lifestyle_caption}</div></div>
+  </section>
+  <section class="es-house">
+    <h2>{house_title}</h2>
+    <p>{house_text}</p>
+    <a class="es-link" href="#categories">{house_cta}</a>
+  </section>
+  <section class="es-sec es-wrap" id="categories">
+    <div class="es-cats">
+      <a class="es-cat"><img src="{cat_1_image}" alt="{cat_1_name}"/><span>{cat_1_name}</span></a>
+      <a class="es-cat"><img src="{cat_2_image}" alt="{cat_2_name}"/><span>{cat_2_name}</span></a>
+      <a class="es-cat"><img src="{cat_3_image}" alt="{cat_3_name}"/><span>{cat_3_name}</span></a>
+      <a class="es-cat"><img src="{cat_4_image}" alt="{cat_4_name}"/><span>{cat_4_name}</span></a>
+    </div>
+    <div class="es-foot"><span>© {year} {brand_name}</span><span>{footer_note}</span></div>
+  </section>
+</div>`;
+  return {
+    id: "shopify-collection",
+    name: "Estelle Jewelry Collection",
+    description: "Editorial dark-luxe jewelry collection page with oversized serif hero, product grid, lifestyle image, brand story and category tiles — modelled 1:1 on the Estelle Framer template.",
+    content,
+    variables: ["{brand_name}", "{season_label}", "{hero_title}", "{hero_subtitle}", "{hero_cta}", "{hero_btn_1}", "{hero_btn_2}", "{products_label}", "{products_cta}", "{product_1_name}", "{product_1_material}", "{product_1_category}", "{product_1_price}", "{product_1_image}", "{product_2_name}", "{product_2_material}", "{product_2_category}", "{product_2_price}", "{product_2_image}", "{product_3_name}", "{product_3_material}", "{product_3_category}", "{product_3_price}", "{product_3_image}", "{product_4_name}", "{product_4_material}", "{product_4_category}", "{product_4_price}", "{product_4_image}", "{lifestyle_image}", "{lifestyle_caption}", "{house_title}", "{house_text}", "{house_cta}", "{cat_1_name}", "{cat_1_image}", "{cat_2_name}", "{cat_2_image}", "{cat_3_name}", "{cat_3_image}", "{cat_4_name}", "{cat_4_image}", "{year}", "{footer_note}"],
+    category: "shopify",
+    tags: ["shopify", "collection", "jewelry", "ecommerce", "luxury"],
+    author: "Community", downloads: 1678, rating: 4.9,
+    seo_title_pattern: "{hero_title} | {brand_name}",
+    seo_description_pattern: "{hero_subtitle} Shop the new {brand_name} collection online.",
+    schema_type: "CollectionPage",
+    platform: "shopify",
+    defaultValues: {
+      brand_name: "estelle",
+      season_label: "Spring / Summer 26",
+      hero_title: "Explore our new collection",
+      hero_subtitle: "Where jewelry lives among objects, memories, and moments—a jewelry box you can step into.",
+      hero_cta: "Step inside",
+      hero_btn_1: "New arrivals",
+      hero_btn_2: "Explore bracelets",
+      products_label: "Featured pieces",
+      products_cta: "View all",
+      product_1_name: "Tennis bracelet",
+      product_1_material: "Gold",
+      product_1_category: "Tennis bracelets",
+      product_1_price: "$215.00",
+      product_1_image: FU + "/39CCKAIYws8A2u56rf8uxnNX3A.png?width=1189&height=1323",
+      product_2_name: "Tennis chain 6 mm",
+      product_2_material: "Silver",
+      product_2_category: "Tennis chains",
+      product_2_price: "$215.00",
+      product_2_image: FU + "/7tvM7vpgKyf1snoSgQGbqdObBw.png?width=1189&height=1323",
+      product_3_name: "Diamond tennis bracelet",
+      product_3_material: "Silver",
+      product_3_category: "Tennis bracelets",
+      product_3_price: "$215.00",
+      product_3_image: FU + "/ENIeSWMm4azWEuKncxUZLXaQS9Y.png?width=1123&height=1401",
+      product_4_name: "Graduated necklace",
+      product_4_material: "Silver",
+      product_4_category: "Tennis chains",
+      product_4_price: "$215.00",
+      product_4_image: FU + "/oNVJvt0GU1EswCM101o9wxI.png?width=1188&height=1324",
+      lifestyle_image: FU + "/gPRaTunYm8woOct9QsTbOWHdc.png?width=2688&height=1792",
+      lifestyle_caption: "Sofia, Bulgaria",
+      house_title: "The house of estelle",
+      house_text: "Where jewelry lives among objects, memories, and moments, a jewelry box you can step into.",
+      house_cta: "Step inside",
+      cat_1_name: "Bracelets",
+      cat_1_image: FU + "/76FTylOrrFHZO1FYU1fs5sIplis.png?width=718&height=920",
+      cat_2_name: "Necklaces",
+      cat_2_image: FU + "/cK8cTJdQdIqoKnFI7YdRxwwXi10.png?width=718&height=920",
+      cat_3_name: "Earrings",
+      cat_3_image: FU + "/vzEwpTRmYyWOv8AzRMWjVW03NY.png?width=718&height=920",
+      cat_4_name: "Rings",
+      cat_4_image: FU + "/a7meYRK6ZacbhZXbzdRutNkuM.png?width=718&height=920",
+      year: "2026",
+      footer_note: "Made with love in Sofia",
+    },
+  };
+};
+
+
+
+
+
 
 // ── Vibe accent palettes ──────────────────────────────────────────────────
 // Each template gets one of these flavors so the marketplace feels varied.
@@ -3624,32 +3790,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
     schema_type: "LocalBusiness",
   },
 
-  // 13. Shopify collection
-  {
-    id: "shopify-collection",
-    name: "Shopify Collection Page",
-    description: "Beautiful Shopify collection landing with hero, products gallery and brand story.",
-    content: page(
-      hero({ bgKeywords: "{collection_name} fashion shop premium", badge: "🛍️ {brand_name}", title: "{collection_name}", subtitle: "{collection_description}", primaryCta: "Shop the collection", sig: 25 }) +
-      trustStrip([{ num: "10K+", lbl: "Happy Customers" }, { num: "4.9★", lbl: "Avg Rating" }, { num: "Free", lbl: "Shipping 50+" }, { num: "30-Day", lbl: "Returns" }]) +
-      gallery("Featured", "Shop the collection", ["{collection_name} product", "{brand_name} packaging", "lifestyle product", "minimalist product", "premium product", "product detail"]) +
-      aboutSplit("About {brand_name}", "Our story", "{brand_story}", "{brand_name} brand lifestyle", 12) +
-      featureGrid("Why shop with us", "Built on trust", "Quality you can feel, service you can rely on.", [
-        { icon: "✨", title: "Premium quality", desc: "Carefully sourced materials and rigorous quality control on every product." },
-        { icon: "🚚", title: "Fast shipping", desc: "Free on orders over $50, delivered in 2–5 business days." },
-        { icon: "🔒", title: "Secure checkout", desc: "256-bit encryption and trusted payment providers — your data is safe." },
-      ]) +
-      defaultTestimonials +
-      ctaBand({ bgKeywords: "shopping bags premium retail", title: "Discover the {collection_name}", subtitle: "Free shipping on every order over $50.", cta: "Shop now", sig: 26 })
-    ),
-    variables: ["{brand_name}", "{collection_name}", "{collection_description}", "{product_1_name}", "{product_1_price}", "{product_2_name}", "{product_2_price}", "{product_3_name}", "{product_3_price}", "{brand_story}"],
-    category: "shopify",
-    tags: ["shopify", "collection", "ecommerce", "products"],
-    author: "Community", downloads: 1678, rating: 4.8,
-    seo_title_pattern: "{collection_name} | {brand_name} — Shop Online",
-    seo_description_pattern: "Shop {collection_name} by {brand_name}. {collection_description}",
-    schema_type: "CollectionPage",
-  },
+  // 13. Shopify collection (Estelle jewelry, 1:1 Framer design)
+  estelleCollection(),
 
   // 14. Shopify product detail
   {
