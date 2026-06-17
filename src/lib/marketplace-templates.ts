@@ -14,6 +14,7 @@ import { FRAMER_BATCH1_TEMPLATES } from "@/lib/marketplace-framer-batch1";
 import { FRAMER_BATCH2_TEMPLATES } from "@/lib/marketplace-framer-batch2";
 import { FRAMER_BATCH3_TEMPLATES } from "@/lib/marketplace-framer-batch3";
 import { FRAMER_BATCH4_TEMPLATES } from "@/lib/marketplace-framer-batch4";
+import { FRAMER_BATCH5_TEMPLATES } from "@/lib/marketplace-framer-batch5";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -3603,6 +3604,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // Batch 3 — Framer featured clones (Sonic, Wander, Bloom, Fade, Roast, Ledger)
   ...FRAMER_BATCH3_TEMPLATES,
   ...FRAMER_BATCH4_TEMPLATES,
+
+  // Batch 5 — Framer featured clones (Estate, Pulse, Stack, Savor, Frame, Learn)
+  ...FRAMER_BATCH5_TEMPLATES,
 
 
 
