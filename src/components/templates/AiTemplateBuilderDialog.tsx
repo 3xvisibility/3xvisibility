@@ -664,7 +664,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
             <Button
               onClick={() => generateMutation.mutate(buildPrompt())}
-              disabled={!businessType || !niche.trim() || generateMutation.isPending}
+              disabled={!businessType || (designCategory ? !pickedDesign : !niche.trim()) || generateMutation.isPending}
               className="w-full"
               size="lg"
             >
