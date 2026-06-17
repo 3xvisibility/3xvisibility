@@ -151,21 +151,14 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
     return ids.sort((a, b) => designCategoryLabel(a).localeCompare(designCategoryLabel(b)));
   }, []);
 
-  // Pick a fresh random design from the chosen category (re-randomizes each click).
-  const pickRandomDesign = (category: string) => {
-    const pool = COMMUNITY_TEMPLATES.filter((t) => t.category === category);
-    if (pool.length === 0) {
-      setPickedDesign(null);
-      return;
-    }
-    // Avoid repeating the same design twice in a row when possible.
-    let next = pool[Math.floor(Math.random() * pool.length)];
-    if (pool.length > 1 && pickedDesign && next.id === pickedDesign.id) {
-      const others = pool.filter((t) => t.id !== pickedDesign.id);
-      next = others[Math.floor(Math.random() * others.length)];
-    }
-    setPickedDesign(next);
-  };
+
+  // Templates that belong to the currently chosen category (for the dropdown).
+  const categoryTemplates = useMemo(
+    () => (designCategory ? COMMUNITY_TEMPLATES.filter((t) => t.category === designCategory) : []),
+    [designCategory],
+  );
+
+
 
 
 
@@ -453,7 +446,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                     onClick={() => {
                       setDesignCategory(id);
                       setBusinessType(designCategoryLabel(id));
-                      pickRandomDesign(id);
+                      setPickedDesign(null);
                     }}
                     className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-sm text-left transition-all ${
                       designCategory === id
@@ -485,6 +478,53 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                 </Select>
               </div>
               <div className="space-y-1.5">
+                {designCategory ? (
+                  <>
+                    <Label className="text-sm font-semibold flex items-center gap-1">
+                      Template design <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={pickedDesign?.id ?? ""}
+                      onValueChange={(id) => {
+                        const tpl = categoryTemplates.find((t) => t.id === id) || null;
+                        setPickedDesign(tpl);
+                      }}
+                    >
+                      <SelectTrigger className={`h-10 ${!pickedDesign ? "border-primary/40 ring-1 ring-primary/20" : ""}`}>
+                        <SelectValue placeholder="Choose a template design" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64">
+                        {categoryTemplates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">
+                      🎨 The generated template will use this design's look.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Label className="text-sm font-semibold flex items-center gap-1">
+                      Business niche / products / services <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      placeholder="e.g., Dental clinic, Organic skincare, Plumbing repair, Yoga classes..."
+                      value={niche}
+                      onChange={(e) => setNiche(e.target.value)}
+                      className={!niche ? "border-primary/40 ring-1 ring-primary/20" : ""}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      🎨 AI will generate niche-relevant images matching your business — be specific!
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Business niche — required for AI copy + niche images */}
+            {designCategory && (
+              <div className="space-y-1.5">
                 <Label className="text-sm font-semibold flex items-center gap-1">
                   Business niche / products / services <span className="text-destructive">*</span>
                 </Label>
@@ -498,38 +538,12 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                   🎨 AI will generate niche-relevant images matching your business — be specific!
                 </p>
               </div>
-            </div>
+            )}
+
 
             {/* Platform picker */}
             {renderPlatformPicker()}
 
-            {/* Random design from the chosen category */}
-            {designCategory && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-                <Label className="flex items-center gap-2 text-sm font-semibold">
-                  <Palette className="h-4 w-4 text-primary" /> Base design
-                </Label>
-                <p className="text-[11px] text-muted-foreground -mt-1">
-                  A random design from <span className="font-medium">{designCategoryLabel(designCategory)}</span> is used as the look. Click the dice for a different one.
-                </p>
-                <div className="flex items-center gap-2">
-                  {pickedDesign && (
-                    <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs min-w-0">
-                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                      <span className="font-medium truncate">{pickedDesign.name}</span>
-                    </div>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-10 gap-1.5 shrink-0"
-                    onClick={() => pickRandomDesign(designCategory)}
-                  >
-                    <RefreshCw className="h-4 w-4" /> Random design
-                  </Button>
-                </div>
-              </div>
-            )}
 
 
 
