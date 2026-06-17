@@ -633,7 +633,7 @@ const lumsSeoLanding = (): MarketplaceTemplate => {
   </section>
 </div>`;
   return {
-    id: "lums-seo-landing",
+    id: "seo-landing",
     name: "SEO Landing Template",
     description: "Bold purple SEO agency landing page with dashboard hero, services, pricing plans, testimonials, animated stats and latest news — modelled on the Lums theme.",
     content,
@@ -840,7 +840,7 @@ const nobleLawFirm = (): MarketplaceTemplate => {
   
 </div>`;
   return {
-    id: "law-firm",
+    id: "law-firm-2",
     name: "Law Firm Template",
     description: "Premium, authoritative law firm landing page with cinematic hero, stats, service grid, why-us, testimonials and consultation CTA — modelled 1:1 on the NobleLaw theme.",
     content,
@@ -1034,7 +1034,7 @@ const heavenPalateRestaurant = (): MarketplaceTemplate => {
   
 </div>`;
   return {
-    id: "restaurant-local",
+    id: "restaurant-2",
     name: "Restaurant Template",
     description: "Elegant fine-dining restaurant landing page with cinematic hero collage, menu highlights, stats, testimonials and table reservation — modelled 1:1 on the Heaven Palate theme.",
     content,
@@ -1480,7 +1480,7 @@ const estelleCollection = (): MarketplaceTemplate => {
   </section>
 </div>`;
   return {
-    id: "shopify-collection",
+    id: "jewelry-collection",
     name: "Jewelry Collection Template",
     description: "Editorial dark-luxe jewelry collection page with oversized serif hero, product grid, lifestyle image, brand story and category tiles — modelled 1:1 on the Estelle Framer template.",
     content,
@@ -3221,7 +3221,7 @@ const refitTemplate = () => `<style>
 const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   // 1. Local Plumber
   {
-    id: "local-plumber",
+    id: "plumber-landing",
     name: "Plumber Landing Template",
     description: "High-converting plumbing landing page — blue & yellow hero with a real plumber photo, trust strip, about split, 6-service grid, emergency band, FAQ, customer reviews, blog highlights and a closing call CTA. Modelled 1:1 on the plumbing.framer.media design.",
     content: plumberTemplate(),
@@ -3319,7 +3319,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 1b. Home & Kitchen Renovation (Refit)
   {
-    id: "refit-renovation",
+    id: "home-renovation",
     name: "Home Renovation Template",
     description: "Sleek dark-theme landing page for a home & kitchen renovation company — bold hero with a real kitchen photo and floating review, stats strip, about gallery, 6-service grid, project showcase, client testimonials, FAQ accordion and a contact CTA. Modelled 1:1 on the refit.framer.website design.",
     content: refitTemplate(),
@@ -3453,7 +3453,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 3. SaaS landing (LanderX-style dark SaaS)
   {
-    id: "saas-landing",
+    id: "saas-startup-2",
     name: "SaaS Startup Template",
     description: "Sleek dark-mode SaaS / startup landing page with a glowing blue hero, social-proof avatars, client logos, benefits grid, wall-of-love testimonials, flexible pricing plans, founder's note and FAQ. Modelled on the LanderX (LanX) design.",
     content: landerxTemplate(),
@@ -3567,7 +3567,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 6. Online course
   {
-    id: "course-landing",
+    id: "online-course-3",
     name: "Online Course Template",
     description: "Conversion-focused online course landing with hero, curriculum, instructor and FAQ.",
     content: page(
@@ -3639,7 +3639,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 31. Dentexa — premium dentist landing (modelled on the Dentexa HTML theme)
   {
-    id: "dentalflow-dentist",
+    id: "dental-studio",
     name: "Dental Studio Template",
     description: "Premium, conversion-focused dentist landing page with a Dentexa-style teal design — hero booking, services, smile gallery, dentist profile, patient reviews, transparent pricing and FAQ. Uses real dental photography throughout.",
     content: dentexaTemplate(),
@@ -3683,7 +3683,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // 33. Gardener — landscaping & garden service landing (modelled on gardener.framer.media)
   {
-    id: "gardener-landscaping",
+    id: "landscaping",
     name: "Landscaping Template",
     description: "Beautiful gardening & landscaping landing page — full-bleed hero with a glass booking form, about split, services gallery, FAQ, recent works grid, customer reviews, blog highlights and a closing CTA. Modelled 1:1 on the gardener.framer.media design with real photography.",
     content: gardenerTemplate(),

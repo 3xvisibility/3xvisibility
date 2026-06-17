@@ -80,7 +80,7 @@ const mediClinic = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "medi-clinic", name: "Health Clinic Template", description: "Calm, trustworthy medical & dental clinic landing with services and stats.",
+    id: "health-clinic", name: "Health Clinic Template", description: "Calm, trustworthy medical & dental clinic landing with services and stats.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -180,7 +180,7 @@ const lexLaw = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "lex-law", name: "Law Firm Template", description: "Authoritative, editorial law firm landing with practice areas and testimonial.",
+    id: "law-firm", name: "Law Firm Template", description: "Authoritative, editorial law firm landing with practice areas and testimonial.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",
@@ -282,7 +282,7 @@ const nestInterior = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "nest-interior", name: "Interior Design Template", description: "Warm, editorial interior design studio with project gallery and process.",
+    id: "interior-design", name: "Interior Design Template", description: "Warm, editorial interior design studio with project gallery and process.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{hero_image}",
@@ -374,7 +374,7 @@ const glowBeauty = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "glow-beauty", name: "Beauty & Cosmetics Template", description: "Soft, glowing cosmetics brand landing with product showcase and CTA.",
+    id: "beauty-and-cosmetics", name: "Beauty & Cosmetics Template", description: "Soft, glowing cosmetics brand landing with product showcase and CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title_a}", "{hero_title_b}", "{hero_subtitle}", "{cta_primary}", "{hero_image}",
@@ -466,7 +466,7 @@ const driveAuto = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "drive-auto", name: "Auto Dealer Template", description: "Bold, cinematic car dealership landing with inventory grid and specs.",
+    id: "auto-dealer", name: "Auto Dealer Template", description: "Bold, cinematic car dealership landing with inventory grid and specs.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -556,7 +556,7 @@ const raveMusic = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "rave-music", name: "Music Artist Template", description: "Electric, neon music artist / DJ landing with tour dates and CTA.",
+    id: "music-artist", name: "Music Artist Template", description: "Electric, neon music artist / DJ landing with tour dates and CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title_a}", "{hero_title_b}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",

@@ -65,7 +65,7 @@ const zenYoga = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "zen-yoga", name: "Yoga & Wellness Template", description: "Calm yoga / wellness studio landing with class types and a soft CTA.",
+    id: "yoga-and-wellness", name: "Yoga & Wellness Template", description: "Calm yoga / wellness studio landing with class types and a soft CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -153,7 +153,7 @@ const craftBakery = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "craft-bakery", name: "Bakery & Café Template", description: "Cozy artisan bakery / café landing with a menu grid and warm CTA.",
+    id: "bakery-and-cafe", name: "Bakery & Café Template", description: "Cozy artisan bakery / café landing with a menu grid and warm CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -254,7 +254,7 @@ const buildConstruction = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "build-construction", name: "Construction Company Template", description: "Bold construction / contractor landing with services, stats and a quote CTA.",
+    id: "construction-company", name: "Construction Company Template", description: "Bold construction / contractor landing with services, stats and a quote CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
@@ -339,7 +339,7 @@ const quillBlog = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "quill-blog", name: "Blog & Magazine Template", description: "Editorial blog / magazine landing with a featured story, post grid and newsletter CTA.",
+    id: "blog-and-magazine", name: "Blog & Magazine Template", description: "Editorial blog / magazine landing with a featured story, post grid and newsletter CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}",
@@ -428,7 +428,7 @@ const trekTour = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "trek-tour", name: "Travel Tours Template", description: "Adventurous travel / tour operator landing with destination cards and a booking CTA.",
+    id: "travel-tours", name: "Travel Tours Template", description: "Adventurous travel / tour operator landing with destination cards and a booking CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}",
@@ -527,7 +527,7 @@ const mintAccounting = (): MarketplaceTemplate => {
   </div></div></section>
 </div>`;
   return {
-    id: "mint-accounting", name: "Accounting & Bookkeeping Template", description: "Trustworthy accounting / bookkeeping landing with services, stats and a consult CTA.",
+    id: "accounting-and-bookkeeping", name: "Accounting & Bookkeeping Template", description: "Trustworthy accounting / bookkeeping landing with services, stats and a consult CTA.",
     content,
     variables: [
       "{eyebrow}", "{hero_title}", "{hero_subtitle}", "{cta_primary}", "{cta_secondary}", "{hero_image}",
