@@ -352,7 +352,7 @@ const quillBlog = (): MarketplaceTemplate => {
     category: "marketing", tags: ["blog", "magazine", "editorial", "news", "light"],
     author: "Community", downloads: 446, rating: 4.7,
     seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-blog",
-    og_title_pattern: "{feature_title}", og_description_pattern: "{feature_excerpt}", og_image_pattern: "{feature_image}",
+    og_title_pattern: "{feature_title}", og_description_pattern: "{feature_excerpt}", og_image_pattern: U("1499750310107-5fef28a66643", 1200, 630),
     schema_type: "Blog", platform: "generic",
     defaultValues: {
       eyebrow: "The journal", hero_title: "Stories, ideas and inspiration worth your time",
