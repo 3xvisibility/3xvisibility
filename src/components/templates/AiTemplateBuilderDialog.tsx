@@ -333,7 +333,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
         };
         const assetDefaults: Record<string, string> = {};
         for (const [k, v] of Object.entries(defaults)) {
-          if (isAssetVar(k, v)) assetDefaults[k] = v;
+          if (isAssetVar(k, v as string)) assetDefaults[k] = v as string;
         }
         const html = applyTemplateDefaults(pickedDesign.content, assetDefaults);
         // Extract remaining {variable} tokens (skip CSS-style/design + baked asset tokens).
