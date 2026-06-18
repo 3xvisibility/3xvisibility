@@ -204,8 +204,12 @@ export function StartGenerationDialog({
       if (p) options.shopify_page_template_suffix = p;
       if (pr) options.shopify_product_template_suffix = pr;
     }
-    if (skinPlatform && skinVariant) {
-      options.platform_skin_variant = skinVariant;
+    if (skinPlatform) {
+      options.design_mode = designMode;
+      // Only apply a new theme skin when the user opted to change the design.
+      if (designMode === "change" && skinVariant) {
+        options.platform_skin_variant = skinVariant;
+      }
     }
     onStart(options);
   };
