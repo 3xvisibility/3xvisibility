@@ -431,11 +431,14 @@ function createWidget(widgetType: string): ElementorNode {
 }
 
 function createSection(): ElementorNode {
+  // Modern Elementor container (flexbox) that directly holds widgets — no column wrapper.
   return {
-    id: genNodeId(), type: "section", settings: {},
-    children: [{ id: genNodeId(), type: "column", settings: { width: "100%" }, children: [] }],
+    id: genNodeId(), type: "container",
+    settings: { layout: "flex", tag: "div" },
+    children: [],
   };
 }
+
 
 // ── Navigator Tree Item ──────────────────────────────────
 function NavigatorItem({ node, depth, selectedId, onSelect }: { node: ElementorNode; depth: number; selectedId: string | null; onSelect: (id: string) => void }) {
