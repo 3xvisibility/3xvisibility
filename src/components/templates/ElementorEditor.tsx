@@ -23,7 +23,8 @@ import {
 // ── Types ──────────────────────────────────────────────────
 interface ElementorNode {
   id: string;
-  type: "section" | "column" | "widget";
+  // Modern Elementor uses "container" (flexbox/grid). "section"/"column" kept for backward-compat parsing.
+  type: "section" | "column" | "widget" | "container";
   widgetType?: "heading" | "text" | "image" | "button" | "list" | "html" | "spacer" | "divider" | "video" | "shortcode";
   settings: Record<string, any>;
   children?: ElementorNode[];
