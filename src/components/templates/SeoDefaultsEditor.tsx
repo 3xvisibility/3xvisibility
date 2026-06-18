@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Search, Link2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { useBranding } from "@/contexts/BrandingContext";
-import { loadBrandMapping, type BrandVariableMapping } from "@/lib/brand-variable-mapping";
 
 /** Turn arbitrary text into a clean URL slug. */
 function slugify(input: string): string {
@@ -16,6 +15,20 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, "")
     .replace(/-{2,}/g, "-");
 }
+
+const BRAND_NAME_KEYS = [
+  "company_name",
+  "brand_name",
+  "firm_name",
+  "business_name",
+  "restaurant_name",
+  "clinic_name",
+  "product_name",
+  "site_name",
+  "website_name",
+  "agency_name",
+  "store_name",
+];
 
 interface SeoDefaultsEditorProps {
   template: MarketplaceTemplate;
@@ -29,18 +42,6 @@ interface SeoDefaultsEditorProps {
 export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
   const { appName } = useBranding();
 
-  // Live brand-variable mapping from Settings (re-reads on change).
-  const [mapping, setMapping] = useState<BrandVariableMapping>(() => loadBrandMapping());
-  useEffect(() => {
-    const refresh = () => setMapping(loadBrandMapping());
-    window.addEventListener("brand-mapping-changed", refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener("brand-mapping-changed", refresh);
-      window.removeEventListener("storage", refresh);
-    };
-  }, []);
-
   const defaults = useMemo(() => {
     // Override the template's placeholder brand defaults (e.g. "Lums") with the
     // user's own company / brand / website name so the SEO title suffix and slug
@@ -48,7 +49,7 @@ export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
     const brandName = (appName || "").trim();
     const dv = { ...template.defaultValues } as Record<string, string>;
     if (brandName) {
-      for (const key of mapping.keys) {
+      for (const key of BRAND_NAME_KEYS) {
         if (key in dv) dv[key] = brandName;
       }
     }
@@ -58,14 +59,13 @@ export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
 
     const titleHasBrand = brandName && new RegExp(brandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(rawTitle);
     return {
-      title: mapping.applyToTitle && brandName && !titleHasBrand ? `${rawTitle} — ${brandName}` : rawTitle,
-      description: mapping.applyToDescription && brandName && !rawDesc.toLowerCase().includes(brandName.toLowerCase())
+      title: brandName && !titleHasBrand ? `${rawTitle} — ${brandName}` : rawTitle,
+      description: brandName && !rawDesc.toLowerCase().includes(brandName.toLowerCase())
         ? `${rawDesc} ${brandName}.`.trim()
         : rawDesc,
-      slug: slugify(mapping.applyToSlug && brandName ? `${rawSlug} ${brandName}` : rawSlug),
+      slug: slugify(brandName ? `${rawSlug} ${brandName}` : rawSlug),
     };
-  }, [template, appName, mapping]);
-
+  }, [template, appName]);
 
   const [title, setTitle] = useState(defaults.title);
   const [description, setDescription] = useState(defaults.description);
