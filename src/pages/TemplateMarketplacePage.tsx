@@ -86,7 +86,7 @@ export default function TemplateMarketplacePage() {
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", authorName: "" });
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
