@@ -175,6 +175,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Brand name → SEO variable mapping */}
+      <BrandVariableMappingCard />
+
       {/* Appearance */}
       <Card className="shadow-surface">
         <CardHeader>
