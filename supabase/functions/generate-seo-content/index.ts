@@ -93,7 +93,7 @@ CONTENT TYPE: "${cType}"
 KEYWORDS: ${kwList}
 LANGUAGE: ${language || "en"}
 ${niche ? `BUSINESS NICHE: ${niche} — tailor copy, tone and visual style to this industry.` : ""}
-${platform === "wordpress" ? "PLATFORM: WordPress + Elementor — wrap each block in <section class=\"elementor-section pgp-section\"> with .elementor-container and .elementor-column wrappers, headings as .elementor-heading-title, buttons as .elementor-button. The template MUST stay editable inside Elementor." : ""}
+${platform === "wordpress" ? "PLATFORM: WordPress + Elementor (modern Container/Flexbox engine) — wrap each block in a flexbox container <div class=\"e-con e-con-boxed e-flex pgp-section\"><div class=\"e-con-inner\">...</div></div> (use nested child containers for columns, display:grid for galleries). Do NOT use legacy elementor-section/elementor-column wrappers. Headings as .elementor-heading-title, buttons as .elementor-button. The template MUST stay editable inside Elementor's Container editor." : ""}
 ${platform === "shopify" ? "PLATFORM: Shopify — use clean Online Store 2.0 compatible HTML, no Liquid tags, kebab-case classes." : ""}
 ${platform === "prestashop" ? "PLATFORM: PrestaShop — use Bootstrap container/row/col-md classes, no inline scripts." : ""}`;
 
