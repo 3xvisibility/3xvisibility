@@ -1271,7 +1271,7 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
         <Separator orientation="vertical" className="h-5 shrink-0" />
 
         <Button variant="outline" size="sm" className="text-xs h-7 gap-1.5 shrink-0" onClick={handleAddSection}>
-          <Plus className="h-3 w-3" /> Section
+          <Plus className="h-3 w-3" /> Container
         </Button>
 
         {selectedNode && (
