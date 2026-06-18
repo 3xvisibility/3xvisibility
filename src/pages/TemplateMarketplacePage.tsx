@@ -86,7 +86,7 @@ export default function TemplateMarketplacePage() {
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+  const [shareForm, setShareForm] = useState({ templateId: "", description: "", category: "general", authorName: "" });
   const [ratingValue, setRatingValue] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
@@ -179,7 +179,7 @@ export default function TemplateMarketplacePage() {
         content: st.content,
         variables: st.variables || [],
         category: st.category,
-        tags: st.tags || [],
+        tags: [],
         author: st.author_name || "Anonymous",
         downloads: st.downloads || 0,
         rating: avgRating,
@@ -234,8 +234,7 @@ export default function TemplateMarketplacePage() {
       const matchesSearch =
         !searchQuery ||
         tpl.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tpl.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tpl.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        tpl.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
@@ -300,7 +299,6 @@ export default function TemplateMarketplacePage() {
         author_name: form.authorName || "Anonymous",
         description: form.description,
         category: form.category,
-        tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
         content: (template as any).content,
         variables: (template as any).variables || [],
       } as any);
@@ -310,7 +308,7 @@ export default function TemplateMarketplacePage() {
       queryClient.invalidateQueries({ queryKey: ["shared-templates"] });
       toast({ title: "Template shared!", description: "Your template is now available in the community marketplace." });
       setShareOpen(false);
-      setShareForm({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+      setShareForm({ templateId: "", description: "", category: "general", authorName: "" });
     },
     onError: (err: Error) => {
       toast({ title: "Share failed", description: err.message, variant: "destructive" });
@@ -772,14 +770,7 @@ export default function TemplateMarketplacePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Tags (comma separated)</Label>
-                <Input
-                  placeholder="seo, blog, local"
-                  value={shareForm.tags}
-                  onChange={(e) => setShareForm(f => ({ ...f, tags: e.target.value }))}
-                />
-              </div>
+
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShareOpen(false)}>Cancel</Button>
