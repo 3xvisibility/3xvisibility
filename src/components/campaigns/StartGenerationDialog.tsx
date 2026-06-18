@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages, Zap } from "lucide-react";
+import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages, Zap, Palette, Paintbrush } from "lucide-react";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
