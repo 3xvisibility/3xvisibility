@@ -151,10 +151,12 @@ ${source}`;
 
     // Platform-specific guidance
     const platformRules: Record<string, string> = {
-      wordpress: `PLATFORM: WordPress + Elementor.
-- Structure each section as <section class="elementor-section elementor-top-section pgp-section"> with inner <div class="elementor-container"> and column wrappers <div class="elementor-column elementor-col-100"> (or 50/33).
+      wordpress: `PLATFORM: WordPress + Elementor (modern Container/Flexbox engine — NOT legacy Section/Column).
+- Structure every section as a flexbox/grid CONTAINER: <div class="e-con e-con-boxed e-flex pgp-section"><div class="e-con-inner">...</div></div>. For multi-column layouts, nest child containers (<div class="e-con e-child e-flex">) side by side inside .e-con-inner — do NOT use the old elementor-section/elementor-column wrappers.
+- Use display:flex (or display:grid for galleries/bento) on containers with gap/flex-direction set via inline styles or classes; this matches Elementor's Container widget so it stays editable as flex/grid.
 - Wrap headings in <h2 class="elementor-heading-title"></h2>, paragraphs in <div class="elementor-widget-text-editor"><p>...</p></div>, buttons in <a class="elementor-button elementor-button-link"><span class="elementor-button-text">...</span></a>, images in <img class="elementor-image"/>.
-- This ensures the imported template stays editable inside Elementor's drag-and-drop editor on the client's WordPress site.`,
+- This ensures the imported template maps to Elementor's drag-and-drop Container editor on the client's WordPress site.`,
+
       shopify: `PLATFORM: Shopify.
 - Use semantic HTML compatible with Shopify Online Store 2.0 sections.
 - Wrap product placeholders in <div class="product-card"> blocks. Use Shopify-friendly class naming (kebab-case, no Liquid tags).
