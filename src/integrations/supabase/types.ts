@@ -1796,7 +1796,6 @@ export type Database = {
           schema_type: string | null
           seo_description_pattern: string | null
           seo_title_pattern: string | null
-          tags: string[]
           template_id: string
           updated_at: string
           user_id: string
@@ -1815,7 +1814,6 @@ export type Database = {
           schema_type?: string | null
           seo_description_pattern?: string | null
           seo_title_pattern?: string | null
-          tags?: string[]
           template_id: string
           updated_at?: string
           user_id: string
@@ -1834,7 +1832,6 @@ export type Database = {
           schema_type?: string | null
           seo_description_pattern?: string | null
           seo_title_pattern?: string | null
-          tags?: string[]
           template_id?: string
           updated_at?: string
           user_id?: string
