@@ -3762,13 +3762,41 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   },
 ];
 
+// Universal responsive safety-net. Every marketplace template ships with its
+// own media queries, but this guarantees that ALL designs collapse gracefully
+// to a fluid single-column (flex/grid container) layout on tablets and phones,
+// never overflow horizontally, and keep media fully fluid — regardless of the
+// per-template class prefix (pgp-, lums-, nbl-, hp-, cv-, es-, dxa-, …).
+const RESPONSIVE_SAFETY_NET = `
+<style data-responsive-global>
+*,*::before,*::after{box-sizing:border-box}
+img,svg,video,iframe,canvas{max-width:100%;height:auto}
+[data-responsive-global] ~ *{overflow-wrap:break-word;word-break:break-word}
+@media(max-width:992px){
+  [class*="grid-4"],[class*="grid4"],[class*="grid-3"],[class*="grid3"]{grid-template-columns:repeat(2,1fr)!important}
+}
+@media(max-width:768px){
+  [class*="grid"],[class*="split"],[class*="cols"],[class*="-row"],[class*="hero-grid"],[class*="contact"],[class*="feat"],[class*="svc"],[class*="proc"],[class*="revs"],[class*="cards"],[class*="cats"],[class*="stats"]{grid-template-columns:1fr!important}
+  [class*="carousel"],[class*="scroller"]{flex-wrap:wrap!important}
+  [class*="hero"]{min-height:auto!important}
+}
+@media(max-width:640px){
+  [class*="grid"],[class*="split"],[class*="price"],[class*="plan"],[class*="gallery"],[class*="gal"],[class*="tgrid"],[class*="sgrid"],[class*="bgrid"],[class*="stats"]{grid-template-columns:1fr!important}
+}
+</style>`;
+
+const ensureResponsive = (content: string): string =>
+  content.includes("data-responsive-global") ? content : RESPONSIVE_SAFETY_NET + content;
+
 // Final catalog: each template gets a derived `platform` and, for WordPress /
 // Shopify / PrestaShop entries, a platform-native re-skin + wrapper classes so
 // they look and publish natively on their target CMS.
 export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = RAW_COMMUNITY_TEMPLATES
   .map((t) => {
     const platform = platformFromCategory(t.category);
-    return platform === "generic"
-      ? { ...t, platform }
-      : { ...t, platform, content: applyPlatformTheme(t.content, platform) };
+    const base =
+      platform === "generic"
+        ? { ...t, platform }
+        : { ...t, platform, content: applyPlatformTheme(t.content, platform) };
+    return { ...base, content: ensureResponsive(base.content) };
   });
