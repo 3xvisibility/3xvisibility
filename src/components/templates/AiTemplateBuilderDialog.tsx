@@ -317,14 +317,35 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
 
   const generateMutation = useMutation({
     mutationFn: async (prompt: string) => {
+      // ── Marketplace template path — NO AI, NO credits, NO AI images ──────────
+      // When the user picked a marketplace design, use that template's own HTML
+      // and its own images verbatim. Nothing is sent to the AI, so no credits
+      // (and no AI image generation) are consumed.
+      if (pickedDesign?.content) {
+        const html = pickedDesign.content;
+        // Extract simple {variable} tokens (skip CSS-style/design tokens).
+        const isDesignVar = (v: string) => {
+          const c = v.replace(/[{}]/g, "").toLowerCase().trim();
+          if (/[:;]/.test(c)) return true;
+          if (/\b(inherit|auto|none|rgba?\(|hsla?\(|transparent|px|rem|em|%)\b/i.test(c)) return true;
+          if (/\s/.test(c) && c.length > 20) return true;
+          return false;
+        };
+        const variables = [...new Set((html.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || []))]
+          .filter((v) => !isDesignVar(v));
+        return {
+          content: html,
+          variables,
+          suggestedName: pickedDesign.name || "Marketplace Template",
+        } as { content: string; variables: string[]; suggestedName: string };
+      }
+
+      // ── From-scratch path — AI generation (only when no template is picked) ──
       const theme = buildThemePayload();
       const bg = buildBackgroundPayload();
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
           prompt, includeHeaderFooter, platform, niche, businessType, keywords: niche,
-          designReference: pickedDesign?.content,
-          designName: pickedDesign?.name,
-          designCategory: pickedDesign ? designCategory : undefined,
           ...theme, ...bg,
         },
       });
@@ -336,7 +357,7 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       setGeneratedContent(data.content);
       setGeneratedName(data.suggestedName);
       setStep("review");
-      toast({ title: "Template generated", description: pickedDesign ? "Your template's own images were kept. Review, edit and save." : "Niche-relevant images included. Review, edit and save." });
+      toast({ title: pickedDesign ? "Template ready" : "Template generated", description: pickedDesign ? "Loaded directly from your chosen template — its own images were kept and no AI credits were used." : "Niche-relevant images included. Review, edit and save." });
     },
     onError: (err: Error) => {
       // Centralised credit/error handling with "Top up" CTA
