@@ -300,7 +300,6 @@ export default function TemplateMarketplacePage() {
         author_name: form.authorName || "Anonymous",
         description: form.description,
         category: form.category,
-        tags: form.tags.split(",").map((t: string) => t.trim()).filter(Boolean),
         content: (template as any).content,
         variables: (template as any).variables || [],
       } as any);
