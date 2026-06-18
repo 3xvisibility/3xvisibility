@@ -15,7 +15,7 @@ import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { TemplateImageEditor } from "@/components/templates/TemplateImageEditor";
 
 import { filterDesignVars } from "@/lib/design-vars-filter";
-import { COMMUNITY_TEMPLATES, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -322,10 +322,24 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
       // and its own images verbatim. Nothing is sent to the AI, so no credits
       // (and no AI image generation) are consumed.
       if (pickedDesign?.content) {
-        const html = pickedDesign.content;
-        // Extract simple {variable} tokens (skip CSS-style/design tokens).
+        const defaults = pickedDesign.defaultValues || {};
+        // Bake the template's own image assets (and any URL-valued defaults)
+        // directly into the HTML so every original image is packaged into the
+        // output instead of being left as an unfilled {token}.
+        const isAssetVar = (name: string, value?: string) => {
+          if (/(image|img|photo|logo|avatar|icon|bg|background|cover|banner|thumb|media|picture|poster)/i.test(name)) return true;
+          if (value && /^(https?:)?\/\/|^\/|^data:image\//i.test(value.trim())) return true;
+          return false;
+        };
+        const assetDefaults: Record<string, string> = {};
+        for (const [k, v] of Object.entries(defaults)) {
+          if (isAssetVar(k, v as string)) assetDefaults[k] = v as string;
+        }
+        const html = applyTemplateDefaults(pickedDesign.content, assetDefaults);
+        // Extract remaining {variable} tokens (skip CSS-style/design + baked asset tokens).
         const isDesignVar = (v: string) => {
           const c = v.replace(/[{}]/g, "").toLowerCase().trim();
+          if (Object.prototype.hasOwnProperty.call(assetDefaults, c)) return true;
           if (/[:;]/.test(c)) return true;
           if (/\b(inherit|auto|none|rgba?\(|hsla?\(|transparent|px|rem|em|%)\b/i.test(c)) return true;
           if (/\s/.test(c) && c.length > 20) return true;
