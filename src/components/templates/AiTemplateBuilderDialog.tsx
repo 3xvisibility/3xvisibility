@@ -15,7 +15,7 @@ import { ElementorEditor } from "@/components/templates/ElementorEditor";
 import { TemplateImageEditor } from "@/components/templates/TemplateImageEditor";
 
 import { filterDesignVars } from "@/lib/design-vars-filter";
-import { COMMUNITY_TEMPLATES, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
