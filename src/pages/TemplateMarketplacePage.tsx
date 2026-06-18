@@ -309,7 +309,7 @@ export default function TemplateMarketplacePage() {
       queryClient.invalidateQueries({ queryKey: ["shared-templates"] });
       toast({ title: "Template shared!", description: "Your template is now available in the community marketplace." });
       setShareOpen(false);
-      setShareForm({ templateId: "", description: "", category: "general", tags: "", authorName: "" });
+      setShareForm({ templateId: "", description: "", category: "general", authorName: "" });
     },
     onError: (err: Error) => {
       toast({ title: "Share failed", description: err.message, variant: "destructive" });
