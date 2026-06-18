@@ -507,7 +507,65 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
   return (
     <ScrollArea className="h-[calc(100vh-280px)] min-h-[300px]">
       <div className="space-y-4 p-3">
+        {/* Container layout — flexbox / grid */}
+        {node.type === "container" && (
+          <div className="space-y-2">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+              <Boxes className="h-3 w-3" /> Container Layout
+            </Label>
+            <div className="flex gap-1.5">
+              {[
+                { val: "flex", label: "Flexbox", icon: Boxes },
+                { val: "grid", label: "Grid", icon: LayoutGrid },
+              ].map(({ val, label, icon: Icon }) => (
+                <button
+                  key={val}
+                  onClick={() => {
+                    onChange({ ...node, settings: { ...s, layout: val } });
+                    updateStyle("display", val);
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs transition-colors ${
+                    (s.layout || "flex") === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ))}
+            </div>
+            {(s.layout || "flex") === "grid" && (
+              <div className="space-y-1">
+                <Label className="text-[9px] text-muted-foreground">Grid Columns</Label>
+                <Input
+                  value={styleObj["grid-template-columns"] || ""}
+                  onChange={(e) => updateStyle("grid-template-columns", e.target.value)}
+                  placeholder="repeat(3, 1fr)"
+                  className="text-xs h-7 font-mono"
+                />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[9px] text-muted-foreground">Gap</Label>
+                <Input value={styleObj.gap || ""} onChange={(e) => updateStyle("gap", e.target.value)}
+                  placeholder="16px" className="text-xs h-7 font-mono" />
+              </div>
+              {(s.layout || "flex") === "flex" && (
+                <div className="space-y-1">
+                  <Label className="text-[9px] text-muted-foreground">Direction</Label>
+                  <Select value={styleObj["flex-direction"] || ""} onValueChange={(v) => updateStyle("flex-direction", v)}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Row" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="row">Row</SelectItem>
+                      <SelectItem value="column">Column</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {/* Content editing */}
+
         {(node.widgetType === "heading" || node.widgetType === "text") && (
           <div className="space-y-2">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Content</Label>
