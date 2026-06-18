@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages, Zap } from "lucide-react";
+import { Play, Clock, FileText, Globe, CalendarClock, AlertTriangle, RotateCcw, Languages, Zap, Palette, Paintbrush } from "lucide-react";
 import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
@@ -82,6 +82,11 @@ export interface GenerationOptions {
   shopify_product_template_suffix?: string;
   /** Per-template platform theme skin variant (e.g. shopify "dawn" / "studio"). */
   platform_skin_variant?: string;
+  /**
+   * Whether to keep the website's existing page design (only refresh SEO title
+   * + content) or switch to a new template design for the generated pages.
+   */
+  design_mode?: "keep" | "change";
 }
 
 export function StartGenerationDialog({
@@ -114,6 +119,9 @@ export function StartGenerationDialog({
   const [skinVariant, setSkinVariant] = useState<string>(
     initialSkinVariant || (skinPlatform ? defaultSkinVariant(skinPlatform) : ""),
   );
+  // For connected websites: keep the existing site design (content-only refresh)
+  // or switch to a new template design. Defaults to keeping the current design.
+  const [designMode, setDesignMode] = useState<"keep" | "change">("keep");
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
@@ -196,8 +204,12 @@ export function StartGenerationDialog({
       if (p) options.shopify_page_template_suffix = p;
       if (pr) options.shopify_product_template_suffix = pr;
     }
-    if (skinPlatform && skinVariant) {
-      options.platform_skin_variant = skinVariant;
+    if (skinPlatform) {
+      options.design_mode = designMode;
+      // Only apply a new theme skin when the user opted to change the design.
+      if (designMode === "change" && skinVariant) {
+        options.platform_skin_variant = skinVariant;
+      }
     }
     onStart(options);
   };
@@ -409,13 +421,64 @@ export function StartGenerationDialog({
           {skinPlatform && (
             <>
               <Separator />
-              <PlatformSkinPicker
-                platform={skinPlatform}
-                value={skinVariant}
-                onChange={setSkinVariant}
-              />
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Design for generated pages</Label>
+                <p className="text-[11px] text-muted-foreground -mt-1">
+                  Your site is connected. Choose whether new pages reuse your current
+                  design or switch to a fresh template design.
+                </p>
+                <RadioGroup
+                  value={designMode}
+                  onValueChange={(v) => setDesignMode(v as "keep" | "change")}
+                  className="grid grid-cols-1 gap-3"
+                >
+                  <Label
+                    htmlFor="design-keep"
+                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      designMode === "keep" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <RadioGroupItem value="keep" id="design-keep" className="mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-sm font-medium">Keep existing design</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Reuse your current website design — only the SEO title and content are updated.
+                      </p>
+                    </div>
+                  </Label>
+                  <Label
+                    htmlFor="design-change"
+                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      designMode === "change" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <RadioGroupItem value="change" id="design-change" className="mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <Paintbrush className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-sm font-medium">Change the design</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Pick a template design below — new pages will use that look instead.
+                      </p>
+                    </div>
+                  </Label>
+                </RadioGroup>
+
+                {designMode === "change" && (
+                  <PlatformSkinPicker
+                    platform={skinPlatform}
+                    value={skinVariant}
+                    onChange={setSkinVariant}
+                  />
+                )}
+              </div>
             </>
           )}
+
 
 
 
