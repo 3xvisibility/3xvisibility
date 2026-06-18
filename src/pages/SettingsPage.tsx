@@ -21,7 +21,6 @@ import { getMinimumPlanFor, PLAN_FEATURES } from "@/lib/plan-features";
 import { useNavigate } from "react-router-dom";
 import ActiveAiProviderCard from "@/components/settings/ActiveAiProviderCard";
 import LocaleSettingsCard from "@/components/settings/LocaleSettingsCard";
-import BrandVariableMappingCard from "@/components/settings/BrandVariableMappingCard";
 
 const AI_PLAN_LIMITS: Record<string, number> = {
   free: 0,
