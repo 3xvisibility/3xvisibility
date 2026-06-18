@@ -345,6 +345,11 @@ function nodeToHtml(node: ElementorNode): string {
   const cls = node.settings.className ? ` class="${node.settings.className}"` : "";
   const style = node.settings.style ? ` style="${node.settings.style}"` : "";
   
+  if (node.type === "container") {
+    const tag = node.settings.tag || "div";
+    const inner = (node.children || []).map(nodeToHtml).join("\n");
+    return `<${tag}${cls}${style}>\n${inner}\n</${tag}>`;
+  }
   if (node.type === "section") {
     const tag = node.settings.tag || "section";
     const inner = (node.children || []).map(nodeToHtml).join("\n");
@@ -354,6 +359,7 @@ function nodeToHtml(node: ElementorNode): string {
     const inner = (node.children || []).map(nodeToHtml).join("\n");
     return inner;
   }
+
   
   switch (node.widgetType) {
     case "heading": {
