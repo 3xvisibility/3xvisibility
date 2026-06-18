@@ -82,6 +82,11 @@ export interface GenerationOptions {
   shopify_product_template_suffix?: string;
   /** Per-template platform theme skin variant (e.g. shopify "dawn" / "studio"). */
   platform_skin_variant?: string;
+  /**
+   * Whether to keep the website's existing page design (only refresh SEO title
+   * + content) or switch to a new template design for the generated pages.
+   */
+  design_mode?: "keep" | "change";
 }
 
 export function StartGenerationDialog({
