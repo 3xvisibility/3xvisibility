@@ -771,8 +771,6 @@ export default function TemplateMarketplacePage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-              </div>
 
             </div>
             <div className="flex justify-end gap-2">
