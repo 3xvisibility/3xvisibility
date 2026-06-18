@@ -751,20 +751,38 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
         
         <Separator />
         
-        {/* Typography */}
+        {/* Typography — per-breakpoint */}
         <div className="space-y-2">
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
             <Type className="h-3 w-3" /> Typography
           </Label>
+          {/* Breakpoint switcher: edits font/spacing for the selected device */}
+          <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+            {[
+              { val: "desktop" as const, label: "Desktop", icon: Monitor },
+              { val: "tablet" as const, label: "Tablet", icon: Tablet },
+              { val: "mobile" as const, label: "Mobile", icon: Smartphone },
+            ].map(({ val, label, icon: Icon }) => (
+              <button key={val} onClick={() => setDevice(val)} title={`Editing ${label}`}
+                className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[9px] font-medium transition-colors ${device === val ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <Icon className="h-3 w-3" /> {label}
+              </button>
+            ))}
+          </div>
+          {device !== "desktop" && (
+            <p className="text-[9px] text-muted-foreground leading-tight">
+              Overrides for <span className="font-semibold capitalize">{device}</span> ({device === "tablet" ? "≤1024px" : "≤767px"}). Leave blank to inherit desktop.
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-[9px] text-muted-foreground">Font Size</Label>
-              <Input value={styleObj["font-size"] || ""} onChange={(e) => updateStyle("font-size", e.target.value)}
-                placeholder="16px" className="text-xs h-7" />
+              <Input value={getResponsive("font-size")} onChange={(e) => updateResponsive("font-size", e.target.value)}
+                placeholder={placeholderFor("font-size") || "16px"} className="text-xs h-7" />
             </div>
             <div className="space-y-1">
               <Label className="text-[9px] text-muted-foreground">Font Weight</Label>
-              <Select value={styleObj["font-weight"] || ""} onValueChange={(v) => updateStyle("font-weight", v)}>
+              <Select value={getResponsive("font-weight")} onValueChange={(v) => updateResponsive("font-weight", v)}>
                 <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Normal" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="300">Light</SelectItem>
@@ -777,10 +795,17 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
               </Select>
             </div>
           </div>
-          <div className="space-y-1">
-            <Label className="text-[9px] text-muted-foreground">Line Height</Label>
-            <Input value={styleObj["line-height"] || ""} onChange={(e) => updateStyle("line-height", e.target.value)}
-              placeholder="1.5" className="text-xs h-7" />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[9px] text-muted-foreground">Line Height</Label>
+              <Input value={getResponsive("line-height")} onChange={(e) => updateResponsive("line-height", e.target.value)}
+                placeholder={placeholderFor("line-height") || "1.5"} className="text-xs h-7" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[9px] text-muted-foreground">Letter Spacing</Label>
+              <Input value={getResponsive("letter-spacing")} onChange={(e) => updateResponsive("letter-spacing", e.target.value)}
+                placeholder={placeholderFor("letter-spacing") || "normal"} className="text-xs h-7" />
+            </div>
           </div>
           <div className="flex gap-1">
             {[
@@ -788,13 +813,14 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
               { prop: "text-align", val: "center", icon: AlignCenter },
               { prop: "text-align", val: "right", icon: AlignRight },
             ].map(({ prop, val, icon: Icon }) => (
-              <button key={val} onClick={() => updateStyle(prop, val)}
-                className={`p-1.5 rounded-md transition-colors ${styleObj[prop] === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+              <button key={val} onClick={() => updateResponsive(prop, getResponsive(prop) === val ? "" : val)}
+                className={`p-1.5 rounded-md transition-colors ${getResponsive(prop) === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
                 <Icon className="h-3.5 w-3.5" />
               </button>
             ))}
           </div>
         </div>
+
         
         <Separator />
         
