@@ -1008,6 +1008,8 @@ function addElIds(nodes: ElementorNode[], html: string): string {
     let nodeIdx = 0;
     for (const el of Array.from(elements)) {
       if (el.nodeType !== 1) continue; // skip text nodes
+      if ((el as Element).tagName === "STYLE") continue; // skip injected responsive style block
+
       if (nodeIdx < nodeList.length) {
         const node = nodeList[nodeIdx];
         (el as Element).setAttribute("data-el-id", node.id);
