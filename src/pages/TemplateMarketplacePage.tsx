@@ -59,26 +59,8 @@ function categoryMeta(id: string) {
   return CATEGORY_META[id] || { label: categoryLabel(id), icon: Tag };
 }
 
-const NICHE_TAGS = [
-  { tag: "veterinary", label: "🐾 Vet" },
-  { tag: "wedding", label: "💍 Wedding" },
-  { tag: "resort", label: "🏝️ Resort" },
-  { tag: "cybersecurity", label: "🛡️ Cybersecurity" },
-  { tag: "florist", label: "🌸 Florist" },
-  { tag: "recruitment", label: "💼 Recruitment" },
-  { tag: "yoga", label: "🧘 Zen" },
-  { tag: "bakery", label: "🥐 Craft" },
-  { tag: "construction", label: "🏗️ Build" },
-  { tag: "blog", label: "✍️ Quill" },
-  { tag: "travel", label: "🧭 Trek" },
-  { tag: "accounting", label: "📊 Mint" },
-  { tag: "auto", label: "🚗 Drive" },
-  { tag: "dental", label: "🦷 Smile" },
-  { tag: "landscaping", label: "🌿 Lush" },
-  { tag: "electrician", label: "⚡ Spark" },
-  { tag: "coffee", label: "☕ Aroma" },
-  { tag: "agency", label: "🎨 Pixel" },
-];
+
+
 
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
