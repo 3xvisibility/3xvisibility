@@ -337,13 +337,61 @@ function parseHtmlToNodes(html: string): ElementorNode[] {
   return nodes;
 }
 
+// Build the media-query CSS for any node that has per-breakpoint (tablet/mobile)
+// typography & spacing overrides. Returns a single <style> block (or "").
+const RESPONSIVE_PROPS = ["font-size", "line-height", "letter-spacing", "font-weight", "text-align", "padding", "margin"] as const;
+
+function hasResponsive(node: ElementorNode): boolean {
+  const r = node.settings.responsive;
+  return !!r && (Object.keys(r.tablet || {}).length > 0 || Object.keys(r.mobile || {}).length > 0);
+}
+
+function responsiveClassName(node: ElementorNode): string {
+  return hasResponsive(node) ? `tpl-r-${node.id}` : "";
+}
+
+function collectResponsiveCss(nodes: ElementorNode[]): string {
+  const tablet: string[] = [];
+  const mobile: string[] = [];
+  const walk = (list: ElementorNode[]) => {
+    for (const node of list) {
+      if (hasResponsive(node)) {
+        const sel = `.tpl-r-${node.id}`;
+        const r = node.settings.responsive || {};
+        const rule = (decls: Record<string, string>) =>
+          Object.entries(decls)
+            .filter(([, v]) => v !== "" && v != null)
+            .map(([k, v]) => `${k}:${v}!important`)
+            .join(";");
+        const tRule = rule(r.tablet || {});
+        const mRule = rule(r.mobile || {});
+        if (tRule) tablet.push(`${sel}{${tRule}}`);
+        if (mRule) mobile.push(`${sel}{${mRule}}`);
+      }
+      if (node.children?.length) walk(node.children);
+    }
+  };
+  walk(nodes);
+  if (!tablet.length && !mobile.length) return "";
+  let css = "<style data-responsive-typography>\n";
+  if (tablet.length) css += `@media(max-width:1024px){${tablet.join("")}}\n`;
+  if (mobile.length) css += `@media(max-width:767px){${mobile.join("")}}\n`;
+  css += "</style>";
+  return css;
+}
+
 function nodesToHtml(nodes: ElementorNode[]): string {
-  return nodes.map(nodeToHtml).join("\n");
+  const responsiveCss = collectResponsiveCss(nodes);
+  const body = nodes.map(nodeToHtml).join("\n");
+  return responsiveCss ? `${responsiveCss}\n${body}` : body;
 }
 
 function nodeToHtml(node: ElementorNode): string {
-  const cls = node.settings.className ? ` class="${node.settings.className}"` : "";
+  const rCls = responsiveClassName(node);
+  const combinedCls = [node.settings.className, rCls].filter(Boolean).join(" ");
+  const cls = combinedCls ? ` class="${combinedCls}"` : "";
   const style = node.settings.style ? ` style="${node.settings.style}"` : "";
+
   
   if (node.type === "container") {
     const tag = node.settings.tag || "div";
