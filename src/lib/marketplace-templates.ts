@@ -3783,6 +3783,15 @@ img,svg,video,iframe,canvas{max-width:100%;height:auto}
 @media(max-width:640px){
   [class*="grid"],[class*="split"],[class*="price"],[class*="plan"],[class*="gallery"],[class*="gal"],[class*="tgrid"],[class*="sgrid"],[class*="bgrid"],[class*="stats"]{grid-template-columns:1fr!important}
 }
+/* Fluid, perfectly responsive typography — scales smoothly phone→tablet→desktop */
+[data-responsive-global] ~ * h1,[data-responsive-global] ~ h1{font-size:clamp(1.9rem,1.2rem + 3.2vw,3.6rem)!important;line-height:1.1!important}
+[data-responsive-global] ~ * h2,[data-responsive-global] ~ h2{font-size:clamp(1.55rem,1.05rem + 2.2vw,2.6rem)!important;line-height:1.15!important}
+[data-responsive-global] ~ * h3,[data-responsive-global] ~ h3{font-size:clamp(1.25rem,0.95rem + 1.3vw,1.8rem)!important;line-height:1.2!important}
+[data-responsive-global] ~ * h4,[data-responsive-global] ~ h4{font-size:clamp(1.05rem,0.9rem + 0.7vw,1.35rem)!important}
+[data-responsive-global] ~ * p,[data-responsive-global] ~ * li,[data-responsive-global] ~ p{font-size:clamp(0.95rem,0.9rem + 0.25vw,1.08rem)!important;line-height:1.65}
+@media(max-width:640px){
+  [data-responsive-global] ~ * section,[data-responsive-global] ~ section{padding-left:1rem!important;padding-right:1rem!important}
+}
 </style>`;
 
 const ensureResponsive = (content: string): string =>
