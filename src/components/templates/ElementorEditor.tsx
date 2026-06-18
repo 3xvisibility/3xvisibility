@@ -98,50 +98,30 @@ function convertNativeElement(el: ElementorNativeWidget): ElementorNode | null {
   if (!el || !el.elType) return null;
   const s = el.settings || {};
 
-  if (el.elType === "section" || (el.elType === "container" && el.elements?.some(c => c.elType === "column" || c.elType === "container"))) {
-    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
+  // Modern Elementor: section, column and container all collapse to a single
+  // flexbox/grid container that directly holds its children (no column wrappers).
+  if (el.elType === "section" || el.elType === "column" || el.elType === "container") {
+    const rawChildren = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
+    // Flatten any legacy column wrappers so children sit directly in the container.
+    const children: ElementorNode[] = [];
+    for (const c of rawChildren) {
+      if (c.type === "column" || (c.type === "container" && !c.settings.className && !c.settings.style && (c.children?.length || 0) > 0 && c.children!.every(cc => cc.type === "widget"))) {
+        children.push(...(c.children || []));
+      } else {
+        children.push(c);
+      }
+    }
+    const isGrid = el.elType === "container" && (s.container_type === "grid" || s.presetTitle === "grid");
     return {
       id: genNodeId(),
-      type: "section",
+      type: "container",
       settings: {
         className: s.css_classes || "",
         style: buildStyleFromElementor(s, "section"),
+        layout: isGrid ? "grid" : "flex",
         background_color: s.background_color || "",
       },
-      children: children.length > 0 ? children : [{ id: genNodeId(), type: "column", settings: {}, children: [] }],
-    };
-  }
-
-  if (el.elType === "column") {
-    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
-    return {
-      id: genNodeId(),
-      type: "column",
-      settings: {
-        width: s._column_size ? `${s._column_size}%` : "100%",
-        className: s.css_classes || "",
-        style: buildStyleFromElementor(s, "column"),
-      },
       children,
-    };
-  }
-
-  // Container without columns = treat as section with single column
-  if (el.elType === "container") {
-    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
-    if (children.some(c => c.type === "widget")) {
-      return {
-        id: genNodeId(),
-        type: "section",
-        settings: { className: s.css_classes || "", style: buildStyleFromElementor(s, "section") },
-        children: [{ id: genNodeId(), type: "column", settings: {}, children }],
-      };
-    }
-    return {
-      id: genNodeId(),
-      type: "section",
-      settings: { className: s.css_classes || "", style: buildStyleFromElementor(s, "section") },
-      children: children.length > 0 ? children : [{ id: genNodeId(), type: "column", settings: {}, children: [] }],
     };
   }
 
@@ -152,6 +132,7 @@ function convertNativeElement(el: ElementorNativeWidget): ElementorNode | null {
 
   return null;
 }
+
 
 function convertNativeWidget(el: ElementorNativeWidget): ElementorNode {
   const s = el.settings || {};
