@@ -179,7 +179,7 @@ export default function TemplateMarketplacePage() {
         content: st.content,
         variables: st.variables || [],
         category: st.category,
-        tags: st.tags || [],
+        tags: [],
         author: st.author_name || "Anonymous",
         downloads: st.downloads || 0,
         rating: avgRating,
