@@ -305,12 +305,14 @@ function parseHtmlToNodes(html: string): ElementorNode[] {
     }
     if (tag === "section") {
       const children = Array.from(el.children).map(c => domToNode(c as Element)).filter(Boolean) as ElementorNode[];
+      const layout = /display\s*:\s*grid/i.test(style) || /\b(grid|e-grid)\b/.test(cls) ? "grid" : "flex";
       return {
-        id: genNodeId(), type: "section",
-        settings: { className: cls, style },
-        children: children.length > 0 ? [{ id: genNodeId(), type: "column", settings: {}, children }] : [],
+        id: genNodeId(), type: "container",
+        settings: { className: cls, style, tag: "section", layout },
+        children,
       };
     }
+
     if (tag === "hr") {
       return { id: genNodeId(), type: "widget", widgetType: "divider", settings: { className: cls, style } };
     }
