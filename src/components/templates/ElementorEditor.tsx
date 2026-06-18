@@ -464,7 +464,8 @@ function NavigatorItem({ node, depth, selectedId, onSelect }: { node: ElementorN
           </button>
         )}
         {!hasChildren && <span className="w-3" />}
-        {node.type === "section" ? <LayoutPanelTop className="h-3 w-3 shrink-0" /> :
+        {node.type === "container" ? (node.settings.layout === "grid" ? <LayoutGrid className="h-3 w-3 shrink-0" /> : <Boxes className="h-3 w-3 shrink-0" />) :
+         node.type === "section" ? <LayoutPanelTop className="h-3 w-3 shrink-0" /> :
          node.type === "column" ? <Columns className="h-3 w-3 shrink-0" /> :
          <Square className="h-3 w-3 shrink-0" />}
         <span className="truncate capitalize">{label}</span>
