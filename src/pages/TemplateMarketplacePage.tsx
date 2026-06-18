@@ -772,13 +772,8 @@ export default function TemplateMarketplacePage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Tags (comma separated)</Label>
-                <Input
-                  placeholder="seo, blog, local"
-                  value={shareForm.tags}
-                  onChange={(e) => setShareForm(f => ({ ...f, tags: e.target.value }))}
-                />
               </div>
+
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShareOpen(false)}>Cancel</Button>
