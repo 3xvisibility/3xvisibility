@@ -264,12 +264,14 @@ function parseHtmlToNodes(html: string): ElementorNode[] {
       
       if (blockChildren.length > 0 && ["div", "section", "article", "main", "header", "footer", "nav"].includes(tag)) {
         const children = Array.from(el.children).map(c => domToNode(c as Element)).filter(Boolean) as ElementorNode[];
+        const layout = /display\s*:\s*grid/i.test(style) || /\b(grid|e-grid)\b/.test(cls) ? "grid" : "flex";
         return {
-          id: genNodeId(), type: "section",
-          settings: { className: cls, style, tag },
-          children: children.length > 0 ? [{ id: genNodeId(), type: "column", settings: {}, children }] : [],
+          id: genNodeId(), type: "container",
+          settings: { className: cls, style, tag, layout },
+          children,
         };
       }
+
       
       return {
         id: genNodeId(), type: "widget", widgetType: "text",
