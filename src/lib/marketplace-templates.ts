@@ -3565,38 +3565,8 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
 
 
-  // 6. Online course
-  {
-    id: "online-course-3",
-    name: "Online Course Template",
-    description: "Conversion-focused online course landing with hero, curriculum, instructor and FAQ.",
-    content: page(
-      hero({ bgKeywords: "online learning student laptop", badge: "{category}", title: "{course_title}", subtitle: "{course_subtitle}", primaryCta: "Enroll now — {price}", secondaryCta: "Watch Preview", sig: 6 }) +
-      trustStrip([{ num: "{lessons_count}", lbl: "Lessons" }, { num: "{duration}", lbl: "Total Duration" }, { num: "4.9★", lbl: "Average Rating" }, { num: "2K+", lbl: "Students" }]) +
-      featureGrid("Curriculum", "What you'll learn", "{learning_outcomes}", [
-        { icon: "🎯", title: "Clear outcomes", desc: "Every lesson is built around a measurable skill you'll walk away with." },
-        { icon: "🎬", title: "HD video lessons", desc: "Watch on any device, at your own pace, with downloadable resources." },
-        { icon: "📜", title: "Certificate", desc: "Earn a verified certificate of completion to share on LinkedIn or your CV." },
-      ]) +
-      aboutSplit("Your instructor", "{instructor_name}", "{instructor_bio}", "professional teacher instructor", 7) +
-      gallery("Inside the course", "A peek at what's included", ["online course video", "study laptop", "students learning", "online classroom", "certificate diploma", "study notes"]) +
-      defaultTestimonials +
-      faq([
-        { q: "Do I get lifetime access?", a: "Yes — once enrolled, you keep access forever, including all future updates." },
-        { q: "Is there a money-back guarantee?", a: "30-day no-questions-asked refund if it isn't right for you." },
-        { q: "Do I need any prior experience?", a: "The course is designed to take you from {level} to confident practitioner." },
-      ]) +
-      ctaBand({ bgKeywords: "graduation success celebration", title: "Start learning today", subtitle: "Join thousands of students already enrolled in {course_title}.", cta: "Enroll now — {price}", sig: 16 })
-    ),
-    variables: ["{course_title}", "{course_subtitle}", "{category}", "{lessons_count}", "{duration}", "{level}", "{price}", "{learning_outcomes}", "{instructor_name}", "{instructor_bio}"],
-    category: "education",
-    tags: ["course", "education", "landing", "online"],
-    author: "Community", downloads: 956, rating: 4.7,
-    seo_title_pattern: "{course_title} — Online Course | {category}",
-    seo_description_pattern: "{course_subtitle}. {lessons_count} lessons, {duration}.",
-    og_title_pattern: "{course_title} — Online Course | {category}", og_description_pattern: "{course_subtitle}. {lessons_count} lessons, {duration}.", og_image_pattern: "",
-    schema_type: "Course",
-  },
+
+
 
   // 7. Law firm
   nobleLawFirm(),
