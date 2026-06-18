@@ -857,14 +857,18 @@ function addElIds(nodes: ElementorNode[], html: string): string {
       if (nodeIdx < nodeList.length) {
         const node = nodeList[nodeIdx];
         (el as Element).setAttribute("data-el-id", node.id);
-        if (node.type === "section" && node.children) {
-          // Tag children recursively
+        if (node.type === "container" && node.children) {
+          // Container holds children directly.
+          tagNodes((el as Element).children, node.children);
+        } else if (node.type === "section" && node.children) {
+          // Legacy section → column → children.
           for (const col of node.children) {
             if (col.children) {
               tagNodes((el as Element).children, col.children);
             }
           }
         }
+
         nodeIdx++;
       }
     }
