@@ -57,12 +57,14 @@ export function Seo({
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
       {image && <meta property="og:image" content={image} />}
+      {image && <meta property="og:image:alt" content={`${title} — ${BRAND}`} />}
 
       {/* Twitter */}
       <meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       {image && <meta name="twitter:image" content={image} />}
+      {image && <meta name="twitter:image:alt" content={`${title} — ${BRAND}`} />}
 
       {schemas.map((schema, i) => (
         <script key={i} type="application/ld+json">
