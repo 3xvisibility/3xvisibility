@@ -444,7 +444,9 @@ function createSection(): ElementorNode {
 function NavigatorItem({ node, depth, selectedId, onSelect }: { node: ElementorNode; depth: number; selectedId: string | null; onSelect: (id: string) => void }) {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = (node.children?.length || 0) > 0;
-  const label = node.type === "section" ? "Section" : node.type === "column" ? "Column" : (node.widgetType || "Widget");
+  const label = node.type === "container"
+    ? (node.settings.layout === "grid" ? "Container (Grid)" : "Container (Flex)")
+    : node.type === "section" ? "Section" : node.type === "column" ? "Column" : (node.widgetType || "Widget");
   const isSelected = selectedId === node.id;
 
   return (
