@@ -419,7 +419,12 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
 .pgp-page [class*="grid"],.pgp-page [class*="split"],.pgp-page [class*="cols"],.pgp-page .e-con{box-sizing:border-box}
 @media(max-width:992px){.pgp-page [class*="grid-4"],.pgp-page [class*="grid-3"]{grid-template-columns:repeat(2,1fr)!important}}
 @media(max-width:768px){.pgp-page [class*="grid"],.pgp-page [class*="split"],.pgp-page [class*="cols"],.pgp-page [class*="contact"],.pgp-page [class*="feat"],.pgp-page .e-con.e-grid{grid-template-columns:1fr!important}.pgp-page [class*="hero"]{min-height:auto!important}}
-@media(max-width:640px){.pgp-page [class*="grid"],.pgp-page [class*="split"],.pgp-page [class*="price"],.pgp-page [class*="stats"]{grid-template-columns:1fr!important}}
+@media(max-width:640px){.pgp-page [class*="grid"],.pgp-page [class*="split"],.pgp-page [class*="price"],.pgp-page [class*="stats"]{grid-template-columns:1fr!important}.pgp-page section{padding-left:1rem!important;padding-right:1rem!important}}
+.pgp-page h1{font-size:clamp(1.9rem,1.2rem + 3.2vw,3.6rem)!important;line-height:1.1!important}
+.pgp-page h2{font-size:clamp(1.55rem,1.05rem + 2.2vw,2.6rem)!important;line-height:1.15!important}
+.pgp-page h3{font-size:clamp(1.25rem,0.95rem + 1.3vw,1.8rem)!important;line-height:1.2!important}
+.pgp-page h4{font-size:clamp(1.05rem,0.9rem + 0.7vw,1.35rem)!important}
+.pgp-page p,.pgp-page li{font-size:clamp(0.95rem,0.9rem + 0.25vw,1.08rem)!important}
 </style>`;
     }
 
