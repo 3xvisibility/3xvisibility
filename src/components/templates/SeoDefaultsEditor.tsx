@@ -4,6 +4,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Link2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { useBranding } from "@/contexts/BrandingContext";
+
+/** Variable names that should resolve to the user's own brand/company/website name. */
+const BRAND_NAME_KEYS = [
+  "company_name",
+  "brand_name",
+  "firm_name",
+  "business_name",
+  "restaurant_name",
+  "clinic_name",
+  "product_name",
+  "site_name",
+  "website_name",
+  "agency_name",
+  "store_name",
+];
 
 /** Turn arbitrary text into a clean URL slug. */
 function slugify(input: string): string {
@@ -25,14 +41,25 @@ interface SeoDefaultsEditorProps {
  * generated page starts with correct, ready-to-edit SEO metadata.
  */
 export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
+  const { appName } = useBranding();
+
   const defaults = useMemo(() => {
-    const dv = template.defaultValues;
+    // Override the template's placeholder brand defaults (e.g. "Lums") with the
+    // user's own company / brand / website name so the SEO title suffix and slug
+    // reflect their business instead of the template theme.
+    const brandName = (appName || "").trim();
+    const dv = { ...template.defaultValues } as Record<string, string>;
+    if (brandName) {
+      for (const key of BRAND_NAME_KEYS) {
+        if (key in dv) dv[key] = brandName;
+      }
+    }
     return {
       title: applyTemplateDefaults(template.seo_title_pattern ?? template.name, dv).trim(),
       description: applyTemplateDefaults(template.seo_description_pattern ?? template.description, dv).trim(),
       slug: slugify(applyTemplateDefaults(template.slug_pattern ?? template.name, dv)),
     };
-  }, [template]);
+  }, [template, appName]);
 
   const [title, setTitle] = useState(defaults.title);
   const [description, setDescription] = useState(defaults.description);
