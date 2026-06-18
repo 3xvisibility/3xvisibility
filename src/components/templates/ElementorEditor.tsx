@@ -337,13 +337,61 @@ function parseHtmlToNodes(html: string): ElementorNode[] {
   return nodes;
 }
 
+// Build the media-query CSS for any node that has per-breakpoint (tablet/mobile)
+// typography & spacing overrides. Returns a single <style> block (or "").
+const RESPONSIVE_PROPS = ["font-size", "line-height", "letter-spacing", "font-weight", "text-align", "padding", "margin"] as const;
+
+function hasResponsive(node: ElementorNode): boolean {
+  const r = node.settings.responsive;
+  return !!r && (Object.keys(r.tablet || {}).length > 0 || Object.keys(r.mobile || {}).length > 0);
+}
+
+function responsiveClassName(node: ElementorNode): string {
+  return hasResponsive(node) ? `tpl-r-${node.id}` : "";
+}
+
+function collectResponsiveCss(nodes: ElementorNode[]): string {
+  const tablet: string[] = [];
+  const mobile: string[] = [];
+  const walk = (list: ElementorNode[]) => {
+    for (const node of list) {
+      if (hasResponsive(node)) {
+        const sel = `.tpl-r-${node.id}`;
+        const r = node.settings.responsive || {};
+        const rule = (decls: Record<string, string>) =>
+          Object.entries(decls)
+            .filter(([, v]) => v !== "" && v != null)
+            .map(([k, v]) => `${k}:${v}!important`)
+            .join(";");
+        const tRule = rule(r.tablet || {});
+        const mRule = rule(r.mobile || {});
+        if (tRule) tablet.push(`${sel}{${tRule}}`);
+        if (mRule) mobile.push(`${sel}{${mRule}}`);
+      }
+      if (node.children?.length) walk(node.children);
+    }
+  };
+  walk(nodes);
+  if (!tablet.length && !mobile.length) return "";
+  let css = "<style data-responsive-typography>\n";
+  if (tablet.length) css += `@media(max-width:1024px){${tablet.join("")}}\n`;
+  if (mobile.length) css += `@media(max-width:767px){${mobile.join("")}}\n`;
+  css += "</style>";
+  return css;
+}
+
 function nodesToHtml(nodes: ElementorNode[]): string {
-  return nodes.map(nodeToHtml).join("\n");
+  const responsiveCss = collectResponsiveCss(nodes);
+  const body = nodes.map(nodeToHtml).join("\n");
+  return responsiveCss ? `${responsiveCss}\n${body}` : body;
 }
 
 function nodeToHtml(node: ElementorNode): string {
-  const cls = node.settings.className ? ` class="${node.settings.className}"` : "";
+  const rCls = responsiveClassName(node);
+  const combinedCls = [node.settings.className, rCls].filter(Boolean).join(" ");
+  const cls = combinedCls ? ` class="${combinedCls}"` : "";
   const style = node.settings.style ? ` style="${node.settings.style}"` : "";
+
   
   if (node.type === "container") {
     const tag = node.settings.tag || "div";
@@ -480,7 +528,9 @@ function NavigatorItem({ node, depth, selectedId, onSelect }: { node: ElementorN
 // ── Style Panel ──────────────────────────────────────────
 function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: ElementorNode) => void }) {
   const s = node.settings;
-  
+  // Active editing breakpoint: desktop (base inline style) vs tablet/mobile overrides.
+  const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
   const updateSetting = (key: string, value: any) => {
     onChange({ ...node, settings: { ...s, [key]: value } });
   };
@@ -503,6 +553,24 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
     const str = Object.entries(updated).map(([k, v]) => `${k}:${v}`).join(";");
     updateSetting("style", str);
   };
+
+  // Per-breakpoint overrides live in settings.responsive.{tablet|mobile}.
+  const responsive = s.responsive || {};
+  // Read a value for the active device (falls back to base inline style for display).
+  const getResponsive = (prop: string): string =>
+    device === "desktop" ? (styleObj[prop] || "") : (responsive[device]?.[prop] ?? "");
+  // Write a value for the active device.
+  const updateResponsive = (prop: string, value: string) => {
+    if (device === "desktop") return updateStyle(prop, value);
+    const current = { ...(responsive[device] || {}) };
+    if (value) current[prop] = value; else delete current[prop];
+    const nextResponsive = { ...responsive, [device]: current };
+    if (Object.keys(current).length === 0) delete nextResponsive[device];
+    updateSetting("responsive", nextResponsive);
+  };
+  const placeholderFor = (prop: string) =>
+    device === "desktop" ? "" : (styleObj[prop] || "inherit");
+
 
   return (
     <ScrollArea className="h-[calc(100vh-280px)] min-h-[300px]">
@@ -683,20 +751,38 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
         
         <Separator />
         
-        {/* Typography */}
+        {/* Typography — per-breakpoint */}
         <div className="space-y-2">
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
             <Type className="h-3 w-3" /> Typography
           </Label>
+          {/* Breakpoint switcher: edits font/spacing for the selected device */}
+          <div className="flex gap-1 p-0.5 bg-muted rounded-md">
+            {[
+              { val: "desktop" as const, label: "Desktop", icon: Monitor },
+              { val: "tablet" as const, label: "Tablet", icon: Tablet },
+              { val: "mobile" as const, label: "Mobile", icon: Smartphone },
+            ].map(({ val, label, icon: Icon }) => (
+              <button key={val} onClick={() => setDevice(val)} title={`Editing ${label}`}
+                className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[9px] font-medium transition-colors ${device === val ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <Icon className="h-3 w-3" /> {label}
+              </button>
+            ))}
+          </div>
+          {device !== "desktop" && (
+            <p className="text-[9px] text-muted-foreground leading-tight">
+              Overrides for <span className="font-semibold capitalize">{device}</span> ({device === "tablet" ? "≤1024px" : "≤767px"}). Leave blank to inherit desktop.
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-[9px] text-muted-foreground">Font Size</Label>
-              <Input value={styleObj["font-size"] || ""} onChange={(e) => updateStyle("font-size", e.target.value)}
-                placeholder="16px" className="text-xs h-7" />
+              <Input value={getResponsive("font-size")} onChange={(e) => updateResponsive("font-size", e.target.value)}
+                placeholder={placeholderFor("font-size") || "16px"} className="text-xs h-7" />
             </div>
             <div className="space-y-1">
               <Label className="text-[9px] text-muted-foreground">Font Weight</Label>
-              <Select value={styleObj["font-weight"] || ""} onValueChange={(v) => updateStyle("font-weight", v)}>
+              <Select value={getResponsive("font-weight")} onValueChange={(v) => updateResponsive("font-weight", v)}>
                 <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Normal" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="300">Light</SelectItem>
@@ -709,10 +795,17 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
               </Select>
             </div>
           </div>
-          <div className="space-y-1">
-            <Label className="text-[9px] text-muted-foreground">Line Height</Label>
-            <Input value={styleObj["line-height"] || ""} onChange={(e) => updateStyle("line-height", e.target.value)}
-              placeholder="1.5" className="text-xs h-7" />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[9px] text-muted-foreground">Line Height</Label>
+              <Input value={getResponsive("line-height")} onChange={(e) => updateResponsive("line-height", e.target.value)}
+                placeholder={placeholderFor("line-height") || "1.5"} className="text-xs h-7" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[9px] text-muted-foreground">Letter Spacing</Label>
+              <Input value={getResponsive("letter-spacing")} onChange={(e) => updateResponsive("letter-spacing", e.target.value)}
+                placeholder={placeholderFor("letter-spacing") || "normal"} className="text-xs h-7" />
+            </div>
           </div>
           <div className="flex gap-1">
             {[
@@ -720,13 +813,14 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
               { prop: "text-align", val: "center", icon: AlignCenter },
               { prop: "text-align", val: "right", icon: AlignRight },
             ].map(({ prop, val, icon: Icon }) => (
-              <button key={val} onClick={() => updateStyle(prop, val)}
-                className={`p-1.5 rounded-md transition-colors ${styleObj[prop] === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+              <button key={val} onClick={() => updateResponsive(prop, getResponsive(prop) === val ? "" : val)}
+                className={`p-1.5 rounded-md transition-colors ${getResponsive(prop) === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
                 <Icon className="h-3.5 w-3.5" />
               </button>
             ))}
           </div>
         </div>
+
         
         <Separator />
         
@@ -765,17 +859,19 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
         <div className="space-y-2">
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
             <Maximize2 className="h-3 w-3" /> Spacing
+            <span className="ml-auto normal-case tracking-normal text-[9px] text-muted-foreground capitalize">{device}</span>
           </Label>
           <div className="grid grid-cols-2 gap-2">
             {["padding", "margin"].map(prop => (
               <div key={prop} className="space-y-1">
                 <Label className="text-[9px] text-muted-foreground capitalize">{prop}</Label>
-                <Input value={styleObj[prop] || ""} onChange={(e) => updateStyle(prop, e.target.value)}
-                  placeholder="10px 20px" className="text-xs h-7 font-mono" />
+                <Input value={getResponsive(prop)} onChange={(e) => updateResponsive(prop, e.target.value)}
+                  placeholder={placeholderFor(prop) || "10px 20px"} className="text-xs h-7 font-mono" />
               </div>
             ))}
           </div>
         </div>
+
         
         <Separator />
         
@@ -912,6 +1008,8 @@ function addElIds(nodes: ElementorNode[], html: string): string {
     let nodeIdx = 0;
     for (const el of Array.from(elements)) {
       if (el.nodeType !== 1) continue; // skip text nodes
+      if ((el as Element).tagName === "STYLE") continue; // skip injected responsive style block
+
       if (nodeIdx < nodeList.length) {
         const node = nodeList[nodeIdx];
         (el as Element).setAttribute("data-el-id", node.id);
@@ -936,6 +1034,54 @@ function addElIds(nodes: ElementorNode[], html: string): string {
   return doc.body.innerHTML;
 }
 
+// Parse a previously-emitted responsive typography <style> block back into a
+// lookup keyed by the helper class (e.g. "tpl-r-el-123"). Keeps per-breakpoint
+// overrides persistent across editor reloads (and avoids duplicate style blocks).
+function parseResponsiveBlock(html: string): { cleaned: string; map: Record<string, { tablet: Record<string, string>; mobile: Record<string, string> }> } {
+  const map: Record<string, { tablet: Record<string, string>; mobile: Record<string, string> }> = {};
+  const blockMatch = html.match(/<style data-responsive-typography>([\s\S]*?)<\/style>/i);
+  if (!blockMatch) return { cleaned: html, map };
+  const block = blockMatch[1];
+  const grab = (mq: RegExp, bp: "tablet" | "mobile") => {
+    const m = block.match(mq);
+    if (!m) return;
+    const inner = m[1];
+    const ruleRe = /\.(tpl-r-[a-zA-Z0-9_-]+)\{([^}]*)\}/g;
+    let r: RegExpExecArray | null;
+    while ((r = ruleRe.exec(inner))) {
+      const cls = r[1];
+      const decls: Record<string, string> = {};
+      r[2].split(";").forEach(pair => {
+        const [k, v] = pair.split(":").map(x => x?.trim());
+        if (k && v) decls[k] = v.replace(/!important$/i, "").trim();
+      });
+      map[cls] = map[cls] || { tablet: {}, mobile: {} };
+      map[cls][bp] = decls;
+    }
+  };
+  grab(/@media\(max-width:1024px\)\{([\s\S]*?)\}\s*(?=@media|$)/i, "tablet");
+  grab(/@media\(max-width:767px\)\{([\s\S]*?)\}\s*(?=@media|$)/i, "mobile");
+  const cleaned = html.replace(/<style data-responsive-typography>[\s\S]*?<\/style>\s*/i, "");
+  return { cleaned, map };
+}
+
+// Apply parsed responsive overrides onto freshly-parsed nodes by their helper class.
+function applyResponsiveMap(nodes: ElementorNode[], map: Record<string, { tablet: Record<string, string>; mobile: Record<string, string> }>) {
+  const walk = (list: ElementorNode[]) => {
+    for (const node of list) {
+      const cn: string = node.settings.className || "";
+      const token = cn.split(/\s+/).find(c => c.startsWith("tpl-r-"));
+      if (token && map[token]) {
+        node.settings.responsive = map[token];
+        node.settings.className = cn.split(/\s+/).filter(c => !c.startsWith("tpl-r-")).join(" ").trim();
+      }
+      if (node.children?.length) walk(node.children);
+    }
+  };
+  walk(nodes);
+  return nodes;
+}
+
 // ── Main Editor Component ──────────────────────────────
 export function ElementorEditor({ html, css, onChange, onCssChange, customVars = [], preserveOriginalStyles, elementorJson }: ElementorEditorProps) {
   // Extract embedded styles from HTML (<!-- STYLES --> blocks)
@@ -943,10 +1089,17 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
     const styleMatch = html.match(/<!-- STYLES -->\n?([\s\S]*?)\n?<!-- \/STYLES -->/);
     return styleMatch ? styleMatch[1] : "";
   }, []);
-  
-  const cleanHtml = useMemo(() => {
-    return html.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "").trim();
+
+  // Pull any prior responsive-typography block out so it doesn't get re-parsed
+  // as a widget and so its rules are restored onto the matching nodes.
+  const responsiveImport = useMemo(() => {
+    const stripped = html.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "");
+    return parseResponsiveBlock(stripped);
   }, []);
+
+  const cleanHtml = useMemo(() => {
+    return responsiveImport.cleaned.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "").trim();
+  }, [responsiveImport]);
   
   // Use Elementor JSON if provided, otherwise parse HTML
   const [nodes, setNodes] = useState<ElementorNode[]>(() => {
@@ -954,8 +1107,9 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
       const parsed = parseElementorJson(elementorJson);
       if (parsed.length > 0) return parsed;
     }
-    return parseHtmlToNodes(cleanHtml);
+    return applyResponsiveMap(parseHtmlToNodes(cleanHtml), responsiveImport.map);
   });
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<"widgets" | "variables" | "navigator" | "dynamic">("widgets");
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "tablet" | "mobile">("desktop");
