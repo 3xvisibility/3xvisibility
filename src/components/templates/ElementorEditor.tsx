@@ -859,17 +859,19 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
         <div className="space-y-2">
           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
             <Maximize2 className="h-3 w-3" /> Spacing
+            <span className="ml-auto normal-case tracking-normal text-[9px] text-muted-foreground capitalize">{device}</span>
           </Label>
           <div className="grid grid-cols-2 gap-2">
             {["padding", "margin"].map(prop => (
               <div key={prop} className="space-y-1">
                 <Label className="text-[9px] text-muted-foreground capitalize">{prop}</Label>
-                <Input value={styleObj[prop] || ""} onChange={(e) => updateStyle(prop, e.target.value)}
-                  placeholder="10px 20px" className="text-xs h-7 font-mono" />
+                <Input value={getResponsive(prop)} onChange={(e) => updateResponsive(prop, e.target.value)}
+                  placeholder={placeholderFor(prop) || "10px 20px"} className="text-xs h-7 font-mono" />
               </div>
             ))}
           </div>
         </div>
+
         
         <Separator />
         
