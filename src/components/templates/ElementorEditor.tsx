@@ -1080,11 +1080,12 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
           <button onClick={handleAddSection}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors">
             <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-              <SplitSquareVertical className="h-4 w-4 text-primary" />
+              <Boxes className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-medium">Section</p>
-              <p className="text-[10px] text-muted-foreground">Full-width container</p>
+              <p className="text-xs font-medium">Container</p>
+              <p className="text-[10px] text-muted-foreground">Flexbox / grid layout</p>
+
             </div>
           </button>
           <Separator className="my-2" />
