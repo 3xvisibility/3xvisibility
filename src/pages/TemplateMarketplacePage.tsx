@@ -460,13 +460,6 @@ export default function TemplateMarketplacePage() {
                 <Badge variant="outline" className="text-[10px] capitalize">{categoryIcon(tpl.category)}</Badge>
               </div>
 
-              <div className="flex flex-wrap gap-1 mb-3">
-                {tpl.tags.slice(0, 4).map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-[10px]">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
 
               <div className="border border-border rounded-md overflow-hidden bg-muted/30 h-32">
                 <div
