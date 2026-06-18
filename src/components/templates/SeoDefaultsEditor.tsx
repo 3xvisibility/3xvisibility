@@ -4,6 +4,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Link2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { useBranding } from "@/contexts/BrandingContext";
+
+/** Variable names that should resolve to the user's own brand/company/website name. */
+const BRAND_NAME_KEYS = [
+  "company_name",
+  "brand_name",
+  "firm_name",
+  "business_name",
+  "restaurant_name",
+  "clinic_name",
+  "product_name",
+  "site_name",
+  "website_name",
+  "agency_name",
+  "store_name",
+];
 
 /** Turn arbitrary text into a clean URL slug. */
 function slugify(input: string): string {
