@@ -528,7 +528,9 @@ function NavigatorItem({ node, depth, selectedId, onSelect }: { node: ElementorN
 // ── Style Panel ──────────────────────────────────────────
 function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: ElementorNode) => void }) {
   const s = node.settings;
-  
+  // Active editing breakpoint: desktop (base inline style) vs tablet/mobile overrides.
+  const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
   const updateSetting = (key: string, value: any) => {
     onChange({ ...node, settings: { ...s, [key]: value } });
   };
@@ -551,6 +553,24 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
     const str = Object.entries(updated).map(([k, v]) => `${k}:${v}`).join(";");
     updateSetting("style", str);
   };
+
+  // Per-breakpoint overrides live in settings.responsive.{tablet|mobile}.
+  const responsive = s.responsive || {};
+  // Read a value for the active device (falls back to base inline style for display).
+  const getResponsive = (prop: string): string =>
+    device === "desktop" ? (styleObj[prop] || "") : (responsive[device]?.[prop] ?? "");
+  // Write a value for the active device.
+  const updateResponsive = (prop: string, value: string) => {
+    if (device === "desktop") return updateStyle(prop, value);
+    const current = { ...(responsive[device] || {}) };
+    if (value) current[prop] = value; else delete current[prop];
+    const nextResponsive = { ...responsive, [device]: current };
+    if (Object.keys(current).length === 0) delete nextResponsive[device];
+    updateSetting("responsive", nextResponsive);
+  };
+  const placeholderFor = (prop: string) =>
+    device === "desktop" ? "" : (styleObj[prop] || "inherit");
+
 
   return (
     <ScrollArea className="h-[calc(100vh-280px)] min-h-[300px]">
