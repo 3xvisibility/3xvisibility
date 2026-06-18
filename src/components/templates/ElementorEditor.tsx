@@ -1007,19 +1007,20 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
   
   const handleAddWidget = useCallback((widgetType: string) => {
     const widget = createWidget(widgetType);
-    // If a section or column is selected, add inside it
-    if (selectedNode && (selectedNode.type === "section" || selectedNode.type === "column")) {
+    // If a container/section/column is selected, add the widget inside it.
+    if (selectedNode && (selectedNode.type === "container" || selectedNode.type === "section" || selectedNode.type === "column")) {
       const target = selectedNode.type === "section" ? selectedNode.children?.[0] || selectedNode : selectedNode;
       const updated = { ...target, children: [...(target.children || []), widget] };
       syncToHtml(updateNode(nodes, target.id, updated));
     } else {
-      // Wrap in a section
+      // Wrap in a fresh flexbox container.
       const section = createSection();
-      section.children![0].children = [widget];
+      section.children = [widget];
       syncToHtml([...nodes, section]);
     }
     setSelectedId(widget.id);
   }, [selectedNode, nodes, updateNode, syncToHtml]);
+
   
   const handleAddSection = useCallback(() => {
     const section = createSection();
