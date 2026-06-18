@@ -15,7 +15,7 @@ import {
   Variable, Hash, Wand2, Columns, Square, Palette, AlignLeft, AlignCenter,
   AlignRight, Bold, Italic, Underline, Monitor, Tablet, Smartphone, Undo2,
   Redo2, Move, Settings2, Layers, ChevronRight, Eye, EyeOff, Copy, Code,
-  PaintBucket, Maximize2, Minimize2, LayoutGrid, SplitSquareVertical,
+  PaintBucket, Maximize2, Minimize2, LayoutGrid, SplitSquareVertical, Boxes,
   GripVertical, ChevronDown, ImagePlus, MapPin, Youtube, BookOpen, Star,
   CloudSun, Map as MapIcon, ImageIcon, PanelLeft, PanelRight,
 } from "lucide-react";
