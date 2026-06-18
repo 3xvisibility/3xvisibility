@@ -59,26 +59,8 @@ function categoryMeta(id: string) {
   return CATEGORY_META[id] || { label: categoryLabel(id), icon: Tag };
 }
 
-const NICHE_TAGS = [
-  { tag: "veterinary", label: "🐾 Vet" },
-  { tag: "wedding", label: "💍 Wedding" },
-  { tag: "resort", label: "🏝️ Resort" },
-  { tag: "cybersecurity", label: "🛡️ Cybersecurity" },
-  { tag: "florist", label: "🌸 Florist" },
-  { tag: "recruitment", label: "💼 Recruitment" },
-  { tag: "yoga", label: "🧘 Zen" },
-  { tag: "bakery", label: "🥐 Craft" },
-  { tag: "construction", label: "🏗️ Build" },
-  { tag: "blog", label: "✍️ Quill" },
-  { tag: "travel", label: "🧭 Trek" },
-  { tag: "accounting", label: "📊 Mint" },
-  { tag: "auto", label: "🚗 Drive" },
-  { tag: "dental", label: "🦷 Smile" },
-  { tag: "landscaping", label: "🌿 Lush" },
-  { tag: "electrician", label: "⚡ Spark" },
-  { tag: "coffee", label: "☕ Aroma" },
-  { tag: "agency", label: "🎨 Pixel" },
-];
+
+
 
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -389,23 +371,6 @@ export default function TemplateMarketplacePage() {
             className="pl-9"
           />
         </div>
-      </div>
-
-      {/* Quick niche tag filters */}
-      <div className="flex flex-wrap gap-2">
-        {NICHE_TAGS.map((nt) => (
-          <button
-            key={nt.tag}
-            onClick={() => setSearchQuery(searchQuery.toLowerCase() === nt.tag ? "" : nt.tag)}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-              searchQuery.toLowerCase() === nt.tag
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-muted/50 text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
-            }`}
-          >
-            {nt.label}
-          </button>
-        ))}
       </div>
 
       {/* Category pills */}
