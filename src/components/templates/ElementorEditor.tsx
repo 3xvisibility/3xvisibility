@@ -15,7 +15,7 @@ import {
   Variable, Hash, Wand2, Columns, Square, Palette, AlignLeft, AlignCenter,
   AlignRight, Bold, Italic, Underline, Monitor, Tablet, Smartphone, Undo2,
   Redo2, Move, Settings2, Layers, ChevronRight, Eye, EyeOff, Copy, Code,
-  PaintBucket, Maximize2, Minimize2, LayoutGrid, SplitSquareVertical,
+  PaintBucket, Maximize2, Minimize2, LayoutGrid, Boxes,
   GripVertical, ChevronDown, ImagePlus, MapPin, Youtube, BookOpen, Star,
   CloudSun, Map as MapIcon, ImageIcon, PanelLeft, PanelRight,
 } from "lucide-react";
@@ -23,7 +23,8 @@ import {
 // ── Types ──────────────────────────────────────────────────
 interface ElementorNode {
   id: string;
-  type: "section" | "column" | "widget";
+  // Modern Elementor uses "container" (flexbox/grid). "section"/"column" kept for backward-compat parsing.
+  type: "section" | "column" | "widget" | "container";
   widgetType?: "heading" | "text" | "image" | "button" | "list" | "html" | "spacer" | "divider" | "video" | "shortcode";
   settings: Record<string, any>;
   children?: ElementorNode[];
@@ -97,50 +98,30 @@ function convertNativeElement(el: ElementorNativeWidget): ElementorNode | null {
   if (!el || !el.elType) return null;
   const s = el.settings || {};
 
-  if (el.elType === "section" || (el.elType === "container" && el.elements?.some(c => c.elType === "column" || c.elType === "container"))) {
-    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
+  // Modern Elementor: section, column and container all collapse to a single
+  // flexbox/grid container that directly holds its children (no column wrappers).
+  if (el.elType === "section" || el.elType === "column" || el.elType === "container") {
+    const rawChildren = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
+    // Flatten any legacy column wrappers so children sit directly in the container.
+    const children: ElementorNode[] = [];
+    for (const c of rawChildren) {
+      if (c.type === "column" || (c.type === "container" && !c.settings.className && !c.settings.style && (c.children?.length || 0) > 0 && c.children!.every(cc => cc.type === "widget"))) {
+        children.push(...(c.children || []));
+      } else {
+        children.push(c);
+      }
+    }
+    const isGrid = el.elType === "container" && (s.container_type === "grid" || s.presetTitle === "grid");
     return {
       id: genNodeId(),
-      type: "section",
+      type: "container",
       settings: {
         className: s.css_classes || "",
         style: buildStyleFromElementor(s, "section"),
+        layout: isGrid ? "grid" : "flex",
         background_color: s.background_color || "",
       },
-      children: children.length > 0 ? children : [{ id: genNodeId(), type: "column", settings: {}, children: [] }],
-    };
-  }
-
-  if (el.elType === "column") {
-    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
-    return {
-      id: genNodeId(),
-      type: "column",
-      settings: {
-        width: s._column_size ? `${s._column_size}%` : "100%",
-        className: s.css_classes || "",
-        style: buildStyleFromElementor(s, "column"),
-      },
       children,
-    };
-  }
-
-  // Container without columns = treat as section with single column
-  if (el.elType === "container") {
-    const children = (el.elements || []).map(convertNativeElement).filter(Boolean) as ElementorNode[];
-    if (children.some(c => c.type === "widget")) {
-      return {
-        id: genNodeId(),
-        type: "section",
-        settings: { className: s.css_classes || "", style: buildStyleFromElementor(s, "section") },
-        children: [{ id: genNodeId(), type: "column", settings: {}, children }],
-      };
-    }
-    return {
-      id: genNodeId(),
-      type: "section",
-      settings: { className: s.css_classes || "", style: buildStyleFromElementor(s, "section") },
-      children: children.length > 0 ? children : [{ id: genNodeId(), type: "column", settings: {}, children: [] }],
     };
   }
 
@@ -151,6 +132,7 @@ function convertNativeElement(el: ElementorNativeWidget): ElementorNode | null {
 
   return null;
 }
+
 
 function convertNativeWidget(el: ElementorNativeWidget): ElementorNode {
   const s = el.settings || {};
@@ -282,12 +264,14 @@ function parseHtmlToNodes(html: string): ElementorNode[] {
       
       if (blockChildren.length > 0 && ["div", "section", "article", "main", "header", "footer", "nav"].includes(tag)) {
         const children = Array.from(el.children).map(c => domToNode(c as Element)).filter(Boolean) as ElementorNode[];
+        const layout = /display\s*:\s*grid/i.test(style) || /\b(grid|e-grid)\b/.test(cls) ? "grid" : "flex";
         return {
-          id: genNodeId(), type: "section",
-          settings: { className: cls, style, tag },
-          children: children.length > 0 ? [{ id: genNodeId(), type: "column", settings: {}, children }] : [],
+          id: genNodeId(), type: "container",
+          settings: { className: cls, style, tag, layout },
+          children,
         };
       }
+
       
       return {
         id: genNodeId(), type: "widget", widgetType: "text",
@@ -321,12 +305,14 @@ function parseHtmlToNodes(html: string): ElementorNode[] {
     }
     if (tag === "section") {
       const children = Array.from(el.children).map(c => domToNode(c as Element)).filter(Boolean) as ElementorNode[];
+      const layout = /display\s*:\s*grid/i.test(style) || /\b(grid|e-grid)\b/.test(cls) ? "grid" : "flex";
       return {
-        id: genNodeId(), type: "section",
-        settings: { className: cls, style },
-        children: children.length > 0 ? [{ id: genNodeId(), type: "column", settings: {}, children }] : [],
+        id: genNodeId(), type: "container",
+        settings: { className: cls, style, tag: "section", layout },
+        children,
       };
     }
+
     if (tag === "hr") {
       return { id: genNodeId(), type: "widget", widgetType: "divider", settings: { className: cls, style } };
     }
@@ -359,6 +345,11 @@ function nodeToHtml(node: ElementorNode): string {
   const cls = node.settings.className ? ` class="${node.settings.className}"` : "";
   const style = node.settings.style ? ` style="${node.settings.style}"` : "";
   
+  if (node.type === "container") {
+    const tag = node.settings.tag || "div";
+    const inner = (node.children || []).map(nodeToHtml).join("\n");
+    return `<${tag}${cls}${style}>\n${inner}\n</${tag}>`;
+  }
   if (node.type === "section") {
     const tag = node.settings.tag || "section";
     const inner = (node.children || []).map(nodeToHtml).join("\n");
@@ -368,6 +359,7 @@ function nodeToHtml(node: ElementorNode): string {
     const inner = (node.children || []).map(nodeToHtml).join("\n");
     return inner;
   }
+
   
   switch (node.widgetType) {
     case "heading": {
@@ -439,17 +431,22 @@ function createWidget(widgetType: string): ElementorNode {
 }
 
 function createSection(): ElementorNode {
+  // Modern Elementor container (flexbox) that directly holds widgets — no column wrapper.
   return {
-    id: genNodeId(), type: "section", settings: {},
-    children: [{ id: genNodeId(), type: "column", settings: { width: "100%" }, children: [] }],
+    id: genNodeId(), type: "container",
+    settings: { layout: "flex", tag: "div" },
+    children: [],
   };
 }
+
 
 // ── Navigator Tree Item ──────────────────────────────────
 function NavigatorItem({ node, depth, selectedId, onSelect }: { node: ElementorNode; depth: number; selectedId: string | null; onSelect: (id: string) => void }) {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = (node.children?.length || 0) > 0;
-  const label = node.type === "section" ? "Section" : node.type === "column" ? "Column" : (node.widgetType || "Widget");
+  const label = node.type === "container"
+    ? (node.settings.layout === "grid" ? "Container (Grid)" : "Container (Flex)")
+    : node.type === "section" ? "Section" : node.type === "column" ? "Column" : (node.widgetType || "Widget");
   const isSelected = selectedId === node.id;
 
   return (
@@ -467,7 +464,8 @@ function NavigatorItem({ node, depth, selectedId, onSelect }: { node: ElementorN
           </button>
         )}
         {!hasChildren && <span className="w-3" />}
-        {node.type === "section" ? <LayoutPanelTop className="h-3 w-3 shrink-0" /> :
+        {node.type === "container" ? (node.settings.layout === "grid" ? <LayoutGrid className="h-3 w-3 shrink-0" /> : <Boxes className="h-3 w-3 shrink-0" />) :
+         node.type === "section" ? <LayoutPanelTop className="h-3 w-3 shrink-0" /> :
          node.type === "column" ? <Columns className="h-3 w-3 shrink-0" /> :
          <Square className="h-3 w-3 shrink-0" />}
         <span className="truncate capitalize">{label}</span>
@@ -509,7 +507,65 @@ function StylePanel({ node, onChange }: { node: ElementorNode; onChange: (n: Ele
   return (
     <ScrollArea className="h-[calc(100vh-280px)] min-h-[300px]">
       <div className="space-y-4 p-3">
+        {/* Container layout — flexbox / grid */}
+        {node.type === "container" && (
+          <div className="space-y-2">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
+              <Boxes className="h-3 w-3" /> Container Layout
+            </Label>
+            <div className="flex gap-1.5">
+              {[
+                { val: "flex", label: "Flexbox", icon: Boxes },
+                { val: "grid", label: "Grid", icon: LayoutGrid },
+              ].map(({ val, label, icon: Icon }) => (
+                <button
+                  key={val}
+                  onClick={() => {
+                    onChange({ ...node, settings: { ...s, layout: val } });
+                    updateStyle("display", val);
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs transition-colors ${
+                    (s.layout || "flex") === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ))}
+            </div>
+            {(s.layout || "flex") === "grid" && (
+              <div className="space-y-1">
+                <Label className="text-[9px] text-muted-foreground">Grid Columns</Label>
+                <Input
+                  value={styleObj["grid-template-columns"] || ""}
+                  onChange={(e) => updateStyle("grid-template-columns", e.target.value)}
+                  placeholder="repeat(3, 1fr)"
+                  className="text-xs h-7 font-mono"
+                />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[9px] text-muted-foreground">Gap</Label>
+                <Input value={styleObj.gap || ""} onChange={(e) => updateStyle("gap", e.target.value)}
+                  placeholder="16px" className="text-xs h-7 font-mono" />
+              </div>
+              {(s.layout || "flex") === "flex" && (
+                <div className="space-y-1">
+                  <Label className="text-[9px] text-muted-foreground">Direction</Label>
+                  <Select value={styleObj["flex-direction"] || ""} onValueChange={(v) => updateStyle("flex-direction", v)}>
+                    <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Row" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="row">Row</SelectItem>
+                      <SelectItem value="column">Column</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {/* Content editing */}
+
         {(node.widgetType === "heading" || node.widgetType === "text") && (
           <div className="space-y-2">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Content</Label>
@@ -859,14 +915,18 @@ function addElIds(nodes: ElementorNode[], html: string): string {
       if (nodeIdx < nodeList.length) {
         const node = nodeList[nodeIdx];
         (el as Element).setAttribute("data-el-id", node.id);
-        if (node.type === "section" && node.children) {
-          // Tag children recursively
+        if (node.type === "container" && node.children) {
+          // Container holds children directly.
+          tagNodes((el as Element).children, node.children);
+        } else if (node.type === "section" && node.children) {
+          // Legacy section → column → children.
           for (const col of node.children) {
             if (col.children) {
               tagNodes((el as Element).children, col.children);
             }
           }
         }
+
         nodeIdx++;
       }
     }
@@ -1005,19 +1065,20 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
   
   const handleAddWidget = useCallback((widgetType: string) => {
     const widget = createWidget(widgetType);
-    // If a section or column is selected, add inside it
-    if (selectedNode && (selectedNode.type === "section" || selectedNode.type === "column")) {
+    // If a container/section/column is selected, add the widget inside it.
+    if (selectedNode && (selectedNode.type === "container" || selectedNode.type === "section" || selectedNode.type === "column")) {
       const target = selectedNode.type === "section" ? selectedNode.children?.[0] || selectedNode : selectedNode;
       const updated = { ...target, children: [...(target.children || []), widget] };
       syncToHtml(updateNode(nodes, target.id, updated));
     } else {
-      // Wrap in a section
+      // Wrap in a fresh flexbox container.
       const section = createSection();
-      section.children![0].children = [widget];
+      section.children = [widget];
       syncToHtml([...nodes, section]);
     }
     setSelectedId(widget.id);
   }, [selectedNode, nodes, updateNode, syncToHtml]);
+
   
   const handleAddSection = useCallback(() => {
     const section = createSection();
@@ -1077,11 +1138,12 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
           <button onClick={handleAddSection}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors">
             <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-              <SplitSquareVertical className="h-4 w-4 text-primary" />
+              <Boxes className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-xs font-medium">Section</p>
-              <p className="text-[10px] text-muted-foreground">Full-width container</p>
+              <p className="text-xs font-medium">Container</p>
+              <p className="text-[10px] text-muted-foreground">Flexbox / grid layout</p>
+
             </div>
           </button>
           <Separator className="my-2" />
@@ -1267,7 +1329,7 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
         <Separator orientation="vertical" className="h-5 shrink-0" />
 
         <Button variant="outline" size="sm" className="text-xs h-7 gap-1.5 shrink-0" onClick={handleAddSection}>
-          <Plus className="h-3 w-3" /> Section
+          <Plus className="h-3 w-3" /> Container
         </Button>
 
         {selectedNode && (
