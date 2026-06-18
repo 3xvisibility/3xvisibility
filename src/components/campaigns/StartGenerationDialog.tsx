@@ -119,6 +119,9 @@ export function StartGenerationDialog({
   const [skinVariant, setSkinVariant] = useState<string>(
     initialSkinVariant || (skinPlatform ? defaultSkinVariant(skinPlatform) : ""),
   );
+  // For connected websites: keep the existing site design (content-only refresh)
+  // or switch to a new template design. Defaults to keeping the current design.
+  const [designMode, setDesignMode] = useState<"keep" | "change">("keep");
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
