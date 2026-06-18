@@ -409,6 +409,22 @@ QUALITY BAR: Output must look like a flagship landing page from a Series-B start
       content = content + "\n" + overrideStyle;
     }
 
+    // Responsive safety-net: guarantee every generated template collapses to a
+    // fluid single-column container layout on tablets/phones and never overflows,
+    // regardless of the grids the model produced.
+    if (!content.includes("data-responsive-global")) {
+      content = content + `
+<style data-responsive-global>
+.pgp-page img,.pgp-page svg,.pgp-page video,.pgp-page iframe{max-width:100%;height:auto}
+.pgp-page [class*="grid"],.pgp-page [class*="split"],.pgp-page [class*="cols"],.pgp-page .e-con{box-sizing:border-box}
+@media(max-width:992px){.pgp-page [class*="grid-4"],.pgp-page [class*="grid-3"]{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:768px){.pgp-page [class*="grid"],.pgp-page [class*="split"],.pgp-page [class*="cols"],.pgp-page [class*="contact"],.pgp-page [class*="feat"],.pgp-page .e-con.e-grid{grid-template-columns:1fr!important}.pgp-page [class*="hero"]{min-height:auto!important}}
+@media(max-width:640px){.pgp-page [class*="grid"],.pgp-page [class*="split"],.pgp-page [class*="price"],.pgp-page [class*="stats"]{grid-template-columns:1fr!important}}
+</style>`;
+    }
+
+
+
     // Extract variables — only simple {identifier} tokens, skip CSS blocks
     const DESIGN_VARS = new Set([
       "font_family","font_size","font_weight","font_color","font_style",
