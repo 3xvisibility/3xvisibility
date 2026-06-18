@@ -234,8 +234,7 @@ export default function TemplateMarketplacePage() {
       const matchesSearch =
         !searchQuery ||
         tpl.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tpl.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tpl.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        tpl.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
