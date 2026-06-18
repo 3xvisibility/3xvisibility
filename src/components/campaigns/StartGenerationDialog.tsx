@@ -421,13 +421,64 @@ export function StartGenerationDialog({
           {skinPlatform && (
             <>
               <Separator />
-              <PlatformSkinPicker
-                platform={skinPlatform}
-                value={skinVariant}
-                onChange={setSkinVariant}
-              />
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Design for generated pages</Label>
+                <p className="text-[11px] text-muted-foreground -mt-1">
+                  Your site is connected. Choose whether new pages reuse your current
+                  design or switch to a fresh template design.
+                </p>
+                <RadioGroup
+                  value={designMode}
+                  onValueChange={(v) => setDesignMode(v as "keep" | "change")}
+                  className="grid grid-cols-1 gap-3"
+                >
+                  <Label
+                    htmlFor="design-keep"
+                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      designMode === "keep" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <RadioGroupItem value="keep" id="design-keep" className="mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-sm font-medium">Keep existing design</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Reuse your current website design — only the SEO title and content are updated.
+                      </p>
+                    </div>
+                  </Label>
+                  <Label
+                    htmlFor="design-change"
+                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      designMode === "change" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <RadioGroupItem value="change" id="design-change" className="mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <Paintbrush className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-sm font-medium">Change the design</span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Pick a template design below — new pages will use that look instead.
+                      </p>
+                    </div>
+                  </Label>
+                </RadioGroup>
+
+                {designMode === "change" && (
+                  <PlatformSkinPicker
+                    platform={skinPlatform}
+                    value={skinVariant}
+                    onChange={setSkinVariant}
+                  />
+                )}
+              </div>
             </>
           )}
+
 
 
 
