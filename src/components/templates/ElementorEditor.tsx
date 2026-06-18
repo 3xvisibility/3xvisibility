@@ -1032,6 +1032,54 @@ function addElIds(nodes: ElementorNode[], html: string): string {
   return doc.body.innerHTML;
 }
 
+// Parse a previously-emitted responsive typography <style> block back into a
+// lookup keyed by the helper class (e.g. "tpl-r-el-123"). Keeps per-breakpoint
+// overrides persistent across editor reloads (and avoids duplicate style blocks).
+function parseResponsiveBlock(html: string): { cleaned: string; map: Record<string, { tablet: Record<string, string>; mobile: Record<string, string> }> } {
+  const map: Record<string, { tablet: Record<string, string>; mobile: Record<string, string> }> = {};
+  const blockMatch = html.match(/<style data-responsive-typography>([\s\S]*?)<\/style>/i);
+  if (!blockMatch) return { cleaned: html, map };
+  const block = blockMatch[1];
+  const grab = (mq: RegExp, bp: "tablet" | "mobile") => {
+    const m = block.match(mq);
+    if (!m) return;
+    const inner = m[1];
+    const ruleRe = /\.(tpl-r-[a-zA-Z0-9_-]+)\{([^}]*)\}/g;
+    let r: RegExpExecArray | null;
+    while ((r = ruleRe.exec(inner))) {
+      const cls = r[1];
+      const decls: Record<string, string> = {};
+      r[2].split(";").forEach(pair => {
+        const [k, v] = pair.split(":").map(x => x?.trim());
+        if (k && v) decls[k] = v.replace(/!important$/i, "").trim();
+      });
+      map[cls] = map[cls] || { tablet: {}, mobile: {} };
+      map[cls][bp] = decls;
+    }
+  };
+  grab(/@media\(max-width:1024px\)\{([\s\S]*?)\}\s*(?=@media|$)/i, "tablet");
+  grab(/@media\(max-width:767px\)\{([\s\S]*?)\}\s*(?=@media|$)/i, "mobile");
+  const cleaned = html.replace(/<style data-responsive-typography>[\s\S]*?<\/style>\s*/i, "");
+  return { cleaned, map };
+}
+
+// Apply parsed responsive overrides onto freshly-parsed nodes by their helper class.
+function applyResponsiveMap(nodes: ElementorNode[], map: Record<string, { tablet: Record<string, string>; mobile: Record<string, string> }>) {
+  const walk = (list: ElementorNode[]) => {
+    for (const node of list) {
+      const cn: string = node.settings.className || "";
+      const token = cn.split(/\s+/).find(c => c.startsWith("tpl-r-"));
+      if (token && map[token]) {
+        node.settings.responsive = map[token];
+        node.settings.className = cn.split(/\s+/).filter(c => !c.startsWith("tpl-r-")).join(" ").trim();
+      }
+      if (node.children?.length) walk(node.children);
+    }
+  };
+  walk(nodes);
+  return nodes;
+}
+
 // ── Main Editor Component ──────────────────────────────
 export function ElementorEditor({ html, css, onChange, onCssChange, customVars = [], preserveOriginalStyles, elementorJson }: ElementorEditorProps) {
   // Extract embedded styles from HTML (<!-- STYLES --> blocks)
@@ -1039,10 +1087,17 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
     const styleMatch = html.match(/<!-- STYLES -->\n?([\s\S]*?)\n?<!-- \/STYLES -->/);
     return styleMatch ? styleMatch[1] : "";
   }, []);
-  
-  const cleanHtml = useMemo(() => {
-    return html.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "").trim();
+
+  // Pull any prior responsive-typography block out so it doesn't get re-parsed
+  // as a widget and so its rules are restored onto the matching nodes.
+  const responsiveImport = useMemo(() => {
+    const stripped = html.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "");
+    return parseResponsiveBlock(stripped);
   }, []);
+
+  const cleanHtml = useMemo(() => {
+    return responsiveImport.cleaned.replace(/<!-- STYLES -->\n?[\s\S]*?\n?<!-- \/STYLES -->\n?/, "").trim();
+  }, [responsiveImport]);
   
   // Use Elementor JSON if provided, otherwise parse HTML
   const [nodes, setNodes] = useState<ElementorNode[]>(() => {
@@ -1050,8 +1105,9 @@ export function ElementorEditor({ html, css, onChange, onCssChange, customVars =
       const parsed = parseElementorJson(elementorJson);
       if (parsed.length > 0) return parsed;
     }
-    return parseHtmlToNodes(cleanHtml);
+    return applyResponsiveMap(parseHtmlToNodes(cleanHtml), responsiveImport.map);
   });
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sidebarTab, setSidebarTab] = useState<"widgets" | "variables" | "navigator" | "dynamic">("widgets");
   const [previewWidth, setPreviewWidth] = useState<"desktop" | "tablet" | "mobile">("desktop");
