@@ -41,14 +41,25 @@ interface SeoDefaultsEditorProps {
  * generated page starts with correct, ready-to-edit SEO metadata.
  */
 export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
+  const { appName } = useBranding();
+
   const defaults = useMemo(() => {
-    const dv = template.defaultValues;
+    // Override the template's placeholder brand defaults (e.g. "Lums") with the
+    // user's own company / brand / website name so the SEO title suffix and slug
+    // reflect their business instead of the template theme.
+    const brandName = (appName || "").trim();
+    const dv = { ...template.defaultValues } as Record<string, string>;
+    if (brandName) {
+      for (const key of BRAND_NAME_KEYS) {
+        if (key in dv) dv[key] = brandName;
+      }
+    }
     return {
       title: applyTemplateDefaults(template.seo_title_pattern ?? template.name, dv).trim(),
       description: applyTemplateDefaults(template.seo_description_pattern ?? template.description, dv).trim(),
       slug: slugify(applyTemplateDefaults(template.slug_pattern ?? template.name, dv)),
     };
-  }, [template]);
+  }, [template, appName]);
 
   const [title, setTitle] = useState(defaults.title);
   const [description, setDescription] = useState(defaults.description);
