@@ -93,6 +93,13 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // App client secret comes from the platform env var, never from the DB.
+    const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
+    if (!clientSecret) {
+      console.error("SHOPIFY_CLIENT_SECRET is not configured");
+      return redirectError("Shopify OAuth is not configured", "not_configured");
+    }
+
     // ── 1. Look up & consume the OAuth state atomically ──
     // Select then immediately delete to prevent replay attacks.
     const { data: oauthState, error: stateError } = await supabase
@@ -124,7 +131,7 @@ Deno.serve(async (req) => {
     }
 
     // ── 4. HMAC signature verification ──
-    const hmacValid = await verifyShopifyHmac(url.searchParams, oauthState.client_secret);
+    const hmacValid = await verifyShopifyHmac(url.searchParams, clientSecret);
     if (!hmacValid) {
       console.error("HMAC verification failed for state", state);
       return redirectError("Signature verification failed — request may have been tampered with", "hmac_failed");
@@ -141,7 +148,7 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         client_id: oauthState.client_id,
-        client_secret: oauthState.client_secret,
+        client_secret: clientSecret,
         code,
       }),
     });

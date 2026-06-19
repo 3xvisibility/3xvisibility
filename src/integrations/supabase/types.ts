@@ -1933,7 +1933,6 @@ export type Database = {
       shopify_oauth_states: {
         Row: {
           client_id: string
-          client_secret: string
           created_at: string
           expires_at: string
           id: string
@@ -1946,7 +1945,6 @@ export type Database = {
         }
         Insert: {
           client_id: string
-          client_secret: string
           created_at?: string
           expires_at: string
           id?: string
@@ -1959,7 +1957,6 @@ export type Database = {
         }
         Update: {
           client_id?: string
-          client_secret?: string
           created_at?: string
           expires_at?: string
           id?: string
