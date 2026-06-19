@@ -23,7 +23,13 @@ import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSele
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
 import { PlatformSkinPicker } from "@/components/campaigns/PlatformSkinPicker";
-import { defaultSkinVariant, type TemplatePlatform } from "@/lib/marketplace-templates";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  defaultSkinVariant,
+  COMMUNITY_TEMPLATES,
+  platformFromCategory,
+  type TemplatePlatform,
+} from "@/lib/marketplace-templates";
 import { useSubscription } from "@/hooks/use-subscription";
 
 /** Map a connected website type to a themeable platform (woocommerce → wordpress). */
@@ -87,6 +93,12 @@ export interface GenerationOptions {
    * + content) or switch to a new template design for the generated pages.
    */
   design_mode?: "keep" | "change";
+  /** Marketplace template id whose design should rebuild the pages (design_mode = "change"). */
+  marketplace_template_id?: string;
+  /** Editable SEO title pattern to apply when switching design. */
+  seo_title_override?: string;
+  /** Editable SEO description pattern to apply when switching design. */
+  seo_description_override?: string;
 }
 
 export function StartGenerationDialog({
@@ -122,6 +134,27 @@ export function StartGenerationDialog({
   // For connected websites: keep the existing site design (content-only refresh)
   // or switch to a new template design. Defaults to keeping the current design.
   const [designMode, setDesignMode] = useState<"keep" | "change">("keep");
+
+  // Marketplace template chosen as the new design (when changing design).
+  // Filter to templates matching the connected platform (plus generic ones).
+  const designTemplates = COMMUNITY_TEMPLATES.filter((t) => {
+    const tplPlatform = t.platform || platformFromCategory(t.category);
+    return !skinPlatform || tplPlatform === skinPlatform || tplPlatform === "generic";
+  });
+  const [marketplaceTemplateId, setMarketplaceTemplateId] = useState<string>("");
+  const [seoTitleOverride, setSeoTitleOverride] = useState<string>("");
+  const [seoDescOverride, setSeoDescOverride] = useState<string>("");
+
+  const handlePickTemplate = (tplId: string) => {
+    setMarketplaceTemplateId(tplId);
+    const tpl = designTemplates.find((t) => t.id === tplId);
+    if (tpl) {
+      setSeoTitleOverride(tpl.seo_title_pattern || "");
+      setSeoDescOverride(tpl.seo_description_pattern || "");
+    }
+  };
+
+
 
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
@@ -209,6 +242,12 @@ export function StartGenerationDialog({
       // Only apply a new theme skin when the user opted to change the design.
       if (designMode === "change" && skinVariant) {
         options.platform_skin_variant = skinVariant;
+      }
+      // Rebuild pages on a chosen marketplace template design + SEO overrides.
+      if (designMode === "change" && marketplaceTemplateId) {
+        options.marketplace_template_id = marketplaceTemplateId;
+        if (seoTitleOverride.trim()) options.seo_title_override = seoTitleOverride.trim();
+        if (seoDescOverride.trim()) options.seo_description_override = seoDescOverride.trim();
       }
     }
     onStart(options);
@@ -469,11 +508,60 @@ export function StartGenerationDialog({
                 </RadioGroup>
 
                 {designMode === "change" && (
-                  <PlatformSkinPicker
-                    platform={skinPlatform}
-                    value={skinVariant}
-                    onChange={setSkinVariant}
-                  />
+                  <div className="space-y-4">
+                    {/* Marketplace template = the new SEO-optimized design */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Marketplace template</Label>
+                      <p className="text-[11px] text-muted-foreground -mt-1">
+                        Your pages will be rebuilt on this design — best for SEO.
+                      </p>
+                      <Select value={marketplaceTemplateId} onValueChange={handlePickTemplate}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose a template design" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {designTemplates.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {marketplaceTemplateId && (
+                      <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium">SEO title</Label>
+                          <Input
+                            value={seoTitleOverride}
+                            onChange={(e) => setSeoTitleOverride(e.target.value)}
+                            placeholder="{hero_title} | {company_name}"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium">SEO description</Label>
+                          <Textarea
+                            value={seoDescOverride}
+                            onChange={(e) => setSeoDescOverride(e.target.value)}
+                            placeholder="Short meta description with your keyword and a call to action."
+                            rows={2}
+                          />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Use {"{variable}"} placeholders — they fill from your CSV / mappings.
+                          Pages generate in {effectiveTargetLang || "the site language"}.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Optional: also match the store's native theme look. */}
+                    <PlatformSkinPicker
+                      platform={skinPlatform}
+                      value={skinVariant}
+                      onChange={setSkinVariant}
+                    />
+                  </div>
                 )}
               </div>
             </>
