@@ -89,6 +89,9 @@ export default function TemplatesPage() {
   const [siteContentType, setSiteContentType] = useState<ContentType>("pages");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string; type?: string; status?: string }[]>([]);
   const [siteLoading, setSiteLoading] = useState(false);
+  // Design source for site import: keep the page's own design, or replace with a marketplace template.
+  const [siteDesignSource, setSiteDesignSource] = useState<"imported" | "marketplace">("imported");
+  const [siteMarketplaceId, setSiteMarketplaceId] = useState<string>("");
   // URL import loading
   const [urlImporting, setUrlImporting] = useState(false);
 
