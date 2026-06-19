@@ -3790,7 +3790,28 @@ const ensureResponsive = (content: string): string =>
 // Final catalog: each template gets a derived `platform` and, for WordPress /
 // Shopify / PrestaShop entries, a platform-native re-skin + wrapper classes so
 // they look and publish natively on their target CMS.
-export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = RAW_COMMUNITY_TEMPLATES
+// Guard against duplicate template IDs or slug patterns when registering batches.
+// Keeps the FIRST occurrence and warns about any conflicts so they can be fixed.
+function dedupeTemplates(templates: MarketplaceTemplate[]): MarketplaceTemplate[] {
+  const seenIds = new Set<string>();
+  const seenSlugs = new Set<string>();
+  const out: MarketplaceTemplate[] = [];
+  for (const t of templates) {
+    if (seenIds.has(t.id)) {
+      console.warn(`[marketplace] Duplicate template id skipped: "${t.id}"`);
+      continue;
+    }
+    if (t.slug_pattern && seenSlugs.has(t.slug_pattern)) {
+      console.warn(`[marketplace] Duplicate slug_pattern on "${t.id}": "${t.slug_pattern}"`);
+    }
+    seenIds.add(t.id);
+    if (t.slug_pattern) seenSlugs.add(t.slug_pattern);
+    out.push(t);
+  }
+  return out;
+}
+
+export const COMMUNITY_TEMPLATES: MarketplaceTemplate[] = dedupeTemplates(RAW_COMMUNITY_TEMPLATES)
   .map((t) => {
     const platform = platformFromCategory(t.category);
     const base =
