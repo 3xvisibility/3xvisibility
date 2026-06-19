@@ -93,6 +93,12 @@ export interface GenerationOptions {
    * + content) or switch to a new template design for the generated pages.
    */
   design_mode?: "keep" | "change";
+  /** Marketplace template id whose design should rebuild the pages (design_mode = "change"). */
+  marketplace_template_id?: string;
+  /** Editable SEO title pattern to apply when switching design. */
+  seo_title_override?: string;
+  /** Editable SEO description pattern to apply when switching design. */
+  seo_description_override?: string;
 }
 
 export function StartGenerationDialog({
