@@ -92,6 +92,7 @@ export default function TemplatesPage() {
   // Design source for site import: keep the page's own design, or replace with a marketplace template.
   const [siteDesignSource, setSiteDesignSource] = useState<"imported" | "marketplace">("imported");
   const [siteMarketplaceId, setSiteMarketplaceId] = useState<string>("");
+  const [sitePendingPage, setSitePendingPage] = useState<{ title: string; link: string; slug: string } | null>(null);
   // URL import loading
   const [urlImporting, setUrlImporting] = useState(false);
 
@@ -1146,7 +1147,7 @@ export default function TemplatesPage() {
       </Dialog>
 
       {/* Site Import Dialog */}
-      <Dialog open={siteDialogOpen} onOpenChange={setSiteDialogOpen}>
+      <Dialog open={siteDialogOpen} onOpenChange={(v) => { setSiteDialogOpen(v); if (!v) setSitePendingPage(null); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1156,7 +1157,7 @@ export default function TemplatesPage() {
           </DialogHeader>
           <div className="space-y-4 mt-2">
             {/* Website selector */}
-            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); loadSitePages(v, siteContentType); }}>
+            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); setSitePendingPage(null); loadSitePages(v, siteContentType); }}>
               <SelectTrigger><SelectValue placeholder="Select website" /></SelectTrigger>
               <SelectContent>
                 {connectedWebsites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.type})</SelectItem>)}
@@ -1169,7 +1170,7 @@ export default function TemplatesPage() {
                 {(["pages", "products", "services"] as ContentType[]).map(ct => (
                   <button
                     key={ct}
-                    onClick={() => { setSiteContentType(ct); loadSitePages(siteWebsite, ct); }}
+                    onClick={() => { setSiteContentType(ct); setSitePendingPage(null); loadSitePages(siteWebsite, ct); }}
                     className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                       siteContentType === ct
                         ? "bg-background shadow-sm text-foreground"
@@ -1185,10 +1186,50 @@ export default function TemplatesPage() {
               </div>
             )}
 
-            {/* Design source: keep the page design, or replace with a marketplace template */}
-            {siteWebsite && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold">Design source</p>
+            {/* Loading */}
+            {siteLoading && (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Loading {siteContentType}...</p>
+              </div>
+            )}
+
+            {/* Step 1: pick a page (only until one is selected) */}
+            {!siteLoading && sitePages.length > 0 && !sitePendingPage && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click a page to continue</p>
+                <div className="max-h-60 overflow-y-auto space-y-1 border rounded-lg p-1">
+                  {sitePages.map(p => (
+                    <button key={p.id || p.link} onClick={() => setSitePendingPage({ title: p.title, link: p.link, slug: p.slug })} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-medium text-sm block truncate">{p.title}</span>
+                          <span className="text-xs text-muted-foreground block truncate">/{p.slug}</span>
+                        </div>
+                        {p.status && (
+                          <Badge variant="outline" className="text-[10px] ml-2 shrink-0">
+                            {p.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: chosen page → pick design source */}
+            {sitePendingPage && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                  <div className="min-w-0">
+                    <span className="text-xs text-muted-foreground">Selected page</span>
+                    <span className="font-medium text-sm block truncate">{sitePendingPage.title}</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSitePendingPage(null)}>Change</Button>
+                </div>
+
+                <p className="text-xs font-semibold">How should the new pages look?</p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -1197,8 +1238,8 @@ export default function TemplatesPage() {
                       siteDesignSource === "imported" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
                     }`}
                   >
-                    <span className="text-xs font-semibold block">Keep imported design</span>
-                    <span className="text-[10px] text-muted-foreground">Use the page's own design as template</span>
+                    <span className="text-xs font-semibold block">Keep existing design</span>
+                    <span className="text-[10px] text-muted-foreground">Only update SEO & content</span>
                   </button>
                   <button
                     type="button"
@@ -1226,40 +1267,26 @@ export default function TemplatesPage() {
                     </SelectContent>
                   </Select>
                 )}
+
+                <Button
+                  className="w-full"
+                  disabled={siteDesignSource === "marketplace" && !siteMarketplaceId}
+                  onClick={() => {
+                    const page = sitePendingPage;
+                    if (!page) return;
+                    if (siteDesignSource === "marketplace") {
+                      applyMarketplaceToSitePage(page.title);
+                    } else {
+                      importSitePage(page.link, page.title);
+                    }
+                    setSitePendingPage(null);
+                  }}
+                >
+                  {siteDesignSource === "marketplace" ? "Apply marketplace design" : "Continue with existing design"}
+                </Button>
               </div>
             )}
 
-            {/* Loading */}
-            {siteLoading && (
-              <div className="flex flex-col items-center justify-center py-8 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Loading {siteContentType}...</p>
-              </div>
-            )}
-
-            {/* Results */}
-            {!siteLoading && sitePages.length > 0 && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click to {siteDesignSource === "marketplace" ? "apply the marketplace design" : "import as template"}</p>
-                <div className="max-h-60 overflow-y-auto space-y-1 border rounded-lg p-1">
-                  {sitePages.map(p => (
-                    <button key={p.id || p.link} onClick={() => siteDesignSource === "marketplace" ? applyMarketplaceToSitePage(p.title) : importSitePage(p.link, p.title)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
-                      <div className="flex items-center justify-between">
-                        <div className="min-w-0 flex-1">
-                          <span className="font-medium text-sm block truncate">{p.title}</span>
-                          <span className="text-xs text-muted-foreground block truncate">/{p.slug}</span>
-                        </div>
-                        {p.status && (
-                          <Badge variant="outline" className="text-[10px] ml-2 shrink-0">
-                            {p.status}
-                          </Badge>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Empty state */}
             {!siteLoading && sitePages.length === 0 && siteWebsite && (
