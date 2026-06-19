@@ -407,6 +407,49 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
                   </div>
                 </div>
               )}
+
+              {selectedWebsiteId && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Design source</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDesignSource("imported")}
+                      className={`text-left p-3 rounded-lg border-2 transition-all ${
+                        designSource === "imported" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="text-xs font-semibold block">Keep imported design</span>
+                      <span className="text-[10px] text-muted-foreground">Use the page's own design</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDesignSource("marketplace")}
+                      className={`text-left p-3 rounded-lg border-2 transition-all ${
+                        designSource === "marketplace" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="text-xs font-semibold block">Use marketplace template</span>
+                      <span className="text-[10px] text-muted-foreground">Replace design with a marketplace one</span>
+                    </button>
+                  </div>
+                  {designSource === "marketplace" && (
+                    <Select value={marketplaceId} onValueChange={setMarketplaceId}>
+                      <SelectTrigger><SelectValue placeholder="Choose marketplace template..." /></SelectTrigger>
+                      <SelectContent>
+                        {COMMUNITY_TEMPLATES
+                          .filter(t => {
+                            const type = websites.find(w => w.id === selectedWebsiteId)?.type;
+                            if (!type) return true;
+                            if (type === "woocommerce") return t.platform === "wordpress" || t.platform === "generic";
+                            return t.platform === type || t.platform === "generic";
+                          })
+                          .map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
