@@ -651,9 +651,44 @@ export default function TemplatesPage() {
     toast({ title: `Page imported as template${varMsg}` });
   };
 
+  // Translate SEO patterns into the chosen language while keeping {placeholders}
+  // intact. Returns the originals unchanged on any failure / auto-detect.
+  const localizeSeoPatterns = async (
+    language: string,
+    fields: { title: string; description: string; slug: string },
+  ): Promise<{ title: string; description: string; slug: string }> => {
+    if (!language || language === "__auto__") return fields;
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-template", {
+        body: {
+          prompt: `Translate the following SEO field patterns into ${language}.
+Rules:
+- Keep every {placeholder} token EXACTLY as-is (do not translate or alter text inside braces).
+- Translate only the surrounding static words.
+- For "slug": output lowercase, hyphen-separated, ASCII-safe, keep {placeholders}.
+- Return ONLY valid JSON: {"title": "...", "description": "...", "slug": "..."}
+
+title: ${fields.title}
+description: ${fields.description}
+slug: ${fields.slug}`,
+        },
+      });
+      if (error) throw error;
+      const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
+      const parsed = JSON.parse(raw);
+      return {
+        title: typeof parsed.title === "string" && parsed.title.trim() ? parsed.title.trim() : fields.title,
+        description: typeof parsed.description === "string" && parsed.description.trim() ? parsed.description.trim() : fields.description,
+        slug: typeof parsed.slug === "string" && parsed.slug.trim() ? parsed.slug.trim() : fields.slug,
+      };
+    } catch {
+      return fields;
+    }
+  };
+
   // Replace a connected-site page's design with a full marketplace template
   // (content + variables + SEO patterns), keeping the page name for context.
-  const applyMarketplaceToSitePage = (pageTitle: string) => {
+  const applyMarketplaceToSitePage = async (pageTitle: string) => {
     const tpl = COMMUNITY_TEMPLATES.find(t => t.id === siteMarketplaceId);
     if (!tpl) {
       toast({ title: "Pick a template first", variant: "destructive" });
@@ -661,6 +696,14 @@ export default function TemplatesPage() {
     }
     setSiteDialogOpen(false);
     setSitePages([]);
+
+    const lang = siteLanguage !== "__auto__" ? siteLanguage : "";
+    const localized = await localizeSeoPatterns(lang, {
+      title: tpl.seo_title_pattern || "",
+      description: tpl.seo_description_pattern || "",
+      slug: tpl.slug_pattern || "",
+    });
+
     setEditingTemplate({
       id: "",
       name: pageTitle || tpl.name,
@@ -671,12 +714,12 @@ export default function TemplatesPage() {
       updated_at: "",
       workspace_id: wsId || null,
       schema_type: tpl.schema_type || "WebPage",
-      schema_config: { source_marketplace_id: tpl.id, language: siteLanguage !== "__auto__" ? siteLanguage : undefined } as any,
-      seo_title_pattern: tpl.seo_title_pattern || "",
-      seo_description_pattern: tpl.seo_description_pattern || "",
+      schema_config: { source_marketplace_id: tpl.id, language: lang || undefined, slug_pattern: localized.slug || undefined } as any,
+      seo_title_pattern: localized.title,
+      seo_description_pattern: localized.description,
     } as any);
     setEditorOpen(true);
-    toast({ title: `"${tpl.name}" applied — replaces the page design` });
+    toast({ title: `"${tpl.name}" applied${lang ? ` — localized to ${lang}` : ""}` });
   };
 
 
