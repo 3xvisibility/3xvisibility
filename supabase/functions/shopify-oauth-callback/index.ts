@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
     }
 
     // ── 4. HMAC signature verification ──
-    const hmacValid = await verifyShopifyHmac(url.searchParams, oauthState.client_secret);
+    const hmacValid = await verifyShopifyHmac(url.searchParams, clientSecret);
     if (!hmacValid) {
       console.error("HMAC verification failed for state", state);
       return redirectError("Signature verification failed — request may have been tampered with", "hmac_failed");
