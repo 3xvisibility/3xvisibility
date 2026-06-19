@@ -7,9 +7,11 @@ import { FileText, ArrowRight, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export function PagesUsageWidget() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { basePath } = useWorkspace();
   const {
     plan,
