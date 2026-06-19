@@ -1147,7 +1147,7 @@ export default function TemplatesPage() {
       </Dialog>
 
       {/* Site Import Dialog */}
-      <Dialog open={siteDialogOpen} onOpenChange={setSiteDialogOpen}>
+      <Dialog open={siteDialogOpen} onOpenChange={(v) => { setSiteDialogOpen(v); if (!v) setSitePendingPage(null); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1157,7 +1157,7 @@ export default function TemplatesPage() {
           </DialogHeader>
           <div className="space-y-4 mt-2">
             {/* Website selector */}
-            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); loadSitePages(v, siteContentType); }}>
+            <Select value={siteWebsite} onValueChange={(v) => { setSiteWebsite(v); setSitePendingPage(null); loadSitePages(v, siteContentType); }}>
               <SelectTrigger><SelectValue placeholder="Select website" /></SelectTrigger>
               <SelectContent>
                 {connectedWebsites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.type})</SelectItem>)}
@@ -1170,7 +1170,7 @@ export default function TemplatesPage() {
                 {(["pages", "products", "services"] as ContentType[]).map(ct => (
                   <button
                     key={ct}
-                    onClick={() => { setSiteContentType(ct); loadSitePages(siteWebsite, ct); }}
+                    onClick={() => { setSiteContentType(ct); setSitePendingPage(null); loadSitePages(siteWebsite, ct); }}
                     className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                       siteContentType === ct
                         ? "bg-background shadow-sm text-foreground"
