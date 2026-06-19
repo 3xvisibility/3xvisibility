@@ -60,7 +60,7 @@ const stats = [
   { value: "40h", label: "Saved per site" },
   { value: "4", label: "Platforms supported" },
   { value: "10k+", label: "Pages per campaign" },
-  { value: "8", label: "Languages" },
+  { value: "4", label: "Languages" },
 ];
 
 const testimonials = [
@@ -93,7 +93,7 @@ const testimonials = [
     role: "Performance Marketing Lead",
     company: "NexGen Media",
     quote:
-      "Multilingual content at scale used to be a pipe dream. With 3XVISIBILITY we run GEO campaigns across 8 languages without hiring translators.",
+      "Multilingual content at scale used to be a pipe dream. With 3XVISIBILITY we run GEO campaigns across 4 languages without hiring translators.",
     stars: 5,
   },
 ];
