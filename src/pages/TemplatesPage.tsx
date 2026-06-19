@@ -89,6 +89,9 @@ export default function TemplatesPage() {
   const [siteContentType, setSiteContentType] = useState<ContentType>("pages");
   const [sitePages, setSitePages] = useState<{ id: string; title: string; slug: string; link: string; type?: string; status?: string }[]>([]);
   const [siteLoading, setSiteLoading] = useState(false);
+  // Design source for site import: keep the page's own design, or replace with a marketplace template.
+  const [siteDesignSource, setSiteDesignSource] = useState<"imported" | "marketplace">("imported");
+  const [siteMarketplaceId, setSiteMarketplaceId] = useState<string>("");
   // URL import loading
   const [urlImporting, setUrlImporting] = useState(false);
 
@@ -644,6 +647,36 @@ export default function TemplatesPage() {
     toast({ title: `Page imported as template${varMsg}` });
   };
 
+  // Replace a connected-site page's design with a full marketplace template
+  // (content + variables + SEO patterns), keeping the page name for context.
+  const applyMarketplaceToSitePage = (pageTitle: string) => {
+    const tpl = COMMUNITY_TEMPLATES.find(t => t.id === siteMarketplaceId);
+    if (!tpl) {
+      toast({ title: "Pick a template first", variant: "destructive" });
+      return;
+    }
+    setSiteDialogOpen(false);
+    setSitePages([]);
+    setEditingTemplate({
+      id: "",
+      name: pageTitle || tpl.name,
+      content: tpl.content,
+      variables: tpl.variables || [],
+      user_id: "",
+      created_at: "",
+      updated_at: "",
+      workspace_id: wsId || null,
+      schema_type: tpl.schema_type || "WebPage",
+      schema_config: { source_marketplace_id: tpl.id } as any,
+      seo_title_pattern: tpl.seo_title_pattern || "",
+      seo_description_pattern: tpl.seo_description_pattern || "",
+    } as any);
+    setEditorOpen(true);
+    toast({ title: `"${tpl.name}" applied — replaces the page design` });
+  };
+
+
+
 
   const handleEditorSave = (data: { name: string; content: string; seoTitlePattern: string; seoDescriptionPattern: string; schemaType: string; schemaConfig: Record<string, any> }) => {
     if (editingTemplate?.id) {
@@ -1150,6 +1183,50 @@ export default function TemplatesPage() {
               </div>
             )}
 
+            {/* Design source: keep the page design, or replace with a marketplace template */}
+            {siteWebsite && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold">Design source</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSiteDesignSource("imported")}
+                    className={`text-left p-3 rounded-lg border-2 transition-all ${
+                      siteDesignSource === "imported" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold block">Keep imported design</span>
+                    <span className="text-[10px] text-muted-foreground">Use the page's own design as template</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSiteDesignSource("marketplace")}
+                    className={`text-left p-3 rounded-lg border-2 transition-all ${
+                      siteDesignSource === "marketplace" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold block">Use marketplace template</span>
+                    <span className="text-[10px] text-muted-foreground">Replace design with a marketplace one</span>
+                  </button>
+                </div>
+                {siteDesignSource === "marketplace" && (
+                  <Select value={siteMarketplaceId} onValueChange={setSiteMarketplaceId}>
+                    <SelectTrigger><SelectValue placeholder="Choose marketplace template..." /></SelectTrigger>
+                    <SelectContent>
+                      {COMMUNITY_TEMPLATES
+                        .filter(t => {
+                          const type = connectedWebsites.find(w => w.id === siteWebsite)?.type;
+                          if (!type) return true;
+                          if (type === "woocommerce") return t.platform === "wordpress" || t.platform === "generic";
+                          return t.platform === type || t.platform === "generic";
+                        })
+                        .map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
             {/* Loading */}
             {siteLoading && (
               <div className="flex flex-col items-center justify-center py-8 gap-3">
@@ -1161,10 +1238,10 @@ export default function TemplatesPage() {
             {/* Results */}
             {!siteLoading && sitePages.length > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click to import as template</p>
+                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click to {siteDesignSource === "marketplace" ? "apply the marketplace design" : "import as template"}</p>
                 <div className="max-h-60 overflow-y-auto space-y-1 border rounded-lg p-1">
                   {sitePages.map(p => (
-                    <button key={p.id || p.link} onClick={() => importSitePage(p.link, p.title)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
+                    <button key={p.id || p.link} onClick={() => siteDesignSource === "marketplace" ? applyMarketplaceToSitePage(p.title) : importSitePage(p.link, p.title)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
                       <div className="flex items-center justify-between">
                         <div className="min-w-0 flex-1">
                           <span className="font-medium text-sm block truncate">{p.title}</span>
