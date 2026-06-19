@@ -1287,6 +1287,20 @@ export default function TemplatesPage() {
                   );
                 })()}
 
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold">Content language</p>
+                  <Select value={siteLanguage} onValueChange={setSiteLanguage}>
+                    <SelectTrigger><SelectValue placeholder="Choose language..." /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {SITE_LANGUAGE_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">All SEO titles, descriptions & content will be generated in this language.</p>
+                </div>
+
+
                 <Button
                   className="w-full"
                   disabled={siteDesignSource === "marketplace" && !siteMarketplaceId}
