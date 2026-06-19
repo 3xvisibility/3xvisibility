@@ -93,6 +93,7 @@ export default function TemplatesPage() {
   const [siteDesignSource, setSiteDesignSource] = useState<"imported" | "marketplace">("imported");
   const [siteMarketplaceId, setSiteMarketplaceId] = useState<string>("");
   const [sitePendingPage, setSitePendingPage] = useState<{ title: string; link: string; slug: string } | null>(null);
+  const [siteMarketplaceCategory, setSiteMarketplaceCategory] = useState<string>("");
   // URL import loading
   const [urlImporting, setUrlImporting] = useState(false);
 
@@ -1252,21 +1253,37 @@ export default function TemplatesPage() {
                     <span className="text-[10px] text-muted-foreground">Replace design with a marketplace one</span>
                   </button>
                 </div>
-                {siteDesignSource === "marketplace" && (
-                  <Select value={siteMarketplaceId} onValueChange={setSiteMarketplaceId}>
-                    <SelectTrigger><SelectValue placeholder="Choose marketplace template..." /></SelectTrigger>
-                    <SelectContent>
-                      {COMMUNITY_TEMPLATES
-                        .filter(t => {
-                          const type = connectedWebsites.find(w => w.id === siteWebsite)?.type;
-                          if (!type) return true;
-                          if (type === "woocommerce") return t.platform === "wordpress" || t.platform === "generic";
-                          return t.platform === type || t.platform === "generic";
-                        })
-                        .map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                )}
+                {siteDesignSource === "marketplace" && (() => {
+                  const type = connectedWebsites.find(w => w.id === siteWebsite)?.type;
+                  const platformOk = (t: typeof COMMUNITY_TEMPLATES[number]) => {
+                    if (!type) return true;
+                    if (type === "woocommerce") return t.platform === "wordpress" || t.platform === "generic";
+                    return t.platform === type || t.platform === "generic";
+                  };
+                  const available = COMMUNITY_TEMPLATES.filter(platformOk);
+                  const categories = Array.from(new Set(available.map(t => t.category))).sort();
+                  const inCategory = siteMarketplaceCategory
+                    ? available.filter(t => t.category === siteMarketplaceCategory)
+                    : [];
+                  return (
+                    <div className="space-y-2">
+                      <Select value={siteMarketplaceCategory} onValueChange={(v) => { setSiteMarketplaceCategory(v); setSiteMarketplaceId(""); }}>
+                        <SelectTrigger><SelectValue placeholder="Choose a category..." /></SelectTrigger>
+                        <SelectContent>
+                          {categories.map(c => <SelectItem key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {siteMarketplaceCategory && (
+                        <Select value={siteMarketplaceId} onValueChange={setSiteMarketplaceId}>
+                          <SelectTrigger><SelectValue placeholder="Choose marketplace template..." /></SelectTrigger>
+                          <SelectContent>
+                            {inCategory.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <Button
                   className="w-full"
