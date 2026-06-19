@@ -761,7 +761,15 @@ slug: ${fields.slug}`,
     if (method === "ai") {
       setAiOpen(true);
     } else if (method === "url" && config.targetUrl) {
-      importSitePage(config.targetUrl, "Imported Template");
+      // Same step flow as connected-site: choose design source + language first.
+      setSiteWebsite("");
+      setSitePages([]);
+      setSiteDesignSource("imported");
+      setSiteMarketplaceId("");
+      setSiteMarketplaceCategory("");
+      setSiteLanguage("__auto__");
+      setSitePendingPage({ title: "Imported Template", link: config.targetUrl, slug: "" });
+      setSiteDialogOpen(true);
     } else if (method === "website" && config.selectedWebsite) {
       const ct = config.contentType || "pages";
       setSiteWebsite(config.selectedWebsite.id);
