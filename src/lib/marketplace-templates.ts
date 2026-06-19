@@ -18,6 +18,7 @@ import { FRAMER_BATCH5_TEMPLATES } from "@/lib/marketplace-framer-batch5";
 import { FRAMER_BATCH6_TEMPLATES } from "@/lib/marketplace-framer-batch6";
 import { FRAMER_BATCH7_TEMPLATES } from "@/lib/marketplace-framer-batch7";
 import { FRAMER_BATCH8_TEMPLATES } from "@/lib/marketplace-framer-batch8";
+import { FRAMER_BATCH9_TEMPLATES } from "@/lib/marketplace-framer-batch9";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -3602,6 +3603,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // Batch 8 — Framer featured clones (Drive, Smile, Lush, Spark, Aroma, Pixel)
   ...FRAMER_BATCH8_TEMPLATES,
+
+  // Batch 9 — Framer featured clones (Peak, Ledger, Nest, Savor, Scholar, Journey)
+  ...FRAMER_BATCH9_TEMPLATES,
 
 
 
