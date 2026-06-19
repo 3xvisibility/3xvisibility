@@ -93,6 +93,7 @@ export default function TemplatesPage() {
   const [siteDesignSource, setSiteDesignSource] = useState<"imported" | "marketplace">("imported");
   const [siteMarketplaceId, setSiteMarketplaceId] = useState<string>("");
   const [sitePendingPage, setSitePendingPage] = useState<{ title: string; link: string; slug: string } | null>(null);
+  const [siteMarketplaceCategory, setSiteMarketplaceCategory] = useState<string>("");
   // URL import loading
   const [urlImporting, setUrlImporting] = useState(false);
 
