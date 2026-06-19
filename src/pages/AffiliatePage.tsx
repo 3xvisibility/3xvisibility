@@ -77,37 +77,42 @@ export default function AffiliatePage() {
 
   async function loadData() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    // Load affiliate link
-    const { data: links } = await supabase
-      .from("affiliate_links")
-      .select("*")
-      .eq("user_id", user.id)
-      .limit(1);
-
-    if (links && links.length > 0) {
-      const l = links[0] as unknown as AffiliateLink;
-      setLink(l);
-
-      // Load referrals
-      const { data: refs } = await supabase
-        .from("affiliate_referrals")
-        .select("*")
-        .eq("affiliate_link_id", l.id)
-        .order("created_at", { ascending: false });
-      setReferrals((refs || []) as unknown as Referral[]);
-
-      // Load payouts
-      const { data: pays } = await supabase
-        .from("affiliate_payouts")
+      // Load affiliate link
+      const { data: links } = await supabase
+        .from("affiliate_links")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      setPayouts((pays || []) as unknown as Payout[]);
+        .limit(1);
+
+      if (links && links.length > 0) {
+        const l = links[0] as unknown as AffiliateLink;
+        setLink(l);
+
+        // Load referrals
+        const { data: refs } = await supabase
+          .from("affiliate_referrals")
+          .select("*")
+          .eq("affiliate_link_id", l.id)
+          .order("created_at", { ascending: false });
+        setReferrals((refs || []) as unknown as Referral[]);
+
+        // Load payouts
+        const { data: pays } = await supabase
+          .from("affiliate_payouts")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        setPayouts((pays || []) as unknown as Payout[]);
+      }
+    } catch (err) {
+      console.error("Failed to load affiliate data", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function createAffiliateLink() {
