@@ -168,7 +168,7 @@
     "pgpTerms.toastError": "Fehler",
     "pgpTerms.toastAiGenerated": "{count} Begriffe generiert",
     "pgpTerms.toastAiFailed": "Fehlgeschlagen",
-    "pgpTerms.toastTermsAdded": "{count} Begriffe aus „{name}" hinzugefügt"
+    "pgpTerms.toastTermsAdded": "{count} Begriffe aus „{name}“ hinzugefügt"
   },
   "es": {
     "pgpTerms.pageTitle": "Generar términos",
