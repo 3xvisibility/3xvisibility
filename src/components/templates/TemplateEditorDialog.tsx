@@ -221,6 +221,8 @@ export function TemplateEditorDialog({
       .toLowerCase().replace(/[^a-z0-9{}\-\/]/g, "-").replace(/-{2,}/g, "-").replace(/^-|-$/g, "");
 
   const buildSchemaConfig = () => ({
+    ...extraCfg,
+    language: language !== "__auto__" ? language : undefined,
     _slugPattern: slugPattern, _canonicalUrl: canonicalUrlPattern,
     _ogTitle: ogTitlePattern, _ogDescription: ogDescriptionPattern,
     _ogImage: ogImagePattern, _twitterCard: twitterCard,
