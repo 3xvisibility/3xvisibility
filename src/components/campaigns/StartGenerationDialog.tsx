@@ -23,7 +23,13 @@ import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSele
 import { detectTextLanguage, compareWithSiteLanguage } from "@/lib/detect-text-language";
 import { ShopifyTemplateSuffixPicker } from "@/components/campaigns/ShopifyTemplateSuffixPicker";
 import { PlatformSkinPicker } from "@/components/campaigns/PlatformSkinPicker";
-import { defaultSkinVariant, type TemplatePlatform } from "@/lib/marketplace-templates";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  defaultSkinVariant,
+  COMMUNITY_TEMPLATES,
+  platformFromCategory,
+  type TemplatePlatform,
+} from "@/lib/marketplace-templates";
 import { useSubscription } from "@/hooks/use-subscription";
 
 /** Map a connected website type to a themeable platform (woocommerce → wordpress). */
