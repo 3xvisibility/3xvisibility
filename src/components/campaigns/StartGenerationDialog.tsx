@@ -243,6 +243,12 @@ export function StartGenerationDialog({
       if (designMode === "change" && skinVariant) {
         options.platform_skin_variant = skinVariant;
       }
+      // Rebuild pages on a chosen marketplace template design + SEO overrides.
+      if (designMode === "change" && marketplaceTemplateId) {
+        options.marketplace_template_id = marketplaceTemplateId;
+        if (seoTitleOverride.trim()) options.seo_title_override = seoTitleOverride.trim();
+        if (seoDescOverride.trim()) options.seo_description_override = seoDescOverride.trim();
+      }
     }
     onStart(options);
   };
