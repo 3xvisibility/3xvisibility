@@ -647,6 +647,36 @@ export default function TemplatesPage() {
     toast({ title: `Page imported as template${varMsg}` });
   };
 
+  // Replace a connected-site page's design with a full marketplace template
+  // (content + variables + SEO patterns), keeping the page name for context.
+  const applyMarketplaceToSitePage = (pageTitle: string) => {
+    const tpl = COMMUNITY_TEMPLATES.find(t => t.id === siteMarketplaceId);
+    if (!tpl) {
+      toast({ title: "Pick a template first", variant: "destructive" });
+      return;
+    }
+    setSiteDialogOpen(false);
+    setSitePages([]);
+    setEditingTemplate({
+      id: "",
+      name: pageTitle || tpl.name,
+      content: tpl.content,
+      variables: tpl.variables || [],
+      user_id: "",
+      created_at: "",
+      updated_at: "",
+      workspace_id: wsId || null,
+      schema_type: tpl.schema_type || "WebPage",
+      schema_config: { source_marketplace_id: tpl.id } as any,
+      seo_title_pattern: tpl.seo_title_pattern || "",
+      seo_description_pattern: tpl.seo_description_pattern || "",
+    } as any);
+    setEditorOpen(true);
+    toast({ title: `"${tpl.name}" applied — replaces the page design` });
+  };
+
+
+
 
   const handleEditorSave = (data: { name: string; content: string; seoTitlePattern: string; seoDescriptionPattern: string; schemaType: string; schemaConfig: Record<string, any> }) => {
     if (editingTemplate?.id) {
