@@ -1183,6 +1183,50 @@ export default function TemplatesPage() {
               </div>
             )}
 
+            {/* Design source: keep the page design, or replace with a marketplace template */}
+            {siteWebsite && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold">Design source</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSiteDesignSource("imported")}
+                    className={`text-left p-3 rounded-lg border-2 transition-all ${
+                      siteDesignSource === "imported" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold block">Keep imported design</span>
+                    <span className="text-[10px] text-muted-foreground">Use the page's own design as template</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSiteDesignSource("marketplace")}
+                    className={`text-left p-3 rounded-lg border-2 transition-all ${
+                      siteDesignSource === "marketplace" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold block">Use marketplace template</span>
+                    <span className="text-[10px] text-muted-foreground">Replace design with a marketplace one</span>
+                  </button>
+                </div>
+                {siteDesignSource === "marketplace" && (
+                  <Select value={siteMarketplaceId} onValueChange={setSiteMarketplaceId}>
+                    <SelectTrigger><SelectValue placeholder="Choose marketplace template..." /></SelectTrigger>
+                    <SelectContent>
+                      {COMMUNITY_TEMPLATES
+                        .filter(t => {
+                          const type = connectedWebsites.find(w => w.id === siteWebsite)?.type;
+                          if (!type) return true;
+                          if (type === "woocommerce") return t.platform === "wordpress" || t.platform === "generic";
+                          return t.platform === type || t.platform === "generic";
+                        })
+                        .map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
             {/* Loading */}
             {siteLoading && (
               <div className="flex flex-col items-center justify-center py-8 gap-3">
