@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/use-subscription";
 import type { FeatureKey } from "@/lib/plan-features";
 import type { Tables } from "@/integrations/supabase/types";
+import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 
 type Website = Tables<"websites">;
 
