@@ -143,15 +143,25 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
       // still carry translated text is reverted to English as well.
       restoreToEnglish();
 
-      const enObserver = new MutationObserver(() => {
-        restoreToEnglish();
+      // IMPORTANT: only react to newly added nodes (childList). Watching
+      // characterData/attributes here would re-fire on our own restore writes,
+      // causing an infinite mutation loop that hangs/crashes the app when
+      // switching back to English. Debounce to coalesce bursts.
+      let enRestoreTimer: number | null = null;
+      const enObserver = new MutationObserver((mutations) => {
+        const hasAdded = mutations.some(
+          (m) => m.type === "childList" && m.addedNodes.length > 0
+        );
+        if (!hasAdded) return;
+        if (enRestoreTimer) return;
+        enRestoreTimer = window.setTimeout(() => {
+          enRestoreTimer = null;
+          restoreToEnglish();
+        }, 100);
       });
       enObserver.observe(document.body, {
         childList: true,
         subtree: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: [...TRANSLATABLE_ATTRS],
       });
 
       // A few synchronous passes across animation frames to catch anything that
@@ -181,6 +191,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
       return () => {
         if (raf) window.cancelAnimationFrame(raf);
+        if (enRestoreTimer) window.clearTimeout(enRestoreTimer);
         window.clearTimeout(hideTimer);
         window.clearTimeout(stopTimer);
         enObserver.disconnect();
