@@ -39,6 +39,7 @@ import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomi
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
+import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import { applyTemplateVariables, autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
 import {
