@@ -104,6 +104,7 @@ export function TemplateEditorDialog({
     setName(""); setContent(""); setViewMode("code"); setActiveTab("content");
     setSeoTitlePattern(""); setSeoDescriptionPattern("");
     setSlugPattern(""); setCanonicalUrlPattern("");
+    setLanguage("__auto__"); setExtraCfg({});
     setOgTitlePattern(""); setOgDescriptionPattern("");
     setOgImagePattern(""); setTwitterCard("summary_large_image");
     setSchemaType("WebPage"); setPostType("page");
