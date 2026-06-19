@@ -135,6 +135,27 @@ export function StartGenerationDialog({
   // or switch to a new template design. Defaults to keeping the current design.
   const [designMode, setDesignMode] = useState<"keep" | "change">("keep");
 
+  // Marketplace template chosen as the new design (when changing design).
+  // Filter to templates matching the connected platform (plus generic ones).
+  const designTemplates = COMMUNITY_TEMPLATES.filter((t) => {
+    const tplPlatform = t.platform || platformFromCategory(t.category);
+    return !skinPlatform || tplPlatform === skinPlatform || tplPlatform === "generic";
+  });
+  const [marketplaceTemplateId, setMarketplaceTemplateId] = useState<string>("");
+  const [seoTitleOverride, setSeoTitleOverride] = useState<string>("");
+  const [seoDescOverride, setSeoDescOverride] = useState<string>("");
+
+  const handlePickTemplate = (tplId: string) => {
+    setMarketplaceTemplateId(tplId);
+    const tpl = designTemplates.find((t) => t.id === tplId);
+    if (tpl) {
+      setSeoTitleOverride(tpl.seo_title_pattern || "");
+      setSeoDescOverride(tpl.seo_description_pattern || "");
+    }
+  };
+
+
+
   const effectiveRows = retryFailedOnly
     ? failedRowsCount
     : maxRowsEnabled
