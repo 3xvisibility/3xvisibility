@@ -1185,10 +1185,7 @@ const en: Record<string, string> = {
   "pgpTerms.taxonomyCustom": "Custom Taxonomy",
   "pgpTerms.taxonomyTag": "Tag",
   "pgpTerms.termCount": "{count} terms",
-  "pgpTerms.termsPlaceholder": "Web Design
-SEO Services
-PPC Management
-Social Media",
+  "pgpTerms.termsPlaceholder": "Web Design\nSEO Services\nPPC Management\nSocial Media",
   "pgpTerms.termsUnit": "terms",
   "pgpTerms.toastAiFailed": "Failed",
   "pgpTerms.toastAiGenerated": "{count} terms generated",
