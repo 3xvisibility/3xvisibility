@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LiveSerpPreview } from "@/components/templates/LiveSerpPreview";
 import type { Tables } from "@/integrations/supabase/types";
 import { extractEdgeError } from "@/lib/edge-function-error";
+import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 
 type Template = Tables<"templates">;
 
