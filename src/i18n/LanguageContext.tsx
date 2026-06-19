@@ -46,14 +46,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [translating, setTranslating] = useState(false);
 
   const setLanguage = useCallback((lang: Language) => {
-    setLanguageState((prev) => {
-      // Show the translating overlay whenever the language actually changes —
-      // including switching back to English, where we restore the source text.
-      if (lang !== prev) {
-        setTranslating(true);
-      }
-      return lang;
-    });
+    // All supported languages are covered by the built-in t() dictionary, so
+    // switching is instant and synchronous — no translating overlay needed.
+    setLanguageState(lang);
     localStorage.setItem("language", lang);
     document.documentElement.lang = lang;
   }, []);

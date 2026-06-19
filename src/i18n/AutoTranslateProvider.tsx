@@ -1,512 +1,53 @@
 /**
  * AutoTranslateProvider
  *
- * Runtime DOM-based translator for the entire UI.
- * Activates whenever `language` is not "en". Walks visible text nodes,
- * batches strings to the `translate-ui` edge function, caches results in
- * localStorage, and replaces text content in place.
+ * All supported languages (en, fr, de, es) are fully covered by the built-in
+ * `t()` dictionary, so no runtime DOM translation is required. The previous
+ * DOM-based translator mutated React-managed text nodes directly and captured
+ * already-translated text as the "original", which caused the sidebar (and
+ * other t() content) to get stuck on a previously selected language when
+ * switching between languages.
  *
- * Skips: SCRIPT, STYLE, NOSCRIPT, CODE, PRE, TEXTAREA, INPUT, SELECT,
- * elements with [data-no-translate] / [contenteditable], and pure
- * numeric / symbol-only strings.
- *
- * This guarantees that pages without explicit t() calls (PGP, dashboards,
- * etc.) are still translated when the user switches language.
+ * This provider now only:
+ *  - clears any legacy DOM translations left over from older sessions, and
+ *  - resets the translating overlay flag.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useLanguage } from "./LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
-
-
-
-const CACHE_PREFIX = "auto-tr6:";
-const BATCH_SIZE = 100;
-const DEBOUNCE_MS = 250;
-
-const SKIP_TAGS = new Set([
-  "SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE", "TEXTAREA",
-  "INPUT", "SELECT", "OPTION", "SVG", "PATH", "CANVAS",
-]);
-
-// Text we never translate
-const SHOULD_SKIP_TEXT = (s: string): boolean => {
-  const t = s.trim();
-  if (!t) return true;
-  if (t.length < 2) return true;
-  if (isProtectedNoop(t)) return true;
-  // Only digits, punctuation, currency, etc.
-  if (!/[A-Za-z\u00C0-\u024F]/.test(t)) return true;
-  return false;
-};
-
-const cacheKey = (lang: string, text: string) => `${CACHE_PREFIX}${lang}:${text}`;
-
-const isProtectedNoop = (text: string): boolean => {
-  const t = text.trim();
-  if (!t) return true;
-  if (/^3X(?:VISIBILITY)?$/i.test(t)) return true;
-  if (/^(WordPress|WooCommerce|Shopify|PrestaShop|PGP|SEO|SEA|GEO|CSV|API|CMS|SSL|SNI|URL|AI|FAQ|Gemini|LibreTranslate|Unsplash|Stripe)$/i.test(t)) return true;
-  if (/^\{[a-z0-9_]+\}$/i.test(t)) return true;
-  if (/^https?:\/\//i.test(t)) return true;
-  return false;
-};
-
-function getCached(lang: string, text: string): string | null {
-  try {
-    return localStorage.getItem(cacheKey(lang, text));
-  } catch {
-    return null;
-  }
-}
-
-function setCached(lang: string, text: string, translation: string) {
-  try {
-    localStorage.setItem(cacheKey(lang, text), translation);
-  } catch {
-    // storage full — best effort prune
-    try {
-      const keys = Object.keys(localStorage).filter((k) => k.startsWith(CACHE_PREFIX));
-      keys.slice(0, 200).forEach((k) => localStorage.removeItem(k));
-      localStorage.setItem(cacheKey(lang, text), translation);
-    } catch { /* ignore */ }
-  }
-}
-
-type TextTarget = { kind: "text"; node: Text; original: string };
-type AttrTarget = { kind: "attr"; el: Element; attr: string; original: string };
-type Target = TextTarget | AttrTarget;
 
 const TRANSLATABLE_ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 
-// Wipe every auto-translated text node / attribute back to its English
-// original. Used both when switching languages (to re-translate cleanly) and
-// when switching back to English (to reveal the source language).
-function restoreToEnglish() {
+// One-time cleanup of any DOM text/attributes that were mutated by the old
+// runtime translator in a prior session. Reverts them to their captured
+// original so React's t() rendering is authoritative again.
+function clearLegacyTranslations() {
+  if (typeof document === "undefined") return;
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   let node: Node | null;
   while ((node = walker.nextNode())) {
     const textNode = node as Text & { __autoTrOriginal?: string; __autoTrLang?: string };
     if (!textNode.__autoTrOriginal) continue;
-    const raw = textNode.nodeValue || "";
-    const leading = raw.match(/^\s*/)?.[0] ?? "";
-    const trailing = raw.match(/\s*$/)?.[0] ?? "";
-    textNode.nodeValue = `${leading}${textNode.__autoTrOriginal}${trailing}`;
-    textNode.__autoTrLang = "en";
+    delete textNode.__autoTrOriginal;
+    delete textNode.__autoTrLang;
   }
 
   const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
   document.body.querySelectorAll(selector).forEach((el) => {
     for (const attr of TRANSLATABLE_ATTRS) {
-      const original = (el as any)[`__autoTr_${attr}_orig`];
-      if (!original) continue;
-      el.setAttribute(attr, original);
-      (el as any)[`__autoTr_${attr}_lang`] = "en";
+      delete (el as any)[`__autoTr_${attr}_orig`];
+      delete (el as any)[`__autoTr_${attr}_lang`];
     }
   });
 }
 
 export function AutoTranslateProvider({ children }: { children: React.ReactNode }) {
-  const { language, translating, setTranslating } = useLanguage();
-  const langRef = useRef(language);
-  const scanScheduledRef = useRef(false);
-  const inFlightRef = useRef<Set<string>>(new Set());
-  const setTranslatingRef = useRef(setTranslating);
+  const { setTranslating } = useLanguage();
 
   useEffect(() => {
-    setTranslatingRef.current = setTranslating;
+    clearLegacyTranslations();
+    setTranslating(false);
   }, [setTranslating]);
 
-  useEffect(() => {
-    langRef.current = language;
-  }, [language]);
-
-
-  useEffect(() => {
-    // On every language switch, wipe stale DOM translations back to their
-    // English originals so the translator re-runs cleanly for the new target.
-    // React-managed t() nodes have no __autoTrOriginal, so they are untouched
-    // and re-render to the new language on their own.
-    restoreToEnglish();
-  }, [language]);
-
-  useEffect(() => {
-    // English is the source language — nothing to translate. Restore any
-    // remaining auto-translated nodes (including ones that mounted late) over
-    // a few animation frames, keeping the overlay up so the user sees the
-    // switch happening, then reveal the fully-English page.
-    if (language === "en") {
-      setTranslatingRef.current(true);
-
-      // Restore immediately, then keep restoring for a short window so that
-      // late-mounting / async content (data fetched after the switch) that may
-      // still carry translated text is reverted to English as well.
-      restoreToEnglish();
-
-      // IMPORTANT: only react to newly added nodes (childList). Watching
-      // characterData/attributes here would re-fire on our own restore writes,
-      // causing an infinite mutation loop that hangs/crashes the app when
-      // switching back to English. Debounce to coalesce bursts.
-      let enRestoreTimer: number | null = null;
-      const enObserver = new MutationObserver((mutations) => {
-        const hasAdded = mutations.some(
-          (m) => m.type === "childList" && m.addedNodes.length > 0
-        );
-        if (!hasAdded) return;
-        if (enRestoreTimer) return;
-        enRestoreTimer = window.setTimeout(() => {
-          enRestoreTimer = null;
-          restoreToEnglish();
-        }, 100);
-      });
-      enObserver.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-
-      // A few synchronous passes across animation frames to catch anything that
-      // renders within the first moments after the switch.
-      let frames = 0;
-      let raf = 0;
-      const pass = () => {
-        restoreToEnglish();
-        frames += 1;
-        if (frames < 6) {
-          raf = window.requestAnimationFrame(pass);
-        }
-      };
-      raf = window.requestAnimationFrame(pass);
-
-      // Hide the overlay once the page has settled into English.
-      const hideTimer = window.setTimeout(() => {
-        restoreToEnglish();
-        setTranslatingRef.current(false);
-      }, 600);
-
-      // Stop the restore observer a bit later so very-late async content is
-      // still reverted, then disconnect to avoid running forever.
-      const stopTimer = window.setTimeout(() => {
-        enObserver.disconnect();
-      }, 4000);
-
-      return () => {
-        if (raf) window.cancelAnimationFrame(raf);
-        if (enRestoreTimer) window.clearTimeout(enRestoreTimer);
-        window.clearTimeout(hideTimer);
-        window.clearTimeout(stopTimer);
-        enObserver.disconnect();
-        setTranslatingRef.current(false);
-      };
-    }
-
-
-
-    // Translate the WHOLE document for every non-English language — including
-    // the built-in t() languages. t() handles the explicit keys, and the DOM
-    // translator fills every remaining hardcoded string (dashboards, modals,
-    // popups, warnings, limit dialogs, tool pages) so nothing stays in English.
-    const getRoots = (): ParentNode[] => {
-      return [document.body];
-    };
-    const collectAll = (): Target[] => {
-      const out: Target[] = [];
-      for (const root of getRoots()) {
-        out.push(...collectTextTargets(root));
-        out.push(...collectAttrTargets(root));
-      }
-      return out;
-    };
-
-    let observer: MutationObserver | null = null;
-    let debounceTimer: number | null = null;
-    let cancelled = false;
-
-    const isSkippedAncestor = (el: Element | null): boolean => {
-      if (!el) return true;
-      if (SKIP_TAGS.has(el.tagName) && el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && el.tagName !== "SELECT") {
-        return true;
-      }
-      if (el.closest("[data-no-translate]")) return true;
-      return false;
-    };
-
-    const collectTextTargets = (root: Node): TextTarget[] => {
-      const out: TextTarget[] = [];
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-        acceptNode: (n) => {
-          const parent = n.parentElement;
-          if (!parent) return NodeFilter.FILTER_REJECT;
-          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
-          if (parent.closest("[data-no-translate]")) return NodeFilter.FILTER_REJECT;
-          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
-          const text = n.nodeValue || "";
-          if (SHOULD_SKIP_TEXT(text)) return NodeFilter.FILTER_REJECT;
-          const original = ((n as any).__autoTrOriginal || text).trim();
-          const visible = text.trim();
-          if ((n as any).__autoTrLang === langRef.current && visible !== original) return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
-        },
-      });
-      let node: Node | null;
-      while ((node = walker.nextNode())) {
-        const t = node as Text;
-        out.push({ kind: "text", node: t, original: ((t as any).__autoTrOriginal || t.nodeValue || "").trim() });
-      }
-      return out;
-    };
-
-    const collectAttrTargets = (root: ParentNode): AttrTarget[] => {
-      const out: AttrTarget[] = [];
-      const selector = TRANSLATABLE_ATTRS.map((a) => `[${a}]`).join(",");
-      const elements = root.querySelectorAll(selector);
-      const lang = langRef.current;
-      elements.forEach((el) => {
-        if (isSkippedAncestor(el)) return;
-        for (const attr of TRANSLATABLE_ATTRS) {
-          const value = el.getAttribute(attr);
-          if (!value) continue;
-          if (SHOULD_SKIP_TEXT(value)) continue;
-          // Already translated to current language?
-          const cacheTag = `__autoTr_${attr}_lang`;
-          const original = ((el as any)[`__autoTr_${attr}_orig`] || value).trim();
-          if ((el as any)[cacheTag] === lang && value.trim() !== original) continue;
-          out.push({ kind: "attr", el, attr, original });
-        }
-      });
-      return out;
-    };
-
-    const applyTranslation = (target: Target, original: string, translated: string) => {
-      const lang = langRef.current;
-      if (target.kind === "text") {
-        const raw = target.node.nodeValue || "";
-        const leading = raw.match(/^\s*/)?.[0] ?? "";
-        const trailing = raw.match(/\s*$/)?.[0] ?? "";
-        target.node.nodeValue = `${leading}${translated}${trailing}`;
-        (target.node as any).__autoTrLang = lang;
-        (target.node as any).__autoTrOriginal = original;
-      } else {
-        target.el.setAttribute(target.attr, translated);
-        (target.el as any)[`__autoTr_${target.attr}_lang`] = lang;
-        (target.el as any)[`__autoTr_${target.attr}_orig`] = original;
-      }
-    };
-
-    const translateBatch = async (originals: string[]): Promise<Record<string, string>> => {
-      const lang = langRef.current;
-      const result: Record<string, string> = {};
-      try {
-        const { data, error } = await supabase.functions.invoke("translate-ui", {
-          body: { texts: originals, target: lang },
-        });
-        if (error || !data?.translations) {
-          originals.forEach((o) => (result[o] = o));
-          return result;
-        }
-        const translations = data.translations as string[];
-        originals.forEach((o, i) => {
-          const tr = translations[i] || o;
-          result[o] = tr;
-          // Cache every resolved string — including ones the service returned
-          // unchanged (proper nouns, already-matching words, or true no-ops).
-          // Caching them prevents an infinite re-request loop where unchanged
-          // strings get re-fetched on every scan and starve real translations.
-          setCached(lang, o, tr);
-        });
-      } catch {
-        // Network/transport failure — do NOT cache so these retry next scan.
-        originals.forEach((o) => (result[o] = o));
-        return result;
-      }
-      return result;
-    };
-
-    const processPending = async () => {
-      if (cancelled) return;
-      const lang = langRef.current;
-      const targets: Target[] = collectAll();
-      if (targets.length === 0) return;
-
-      // Group by original
-      const groups = new Map<string, Target[]>();
-      for (const t of targets) {
-        if (!groups.has(t.original)) groups.set(t.original, []);
-        groups.get(t.original)!.push(t);
-      }
-
-      const needRequest: string[] = [];
-      let skippedInFlight = false;
-      for (const [original, ts] of groups) {
-        const cached = getCached(lang, original);
-        if (cached) {
-          ts.forEach((t) => applyTranslation(t, original, cached));
-          continue;
-        }
-        if (inFlightRef.current.has(`${lang}:${original}`)) {
-          skippedInFlight = true;
-          continue;
-        }
-        needRequest.push(original);
-      }
-
-      // Some strings are still being translated by a concurrent batch — once
-      // those resolve and cache, a follow-up scan will apply them. Schedule one.
-      if (skippedInFlight) scheduleRescan();
-
-      if (needRequest.length === 0) return;
-      needRequest.forEach((o) => inFlightRef.current.add(`${lang}:${o}`));
-
-      const slices: string[][] = [];
-      for (let i = 0; i < needRequest.length; i += BATCH_SIZE) {
-        slices.push(needRequest.slice(i, i + BATCH_SIZE));
-      }
-
-      const settled = await Promise.all(
-        slices.map(async (slice) => ({ slice, map: await translateBatch(slice) }))
-      );
-      if (cancelled || langRef.current !== lang) {
-        needRequest.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
-        return;
-      }
-
-      const combined: Record<string, string> = {};
-      settled.forEach(({ slice, map }) => {
-        Object.assign(combined, map);
-        slice.forEach((o) => inFlightRef.current.delete(`${lang}:${o}`));
-      });
-
-      // Re-collect once after all batches so React re-renders and late-mounted
-      // sections still receive translations from the fresh result map/cache.
-      const fresh: Target[] = collectAll();
-      for (const t of fresh) {
-        const tr = combined[t.original];
-        if (tr) applyTranslation(t, t.original, tr);
-      }
-
-      // After translating, run one more sweep so anything that wasn't matched
-      // during the in-flight window gets applied from cache. Converges quickly
-      // because real translations are now cached.
-      scheduleRescan();
-    };
-
-    let rescanTimer: number | null = null;
-    const scheduleRescan = () => {
-      if (rescanTimer) return;
-      rescanTimer = window.setTimeout(() => {
-        rescanTimer = null;
-        processPending();
-      }, 500);
-    };
-
-    const scheduleScan = () => {
-      if (scanScheduledRef.current) return;
-      scanScheduledRef.current = true;
-      if (debounceTimer) window.clearTimeout(debounceTimer);
-      debounceTimer = window.setTimeout(() => {
-        scanScheduledRef.current = false;
-        debounceTimer = null;
-        processPending();
-      }, DEBOUNCE_MS);
-    };
-
-
-    // Initial full translation pass — keep the overlay up until it resolves so
-    // the user sees a loading state while the page is being translated, then
-    // reveal the fully-translated page.
-    let safety: number | null = window.setTimeout(() => {
-      setTranslatingRef.current(false);
-    }, 12000);
-    (async () => {
-      try {
-        await processPending();
-      } finally {
-        if (!cancelled) {
-          if (safety) window.clearTimeout(safety);
-          safety = null;
-          setTranslatingRef.current(false);
-        }
-      }
-    })();
-
-
-    // Observe DOM changes (route changes, dialogs, async content)
-    observer = new MutationObserver((mutations) => {
-      let relevant = false;
-      for (const m of mutations) {
-        if (m.type === "childList" && (m.addedNodes.length || m.removedNodes.length)) {
-          relevant = true;
-          break;
-        }
-        if (m.type === "characterData") {
-          const t = m.target as Text;
-          const original = ((t as any).__autoTrOriginal || "").trim();
-          const visible = (t.nodeValue || "").trim();
-          if ((t as any).__autoTrLang !== langRef.current || (original && visible === original)) {
-            relevant = true;
-            break;
-          }
-        }
-        if (m.type === "attributes" && m.attributeName) {
-          const el = m.target as Element;
-          const tag = `__autoTr_${m.attributeName}_lang`;
-          const original = ((el as any)[`__autoTr_${m.attributeName}_orig`] || "").trim();
-          const visible = (el.getAttribute(m.attributeName) || "").trim();
-          // Ignore self-applied translations
-          if ((el as any)[tag] !== langRef.current || (original && visible === original)) {
-            relevant = true;
-            break;
-          }
-        }
-      }
-      if (relevant) scheduleScan();
-    });
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: [...TRANSLATABLE_ATTRS],
-    });
-
-    return () => {
-      cancelled = true;
-      if (debounceTimer) window.clearTimeout(debounceTimer);
-      if (rescanTimer) window.clearTimeout(rescanTimer);
-      if (safety) window.clearTimeout(safety);
-      observer?.disconnect();
-    };
-  }, [language]);
-
-  return (
-    <>
-      {children}
-      <TranslatingOverlay show={translating} language={language} />
-    </>
-  );
+  return <>{children}</>;
 }
-
-const OVERLAY_TEXT: Record<string, { title: string; sub: string }> = {
-  fr: { title: "Traduction en cours…", sub: "Préparation de la page dans votre langue" },
-  de: { title: "Übersetzung läuft…", sub: "Die Seite wird in Ihrer Sprache vorbereitet" },
-  en: { title: "Translating…", sub: "Preparing the page in your language" },
-};
-
-function TranslatingOverlay({ show, language }: { show: boolean; language: string }) {
-  if (!show) return null;
-  const copy = OVERLAY_TEXT[language] ?? OVERLAY_TEXT.en;
-  return (
-    <div
-      data-no-translate
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm"
-      role="status"
-      aria-live="polite"
-    >
-      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-primary/30 border-t-primary" />
-      <div className="text-center">
-        <p className="text-sm font-semibold text-foreground">{copy.title}</p>
-        <p className="text-xs text-muted-foreground">{copy.sub}</p>
-      </div>
-    </div>
-  );
-}
-
