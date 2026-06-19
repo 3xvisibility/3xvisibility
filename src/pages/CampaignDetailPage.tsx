@@ -259,6 +259,34 @@ export default function CampaignDetailPage() {
         } as any).eq("id", id!);
       }
 
+      // Switch the campaign's template design to a chosen marketplace template.
+      // Rebuilds existing + new pages on that design, with editable SEO patterns.
+      if (opts?.marketplace_template_id && campaign?.template_id && !isTest) {
+        const mkt = COMMUNITY_TEMPLATES.find((t) => t.id === opts.marketplace_template_id);
+        if (mkt) {
+          const wtype = ((campaign as any)?.websites?.type || "").toLowerCase();
+          const platform: TemplatePlatform =
+            wtype === "shopify" ? "shopify"
+            : wtype === "prestashop" ? "prestashop"
+            : (wtype === "wordpress" || wtype === "woocommerce") ? "wordpress"
+            : "generic";
+          let newContent = mkt.content;
+          if (platform !== "generic" && opts.platform_skin_variant) {
+            newContent = reskinContent(newContent, platform, opts.platform_skin_variant);
+          }
+          await supabase
+            .from("templates")
+            .update({
+              content: newContent,
+              variables: mkt.variables,
+              seo_title_pattern: opts.seo_title_override ?? mkt.seo_title_pattern ?? null,
+              seo_description_pattern: opts.seo_description_override ?? mkt.seo_description_pattern ?? null,
+            } as any)
+            .eq("id", campaign.template_id);
+        }
+      }
+
+
       // Apply the chosen per-template platform theme skin to the template content
       // so every generated page reflects it (e.g. Shopify Dawn vs Studio vs Craft).
       if (opts?.platform_skin_variant && campaign?.template_id && !isTest) {
