@@ -24,6 +24,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { filterDesignVars } from "@/lib/design-vars-filter";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 
 type Template = Tables<"templates">;
@@ -93,6 +94,7 @@ export default function PgpGeneratePage() {
   const [aiGenerating, setAiGenerating] = useState(false);
 
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { currentWorkspace, basePath } = useWorkspace();
@@ -206,12 +208,12 @@ Only return valid JSON. No markdown fences.`;
       }
 
       queryClient.invalidateQueries({ queryKey: ["pgp-keywords-full", wsId] });
-      toast({ title: "Keywords generated", description: `AI created terms for ${varNames.length} keyword groups.` });
+      toast({ title: t("pgpGenerate.toastKeywordsGeneratedTitle"), description: t("pgpGenerate.toastKeywordsGeneratedDesc", { count: varNames.length }) });
       setShowAiKeywordFill(false);
       setAiKwBusiness("");
       setAiKwCustomData("");
     } catch (err: any) {
-      toast({ title: "AI fill failed", description: err.message, variant: "destructive" });
+      toast({ title: t("pgpGenerate.toastAiFillFailedTitle"), description: err.message, variant: "destructive" });
     } finally {
       setAiKwFilling(false);
     }
@@ -258,11 +260,11 @@ Only return valid JSON. No markdown fences.`;
     // Variable transforms
     rendered = rendered.replace(/\{(\w+):(\w+(?:\(\d+\))?)\}/gi, (_m: string, varName: string, transform: string) => {
       const rawVal = sampleData[varName] || sampleData[varName.toLowerCase()] || "";
-      const t = transform.toLowerCase();
-      if (t === "uppercase") return rawVal.toUpperCase();
-      if (t === "lowercase") return rawVal.toLowerCase();
-      if (t === "capitalize") return rawVal.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-      if (t === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      const txf = transform.toLowerCase();
+      if (txf === "uppercase") return rawVal.toUpperCase();
+      if (txf === "lowercase") return rawVal.toLowerCase();
+      if (txf === "capitalize") return rawVal.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+      if (txf === "slug") return rawVal.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
       return rawVal;
     });
     // Plain variable replacement
@@ -373,7 +375,7 @@ Only return valid JSON. No markdown fences.`;
 
   const handleAiGenerate = async () => {
     if (!wsId || !aiBusinessDesc.trim()) {
-      toast({ title: "Describe your business first", variant: "destructive" });
+      toast({ title: t("pgpGenerate.toastDescribeFirst"), variant: "destructive" });
       return;
     }
     setAiGenerating(true);
@@ -451,11 +453,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       if (pagesErr) throw pagesErr;
 
       setGenProgress({ processed: pages.length, total: pages.length, errors: 0 });
-      toast({ title: "AI Generation complete!", description: `${pages.length} pages created.` });
+      toast({ title: t("pgpGenerate.toastAiCompleteTitle"), description: t("pgpGenerate.toastAiCompleteDesc", { count: pages.length }) });
 
       setTimeout(() => navigate(`${basePath}/campaigns/${campaign.id}`), 1500);
     } catch (err: any) {
-      toast({ title: "AI generation failed", description: err.message, variant: "destructive" });
+      toast({ title: t("pgpGenerate.toastAiFailedTitle"), description: err.message, variant: "destructive" });
     } finally {
       setAiGenerating(false);
     }
@@ -464,7 +466,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
   const handleGenerate = async () => {
     if (!selectedGroup || !wsId) return;
     if (missingKeywords.length > 0) {
-      toast({ title: "Missing Keywords", description: `Define keywords: ${missingKeywords.map(k => k.name).join(", ")}`, variant: "destructive" });
+      toast({ title: t("pgpGenerate.toastMissingKeywordsTitle"), description: t("pgpGenerate.toastMissingKeywordsDesc", { list: missingKeywords.map(k => k.name).join(", ") }), variant: "destructive" });
       return;
     }
 
@@ -477,7 +479,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
       const rows = buildRows();
       if (rows.length === 0) {
-        toast({ title: "No rows to generate", variant: "destructive" });
+        toast({ title: t("pgpGenerate.toastNoRowsTitle"), variant: "destructive" });
         setIsGenerating(false);
         return;
       }
@@ -565,8 +567,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
       setGenProgress({ processed: finalSuccess + finalErrors, total: finalJob?.total_rows || rows.length, errors: finalErrors });
       toast({
-        title: finalErrors > 0 ? "Generation completed with errors" : "Generation complete!",
-        description: `${finalSuccess} pages generated${finalErrors > 0 ? `, ${finalErrors} failed` : ""}.`,
+        title: finalErrors > 0 ? t("pgpGenerate.toastGenWithErrorsTitle") : t("pgpGenerate.toastGenCompleteTitle"),
+        description: finalErrors > 0 ? t("pgpGenerate.toastGenWithErrorsDesc", { success: finalSuccess, errors: finalErrors }) : t("pgpGenerate.toastGenCompleteDesc", { success: finalSuccess }),
         variant: finalErrors > 0 ? "destructive" : "default",
       });
 
@@ -575,7 +577,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
       }, 1500);
 
     } catch (err: any) {
-      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+      toast({ title: t("pgpGenerate.toastGenFailedTitle"), description: err.message, variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -590,33 +592,33 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-lg sm:text-display">Generate</h1>
+        <h1 className="text-lg sm:text-display">{t("pgpGenerate.pageTitle")}</h1>
         <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-          Select a Content Group, configure generation settings, and generate pages.
+          {t("pgpGenerate.pageSubtitle")}
         </p>
       </div>
 
       {/* Readiness check */}
       {!loadingGroups && (contentGroups.length === 0 || keywords.length === 0) && (
         <div className="rounded-xl border border-amber-300/50 bg-amber-50/50 dark:bg-amber-500/10 p-4 sm:p-5 space-y-3">
-          <h3 className="font-semibold text-sm text-amber-800 dark:text-amber-300">⚙️ Setup Required Before Generating</h3>
+          <h3 className="font-semibold text-sm text-amber-800 dark:text-amber-300">{t("pgpGenerate.setupTitle")}</h3>
           <div className="space-y-2">
             {keywords.length === 0 && (
               <div className="flex items-center gap-2 text-xs">
                 <div className="h-5 w-5 rounded-full bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200 flex items-center justify-center text-[10px] font-bold">!</div>
-                <span className="text-amber-700 dark:text-amber-300">No keywords found.</span>
-                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/pgp-keywords`)}>Create keywords →</button>
+                <span className="text-amber-700 dark:text-amber-300">{t("pgpGenerate.noKeywords")}</span>
+                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/pgp-keywords`)}>{t("pgpGenerate.createKeywords")}</button>
               </div>
             )}
             {contentGroups.length === 0 && (
               <div className="flex items-center gap-2 text-xs">
                 <div className="h-5 w-5 rounded-full bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200 flex items-center justify-center text-[10px] font-bold">!</div>
-                <span className="text-amber-700 dark:text-amber-300">No templates found.</span>
-                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/templates`)}>Create template →</button>
+                <span className="text-amber-700 dark:text-amber-300">{t("pgpGenerate.noTemplates")}</span>
+                <button className="underline font-semibold text-primary" onClick={() => navigate(`${basePath}/templates`)}>{t("pgpGenerate.createTemplate")}</button>
               </div>
             )}
           </div>
-          <p className="text-[11px] text-amber-600 dark:text-amber-400">Complete the steps above to start generating pages. Or use the <strong>AI Generate</strong> tab to skip setup entirely.</p>
+          <p className="text-[11px] text-amber-600 dark:text-amber-400">{t("pgpGenerate.setupHintPre")} <strong>{t("pgpGenerate.setupHintAiBold")}</strong> {t("pgpGenerate.setupHintPost")}</p>
         </div>
       )}
 
@@ -631,7 +633,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               </Label>
               <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
                 <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Select a Content Group..." />
+                  <SelectValue placeholder={t("pgpGenerate.selectGroupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {contentGroups.map(g => (
@@ -646,7 +648,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
               {selectedGroup && (
                 <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Keywords in this group</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("pgpGenerate.keywordsInGroup")}</p>
                   <div className="space-y-2">
                     {groupKeywords.map(gk => (
                       <div key={gk.name} className="flex items-center justify-between py-1">
@@ -656,11 +658,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         </div>
                         {gk.keyword ? (
                           <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300">
-                            <CheckCircle2 className="h-3 w-3 mr-1" /> {gk.termCount} terms
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> {t("pgpGenerate.terms", { count: gk.termCount })}
                           </Badge>
                         ) : (
                           <Badge variant="destructive" className="text-[10px]">
-                            <XCircle className="h-3 w-3 mr-1" /> Not defined
+                            <XCircle className="h-3 w-3 mr-1" /> {t("pgpGenerate.notDefined")}
                           </Badge>
                         )}
                       </div>
@@ -670,7 +672,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-500/10 rounded-lg px-3 py-2">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                        <span>Define missing keywords before generating.</span>
+                        <span>{t("pgpGenerate.defineMissingKeywords")}</span>
                         <Button variant="link" size="sm" className="text-amber-600 h-auto p-0 ml-auto" onClick={() => navigate(`${basePath}/pgp-keywords`)}>
                           Keywords →
                         </Button>
@@ -682,14 +684,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         onClick={() => setShowAiKeywordFill(!showAiKeywordFill)}
                       >
                         <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                        {showAiKeywordFill ? "Hide AI Fill" : "AI Auto-Fill All Keywords"}
+                        {showAiKeywordFill ? t("pgpGenerate.hideAiFill") : t("pgpGenerate.aiAutoFill")}
                       </Button>
                       {showAiKeywordFill && (
                         <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold">Business / Service *</Label>
+                            <Label className="text-xs font-semibold">{t("pgpGenerate.businessServiceLabel")}</Label>
                             <Textarea
-                              placeholder="e.g. E-commerce store selling electronics, smartphones, laptops..."
+                              placeholder={t("pgpGenerate.businessServicePlaceholder")}
                               value={aiKwBusiness}
                               onChange={(e) => setAiKwBusiness(e.target.value)}
                               rows={2}
@@ -697,9 +699,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold">Custom Data <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                            <Label className="text-xs font-semibold">{t("pgpGenerate.customDataLabel")} <span className="text-muted-foreground font-normal">{t("pgpGenerate.optional")}</span></Label>
                             <Textarea
-                              placeholder="e.g. Brand names: Samsung, Apple. Price range: $100-$2000. Free shipping over $50..."
+                              placeholder={t("pgpGenerate.customDataPlaceholder")}
                               value={aiKwCustomData}
                               onChange={(e) => setAiKwCustomData(e.target.value)}
                               rows={2}
@@ -707,11 +709,11 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs">Terms per keyword</Label>
+                            <Label className="text-xs">{t("pgpGenerate.termsPerKeyword")}</Label>
                             <Input type="number" min={3} max={50} value={aiKwCount} onChange={(e) => setAiKwCount(e.target.value)} className="h-8 text-xs" />
                           </div>
                           <p className="text-[10px] text-muted-foreground">
-                            AI will generate terms for: {missingKeywords.map(k => `{${k.name}}`).join(", ")}
+                            {t("pgpGenerate.aiWillGenerate")} {missingKeywords.map(k => `{${k.name}}`).join(", ")}
                           </p>
                           <Button
                             size="sm"
@@ -719,7 +721,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             disabled={!aiKwBusiness.trim() || aiKwFilling}
                             onClick={handleAiKeywordFill}
                           >
-                            {aiKwFilling ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Generating...</> : <><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Generate All Keywords</>}
+                            {aiKwFilling ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("pgpGenerate.generating")}</> : <><Sparkles className="h-3.5 w-3.5 mr-1.5" /> {t("pgpGenerate.generateAllKeywords")}</>}
                           </Button>
                         </div>
                       )}
@@ -737,10 +739,10 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-primary" />
-                    <p className="text-sm font-semibold">AI-Powered Page Generation</p>
+                    <p className="text-sm font-semibold">{t("pgpGenerate.aiPoweredTitle")}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    No Content Group needed — describe your business and AI generates unique, SEO-optimized pages.
+                    {t("pgpGenerate.aiPoweredDescNoGroup")}
                   </p>
                 </div>
 
@@ -756,78 +758,78 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Target Keywords</Label>
+                  <Label className="text-xs font-semibold">{t("pgpGenerate.targetKeywordsLabel")}</Label>
                   <Textarea
-                    placeholder="e.g. plumber near me, emergency plumbing, water heater repair..."
+                    placeholder={t("pgpGenerate.targetKeywordsPlaceholder")}
                     value={aiKeywords}
                     onChange={(e) => setAiKeywords(e.target.value)}
                     rows={2}
                     className="resize-none"
                   />
-                  <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank to auto-detect.</p>
+                  <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.keywordsHint")}</p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Target Locations</Label>
+                  <Label className="text-xs font-semibold">{t("pgpGenerate.targetLocationsLabel")}</Label>
                   <Textarea
-                    placeholder="e.g. Houston TX, Dallas TX, Austin TX..."
+                    placeholder={t("pgpGenerate.targetLocationsPlaceholder")}
                     value={aiLocations}
                     onChange={(e) => setAiLocations(e.target.value)}
                     rows={2}
                     className="resize-none"
                   />
-                  <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank for general pages.</p>
+                  <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.locationsHint")}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Number of Pages</Label>
+                    <Label className="text-xs">{t("pgpGenerate.numberOfPagesLabel")}</Label>
                     <Input type="number" min={1} max={50} value={aiPageCount} onChange={(e) => setAiPageCount(e.target.value)} className="h-9" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Language</Label>
+                    <Label className="text-xs">{t("pgpGenerate.languageLabel")}</Label>
                     <Select value={aiLanguage} onValueChange={setAiLanguage}>
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="es">Spanish</SelectItem>
-                        <SelectItem value="de">German</SelectItem>
-                        <SelectItem value="pt">Portuguese</SelectItem>
-                        <SelectItem value="ar">Arabic</SelectItem>
-                        <SelectItem value="hi">Hindi</SelectItem>
-                        <SelectItem value="ja">Japanese</SelectItem>
+                        <SelectItem value="en">{t("pgpGenerate.langEnglish")}</SelectItem>
+                        <SelectItem value="fr">{t("pgpGenerate.langFrench")}</SelectItem>
+                        <SelectItem value="es">{t("pgpGenerate.langSpanish")}</SelectItem>
+                        <SelectItem value="de">{t("pgpGenerate.langGerman")}</SelectItem>
+                        <SelectItem value="pt">{t("pgpGenerate.langPortuguese")}</SelectItem>
+                        <SelectItem value="ar">{t("pgpGenerate.langArabic")}</SelectItem>
+                        <SelectItem value="hi">{t("pgpGenerate.langHindi")}</SelectItem>
+                        <SelectItem value="ja">{t("pgpGenerate.langJapanese")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Brand Name</Label>
+                  <Label className="text-xs font-semibold">{t("pgpGenerate.brandNameLabel")}</Label>
                   <div className="flex gap-2">
                     <Select value={brandSource} onValueChange={(v) => setBrandSource(v as "website" | "custom")}>
                       <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="website">From Website</SelectItem>
-                        <SelectItem value="custom">Custom</SelectItem>
+                        <SelectItem value="website">{t("pgpGenerate.fromWebsite")}</SelectItem>
+                        <SelectItem value="custom">{t("pgpGenerate.custom")}</SelectItem>
                       </SelectContent>
                     </Select>
                     {brandSource === "custom" ? (
-                      <Input className="h-9 flex-1" placeholder="Your Brand Name" value={customBrandName} onChange={e => setCustomBrandName(e.target.value)} />
+                      <Input className="h-9 flex-1" placeholder={t("pgpGenerate.customBrandPlaceholder")} value={customBrandName} onChange={e => setCustomBrandName(e.target.value)} />
                     ) : (
-                      <p className="text-xs text-muted-foreground self-center flex-1 truncate">{resolvedBrandName || "Select a website below"}</p>
+                      <p className="text-xs text-muted-foreground self-center flex-1 truncate">{resolvedBrandName || t("pgpGenerate.selectWebsiteBelow")}</p>
                     )}
                   </div>
-                  <p className="text-[10px] text-muted-foreground">Used as {"{brand_name}"} in templates</p>
+                  <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.brandNameHint")}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Publish To</Label>
+                    <Label className="text-xs">{t("pgpGenerate.publishToLabel")}</Label>
                     <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
-                      <SelectTrigger className="h-9"><SelectValue placeholder="None (save locally)" /></SelectTrigger>
+                      <SelectTrigger className="h-9"><SelectValue placeholder={t("pgpGenerate.noneLocal")} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">None (save locally)</SelectItem>
+                        <SelectItem value="none">{t("pgpGenerate.noneLocal")}</SelectItem>
                         {websites.filter(w => w.status === "connected").map(w => (
                           <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                         ))}
@@ -835,12 +837,12 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Publish Mode</Label>
+                    <Label className="text-xs">{t("pgpGenerate.publishModeLabel")}</Label>
                     <Select value={publishMode} onValueChange={setPublishMode}>
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="publish">Publish</SelectItem>
+                        <SelectItem value="draft">{t("pgpGenerate.draft")}</SelectItem>
+                        <SelectItem value="publish">{t("pgpGenerate.publish")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -853,9 +855,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   onClick={handleAiGenerate}
                 >
                   {aiGenerating ? (
-                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> AI Generating...</>
+                    <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("pgpGenerate.aiGenerating")}</>
                   ) : (
-                    <><Sparkles className="h-4 w-4 mr-2" /> Generate with AI</>
+                    <><Sparkles className="h-4 w-4 mr-2" /> {t("pgpGenerate.generateWithAi")}</>
                   )}
                 </Button>
               </CardContent>
@@ -877,7 +879,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <TabsContent value="generation" className="space-y-4">
                     {/* Method Selection */}
                     <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Generation Method</Label>
+                      <Label className="text-xs font-semibold">{t("pgpGenerate.generationMethodLabel")}</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {([
                           { value: "all", label: "All Combinations", desc: "Every possible combination of keyword terms" },
@@ -927,31 +929,31 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Brand Name</Label>
+                      <Label className="text-xs font-semibold">{t("pgpGenerate.brandNameLabel")}</Label>
                       <div className="flex gap-2">
                         <Select value={brandSource} onValueChange={(v) => setBrandSource(v as "website" | "custom")}>
                           <SelectTrigger className="h-9 w-[140px]"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="website">From Website</SelectItem>
-                            <SelectItem value="custom">Custom</SelectItem>
+                            <SelectItem value="website">{t("pgpGenerate.fromWebsite")}</SelectItem>
+                            <SelectItem value="custom">{t("pgpGenerate.custom")}</SelectItem>
                           </SelectContent>
                         </Select>
                         {brandSource === "custom" ? (
-                          <Input className="h-9 flex-1" placeholder="Your Brand Name" value={customBrandName} onChange={e => setCustomBrandName(e.target.value)} />
+                          <Input className="h-9 flex-1" placeholder={t("pgpGenerate.customBrandPlaceholder")} value={customBrandName} onChange={e => setCustomBrandName(e.target.value)} />
                         ) : (
-                          <p className="text-xs text-muted-foreground self-center flex-1 truncate">{resolvedBrandName || "Select a website below"}</p>
+                          <p className="text-xs text-muted-foreground self-center flex-1 truncate">{resolvedBrandName || t("pgpGenerate.selectWebsiteBelow")}</p>
                         )}
                       </div>
-                      <p className="text-[10px] text-muted-foreground">Used as {"{brand_name}"} in templates</p>
+                      <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.brandNameHint")}</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Publish To</Label>
+                        <Label className="text-xs">{t("pgpGenerate.publishToLabel")}</Label>
                         <Select value={selectedWebsite} onValueChange={setSelectedWebsite}>
-                          <SelectTrigger className="h-9"><SelectValue placeholder="None (save locally)" /></SelectTrigger>
+                          <SelectTrigger className="h-9"><SelectValue placeholder={t("pgpGenerate.noneLocal")} /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">None (save locally)</SelectItem>
+                            <SelectItem value="none">{t("pgpGenerate.noneLocal")}</SelectItem>
                             {websites.filter(w => w.status === "connected").map(w => (
                               <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                             ))}
@@ -959,14 +961,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Publish Mode</Label>
+                        <Label className="text-xs">{t("pgpGenerate.publishModeLabel")}</Label>
                         <Select value={publishMode} onValueChange={setPublishMode}>
                           <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="publish">Publish</SelectItem>
-                            <SelectItem value="private">Private</SelectItem>
-                            <SelectItem value="pending">Pending Review</SelectItem>
+                            <SelectItem value="draft">{t("pgpGenerate.draft")}</SelectItem>
+                            <SelectItem value="publish">{t("pgpGenerate.publish")}</SelectItem>
+                            <SelectItem value="private">{t("pgpGenerate.private")}</SelectItem>
+                            <SelectItem value="pending">{t("pgpGenerate.pendingReview")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -974,8 +976,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium">Spin Content</p>
-                        <p className="text-[11px] text-muted-foreground">Resolve {"{spintax|variations}"} in content</p>
+                        <p className="text-sm font-medium">{t("pgpGenerate.spinContentLabel")}</p>
+                        <p className="text-[11px] text-muted-foreground">{t("pgpGenerate.spinContentHint")}</p>
                       </div>
                       <Switch checked={spinContent} onCheckedChange={setSpinContent} />
                     </div>
@@ -985,17 +987,17 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-1">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        <p className="text-sm font-semibold">AI-Powered Page Generation</p>
+                        <p className="text-sm font-semibold">{t("pgpGenerate.aiPoweredTitle")}</p>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Describe your business and AI will generate unique, SEO-optimized pages automatically.
+                        {t("pgpGenerate.aiPoweredDesc")}
                       </p>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Business / Store Description *</Label>
+                      <Label className="text-xs font-semibold">{t("pgpGenerate.businessDescLabel")}</Label>
                       <Textarea
-                        placeholder="e.g. Plumbing services company in Texas, specializing in emergency repairs, water heater installation, and drain cleaning..."
+                        placeholder={t("pgpGenerate.businessDescPlaceholderLong")}
                         value={aiBusinessDesc}
                         onChange={(e) => setAiBusinessDesc(e.target.value)}
                         rows={3}
@@ -1004,32 +1006,32 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Target Keywords</Label>
+                      <Label className="text-xs font-semibold">{t("pgpGenerate.targetKeywordsLabel")}</Label>
                       <Textarea
-                        placeholder="e.g. plumber near me, emergency plumbing, water heater repair, drain cleaning service..."
+                        placeholder={t("pgpGenerate.targetKeywordsPlaceholderLong")}
                         value={aiKeywords}
                         onChange={(e) => setAiKeywords(e.target.value)}
                         rows={2}
                         className="resize-none"
                       />
-                      <p className="text-[10px] text-muted-foreground">Comma-separated. Leave blank to auto-detect.</p>
+                      <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.keywordsHint")}</p>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Target Locations</Label>
+                      <Label className="text-xs font-semibold">{t("pgpGenerate.targetLocationsLabel")}</Label>
                       <Textarea
-                        placeholder="e.g. Houston TX, Dallas TX, Austin TX, San Antonio TX..."
+                        placeholder={t("pgpGenerate.targetLocationsPlaceholderLong")}
                         value={aiLocations}
                         onChange={(e) => setAiLocations(e.target.value)}
                         rows={2}
                         className="resize-none"
                       />
-                      <p className="text-[10px] text-muted-foreground">Comma-separated cities/areas. Leave blank for general pages.</p>
+                      <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.locationsHintArea")}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Number of Pages</Label>
+                        <Label className="text-xs">{t("pgpGenerate.numberOfPagesLabel")}</Label>
                         <Input
                           type="number"
                           min={1}
@@ -1040,21 +1042,21 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Language</Label>
+                        <Label className="text-xs">{t("pgpGenerate.languageLabel")}</Label>
                         <Select value={aiLanguage} onValueChange={setAiLanguage}>
                           <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="fr">French</SelectItem>
-                            <SelectItem value="es">Spanish</SelectItem>
-                            <SelectItem value="de">German</SelectItem>
-                            <SelectItem value="it">Italian</SelectItem>
-                            <SelectItem value="pt">Portuguese</SelectItem>
-                            <SelectItem value="nl">Dutch</SelectItem>
-                            <SelectItem value="ar">Arabic</SelectItem>
-                            <SelectItem value="hi">Hindi</SelectItem>
-                            <SelectItem value="ja">Japanese</SelectItem>
-                            <SelectItem value="zh">Chinese</SelectItem>
+                            <SelectItem value="en">{t("pgpGenerate.langEnglish")}</SelectItem>
+                            <SelectItem value="fr">{t("pgpGenerate.langFrench")}</SelectItem>
+                            <SelectItem value="es">{t("pgpGenerate.langSpanish")}</SelectItem>
+                            <SelectItem value="de">{t("pgpGenerate.langGerman")}</SelectItem>
+                            <SelectItem value="it">{t("pgpGenerate.langItalian")}</SelectItem>
+                            <SelectItem value="pt">{t("pgpGenerate.langPortuguese")}</SelectItem>
+                            <SelectItem value="nl">{t("pgpGenerate.langDutch")}</SelectItem>
+                            <SelectItem value="ar">{t("pgpGenerate.langArabic")}</SelectItem>
+                            <SelectItem value="hi">{t("pgpGenerate.langHindi")}</SelectItem>
+                            <SelectItem value="ja">{t("pgpGenerate.langJapanese")}</SelectItem>
+                            <SelectItem value="zh">{t("pgpGenerate.langChinese")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1067,9 +1069,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       onClick={handleAiGenerate}
                     >
                       {aiGenerating ? (
-                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> AI Generating...</>
+                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("pgpGenerate.aiGenerating")}</>
                       ) : (
-                        <><Sparkles className="h-4 w-4 mr-2" /> Generate with AI</>
+                        <><Sparkles className="h-4 w-4 mr-2" /> {t("pgpGenerate.generateWithAi")}</>
                       )}
                     </Button>
                   </TabsContent>
@@ -1077,8 +1079,8 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                   <TabsContent value="overwrite" className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium">Enable Overwrite</p>
-                        <p className="text-[11px] text-muted-foreground">Replace pages with matching slugs</p>
+                        <p className="text-sm font-medium">{t("pgpGenerate.enableOverwriteLabel")}</p>
+                        <p className="text-[11px] text-muted-foreground">{t("pgpGenerate.enableOverwriteDesc")}</p>
                       </div>
                       <Switch checked={overwrite} onCheckedChange={setOverwrite} />
                     </div>
@@ -1114,7 +1116,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                   <TabsContent value="schedule" className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-semibold">Schedule Mode</Label>
+                      <Label className="text-xs font-semibold">{t("pgpGenerate.scheduleModeLabel")}</Label>
                       <Select value={scheduleMode} onValueChange={(v: any) => setScheduleMode(v)}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -1128,30 +1130,30 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                     {scheduleMode === "specific" && (
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Publish Date</Label>
+                        <Label className="text-xs">{t("pgpGenerate.publishDateLabel")}</Label>
                         <Input type="datetime-local" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="h-9" />
                       </div>
                     )}
 
                     {scheduleMode === "increment" && (
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Hours Between Each Page</Label>
+                        <Label className="text-xs">{t("pgpGenerate.hoursBetweenLabel")}</Label>
                         <Input type="number" value={incrementHours} onChange={(e) => setIncrementHours(e.target.value)} className="h-9" min={1} />
-                        <p className="text-[10px] text-muted-foreground">Each page is published X hours after the previous one.</p>
+                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.dripHint")}</p>
                       </div>
                     )}
 
                     {scheduleMode === "random" && (
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <Label className="text-xs">Start Date</Label>
+                          <Label className="text-xs">{t("pgpGenerate.startDateLabel")}</Label>
                           <Input type="datetime-local" value={scheduleDateStart} onChange={(e) => setScheduleDateStart(e.target.value)} className="h-9" />
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-xs">End Date</Label>
+                          <Label className="text-xs">{t("pgpGenerate.endDateLabel")}</Label>
                           <Input type="datetime-local" value={scheduleDateEnd} onChange={(e) => setScheduleDateEnd(e.target.value)} className="h-9" />
                         </div>
-                        <p className="col-span-2 text-[10px] text-muted-foreground">Each page gets a random date between start and end.</p>
+                        <p className="col-span-2 text-[10px] text-muted-foreground">{t("pgpGenerate.randomDateHint")}</p>
                       </div>
                     )}
                   </TabsContent>
@@ -1202,7 +1204,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 disabled={!selectedGroup || groupKeywords.every(k => !k.keyword)}
                 onClick={handleTestGenerate}
               >
-                <Eye className="h-4 w-4 mr-2" /> Test (Preview 1 Page)
+                <Eye className="h-4 w-4 mr-2" /> {t("pgpGenerate.testPreviewBtn")}
               </Button>
 
               {selectedGroup && (
