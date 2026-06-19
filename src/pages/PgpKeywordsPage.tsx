@@ -1,3 +1,5 @@
+// ============= Lines 1-373 of 1252 total lines =============
+
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { callAI } from "@/lib/ai-client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import * as XLSX from "xlsx";
 
 const PAGE_SIZE = 15;
@@ -62,30 +65,19 @@ function isTechnicalKeywordNoise(line: string): boolean {
   );
 }
 
-/**
- * Keep only real, human-readable keyword phrases.
- * Strips any line that looks like HTML, CSS, a stylesheet rule, JS, a hex color,
- * a CSS declaration/selector, a URL, or other markup noise — so the Terms box
- * never fills up with `<style>`, `.pgp-page { ... }`, `--aurora-1: #6366f1;`, etc.
- */
 function sanitizeKeywordLines(lines: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const rawLine of lines) {
     let line = (rawLine || "")
-      .replace(/^\d+[.)]\s*/, "")   // "1. ", "2) "
-      .replace(/^[-•*]\s*/, "")      // bullet markers
+      .replace(/^\d+[.)]\s*/, "")
+      .replace(/^[-•*]\s*/, "")
       .trim();
     if (!line) continue;
-
     if (isTechnicalKeywordNoise(line)) continue;
-
-    // Trim trailing punctuation noise; keep readable phrases only.
     line = line.replace(/[{}<>;]+/g, "").trim();
     if (!line || line.length > 100) continue;
-    // Must contain at least one letter (skip pure numbers / measurements).
     if (!/[a-z\u00C0-\u024F\u0980-\u09FF]/i.test(line)) continue;
-
     const key = line.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -170,6 +162,8 @@ interface PgpKeyword {
 }
 
 export default function PgpKeywordsPage() {
+  const { t } = useLanguage();
+
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<PgpKeyword | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PgpKeyword | null>(null);
@@ -349,7 +343,7 @@ export default function PgpKeywordsPage() {
     },
     onSuccess: ({ keepOpen, folderValue }) => {
       queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] });
-      toast({ title: editing ? "Keyword updated" : "Keyword created" });
+      toast({ title: editing ? t("pgpKeywords.toastKeywordUpdated") : t("pgpKeywords.toastKeywordCreated") });
       if (keepOpen && !editing) {
         resetEditor();
         if (folderValue) setKwFolder(folderValue);
@@ -358,21 +352,21 @@ export default function PgpKeywordsPage() {
         resetEditor();
       }
     },
-    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("pgpKeywords.toastError"), description: err.message, variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("pgp_keywords").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] }); toast({ title: "Keyword deleted" }); setDeleteTarget(null); },
-    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] }); toast({ title: t("pgpKeywords.toastKeywordDeleted") }); setDeleteTarget(null); },
+    onError: (err: Error) => toast({ title: t("pgpKeywords.toastError"), description: err.message, variant: "destructive" }),
   });
 
   const duplicateKeyword = async (kw: PgpKeyword) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !wsId) return;
     const { error } = await supabase.from("pgp_keywords").insert({ ...kw, id: undefined, name: `${kw.name}_copy_${Date.now().toString(36)}`, workspace_id: wsId, user_id: user.id, created_at: undefined, updated_at: undefined } as any);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] }); toast({ title: "Keyword duplicated" }); }
+    if (error) toast({ title: t("pgpKeywords.toastError"), description: error.message, variant: "destructive" });
+    else { queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] }); toast({ title: t("pgpKeywords.toastKeywordDuplicated") }); }
   };
 
   const exportKeyword = (kw: PgpKeyword) => {
@@ -396,14 +390,13 @@ export default function PgpKeywordsPage() {
       if (Array.isArray(json)) lines = json.map(v => typeof v === "string" ? v : JSON.stringify(v));
       else if (json.items) lines = json.items.map((v: any) => typeof v === "string" ? v : v.title || v.name || JSON.stringify(v));
     } else {
-      // txt, csv, or any text
       const text = await file.text();
       lines = text.split("\n").map(l => l.trim()).filter(Boolean);
     }
 
     const clean = sanitizeKeywordLines(lines);
     setKwTerms(prev => mergeCleanTerms(prev, clean));
-    toast({ title: `${clean.length} terms imported` });
+    toast({ title: t("pgpKeywords.toastTermsImported", { count: clean.length }) });
     if (importRef.current) importRef.current.value = "";
   };
 
@@ -423,8 +416,8 @@ export default function PgpKeywordsPage() {
       const lines = extractKeywordCandidates(result.content);
       if (lines.length === 0) throw new Error("AI did not return clean SEO keywords. Please try a more specific topic.");
       setKwTerms(prev => mergeCleanTerms(prev, lines));
-      toast({ title: `${lines.length} AI SEO keywords generated` });
-    } catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
+      toast({ title: t("pgpKeywords.toastAiKeywordsGenerated", { count: lines.length }) });
+    } catch (err: any) { toast({ title: t("pgpKeywords.toastFailed"), description: err.message, variant: "destructive" }); }
     finally { setAiGenerating(false); }
   };
 
@@ -437,9 +430,8 @@ export default function PgpKeywordsPage() {
         if (locState && locState !== "__all__") query = query.eq("state", locState);
         if (locCounty) query = query.eq("county", locCounty);
       } else if (locMode === "radius" && locCenterCity.trim()) {
-        // For radius: first find center city coordinates, then filter
         const { data: centerData } = await supabase.from("locations").select("latitude, longitude").eq("country_code", locCountry).ilike("city", locCenterCity.trim()).limit(1);
-        if (!centerData || centerData.length === 0) { toast({ title: "Center city not found", variant: "destructive" }); setLocLoading(false); return; }
+        if (!centerData || centerData.length === 0) { toast({ title: t("pgpKeywords.toastCenterCityNotFound"), variant: "destructive" }); setLocLoading(false); return; }
         const cLat = Number(centerData[0].latitude);
         const cLng = Number(centerData[0].longitude);
         const radiusKm = locRadiusUnit === "miles" ? Number(locRadius) * 1.60934 : Number(locRadius);
@@ -450,9 +442,8 @@ export default function PgpKeywordsPage() {
 
       const { data, error } = await query.limit(1000);
       if (error) throw error;
-      if (!data || data.length === 0) { toast({ title: "No locations found", variant: "destructive" }); setLocLoading(false); return; }
+      if (!data || data.length === 0) { toast({ title: t("pgpKeywords.toastNoLocationsFound"), variant: "destructive" }); setLocLoading(false); return; }
 
-      // If radius mode, further filter by actual distance
       let finalData = data;
       if (locMode === "radius" && locCenterCity.trim()) {
         const { data: centerData } = await supabase.from("locations").select("latitude, longitude").eq("country_code", locCountry).ilike("city", locCenterCity.trim()).limit(1);
@@ -465,13 +456,12 @@ export default function PgpKeywordsPage() {
             const dLat = (Number(loc.latitude) - cLat) * Math.PI / 180;
             const dLng = (Number(loc.longitude) - cLng) * Math.PI / 180;
             const a = Math.sin(dLat / 2) ** 2 + Math.cos(cLat * Math.PI / 180) * Math.cos(Number(loc.latitude) * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-            const dist = 3959 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); // miles
+            const dist = 3959 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return dist <= maxDist;
           });
         }
       }
 
-      // Build columns and terms based on include settings
       const cols: string[] = [];
       if (locInclude.city) cols.push("city");
       if (locInclude.state) cols.push("state");
@@ -520,8 +510,8 @@ export default function PgpKeywordsPage() {
         setKwTerms(prev => mergeCleanTerms(prev, terms));
       }
 
-      toast({ title: `${finalData.length} location terms generated` });
-    } catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
+      toast({ title: t("pgpKeywords.toastLocationTermsGenerated", { count: finalData.length }) });
+    } catch (err: any) { toast({ title: t("pgpKeywords.toastFailed"), description: err.message, variant: "destructive" }); }
     finally { setLocLoading(false); }
   };
 
@@ -538,24 +528,24 @@ export default function PgpKeywordsPage() {
         if (Array.isArray(json)) rawLines = json.map((item: any) => typeof item === "string" ? item : JSON.stringify(item));
         else if (json.items) rawLines = json.items.map((item: any) => typeof item === "string" ? item : item.title || item.name || JSON.stringify(item));
         const lines = sanitizeKeywordLines(rawLines);
-        if (lines.length > 0) { setKwTerms(prev => mergeCleanTerms(prev, lines)); toast({ title: `${lines.length} terms fetched from JSON` }); return; }
+        if (lines.length > 0) { setKwTerms(prev => mergeCleanTerms(prev, lines)); toast({ title: t("pgpKeywords.toastTermsFetchedJson", { count: lines.length }) }); return; }
       } catch {}
       if (text.includes("<rss") || text.includes("<feed") || text.includes("<item")) {
         const doc = new DOMParser().parseFromString(text, "text/xml");
         const items = doc.querySelectorAll("item title, entry title");
         const lines = sanitizeKeywordLines(Array.from(items).map(el => el.textContent?.trim() || ""));
-        if (lines.length > 0) { setKwTerms(prev => mergeCleanTerms(prev, lines)); toast({ title: `${lines.length} terms fetched from RSS` }); return; }
+        if (lines.length > 0) { setKwTerms(prev => mergeCleanTerms(prev, lines)); toast({ title: t("pgpKeywords.toastTermsFetchedRss", { count: lines.length }) }); return; }
       }
       const lines = sanitizeKeywordLines(text.split("\n"));
       if (lines.length === 0) throw new Error("No clean keywords found at this URL");
       setKwTerms(prev => mergeCleanTerms(prev, lines));
-      toast({ title: `${lines.length} terms fetched` });
-    } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
+      toast({ title: t("pgpKeywords.toastTermsFetched", { count: lines.length }) });
+    } catch (err: any) { toast({ title: t("pgpKeywords.toastFailedToFetch"), description: err.message, variant: "destructive" }); }
     finally { setDynLoading(false); }
   };
 
   const fetchWebsiteKeywords = async () => {
-    if (!webSiteId) { toast({ title: "Please select a website", variant: "destructive" }); return; }
+    if (!webSiteId) { toast({ title: t("pgpKeywords.toastSelectWebsite"), variant: "destructive" }); return; }
     setWebLoading(true);
     try {
       const site = websites.find(w => w.id === webSiteId);
@@ -565,7 +555,6 @@ export default function PgpKeywordsPage() {
       if (data?.error) throw new Error(data.error);
       const pages = data?.items || data?.pages || [];
       if (pages.length === 0) throw new Error("No pages found on this website");
-      // Extract only visible SEO terms from titles, headings, excerpts and SEO keywords — never raw HTML/CSS.
       const allTerms = new Set<string>();
       for (const page of pages) {
         const title = page.title || "";
@@ -576,7 +565,6 @@ export default function PgpKeywordsPage() {
         for (const h of headings) {
           if (h && typeof h === "string") allTerms.add(h.trim());
         }
-        // Extract meta keywords
         const metaKw = page.meta_keywords || page.keywords || page.seo_keywords || "";
         const metaList = Array.isArray(metaKw) ? metaKw : String(metaKw).split(",");
         metaList.map((k: string) => k.trim()).filter(Boolean).forEach((k: string) => allTerms.add(k));
@@ -584,8 +572,8 @@ export default function PgpKeywordsPage() {
       const lines = sanitizeKeywordLines([...allTerms]);
       if (lines.length === 0) throw new Error("Could not extract clean keywords from website pages");
       setKwTerms(prev => mergeCleanTerms(prev, lines));
-      toast({ title: `${lines.length} keywords extracted from ${pages.length} pages` });
-    } catch (err: any) { toast({ title: "Failed to fetch", description: err.message, variant: "destructive" }); }
+      toast({ title: t("pgpKeywords.toastKeywordsExtracted", { kwCount: lines.length, pageCount: pages.length }) });
+    } catch (err: any) { toast({ title: t("pgpKeywords.toastFailedToFetch"), description: err.message, variant: "destructive" }); }
     finally { setWebLoading(false); }
   };
 
@@ -610,8 +598,8 @@ export default function PgpKeywordsPage() {
       const lines = extractKeywordCandidates(result.content);
       if (lines.length === 0) throw new Error("Could not extract clean keywords from this URL");
       setKwTerms(prev => mergeCleanTerms(prev, lines));
-      toast({ title: `${lines.length} keywords detected from URL` });
-    } catch (err: any) { toast({ title: "Failed to scan URL", description: err.message, variant: "destructive" }); }
+      toast({ title: t("pgpKeywords.toastKeywordsDetected", { count: lines.length }) });
+    } catch (err: any) { toast({ title: t("pgpKeywords.toastFailedToScanUrl"), description: err.message, variant: "destructive" }); }
     finally { setScanLoading(false); }
   };
 
@@ -622,7 +610,6 @@ export default function PgpKeywordsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
 
-      // 1) Generate CLEAN keywords via a plain-text AI call (no HTML/CSS contamination).
       const kwResult = await callAI({
         model: "google/gemini-3-flash-preview",
         temperature: 0.3,
@@ -649,7 +636,6 @@ Output JSON only, nothing else.`,
       );
       if (serviceTerms.length === 0) throw new Error("Could not generate clean keywords. Please try again.");
 
-      // 2) Generate the HTML content template separately (HTML stays in the template, never in keywords).
       const { data, error } = await supabase.functions.invoke("generate-template", {
         body: {
           prompt: `Create an SEO-optimized HTML content template for a landing page about the service "${wizService}" using {service} and {city} variables. Include H1, H2 sections, FAQ, and call-to-action.
@@ -663,19 +649,16 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
       let result: any = {};
       try { result = JSON.parse(raw); } catch { result = {}; }
 
-      // Create service keyword
       await supabase.from("pgp_keywords").insert({
         name: "service", source: "ai", terms: serviceTerms, term_count: serviceTerms.length,
         columns: [], delimiter: null, source_config: { auto_generated: true, topic: wizService }, workspace_id: wsId, user_id: user.id,
       } as any);
 
-      // Create city keyword
       await supabase.from("pgp_keywords").insert({
         name: "city", source: "ai", terms: cityTerms, term_count: cityTerms.length,
         columns: [], delimiter: null, source_config: { auto_generated: true, topic: wizLocations }, workspace_id: wsId, user_id: user.id,
       } as any);
 
-      // Create content group (template)
       const variables = [...new Set((result.template_content || "").match(/\{[^}]+\}/g) || [])];
       await supabase.from("templates").insert({
         name: result.template_name || `${wizService} Landing Page`,
@@ -688,32 +671,63 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
 
       queryClient.invalidateQueries({ queryKey: ["pgp-keywords"] });
       queryClient.invalidateQueries({ queryKey: ["pgp-content-groups"] });
-      toast({ title: "Auto-generated!", description: "Keywords and Content Group created. Go to Generate to start." });
+      toast({ title: t("pgpKeywords.toastAutoGenerated"), description: t("pgpKeywords.toastAutoGeneratedDesc") });
       setAutoWizardOpen(false);
       setWizService(""); setWizLocations("");
-    } catch (err: any) { toast({ title: "Failed", description: err.message, variant: "destructive" }); }
+    } catch (err: any) { toast({ title: t("pgpKeywords.toastFailed"), description: err.message, variant: "destructive" }); }
     finally { setWizGenerating(false); }
   };
 
   const sourceLabels: Record<string, string> = {
-    local: "Local", csv: "CSV", ai: "AI", location: "Location",
-    csv_url: "CSV URL", google_sheet: "Sheet", rss_feed: "RSS",
-    website: "Website", text: "Text File",
+    local: t("pgpKeywords.sourceLocal"),
+    csv: t("pgpKeywords.sourceFile"),
+    ai: t("pgpKeywords.sourceAi"),
+    location: t("pgpKeywords.sourceLocation"),
+    csv_url: t("pgpKeywords.sourceCsvUrl"),
+    google_sheet: t("pgpKeywords.sourceSheet"),
+    rss_feed: t("pgpKeywords.sourceRss"),
+    website: t("pgpKeywords.sourceWebsite"),
+    url_scan: t("pgpKeywords.sourceUrlScan"),
+    text: t("pgpKeywords.sourceText"),
   };
+
+  const sourceOptions = [
+    { value: "local",        label: t("pgpKeywords.sourceLocal"),      icon: FileText,    desc: t("pgpKeywords.sourceLocalDesc") },
+    { value: "csv",          label: t("pgpKeywords.sourceFile"),       icon: Database,    desc: t("pgpKeywords.sourceFileDesc") },
+    { value: "ai",           label: t("pgpKeywords.sourceAi"),         icon: Sparkles,    desc: t("pgpKeywords.sourceAiDesc") },
+    { value: "location",     label: t("pgpKeywords.sourceLocation"),   icon: MapPin,      desc: t("pgpKeywords.sourceLocationDesc") },
+    { value: "csv_url",      label: t("pgpKeywords.sourceCsvUrl"),     icon: Link2,       desc: t("pgpKeywords.sourceCsvUrlDesc") },
+    { value: "google_sheet", label: t("pgpKeywords.sourceSheet"),      icon: Globe,       desc: t("pgpKeywords.sourceSheetDesc") },
+    { value: "rss_feed",     label: t("pgpKeywords.sourceRss"),        icon: Rss,         desc: t("pgpKeywords.sourceRssDesc") },
+    { value: "website",      label: t("pgpKeywords.sourceWebsite"),    icon: Globe,       desc: t("pgpKeywords.sourceWebsiteDesc") },
+    { value: "url_scan",     label: t("pgpKeywords.sourceUrlScan"),    icon: ExternalLink, desc: t("pgpKeywords.sourceUrlScanDesc") },
+    { value: "text",         label: t("pgpKeywords.sourceText"),       icon: FileText,    desc: t("pgpKeywords.sourceTextDesc") },
+  ];
+
+  const locIncludeFields = [
+    { key: "city" as const,         label: t("pgpKeywords.locFieldCity") },
+    { key: "state" as const,        label: t("pgpKeywords.locFieldState") },
+    { key: "county" as const,       label: t("pgpKeywords.locFieldCounty") },
+    { key: "zip" as const,          label: t("pgpKeywords.locFieldZip") },
+    { key: "region" as const,       label: t("pgpKeywords.locFieldRegion") },
+    { key: "area_code" as const,    label: t("pgpKeywords.locFieldAreaCode") },
+    { key: "population" as const,   label: t("pgpKeywords.locFieldPopulation") },
+    { key: "demographics" as const, label: t("pgpKeywords.locFieldDemographics") },
+  ];
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-display">Keywords</h1>
-          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Define reusable keyword groups with terms that cycle during page generation.</p>
+          <h1 className="text-lg sm:text-display">{t("pgpKeywords.pageTitle")}</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">{t("pgpKeywords.pageDescription")}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button size="sm" variant="outline" onClick={() => setAutoWizardOpen(true)}>
-            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Auto-</span>Generate
+            <Wand2 className="mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Auto-</span>{t("pgpKeywords.autoGenerateBtnSuffix")}
           </Button>
           <Button size="sm" onClick={() => openEditor()}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Keyword
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("pgpKeywords.addKeywordBtn")}
           </Button>
         </div>
       </div>
@@ -721,28 +735,28 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
       {/* PGP Workflow Guide - show when no keywords */}
       {!isLoading && keywords.length === 0 && (
         <div className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 sm:p-5">
-          <h3 className="font-semibold text-sm mb-1">🚀 How Page Generator Pro Works</h3>
-          <p className="text-xs text-muted-foreground mb-3">Follow these 3 steps to mass-generate SEO pages:</p>
+          <h3 className="font-semibold text-sm mb-1">{t("pgpKeywords.workflowTitle")}</h3>
+          <p className="text-xs text-muted-foreground mb-3">{t("pgpKeywords.workflowSubtitle")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="flex items-start gap-2 rounded-lg bg-primary/10 p-3">
               <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[11px] font-bold shrink-0">1</div>
               <div>
-                <p className="text-xs font-semibold text-primary">Keywords</p>
-                <p className="text-[11px] text-muted-foreground">Create keyword groups with terms like cities, services, etc.</p>
+                <p className="text-xs font-semibold text-primary">{t("pgpKeywords.step1Title")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.step1Desc")}</p>
               </div>
             </div>
             <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
               <div className="h-6 w-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[11px] font-bold shrink-0">2</div>
               <div>
-                <p className="text-xs font-semibold">Content Groups</p>
-                <p className="text-[11px] text-muted-foreground">Create templates using your keyword variables.</p>
+                <p className="text-xs font-semibold">{t("pgpKeywords.step2Title")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.step2Desc")}</p>
               </div>
             </div>
             <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3">
               <div className="h-6 w-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[11px] font-bold shrink-0">3</div>
               <div>
-                <p className="text-xs font-semibold">Generate</p>
-                <p className="text-[11px] text-muted-foreground">Combine keywords + templates to generate pages.</p>
+                <p className="text-xs font-semibold">{t("pgpKeywords.step3Title")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.step3Desc")}</p>
               </div>
             </div>
           </div>
@@ -752,24 +766,24 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative w-full sm:max-w-xs">
           <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search keywords..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
+          <Input placeholder={t("pgpKeywords.searchPlaceholder")} value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
         </div>
         {folders.length > 0 && (
           <Select value={folderFilter} onValueChange={(v) => { setFolderFilter(v); setCurrentPage(1); }}>
             <SelectTrigger className="h-9 w-full sm:w-[180px]">
               <FolderOpen className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-              <SelectValue placeholder="All Folders" />
+              <SelectValue placeholder={t("pgpKeywords.allFolders")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">All Folders</SelectItem>
-              <SelectItem value="__none__">Uncategorized</SelectItem>
+              <SelectItem value="__all__">{t("pgpKeywords.allFolders")}</SelectItem>
+              <SelectItem value="__none__">{t("pgpKeywords.uncategorized")}</SelectItem>
               {folders.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
         {folderFilter !== "__all__" && folderFilter !== "__none__" && (
           <Button size="sm" variant="outline" onClick={() => openEditor(undefined, folderFilter)} className="h-9">
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Add to "{folderFilter}"
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("pgpKeywords.addToFolder", { folder: folderFilter })}
           </Button>
         )}
       </div>
@@ -785,10 +799,10 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                   <FolderOpen className="h-4 w-4 text-primary shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs font-semibold truncate">{folder}</p>
-                    <p className="text-[10px] text-muted-foreground">{count} keyword{count !== 1 ? "s" : ""}</p>
+                    <p className="text-[10px] text-muted-foreground">{count} {count !== 1 ? t("pgpKeywords.keywords") : t("pgpKeywords.keyword")}</p>
                   </div>
                 </button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={() => openEditor(undefined, folder)} title={`Add keyword to ${folder}`}>
+                <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={() => openEditor(undefined, folder)} title={t("pgpKeywords.addKeywordToFolder", { folder })}>
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -805,25 +819,25 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <KeyRound className="h-8 w-8 text-primary/60" />
             </div>
-            <h3 className="font-semibold text-base mb-1">{keywords.length === 0 ? "Create Your First Keyword" : "No matching keywords"}</h3>
+            <h3 className="font-semibold text-base mb-1">{keywords.length === 0 ? t("pgpKeywords.emptyFirstKeyword") : t("pgpKeywords.emptyNoMatch")}</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
-              {keywords.length === 0 ? "Keywords are template variables (like {city} or {service}) with lists of terms. Each page uses a different combination." : "Try adjusting your search."}
+              {keywords.length === 0 ? t("pgpKeywords.emptyFirstDesc") : t("pgpKeywords.emptySearchHint")}
             </p>
             {keywords.length === 0 && (
               <>
                 <div className="flex flex-col sm:flex-row items-center gap-2 justify-center mb-4">
                   <Button onClick={() => setAutoWizardOpen(true)} className="w-full sm:w-auto">
-                    <Wand2 className="mr-2 h-4 w-4" /> Auto-Generate (Easiest)
+                    <Wand2 className="mr-2 h-4 w-4" /> {t("pgpKeywords.autoGenerateEasiest")}
                   </Button>
                   <Button variant="outline" onClick={() => openEditor()} className="w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" /> Add Manually
+                    <Plus className="mr-2 h-4 w-4" /> {t("pgpKeywords.addManually")}
                   </Button>
                 </div>
                 <div className="text-left max-w-sm mx-auto space-y-1.5 mt-4">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">💡 Quick tips</p>
-                  <p className="text-xs text-muted-foreground">• <strong>Auto-Generate</strong> creates keywords + a content template from your business description</p>
-                  <p className="text-xs text-muted-foreground">• <strong>Location source</strong> pulls city/state data from our US locations database</p>
-                  <p className="text-xs text-muted-foreground">• <strong>Import</strong> terms from CSV, Excel, text files, or Google Sheets</p>
+                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">{t("pgpKeywords.quickTipsTitle")}</p>
+                  <p className="text-xs text-muted-foreground">• <strong>{t("pgpKeywords.quickTip1Bold")}</strong> {t("pgpKeywords.quickTip1Text")}</p>
+                  <p className="text-xs text-muted-foreground">• <strong>{t("pgpKeywords.quickTip2Bold")}</strong> {t("pgpKeywords.quickTip2Text")}</p>
+                  <p className="text-xs text-muted-foreground">• <strong>{t("pgpKeywords.quickTip3Bold")}</strong> {t("pgpKeywords.quickTip3Text")}</p>
                 </div>
               </>
             )}
@@ -835,13 +849,13 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             <Table>
               <TableHeader>
                  <TableRow>
-                  <TableHead className="min-w-[140px]">Keyword</TableHead>
-                  <TableHead className="min-w-[80px]">Folder</TableHead>
-                  <TableHead className="min-w-[80px]">Source</TableHead>
-                  <TableHead className="min-w-[60px]">Terms</TableHead>
-                  <TableHead className="hidden md:table-cell min-w-[60px]">Columns</TableHead>
-                  <TableHead className="hidden sm:table-cell min-w-[90px]">Updated</TableHead>
-                  <TableHead className="text-right w-10">Actions</TableHead>
+                  <TableHead className="min-w-[140px]">{t("pgpKeywords.colKeyword")}</TableHead>
+                  <TableHead className="min-w-[80px]">{t("pgpKeywords.colFolder")}</TableHead>
+                  <TableHead className="min-w-[80px]">{t("pgpKeywords.colSource")}</TableHead>
+                  <TableHead className="min-w-[60px]">{t("pgpKeywords.colTerms")}</TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[60px]">{t("pgpKeywords.colColumns")}</TableHead>
+                  <TableHead className="hidden sm:table-cell min-w-[90px]">{t("pgpKeywords.colUpdated")}</TableHead>
+                  <TableHead className="text-right w-10">{t("pgpKeywords.colActions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -868,10 +882,10 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem onClick={() => openEditor(kw)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => duplicateKeyword(kw)}><Copy className="h-3.5 w-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => exportKeyword(kw)}><Download className="h-3.5 w-3.5 mr-2" /> Export</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(kw)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditor(kw)}><Pencil className="h-3.5 w-3.5 mr-2" /> {t("pgpKeywords.actionEdit")}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => duplicateKeyword(kw)}><Copy className="h-3.5 w-3.5 mr-2" /> {t("pgpKeywords.actionDuplicate")}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportKeyword(kw)}><Download className="h-3.5 w-3.5 mr-2" /> {t("pgpKeywords.actionExport")}</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(kw)}><Trash2 className="h-3.5 w-3.5 mr-2" /> {t("pgpKeywords.actionDelete")}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -882,7 +896,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
           </div>
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-3 sm:px-4 py-3">
-              <p className="text-xs text-muted-foreground">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}</p>
+              <p className="text-xs text-muted-foreground">{t("pgpKeywords.paginationRange", { start: (safePage - 1) * PAGE_SIZE + 1, end: Math.min(safePage * PAGE_SIZE, filtered.length), total: filtered.length })}</p>
               <div className="flex items-center gap-1">
                 <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}><ChevronLeft className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)}><ChevronRight className="h-4 w-4" /></Button>
@@ -898,54 +912,43 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
           <DialogHeader className="px-6 pt-6 pb-0">
             <DialogTitle className="flex items-center gap-2">
               <KeyRound className="h-5 w-5 text-primary" />
-              {editing ? "Edit Keyword" : "Add Keyword"}
+              {editing ? t("pgpKeywords.editorTitleEdit") : t("pgpKeywords.editorTitleAdd")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-6 space-y-5 mt-4">
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Keyword Name</Label>
-              <Input placeholder="e.g., service, city, product_name" value={kwName} onChange={(e) => setKwName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"))} className="font-mono h-11" />
-              <p className="text-[11px] text-muted-foreground">Use in templates as <code className="bg-muted px-1 rounded">{`{${kwName || "keyword"}}`}</code></p>
+              <Label className="text-sm font-semibold">{t("pgpKeywords.labelKeywordName")}</Label>
+              <Input placeholder={t("pgpKeywords.placeholderKeywordName")} value={kwName} onChange={(e) => setKwName(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"))} className="font-mono h-11" />
+              <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.keywordNameHint")} <code className="bg-muted px-1 rounded">{`{${kwName || "keyword"}}`}</code></p>
             </div>
 
             {/* Folder Selection */}
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Folder <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Label className="text-sm font-semibold">{t("pgpKeywords.labelFolder")} <span className="text-muted-foreground font-normal">{t("pgpKeywords.folderOptional")}</span></Label>
               <div className="flex gap-2">
                 <Select value={kwFolder || "__none__"} onValueChange={(v) => { setKwFolder(v === "__none__" ? "" : v); setNewFolderName(""); }}>
                   <SelectTrigger className="h-9 flex-1">
-                    <SelectValue placeholder="No folder" />
+                    <SelectValue placeholder={t("pgpKeywords.noFolder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">No folder</SelectItem>
+                    <SelectItem value="__none__">{t("pgpKeywords.noFolder")}</SelectItem>
                     {folders.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                    <SelectItem value="__new__">+ Create new folder</SelectItem>
+                    <SelectItem value="__new__">{t("pgpKeywords.createNewFolder")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {kwFolder === "__new__" && (
-                <Input placeholder="Enter folder name, e.g. Shop, Web Design" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} className="h-9 mt-1.5" autoFocus />
+                <Input placeholder={t("pgpKeywords.placeholderFolderName")} value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} className="h-9 mt-1.5" autoFocus />
               )}
-              <p className="text-[11px] text-muted-foreground">Group keywords by website or project for easy filtering</p>
+              <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.folderHint")}</p>
             </div>
 
             {/* Source Selection */}
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Source</Label>
+              <Label className="text-sm font-semibold">{t("pgpKeywords.labelSource")}</Label>
               <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2">
-                {[
-                  { value: "local", label: "Local", icon: FileText, desc: "Manual" },
-                  { value: "csv", label: "File", icon: Database, desc: "CSV/Excel/TXT" },
-                  { value: "ai", label: "AI", icon: Sparkles, desc: "Generated" },
-                  { value: "location", label: "Location", icon: MapPin, desc: "Database" },
-                  { value: "csv_url", label: "CSV URL", icon: Link2, desc: "Remote" },
-                  { value: "google_sheet", label: "Sheet", icon: Globe, desc: "Google" },
-                  { value: "rss_feed", label: "RSS", icon: Rss, desc: "Feed" },
-                  { value: "website", label: "Website", icon: Globe, desc: "From Site" },
-                  { value: "url_scan", label: "URL Scan", icon: ExternalLink, desc: "Any URL" },
-                  { value: "text", label: "Text", icon: FileText, desc: ".txt file" },
-                ].map(s => (
+                {sourceOptions.map(s => (
                   <button key={s.value} onClick={() => setKwSource(s.value)}
                     className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border text-center transition-all ${kwSource === s.value ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:bg-accent"}`}>
                     <s.icon className="h-3.5 w-3.5" />
@@ -958,13 +961,13 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {/* AI Generation */}
             {kwSource === "ai" && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> AI Term Generator</p>
+                <p className="text-xs font-semibold flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> {t("pgpKeywords.aiSectionTitle")}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px] gap-2">
-                  <Input placeholder="Topic (e.g., plumbing services)" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} className="h-9" />
-                  <Input type="number" placeholder="Count" value={aiCount} onChange={(e) => setAiCount(e.target.value)} className="h-9" min={1} max={500} />
+                  <Input placeholder={t("pgpKeywords.aiTopicPlaceholder")} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} className="h-9" />
+                  <Input type="number" placeholder={t("pgpKeywords.aiCountPlaceholder")} value={aiCount} onChange={(e) => setAiCount(e.target.value)} className="h-9" min={1} max={500} />
                 </div>
                 <Button size="sm" onClick={generateAiTerms} disabled={aiGenerating || !aiTopic.trim()}>
-                  {aiGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Generating...</> : <><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Generate Terms</>}
+                  {aiGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("pgpKeywords.aiGenerating")}</> : <><Sparkles className="h-3.5 w-3.5 mr-1.5" /> {t("pgpKeywords.aiGenerateBtn")}</>}
                 </Button>
               </div>
             )}
@@ -972,7 +975,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {/* Location Source with Radius/Area */}
             {kwSource === "location" && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-4">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-primary" /> Generate Location Keywords</p>
+                <p className="text-xs font-semibold flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-primary" /> {t("pgpKeywords.locSectionTitle")}</p>
 
                 {/* Radius vs Area */}
                 <div className="grid grid-cols-2 gap-3">
@@ -980,9 +983,9 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                     <button key={mode} onClick={() => setLocMode(mode)}
                       className={`p-3 rounded-xl border text-center transition-all ${locMode === mode ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border hover:bg-accent"}`}>
                       <RadioGroup value={locMode} className="justify-center pointer-events-none"><RadioGroupItem value={mode} /></RadioGroup>
-                      <p className="text-xs font-semibold mt-1 capitalize">{mode}</p>
+                      <p className="text-xs font-semibold mt-1">{mode === "radius" ? t("pgpKeywords.locModeRadius") : t("pgpKeywords.locModeArea")}</p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {mode === "radius" ? "Fixed radius from an address" : "Specific Regions, States or Counties"}
+                        {mode === "radius" ? t("pgpKeywords.locModeRadiusDesc") : t("pgpKeywords.locModeAreaDesc")}
                       </p>
                     </button>
                   ))}
@@ -991,7 +994,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                 {locMode === "radius" ? (
                   <div className="space-y-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Country</Label>
+                      <Label className="text-xs">{t("pgpKeywords.locLabelCountry")}</Label>
                       <Select value={locCountry} onValueChange={setLocCountry}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                         <SelectContent className="max-h-60">
@@ -1000,21 +1003,21 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Center City</Label>
-                      <Input placeholder="e.g., New York" value={locCenterCity} onChange={(e) => setLocCenterCity(e.target.value)} className="h-9" />
+                      <Label className="text-xs">{t("pgpKeywords.locLabelCenterCity")}</Label>
+                      <Input placeholder={t("pgpKeywords.locPlaceholderCenterCity")} value={locCenterCity} onChange={(e) => setLocCenterCity(e.target.value)} className="h-9" />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">Radius</Label>
+                        <Label className="text-xs">{t("pgpKeywords.locLabelRadius")}</Label>
                         <Input type="number" value={locRadius} onChange={(e) => setLocRadius(e.target.value)} className="h-9" />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Unit</Label>
+                        <Label className="text-xs">{t("pgpKeywords.locLabelUnit")}</Label>
                         <Select value={locRadiusUnit} onValueChange={setLocRadiusUnit}>
                           <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="miles">Miles</SelectItem>
-                            <SelectItem value="km">Kilometers</SelectItem>
+                            <SelectItem value="miles">{t("pgpKeywords.locUnitMiles")}</SelectItem>
+                            <SelectItem value="km">{t("pgpKeywords.locUnitKm")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1023,7 +1026,7 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Country</Label>
+                      <Label className="text-xs">{t("pgpKeywords.locLabelCountry")}</Label>
                       <Select value={locCountry} onValueChange={(v) => { setLocCountry(v); setLocState(""); setLocCounty(""); }}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                         <SelectContent className="max-h-60">
@@ -1032,21 +1035,21 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Regions / States</Label>
+                      <Label className="text-xs">{t("pgpKeywords.locLabelRegionsStates")}</Label>
                       <Select value={locState || "__all__"} onValueChange={(v) => { setLocState(v === "__all__" ? "" : v); setLocCounty(""); }}>
-                        <SelectTrigger className="h-9"><SelectValue placeholder="All states" /></SelectTrigger>
+                        <SelectTrigger className="h-9"><SelectValue placeholder={t("pgpKeywords.locAllStatesPlaceholder")} /></SelectTrigger>
                         <SelectContent className="max-h-60">
-                          <SelectItem value="__all__">All States</SelectItem>
+                          <SelectItem value="__all__">{t("pgpKeywords.locAllStates")}</SelectItem>
                           {locStates.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Counties</Label>
+                      <Label className="text-xs">{t("pgpKeywords.locLabelCounties")}</Label>
                       <Select value={locCounty || "__all__"} onValueChange={(v) => setLocCounty(v === "__all__" ? "" : v)}>
-                        <SelectTrigger className="h-9"><SelectValue placeholder="All counties" /></SelectTrigger>
+                        <SelectTrigger className="h-9"><SelectValue placeholder={t("pgpKeywords.locAllCountiesPlaceholder")} /></SelectTrigger>
                         <SelectContent className="max-h-60">
-                          <SelectItem value="__all__">All Counties</SelectItem>
+                          <SelectItem value="__all__">{t("pgpKeywords.locAllCounties")}</SelectItem>
                           {locCounties.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -1055,18 +1058,9 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                 )}
 
                 <div className="space-y-2">
-                  <Label className="text-xs">Include Fields</Label>
+                  <Label className="text-xs">{t("pgpKeywords.locLabelIncludeFields")}</Label>
                   <div className="flex flex-wrap gap-3">
-                    {([
-                      { key: "city", label: "City" },
-                      { key: "state", label: "State" },
-                      { key: "county", label: "County" },
-                      { key: "zip", label: "ZIP Code" },
-                      { key: "region", label: "Region" },
-                      { key: "area_code", label: "Area Code" },
-                      { key: "population", label: "Population" },
-                      { key: "demographics", label: "Demographics" },
-                    ] as const).map(field => (
+                    {locIncludeFields.map(field => (
                       <label key={field.key} className="flex items-center gap-1.5 text-xs cursor-pointer">
                         <Checkbox checked={locInclude[field.key]} onCheckedChange={(v) => setLocInclude(prev => ({ ...prev, [field.key]: !!v }))} />
                         <span>{field.label}</span>
@@ -1074,18 +1068,18 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
                     ))}
                   </div>
                   {locInclude.demographics && (
-                    <p className="text-[10px] text-muted-foreground">Demographics includes: Population by Gender, Median Age, Median Household Income</p>
+                    <p className="text-[10px] text-muted-foreground">{t("pgpKeywords.locDemographicsHint")}</p>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs">Term Format</Label>
-                  <Input value={locFormat} onChange={(e) => setLocFormat(e.target.value)} className="h-9 font-mono text-xs" placeholder="{city}, {state}" />
-                  <p className="text-[10px] text-muted-foreground">Variables: {"{city}"}, {"{state}"}, {"{state_code}"}, {"{county}"}, {"{zip_code}"}, {"{region}"}, {"{area_code}"}, {"{population}"}</p>
+                  <Label className="text-xs">{t("pgpKeywords.locLabelFormat")}</Label>
+                  <Input value={locFormat} onChange={(e) => setLocFormat(e.target.value)} className="h-9 font-mono text-xs" placeholder={t("pgpKeywords.locFormatPlaceholder")} />
+                  <p className="text-[10px] text-muted-foreground">{t("pgpKeywords.locFormatVariables")}</p>
                 </div>
 
                 <Button size="sm" onClick={generateLocationTerms} disabled={locLoading}>
-                  {locLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Loading...</> : <><MapPin className="h-3.5 w-3.5 mr-1.5" /> Generate Location Terms</>}
+                  {locLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("pgpKeywords.locLoading")}</> : <><MapPin className="h-3.5 w-3.5 mr-1.5" /> {t("pgpKeywords.locGenerateBtn")}</>}
                 </Button>
               </div>
             )}
@@ -1095,15 +1089,16 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
                 <p className="text-xs font-semibold flex items-center gap-1.5">
                   {kwSource === "rss_feed" ? <Rss className="h-3.5 w-3.5 text-primary" /> : <Link2 className="h-3.5 w-3.5 text-primary" />}
-                  {kwSource === "csv_url" && "Fetch from CSV URL"}
-                  {kwSource === "google_sheet" && "Fetch from Google Sheets (Published CSV)"}
-                  {kwSource === "rss_feed" && "Fetch from RSS Feed"}
+                  {kwSource === "csv_url" && t("pgpKeywords.dynFetchCsvUrl")}
+                  {kwSource === "google_sheet" && t("pgpKeywords.dynFetchGoogleSheet")}
+                  {kwSource === "rss_feed" && t("pgpKeywords.dynFetchRss")}
                 </p>
-                <Input placeholder={kwSource === "csv_url" ? "https://example.com/data.csv" : kwSource === "google_sheet" ? "https://docs.google.com/spreadsheets/d/.../export?format=csv" : "https://example.com/feed.xml"}
+                <Input
+                  placeholder={kwSource === "csv_url" ? t("pgpKeywords.dynPlaceholderCsvUrl") : kwSource === "google_sheet" ? t("pgpKeywords.dynPlaceholderSheet") : t("pgpKeywords.dynPlaceholderRss")}
                   value={dynUrl} onChange={(e) => setDynUrl(e.target.value)} className="h-9 font-mono text-xs" />
-                {kwSource === "google_sheet" && <p className="text-[10px] text-muted-foreground">Publish your Google Sheet as CSV: File → Share → Publish to web → Select CSV format</p>}
+                {kwSource === "google_sheet" && <p className="text-[10px] text-muted-foreground">{t("pgpKeywords.dynGoogleSheetHint")}</p>}
                 <Button size="sm" onClick={fetchDynamicSource} disabled={dynLoading || !dynUrl.trim()}>
-                  {dynLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Fetching...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Fetch Terms</>}
+                  {dynLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("pgpKeywords.dynFetching")}</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> {t("pgpKeywords.dynFetchBtn")}</>}
                 </Button>
               </div>
             )}
@@ -1111,21 +1106,21 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {/* Website Source */}
             {kwSource === "website" && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> Extract Keywords from Website</p>
+                <p className="text-xs font-semibold flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> {t("pgpKeywords.webSectionTitle")}</p>
                 {websites.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No connected websites found. Add a website first in the Sites section.</p>
+                  <p className="text-xs text-muted-foreground">{t("pgpKeywords.webNoSites")}</p>
                 ) : (
                   <>
                     <Select value={webSiteId || "__none__"} onValueChange={(v) => setWebSiteId(v === "__none__" ? "" : v)}>
-                      <SelectTrigger className="h-9"><SelectValue placeholder="Select a website" /></SelectTrigger>
+                      <SelectTrigger className="h-9"><SelectValue placeholder={t("pgpKeywords.webSelectPlaceholder")} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">Select a website...</SelectItem>
+                        <SelectItem value="__none__">{t("pgpKeywords.webSelectOption")}</SelectItem>
                         {websites.map(w => <SelectItem key={w.id} value={w.id}>{w.name} ({w.url})</SelectItem>)}
                       </SelectContent>
                     </Select>
-                    <p className="text-[10px] text-muted-foreground">Scans your website pages and extracts titles, headings, and meta keywords as terms.</p>
+                    <p className="text-[10px] text-muted-foreground">{t("pgpKeywords.webScanHint")}</p>
                     <Button size="sm" onClick={fetchWebsiteKeywords} disabled={webLoading || !webSiteId}>
-                      {webLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Scanning...</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> Extract Keywords</>}
+                      {webLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("pgpKeywords.webScanning")}</> : <><Download className="h-3.5 w-3.5 mr-1.5" /> {t("pgpKeywords.webExtractBtn")}</>}
                     </Button>
                   </>
                 )}
@@ -1135,16 +1130,16 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {/* URL Scan Source */}
             {kwSource === "url_scan" && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><ExternalLink className="h-3.5 w-3.5 text-primary" /> Auto-Detect Keywords from Any URL</p>
-                <p className="text-[11px] text-muted-foreground">Paste any website URL and AI will analyze the page to extract product names, services, categories, and key phrases.</p>
+                <p className="text-xs font-semibold flex items-center gap-1.5"><ExternalLink className="h-3.5 w-3.5 text-primary" /> {t("pgpKeywords.scanSectionTitle")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.scanDesc")}</p>
                 <Input
-                  placeholder="https://example.com or https://shop.com/products"
+                  placeholder={t("pgpKeywords.scanPlaceholder")}
                   value={scanUrl}
                   onChange={(e) => setScanUrl(e.target.value)}
                   className="h-9 font-mono text-xs"
                 />
                 <Button size="sm" onClick={fetchUrlKeywords} disabled={scanLoading || !scanUrl.trim()}>
-                  {scanLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Scanning...</> : <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> Detect Keywords</>}
+                  {scanLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("pgpKeywords.scanScanning")}</> : <><Wand2 className="h-3.5 w-3.5 mr-1.5" /> {t("pgpKeywords.scanDetectBtn")}</>}
                 </Button>
               </div>
             )}
@@ -1152,48 +1147,48 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
             {/* File Import (CSV, Excel, TXT, JSON) */}
             {(kwSource === "csv" || kwSource === "text") && (
               <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-semibold flex items-center gap-1.5"><Upload className="h-3.5 w-3.5 text-primary" /> Import from File</p>
+                <p className="text-xs font-semibold flex items-center gap-1.5"><Upload className="h-3.5 w-3.5 text-primary" /> {t("pgpKeywords.importSectionTitle")}</p>
                 <input ref={importRef} type="file" accept={kwSource === "text" ? ".txt" : ".txt,.csv,.json,.xlsx,.xls"} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTerms(f); }} />
                 <Button variant="outline" size="sm" onClick={() => importRef.current?.click()}>
-                  <Upload className="h-3.5 w-3.5 mr-1.5" /> {kwSource === "text" ? "Upload Text File (.txt)" : "Upload File (TXT, CSV, JSON, Excel)"}
+                  <Upload className="h-3.5 w-3.5 mr-1.5" /> {kwSource === "text" ? t("pgpKeywords.importUploadTxt") : t("pgpKeywords.importUploadFile")}
                 </Button>
-                <p className="text-[11px] text-muted-foreground">{kwSource === "text" ? "One term per line in a plain text file." : "One term per line. CSV/Excel uses the first column."}</p>
+                <p className="text-[11px] text-muted-foreground">{kwSource === "text" ? t("pgpKeywords.importHintTxt") : t("pgpKeywords.importHintFile")}</p>
               </div>
             )}
 
             {/* Terms textarea */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">Terms</Label>
-                <span className="text-[11px] text-muted-foreground tabular-nums">{kwTerms.split("\n").filter(Boolean).length} term(s)</span>
+                <Label className="text-sm font-semibold">{t("pgpKeywords.labelTerms")}</Label>
+                <span className="text-[11px] text-muted-foreground tabular-nums">{t("pgpKeywords.termCount", { count: kwTerms.split("\n").filter(Boolean).length })}</span>
               </div>
-              <Textarea placeholder={"bathroom installations\nfixing leaks\ncentral heating\nkitchen plumbing"} value={kwTerms} onChange={(e) => setKwTerms(e.target.value)} rows={10} className="font-mono text-xs leading-relaxed" />
-              <p className="text-[11px] text-muted-foreground">One term per line. Each generated page uses a different term.</p>
+              <Textarea placeholder={t("pgpKeywords.termsPlaceholder")} value={kwTerms} onChange={(e) => setKwTerms(e.target.value)} rows={10} className="font-mono text-xs leading-relaxed" />
+              <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.termsHint")}</p>
             </div>
 
             {/* Delimiter & Columns */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Delimiter (optional)</Label>
-                <Input placeholder="e.g., | or ," value={kwDelimiter} onChange={(e) => setKwDelimiter(e.target.value)} className="font-mono h-9 text-sm" />
+                <Label className="text-xs text-muted-foreground">{t("pgpKeywords.labelDelimiter")}</Label>
+                <Input placeholder={t("pgpKeywords.placeholderDelimiter")} value={kwDelimiter} onChange={(e) => setKwDelimiter(e.target.value)} className="font-mono h-9 text-sm" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Column Names (optional)</Label>
-                <Input placeholder="e.g., city, state, zip" value={kwColumns} onChange={(e) => setKwColumns(e.target.value)} className="font-mono h-9 text-sm" />
-                <p className="text-[10px] text-muted-foreground">Access as <code className="bg-muted px-1 rounded">{`{${kwName || "keyword"}(column_name)}`}</code></p>
+                <Label className="text-xs text-muted-foreground">{t("pgpKeywords.labelColumns")}</Label>
+                <Input placeholder={t("pgpKeywords.placeholderColumns")} value={kwColumns} onChange={(e) => setKwColumns(e.target.value)} className="font-mono h-9 text-sm" />
+                <p className="text-[10px] text-muted-foreground">{t("pgpKeywords.columnsHint")} <code className="bg-muted px-1 rounded">{`{${kwName || "keyword"}(column_name)}`}</code></p>
               </div>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2 px-6 py-3 border-t bg-card">
-            <Button variant="outline" onClick={() => { setEditorOpen(false); resetEditor(); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setEditorOpen(false); resetEditor(); }}>{t("pgpKeywords.btnCancel")}</Button>
             {!editing && (
               <Button variant="secondary" onClick={() => saveMutation.mutate({ keepOpen: true })} disabled={!kwName.trim() || saveMutation.isPending}>
-                {saveMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Saving...</> : <><Plus className="h-4 w-4 mr-1" /> Save & Add Another</>}
+                {saveMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin mr-1" /> {t("pgpKeywords.btnSaving")}</> : <><Plus className="h-4 w-4 mr-1" /> {t("pgpKeywords.btnSaveAndAdd")}</>}
               </Button>
             )}
             <Button onClick={() => saveMutation.mutate({})} disabled={!kwName.trim() || saveMutation.isPending}>
-              {saveMutation.isPending ? "Saving..." : editing ? "Save Changes" : "Create Keyword"}
+              {saveMutation.isPending ? t("pgpKeywords.btnSaving") : editing ? t("pgpKeywords.btnSaveChanges") : t("pgpKeywords.btnCreateKeyword")}
             </Button>
           </div>
         </DialogContent>
@@ -1203,31 +1198,31 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
       <Dialog open={autoWizardOpen} onOpenChange={setAutoWizardOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> Auto-Generate Keywords & Content Group</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Wand2 className="h-5 w-5 text-primary" /> {t("pgpKeywords.wizardTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">Enter your service or product and AI will automatically create keyword groups and a matching content template.</p>
+            <p className="text-sm text-muted-foreground">{t("pgpKeywords.wizardDesc")}</p>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Service / Product *</Label>
-              <Input placeholder="e.g., Plumbing Services, Dental Clinic, Real Estate" value={wizService} onChange={(e) => setWizService(e.target.value)} className="h-11" />
+              <Label className="text-sm font-semibold">{t("pgpKeywords.wizardLabelService")}</Label>
+              <Input placeholder={t("pgpKeywords.wizardPlaceholderService")} value={wizService} onChange={(e) => setWizService(e.target.value)} className="h-11" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Target Locations (optional)</Label>
-              <Input placeholder="e.g., California, New York, Texas" value={wizLocations} onChange={(e) => setWizLocations(e.target.value)} />
-              <p className="text-[11px] text-muted-foreground">Comma-separated. Leave empty for US cities.</p>
+              <Label className="text-sm font-semibold">{t("pgpKeywords.wizardLabelLocations")}</Label>
+              <Input placeholder={t("pgpKeywords.wizardPlaceholderLocations")} value={wizLocations} onChange={(e) => setWizLocations(e.target.value)} />
+              <p className="text-[11px] text-muted-foreground">{t("pgpKeywords.wizardLocationsHint")}</p>
             </div>
             <div className="bg-muted/50 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">This will create:</p>
+              <p className="font-medium text-foreground">{t("pgpKeywords.wizardWillCreate")}</p>
               <ul className="list-disc pl-4 space-y-0.5">
-                <li>A <strong>service</strong> keyword with relevant term variations</li>
-                <li>A <strong>city</strong> keyword with target locations</li>
-                <li>A <strong>Content Group</strong> template optimized for SEO</li>
+                <li>{t("pgpKeywords.wizardItem1Pre")} <strong>{t("pgpKeywords.wizardItem1Bold")}</strong> {t("pgpKeywords.wizardItem1Post")}</li>
+                <li>{t("pgpKeywords.wizardItem2Pre")} <strong>{t("pgpKeywords.wizardItem2Bold")}</strong> {t("pgpKeywords.wizardItem2Post")}</li>
+                <li>{t("pgpKeywords.wizardItem3Pre")} <strong>{t("pgpKeywords.wizardItem3Bold")}</strong> {t("pgpKeywords.wizardItem3Post")}</li>
               </ul>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setAutoWizardOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setAutoWizardOpen(false)}>{t("pgpKeywords.btnCancel")}</Button>
               <Button onClick={runAutoWizard} disabled={wizGenerating || !wizService.trim()}>
-                {wizGenerating ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> Generating...</> : <><Wand2 className="h-4 w-4 mr-1.5" /> Create Keywords & Content Group</>}
+                {wizGenerating ? <><Loader2 className="h-4 w-4 animate-spin mr-1.5" /> {t("pgpKeywords.wizardGenerating")}</> : <><Wand2 className="h-4 w-4 mr-1.5" /> {t("pgpKeywords.wizardCreateBtn")}</>}
               </Button>
             </div>
           </div>
@@ -1238,12 +1233,14 @@ Output as JSON: { "template_name": "...", "template_content": "...", "seo_title"
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Keyword?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete <strong>{`{${deleteTarget?.name}}`}</strong> and its {deleteTarget?.term_count || 0} terms.</AlertDialogDescription>
+            <AlertDialogTitle>{t("pgpKeywords.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("pgpKeywords.deleteDescPre")} <strong>{`{${deleteTarget?.name}}`}</strong> {t("pgpKeywords.deleteDescMid", { count: deleteTarget?.term_count || 0 })}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("pgpKeywords.deleteBtnCancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("pgpKeywords.deleteBtnConfirm")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
