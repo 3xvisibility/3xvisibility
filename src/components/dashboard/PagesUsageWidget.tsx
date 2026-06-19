@@ -43,7 +43,7 @@ export function PagesUsageWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           <FileText className="h-4 w-4 text-primary" />
-          Remaining pages this period
+          {t("pagesUsage.title")}
           <Badge variant="outline" className="ml-auto capitalize text-[10px]">
             {plan}
           </Badge>
@@ -60,7 +60,7 @@ export function PagesUsageWidget() {
           <div className="flex flex-col gap-1">
             <span className="text-2xl font-bold tabular-nums">∞</span>
             <p className="text-xs text-muted-foreground">
-              Unlimited pages on this plan.
+              {t("pagesUsage.unlimited")}
             </p>
           </div>
         ) : (
@@ -71,17 +71,17 @@ export function PagesUsageWidget() {
                   {pagesRemaining.toLocaleString()}
                 </span>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  remaining this period
+                  {t("pagesUsage.remainingThisPeriod")}
                 </p>
               </div>
               {isExhausted && (
                 <Badge variant="destructive" className="text-[10px]">
-                  Limit reached
+                  {t("pagesUsage.limitReached")}
                 </Badge>
               )}
               {!isExhausted && isWarning && (
                 <Badge variant="outline" className="text-[10px] border-warning text-warning">
-                  {percentUsed}% used
+                  {t("pagesUsage.percentUsed", { percent: percentUsed })}
                 </Badge>
               )}
             </div>
@@ -89,8 +89,8 @@ export function PagesUsageWidget() {
             <div className="space-y-1">
               <Progress value={Math.min(100, percentUsed)} className="h-2" />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{pagesUsed.toLocaleString()} used</span>
-                <span>{pagesLimit.toLocaleString()} limit</span>
+                <span>{t("pagesUsage.used", { count: pagesUsed.toLocaleString() })}</span>
+                <span>{t("pagesUsage.limit", { count: pagesLimit.toLocaleString() })}</span>
               </div>
             </div>
 
@@ -99,8 +99,8 @@ export function PagesUsageWidget() {
                 <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
                 <p className="text-xs text-destructive flex-1">
                   {isExhausted
-                    ? "You've reached your page limit for this period."
-                    : `You're at ${percentUsed}% of your page limit.`}
+                    ? t("pagesUsage.exhaustedMsg")
+                    : t("pagesUsage.warningMsg", { percent: percentUsed })}
                 </p>
                 <Button
                   size="sm"
@@ -108,14 +108,14 @@ export function PagesUsageWidget() {
                   className="shrink-0 gap-1 h-7 text-xs"
                   onClick={() => navigate(`${basePath}/billing`)}
                 >
-                  Upgrade <ArrowRight className="h-3 w-3" />
+                  {t("pagesUsage.upgrade")} <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>
             )}
 
             {resetLabel && (
               <p className="text-[11px] text-muted-foreground">
-                Resets on <span className="font-medium text-foreground">{resetLabel}</span>
+                {t("pagesUsage.resetsOn")} <span className="font-medium text-foreground">{resetLabel}</span>
               </p>
             )}
           </>
