@@ -39,7 +39,12 @@ function toTsObjectLiteral(obj: Record<string, string>, indent = 2): string {
   return Object.entries(obj)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => {
-      const escaped = v.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      const escaped = v
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, "\\n")
+        .replace(/\r/g, "\\r")
+        .replace(/\t/g, "\\t");
       return `${pad}"${k}": "${escaped}",`;
     })
     .join("\n");
