@@ -33,6 +33,8 @@ interface TemplateCreationPickerProps {
     selectedWebsite?: Website;
     contentType?: ContentType;
     platform?: TargetPlatform;
+    designSource?: "imported" | "marketplace";
+    marketplaceId?: string;
   }) => void;
 }
 
