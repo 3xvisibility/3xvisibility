@@ -707,7 +707,7 @@ export default function TemplatesPage() {
     });
   };
 
-  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType; platform?: "wordpress" | "shopify" | "prestashop" | "generic" }) => {
+  const handlePickerSelect = (method: CreationMethod, config: { selectedKeywords: string[]; targetUrl?: string; selectedWebsite?: any; contentType?: ContentType; platform?: "wordpress" | "shopify" | "prestashop" | "generic"; designSource?: "imported" | "marketplace"; marketplaceId?: string }) => {
     setPendingKeywords(config.selectedKeywords);
     setPickerOpen(false);
 
@@ -719,6 +719,8 @@ export default function TemplatesPage() {
       const ct = config.contentType || "pages";
       setSiteWebsite(config.selectedWebsite.id);
       setSiteContentType(ct);
+      setSiteDesignSource(config.designSource || "imported");
+      setSiteMarketplaceId(config.marketplaceId || "");
       loadSitePages(config.selectedWebsite.id, ct);
       setSiteDialogOpen(true);
     } else {

@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/use-subscription";
 import type { FeatureKey } from "@/lib/plan-features";
 import type { Tables } from "@/integrations/supabase/types";
+import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
 
 type Website = Tables<"websites">;
 
@@ -33,6 +34,8 @@ interface TemplateCreationPickerProps {
     selectedWebsite?: Website;
     contentType?: ContentType;
     platform?: TargetPlatform;
+    designSource?: "imported" | "marketplace";
+    marketplaceId?: string;
   }) => void;
 }
 
@@ -93,6 +96,8 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
   const [contentType, setContentType] = useState<ContentType>("pages");
   const [platform, setPlatform] = useState<TargetPlatform>("wordpress");
+  const [designSource, setDesignSource] = useState<"imported" | "marketplace">("imported");
+  const [marketplaceId, setMarketplaceId] = useState<string>("");
   const [folderFilter, setFolderFilter] = useState<string>("__all__");
 
   const { features } = useSubscription();
@@ -205,6 +210,8 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
       selectedWebsite: selected === "website" ? website : undefined,
       contentType: selected === "website" ? contentType : undefined,
       platform: selected === "design" ? effectivePlatform : undefined,
+      designSource: selected === "website" ? designSource : undefined,
+      marketplaceId: selected === "website" && designSource === "marketplace" ? marketplaceId : undefined,
     });
     // Reset
     setSelected(null);
@@ -214,6 +221,8 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     setSelectedWebsiteId("");
     setContentType("pages");
     setPlatform("wordpress");
+    setDesignSource("imported");
+    setMarketplaceId("");
     setBusinessNiche("");
     setAiSuggestions([]);
   };
@@ -222,6 +231,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     if (!selected) return false;
     if (selected === "url" && !targetUrl.trim()) return false;
     if (selected === "website" && !selectedWebsiteId) return false;
+    if (selected === "website" && designSource === "marketplace" && !marketplaceId) return false;
     if (selected === "design" && !platform) return false;
     return true;
   };
@@ -395,6 +405,49 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {selectedWebsiteId && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Design source</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDesignSource("imported")}
+                      className={`text-left p-3 rounded-lg border-2 transition-all ${
+                        designSource === "imported" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="text-xs font-semibold block">Keep imported design</span>
+                      <span className="text-[10px] text-muted-foreground">Use the page's own design</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDesignSource("marketplace")}
+                      className={`text-left p-3 rounded-lg border-2 transition-all ${
+                        designSource === "marketplace" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      <span className="text-xs font-semibold block">Use marketplace template</span>
+                      <span className="text-[10px] text-muted-foreground">Replace design with a marketplace one</span>
+                    </button>
+                  </div>
+                  {designSource === "marketplace" && (
+                    <Select value={marketplaceId} onValueChange={setMarketplaceId}>
+                      <SelectTrigger><SelectValue placeholder="Choose marketplace template..." /></SelectTrigger>
+                      <SelectContent>
+                        {COMMUNITY_TEMPLATES
+                          .filter(t => {
+                            const type = websites.find(w => w.id === selectedWebsiteId)?.type;
+                            if (!type) return true;
+                            if (type === "woocommerce") return t.platform === "wordpress" || t.platform === "generic";
+                            return t.platform === type || t.platform === "generic";
+                          })
+                          .map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               )}
             </div>
