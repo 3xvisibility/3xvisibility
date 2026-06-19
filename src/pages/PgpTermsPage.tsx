@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const PAGE_SIZE = 15;
 
@@ -38,6 +39,8 @@ interface TermGroup {
 }
 
 export default function PgpTermsPage() {
+  const { t } = useLanguage();
+
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<TermGroup | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TermGroup | null>(null);
@@ -160,11 +163,11 @@ export default function PgpTermsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pgp-term-groups"] });
-      toast({ title: editing ? "Term Group updated" : "Term Group created" });
+      toast({ title: editing ? t("pgpTerms.toastUpdated") : t("pgpTerms.toastCreated") });
       setEditorOpen(false);
       resetEditor();
     },
-    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("pgpTerms.toastError"), description: err.message, variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -174,10 +177,10 @@ export default function PgpTermsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pgp-term-groups"] });
-      toast({ title: "Term Group deleted" });
+      toast({ title: t("pgpTerms.toastDeleted") });
       setDeleteTarget(null);
     },
-    onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    onError: (err: Error) => toast({ title: t("pgpTerms.toastError"), description: err.message, variant: "destructive" }),
   });
 
   const generateAiTerms = async () => {
@@ -194,9 +197,9 @@ export default function PgpTermsPage() {
       const raw = (data?.content || "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
       const lines = raw.split("\n").map((l: string) => l.replace(/^\d+[\.\)]\s*/, "").trim()).filter(Boolean);
       setTerms(prev => prev ? `${prev}\n${lines.join("\n")}` : lines.join("\n"));
-      toast({ title: `${lines.length} terms generated` });
+      toast({ title: t("pgpTerms.toastAiGenerated", { count: lines.length }) });
     } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+      toast({ title: t("pgpTerms.toastAiFailed"), description: err.message, variant: "destructive" });
     } finally {
       setAiGenerating(false);
     }
@@ -206,33 +209,38 @@ export default function PgpTermsPage() {
     const kw = keywords.find(k => k.id === keywordSourceId);
     if (kw) {
       setTerms(prev => prev ? `${prev}\n${(kw.terms || []).join("\n")}` : (kw.terms || []).join("\n"));
-      toast({ title: `${kw.terms?.length || 0} terms added from "${kw.name}"` });
+      toast({ title: t("pgpTerms.toastTermsAdded", { count: kw.terms?.length || 0, name: kw.name }) });
     }
   };
 
   const taxonomyLabels: Record<string, string> = {
-    category: "Category",
-    tag: "Tag",
-    custom: "Custom Taxonomy",
+    category: t("pgpTerms.taxonomyCategory"),
+    tag: t("pgpTerms.taxonomyTag"),
+    custom: t("pgpTerms.taxonomyCustom"),
   };
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-display">Generate Terms</h1>
+          <h1 className="text-lg sm:text-display">{t("pgpTerms.pageTitle")}</h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-            Mass-generate categories, tags, and custom taxonomies from keywords.
+            {t("pgpTerms.pageSubtitle")}
           </p>
         </div>
         <Button size="sm" className="w-fit shrink-0" onClick={() => openEditor()}>
-          <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Term Group
+          <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("pgpTerms.addTermGroup")}
         </Button>
       </div>
 
       <div className="relative w-full sm:max-w-xs">
         <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search term groups..." value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }} className="pl-8 h-9" />
+        <Input
+          placeholder={t("pgpTerms.searchPlaceholder")}
+          value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+          className="pl-8 h-9"
+        />
       </div>
 
       {isLoading ? (
@@ -243,13 +251,15 @@ export default function PgpTermsPage() {
             <div className="h-16 w-16 mx-auto rounded-2xl bg-muted flex items-center justify-center mb-4">
               <FolderTree className="h-8 w-8 text-muted-foreground/50" />
             </div>
-            <h3 className="font-semibold mb-1">{termGroups.length === 0 ? "No term groups yet" : "No matches"}</h3>
+            <h3 className="font-semibold mb-1">
+              {termGroups.length === 0 ? t("pgpTerms.emptyTitle") : t("pgpTerms.noMatchesTitle")}
+            </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              {termGroups.length === 0 ? "Term Groups let you mass-generate categories, tags, and taxonomies from your keyword lists." : "Adjust your search."}
+              {termGroups.length === 0 ? t("pgpTerms.emptyDescription") : t("pgpTerms.noMatchesDescription")}
             </p>
             {termGroups.length === 0 && (
               <Button onClick={() => openEditor()}>
-                <Plus className="mr-2 h-4 w-4" /> Create Term Group
+                <Plus className="mr-2 h-4 w-4" /> {t("pgpTerms.createTermGroup")}
               </Button>
             )}
           </CardContent>
@@ -260,12 +270,12 @@ export default function PgpTermsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[130px]">Name</TableHead>
-                  <TableHead className="min-w-[80px]">Taxonomy</TableHead>
-                  <TableHead className="min-w-[60px]">Terms</TableHead>
-                  <TableHead className="hidden sm:table-cell min-w-[90px]">Auto-Generate</TableHead>
-                  <TableHead className="hidden md:table-cell min-w-[90px]">Updated</TableHead>
-                  <TableHead className="text-right w-10">Actions</TableHead>
+                  <TableHead className="min-w-[130px]">{t("pgpTerms.colName")}</TableHead>
+                  <TableHead className="min-w-[80px]">{t("pgpTerms.colTaxonomy")}</TableHead>
+                  <TableHead className="min-w-[60px]">{t("pgpTerms.colTerms")}</TableHead>
+                  <TableHead className="hidden sm:table-cell min-w-[90px]">{t("pgpTerms.colAutoGenerate")}</TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[90px]">{t("pgpTerms.colUpdated")}</TableHead>
+                  <TableHead className="text-right w-10">{t("pgpTerms.colActions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -274,18 +284,25 @@ export default function PgpTermsPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Tags className="h-4 w-4 text-primary shrink-0" />
-                        <span className="font-medium text-xs sm:text-sm cursor-pointer hover:text-primary truncate max-w-[100px] sm:max-w-none" onClick={() => openEditor(tg)}>{tg.name}</span>
+                        <span
+                          className="font-medium text-xs sm:text-sm cursor-pointer hover:text-primary truncate max-w-[100px] sm:max-w-none"
+                          onClick={() => openEditor(tg)}
+                        >
+                          {tg.name}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="text-[10px] capitalize">{taxonomyLabels[tg.taxonomy] || tg.taxonomy}</Badge>
+                      <Badge variant="secondary" className="text-[10px] capitalize">
+                        {taxonomyLabels[tg.taxonomy] || tg.taxonomy}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm tabular-nums">{tg.term_count}</span>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={tg.auto_generate ? "default" : "outline"} className="text-[10px]">
-                        {tg.auto_generate ? "Yes" : "No"}
+                        {tg.auto_generate ? t("pgpTerms.yes") : t("pgpTerms.no")}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
@@ -294,11 +311,17 @@ export default function PgpTermsPage() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" aria-label={t("pgpTerms.actionsAriaLabel")}>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem onClick={() => openEditor(tg)}><Pencil className="h-3.5 w-3.5 mr-2" /> Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(tg)}><Trash2 className="h-3.5 w-3.5 mr-2" /> Delete</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditor(tg)}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" /> {t("pgpTerms.edit")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(tg)}>
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> {t("pgpTerms.delete")}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -309,10 +332,16 @@ export default function PgpTermsPage() {
           </div>
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-3 sm:px-4 py-3">
-              <p className="text-xs text-muted-foreground">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}</p>
+              <p className="text-xs text-muted-foreground">
+                {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} {t("pgpTerms.paginationOf")} {filtered.length}
+              </p>
               <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)}><ChevronRight className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage <= 1} onClick={() => setCurrentPage(safePage - 1)} aria-label={t("pgpTerms.prevPage")}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={safePage >= totalPages} onClick={() => setCurrentPage(safePage + 1)} aria-label={t("pgpTerms.nextPage")}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
@@ -323,52 +352,56 @@ export default function PgpTermsPage() {
       <Dialog open={editorOpen} onOpenChange={(v) => { if (!v) { setEditorOpen(false); resetEditor(); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Term Group" : "New Term Group"}</DialogTitle>
+            <DialogTitle>{editing ? t("pgpTerms.dialogEditTitle") : t("pgpTerms.dialogNewTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Name</Label>
-              <Input placeholder="e.g. service_categories" value={name} onChange={(e) => setName(e.target.value)} className="h-9" />
+              <Label className="text-xs font-semibold">{t("pgpTerms.labelName")}</Label>
+              <Input placeholder={t("pgpTerms.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} className="h-9" />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Taxonomy Type</Label>
+              <Label className="text-xs font-semibold">{t("pgpTerms.labelTaxonomyType")}</Label>
               <Select value={taxonomy} onValueChange={setTaxonomy}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="category">Category</SelectItem>
-                  <SelectItem value="tag">Tag</SelectItem>
-                  <SelectItem value="custom">Custom Taxonomy</SelectItem>
+                  <SelectItem value="category">{t("pgpTerms.taxonomyCategory")}</SelectItem>
+                  <SelectItem value="tag">{t("pgpTerms.taxonomyTag")}</SelectItem>
+                  <SelectItem value="custom">{t("pgpTerms.taxonomyCustom")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Terms (one per line)</Label>
+              <Label className="text-xs font-semibold">{t("pgpTerms.labelTerms")}</Label>
               <Textarea
                 rows={8}
-                placeholder={"Web Design\nSEO Services\nPPC Management\nSocial Media"}
+                placeholder={t("pgpTerms.termsPlaceholder")}
                 value={terms}
                 onChange={(e) => setTerms(e.target.value)}
                 className="font-mono text-xs"
               />
-              <p className="text-[10px] text-muted-foreground">{terms.split("\n").filter(t => t.trim()).length} terms</p>
+              <p className="text-[10px] text-muted-foreground">
+                {t("pgpTerms.termCount", { count: terms.split("\n").filter(t => t.trim()).length })}
+              </p>
             </div>
 
             {/* Populate from keyword */}
             <div className="rounded-lg border p-3 space-y-2">
-              <Label className="text-xs font-semibold">Populate from Keyword</Label>
+              <Label className="text-xs font-semibold">{t("pgpTerms.labelPopulateFromKeyword")}</Label>
               <div className="flex gap-2">
                 <Select value={keywordSourceId} onValueChange={setKeywordSourceId}>
-                  <SelectTrigger className="h-8 text-xs flex-1"><SelectValue placeholder="Select keyword..." /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs flex-1">
+                    <SelectValue placeholder={t("pgpTerms.selectKeywordPlaceholder")} />
+                  </SelectTrigger>
                   <SelectContent>
                     {keywords.map(kw => (
-                      <SelectItem key={kw.id} value={kw.id}>{kw.name} ({kw.term_count} terms)</SelectItem>
+                      <SelectItem key={kw.id} value={kw.id}>{kw.name} ({kw.term_count} {t("pgpTerms.termsUnit")})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Button size="sm" variant="outline" className="h-8" disabled={!keywordSourceId} onClick={populateFromKeyword}>
-                  Add
+                  {t("pgpTerms.addButton")}
                 </Button>
               </div>
             </div>
@@ -376,29 +409,36 @@ export default function PgpTermsPage() {
             {/* AI Generate */}
             <div className="rounded-lg border p-3 space-y-2">
               <Label className="text-xs font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> AI Generate
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> {t("pgpTerms.labelAiGenerate")}
               </Label>
               <div className="flex gap-2">
-                <Input placeholder="e.g. plumbing services" value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} className="h-8 text-xs flex-1" />
+                <Input
+                  placeholder={t("pgpTerms.aiTopicPlaceholder")}
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  className="h-8 text-xs flex-1"
+                />
                 <Button size="sm" variant="outline" className="h-8" disabled={aiGenerating || !aiTopic.trim()} onClick={generateAiTerms}>
-                  {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Generate"}
+                  {aiGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("pgpTerms.generateButton")}
                 </Button>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Auto-Generate on Campaign</p>
-                <p className="text-[11px] text-muted-foreground">Create these terms automatically when generating pages</p>
+                <p className="text-sm font-medium">{t("pgpTerms.autoGenerateLabel")}</p>
+                <p className="text-[11px] text-muted-foreground">{t("pgpTerms.autoGenerateDescription")}</p>
               </div>
               <Switch checked={autoGenerate} onCheckedChange={setAutoGenerate} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditorOpen(false); resetEditor(); }}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setEditorOpen(false); resetEditor(); }}>
+              {t("pgpTerms.cancel")}
+            </Button>
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
               {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {editing ? "Update" : "Create"}
+              {editing ? t("pgpTerms.update") : t("pgpTerms.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -408,12 +448,17 @@ export default function PgpTermsPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Term Group?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete this term group and all its terms.</AlertDialogDescription>
+            <AlertDialogTitle>{t("pgpTerms.deleteDialogTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("pgpTerms.deleteDialogDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("pgpTerms.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("pgpTerms.delete")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
