@@ -210,6 +210,8 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
       selectedWebsite: selected === "website" ? website : undefined,
       contentType: selected === "website" ? contentType : undefined,
       platform: selected === "design" ? effectivePlatform : undefined,
+      designSource: selected === "website" ? designSource : undefined,
+      marketplaceId: selected === "website" && designSource === "marketplace" ? marketplaceId : undefined,
     });
     // Reset
     setSelected(null);
@@ -219,6 +221,8 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     setSelectedWebsiteId("");
     setContentType("pages");
     setPlatform("wordpress");
+    setDesignSource("imported");
+    setMarketplaceId("");
     setBusinessNiche("");
     setAiSuggestions([]);
   };
@@ -227,6 +231,7 @@ Example for "dentist": city, state, brand_name, dental_service, insurance_accept
     if (!selected) return false;
     if (selected === "url" && !targetUrl.trim()) return false;
     if (selected === "website" && !selectedWebsiteId) return false;
+    if (selected === "website" && designSource === "marketplace" && !marketplaceId) return false;
     if (selected === "design" && !platform) return false;
     return true;
   };
