@@ -535,6 +535,20 @@ ${contentText}`
 
             {/* ── SEO Tab ── */}
             <TabsContent value="seo" className="m-0 p-5 space-y-5">
+              {/* Content language — stored per template, editable before publishing */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Content language</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="h-10"><SelectValue placeholder="Choose language..." /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {SITE_LANGUAGE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">All generated SEO titles, descriptions &amp; content for this template use this language. You can change it before publishing.</p>
+              </div>
+
               {/* AI SEO Generator — derived from the template content */}
               <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 space-y-3">
                 <div className="flex items-center gap-2">
