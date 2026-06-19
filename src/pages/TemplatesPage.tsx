@@ -671,7 +671,7 @@ export default function TemplatesPage() {
       updated_at: "",
       workspace_id: wsId || null,
       schema_type: tpl.schema_type || "WebPage",
-      schema_config: { source_marketplace_id: tpl.id } as any,
+      schema_config: { source_marketplace_id: tpl.id, language: siteLanguage !== "__auto__" ? siteLanguage : undefined } as any,
       seo_title_pattern: tpl.seo_title_pattern || "",
       seo_description_pattern: tpl.seo_description_pattern || "",
     } as any);
