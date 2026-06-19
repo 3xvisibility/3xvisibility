@@ -96,6 +96,8 @@ export function TemplateCreationPicker({ open, onOpenChange, onSelect }: Templat
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>("");
   const [contentType, setContentType] = useState<ContentType>("pages");
   const [platform, setPlatform] = useState<TargetPlatform>("wordpress");
+  const [designSource, setDesignSource] = useState<"imported" | "marketplace">("imported");
+  const [marketplaceId, setMarketplaceId] = useState<string>("");
   const [folderFilter, setFolderFilter] = useState<string>("__all__");
 
   const { features } = useSubscription();
