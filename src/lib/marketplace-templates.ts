@@ -20,6 +20,7 @@ import { FRAMER_BATCH7_TEMPLATES } from "@/lib/marketplace-framer-batch7";
 import { FRAMER_BATCH8_TEMPLATES } from "@/lib/marketplace-framer-batch8";
 import { FRAMER_BATCH9_TEMPLATES } from "@/lib/marketplace-framer-batch9";
 import { FRAMER_BATCH10_TEMPLATES } from "@/lib/marketplace-framer-batch10";
+import { FRAMER_BATCH11_TEMPLATES } from "@/lib/marketplace-framer-batch11";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -3610,6 +3611,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // Batch 10 — Framer featured clones (Orbit, Aperture, Justice, Glow, Wave, Unity)
   ...FRAMER_BATCH10_TEMPLATES,
+
+  // Batch 11 — Framer featured clones (Pulse, Forge, Bloom, Vault, Roam, Canvas)
+  ...FRAMER_BATCH11_TEMPLATES,
 
 
 
