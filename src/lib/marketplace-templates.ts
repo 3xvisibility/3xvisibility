@@ -27,6 +27,7 @@ import { FRAMER_BATCH14_TEMPLATES } from "@/lib/marketplace-framer-batch14";
 import { FRAMER_BATCH15_TEMPLATES } from "@/lib/marketplace-framer-batch15";
 import { FRAMER_BATCH16_TEMPLATES } from "@/lib/marketplace-framer-batch16";
 import { FRAMER_BATCH17_TEMPLATES } from "@/lib/marketplace-framer-batch17";
+import { FRAMER_BATCH18_TEMPLATES } from "@/lib/marketplace-framer-batch18";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -3632,6 +3633,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   ...FRAMER_BATCH15_TEMPLATES,
   ...FRAMER_BATCH16_TEMPLATES,
   ...FRAMER_BATCH17_TEMPLATES,
+  ...FRAMER_BATCH18_TEMPLATES,
 
 
 
