@@ -1238,10 +1238,10 @@ export default function TemplatesPage() {
             {/* Results */}
             {!siteLoading && sitePages.length > 0 && (
               <div>
-                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click to import as template</p>
+                <p className="text-xs text-muted-foreground mb-2">{sitePages.length} {siteContentType} found — click to {siteDesignSource === "marketplace" ? "apply the marketplace design" : "import as template"}</p>
                 <div className="max-h-60 overflow-y-auto space-y-1 border rounded-lg p-1">
                   {sitePages.map(p => (
-                    <button key={p.id || p.link} onClick={() => importSitePage(p.link, p.title)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
+                    <button key={p.id || p.link} onClick={() => siteDesignSource === "marketplace" ? applyMarketplaceToSitePage(p.title) : importSitePage(p.link, p.title)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors group">
                       <div className="flex items-center justify-between">
                         <div className="min-w-0 flex-1">
                           <span className="font-medium text-sm block truncate">{p.title}</span>
