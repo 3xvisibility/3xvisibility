@@ -126,7 +126,9 @@ export function TemplateEditorDialog({
       setSeoDescriptionPattern(editingTemplate.seo_description_pattern || "");
       setSchemaType(editingTemplate.schema_type || "WebPage");
       const cfg = (editingTemplate.schema_config as Record<string, any>) || {};
-      setSlugPattern(cfg._slugPattern || "");
+      setExtraCfg(cfg);
+      setLanguage(cfg.language || "__auto__");
+      setSlugPattern(cfg._slugPattern || cfg.slug_pattern || "");
       setCanonicalUrlPattern(cfg._canonicalUrl || "");
       setOgTitlePattern(cfg._ogTitle || "");
       setOgDescriptionPattern(cfg._ogDescription || "");
