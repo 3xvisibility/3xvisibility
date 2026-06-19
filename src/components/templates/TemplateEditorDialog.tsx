@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LiveSerpPreview } from "@/components/templates/LiveSerpPreview";
 import type { Tables } from "@/integrations/supabase/types";
 import { extractEdgeError } from "@/lib/edge-function-error";
+import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 
 type Template = Tables<"templates">;
 
@@ -54,6 +55,8 @@ export function TemplateEditorDialog({
   const [seoTitlePattern, setSeoTitlePattern] = useState("");
   const [seoDescriptionPattern, setSeoDescriptionPattern] = useState("");
   const [slugPattern, setSlugPattern] = useState("");
+  const [language, setLanguage] = useState("__auto__");
+  const [extraCfg, setExtraCfg] = useState<Record<string, any>>({});
   const [canonicalUrlPattern, setCanonicalUrlPattern] = useState("");
   const [ogTitlePattern, setOgTitlePattern] = useState("");
   const [ogDescriptionPattern, setOgDescriptionPattern] = useState("");
@@ -101,6 +104,7 @@ export function TemplateEditorDialog({
     setName(""); setContent(""); setViewMode("code"); setActiveTab("content");
     setSeoTitlePattern(""); setSeoDescriptionPattern("");
     setSlugPattern(""); setCanonicalUrlPattern("");
+    setLanguage("__auto__"); setExtraCfg({});
     setOgTitlePattern(""); setOgDescriptionPattern("");
     setOgImagePattern(""); setTwitterCard("summary_large_image");
     setSchemaType("WebPage"); setPostType("page");
@@ -122,7 +126,9 @@ export function TemplateEditorDialog({
       setSeoDescriptionPattern(editingTemplate.seo_description_pattern || "");
       setSchemaType(editingTemplate.schema_type || "WebPage");
       const cfg = (editingTemplate.schema_config as Record<string, any>) || {};
-      setSlugPattern(cfg._slugPattern || "");
+      setExtraCfg(cfg);
+      setLanguage(cfg.language || "__auto__");
+      setSlugPattern(cfg._slugPattern || cfg.slug_pattern || "");
       setCanonicalUrlPattern(cfg._canonicalUrl || "");
       setOgTitlePattern(cfg._ogTitle || "");
       setOgDescriptionPattern(cfg._ogDescription || "");
@@ -215,6 +221,8 @@ export function TemplateEditorDialog({
       .toLowerCase().replace(/[^a-z0-9{}\-\/]/g, "-").replace(/-{2,}/g, "-").replace(/^-|-$/g, "");
 
   const buildSchemaConfig = () => ({
+    ...extraCfg,
+    language: language !== "__auto__" ? language : undefined,
     _slugPattern: slugPattern, _canonicalUrl: canonicalUrlPattern,
     _ogTitle: ogTitlePattern, _ogDescription: ogDescriptionPattern,
     _ogImage: ogImagePattern, _twitterCard: twitterCard,
@@ -527,6 +535,20 @@ ${contentText}`
 
             {/* ── SEO Tab ── */}
             <TabsContent value="seo" className="m-0 p-5 space-y-5">
+              {/* Content language — stored per template, editable before publishing */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Content language</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="h-10"><SelectValue placeholder="Choose language..." /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {SITE_LANGUAGE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">All generated SEO titles, descriptions &amp; content for this template use this language. You can change it before publishing.</p>
+              </div>
+
               {/* AI SEO Generator — derived from the template content */}
               <div className="rounded-xl border bg-gradient-to-r from-primary/5 via-transparent to-transparent p-4 space-y-3">
                 <div className="flex items-center gap-2">
