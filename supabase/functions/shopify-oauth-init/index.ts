@@ -89,7 +89,6 @@ Deno.serve(async (req) => {
       workspace_id,
       shop_domain: domain,
       client_id: clientId,
-      client_secret: clientSecret,
       site_name: site_name || domain,
       language: language || null,
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
