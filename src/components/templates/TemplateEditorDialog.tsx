@@ -55,6 +55,8 @@ export function TemplateEditorDialog({
   const [seoTitlePattern, setSeoTitlePattern] = useState("");
   const [seoDescriptionPattern, setSeoDescriptionPattern] = useState("");
   const [slugPattern, setSlugPattern] = useState("");
+  const [language, setLanguage] = useState("__auto__");
+  const [extraCfg, setExtraCfg] = useState<Record<string, any>>({});
   const [canonicalUrlPattern, setCanonicalUrlPattern] = useState("");
   const [ogTitlePattern, setOgTitlePattern] = useState("");
   const [ogDescriptionPattern, setOgDescriptionPattern] = useState("");
