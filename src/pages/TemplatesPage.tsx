@@ -92,6 +92,7 @@ export default function TemplatesPage() {
   // Design source for site import: keep the page's own design, or replace with a marketplace template.
   const [siteDesignSource, setSiteDesignSource] = useState<"imported" | "marketplace">("imported");
   const [siteMarketplaceId, setSiteMarketplaceId] = useState<string>("");
+  const [sitePendingPage, setSitePendingPage] = useState<{ title: string; link: string; slug: string } | null>(null);
   // URL import loading
   const [urlImporting, setUrlImporting] = useState(false);
 
