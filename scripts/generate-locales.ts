@@ -25,6 +25,7 @@ const PRIMARY_LANGUAGES: { code: string; label: string; flag: string }[] = [
   { code: "en", label: "English", flag: "🇬🇧" },
   { code: "fr", label: "Français", flag: "🇫🇷" },
   { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
 ];
 
 const PRIMARY_CODES = PRIMARY_LANGUAGES.map((l) => l.code);
