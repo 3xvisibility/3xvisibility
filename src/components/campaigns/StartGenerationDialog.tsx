@@ -508,11 +508,60 @@ export function StartGenerationDialog({
                 </RadioGroup>
 
                 {designMode === "change" && (
-                  <PlatformSkinPicker
-                    platform={skinPlatform}
-                    value={skinVariant}
-                    onChange={setSkinVariant}
-                  />
+                  <div className="space-y-4">
+                    {/* Marketplace template = the new SEO-optimized design */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Marketplace template</Label>
+                      <p className="text-[11px] text-muted-foreground -mt-1">
+                        Your pages will be rebuilt on this design — best for SEO.
+                      </p>
+                      <Select value={marketplaceTemplateId} onValueChange={handlePickTemplate}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose a template design" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {designTemplates.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {marketplaceTemplateId && (
+                      <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium">SEO title</Label>
+                          <Input
+                            value={seoTitleOverride}
+                            onChange={(e) => setSeoTitleOverride(e.target.value)}
+                            placeholder="{hero_title} | {company_name}"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium">SEO description</Label>
+                          <Textarea
+                            value={seoDescOverride}
+                            onChange={(e) => setSeoDescOverride(e.target.value)}
+                            placeholder="Short meta description with your keyword and a call to action."
+                            rows={2}
+                          />
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Use {"{variable}"} placeholders — they fill from your CSV / mappings.
+                          Pages generate in {effectiveTargetLang || "the site language"}.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Optional: also match the store's native theme look. */}
+                    <PlatformSkinPicker
+                      platform={skinPlatform}
+                      value={skinVariant}
+                      onChange={setSkinVariant}
+                    />
+                  </div>
                 )}
               </div>
             </>
