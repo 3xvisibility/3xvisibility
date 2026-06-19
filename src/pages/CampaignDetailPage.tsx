@@ -6,7 +6,7 @@ import { DirectoryStructureBuilder } from "@/components/campaigns/DirectoryStruc
 import { SpintaxPreview } from "@/components/campaigns/SpintaxPreview";
 import { SeoImprovementWorkflow } from "@/components/campaigns/SeoImprovementWorkflow";
 import { StartGenerationDialog, type GenerationOptions } from "@/components/campaigns/StartGenerationDialog";
-import { reskinContent, type TemplatePlatform } from "@/lib/marketplace-templates";
+import { reskinContent, COMMUNITY_TEMPLATES, type TemplatePlatform } from "@/lib/marketplace-templates";
 import { PublishWebsiteSelector } from "@/components/campaigns/PublishWebsiteSelector";
 import { LiveVariablePreview } from "@/components/templates/LiveVariablePreview";
 import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
