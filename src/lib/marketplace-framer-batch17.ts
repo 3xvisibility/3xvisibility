@@ -143,7 +143,7 @@ const stitchFashion = (): MarketplaceTemplate => ({
 const orbitSaas = (): MarketplaceTemplate => ({
   id: "saas-orbit", name: "SaaS Product Template",
   description: "Modern dark SaaS landing with feature cards and vibrant gradient.",
-  content: base("ob", "--bg:#080b16;--fg:#eef1fb;--muted:#838ea6;--line:rgba(255,255,255,.1);--ac:#3b82f6;--acbg:rgba(59,130,246,.16);--acsh:rgba(59,130,246,.34);--card:#101526;--finalbg:linear-gradient(135deg,#13friendly,#080b16);background:var(--bg);color:var(--fg)".replace('13friendly', '152138')) + body("ob", ["🚀", "⚙️", "📊"]),
+  content: base("ob", "--bg:#080b16;--fg:#eef1fb;--muted:#838ea6;--line:rgba(255,255,255,.1);--ac:#3b82f6;--acbg:rgba(59,130,246,.16);--acsh:rgba(59,130,246,.34);--card:#101526;--finalbg:linear-gradient(135deg,#152138,#080b16);background:var(--bg);color:var(--fg)") + body("ob", ["🚀", "⚙️", "📊"]),
   variables: VARS, category: "business", tags: ["saas", "software", "product", "dark"],
   author: "Community", downloads: 367, rating: 4.9,
   seo_title_pattern: "{hero_title} | {eyebrow}", seo_description_pattern: "{hero_subtitle}", slug_pattern: "{eyebrow}-saas",
