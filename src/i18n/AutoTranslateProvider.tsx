@@ -191,6 +191,7 @@ export function AutoTranslateProvider({ children }: { children: React.ReactNode 
 
       return () => {
         if (raf) window.cancelAnimationFrame(raf);
+        if (enRestoreTimer) window.clearTimeout(enRestoreTimer);
         window.clearTimeout(hideTimer);
         window.clearTimeout(stopTimer);
         enObserver.disconnect();
