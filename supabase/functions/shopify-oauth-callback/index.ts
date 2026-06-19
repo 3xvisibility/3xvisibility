@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         client_id: oauthState.client_id,
-        client_secret: oauthState.client_secret,
+        client_secret: clientSecret,
         code,
       }),
     });
