@@ -39,6 +39,7 @@ import { TemplateCustomizerDialog } from "@/components/templates/TemplateCustomi
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { TemplateVersionBadge } from "@/components/templates/TemplateVersionBadge";
 import { COMMUNITY_TEMPLATES } from "@/lib/marketplace-templates";
+import { SITE_LANGUAGE_OPTIONS } from "@/components/websites/WebsiteLanguageSelect";
 import { computeMarketplaceVersion } from "@/lib/marketplace-versioning";
 import { applyTemplateVariables, autoExtractTemplateVariables } from "@/lib/template-variable-extractor";
 import {
@@ -94,6 +95,7 @@ export default function TemplatesPage() {
   const [siteMarketplaceId, setSiteMarketplaceId] = useState<string>("");
   const [sitePendingPage, setSitePendingPage] = useState<{ title: string; link: string; slug: string } | null>(null);
   const [siteMarketplaceCategory, setSiteMarketplaceCategory] = useState<string>("");
+  const [siteLanguage, setSiteLanguage] = useState<string>("__auto__");
   // URL import loading
   const [urlImporting, setUrlImporting] = useState(false);
 
@@ -643,7 +645,7 @@ export default function TemplatesPage() {
     const allVars = filterDesignVars([...new Set([...variableEntries.map((v) => v.name), ...pendingKeywords])]);
     const fullContent = styles ? `<!-- STYLES -->\n${styles}\n<!-- /STYLES -->\n${html}` : html;
     setSiteDialogOpen(false); setSitePages([]);
-    setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: {}, seo_title_pattern: "", seo_description_pattern: "" } as any);
+    setEditingTemplate({ id: "", name: pageTitle || "Site Template", content: fullContent, variables: allVars, user_id: "", created_at: "", updated_at: "", workspace_id: wsId || null, schema_type: "WebPage", schema_config: { language: siteLanguage !== "__auto__" ? siteLanguage : undefined }, seo_title_pattern: "", seo_description_pattern: "" } as any);
     setEditorOpen(true);
     const varMsg = allVars.length > 0 ? ` — ${allVars.length} keywords detected: {${allVars.join("}, {")}}` : "";
     toast({ title: `Page imported as template${varMsg}` });
@@ -669,7 +671,7 @@ export default function TemplatesPage() {
       updated_at: "",
       workspace_id: wsId || null,
       schema_type: tpl.schema_type || "WebPage",
-      schema_config: { source_marketplace_id: tpl.id } as any,
+      schema_config: { source_marketplace_id: tpl.id, language: siteLanguage !== "__auto__" ? siteLanguage : undefined } as any,
       seo_title_pattern: tpl.seo_title_pattern || "",
       seo_description_pattern: tpl.seo_description_pattern || "",
     } as any);
@@ -1284,6 +1286,20 @@ export default function TemplatesPage() {
                     </div>
                   );
                 })()}
+
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold">Content language</p>
+                  <Select value={siteLanguage} onValueChange={setSiteLanguage}>
+                    <SelectTrigger><SelectValue placeholder="Choose language..." /></SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {SITE_LANGUAGE_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">All SEO titles, descriptions & content will be generated in this language.</p>
+                </div>
+
 
                 <Button
                   className="w-full"
