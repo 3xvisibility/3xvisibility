@@ -60,7 +60,7 @@ const stats = [
   { value: "40h", label: "Saved per site" },
   { value: "4", label: "Platforms supported" },
   { value: "10k+", label: "Pages per campaign" },
-  { value: "8", label: "Languages" },
+  { value: "4", label: "Languages" },
 ];
 
 const testimonials = [
