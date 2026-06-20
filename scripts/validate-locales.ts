@@ -147,8 +147,11 @@ function extractKeys(filePath: string): Set<string> {
 }
 
 type Missing = { file: string; key: string };
-const missingCritical: Missing[] = [];
-const missingWarnings: Missing[] = [];
+// Primary languages MUST have full key parity with en.ts (fatal if not).
+// Secondary languages fall back to English at runtime (warning only).
+const PRIMARY_LANGS = new Set(["fr", "de", "es"]);
+const missingFatal: Missing[] = [];
+const missingSecondary: Missing[] = [];
 
 const EN_FILE = join(LOCALES_DIR, "en.ts");
 const enKeys = extractKeys(EN_FILE);
@@ -156,14 +159,16 @@ const enKeys = extractKeys(EN_FILE);
 for (const f of localeFiles) {
   if (f === EN_FILE) continue;
   const label = f.replace(ROOT + "/", "");
+  const lang = label.split("/").pop()!.replace(".ts", "");
   const localeKeys = extractKeys(f);
   for (const key of enKeys) {
     if (!localeKeys.has(key)) {
-      if (isCritical(key)) missingCritical.push({ file: label, key });
-      else missingWarnings.push({ file: label, key });
+      if (PRIMARY_LANGS.has(lang)) missingFatal.push({ file: label, key });
+      else missingSecondary.push({ file: label, key });
     }
   }
 }
+
 
 // ── Report ──────────────────────────────────────────────────────────────
 // Missing keys are FATAL: every locale must define the full English key set so
