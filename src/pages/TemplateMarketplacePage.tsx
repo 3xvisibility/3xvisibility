@@ -31,6 +31,7 @@ import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
+import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
 import { Languages } from "lucide-react";
 
 // Known category metadata (icons + nice labels). Any category found on a
