@@ -879,8 +879,8 @@ export default function AuthPage() {
                       <Globe className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold">Multi-Platform</p>
-                      <p className="text-[10px] text-muted-foreground">WP, Shopify, PrestaShop</p>
+                      <p className="text-xs font-semibold">{t("auth.multiPlatformTitle")}</p>
+                      <p className="text-[10px] text-muted-foreground" data-no-translate translate="no">WP, Shopify, PrestaShop</p>
                     </div>
                   </div>
                 </motion.div>
