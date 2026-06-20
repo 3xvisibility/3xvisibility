@@ -1087,18 +1087,18 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                     {overwrite && (
                       <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Select sections to overwrite</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("pgpGenerate.selectSectionsOverwrite")}</p>
                         <div className="grid grid-cols-2 gap-2">
                           {([
-                            { key: "title", label: "Title & Slug" },
-                            { key: "content", label: "Content" },
-                            { key: "excerpt", label: "Excerpt" },
-                            { key: "seo", label: "SEO Metadata" },
-                            { key: "featuredImage", label: "Featured Image" },
-                            { key: "customFields", label: "Custom Fields" },
-                            { key: "taxonomies", label: "Taxonomies" },
-                            { key: "author", label: "Author" },
-                            { key: "publishDate", label: "Publish Date" },
+                            { key: "title", label: t("pgpGenerate.fieldTitle") },
+                            { key: "content", label: t("pgpGenerate.fieldContent") },
+                            { key: "excerpt", label: t("pgpGenerate.fieldExcerpt") },
+                            { key: "seo", label: t("pgpGenerate.fieldSeo") },
+                            { key: "featuredImage", label: t("pgpGenerate.fieldFeaturedImage") },
+                            { key: "customFields", label: t("pgpGenerate.fieldCustomFields") },
+                            { key: "taxonomies", label: t("pgpGenerate.fieldTaxonomies") },
+                            { key: "author", label: t("pgpGenerate.fieldAuthor") },
+                            { key: "publishDate", label: t("pgpGenerate.fieldPublishDate") },
                           ] as const).map(f => (
                             <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer p-2 rounded-lg hover:bg-accent transition-colors">
                               <Checkbox
@@ -1109,7 +1109,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             </label>
                           ))}
                         </div>
-                        <p className="text-[10px] text-muted-foreground">Unchecked sections will be preserved from the existing page.</p>
+                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.overwriteHint")}</p>
                       </div>
                     )}
                   </TabsContent>
@@ -1120,10 +1120,10 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <Select value={scheduleMode} onValueChange={(v: any) => setScheduleMode(v)}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="immediate">Immediate</SelectItem>
-                          <SelectItem value="specific">Specific Date</SelectItem>
-                          <SelectItem value="increment">Increment (Drip Feed)</SelectItem>
-                          <SelectItem value="random">Random Date Range</SelectItem>
+                          <SelectItem value="immediate">{t("pgpGenerate.scheduleImmediate")}</SelectItem>
+                          <SelectItem value="specific">{t("pgpGenerate.scheduleSpecific")}</SelectItem>
+                          <SelectItem value="increment">{t("pgpGenerate.scheduleIncrement")}</SelectItem>
+                          <SelectItem value="random">{t("pgpGenerate.scheduleRandom")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
