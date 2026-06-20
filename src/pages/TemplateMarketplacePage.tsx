@@ -543,7 +543,7 @@ export default function TemplateMarketplacePage() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="preview" className="mt-3">
-                    <TemplatePreview html={applyTemplateDefaults(previewTemplate.content, previewTemplate.defaultValues)} />
+                    <TemplatePreview html={applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
                   </TabsContent>
                   <TabsContent value="customize" className="mt-3 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
@@ -555,9 +555,9 @@ export default function TemplateMarketplacePage() {
                         size="sm"
                         className="h-8 text-xs"
                         onClick={() => downloadStarterCsv({
-                          templateName: previewTemplate.name,
-                          variables: previewTemplate.variables,
-                          defaultValues: previewTemplate.defaultValues,
+                          templateName: activePreview.name,
+                          variables: activePreview.variables,
+                          defaultValues: activePreview.defaultValues,
                         })}
                       >
                         <Download className="h-3.5 w-3.5 mr-1.5" /> Starter CSV
@@ -566,7 +566,7 @@ export default function TemplateMarketplacePage() {
                         variant="outline"
                         size="sm"
                         className="h-8 text-xs"
-                        onClick={() => exportTemplateZip(previewTemplate)}
+                        onClick={() => exportTemplateZip(activePreview)}
                       >
                         <Download className="h-3.5 w-3.5 mr-1.5" /> Export design (.zip)
                       </Button>
@@ -596,24 +596,24 @@ export default function TemplateMarketplacePage() {
                       />
                     </div>
                     {uploadedCsv.length > 0 && (
-                      <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
+                      <RowMappingPreview csvData={uploadedCsv} templateContent={activePreview.content} />
                     )}
                     <ContentFieldsPanel
-                      templateContent={previewTemplate.content}
-                      defaultValues={previewTemplate.defaultValues}
+                      templateContent={activePreview.content}
+                      defaultValues={activePreview.defaultValues}
                       values={contentOverrides}
                       onChange={(v, val) => setContentOverrides((prev) => ({ ...prev, [v]: val }))}
                       onReset={() => setContentOverrides({})}
                     />
                     <ImageVariablePanel
-                      templateContent={previewTemplate.content}
-                      defaultValues={previewTemplate.defaultValues}
+                      templateContent={activePreview.content}
+                      defaultValues={activePreview.defaultValues}
                       values={imageOverrides}
                       onChange={(v, url) => setImageOverrides((prev) => ({ ...prev, [v]: url }))}
                       onReset={() => setImageOverrides({})}
                     />
                     <LiveVariablePreview
-                      templateContent={previewTemplate.content}
+                      templateContent={activePreview.content}
                       csvData={previewRows}
                     />
                   </TabsContent>
