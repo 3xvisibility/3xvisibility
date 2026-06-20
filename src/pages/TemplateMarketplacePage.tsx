@@ -619,7 +619,7 @@ export default function TemplateMarketplacePage() {
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">
                     <pre className="p-4 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-64 overflow-y-auto">
-                      {previewTemplate.content}
+                      {activePreview.content}
                     </pre>
                   </TabsContent>
                 </Tabs>
