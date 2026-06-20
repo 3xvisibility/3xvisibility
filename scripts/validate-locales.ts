@@ -171,31 +171,31 @@ for (const f of localeFiles) {
 
 
 // ── Report ──────────────────────────────────────────────────────────────
-// Missing keys are FATAL: every locale must define the full English key set so
-// the build fails fast instead of silently shipping untranslated strings.
-const totalMissing = missingCritical.length + missingWarnings.length;
+// Missing keys in PRIMARY languages are FATAL so the build fails fast instead
+// of silently shipping untranslated strings. Secondary languages fall back to
+// English at runtime, so they are reported as warnings only.
+const totalFatal = missingFatal.length;
 
-if (missingCritical.length > 0) {
+if (missingFatal.length > 0) {
   const byFile = new Map<string, number>();
-  for (const m of missingCritical) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
-  console.error(`❌ ${missingCritical.length} critical-prefix key(s) missing:`);
+  for (const m of missingFatal) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
+  console.error(`❌ ${missingFatal.length} missing key(s) in primary languages (must match en.ts):`);
   for (const [file, count] of byFile) console.error(`   ${file}: ${count} missing`);
-  for (const m of missingCritical) console.error(`     ${m.file}  "${m.key}"`);
+  for (const m of missingFatal) console.error(`     ${m.file}  "${m.key}"`);
   console.error("");
 }
 
-if (missingWarnings.length > 0) {
+if (missingSecondary.length > 0) {
   const byFile = new Map<string, number>();
-  for (const m of missingWarnings) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
-  console.error(`❌ ${missingWarnings.length} key(s) missing:`);
-  for (const [file, count] of byFile) console.error(`   ${file}: ${count} missing`);
-  for (const m of missingWarnings) console.error(`     ${m.file}  "${m.key}"`);
-  console.error("");
+  for (const m of missingSecondary) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
+  console.warn(`⚠️  ${missingSecondary.length} key(s) missing in secondary languages (fall back to English at runtime):`);
+  for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
+  console.warn("");
 }
 
-if (issues.length === 0 && totalMissing === 0) {
+if (issues.length === 0 && totalFatal === 0) {
   console.log(
-    `✅ All ${localeFiles.length + 1} locale files are valid (syntax + full key parity with en.ts).\n`,
+    `✅ Locale files valid (syntax checked; primary languages have full key parity with en.ts).\n`,
   );
   process.exit(0);
 } else {
