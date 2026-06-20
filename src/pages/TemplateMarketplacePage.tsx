@@ -261,6 +261,10 @@ export default function TemplateMarketplacePage() {
     });
   }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
 
+  // Auto-translate the card metadata (name + description) for the visible
+  // templates into the active language (en/fr/de/es). Cached per template.
+  const { localize: localizeCard } = useTranslatedTemplateList(filteredTemplates, language);
+
   const importMutation = useMutation({
     mutationFn: async (tpl: MarketplaceTemplate) => {
       const { data: { user } } = await supabase.auth.getUser();
