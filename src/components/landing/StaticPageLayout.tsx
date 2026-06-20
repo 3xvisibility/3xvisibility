@@ -24,7 +24,7 @@ export function StaticPageLayout({ title, subtitle, children }: Props) {
           </div>
         </section>
         <section className="py-14 md:py-24">
-          <div className="container mx-auto px-4 lg:px-8 max-w-4xl prose prose-lg md:prose-xl prose-invert prose-headings:font-semibold prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-4 prose-p:text-[hsl(250,15%,68%)] prose-p:leading-relaxed prose-li:text-[hsl(250,15%,68%)] prose-a:text-primary">
+          <div className="container mx-auto px-4 lg:px-8 max-w-4xl prose prose-lg md:prose-xl prose-invert tracking-normal prose-headings:font-semibold prose-headings:tracking-tight prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:mt-14 prose-h2:mb-5 prose-p:text-[hsl(250,15%,68%)] prose-p:leading-loose prose-p:my-6 prose-ul:my-6 prose-ul:space-y-3 prose-li:text-[hsl(250,15%,68%)] prose-li:leading-relaxed prose-li:my-2 prose-a:text-primary">
             {children}
           </div>
         </section>
