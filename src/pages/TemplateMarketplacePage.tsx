@@ -348,7 +348,7 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  const categoryIcon = (cat: string) => categoryMeta(cat).label;
+  const categoryIcon = (cat: string) => localizedCategoryLabel(cat, language);
 
 
   return (
