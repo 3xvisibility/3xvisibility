@@ -451,8 +451,8 @@ export default function TemplateMarketplacePage() {
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{tpl.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{tpl.description}</p>
+                  <h3 className="font-semibold truncate">{localizeCard(tpl).name}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{localizeCard(tpl).description}</p>
                 </div>
               </div>
 
