@@ -547,18 +547,18 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex items-center gap-2 mb-2">
               <Map className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold">Sitemap</span>
+              <span className="text-xs font-semibold">{t("websiteCard.sitemap")}</span>
             </div>
             {sitemap ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="tabular-nums">{sitemap.page_count} pages</span>
+                  <span className="tabular-nums">{t("websiteCard.pagesCount", { count: sitemap.page_count })}</span>
                   <span>•</span>
                   <span className="tabular-nums">{new Date(sitemap.last_generated_at).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-1 flex-wrap">
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleDownloadSitemap}>
-                    <Download className="h-3 w-3 mr-1" /> Download
+                    <Download className="h-3 w-3 mr-1" /> {t("websiteCard.download")}
                   </Button>
                   <Button
                     size="sm"
@@ -568,16 +568,16 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                     onClick={() => generateSitemapMutation.mutate(site.id)}
                   >
                     {isGenerating ? (
-                      <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                      <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.generating")}</>
                     ) : (
-                      <><RefreshCw className="h-3 w-3 mr-1" /> Regenerate</>
+                      <><RefreshCw className="h-3 w-3 mr-1" /> {t("websiteCard.regenerate")}</>
                     )}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">No sitemap generated yet.</p>
+                <p className="text-xs text-muted-foreground">{t("websiteCard.noSitemap")}</p>
                 <Button
                   size="sm"
                   variant="outline"
@@ -586,9 +586,9 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   onClick={() => generateSitemapMutation.mutate(site.id)}
                 >
                   {isGenerating ? (
-                    <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                    <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.generating")}</>
                   ) : (
-                    <><Map className="h-3 w-3 mr-1" /> Generate Sitemap</>
+                    <><Map className="h-3 w-3 mr-1" /> {t("websiteCard.generateSitemap")}</>
                   )}
                 </Button>
               </div>
