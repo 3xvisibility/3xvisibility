@@ -584,7 +584,7 @@ export default function DataCsvPage() {
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <span className="text-sm text-muted-foreground truncate max-w-[180px] block">
-                        {file.campaign_id ? getCampaignName(file.campaign_id) : <span className="italic">Standalone</span>}
+                        {file.campaign_id ? getCampaignName(file.campaign_id) : <span className="italic">{t("dataCsv.standalone")}</span>}
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -599,29 +599,29 @@ export default function DataCsvPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem onClick={() => handlePreview(file)}>
-                            <Eye className="h-4 w-4 mr-2" /> Preview
+                            <Eye className="h-4 w-4 mr-2" /> {t("dataCsv.preview")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDownloadAs(file, "csv")}>
-                            <FileText className="h-4 w-4 mr-2" /> Download CSV
+                            <FileText className="h-4 w-4 mr-2" /> {t("dataCsv.downloadCsv")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDownloadAs(file, "json")}>
-                            <FileJson className="h-4 w-4 mr-2" /> Download JSON
+                            <FileJson className="h-4 w-4 mr-2" /> {t("dataCsv.downloadJson")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDownloadAs(file, "xlsx")}>
-                            <FileSpreadsheet className="h-4 w-4 mr-2" /> Download Excel
+                            <FileSpreadsheet className="h-4 w-4 mr-2" /> {t("dataCsv.downloadExcel")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                             setReplacingFileId(file.id);
                             document.getElementById("data-csv-replace-input")?.click();
                           }}>
-                            <Upload className="h-4 w-4 mr-2" /> Replace
+                            <Upload className="h-4 w-4 mr-2" /> {t("dataCsv.replace")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => deleteMutation.mutate(file.id)}
                             className="text-destructive focus:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            <Trash2 className="h-4 w-4 mr-2" /> {t("dataCsv.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -636,7 +636,7 @@ export default function DataCsvPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
               <span className="text-xs text-muted-foreground">
-                Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredFiles.length)} of {filteredFiles.length}
+                {t("dataCsv.showingRange", { start: (safePage - 1) * PAGE_SIZE + 1, end: Math.min(safePage * PAGE_SIZE, filteredFiles.length), total: filteredFiles.length })}
               </span>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-7 w-7" disabled={safePage <= 1} onClick={() => setCurrentPage(p => p - 1)}>
