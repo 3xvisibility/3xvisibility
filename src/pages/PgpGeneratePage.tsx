@@ -164,7 +164,7 @@ export default function PgpGeneratePage() {
     setAiKwFilling(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const varNames = missingKeywords.map(k => k.name);
       const prompt = `Generate keyword data for an SEO page generator tool.
@@ -190,7 +190,7 @@ Only return valid JSON. No markdown fences.`;
         const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
         parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
       } catch {
-        throw new Error("AI returned invalid data. Try again.");
+        throw new Error(t("pgpGenerate.errorAiInvalidData"));
       }
 
       // Create keyword groups for each variable
@@ -382,7 +382,7 @@ Only return valid JSON. No markdown fences.`;
     setGenProgress({ processed: 0, total: 0, errors: 0 });
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const count = parseInt(aiPageCount) || 10;
       setGenProgress({ processed: 0, total: count, errors: 0 });
@@ -417,7 +417,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         pages = JSON.parse(cleaned);
         if (!Array.isArray(pages)) pages = [pages];
       } catch {
-        throw new Error("AI returned invalid format. Please try again.");
+        throw new Error(t("pgpGenerate.errorAiInvalidFormat"));
       }
 
       // Create campaign
@@ -475,7 +475,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const rows = buildRows();
       if (rows.length === 0) {
