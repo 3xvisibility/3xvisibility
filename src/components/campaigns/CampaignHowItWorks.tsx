@@ -163,9 +163,7 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
-              <span>
-                Tip: Start with <strong className="text-foreground">10–20 rows</strong> to test, then scale up.
-              </span>
+              <span dangerouslySetInnerHTML={{ __html: t("campaignHow.ctaTip") }} />
             </div>
             {onCreateClick && (
               <Button
@@ -174,7 +172,7 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
                 className="rounded-xl bg-gradient-primary hover:brightness-110 gap-1.5 shrink-0"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Start a campaign
+                {t("campaignHow.startCampaign")}
               </Button>
             )}
           </div>
