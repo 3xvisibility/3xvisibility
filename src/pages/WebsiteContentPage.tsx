@@ -433,11 +433,11 @@ export default function WebsiteContentPage() {
           <TabsList>
             <TabsTrigger value="pages" className="text-xs gap-1.5">
               <FileText className="h-3.5 w-3.5" />
-              Pages ({pages.length})
+              {t("websiteContent.pagesTab")} ({pages.length})
             </TabsTrigger>
             <TabsTrigger value="products" className="text-xs gap-1.5">
               <ShoppingBag className="h-3.5 w-3.5" />
-              Products ({products.length})
+              {t("websiteContent.productsTab")} ({products.length})
             </TabsTrigger>
           </TabsList>
           <div className="relative w-full sm:w-64">
@@ -445,7 +445,7 @@ export default function WebsiteContentPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={`Search ${activeTab}...`}
+              placeholder={t("websiteContent.searchPlaceholder", { type: activeTab === "pages" ? t("websiteContent.pagesTab").toLowerCase() : t("websiteContent.productsTab").toLowerCase() })}
               className="h-8 pl-8 text-xs"
             />
           </div>
