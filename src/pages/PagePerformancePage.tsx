@@ -345,23 +345,23 @@ export default function PagePerformancePage() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No published pages found</p>
-              <p className="text-sm mt-1">Publish pages to start tracking performance metrics.</p>
+              <p className="font-medium">{t("pagePerformance.noPages")}</p>
+              <p className="text-sm mt-1">{t("pagePerformance.publishPagesHint")}</p>
             </div>
           ) : (
             <div>
               <table className="w-full text-sm table-fixed">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left p-3 font-medium text-muted-foreground">Page</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground">Views</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden sm:table-cell">Visitors</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">Avg Time</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">Bounce</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">CTR</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">Conv.</th>
-                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">SEO</th>
-                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">Freshness</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground">{t("pagePerformance.page")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground">{t("pagePerformance.views")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden sm:table-cell">{t("pagePerformance.visitors")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">{t("pagePerformance.avgTime")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">{t("pagePerformance.bounce")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.ctr")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.conv")}</th>
+                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.seo")}</th>
+                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.freshness")}</th>
                   </tr>
                 </thead>
                 <tbody>
