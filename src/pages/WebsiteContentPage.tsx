@@ -378,9 +378,9 @@ export default function WebsiteContentPage() {
               className="h-9 shrink-0"
             >
               {scanUrlMutation.isPending ? (
-                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Scanning...</>
+                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> {t("websiteContent.scanning")}</>
               ) : (
-                <><Search className="h-3.5 w-3.5 mr-1" /> Scan URL</>
+                <><Search className="h-3.5 w-3.5 mr-1" /> {t("websiteContent.scanUrl")}</>
               )}
             </Button>
           </form>
