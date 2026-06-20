@@ -1167,14 +1167,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <Card className="shadow-surface">
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">Generation Progress</span>
+                  <span className="text-sm font-semibold">{t("pgpGenerate.progressTitle")}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">
                     {genProgress.processed}/{genProgress.total}
                   </span>
                 </div>
                 <Progress value={genProgress.total > 0 ? (genProgress.processed / genProgress.total) * 100 : 0} className="h-2" />
                 {genProgress.errors > 0 && (
-                  <p className="text-xs text-destructive">{genProgress.errors} error(s)</p>
+                  <p className="text-xs text-destructive">{t("pgpGenerate.progressErrors", { count: genProgress.errors })}</p>
                 )}
               </CardContent>
             </Card>
@@ -1192,9 +1192,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 onClick={handleGenerate}
               >
                 {isGenerating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("pgpGenerate.generatingBtn")}</>
                 ) : (
-                  <><Play className="h-4 w-4 mr-2" /> Generate</>
+                  <><Play className="h-4 w-4 mr-2" /> {t("pgpGenerate.generateBtn")}</>
                 )}
               </Button>
 
@@ -1210,35 +1210,35 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               {selectedGroup && (
                 <div className="rounded-xl border p-3 space-y-2 text-xs">
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Method</span>
-                    <span className="font-medium text-foreground capitalize">{method}</span>
+                    <span>{t("pgpGenerate.summaryMethod")}</span>
+                    <span className="font-medium text-foreground">{method === "all" ? t("pgpGenerate.methodAll") : method === "sequential" ? t("pgpGenerate.methodSequential") : t("pgpGenerate.methodRandom")}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Keywords</span>
+                    <span>{t("pgpGenerate.summaryKeywords")}</span>
                     <span className="font-medium text-foreground">{groupKeywords.length}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Max Pages</span>
+                    <span>{t("pgpGenerate.summaryMaxPages")}</span>
                     <span className="font-medium text-foreground">{maxPages.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Will Generate</span>
+                    <span>{t("pgpGenerate.summaryWillGenerate")}</span>
                     <span className="font-medium text-foreground">
                       {numberOfPages ? Math.min(parseInt(numberOfPages) || 0, maxPages).toLocaleString() : maxPages.toLocaleString()}
                     </span>
                   </div>
                   <Separator className="my-1" />
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Overwrite</span>
-                    <span className="font-medium text-foreground">{overwrite ? "Yes" : "No"}</span>
+                    <span>{t("pgpGenerate.summaryOverwrite")}</span>
+                    <span className="font-medium text-foreground">{overwrite ? t("pgpGenerate.yes") : t("pgpGenerate.no")}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Spintax</span>
-                    <span className="font-medium text-foreground">{spinContent ? "On" : "Off"}</span>
+                    <span>{t("pgpGenerate.summarySpintax")}</span>
+                    <span className="font-medium text-foreground">{spinContent ? t("pgpGenerate.on") : t("pgpGenerate.off")}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Schedule</span>
-                    <span className="font-medium text-foreground capitalize">{scheduleMode}</span>
+                    <span>{t("pgpGenerate.summarySchedule")}</span>
+                    <span className="font-medium text-foreground">{scheduleMode === "immediate" ? t("pgpGenerate.scheduleImmediate") : scheduleMode === "specific" ? t("pgpGenerate.scheduleSpecific") : scheduleMode === "increment" ? t("pgpGenerate.scheduleIncrement") : t("pgpGenerate.scheduleRandom")}</span>
                   </div>
                 </div>
               )}
@@ -1250,9 +1250,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <Card className="shadow-surface">
               <CardContent className="p-0">
                 <div className="px-4 py-3 border-b flex items-center justify-between">
-                  <p className="text-xs font-semibold">Test Preview</p>
+                  <p className="text-xs font-semibold">{t("pgpGenerate.testPreviewTitle")}</p>
                   <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setTestPreview(null)}>
-                    Close
+                    {t("pgpGenerate.close")}
                   </Button>
                 </div>
                 <div className="p-4 max-h-96 overflow-auto">
