@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { calculateFreshness } from "@/lib/content-freshness";
 import { calculateSeoScore } from "@/lib/seo-score";
 
@@ -33,6 +34,7 @@ export default function PagePerformancePage() {
   const [sortBy, setSortBy] = useState("views");
   const [timeRange, setTimeRange] = useState("30d");
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading: loadingPages } = useQuery({
