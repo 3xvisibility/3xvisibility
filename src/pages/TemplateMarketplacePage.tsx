@@ -88,6 +88,8 @@ function localizedCategoryLabel(id: string, language: Language): string {
 
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 15;
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
