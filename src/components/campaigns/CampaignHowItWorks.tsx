@@ -15,45 +15,23 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const STORAGE_KEY = "campaign-howitworks-dismissed-v1";
 
 interface Step {
   num: number;
   icon: React.ElementType;
-  title: string;
-  desc: string;
-  tip?: string;
+  titleKey: string;
+  descKey: string;
+  tipKey?: string;
 }
 
 const STEPS: Step[] = [
-  {
-    num: 1,
-    icon: Database,
-    title: "Add your data",
-    desc: "Upload a CSV, let AI generate rows, or pick locations. Each row becomes one page.",
-    tip: "Example: 100 cities × 1 service = 100 unique pages",
-  },
-  {
-    num: 2,
-    icon: FileText,
-    title: "Pick a template",
-    desc: "Choose a design from the marketplace or build one with AI. The template is the layout for every page.",
-    tip: "Template variables like {city}, {service} get filled from your data",
-  },
-  {
-    num: 3,
-    icon: Globe,
-    title: "Connect a website",
-    desc: "Link the WordPress, Shopify or PrestaShop site where pages should be published. Optional — you can also keep them as drafts.",
-  },
-  {
-    num: 4,
-    icon: Play,
-    title: "Run the campaign",
-    desc: "Click Run. We generate every page, optimise SEO, and publish (or save as drafts) automatically.",
-    tip: "Use Test mode first to preview 1 page before generating all of them",
-  },
+  { num: 1, icon: Database, titleKey: "campaignHow.step1Title", descKey: "campaignHow.step1Desc", tipKey: "campaignHow.step1Tip" },
+  { num: 2, icon: FileText, titleKey: "campaignHow.step2Title", descKey: "campaignHow.step2Desc", tipKey: "campaignHow.step2Tip" },
+  { num: 3, icon: Globe, titleKey: "campaignHow.step3Title", descKey: "campaignHow.step3Desc" },
+  { num: 4, icon: Play, titleKey: "campaignHow.step4Title", descKey: "campaignHow.step4Desc", tipKey: "campaignHow.step4Tip" },
 ];
 
 interface Props {
@@ -63,6 +41,7 @@ interface Props {
 }
 
 export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
+  const { t } = useLanguage();
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) === "1";
@@ -91,10 +70,10 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate">
-              How a campaign works
+              {t("campaignHow.title")}
             </p>
             <p className="text-[11px] text-muted-foreground truncate">
-              4 simple steps — Data → Template → Website → Run
+              {t("campaignHow.subtitle")}
             </p>
           </div>
         </div>
@@ -107,11 +86,11 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
           >
             {expanded ? (
               <>
-                Hide <ChevronUp className="h-3.5 w-3.5" />
+                {t("campaignHow.hide")} <ChevronUp className="h-3.5 w-3.5" />
               </>
             ) : (
               <>
-                Show <ChevronDown className="h-3.5 w-3.5" />
+                {t("campaignHow.show")} <ChevronDown className="h-3.5 w-3.5" />
               </>
             )}
           </Button>
@@ -120,7 +99,7 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
             size="icon"
             onClick={handleDismiss}
             className="h-8 w-8"
-            title="Don't show again"
+            title={t("campaignHow.dontShowAgain")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -152,17 +131,17 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
                       </Badge>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-sm leading-tight">{step.title}</p>
+                      <p className="font-semibold text-sm leading-tight">{t(step.titleKey)}</p>
                     </div>
                   </div>
 
-                  <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{t(step.descKey)}</p>
 
-                  {step.tip && (
+                  {step.tipKey && (
                     <div className="mt-2.5 pt-2.5 border-t border-dashed border-border flex gap-1.5">
                       <Lightbulb className="h-3 w-3 text-warning shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[10px] text-foreground/80 leading-snug">{step.tip}</p>
+                        <p className="text-[10px] text-foreground/80 leading-snug">{t(step.tipKey)}</p>
                       </div>
                     </div>
                   )}
@@ -184,9 +163,7 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />
-              <span>
-                Tip: Start with <strong className="text-foreground">10–20 rows</strong> to test, then scale up.
-              </span>
+              <span dangerouslySetInnerHTML={{ __html: t("campaignHow.ctaTip") }} />
             </div>
             {onCreateClick && (
               <Button
@@ -195,7 +172,7 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
                 className="rounded-xl bg-gradient-primary hover:brightness-110 gap-1.5 shrink-0"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Start a campaign
+                {t("campaignHow.startCampaign")}
               </Button>
             )}
           </div>
