@@ -117,7 +117,7 @@ function formatSize(bytes: number) {
   return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
-const delimiterLabel: Record<string, string> = { ",": "Comma", ";": "Semicolon", "\t": "Tab", "|": "Pipe" };
+const delimiterLabelKey: Record<string, string> = { ",": "dataCsv.delimiterComma", ";": "dataCsv.delimiterSemicolon", "\t": "dataCsv.delimiterTab", "|": "dataCsv.delimiterPipe" };
 
 const PAGE_SIZE = 10;
 
@@ -185,18 +185,18 @@ export default function DataCsvPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["csv-files"] });
-      toast({ title: "CSV file deleted" });
+      toast({ title: t("dataCsv.deleted") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     },
   });
 
   const uploadMutation = useMutation({
     mutationFn: async ({ file, parsed }: { file: File; parsed: ReturnType<typeof parseCsvText> }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      if (!wsId) throw new Error("No workspace selected");
+      if (!user) throw new Error(t("dataCsv.notAuthenticated"));
+      if (!wsId) throw new Error(t("dataCsv.noWorkspace"));
       const text = await file.text();
       const { error } = await (supabase.from("campaign_csv_files" as any) as any).insert({
         campaign_id: null as any,
@@ -213,11 +213,11 @@ export default function DataCsvPage() {
     },
     onSuccess: (name) => {
       queryClient.invalidateQueries({ queryKey: ["csv-files"] });
-      toast({ title: "CSV uploaded", description: `"${name}" is ready to use.` });
+      toast({ title: t("dataCsv.uploaded_toast"), description: t("dataCsv.readyToUse", { name }) });
       resetUpload();
     },
     onError: (err: Error) => {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      toast({ title: t("dataCsv.uploadFailed"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -238,11 +238,11 @@ export default function DataCsvPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["csv-files"] });
-      toast({ title: "CSV replaced", description: `"${data.fileName}" uploaded with ${data.rowCount} rows.` });
+      toast({ title: t("dataCsv.replaced"), description: t("dataCsv.replacedDesc", { name: data.fileName, count: data.rowCount }) });
       setReplacingFileId(null);
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -252,7 +252,7 @@ export default function DataCsvPage() {
     const ext = file.name.split(".").pop()?.toLowerCase();
     const validExts = ["csv", "tsv", "txt", "json", "xlsx", "xls"];
     if (!ext || !validExts.includes(ext)) {
-      toast({ title: "Invalid file", description: "Please upload a .csv, .tsv, .json, .xlsx, or .xls file.", variant: "destructive" });
+      toast({ title: t("dataCsv.invalidFile"), description: t("dataCsv.invalidFileDesc"), variant: "destructive" });
       return;
     }
     try {
@@ -264,7 +264,7 @@ export default function DataCsvPage() {
       setPendingEncoding("utf-8");
       setUploadOpen(true);
     } catch (err: any) {
-      toast({ title: "Parse error", description: err.message || "Failed to parse file", variant: "destructive" });
+      toast({ title: t("dataCsv.parseError"), description: err.message || t("dataCsv.parseFailed"), variant: "destructive" });
     }
   };
 
@@ -285,7 +285,7 @@ export default function DataCsvPage() {
       .eq("id", file.id)
       .single();
     if (error || !data) {
-      toast({ title: "Error loading preview", variant: "destructive" });
+      toast({ title: t("dataCsv.previewLoadError"), variant: "destructive" });
       return;
     }
     const headers = (data.headers as string[]) || [];
@@ -305,7 +305,7 @@ export default function DataCsvPage() {
       .eq("id", file.id)
       .single();
     if (error || !data?.raw_content) {
-      toast({ title: "Error downloading file", variant: "destructive" });
+      toast({ title: t("dataCsv.downloadError"), variant: "destructive" });
       return;
     }
     const headers = (data.headers as string[]) || [];
@@ -323,7 +323,7 @@ export default function DataCsvPage() {
 
   const handleBulkDownload = async () => {
     if (csvFiles.length === 0) return;
-    toast({ title: "Downloading…", description: `Preparing ${csvFiles.length} file(s).` });
+    toast({ title: t("dataCsv.downloading"), description: t("dataCsv.preparingFiles", { count: csvFiles.length }) });
     for (const file of csvFiles) {
       await handleDownload(file);
       await new Promise(r => setTimeout(r, 300));
