@@ -392,8 +392,8 @@ export default function WebsiteContentPage() {
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="py-3 px-4">
             <div className="flex items-center justify-between gap-2 mb-2">
-              <Badge variant="outline" className="text-xs">Scanned Page</Badge>
-              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setScannedItem(null)}>Clear</Button>
+              <Badge variant="outline" className="text-xs">{t("websiteContent.scannedPage")}</Badge>
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setScannedItem(null)}>{t("websiteContent.clear")}</Button>
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-2">
