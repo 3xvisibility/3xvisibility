@@ -406,9 +406,9 @@ export default function PagePerformancePage() {
           <CardContent className="p-4 flex items-center gap-3">
             <TrendingUp className="h-5 w-5 text-primary shrink-0" />
             <div>
-              <p className="text-sm font-medium">Connect analytics to see real data</p>
+              <p className="text-sm font-medium">{t("pagePerformance.connectAnalytics")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Performance metrics will populate automatically as your published pages receive traffic. You can also import analytics data via the API.
+                {t("pagePerformance.metricsPopulateHint")}
               </p>
             </div>
           </CardContent>
