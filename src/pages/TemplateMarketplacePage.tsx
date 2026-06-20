@@ -348,7 +348,7 @@ export default function TemplateMarketplacePage() {
           variant={activeTab === "browse" ? "default" : "outline"}
           onClick={() => setActiveTab("browse")}
         >
-          <Store className="h-3.5 w-3.5 mr-1.5" /> All Templates
+          <Store className="h-3.5 w-3.5 mr-1.5" /> {t("marketplace.allTemplates")}
         </Button>
         <Button
           size="sm"
