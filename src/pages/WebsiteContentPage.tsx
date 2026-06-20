@@ -625,7 +625,7 @@ function ContentList({
                     className="h-9 w-full justify-center gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/5"
                     onClick={() => onEdit(item)}
                   >
-                    <Pencil className="h-3.5 w-3.5" /> Edit & Optimize SEO
+                    <Pencil className="h-3.5 w-3.5" /> {t("websiteContent.editOptimize")}
                   </Button>
                   <Button
                     size="sm"
@@ -633,14 +633,14 @@ function ContentList({
                     className="h-9 w-full justify-center gap-1.5 text-xs"
                     onClick={() => onPreview(item)}
                   >
-                    <Eye className="h-3.5 w-3.5" /> Preview
+                    <Eye className="h-3.5 w-3.5" /> {t("websiteContent.preview")}
                   </Button>
                   <Button
                     size="sm"
                     className="h-9 w-full justify-center gap-1.5 text-xs bg-primary text-primary-foreground"
                     onClick={() => onDetectTemplate(item)}
                   >
-                    <Sparkles className="h-3.5 w-3.5" /> Generate Template
+                    <Sparkles className="h-3.5 w-3.5" /> {t("websiteContent.generateTemplate")}
                   </Button>
                 </div>
               </div>
