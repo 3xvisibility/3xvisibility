@@ -794,7 +794,7 @@ export default function DataCsvPage() {
 
               {/* Actions */}
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
-                <Button variant="outline" onClick={resetUpload}>Cancel</Button>
+                <Button variant="outline" onClick={resetUpload}>{t("common.cancel")}</Button>
                 <Button
                   disabled={!pendingValidation.valid || uploadMutation.isPending}
                   onClick={() => {
@@ -803,7 +803,7 @@ export default function DataCsvPage() {
                   }}
                   className="bg-gradient-primary hover:brightness-110 gap-2"
                 >
-                  {uploadMutation.isPending ? "Uploading…" : <><Upload className="h-4 w-4" /> Upload File</>}
+                  {uploadMutation.isPending ? t("dataCsv.uploading") : <><Upload className="h-4 w-4" /> {t("dataCsv.uploadFile")}</>}
                 </Button>
               </div>
             </div>
@@ -817,10 +817,10 @@ export default function DataCsvPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5 text-primary" />
-              {previewFile?.file_name || "CSV Preview"}
+              {previewFile?.file_name || t("dataCsv.csvPreview")}
             </DialogTitle>
             <DialogDescription>
-              Showing first 10 rows · {previewFile?.row_count?.toLocaleString()} total rows · {formatSize(previewFile?.file_size || 0)}
+              {t("dataCsv.previewSummary", { count: 10, total: previewFile?.row_count?.toLocaleString() || 0, size: formatSize(previewFile?.file_size || 0) })}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[50vh]">
@@ -850,7 +850,7 @@ export default function DataCsvPage() {
             ) : (
               <div className="py-12 text-center text-muted-foreground">
                 <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
-                <p className="text-sm">Loading preview...</p>
+                <p className="text-sm">{t("dataCsv.loadingPreview")}</p>
               </div>
             )}
           </ScrollArea>
