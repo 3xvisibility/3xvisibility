@@ -572,7 +572,7 @@ export default function CampaignDetailPage() {
               ))}
             </div>
             <p className="text-sm text-muted-foreground mt-0.5 break-words">
-              {(campaign as any).websites?.name || "No site"} · {(campaign as any).templates?.name || "No template"} · {campaign.total_rows || 0} rows
+              {(campaign as any).websites?.name || t("campaignDetail.noSite")} · {(campaign as any).templates?.name || t("campaignDetail.noTemplate")} · {t("campaignDetail.rowsCount", { count: campaign.total_rows || 0 })}
             </p>
           </div>
         </div>
