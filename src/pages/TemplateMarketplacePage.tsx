@@ -31,6 +31,7 @@ import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
+import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
 import { Languages } from "lucide-react";
 
 // Known category metadata (icons + nice labels). Any category found on a
@@ -261,6 +262,10 @@ export default function TemplateMarketplacePage() {
     });
   }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
 
+  // Auto-translate the card metadata (name + description) for the visible
+  // templates into the active language (en/fr/de/es). Cached per template.
+  const { localize: localizeCard } = useTranslatedTemplateList(filteredTemplates, language);
+
   const importMutation = useMutation({
     mutationFn: async (tpl: MarketplaceTemplate) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -446,8 +451,8 @@ export default function TemplateMarketplacePage() {
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{tpl.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{tpl.description}</p>
+                  <h3 className="font-semibold truncate">{localizeCard(tpl).name}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{localizeCard(tpl).description}</p>
                 </div>
               </div>
 
