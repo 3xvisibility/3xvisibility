@@ -166,27 +166,31 @@ for (const f of localeFiles) {
 }
 
 // ── Report ──────────────────────────────────────────────────────────────
-// Missing keys are NON-FATAL: the runtime falls back to English, so they never
-// break the build. Report them as warnings only (criticals highlighted first).
+// Missing keys are FATAL: every locale must define the full English key set so
+// the build fails fast instead of silently shipping untranslated strings.
+const totalMissing = missingCritical.length + missingWarnings.length;
+
 if (missingCritical.length > 0) {
   const byFile = new Map<string, number>();
   for (const m of missingCritical) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
-  console.warn(`⚠️  ${missingCritical.length} critical-prefix key(s) missing (fall back to English at runtime — please translate):`);
-  for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
-  console.warn("");
+  console.error(`❌ ${missingCritical.length} critical-prefix key(s) missing:`);
+  for (const [file, count] of byFile) console.error(`   ${file}: ${count} missing`);
+  for (const m of missingCritical) console.error(`     ${m.file}  "${m.key}"`);
+  console.error("");
 }
 
 if (missingWarnings.length > 0) {
   const byFile = new Map<string, number>();
   for (const m of missingWarnings) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
-  console.warn(`⚠️  ${missingWarnings.length} non-critical key(s) missing (fall back to English at runtime):`);
-  for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
-  console.warn("");
+  console.error(`❌ ${missingWarnings.length} key(s) missing:`);
+  for (const [file, count] of byFile) console.error(`   ${file}: ${count} missing`);
+  for (const m of missingWarnings) console.error(`     ${m.file}  "${m.key}"`);
+  console.error("");
 }
 
-if (issues.length === 0) {
+if (issues.length === 0 && totalMissing === 0) {
   console.log(
-    `✅ All ${localeFiles.length + 1} locale files are valid (syntax rules checked). Missing keys (if any) fall back to English at runtime and never break the build.\n`,
+    `✅ All ${localeFiles.length + 1} locale files are valid (syntax + full key parity with en.ts).\n`,
   );
   process.exit(0);
 } else {
