@@ -226,6 +226,22 @@ export default function TemplateMappingPage() {
   const totalVars = classified.length;
   const mappedVars = classified.filter(v => resolveColumnForVar(v.name)).length;
   const unmappedVars = totalVars - mappedVars;
+  const sectionLabels: Record<SectionKey, string> = {
+    hero: t("templateMapping.sectionHero"),
+    about: t("templateMapping.sectionAbout"),
+    gallery: t("templateMapping.sectionGallery"),
+    faq: t("templateMapping.sectionFaq"),
+    seo: t("templateMapping.sectionSeo"),
+    other: t("templateMapping.sectionOther"),
+  };
+  const sectionDescriptions: Record<SectionKey, string> = {
+    hero: t("templateMapping.sectionHeroDesc"),
+    about: t("templateMapping.sectionAboutDesc"),
+    gallery: t("templateMapping.sectionGalleryDesc"),
+    faq: t("templateMapping.sectionFaqDesc"),
+    seo: t("templateMapping.sectionSeoDesc"),
+    other: t("templateMapping.sectionOtherDesc"),
+  };
 
   return (
     <div className="space-y-6">
@@ -373,11 +389,11 @@ export default function TemplateMappingPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <CardTitle className="text-sm flex items-center gap-2">
-                            {meta.label}
+                            {sectionLabels[key]}
                             <Badge variant="outline" className="text-[10px]">{vars.length}</Badge>
                           </CardTitle>
                           <CardDescription className="text-xs mt-0.5">
-                            {meta.description}
+                            {sectionDescriptions[key]}
                           </CardDescription>
                         </div>
                       </div>
@@ -387,10 +403,10 @@ export default function TemplateMappingPage() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="min-w-[140px]">Template variable</TableHead>
-                              <TableHead className="min-w-[160px]">CSV column</TableHead>
-                              <TableHead className="hidden sm:table-cell">Sample value</TableHead>
-                              <TableHead className="text-right w-[80px]">Uses</TableHead>
+                              <TableHead className="min-w-[140px]">{t("templateMapping.tableTemplateVariable")}</TableHead>
+                              <TableHead className="min-w-[160px]">{t("templateMapping.tableCsvColumn")}</TableHead>
+                              <TableHead className="hidden sm:table-cell">{t("templateMapping.tableSampleValue")}</TableHead>
+                              <TableHead className="text-right w-[80px]">{t("templateMapping.tableUses")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -431,7 +447,7 @@ export default function TemplateMappingPage() {
               })}
               {totalVars === 0 && (
                 <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-                  This template has no <code className="bg-muted px-1 rounded">{'{variable}'}</code> placeholders.
+                  {t("templateMapping.noVariablesPrefix")} <code className="bg-muted px-1 rounded">{'{variable}'}</code> {t("templateMapping.noVariablesSuffix")}
                 </CardContent></Card>
               )}
             </TabsContent>
