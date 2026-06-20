@@ -147,8 +147,11 @@ function extractKeys(filePath: string): Set<string> {
 }
 
 type Missing = { file: string; key: string };
-const missingCritical: Missing[] = [];
-const missingWarnings: Missing[] = [];
+// Primary languages MUST have full key parity with en.ts (fatal if not).
+// Secondary languages fall back to English at runtime (warning only).
+const PRIMARY_LANGS = new Set(["fr", "de", "es"]);
+const missingFatal: Missing[] = [];
+const missingSecondary: Missing[] = [];
 
 const EN_FILE = join(LOCALES_DIR, "en.ts");
 const enKeys = extractKeys(EN_FILE);
@@ -156,37 +159,43 @@ const enKeys = extractKeys(EN_FILE);
 for (const f of localeFiles) {
   if (f === EN_FILE) continue;
   const label = f.replace(ROOT + "/", "");
+  const lang = label.split("/").pop()!.replace(".ts", "");
   const localeKeys = extractKeys(f);
   for (const key of enKeys) {
     if (!localeKeys.has(key)) {
-      if (isCritical(key)) missingCritical.push({ file: label, key });
-      else missingWarnings.push({ file: label, key });
+      if (PRIMARY_LANGS.has(lang)) missingFatal.push({ file: label, key });
+      else missingSecondary.push({ file: label, key });
     }
   }
 }
 
+
 // ── Report ──────────────────────────────────────────────────────────────
-// Missing keys are NON-FATAL: the runtime falls back to English, so they never
-// break the build. Report them as warnings only (criticals highlighted first).
-if (missingCritical.length > 0) {
+// Missing keys in PRIMARY languages are FATAL so the build fails fast instead
+// of silently shipping untranslated strings. Secondary languages fall back to
+// English at runtime, so they are reported as warnings only.
+const totalFatal = missingFatal.length;
+
+if (missingFatal.length > 0) {
   const byFile = new Map<string, number>();
-  for (const m of missingCritical) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
-  console.warn(`⚠️  ${missingCritical.length} critical-prefix key(s) missing (fall back to English at runtime — please translate):`);
+  for (const m of missingFatal) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
+  console.error(`❌ ${missingFatal.length} missing key(s) in primary languages (must match en.ts):`);
+  for (const [file, count] of byFile) console.error(`   ${file}: ${count} missing`);
+  for (const m of missingFatal) console.error(`     ${m.file}  "${m.key}"`);
+  console.error("");
+}
+
+if (missingSecondary.length > 0) {
+  const byFile = new Map<string, number>();
+  for (const m of missingSecondary) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
+  console.warn(`⚠️  ${missingSecondary.length} key(s) missing in secondary languages (fall back to English at runtime):`);
   for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
   console.warn("");
 }
 
-if (missingWarnings.length > 0) {
-  const byFile = new Map<string, number>();
-  for (const m of missingWarnings) byFile.set(m.file, (byFile.get(m.file) || 0) + 1);
-  console.warn(`⚠️  ${missingWarnings.length} non-critical key(s) missing (fall back to English at runtime):`);
-  for (const [file, count] of byFile) console.warn(`   ${file}: ${count} missing`);
-  console.warn("");
-}
-
-if (issues.length === 0) {
+if (issues.length === 0 && totalFatal === 0) {
   console.log(
-    `✅ All ${localeFiles.length + 1} locale files are valid (syntax rules checked). Missing keys (if any) fall back to English at runtime and never break the build.\n`,
+    `✅ Locale files valid (syntax checked; primary languages have full key parity with en.ts).\n`,
   );
   process.exit(0);
 } else {
@@ -198,7 +207,7 @@ if (issues.length === 0) {
     byRule.set(issue.rule, list);
   }
 
-  console.error(`❌ Found ${issues.length} problem(s):\n`);
+  if (issues.length > 0) console.error(`❌ Found ${issues.length} syntax problem(s):\n`);
 
   for (const [rule, items] of byRule) {
     console.error(`── ${rule} (${items.length}) ──`);
@@ -206,6 +215,10 @@ if (issues.length === 0) {
       console.error(`  ${item.file}:${item.line}  "${item.key}"  → ${item.detail}`);
     }
     console.error("");
+  }
+
+  if (totalFatal > 0) {
+    console.error(`❌ ${totalFatal} missing key(s) in primary languages — they must define every en.ts key. Build aborted.\n`);
   }
 
   process.exit(1);
