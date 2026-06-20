@@ -288,7 +288,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           <div className="mt-3 flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="capitalize text-xs">{site.type}</Badge>
             <Badge variant={site.status === "connected" ? "secondary" : "destructive"} className={site.status === "connected" ? "bg-success/10 text-success" : ""}>
-              {site.status}
+              {site.status === "connected" ? t("websiteCard.connected") : t("websiteCard.disconnected")}
             </Badge>
             {site.language && (
               <Badge variant="outline" className="text-xs gap-1">
