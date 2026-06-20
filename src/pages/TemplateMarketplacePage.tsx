@@ -264,9 +264,20 @@ export default function TemplateMarketplacePage() {
     });
   }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
 
+  // Reset to first page whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, activeTab]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PER_PAGE));
+  const paginatedTemplates = useMemo(
+    () => filteredTemplates.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE),
+    [filteredTemplates, currentPage]
+  );
+
   // Auto-translate the card metadata (name + description) for the visible
   // templates into the active language (en/fr/de/es). Cached per template.
-  const { localize: localizeCard } = useTranslatedTemplateList(filteredTemplates, language);
+  const { localize: localizeCard } = useTranslatedTemplateList(paginatedTemplates, language);
 
   const importMutation = useMutation({
     mutationFn: async (tpl: MarketplaceTemplate) => {
