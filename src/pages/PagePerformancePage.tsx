@@ -306,7 +306,7 @@ export default function PagePerformancePage() {
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-xs" />
+          <Input placeholder={t("pagePerformance.searchPages")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-xs" />
         </div>
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-[140px] h-8 text-xs">
@@ -314,12 +314,12 @@ export default function PagePerformancePage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="views">Most Views</SelectItem>
-            <SelectItem value="visitors">Most Visitors</SelectItem>
-            <SelectItem value="bounce">Lowest Bounce</SelectItem>
-            <SelectItem value="ctr">Highest CTR</SelectItem>
-            <SelectItem value="seo">Best SEO</SelectItem>
-            <SelectItem value="conversions">Most Conversions</SelectItem>
+            <SelectItem value="views">{t("pagePerformance.mostViews")}</SelectItem>
+            <SelectItem value="visitors">{t("pagePerformance.mostVisitors")}</SelectItem>
+            <SelectItem value="bounce">{t("pagePerformance.lowestBounce")}</SelectItem>
+            <SelectItem value="ctr">{t("pagePerformance.highestCtr")}</SelectItem>
+            <SelectItem value="seo">{t("pagePerformance.bestSeo")}</SelectItem>
+            <SelectItem value="conversions">{t("pagePerformance.mostConversions")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={timeRange} onValueChange={setTimeRange}>
@@ -327,10 +327,10 @@ export default function PagePerformancePage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7d">Last 7d</SelectItem>
-            <SelectItem value="30d">Last 30d</SelectItem>
-            <SelectItem value="90d">Last 90d</SelectItem>
-            <SelectItem value="all">All Time</SelectItem>
+            <SelectItem value="7d">{t("pagePerformance.last7d")}</SelectItem>
+            <SelectItem value="30d">{t("pagePerformance.last30d")}</SelectItem>
+            <SelectItem value="90d">{t("pagePerformance.last90d")}</SelectItem>
+            <SelectItem value="all">{t("pagePerformance.allTime")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
