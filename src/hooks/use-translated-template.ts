@@ -28,6 +28,8 @@ function hash(str: string): string {
 interface TranslatedTemplateState {
   template: MarketplaceTemplate;
   translating: boolean;
+  /** Set when auto-translation failed; the source-language template is shown. */
+  error: string | null;
 }
 
 /**
