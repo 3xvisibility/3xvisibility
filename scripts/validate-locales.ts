@@ -202,7 +202,7 @@ if (issues.length === 0 && totalMissing === 0) {
     byRule.set(issue.rule, list);
   }
 
-  console.error(`❌ Found ${issues.length} problem(s):\n`);
+  if (issues.length > 0) console.error(`❌ Found ${issues.length} syntax problem(s):\n`);
 
   for (const [rule, items] of byRule) {
     console.error(`── ${rule} (${items.length}) ──`);
