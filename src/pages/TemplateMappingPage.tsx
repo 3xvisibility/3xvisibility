@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import {
   classifyTemplate, SECTIONS, type SectionKey, type ClassifiedVariable,
 } from "@/lib/template-section-classifier";
@@ -62,6 +63,7 @@ const SECTION_ICON: Record<SectionKey, typeof Rocket> = {
 
 export default function TemplateMappingPage() {
   const { currentWorkspace, basePath } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [search, setSearch] = useState("");
@@ -155,7 +157,7 @@ export default function TemplateMappingPage() {
   /** Persist the entire draft mapping to Supabase. */
   const saveMapping = useMutation({
     mutationFn: async () => {
-      if (!activeCampaign) throw new Error("No campaign selected");
+      if (!activeCampaign) throw new Error(t("templateMapping.errorNoCampaign"));
       const { error } = await supabase
         .from("campaigns")
         .update({ mapping: workingMapping })
@@ -164,15 +166,15 @@ export default function TemplateMappingPage() {
       return workingMapping;
     },
     onSuccess: () => {
-      toast.success(`Saved ${dirtyKeys.length} mapping change${dirtyKeys.length === 1 ? "" : "s"}`);
+      toast.success(t("templateMapping.toastSaved", { count: dirtyKeys.length }));
       queryClient.invalidateQueries({ queryKey: ["mapping-campaigns", wsId] });
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to save mappings"),
+    onError: (e: any) => toast.error(e?.message || t("templateMapping.toastSaveFailed")),
   });
 
   const discardChanges = () => {
     setDraftMapping({ ...savedMapping });
-    toast.info("Changes discarded");
+    toast.info(t("templateMapping.toastDiscarded"));
   };
 
   // Classify variables once template is loaded
