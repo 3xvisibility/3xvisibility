@@ -78,10 +78,15 @@ export default function TemplateMarketplacePage() {
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
+
+  // Auto-translate the previewed template (content, name, SEO + default values)
+  // into the active language (en/fr/de/es). English is returned untouched.
+  const { template: activePreview, translating: previewTranslating } =
+    useTranslatedTemplate(previewTemplate, language);
 
   // Reset uploaded CSV + image overrides when switching templates.
   useEffect(() => { setUploadedCsv([]); setImageOverrides({}); setContentOverrides({}); }, [previewTemplate?.id]);
@@ -90,11 +95,11 @@ export default function TemplateMarketplacePage() {
   const previewRows = useMemo(() => {
     const base = uploadedCsv.length > 0
       ? uploadedCsv
-      : (previewTemplate?.defaultValues ? [previewTemplate.defaultValues] : []);
+      : (activePreview?.defaultValues ? [activePreview.defaultValues] : []);
     const overrides = { ...contentOverrides, ...imageOverrides };
     if (Object.keys(overrides).length === 0) return base;
     return base.map((row) => ({ ...row, ...overrides }));
-  }, [uploadedCsv, previewTemplate, imageOverrides, contentOverrides]);
+  }, [uploadedCsv, activePreview, imageOverrides, contentOverrides]);
 
   const handleCsvUpload = async (file: File) => {
     try {
