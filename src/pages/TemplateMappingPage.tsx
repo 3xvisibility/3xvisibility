@@ -234,16 +234,15 @@ export default function TemplateMappingPage() {
         <div className="min-w-0">
           <h1 className="text-lg sm:text-display flex items-center gap-2">
             <Columns3 className="h-5 w-5 text-primary" />
-            Template Variable Mapping
+            {t("templateMapping.title")}
           </h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-            See exactly which CSV column fills the hero, about, gallery captions, FAQ
-            and other slots of every generated page.
+            {t("templateMapping.subtitle")}
           </p>
         </div>
         <Button variant="outline" asChild size="sm" className="w-fit">
           <Link to={`${basePath}/campaigns`}>
-            Manage campaigns <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            {t("templateMapping.manageCampaigns")} <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Link>
         </Button>
       </div>
@@ -251,9 +250,9 @@ export default function TemplateMappingPage() {
       {/* ── Campaign picker ──────────────────── */}
       <Card className="shadow-surface">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Choose a campaign</CardTitle>
+          <CardTitle className="text-sm">{t("templateMapping.chooseCampaign")}</CardTitle>
           <CardDescription className="text-xs">
-            Mappings are scoped to the campaign + template combination.
+            {t("templateMapping.campaignScopeDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
@@ -261,16 +260,16 @@ export default function TemplateMappingPage() {
             <Skeleton className="h-9 w-full max-w-sm" />
           ) : campaigns.length === 0 ? (
             <div className="text-sm text-muted-foreground border border-dashed rounded-lg p-4">
-              No campaigns with templates yet.{" "}
+              {t("templateMapping.noCampaignsPrefix")}{" "}
               <Link to={`${basePath}/campaigns`} className="underline text-primary">
-                Create one
+                {t("templateMapping.createOne")}
               </Link>{" "}
-              to see its mapping here.
+              {t("templateMapping.noCampaignsSuffix")}
             </div>
           ) : (
             <Select value={activeCampaignId} onValueChange={setSelectedCampaignId}>
               <SelectTrigger className="w-full sm:max-w-sm h-9">
-                <SelectValue placeholder="Select a campaign" />
+                <SelectValue placeholder={t("templateMapping.selectCampaignPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {campaigns.map(c => (
@@ -286,10 +285,10 @@ export default function TemplateMappingPage() {
         <>
           {/* ── Summary stats ─────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard label="Template" value={template.name} icon={FileText} />
-            <StatCard label="Variables" value={String(totalVars)} icon={Sparkles} />
-            <StatCard label="Mapped" value={String(mappedVars)} tone="success" />
-            <StatCard label="Unmapped" value={String(unmappedVars)} tone={unmappedVars ? "warn" : "muted"} />
+            <StatCard label={t("templateMapping.statTemplate")} value={template.name} icon={FileText} />
+            <StatCard label={t("templateMapping.statVariables")} value={String(totalVars)} icon={Sparkles} />
+            <StatCard label={t("templateMapping.statMapped")} value={String(mappedVars)} tone="success" />
+            <StatCard label={t("templateMapping.statUnmapped")} value={String(unmappedVars)} tone={unmappedVars ? "warn" : "muted"} />
           </div>
 
           {/* ── Save bar ──────────────────────── */}
