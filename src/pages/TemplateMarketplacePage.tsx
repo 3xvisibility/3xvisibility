@@ -490,39 +490,44 @@ export default function TemplateMarketplacePage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
-                  {previewTemplate.name}
+                  {activePreview.name}
+                  {previewTranslating && (
+                    <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                      <Languages className="h-3.5 w-3.5 animate-pulse" /> {t("common.translating") || "Translating…"}
+                    </span>
+                  )}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
-                <p className="text-sm text-muted-foreground">{previewTemplate.description}</p>
+                <p className="text-sm text-muted-foreground">{activePreview.description}</p>
 
                 <div className="flex flex-wrap items-center gap-3 text-sm">
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-                    {previewTemplate.rating}
+                    {activePreview.rating}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Download className="h-3.5 w-3.5" />
-                    {previewTemplate.downloads.toLocaleString()} imports
+                    {activePreview.downloads.toLocaleString()} imports
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Users className="h-3.5 w-3.5" />
-                    {previewTemplate.author}
+                    {activePreview.author}
                   </span>
-                  <Badge variant="outline" className="capitalize">{categoryIcon(previewTemplate.category)}</Badge>
-                  {previewTemplate.schema_type && (
-                    <Badge variant="secondary" className="text-xs">Schema: {previewTemplate.schema_type}</Badge>
+                  <Badge variant="outline" className="capitalize">{categoryIcon(activePreview.category)}</Badge>
+                  {activePreview.schema_type && (
+                    <Badge variant="secondary" className="text-xs">Schema: {activePreview.schema_type}</Badge>
                   )}
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
                   <span className="text-xs text-muted-foreground">Variables:</span>
-                  {previewTemplate.variables.map((v) => (
+                  {activePreview.variables.map((v) => (
                     <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
                   ))}
                 </div>
 
-                <SeoDefaultsEditor template={previewTemplate} />
+                <SeoDefaultsEditor template={activePreview} />
 
 
                 <Tabs defaultValue="preview" className="w-full">
