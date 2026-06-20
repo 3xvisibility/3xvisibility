@@ -15,45 +15,23 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const STORAGE_KEY = "campaign-howitworks-dismissed-v1";
 
 interface Step {
   num: number;
   icon: React.ElementType;
-  title: string;
-  desc: string;
-  tip?: string;
+  titleKey: string;
+  descKey: string;
+  tipKey?: string;
 }
 
 const STEPS: Step[] = [
-  {
-    num: 1,
-    icon: Database,
-    title: "Add your data",
-    desc: "Upload a CSV, let AI generate rows, or pick locations. Each row becomes one page.",
-    tip: "Example: 100 cities × 1 service = 100 unique pages",
-  },
-  {
-    num: 2,
-    icon: FileText,
-    title: "Pick a template",
-    desc: "Choose a design from the marketplace or build one with AI. The template is the layout for every page.",
-    tip: "Template variables like {city}, {service} get filled from your data",
-  },
-  {
-    num: 3,
-    icon: Globe,
-    title: "Connect a website",
-    desc: "Link the WordPress, Shopify or PrestaShop site where pages should be published. Optional — you can also keep them as drafts.",
-  },
-  {
-    num: 4,
-    icon: Play,
-    title: "Run the campaign",
-    desc: "Click Run. We generate every page, optimise SEO, and publish (or save as drafts) automatically.",
-    tip: "Use Test mode first to preview 1 page before generating all of them",
-  },
+  { num: 1, icon: Database, titleKey: "campaignHow.step1Title", descKey: "campaignHow.step1Desc", tipKey: "campaignHow.step1Tip" },
+  { num: 2, icon: FileText, titleKey: "campaignHow.step2Title", descKey: "campaignHow.step2Desc", tipKey: "campaignHow.step2Tip" },
+  { num: 3, icon: Globe, titleKey: "campaignHow.step3Title", descKey: "campaignHow.step3Desc" },
+  { num: 4, icon: Play, titleKey: "campaignHow.step4Title", descKey: "campaignHow.step4Desc", tipKey: "campaignHow.step4Tip" },
 ];
 
 interface Props {
