@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { TemplateDetectorDialog } from "@/components/website-content/TemplateDetectorDialog";
 import { PagePreviewDialog } from "@/components/website-content/PagePreviewDialog";
 import { PageEditDialog } from "@/components/website-content/PageEditDialog";
@@ -67,6 +68,7 @@ function decodeHtmlEntities(text: string): string {
 
 export default function WebsiteContentPage() {
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
   const { toast } = useToast();
   const persistedUiState = useMemo(() => readWebsiteContentUiState(), []);
@@ -93,7 +95,7 @@ export default function WebsiteContentPage() {
     onSuccess: (data) => {
       const item: ContentItem = {
         id: `scan-${Date.now()}`,
-        title: data.title || "Scanned Page",
+        title: data.title || t("websiteContent.defaultScannedTitle"),
         slug: new URL(scanUrl).pathname.replace(/^\/|\/$/g, "") || "home",
         url: scanUrl,
         type: "page",
@@ -103,10 +105,10 @@ export default function WebsiteContentPage() {
         modified: new Date().toISOString(),
       };
       setScannedItem(item);
-      toast({ title: "Page scanned", description: `Found content from ${scanUrl}` });
+      toast({ title: t("websiteContent.pageScanned"), description: t("websiteContent.pageScannedDesc", { url: scanUrl }) });
     },
     onError: (err: Error) => {
-      toast({ title: "Scan failed", description: err.message, variant: "destructive" });
+      toast({ title: t("websiteContent.scanFailed"), description: err.message, variant: "destructive" });
     },
   });
   const [persistedEditPageId, setPersistedEditPageId] = useState<string | null>(() => persistedUiState?.editPageId ?? null);
@@ -266,12 +268,12 @@ export default function WebsiteContentPage() {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Globe className="h-16 w-16 text-muted-foreground/30 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Websites Connected</h2>
+        <h2 className="text-xl font-semibold mb-2">{t("websiteContent.noWebsitesConnected")}</h2>
         <p className="text-muted-foreground text-sm max-w-md mb-4">
-          Connect a WordPress, Shopify, PrestaShop, or WooCommerce website first to browse and manage its content.
+          {t("websiteContent.noWebsitesConnectedDesc")}
         </p>
         <Button onClick={() => window.location.href = "/websites"}>
-          <Globe className="h-4 w-4 mr-2" /> Connect a Website
+          <Globe className="h-4 w-4 mr-2" /> {t("websiteContent.connectWebsite")}
         </Button>
       </div>
     );
@@ -284,16 +286,16 @@ export default function WebsiteContentPage() {
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
-            Website Content
+            {t("websiteContent.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Browse pages & products from your connected websites
+            {t("websiteContent.description")}
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select value={effectiveWebsite} onValueChange={setSelectedWebsite}>
             <SelectTrigger className="h-9 text-sm w-full sm:w-[240px]">
-              <SelectValue placeholder="Select website" />
+              <SelectValue placeholder={t("websiteContent.selectWebsite")} />
             </SelectTrigger>
             <SelectContent>
               {websites.map((w) => (
@@ -312,7 +314,7 @@ export default function WebsiteContentPage() {
             onClick={() => {
               refetchPages();
               refetchProducts();
-              toast({ title: "Refreshing content..." });
+              toast({ title: t("websiteContent.refreshing") });
             }}
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -364,7 +366,7 @@ export default function WebsiteContentPage() {
               <Input
                 value={scanUrl}
                 onChange={(e) => setScanUrl(e.target.value)}
-                placeholder="Search page by URL — paste any page or product URL..."
+                placeholder={t("websiteContent.scanUrlPlaceholder")}
                 className="h-9 text-sm flex-1"
                 type="url"
               />
@@ -376,9 +378,9 @@ export default function WebsiteContentPage() {
               className="h-9 shrink-0"
             >
               {scanUrlMutation.isPending ? (
-                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Scanning...</>
+                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> {t("websiteContent.scanning")}</>
               ) : (
-                <><Search className="h-3.5 w-3.5 mr-1" /> Scan URL</>
+                <><Search className="h-3.5 w-3.5 mr-1" /> {t("websiteContent.scanUrl")}</>
               )}
             </Button>
           </form>
@@ -390,8 +392,8 @@ export default function WebsiteContentPage() {
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="py-3 px-4">
             <div className="flex items-center justify-between gap-2 mb-2">
-              <Badge variant="outline" className="text-xs">Scanned Page</Badge>
-              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setScannedItem(null)}>Clear</Button>
+              <Badge variant="outline" className="text-xs">{t("websiteContent.scannedPage")}</Badge>
+              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setScannedItem(null)}>{t("websiteContent.clear")}</Button>
             </div>
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-2">
@@ -411,13 +413,13 @@ export default function WebsiteContentPage() {
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <Button size="sm" variant="outline" className="h-9 w-full justify-center gap-1.5 text-xs" onClick={() => setPreviewPage(scannedItem)}>
-                  <Eye className="h-3.5 w-3.5" /> Preview
+                  <Eye className="h-3.5 w-3.5" /> {t("websiteContent.preview")}
                 </Button>
                 <Button size="sm" className="h-9 w-full justify-center gap-1.5 text-xs bg-primary text-primary-foreground" onClick={() => setTemplatePage(scannedItem)}>
-                  <Sparkles className="h-3.5 w-3.5" /> Generate Template
+                  <Sparkles className="h-3.5 w-3.5" /> {t("websiteContent.generateTemplate")}
                 </Button>
                 <Button size="sm" variant="outline" className="h-9 w-full justify-center gap-1.5 text-xs" onClick={() => window.open(scannedItem.url, "_blank")}>
-                  <ExternalLink className="h-3.5 w-3.5" /> Open
+                  <ExternalLink className="h-3.5 w-3.5" /> {t("websiteContent.open")}
                 </Button>
               </div>
             </div>
@@ -431,11 +433,11 @@ export default function WebsiteContentPage() {
           <TabsList>
             <TabsTrigger value="pages" className="text-xs gap-1.5">
               <FileText className="h-3.5 w-3.5" />
-              Pages ({pages.length})
+              {t("websiteContent.pagesTab")} ({pages.length})
             </TabsTrigger>
             <TabsTrigger value="products" className="text-xs gap-1.5">
               <ShoppingBag className="h-3.5 w-3.5" />
-              Products ({products.length})
+              {t("websiteContent.productsTab")} ({products.length})
             </TabsTrigger>
           </TabsList>
           <div className="relative w-full sm:w-64">
@@ -443,7 +445,7 @@ export default function WebsiteContentPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={`Search ${activeTab}...`}
+              placeholder={t("websiteContent.searchPlaceholder", { type: activeTab === "pages" ? t("websiteContent.pagesTab").toLowerCase() : t("websiteContent.productsTab").toLowerCase() })}
               className="h-8 pl-8 text-xs"
             />
           </div>
@@ -527,6 +529,7 @@ function ContentList({
   onPreview: (item: ContentItem) => void;
   onEdit: (item: ContentItem) => void;
 }) {
+  const { t } = useLanguage();
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -542,7 +545,7 @@ function ContentList({
       <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="py-6 text-center">
           <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
-          <p className="text-sm text-destructive font-medium">Failed to fetch content</p>
+          <p className="text-sm text-destructive font-medium">{t("websiteContent.failedToFetch")}</p>
           <p className="text-xs text-muted-foreground mt-1">{error.message}</p>
         </CardContent>
       </Card>
@@ -554,7 +557,7 @@ function ContentList({
       <Card>
         <CardContent className="py-10 text-center text-muted-foreground">
           <FileText className="h-10 w-10 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No content found</p>
+          <p className="text-sm">{t("websiteContent.noContentFound")}</p>
         </CardContent>
       </Card>
     );
@@ -571,7 +574,7 @@ function ContentList({
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex items-start gap-2">
                       <h3 className="min-w-0 flex-1 text-sm font-medium leading-snug break-words">
-                        {decodeHtmlEntities(item.title) || "(Untitled)"}
+                        {decodeHtmlEntities(item.title) || t("websiteContent.untitled")}
                       </h3>
                       {item.url && (
                         <Button
@@ -622,7 +625,7 @@ function ContentList({
                     className="h-9 w-full justify-center gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/5"
                     onClick={() => onEdit(item)}
                   >
-                    <Pencil className="h-3.5 w-3.5" /> Edit & Optimize SEO
+                    <Pencil className="h-3.5 w-3.5" /> {t("websiteContent.editOptimize")}
                   </Button>
                   <Button
                     size="sm"
@@ -630,14 +633,14 @@ function ContentList({
                     className="h-9 w-full justify-center gap-1.5 text-xs"
                     onClick={() => onPreview(item)}
                   >
-                    <Eye className="h-3.5 w-3.5" /> Preview
+                    <Eye className="h-3.5 w-3.5" /> {t("websiteContent.preview")}
                   </Button>
                   <Button
                     size="sm"
                     className="h-9 w-full justify-center gap-1.5 text-xs bg-primary text-primary-foreground"
                     onClick={() => onDetectTemplate(item)}
                   >
-                    <Sparkles className="h-3.5 w-3.5" /> Generate Template
+                    <Sparkles className="h-3.5 w-3.5" /> {t("websiteContent.generateTemplate")}
                   </Button>
                 </div>
               </div>
