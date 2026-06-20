@@ -133,6 +133,32 @@ async function aiTranslateHtml(html: string, langName: string): Promise<string |
   return data.choices?.[0]?.message?.content?.trim() || null;
 }
 
+// AI fallback for a batch of short strings. Returns translations aligned to
+// the input order, or null if AI is unavailable / misaligned.
+async function aiTranslateBatch(values: string[], langName: string): Promise<string[] | null> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY || values.length === 0) return null;
+  const joined = values.join(SENTINEL);
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash-lite",
+      messages: [
+        { role: "system", content: `Translate each segment to ${langName}. Segments are separated by the exact marker "@@SPLIT@@". Keep the same number of segments and the markers in place. Preserve {variables}, URLs and brand/proper names. Return only the translated text with markers, nothing else.` },
+        { role: "user", content: joined },
+      ],
+    }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const out = data.choices?.[0]?.message?.content?.trim();
+  if (!out) return null;
+  const split = out.split(/\n?@@SPLIT@@\n?/);
+  if (split.length !== values.length) return null;
+  return values.map((v: string, i: number) => preserveSpacing(v, split[i]));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
