@@ -105,10 +105,10 @@ export default function WebsiteContentPage() {
         modified: new Date().toISOString(),
       };
       setScannedItem(item);
-      toast({ title: "Page scanned", description: `Found content from ${scanUrl}` });
+      toast({ title: t("websiteContent.pageScanned"), description: t("websiteContent.pageScannedDesc", { url: scanUrl }) });
     },
     onError: (err: Error) => {
-      toast({ title: "Scan failed", description: err.message, variant: "destructive" });
+      toast({ title: t("websiteContent.scanFailed"), description: err.message, variant: "destructive" });
     },
   });
   const [persistedEditPageId, setPersistedEditPageId] = useState<string | null>(() => persistedUiState?.editPageId ?? null);
