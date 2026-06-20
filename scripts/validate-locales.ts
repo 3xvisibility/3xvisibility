@@ -212,5 +212,9 @@ if (issues.length === 0 && totalMissing === 0) {
     console.error("");
   }
 
+  if (totalMissing > 0) {
+    console.error(`❌ ${totalMissing} missing translation key(s) — every locale must define all en.ts keys. Build aborted.\n`);
+  }
+
   process.exit(1);
 }
