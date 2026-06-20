@@ -543,6 +543,8 @@ export default function TemplateMarketplacePage() {
           </Button>
           <span className="text-sm text-muted-foreground">
             Page {currentPage} of {totalPages}
+            <span className="mx-2 opacity-50">·</span>
+            {filteredTemplates.length} {filteredTemplates.length === 1 ? "result" : "results"}
           </span>
           <Button
             variant="outline"
