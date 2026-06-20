@@ -29,6 +29,8 @@ import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { useTranslatedTemplate } from "@/hooks/use-translated-template";
+import { Languages } from "lucide-react";
 
 // Known category metadata (icons + nice labels). Any category found on a
 // template that isn't listed here still gets a pill automatically, so future
@@ -76,10 +78,15 @@ export default function TemplateMarketplacePage() {
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
+
+  // Auto-translate the previewed template (content, name, SEO + default values)
+  // into the active language (en/fr/de/es). English is returned untouched.
+  const { template: activePreview, translating: previewTranslating } =
+    useTranslatedTemplate(previewTemplate, language);
 
   // Reset uploaded CSV + image overrides when switching templates.
   useEffect(() => { setUploadedCsv([]); setImageOverrides({}); setContentOverrides({}); }, [previewTemplate?.id]);
@@ -88,11 +95,11 @@ export default function TemplateMarketplacePage() {
   const previewRows = useMemo(() => {
     const base = uploadedCsv.length > 0
       ? uploadedCsv
-      : (previewTemplate?.defaultValues ? [previewTemplate.defaultValues] : []);
+      : (activePreview?.defaultValues ? [activePreview.defaultValues] : []);
     const overrides = { ...contentOverrides, ...imageOverrides };
     if (Object.keys(overrides).length === 0) return base;
     return base.map((row) => ({ ...row, ...overrides }));
-  }, [uploadedCsv, previewTemplate, imageOverrides, contentOverrides]);
+  }, [uploadedCsv, activePreview, imageOverrides, contentOverrides]);
 
   const handleCsvUpload = async (file: File) => {
     try {
@@ -483,39 +490,44 @@ export default function TemplateMarketplacePage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
-                  {previewTemplate.name}
+                  {activePreview.name}
+                  {previewTranslating && (
+                    <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                      <Languages className="h-3.5 w-3.5 animate-pulse" /> {t("common.translating") || "Translating…"}
+                    </span>
+                  )}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
-                <p className="text-sm text-muted-foreground">{previewTemplate.description}</p>
+                <p className="text-sm text-muted-foreground">{activePreview.description}</p>
 
                 <div className="flex flex-wrap items-center gap-3 text-sm">
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-                    {previewTemplate.rating}
+                    {activePreview.rating}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Download className="h-3.5 w-3.5" />
-                    {previewTemplate.downloads.toLocaleString()} imports
+                    {activePreview.downloads.toLocaleString()} imports
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <Users className="h-3.5 w-3.5" />
-                    {previewTemplate.author}
+                    {activePreview.author}
                   </span>
-                  <Badge variant="outline" className="capitalize">{categoryIcon(previewTemplate.category)}</Badge>
-                  {previewTemplate.schema_type && (
-                    <Badge variant="secondary" className="text-xs">Schema: {previewTemplate.schema_type}</Badge>
+                  <Badge variant="outline" className="capitalize">{categoryIcon(activePreview.category)}</Badge>
+                  {activePreview.schema_type && (
+                    <Badge variant="secondary" className="text-xs">Schema: {activePreview.schema_type}</Badge>
                   )}
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
                   <span className="text-xs text-muted-foreground">Variables:</span>
-                  {previewTemplate.variables.map((v) => (
+                  {activePreview.variables.map((v) => (
                     <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
                   ))}
                 </div>
 
-                <SeoDefaultsEditor template={previewTemplate} />
+                <SeoDefaultsEditor template={activePreview} />
 
 
                 <Tabs defaultValue="preview" className="w-full">
@@ -531,7 +543,7 @@ export default function TemplateMarketplacePage() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="preview" className="mt-3">
-                    <TemplatePreview html={applyTemplateDefaults(previewTemplate.content, previewTemplate.defaultValues)} />
+                    <TemplatePreview html={applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
                   </TabsContent>
                   <TabsContent value="customize" className="mt-3 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
@@ -543,9 +555,9 @@ export default function TemplateMarketplacePage() {
                         size="sm"
                         className="h-8 text-xs"
                         onClick={() => downloadStarterCsv({
-                          templateName: previewTemplate.name,
-                          variables: previewTemplate.variables,
-                          defaultValues: previewTemplate.defaultValues,
+                          templateName: activePreview.name,
+                          variables: activePreview.variables,
+                          defaultValues: activePreview.defaultValues,
                         })}
                       >
                         <Download className="h-3.5 w-3.5 mr-1.5" /> Starter CSV
@@ -554,7 +566,7 @@ export default function TemplateMarketplacePage() {
                         variant="outline"
                         size="sm"
                         className="h-8 text-xs"
-                        onClick={() => exportTemplateZip(previewTemplate)}
+                        onClick={() => exportTemplateZip(activePreview)}
                       >
                         <Download className="h-3.5 w-3.5 mr-1.5" /> Export design (.zip)
                       </Button>
@@ -584,30 +596,30 @@ export default function TemplateMarketplacePage() {
                       />
                     </div>
                     {uploadedCsv.length > 0 && (
-                      <RowMappingPreview csvData={uploadedCsv} templateContent={previewTemplate.content} />
+                      <RowMappingPreview csvData={uploadedCsv} templateContent={activePreview.content} />
                     )}
                     <ContentFieldsPanel
-                      templateContent={previewTemplate.content}
-                      defaultValues={previewTemplate.defaultValues}
+                      templateContent={activePreview.content}
+                      defaultValues={activePreview.defaultValues}
                       values={contentOverrides}
                       onChange={(v, val) => setContentOverrides((prev) => ({ ...prev, [v]: val }))}
                       onReset={() => setContentOverrides({})}
                     />
                     <ImageVariablePanel
-                      templateContent={previewTemplate.content}
-                      defaultValues={previewTemplate.defaultValues}
+                      templateContent={activePreview.content}
+                      defaultValues={activePreview.defaultValues}
                       values={imageOverrides}
                       onChange={(v, url) => setImageOverrides((prev) => ({ ...prev, [v]: url }))}
                       onReset={() => setImageOverrides({})}
                     />
                     <LiveVariablePreview
-                      templateContent={previewTemplate.content}
+                      templateContent={activePreview.content}
                       csvData={previewRows}
                     />
                   </TabsContent>
                   <TabsContent value="code" className="mt-3">
                     <pre className="p-4 bg-muted rounded-md text-xs font-mono overflow-x-auto leading-relaxed max-h-64 overflow-y-auto">
-                      {previewTemplate.content}
+                      {activePreview.content}
                     </pre>
                   </TabsContent>
                 </Tabs>
@@ -665,8 +677,8 @@ export default function TemplateMarketplacePage() {
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
                   <Button
-                    onClick={() => importMutation.mutate(previewTemplate)}
-                    disabled={importMutation.isPending}
+                    onClick={() => importMutation.mutate(activePreview)}
+                    disabled={importMutation.isPending || previewTranslating}
                   >
                     {importMutation.isPending ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</>
