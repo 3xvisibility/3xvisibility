@@ -88,6 +88,8 @@ function localizedCategoryLabel(id: string, language: Language): string {
 
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 15;
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"browse" | "community">("browse");
   const [previewTemplate, setPreviewTemplate] = useState<MarketplaceTemplate | null>(null);
@@ -262,9 +264,20 @@ export default function TemplateMarketplacePage() {
     });
   }, [searchQuery, selectedCategory, activeTab, allTemplates, communityTemplates]);
 
+  // Reset to first page whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, activeTab]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / PER_PAGE));
+  const paginatedTemplates = useMemo(
+    () => filteredTemplates.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE),
+    [filteredTemplates, currentPage]
+  );
+
   // Auto-translate the card metadata (name + description) for the visible
   // templates into the active language (en/fr/de/es). Cached per template.
-  const { localize: localizeCard } = useTranslatedTemplateList(filteredTemplates, language);
+  const { localize: localizeCard } = useTranslatedTemplateList(paginatedTemplates, language);
 
   const importMutation = useMutation({
     mutationFn: async (tpl: MarketplaceTemplate) => {
@@ -442,7 +455,7 @@ export default function TemplateMarketplacePage() {
 
       {/* Template grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map((tpl) => (
+        {paginatedTemplates.map((tpl) => (
           <Card
             key={tpl.id}
             className="shadow-surface hover:shadow-surface-hover transition-all duration-150 cursor-pointer group"
@@ -517,6 +530,30 @@ export default function TemplateMarketplacePage() {
           </div>
         )}
       </div>
+
+      {filteredTemplates.length > PER_PAGE && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       {/* Preview dialog */}
       <Dialog open={!!previewTemplate} onOpenChange={(v) => !v && setPreviewTemplate(null)}>
