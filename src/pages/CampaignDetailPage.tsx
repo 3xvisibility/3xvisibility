@@ -676,7 +676,7 @@ export default function CampaignDetailPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold tabular-nums">{statusCounts[s]}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{s} pages</p>
+                    <p className="text-xs text-muted-foreground">{t(`campaignDetail.${s}Pages`)}</p>
                   </div>
                 </CardContent>
               </Card>
