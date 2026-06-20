@@ -41,6 +41,7 @@ interface Props {
 }
 
 export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
+  const { t } = useLanguage();
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(STORAGE_KEY) === "1";
