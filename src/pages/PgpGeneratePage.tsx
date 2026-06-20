@@ -629,7 +629,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           <Card className="shadow-surface">
             <CardContent className="p-5 space-y-4">
               <Label className="text-sm font-semibold flex items-center gap-2">
-                <Layers className="h-4 w-4 text-primary" /> Content Group
+                <Layers className="h-4 w-4 text-primary" /> {t("pgpGenerate.contentGroupLabel")}
               </Label>
               <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
                 <SelectTrigger className="h-11">
@@ -674,7 +674,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                         <span>{t("pgpGenerate.defineMissingKeywords")}</span>
                         <Button variant="link" size="sm" className="text-amber-600 h-auto p-0 ml-auto" onClick={() => navigate(`${basePath}/pgp-keywords`)}>
-                          Keywords →
+                          {t("pgpGenerate.keywordsLink")}
                         </Button>
                       </div>
                       <Button
