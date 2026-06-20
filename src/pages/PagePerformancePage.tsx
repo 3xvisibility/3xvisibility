@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { calculateFreshness } from "@/lib/content-freshness";
 import { calculateSeoScore } from "@/lib/seo-score";
 
@@ -33,6 +34,7 @@ export default function PagePerformancePage() {
   const [sortBy, setSortBy] = useState("views");
   const [timeRange, setTimeRange] = useState("30d");
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
 
   const { data: pages = [], isLoading: loadingPages } = useQuery({
@@ -96,10 +98,10 @@ export default function PagePerformancePage() {
         conversions: totalConversions,
         freshness,
         seoScore: seo.score,
-        seoLabel: seo.label,
+          seoLabel: seo.label === "N/A" ? t("common.notAvailable") : seo.label,
       };
     });
-  }, [pages, metrics]);
+  }, [pages, metrics, t]);
 
   // Summary stats
   const summary = useMemo(() => {
@@ -185,22 +187,22 @@ export default function PagePerformancePage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <BarChart3 className="h-6 w-6 text-primary" />
-          Page Performance
+          {t("pagePerformance.title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track traffic, engagement, and conversion metrics for your published pages.
+          {t("pagePerformance.trafficDescription")}
         </p>
       </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Views", value: summary.totalViews.toLocaleString(), icon: Eye, color: "text-primary" },
-          { label: "Unique Visitors", value: summary.totalVisitors.toLocaleString(), icon: Users, color: "text-emerald-600" },
-          { label: "Avg Bounce Rate", value: `${summary.avgBounce}%`, icon: TrendingDown, color: "text-amber-600" },
-          { label: "Avg CTR", value: `${summary.avgCtr}%`, icon: MousePointerClick, color: "text-primary" },
-          { label: "Conversions", value: summary.totalConversions.toLocaleString(), icon: Target, color: "text-emerald-600" },
-          { label: "Avg SEO Score", value: `${summary.avgSeo}/100`, icon: Zap, color: "text-primary" },
+          { label: t("pagePerformance.totalViews"), value: summary.totalViews.toLocaleString(), icon: Eye, color: "text-primary" },
+          { label: t("pagePerformance.uniqueVisitors"), value: summary.totalVisitors.toLocaleString(), icon: Users, color: "text-emerald-600" },
+          { label: t("pagePerformance.avgBounceRate"), value: `${summary.avgBounce}%`, icon: TrendingDown, color: "text-amber-600" },
+          { label: t("pagePerformance.avgCtr"), value: `${summary.avgCtr}%`, icon: MousePointerClick, color: "text-primary" },
+          { label: t("pagePerformance.conversions"), value: summary.totalConversions.toLocaleString(), icon: Target, color: "text-emerald-600" },
+          { label: t("pagePerformance.avgSeoScore"), value: `${summary.avgSeo}/100`, icon: Zap, color: "text-primary" },
         ].map((stat) => (
           <Card key={stat.label} className="shadow-surface">
             <CardContent className="p-4">
@@ -219,7 +221,7 @@ export default function PagePerformancePage() {
         {/* Top Pages by Views */}
         <Card className="shadow-surface">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Top Pages by Traffic</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("pagePerformance.topPagesByTraffic")}</h3>
             {isLoading ? (
               <Skeleton className="h-[250px]" />
             ) : topByViews.length > 0 ? (
@@ -236,7 +238,7 @@ export default function PagePerformancePage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
-                <p>No performance data yet. Metrics will appear here once pages receive traffic.</p>
+                <p>{t("pagePerformance.noPerformanceData")}</p>
               </div>
             )}
           </CardContent>
@@ -245,7 +247,7 @@ export default function PagePerformancePage() {
         {/* Bounce Rate Distribution */}
         <Card className="shadow-surface">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Bounce Rate Distribution</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("pagePerformance.bounceRateDistribution")}</h3>
             {isLoading ? (
               <Skeleton className="h-[250px]" />
             ) : (
@@ -275,7 +277,7 @@ export default function PagePerformancePage() {
         {/* SEO Score vs Views */}
         <Card className="shadow-surface lg:col-span-2">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">SEO Score vs Traffic (Top 20 Pages)</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("pagePerformance.seoScoreVsTraffic")}</h3>
             {isLoading ? (
               <Skeleton className="h-[220px]" />
             ) : seoVsPerf.length > 0 ? (
@@ -293,7 +295,7 @@ export default function PagePerformancePage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-                No data available yet.
+                {t("pagePerformance.noDataYet")}
               </div>
             )}
           </CardContent>
@@ -304,7 +306,7 @@ export default function PagePerformancePage() {
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-xs" />
+          <Input placeholder={t("pagePerformance.searchPages")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-xs" />
         </div>
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className="w-[140px] h-8 text-xs">
@@ -312,12 +314,12 @@ export default function PagePerformancePage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="views">Most Views</SelectItem>
-            <SelectItem value="visitors">Most Visitors</SelectItem>
-            <SelectItem value="bounce">Lowest Bounce</SelectItem>
-            <SelectItem value="ctr">Highest CTR</SelectItem>
-            <SelectItem value="seo">Best SEO</SelectItem>
-            <SelectItem value="conversions">Most Conversions</SelectItem>
+            <SelectItem value="views">{t("pagePerformance.mostViews")}</SelectItem>
+            <SelectItem value="visitors">{t("pagePerformance.mostVisitors")}</SelectItem>
+            <SelectItem value="bounce">{t("pagePerformance.lowestBounce")}</SelectItem>
+            <SelectItem value="ctr">{t("pagePerformance.highestCtr")}</SelectItem>
+            <SelectItem value="seo">{t("pagePerformance.bestSeo")}</SelectItem>
+            <SelectItem value="conversions">{t("pagePerformance.mostConversions")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={timeRange} onValueChange={setTimeRange}>
@@ -325,10 +327,10 @@ export default function PagePerformancePage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7d">Last 7d</SelectItem>
-            <SelectItem value="30d">Last 30d</SelectItem>
-            <SelectItem value="90d">Last 90d</SelectItem>
-            <SelectItem value="all">All Time</SelectItem>
+            <SelectItem value="7d">{t("pagePerformance.last7d")}</SelectItem>
+            <SelectItem value="30d">{t("pagePerformance.last30d")}</SelectItem>
+            <SelectItem value="90d">{t("pagePerformance.last90d")}</SelectItem>
+            <SelectItem value="all">{t("pagePerformance.allTime")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -343,23 +345,23 @@ export default function PagePerformancePage() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No published pages found</p>
-              <p className="text-sm mt-1">Publish pages to start tracking performance metrics.</p>
+              <p className="font-medium">{t("pagePerformance.noPages")}</p>
+              <p className="text-sm mt-1">{t("pagePerformance.publishPagesHint")}</p>
             </div>
           ) : (
             <div>
               <table className="w-full text-sm table-fixed">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left p-3 font-medium text-muted-foreground">Page</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground">Views</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden sm:table-cell">Visitors</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">Avg Time</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">Bounce</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">CTR</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">Conv.</th>
-                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">SEO</th>
-                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">Freshness</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground">{t("pagePerformance.page")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground">{t("pagePerformance.views")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden sm:table-cell">{t("pagePerformance.visitors")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">{t("pagePerformance.avgTime")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden md:table-cell">{t("pagePerformance.bounce")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.ctr")}</th>
+                    <th className="text-right p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.conv")}</th>
+                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.seo")}</th>
+                    <th className="text-center p-3 font-medium text-muted-foreground hidden lg:table-cell">{t("pagePerformance.freshness")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -404,9 +406,9 @@ export default function PagePerformancePage() {
           <CardContent className="p-4 flex items-center gap-3">
             <TrendingUp className="h-5 w-5 text-primary shrink-0" />
             <div>
-              <p className="text-sm font-medium">Connect analytics to see real data</p>
+              <p className="text-sm font-medium">{t("pagePerformance.connectAnalytics")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Performance metrics will populate automatically as your published pages receive traffic. You can also import analytics data via the API.
+                {t("pagePerformance.metricsPopulateHint")}
               </p>
             </div>
           </CardContent>

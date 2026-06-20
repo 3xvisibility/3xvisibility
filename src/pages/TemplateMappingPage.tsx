@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import {
   classifyTemplate, SECTIONS, type SectionKey, type ClassifiedVariable,
 } from "@/lib/template-section-classifier";
@@ -62,6 +63,7 @@ const SECTION_ICON: Record<SectionKey, typeof Rocket> = {
 
 export default function TemplateMappingPage() {
   const { currentWorkspace, basePath } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>("");
   const [search, setSearch] = useState("");
@@ -155,7 +157,7 @@ export default function TemplateMappingPage() {
   /** Persist the entire draft mapping to Supabase. */
   const saveMapping = useMutation({
     mutationFn: async () => {
-      if (!activeCampaign) throw new Error("No campaign selected");
+      if (!activeCampaign) throw new Error(t("templateMapping.errorNoCampaign"));
       const { error } = await supabase
         .from("campaigns")
         .update({ mapping: workingMapping })
@@ -164,15 +166,15 @@ export default function TemplateMappingPage() {
       return workingMapping;
     },
     onSuccess: () => {
-      toast.success(`Saved ${dirtyKeys.length} mapping change${dirtyKeys.length === 1 ? "" : "s"}`);
+      toast.success(t("templateMapping.toastSaved", { count: dirtyKeys.length }));
       queryClient.invalidateQueries({ queryKey: ["mapping-campaigns", wsId] });
     },
-    onError: (e: any) => toast.error(e?.message || "Failed to save mappings"),
+    onError: (e: any) => toast.error(e?.message || t("templateMapping.toastSaveFailed")),
   });
 
   const discardChanges = () => {
     setDraftMapping({ ...savedMapping });
-    toast.info("Changes discarded");
+    toast.info(t("templateMapping.toastDiscarded"));
   };
 
   // Classify variables once template is loaded
@@ -224,6 +226,22 @@ export default function TemplateMappingPage() {
   const totalVars = classified.length;
   const mappedVars = classified.filter(v => resolveColumnForVar(v.name)).length;
   const unmappedVars = totalVars - mappedVars;
+  const sectionLabels: Record<SectionKey, string> = {
+    hero: t("templateMapping.sectionHero"),
+    about: t("templateMapping.sectionAbout"),
+    gallery: t("templateMapping.sectionGallery"),
+    faq: t("templateMapping.sectionFaq"),
+    seo: t("templateMapping.sectionSeo"),
+    other: t("templateMapping.sectionOther"),
+  };
+  const sectionDescriptions: Record<SectionKey, string> = {
+    hero: t("templateMapping.sectionHeroDesc"),
+    about: t("templateMapping.sectionAboutDesc"),
+    gallery: t("templateMapping.sectionGalleryDesc"),
+    faq: t("templateMapping.sectionFaqDesc"),
+    seo: t("templateMapping.sectionSeoDesc"),
+    other: t("templateMapping.sectionOtherDesc"),
+  };
 
   return (
     <div className="space-y-6">
@@ -232,16 +250,15 @@ export default function TemplateMappingPage() {
         <div className="min-w-0">
           <h1 className="text-lg sm:text-display flex items-center gap-2">
             <Columns3 className="h-5 w-5 text-primary" />
-            Template Variable Mapping
+            {t("templateMapping.title")}
           </h1>
           <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-            See exactly which CSV column fills the hero, about, gallery captions, FAQ
-            and other slots of every generated page.
+            {t("templateMapping.subtitle")}
           </p>
         </div>
         <Button variant="outline" asChild size="sm" className="w-fit">
           <Link to={`${basePath}/campaigns`}>
-            Manage campaigns <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            {t("templateMapping.manageCampaigns")} <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Link>
         </Button>
       </div>
@@ -249,9 +266,9 @@ export default function TemplateMappingPage() {
       {/* ── Campaign picker ──────────────────── */}
       <Card className="shadow-surface">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Choose a campaign</CardTitle>
+          <CardTitle className="text-sm">{t("templateMapping.chooseCampaign")}</CardTitle>
           <CardDescription className="text-xs">
-            Mappings are scoped to the campaign + template combination.
+            {t("templateMapping.campaignScopeDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
@@ -259,16 +276,16 @@ export default function TemplateMappingPage() {
             <Skeleton className="h-9 w-full max-w-sm" />
           ) : campaigns.length === 0 ? (
             <div className="text-sm text-muted-foreground border border-dashed rounded-lg p-4">
-              No campaigns with templates yet.{" "}
+              {t("templateMapping.noCampaignsPrefix")}{" "}
               <Link to={`${basePath}/campaigns`} className="underline text-primary">
-                Create one
+                {t("templateMapping.createOne")}
               </Link>{" "}
-              to see its mapping here.
+              {t("templateMapping.noCampaignsSuffix")}
             </div>
           ) : (
             <Select value={activeCampaignId} onValueChange={setSelectedCampaignId}>
               <SelectTrigger className="w-full sm:max-w-sm h-9">
-                <SelectValue placeholder="Select a campaign" />
+                <SelectValue placeholder={t("templateMapping.selectCampaignPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {campaigns.map(c => (
@@ -284,10 +301,10 @@ export default function TemplateMappingPage() {
         <>
           {/* ── Summary stats ─────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatCard label="Template" value={template.name} icon={FileText} />
-            <StatCard label="Variables" value={String(totalVars)} icon={Sparkles} />
-            <StatCard label="Mapped" value={String(mappedVars)} tone="success" />
-            <StatCard label="Unmapped" value={String(unmappedVars)} tone={unmappedVars ? "warn" : "muted"} />
+            <StatCard label={t("templateMapping.statTemplate")} value={template.name} icon={FileText} />
+            <StatCard label={t("templateMapping.statVariables")} value={String(totalVars)} icon={Sparkles} />
+            <StatCard label={t("templateMapping.statMapped")} value={String(mappedVars)} tone="success" />
+            <StatCard label={t("templateMapping.statUnmapped")} value={String(unmappedVars)} tone={unmappedVars ? "warn" : "muted"} />
           </div>
 
           {/* ── Save bar ──────────────────────── */}
@@ -302,14 +319,14 @@ export default function TemplateMappingPage() {
               {isDirty ? (
                 <>
                   <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-400">
-                    {dirtyKeys.length} unsaved
+                    {t("templateMapping.unsavedCount", { count: dirtyKeys.length })}
                   </Badge>
                   <span className="text-muted-foreground truncate">
-                    Click Save to apply mappings to future page generation.
+                    {t("templateMapping.saveApplyHint")}
                   </span>
                 </>
               ) : (
-                <span className="text-muted-foreground">All mapping changes saved.</span>
+                <span className="text-muted-foreground">{t("templateMapping.allSaved")}</span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -320,7 +337,7 @@ export default function TemplateMappingPage() {
                 onClick={discardChanges}
                 disabled={!isDirty || saveMapping.isPending}
               >
-                <Undo2 className="h-3.5 w-3.5 mr-1.5" /> Discard
+                <Undo2 className="h-3.5 w-3.5 mr-1.5" /> {t("templateMapping.discard")}
               </Button>
               <Button
                 size="sm"
@@ -333,7 +350,7 @@ export default function TemplateMappingPage() {
                 ) : (
                   <Save className="h-3.5 w-3.5 mr-1.5" />
                 )}
-                Save mappings
+                {t("templateMapping.saveMappings")}
               </Button>
             </div>
           </div>
@@ -342,7 +359,7 @@ export default function TemplateMappingPage() {
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Filter variables..."
+              placeholder={t("templateMapping.filterVariables")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 h-9"
@@ -352,8 +369,8 @@ export default function TemplateMappingPage() {
           {/* ── Tabs: by section / by page ────── */}
           <Tabs defaultValue="sections" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="sections">By section</TabsTrigger>
-              <TabsTrigger value="pages">By generated page</TabsTrigger>
+              <TabsTrigger value="sections">{t("templateMapping.bySection")}</TabsTrigger>
+              <TabsTrigger value="pages">{t("templateMapping.byGeneratedPage")}</TabsTrigger>
             </TabsList>
 
             {/* By section view */}
@@ -372,11 +389,11 @@ export default function TemplateMappingPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <CardTitle className="text-sm flex items-center gap-2">
-                            {meta.label}
+                            {sectionLabels[key]}
                             <Badge variant="outline" className="text-[10px]">{vars.length}</Badge>
                           </CardTitle>
                           <CardDescription className="text-xs mt-0.5">
-                            {meta.description}
+                            {sectionDescriptions[key]}
                           </CardDescription>
                         </div>
                       </div>
@@ -386,10 +403,10 @@ export default function TemplateMappingPage() {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="min-w-[140px]">Template variable</TableHead>
-                              <TableHead className="min-w-[160px]">CSV column</TableHead>
-                              <TableHead className="hidden sm:table-cell">Sample value</TableHead>
-                              <TableHead className="text-right w-[80px]">Uses</TableHead>
+                              <TableHead className="min-w-[140px]">{t("templateMapping.tableTemplateVariable")}</TableHead>
+                              <TableHead className="min-w-[160px]">{t("templateMapping.tableCsvColumn")}</TableHead>
+                              <TableHead className="hidden sm:table-cell">{t("templateMapping.tableSampleValue")}</TableHead>
+                              <TableHead className="text-right w-[80px]">{t("templateMapping.tableUses")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -430,7 +447,7 @@ export default function TemplateMappingPage() {
               })}
               {totalVars === 0 && (
                 <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-                  This template has no <code className="bg-muted px-1 rounded">{'{variable}'}</code> placeholders.
+                  {t("templateMapping.noVariablesPrefix")} <code className="bg-muted px-1 rounded">{'{variable}'}</code> {t("templateMapping.noVariablesSuffix")}
                 </CardContent></Card>
               )}
             </TabsContent>
@@ -439,7 +456,7 @@ export default function TemplateMappingPage() {
             <TabsContent value="pages" className="space-y-4">
               {pages.length === 0 ? (
                 <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-                  No pages have been generated for this campaign yet.
+                  {t("templateMapping.noGeneratedPages")}
                 </CardContent></Card>
               ) : (
                 pages.map(page => {
@@ -458,10 +475,10 @@ export default function TemplateMappingPage() {
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead className="min-w-[110px]">Section</TableHead>
-                                <TableHead className="min-w-[120px]">Variable</TableHead>
-                                <TableHead className="min-w-[120px]">From column</TableHead>
-                                <TableHead>Filled value</TableHead>
+                                <TableHead className="min-w-[110px]">{t("templateMapping.tableSection")}</TableHead>
+                                <TableHead className="min-w-[120px]">{t("templateMapping.tableVariable")}</TableHead>
+                                <TableHead className="min-w-[120px]">{t("templateMapping.tableFromColumn")}</TableHead>
+                                <TableHead>{t("templateMapping.tableFilledValue")}</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -473,7 +490,7 @@ export default function TemplateMappingPage() {
                                   <TableRow key={v.name}>
                                     <TableCell>
                                       <Badge variant="outline" className={`text-[10px] ${meta.badgeClass}`}>
-                                        {meta.label}
+                                        {sectionLabels[v.section]}
                                       </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -492,7 +509,7 @@ export default function TemplateMappingPage() {
                                       />
                                     </TableCell>
                                     <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
-                                      {value || <span className="italic opacity-60">empty</span>}
+                                      {value || <span className="italic opacity-60">{t("templateMapping.emptyValue")}</span>}
                                     </TableCell>
                                   </TableRow>
                                 );
@@ -555,11 +572,12 @@ function MappingEditor({
   compact?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
+  const { t } = useLanguage();
 
   if (csvColumns.length === 0) {
     return (
       <span className="text-[11px] italic text-muted-foreground">
-        No CSV columns available
+        {t("templateMapping.noCsvColumns")}
       </span>
     );
   }
@@ -573,17 +591,17 @@ function MappingEditor({
             <span className="font-medium truncate" title={currentColumn}>{currentColumn}</span>
           </span>
         ) : (
-          <Badge variant="destructive" className="text-[10px]">unmapped</Badge>
+          <Badge variant="destructive" className="text-[10px]">{t("templateMapping.unmapped")}</Badge>
         )}
         {isDirty && (
-          <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-300">unsaved</Badge>
+          <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-300">{t("templateMapping.unsaved")}</Badge>
         )}
         <Button
           variant="ghost"
           size="icon"
           className="h-6 w-6 shrink-0"
           onClick={() => setEditing(true)}
-          aria-label={`Change mapping for ${varName}`}
+          aria-label={t("templateMapping.changeMappingAria", { name: varName })}
         >
           <Pencil className="h-3 w-3" />
         </Button>
@@ -601,11 +619,11 @@ function MappingEditor({
         }}
       >
         <SelectTrigger className="h-7 text-xs min-w-[140px] max-w-[220px]">
-          <SelectValue placeholder="Pick a CSV column" />
+          <SelectValue placeholder={t("templateMapping.pickCsvColumn")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={UNMAPPED}>
-            <span className="italic text-muted-foreground">— Unmapped —</span>
+            <span className="italic text-muted-foreground">{t("templateMapping.unmappedOption")}</span>
           </SelectItem>
           {csvColumns.map(c => (
             <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -617,7 +635,7 @@ function MappingEditor({
         size="icon"
         className="h-6 w-6 shrink-0"
         onClick={() => setEditing(false)}
-        aria-label="Cancel"
+        aria-label={t("common.cancel")}
       >
         <XIcon className="h-3 w-3" />
       </Button>

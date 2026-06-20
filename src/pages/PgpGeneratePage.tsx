@@ -164,7 +164,7 @@ export default function PgpGeneratePage() {
     setAiKwFilling(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const varNames = missingKeywords.map(k => k.name);
       const prompt = `Generate keyword data for an SEO page generator tool.
@@ -190,7 +190,7 @@ Only return valid JSON. No markdown fences.`;
         const raw = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
         parsed = JSON.parse(raw.replace(/^```json?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim());
       } catch {
-        throw new Error("AI returned invalid data. Try again.");
+        throw new Error(t("pgpGenerate.errorAiInvalidData"));
       }
 
       // Create keyword groups for each variable
@@ -382,7 +382,7 @@ Only return valid JSON. No markdown fences.`;
     setGenProgress({ processed: 0, total: 0, errors: 0 });
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const count = parseInt(aiPageCount) || 10;
       setGenProgress({ processed: 0, total: count, errors: 0 });
@@ -417,7 +417,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
         pages = JSON.parse(cleaned);
         if (!Array.isArray(pages)) pages = [pages];
       } catch {
-        throw new Error("AI returned invalid format. Please try again.");
+        throw new Error(t("pgpGenerate.errorAiInvalidFormat"));
       }
 
       // Create campaign
@@ -475,7 +475,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(t("settings.notAuthenticated"));
 
       const rows = buildRows();
       if (rows.length === 0) {
@@ -629,7 +629,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
           <Card className="shadow-surface">
             <CardContent className="p-5 space-y-4">
               <Label className="text-sm font-semibold flex items-center gap-2">
-                <Layers className="h-4 w-4 text-primary" /> Content Group
+                <Layers className="h-4 w-4 text-primary" /> {t("pgpGenerate.contentGroupLabel")}
               </Label>
               <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
                 <SelectTrigger className="h-11">
@@ -674,7 +674,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                         <span>{t("pgpGenerate.defineMissingKeywords")}</span>
                         <Button variant="link" size="sm" className="text-amber-600 h-auto p-0 ml-auto" onClick={() => navigate(`${basePath}/pgp-keywords`)}>
-                          Keywords →
+                          {t("pgpGenerate.keywordsLink")}
                         </Button>
                       </div>
                       <Button
@@ -747,9 +747,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Business / Store Description *</Label>
+                  <Label className="text-xs font-semibold">{t("pgpGenerate.businessDescLabel")}</Label>
                   <Textarea
-                    placeholder="e.g. Plumbing services company in Texas, specializing in emergency repairs..."
+                    placeholder={t("pgpGenerate.businessDescPlaceholder")}
                     value={aiBusinessDesc}
                     onChange={(e) => setAiBusinessDesc(e.target.value)}
                     rows={3}
@@ -870,10 +870,10 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <CardContent className="p-5 space-y-5">
                 <Tabs defaultValue="generation" className="space-y-4">
                   <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-                    <TabsTrigger value="generation" className="text-xs sm:text-sm"><Zap className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Generation</span><span className="sm:hidden">Gen</span></TabsTrigger>
-                    <TabsTrigger value="ai" className="text-xs sm:text-sm"><Sparkles className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> AI</TabsTrigger>
-                    <TabsTrigger value="overwrite" className="text-xs sm:text-sm"><RotateCcw className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Overwrite</span><span className="sm:hidden">Overw.</span></TabsTrigger>
-                    <TabsTrigger value="schedule" className="text-xs sm:text-sm"><Settings2 className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Schedule</span><span className="sm:hidden">Sched.</span></TabsTrigger>
+                    <TabsTrigger value="generation" className="text-xs sm:text-sm"><Zap className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">{t("pgpGenerate.tabGeneration")}</span><span className="sm:hidden">{t("pgpGenerate.tabGenerationShort")}</span></TabsTrigger>
+                    <TabsTrigger value="ai" className="text-xs sm:text-sm"><Sparkles className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> {t("pgpGenerate.tabAi")}</TabsTrigger>
+                    <TabsTrigger value="overwrite" className="text-xs sm:text-sm"><RotateCcw className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">{t("pgpGenerate.tabOverwrite")}</span><span className="sm:hidden">{t("pgpGenerate.tabOverwriteShort")}</span></TabsTrigger>
+                    <TabsTrigger value="schedule" className="text-xs sm:text-sm"><Settings2 className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">{t("pgpGenerate.tabSchedule")}</span><span className="sm:hidden">{t("pgpGenerate.tabScheduleShort")}</span></TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="generation" className="space-y-4">
@@ -882,9 +882,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <Label className="text-xs font-semibold">{t("pgpGenerate.generationMethodLabel")}</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {([
-                          { value: "all", label: "All Combinations", desc: "Every possible combination of keyword terms" },
-                          { value: "sequential", label: "Sequential", desc: "Honors the order of terms in each keyword" },
-                          { value: "random", label: "Random", desc: "Picks a random term from each keyword" },
+                          { value: "all", label: t("pgpGenerate.methodAll"), desc: t("pgpGenerate.methodAllDesc") },
+                          { value: "sequential", label: t("pgpGenerate.methodSequential"), desc: t("pgpGenerate.methodSequentialDesc") },
+                          { value: "random", label: t("pgpGenerate.methodRandom"), desc: t("pgpGenerate.methodRandomDesc") },
                         ] as const).map(m => (
                           <button
                             key={m.value}
@@ -905,26 +905,26 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Number of Pages</Label>
+                        <Label className="text-xs">{t("pgpGenerate.numberOfPagesLabel")}</Label>
                         <Input
                           type="number"
-                          placeholder={`Max: ${maxPages.toLocaleString()}`}
+                          placeholder={t("pgpGenerate.maxPlaceholder", { count: maxPages.toLocaleString() })}
                           value={numberOfPages}
                           onChange={(e) => setNumberOfPages(e.target.value)}
                           className="h-9"
                         />
-                        <p className="text-[10px] text-muted-foreground">Leave blank for all ({maxPages.toLocaleString()} pages)</p>
+                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.leaveBlankAll", { count: maxPages.toLocaleString() })}</p>
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Resume Index</Label>
+                        <Label className="text-xs">{t("pgpGenerate.resumeIndexLabel")}</Label>
                         <Input
                           type="number"
-                          placeholder="0"
+                          placeholder={t("pgpGenerate.resumeIndexPlaceholder")}
                           value={resumeIndex}
                           onChange={(e) => setResumeIndex(e.target.value)}
                           className="h-9"
                         />
-                        <p className="text-[10px] text-muted-foreground">Start from this index (0-based)</p>
+                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.resumeIndexHint")}</p>
                       </div>
                     </div>
 
@@ -1087,18 +1087,18 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                     {overwrite && (
                       <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Select sections to overwrite</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("pgpGenerate.selectSectionsOverwrite")}</p>
                         <div className="grid grid-cols-2 gap-2">
                           {([
-                            { key: "title", label: "Title & Slug" },
-                            { key: "content", label: "Content" },
-                            { key: "excerpt", label: "Excerpt" },
-                            { key: "seo", label: "SEO Metadata" },
-                            { key: "featuredImage", label: "Featured Image" },
-                            { key: "customFields", label: "Custom Fields" },
-                            { key: "taxonomies", label: "Taxonomies" },
-                            { key: "author", label: "Author" },
-                            { key: "publishDate", label: "Publish Date" },
+                            { key: "title", label: t("pgpGenerate.fieldTitle") },
+                            { key: "content", label: t("pgpGenerate.fieldContent") },
+                            { key: "excerpt", label: t("pgpGenerate.fieldExcerpt") },
+                            { key: "seo", label: t("pgpGenerate.fieldSeo") },
+                            { key: "featuredImage", label: t("pgpGenerate.fieldFeaturedImage") },
+                            { key: "customFields", label: t("pgpGenerate.fieldCustomFields") },
+                            { key: "taxonomies", label: t("pgpGenerate.fieldTaxonomies") },
+                            { key: "author", label: t("pgpGenerate.fieldAuthor") },
+                            { key: "publishDate", label: t("pgpGenerate.fieldPublishDate") },
                           ] as const).map(f => (
                             <label key={f.key} className="flex items-center gap-2 text-xs cursor-pointer p-2 rounded-lg hover:bg-accent transition-colors">
                               <Checkbox
@@ -1109,7 +1109,7 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                             </label>
                           ))}
                         </div>
-                        <p className="text-[10px] text-muted-foreground">Unchecked sections will be preserved from the existing page.</p>
+                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.overwriteHint")}</p>
                       </div>
                     )}
                   </TabsContent>
@@ -1120,10 +1120,10 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <Select value={scheduleMode} onValueChange={(v: any) => setScheduleMode(v)}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="immediate">Immediate</SelectItem>
-                          <SelectItem value="specific">Specific Date</SelectItem>
-                          <SelectItem value="increment">Increment (Drip Feed)</SelectItem>
-                          <SelectItem value="random">Random Date Range</SelectItem>
+                          <SelectItem value="immediate">{t("pgpGenerate.scheduleImmediate")}</SelectItem>
+                          <SelectItem value="specific">{t("pgpGenerate.scheduleSpecific")}</SelectItem>
+                          <SelectItem value="increment">{t("pgpGenerate.scheduleIncrement")}</SelectItem>
+                          <SelectItem value="random">{t("pgpGenerate.scheduleRandom")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1167,14 +1167,14 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <Card className="shadow-surface">
               <CardContent className="p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">Generation Progress</span>
+                  <span className="text-sm font-semibold">{t("pgpGenerate.progressTitle")}</span>
                   <span className="text-xs text-muted-foreground tabular-nums">
                     {genProgress.processed}/{genProgress.total}
                   </span>
                 </div>
                 <Progress value={genProgress.total > 0 ? (genProgress.processed / genProgress.total) * 100 : 0} className="h-2" />
                 {genProgress.errors > 0 && (
-                  <p className="text-xs text-destructive">{genProgress.errors} error(s)</p>
+                  <p className="text-xs text-destructive">{t("pgpGenerate.progressErrors", { count: genProgress.errors })}</p>
                 )}
               </CardContent>
             </Card>
@@ -1192,9 +1192,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 onClick={handleGenerate}
               >
                 {isGenerating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generating...</>
+                  <><Loader2 className="h-4 w-4 animate-spin mr-2" /> {t("pgpGenerate.generatingBtn")}</>
                 ) : (
-                  <><Play className="h-4 w-4 mr-2" /> Generate</>
+                  <><Play className="h-4 w-4 mr-2" /> {t("pgpGenerate.generateBtn")}</>
                 )}
               </Button>
 
@@ -1210,35 +1210,35 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               {selectedGroup && (
                 <div className="rounded-xl border p-3 space-y-2 text-xs">
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Method</span>
-                    <span className="font-medium text-foreground capitalize">{method}</span>
+                    <span>{t("pgpGenerate.summaryMethod")}</span>
+                    <span className="font-medium text-foreground">{method === "all" ? t("pgpGenerate.methodAll") : method === "sequential" ? t("pgpGenerate.methodSequential") : t("pgpGenerate.methodRandom")}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Keywords</span>
+                    <span>{t("pgpGenerate.summaryKeywords")}</span>
                     <span className="font-medium text-foreground">{groupKeywords.length}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Max Pages</span>
+                    <span>{t("pgpGenerate.summaryMaxPages")}</span>
                     <span className="font-medium text-foreground">{maxPages.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Will Generate</span>
+                    <span>{t("pgpGenerate.summaryWillGenerate")}</span>
                     <span className="font-medium text-foreground">
                       {numberOfPages ? Math.min(parseInt(numberOfPages) || 0, maxPages).toLocaleString() : maxPages.toLocaleString()}
                     </span>
                   </div>
                   <Separator className="my-1" />
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Overwrite</span>
-                    <span className="font-medium text-foreground">{overwrite ? "Yes" : "No"}</span>
+                    <span>{t("pgpGenerate.summaryOverwrite")}</span>
+                    <span className="font-medium text-foreground">{overwrite ? t("pgpGenerate.yes") : t("pgpGenerate.no")}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Spintax</span>
-                    <span className="font-medium text-foreground">{spinContent ? "On" : "Off"}</span>
+                    <span>{t("pgpGenerate.summarySpintax")}</span>
+                    <span className="font-medium text-foreground">{spinContent ? t("pgpGenerate.on") : t("pgpGenerate.off")}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Schedule</span>
-                    <span className="font-medium text-foreground capitalize">{scheduleMode}</span>
+                    <span>{t("pgpGenerate.summarySchedule")}</span>
+                    <span className="font-medium text-foreground">{scheduleMode === "immediate" ? t("pgpGenerate.scheduleImmediate") : scheduleMode === "specific" ? t("pgpGenerate.scheduleSpecific") : scheduleMode === "increment" ? t("pgpGenerate.scheduleIncrement") : t("pgpGenerate.scheduleRandom")}</span>
                   </div>
                 </div>
               )}
@@ -1250,9 +1250,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
             <Card className="shadow-surface">
               <CardContent className="p-0">
                 <div className="px-4 py-3 border-b flex items-center justify-between">
-                  <p className="text-xs font-semibold">Test Preview</p>
+                  <p className="text-xs font-semibold">{t("pgpGenerate.testPreviewTitle")}</p>
                   <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setTestPreview(null)}>
-                    Close
+                    {t("pgpGenerate.close")}
                   </Button>
                 </div>
                 <div className="p-4 max-h-96 overflow-auto">
