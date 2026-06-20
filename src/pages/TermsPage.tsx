@@ -38,7 +38,7 @@ export default function TermsPage() {
       </p>
       <h2>Contact</h2>
       <p>
-        Legal questions: <a href="mailto:legal@pagegen.app">legal@pagegen.app</a>
+        Legal questions: <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a>
       </p>
     </StaticPageLayout>
     </>
