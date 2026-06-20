@@ -53,6 +53,9 @@ export function WorkspaceBreadcrumb() {
     marketplace: t("sidebar.marketplace"),
     indexing: t("sidebar.indexing"),
     data: t("sidebar.dataCsv"),
+    "pgp-keywords": t("sidebar.pgpKeywords"),
+    "pgp-generate": t("sidebar.pgpGenerate"),
+    "pgp-terms": t("sidebar.pgpTerms"),
     "website-content": t("sidebar.websiteContent"),
     "template-mapping": t("sidebar.templateMapping"),
     
