@@ -21,6 +21,7 @@ import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 import { ShopifyProductManager } from "./ShopifyProductManager";
 import { extractEdgeError } from "@/lib/edge-function-error";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type Website = Tables<"websites">;
 
