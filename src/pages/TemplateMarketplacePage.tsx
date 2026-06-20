@@ -355,7 +355,7 @@ export default function TemplateMarketplacePage() {
           variant={activeTab === "community" ? "default" : "outline"}
           onClick={() => setActiveTab("community")}
         >
-          <Users className="h-3.5 w-3.5 mr-1.5" /> Community Shared
+          <Users className="h-3.5 w-3.5 mr-1.5" /> {t("marketplace.communityShared")}
           {communityTemplates.length > 0 && (
             <Badge variant="secondary" className="ml-1.5 text-[10px]">{communityTemplates.length}</Badge>
           )}
