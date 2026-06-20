@@ -132,8 +132,8 @@ export default function PgpTermsPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !wsId) throw new Error("Not authenticated");
-      if (!name.trim()) throw new Error("Name is required");
+      if (!user || !wsId) throw new Error(t("settings.notAuthenticated"));
+      if (!name.trim()) throw new Error(t("pgpTerms.nameRequired"));
 
       const termsArray = terms.split("\n").map(t => t.trim()).filter(Boolean);
 
