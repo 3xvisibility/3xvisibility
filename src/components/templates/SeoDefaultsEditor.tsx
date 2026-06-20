@@ -66,7 +66,7 @@ export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
         : rawDesc,
       slug: slugify(brandName ? `${rawSlug} ${brandName}` : rawSlug),
     };
-  }, [template, appName]);
+  }, [template, appName, isWhitelabeled]);
 
   const [title, setTitle] = useState(defaults.title);
   const [description, setDescription] = useState(defaults.description);
