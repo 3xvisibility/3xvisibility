@@ -40,13 +40,14 @@ interface SeoDefaultsEditorProps {
  * generated page starts with correct, ready-to-edit SEO metadata.
  */
 export function SeoDefaultsEditor({ template }: SeoDefaultsEditorProps) {
-  const { appName } = useBranding();
+  const { appName, isWhitelabeled } = useBranding();
 
   const defaults = useMemo(() => {
-    // Override the template's placeholder brand defaults (e.g. "Lums") with the
-    // user's own company / brand / website name so the SEO title suffix and slug
-    // reflect their business instead of the template theme.
-    const brandName = (appName || "").trim();
+    // Only override the template's placeholder brand defaults with the user's own
+    // brand name when they have actually set one (whitelabel). Otherwise keep the
+    // template's default brand values so the platform name (e.g. "3XVISIBILITY")
+    // is never injected as the user's business name.
+    const brandName = isWhitelabeled ? (appName || "").trim() : "";
     const dv = { ...template.defaultValues } as Record<string, string>;
     if (brandName) {
       for (const key of BRAND_NAME_KEYS) {
