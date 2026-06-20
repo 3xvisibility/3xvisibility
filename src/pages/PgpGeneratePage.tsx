@@ -870,10 +870,10 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
               <CardContent className="p-5 space-y-5">
                 <Tabs defaultValue="generation" className="space-y-4">
                   <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-                    <TabsTrigger value="generation" className="text-xs sm:text-sm"><Zap className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Generation</span><span className="sm:hidden">Gen</span></TabsTrigger>
-                    <TabsTrigger value="ai" className="text-xs sm:text-sm"><Sparkles className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> AI</TabsTrigger>
-                    <TabsTrigger value="overwrite" className="text-xs sm:text-sm"><RotateCcw className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Overwrite</span><span className="sm:hidden">Overw.</span></TabsTrigger>
-                    <TabsTrigger value="schedule" className="text-xs sm:text-sm"><Settings2 className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">Schedule</span><span className="sm:hidden">Sched.</span></TabsTrigger>
+                    <TabsTrigger value="generation" className="text-xs sm:text-sm"><Zap className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">{t("pgpGenerate.tabGeneration")}</span><span className="sm:hidden">{t("pgpGenerate.tabGenerationShort")}</span></TabsTrigger>
+                    <TabsTrigger value="ai" className="text-xs sm:text-sm"><Sparkles className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> {t("pgpGenerate.tabAi")}</TabsTrigger>
+                    <TabsTrigger value="overwrite" className="text-xs sm:text-sm"><RotateCcw className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">{t("pgpGenerate.tabOverwrite")}</span><span className="sm:hidden">{t("pgpGenerate.tabOverwriteShort")}</span></TabsTrigger>
+                    <TabsTrigger value="schedule" className="text-xs sm:text-sm"><Settings2 className="h-3.5 w-3.5 mr-1 sm:mr-1.5" /> <span className="hidden sm:inline">{t("pgpGenerate.tabSchedule")}</span><span className="sm:hidden">{t("pgpGenerate.tabScheduleShort")}</span></TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="generation" className="space-y-4">
@@ -882,9 +882,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                       <Label className="text-xs font-semibold">{t("pgpGenerate.generationMethodLabel")}</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {([
-                          { value: "all", label: "All Combinations", desc: "Every possible combination of keyword terms" },
-                          { value: "sequential", label: "Sequential", desc: "Honors the order of terms in each keyword" },
-                          { value: "random", label: "Random", desc: "Picks a random term from each keyword" },
+                          { value: "all", label: t("pgpGenerate.methodAll"), desc: t("pgpGenerate.methodAllDesc") },
+                          { value: "sequential", label: t("pgpGenerate.methodSequential"), desc: t("pgpGenerate.methodSequentialDesc") },
+                          { value: "random", label: t("pgpGenerate.methodRandom"), desc: t("pgpGenerate.methodRandomDesc") },
                         ] as const).map(m => (
                           <button
                             key={m.value}
@@ -905,26 +905,26 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Number of Pages</Label>
+                        <Label className="text-xs">{t("pgpGenerate.numberOfPagesLabel")}</Label>
                         <Input
                           type="number"
-                          placeholder={`Max: ${maxPages.toLocaleString()}`}
+                          placeholder={t("pgpGenerate.maxPlaceholder", { count: maxPages.toLocaleString() })}
                           value={numberOfPages}
                           onChange={(e) => setNumberOfPages(e.target.value)}
                           className="h-9"
                         />
-                        <p className="text-[10px] text-muted-foreground">Leave blank for all ({maxPages.toLocaleString()} pages)</p>
+                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.leaveBlankAll", { count: maxPages.toLocaleString() })}</p>
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Resume Index</Label>
+                        <Label className="text-xs">{t("pgpGenerate.resumeIndexLabel")}</Label>
                         <Input
                           type="number"
-                          placeholder="0"
+                          placeholder={t("pgpGenerate.resumeIndexPlaceholder")}
                           value={resumeIndex}
                           onChange={(e) => setResumeIndex(e.target.value)}
                           className="h-9"
                         />
-                        <p className="text-[10px] text-muted-foreground">Start from this index (0-based)</p>
+                        <p className="text-[10px] text-muted-foreground">{t("pgpGenerate.resumeIndexHint")}</p>
                       </div>
                     </div>
 
