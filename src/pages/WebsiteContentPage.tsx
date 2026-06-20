@@ -529,6 +529,7 @@ function ContentList({
   onPreview: (item: ContentItem) => void;
   onEdit: (item: ContentItem) => void;
 }) {
+  const { t } = useLanguage();
   if (isLoading) {
     return (
       <div className="space-y-2">
