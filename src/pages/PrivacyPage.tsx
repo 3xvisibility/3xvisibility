@@ -34,7 +34,7 @@ export default function PrivacyPage() {
       </p>
       <h2>Contact</h2>
       <p>
-        Privacy questions: <a href="mailto:privacy@pagegen.app">privacy@pagegen.app</a>
+        Privacy questions: <a href="mailto:info@3xvisibility.com">info@3xvisibility.com</a>
       </p>
     </StaticPageLayout>
     </>
