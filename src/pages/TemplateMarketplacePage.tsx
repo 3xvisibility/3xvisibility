@@ -29,6 +29,8 @@ import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { useTranslatedTemplate } from "@/hooks/use-translated-template";
+import { Languages } from "lucide-react";
 
 // Known category metadata (icons + nice labels). Any category found on a
 // template that isn't listed here still gets a pill automatically, so future
