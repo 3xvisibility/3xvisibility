@@ -217,8 +217,8 @@ if (issues.length === 0 && totalFatal === 0) {
     console.error("");
   }
 
-  if (totalMissing > 0) {
-    console.error(`❌ ${totalMissing} missing translation key(s) — every locale must define all en.ts keys. Build aborted.\n`);
+  if (totalFatal > 0) {
+    console.error(`❌ ${totalFatal} missing key(s) in primary languages — they must define every en.ts key. Build aborted.\n`);
   }
 
   process.exit(1);
