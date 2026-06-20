@@ -86,11 +86,11 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
           >
             {expanded ? (
               <>
-                Hide <ChevronUp className="h-3.5 w-3.5" />
+                {t("campaignHow.hide")} <ChevronUp className="h-3.5 w-3.5" />
               </>
             ) : (
               <>
-                Show <ChevronDown className="h-3.5 w-3.5" />
+                {t("campaignHow.show")} <ChevronDown className="h-3.5 w-3.5" />
               </>
             )}
           </Button>
@@ -99,7 +99,7 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
             size="icon"
             onClick={handleDismiss}
             className="h-8 w-8"
-            title="Don't show again"
+            title={t("campaignHow.dontShowAgain")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
