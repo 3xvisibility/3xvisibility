@@ -483,9 +483,9 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               onClick={() => testConnectionMutation.mutate()}
             >
               {testConnectionMutation.isPending ? (
-                <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Testing...</>
+                <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.testing")}</>
               ) : (
-                <><Zap className="h-3 w-3 mr-1" /> Test Connection</>
+                <><Zap className="h-3 w-3 mr-1" /> {t("websiteCard.testConnection")}</>
               )}
             </Button>
             <Button
@@ -495,12 +495,12 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               onClick={() => setRetransOpen(true)}
               title={
                 site.language
-                  ? `Re-translate the most recent pages to ${site.language} and republish them`
-                  : "Set a Site Language first to enable this action"
+                  ? t("websiteCard.retranslateTitle", { lang: site.language })
+                  : t("websiteCard.retranslateTitleNoLang")
               }
             >
               <Languages className="h-3 w-3 mr-1" />
-              Re-translate to {site.language || "site language"}
+              {t("websiteCard.retranslateTo", { lang: site.language || t("websiteCard.siteLanguage") })}
             </Button>
             {isShopify && (
               <>
