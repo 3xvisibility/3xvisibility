@@ -219,13 +219,13 @@ export default function TemplateMarketplacePage() {
       counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
     }
     const ids = Array.from(counts.keys()).sort((a, b) =>
-      categoryMeta(a).label.localeCompare(categoryMeta(b).label)
+      localizedCategoryLabel(a, language).localeCompare(localizedCategoryLabel(b, language))
     );
     return [
-      { id: "all", ...categoryMeta("all"), count: source.length },
-      ...ids.map((id) => ({ id, ...categoryMeta(id), count: counts.get(id) || 0 })),
+      { id: "all", ...categoryMeta("all"), label: localizedCategoryLabel("all", language), count: source.length },
+      ...ids.map((id) => ({ id, ...categoryMeta(id), label: localizedCategoryLabel(id, language), count: counts.get(id) || 0 })),
     ];
-  }, [activeTab, allTemplates, communityTemplates]);
+  }, [activeTab, allTemplates, communityTemplates, language]);
 
   const shareCategories = useMemo(() => {
     const ids = new Set(Object.keys(CATEGORY_META).filter((id) => id !== "all"));
