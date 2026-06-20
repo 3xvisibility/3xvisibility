@@ -456,7 +456,7 @@ export default function TemplateMappingPage() {
             <TabsContent value="pages" className="space-y-4">
               {pages.length === 0 ? (
                 <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
-                  No pages have been generated for this campaign yet.
+                  {t("templateMapping.noGeneratedPages")}
                 </CardContent></Card>
               ) : (
                 pages.map(page => {
@@ -475,10 +475,10 @@ export default function TemplateMappingPage() {
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead className="min-w-[110px]">Section</TableHead>
-                                <TableHead className="min-w-[120px]">Variable</TableHead>
-                                <TableHead className="min-w-[120px]">From column</TableHead>
-                                <TableHead>Filled value</TableHead>
+                                <TableHead className="min-w-[110px]">{t("templateMapping.tableSection")}</TableHead>
+                                <TableHead className="min-w-[120px]">{t("templateMapping.tableVariable")}</TableHead>
+                                <TableHead className="min-w-[120px]">{t("templateMapping.tableFromColumn")}</TableHead>
+                                <TableHead>{t("templateMapping.tableFilledValue")}</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -490,7 +490,7 @@ export default function TemplateMappingPage() {
                                   <TableRow key={v.name}>
                                     <TableCell>
                                       <Badge variant="outline" className={`text-[10px] ${meta.badgeClass}`}>
-                                        {meta.label}
+                                        {sectionLabels[v.section]}
                                       </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -509,7 +509,7 @@ export default function TemplateMappingPage() {
                                       />
                                     </TableCell>
                                     <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
-                                      {value || <span className="italic opacity-60">empty</span>}
+                                      {value || <span className="italic opacity-60">{t("templateMapping.emptyValue")}</span>}
                                     </TableCell>
                                   </TableRow>
                                 );
