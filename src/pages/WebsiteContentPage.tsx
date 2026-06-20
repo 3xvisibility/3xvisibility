@@ -314,7 +314,7 @@ export default function WebsiteContentPage() {
             onClick={() => {
               refetchPages();
               refetchProducts();
-              toast({ title: "Refreshing content..." });
+              toast({ title: t("websiteContent.refreshing") });
             }}
           >
             <RefreshCw className="h-3.5 w-3.5" />
