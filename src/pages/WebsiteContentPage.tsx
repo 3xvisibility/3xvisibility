@@ -545,7 +545,7 @@ function ContentList({
       <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="py-6 text-center">
           <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
-          <p className="text-sm text-destructive font-medium">Failed to fetch content</p>
+          <p className="text-sm text-destructive font-medium">{t("websiteContent.failedToFetch")}</p>
           <p className="text-xs text-muted-foreground mt-1">{error.message}</p>
         </CardContent>
       </Card>
