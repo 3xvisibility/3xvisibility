@@ -696,10 +696,10 @@ export default function DataCsvPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5 text-primary" />
-              {pendingFile?.name || "Upload CSV"}
+              {pendingFile?.name || t("dataCsv.uploadCsv")}
             </DialogTitle>
             <DialogDescription>
-              Review file structure before uploading.
+              {t("dataCsv.reviewBeforeUpload")}
             </DialogDescription>
           </DialogHeader>
 
@@ -711,16 +711,16 @@ export default function DataCsvPage() {
                   <FileSpreadsheet className="h-3 w-3" /> {formatSize(pendingFile?.size || 0)}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  {pendingParsed.rowData.length.toLocaleString()} rows
+                  {t("dataCsv.rowsCount", { count: pendingParsed.rowData.length.toLocaleString() })}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  {pendingParsed.headers.length} columns
+                  {t("dataCsv.columnsCount", { count: pendingParsed.headers.length })}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  Delimiter: {delimiterLabel[pendingParsed.delimiter] || pendingParsed.delimiter}
+                  {t("dataCsv.delimiter", { value: delimiterLabelKey[pendingParsed.delimiter] ? t(delimiterLabelKey[pendingParsed.delimiter]) : pendingParsed.delimiter })}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  Encoding: {pendingEncoding.toUpperCase()}
+                  {t("dataCsv.encoding", { value: pendingEncoding.toUpperCase() })}
                 </Badge>
               </div>
 
@@ -745,17 +745,17 @@ export default function DataCsvPage() {
               {pendingValidation.valid && pendingValidation.warnings.length === 0 && (
                 <div className="flex items-center gap-2 text-xs text-success bg-success/5 border border-success/20 rounded-lg p-2.5">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span>File structure looks good – no issues detected.</span>
+                  <span>{t("dataCsv.structureGood")}</span>
                 </div>
               )}
 
               {/* Headers list */}
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Detected Headers</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">{t("dataCsv.detectedHeaders")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {pendingParsed.headers.map((h, i) => (
                     <Badge key={i} variant="secondary" className="text-[10px] rounded-md font-mono">
-                      {h || <span className="italic text-destructive">(empty)</span>}
+                      {h || <span className="italic text-destructive">{t("dataCsv.emptyHeader")}</span>}
                     </Badge>
                   ))}
                 </div>
@@ -763,7 +763,7 @@ export default function DataCsvPage() {
 
               {/* Preview table */}
               <div className="flex-1 overflow-hidden">
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Preview (first 10 rows)</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">{t("dataCsv.previewFirstRows", { count: 10 })}</p>
                 <ScrollArea className="max-h-[30vh] border border-border rounded-lg">
                   <div className="overflow-x-auto">
                     <Table>
