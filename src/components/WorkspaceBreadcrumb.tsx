@@ -54,6 +54,7 @@ export function WorkspaceBreadcrumb() {
     indexing: t("sidebar.indexing"),
     data: t("sidebar.dataCsv"),
     "website-content": t("sidebar.websiteContent"),
+    "template-mapping": t("sidebar.templateMapping"),
     
     "content-calendar": t("sidebar.contentCalendar"),
     performance: t("sidebar.performance"),
