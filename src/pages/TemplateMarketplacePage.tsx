@@ -330,14 +330,14 @@ export default function TemplateMarketplacePage() {
         <div>
           <h1 className="text-display flex items-center gap-2">
             <Store className="h-6 w-6 text-primary" />
-            Template Marketplace
+            {t("marketplace.title")}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Browse, share, and rate community templates.
+            {t("marketplace.subtitle")}
           </p>
         </div>
         <Button onClick={() => setShareOpen(true)} variant="outline" className="gap-2">
-          <Share2 className="h-4 w-4" /> Share Template
+          <Share2 className="h-4 w-4" /> {t("marketplace.shareTemplate")}
         </Button>
       </div>
 
