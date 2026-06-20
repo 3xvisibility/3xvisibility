@@ -68,7 +68,7 @@ export function CampaignHowItWorks({ onCreateClick, compact = false }: Props) {
           <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <Lightbulb className="h-4 w-4 text-primary" />
           </div>
-          <div class="min-w-0">
+          <div className="min-w-0">
             <p className="font-semibold text-sm truncate">
               {t("campaignHow.title")}
             </p>
