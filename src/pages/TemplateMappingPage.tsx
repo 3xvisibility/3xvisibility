@@ -303,14 +303,14 @@ export default function TemplateMappingPage() {
               {isDirty ? (
                 <>
                   <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-400">
-                    {dirtyKeys.length} unsaved
+                    {t("templateMapping.unsavedCount", { count: dirtyKeys.length })}
                   </Badge>
                   <span className="text-muted-foreground truncate">
-                    Click Save to apply mappings to future page generation.
+                    {t("templateMapping.saveApplyHint")}
                   </span>
                 </>
               ) : (
-                <span className="text-muted-foreground">All mapping changes saved.</span>
+                <span className="text-muted-foreground">{t("templateMapping.allSaved")}</span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ export default function TemplateMappingPage() {
                 onClick={discardChanges}
                 disabled={!isDirty || saveMapping.isPending}
               >
-                <Undo2 className="h-3.5 w-3.5 mr-1.5" /> Discard
+                <Undo2 className="h-3.5 w-3.5 mr-1.5" /> {t("templateMapping.discard")}
               </Button>
               <Button
                 size="sm"
@@ -334,7 +334,7 @@ export default function TemplateMappingPage() {
                 ) : (
                   <Save className="h-3.5 w-3.5 mr-1.5" />
                 )}
-                Save mappings
+                {t("templateMapping.saveMappings")}
               </Button>
             </div>
           </div>
@@ -343,7 +343,7 @@ export default function TemplateMappingPage() {
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Filter variables..."
+              placeholder={t("templateMapping.filterVariables")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 h-9"
@@ -353,8 +353,8 @@ export default function TemplateMappingPage() {
           {/* ── Tabs: by section / by page ────── */}
           <Tabs defaultValue="sections" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="sections">By section</TabsTrigger>
-              <TabsTrigger value="pages">By generated page</TabsTrigger>
+              <TabsTrigger value="sections">{t("templateMapping.bySection")}</TabsTrigger>
+              <TabsTrigger value="pages">{t("templateMapping.byGeneratedPage")}</TabsTrigger>
             </TabsList>
 
             {/* By section view */}
