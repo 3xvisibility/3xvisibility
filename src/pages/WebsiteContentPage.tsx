@@ -95,7 +95,7 @@ export default function WebsiteContentPage() {
     onSuccess: (data) => {
       const item: ContentItem = {
         id: `scan-${Date.now()}`,
-        title: data.title || "Scanned Page",
+        title: data.title || t("websiteContent.defaultScannedTitle"),
         slug: new URL(scanUrl).pathname.replace(/^\/|\/$/g, "") || "home",
         url: scanUrl,
         type: "page",
