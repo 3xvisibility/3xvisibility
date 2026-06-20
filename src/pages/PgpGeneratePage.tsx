@@ -747,9 +747,9 @@ Return a JSON array of these objects. Only return valid JSON, no markdown.`,
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Business / Store Description *</Label>
+                  <Label className="text-xs font-semibold">{t("pgpGenerate.businessDescLabel")}</Label>
                   <Textarea
-                    placeholder="e.g. Plumbing services company in Texas, specializing in emergency repairs..."
+                    placeholder={t("pgpGenerate.businessDescPlaceholder")}
                     value={aiBusinessDesc}
                     onChange={(e) => setAiBusinessDesc(e.target.value)}
                     rows={3}
