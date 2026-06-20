@@ -403,7 +403,7 @@ export default function DataCsvPage() {
               {isDragging ? t("dataCsv.dropHere") : t("dataCsv.dragAndDrop")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Supports CSV, TSV, JSON, Excel (.xlsx, .xls) files
+              {t("dataCsv.supportedFormatsFull")}
             </p>
           </div>
         </CardContent>
@@ -411,31 +411,31 @@ export default function DataCsvPage() {
 
       {/* Future connectors hint */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="font-medium">Coming soon:</span>
+        <span className="font-medium">{t("dataCsv.comingSoon")}</span>
         <div className="flex items-center gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex items-center gap-1.5 opacity-50 cursor-default">
-                <Sheet className="h-3.5 w-3.5" /> Google Sheets
+                <Sheet className="h-3.5 w-3.5" /> {t("dataCsv.googleSheets")}
               </span>
             </TooltipTrigger>
-            <TooltipContent>Import data directly from Google Sheets</TooltipContent>
+            <TooltipContent>{t("dataCsv.googleSheetsTooltip")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex items-center gap-1.5 opacity-50 cursor-default">
-                <Rss className="h-3.5 w-3.5" /> API Feed
+                <Rss className="h-3.5 w-3.5" /> {t("dataCsv.apiFeed")}
               </span>
             </TooltipTrigger>
-            <TooltipContent>Connect a REST API as a data source</TooltipContent>
+            <TooltipContent>{t("dataCsv.apiFeedTooltip")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex items-center gap-1.5 opacity-50 cursor-default">
-                <Database className="h-3.5 w-3.5" /> Database
+                <Database className="h-3.5 w-3.5" /> {t("dataCsv.database")}
               </span>
             </TooltipTrigger>
-            <TooltipContent>Query a database directly</TooltipContent>
+            <TooltipContent>{t("dataCsv.databaseTooltip")}</TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -444,7 +444,7 @@ export default function DataCsvPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search files or campaigns..."
+          placeholder={t("dataCsv.searchFilesOrCampaigns")}
           value={searchQuery}
           onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
           className="pl-9"
