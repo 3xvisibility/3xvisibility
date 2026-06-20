@@ -105,8 +105,19 @@ export default function TemplateMarketplacePage() {
 
   // Auto-translate the previewed template (content, name, SEO + default values)
   // into the active language (en/fr/de/es). English is returned untouched.
-  const { template: activePreview, translating: previewTranslating } =
+  const { template: activePreview, translating: previewTranslating, error: translateError } =
     useTranslatedTemplate(previewTemplate, language);
+
+  // Surface translation failures so the user knows the preview fell back to English.
+  useEffect(() => {
+    if (translateError) {
+      toast({
+        title: "Translation unavailable",
+        description: `${translateError}. Showing the original English template.`,
+        variant: "destructive",
+      });
+    }
+  }, [translateError, toast]);
 
   // Reset uploaded CSV + image overrides when switching templates.
   useEffect(() => { setUploadedCsv([]); setImageOverrides({}); setContentOverrides({}); }, [previewTemplate?.id]);
