@@ -268,12 +268,12 @@ export default function WebsiteContentPage() {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Globe className="h-16 w-16 text-muted-foreground/30 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Websites Connected</h2>
+        <h2 className="text-xl font-semibold mb-2">{t("websiteContent.noWebsitesConnected")}</h2>
         <p className="text-muted-foreground text-sm max-w-md mb-4">
-          Connect a WordPress, Shopify, PrestaShop, or WooCommerce website first to browse and manage its content.
+          {t("websiteContent.noWebsitesConnectedDesc")}
         </p>
         <Button onClick={() => window.location.href = "/websites"}>
-          <Globe className="h-4 w-4 mr-2" /> Connect a Website
+          <Globe className="h-4 w-4 mr-2" /> {t("websiteContent.connectWebsite")}
         </Button>
       </div>
     );
