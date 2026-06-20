@@ -98,10 +98,10 @@ export default function PagePerformancePage() {
         conversions: totalConversions,
         freshness,
         seoScore: seo.score,
-        seoLabel: seo.label,
+          seoLabel: seo.label === "N/A" ? t("common.notAvailable") : seo.label,
       };
     });
-  }, [pages, metrics]);
+  }, [pages, metrics, t]);
 
   // Summary stats
   const summary = useMemo(() => {
@@ -187,22 +187,22 @@ export default function PagePerformancePage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <BarChart3 className="h-6 w-6 text-primary" />
-          Page Performance
+          {t("pagePerformance.title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track traffic, engagement, and conversion metrics for your published pages.
+          {t("pagePerformance.trafficDescription")}
         </p>
       </div>
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Views", value: summary.totalViews.toLocaleString(), icon: Eye, color: "text-primary" },
-          { label: "Unique Visitors", value: summary.totalVisitors.toLocaleString(), icon: Users, color: "text-emerald-600" },
-          { label: "Avg Bounce Rate", value: `${summary.avgBounce}%`, icon: TrendingDown, color: "text-amber-600" },
-          { label: "Avg CTR", value: `${summary.avgCtr}%`, icon: MousePointerClick, color: "text-primary" },
-          { label: "Conversions", value: summary.totalConversions.toLocaleString(), icon: Target, color: "text-emerald-600" },
-          { label: "Avg SEO Score", value: `${summary.avgSeo}/100`, icon: Zap, color: "text-primary" },
+          { label: t("pagePerformance.totalViews"), value: summary.totalViews.toLocaleString(), icon: Eye, color: "text-primary" },
+          { label: t("pagePerformance.uniqueVisitors"), value: summary.totalVisitors.toLocaleString(), icon: Users, color: "text-emerald-600" },
+          { label: t("pagePerformance.avgBounceRate"), value: `${summary.avgBounce}%`, icon: TrendingDown, color: "text-amber-600" },
+          { label: t("pagePerformance.avgCtr"), value: `${summary.avgCtr}%`, icon: MousePointerClick, color: "text-primary" },
+          { label: t("pagePerformance.conversions"), value: summary.totalConversions.toLocaleString(), icon: Target, color: "text-emerald-600" },
+          { label: t("pagePerformance.avgSeoScore"), value: `${summary.avgSeo}/100`, icon: Zap, color: "text-primary" },
         ].map((stat) => (
           <Card key={stat.label} className="shadow-surface">
             <CardContent className="p-4">
