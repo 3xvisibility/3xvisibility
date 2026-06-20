@@ -677,8 +677,8 @@ export default function TemplateMarketplacePage() {
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Close</Button>
                   <Button
-                    onClick={() => importMutation.mutate(previewTemplate)}
-                    disabled={importMutation.isPending}
+                    onClick={() => importMutation.mutate(activePreview)}
+                    disabled={importMutation.isPending || previewTranslating}
                   >
                     {importMutation.isPending ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</>
