@@ -62,6 +62,25 @@ function categoryMeta(id: string) {
   return CATEGORY_META[id] || { label: categoryLabel(id), icon: Tag };
 }
 
+// Localized labels for the generic categories. Brand names (WordPress, Shopify,
+// PrestaShop) are intentionally omitted so they stay untranslated.
+const CATEGORY_LABEL_I18N: Record<string, Partial<Record<Language, string>>> = {
+  all: { fr: "Tous", de: "Alle", es: "Todos" },
+  "local-seo": { fr: "SEO local", de: "Lokales SEO", es: "SEO local" },
+  ecommerce: { fr: "E-commerce", de: "E-Commerce", es: "Comercio electrónico" },
+  saas: { fr: "SaaS / Tech", de: "SaaS / Technik", es: "SaaS / Tecnología" },
+  marketing: { fr: "Marketing", de: "Marketing", es: "Marketing" },
+  professional: { fr: "Professionnel", de: "Professionell", es: "Profesional" },
+  education: { fr: "Éducation", de: "Bildung", es: "Educación" },
+  health: { fr: "Santé", de: "Gesundheit", es: "Salud" },
+  general: { fr: "Général", de: "Allgemein", es: "General" },
+};
+
+// Resolve a category label for the active language, keeping brand names intact.
+function localizedCategoryLabel(id: string, language: Language): string {
+  return CATEGORY_LABEL_I18N[id]?.[language] ?? categoryMeta(id).label;
+}
+
 
 
 
