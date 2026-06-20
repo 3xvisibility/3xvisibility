@@ -454,10 +454,10 @@ export default function DataCsvPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Files", value: csvFiles.length, icon: FileSpreadsheet, color: "text-primary" },
-          { label: "Total Rows", value: csvFiles.reduce((s: number, f: any) => s + (f.row_count || 0), 0).toLocaleString(), icon: Database, color: "text-secondary" },
-          { label: "Total Size", value: formatSize(csvFiles.reduce((s: number, f: any) => s + (f.file_size || 0), 0)), icon: HardDrive, color: "text-success" },
-          { label: "Campaigns", value: campaignIds.length, icon: Layers, color: "text-warning" },
+          { label: t("dataCsv.totalFiles"), value: csvFiles.length, icon: FileSpreadsheet, color: "text-primary" },
+          { label: t("dataCsv.totalRows"), value: csvFiles.reduce((s: number, f: any) => s + (f.row_count || 0), 0).toLocaleString(), icon: Database, color: "text-secondary" },
+          { label: t("dataCsv.totalSize"), value: formatSize(csvFiles.reduce((s: number, f: any) => s + (f.file_size || 0), 0)), icon: HardDrive, color: "text-success" },
+          { label: t("dataCsv.campaigns"), value: campaignIds.length, icon: Layers, color: "text-warning" },
         ].map(stat => (
           <Card key={stat.label} className="border-0 shadow-surface">
             <CardContent className="p-4 flex items-center gap-3">
@@ -488,12 +488,12 @@ export default function DataCsvPage() {
                 <FileSpreadsheet className="h-8 w-8 text-muted-foreground/50" />
               </div>
               <h3 className="font-semibold">
-                {csvFiles.length === 0 ? "No CSV files yet" : "No matching files"}
+                {csvFiles.length === 0 ? t("dataCsv.noFilesTitle") : t("dataCsv.noMatchingFiles")}
               </h3>
               <p className="text-muted-foreground text-sm max-w-sm">
                 {csvFiles.length === 0
-                  ? "Upload a CSV file above or create a campaign with data."
-                  : "Try adjusting your search query."}
+                  ? t("dataCsv.noFilesHint")
+                  : t("dataCsv.adjustSearch")}
               </p>
             </div>
           </CardContent>
@@ -510,12 +510,12 @@ export default function DataCsvPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{file.file_name || "data.csv"}</p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <Badge variant="secondary" className="text-[10px] rounded-lg">{(file.row_count || 0).toLocaleString()} rows</Badge>
+                    <Badge variant="secondary" className="text-[10px] rounded-lg">{t("dataCsv.rowsCount", { count: (file.row_count || 0).toLocaleString() })}</Badge>
                     <span className="text-[10px] text-muted-foreground">{formatSize(file.file_size || 0)}</span>
-                    <span className="text-[10px] text-muted-foreground">{(file.headers as string[] | null)?.length || "—"} cols</span>
+                    <span className="text-[10px] text-muted-foreground">{t("dataCsv.colsCount", { count: (file.headers as string[] | null)?.length || "—" })}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                    {file.campaign_id ? getCampaignName(file.campaign_id) : "Standalone"} · {new Date(file.created_at).toLocaleDateString()}
+                    {file.campaign_id ? getCampaignName(file.campaign_id) : t("dataCsv.standalone")} · {new Date(file.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <DropdownMenu>
