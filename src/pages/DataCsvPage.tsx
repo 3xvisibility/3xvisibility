@@ -526,23 +526,23 @@ export default function DataCsvPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuItem onClick={() => handlePreview(file)}>
-                      <Eye className="h-4 w-4 mr-2" /> Preview
+                      <Eye className="h-4 w-4 mr-2" /> {t("dataCsv.preview")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDownloadAs(file, "csv")}>
-                      <FileText className="h-4 w-4 mr-2" /> Download CSV
+                      <FileText className="h-4 w-4 mr-2" /> {t("dataCsv.downloadCsv")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDownloadAs(file, "json")}>
-                      <FileJson className="h-4 w-4 mr-2" /> Download JSON
+                      <FileJson className="h-4 w-4 mr-2" /> {t("dataCsv.downloadJson")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDownloadAs(file, "xlsx")}>
-                      <FileSpreadsheet className="h-4 w-4 mr-2" /> Download Excel
+                      <FileSpreadsheet className="h-4 w-4 mr-2" /> {t("dataCsv.downloadExcel")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => { setReplacingFileId(file.id); document.getElementById("data-csv-replace-input")?.click(); }}>
-                      <Upload className="h-4 w-4 mr-2" /> Replace
+                      <Upload className="h-4 w-4 mr-2" /> {t("dataCsv.replace")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => deleteMutation.mutate(file.id)} className="text-destructive focus:text-destructive">
-                      <Trash2 className="h-4 w-4 mr-2" /> Delete
+                      <Trash2 className="h-4 w-4 mr-2" /> {t("dataCsv.delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -555,13 +555,13 @@ export default function DataCsvPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">File Name</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Size</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Rows</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">Columns</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">Campaign</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Uploaded</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium text-right">Actions</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.fileName")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.size")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.rows")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">{t("dataCsv.columns")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">{t("dataCsv.campaign")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.uploaded")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium text-right">{t("dataCsv.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
