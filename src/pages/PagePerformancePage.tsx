@@ -221,7 +221,7 @@ export default function PagePerformancePage() {
         {/* Top Pages by Views */}
         <Card className="shadow-surface">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Top Pages by Traffic</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("pagePerformance.topPagesByTraffic")}</h3>
             {isLoading ? (
               <Skeleton className="h-[250px]" />
             ) : topByViews.length > 0 ? (
@@ -238,7 +238,7 @@ export default function PagePerformancePage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
-                <p>No performance data yet. Metrics will appear here once pages receive traffic.</p>
+                <p>{t("pagePerformance.noPerformanceData")}</p>
               </div>
             )}
           </CardContent>
@@ -247,7 +247,7 @@ export default function PagePerformancePage() {
         {/* Bounce Rate Distribution */}
         <Card className="shadow-surface">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Bounce Rate Distribution</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("pagePerformance.bounceRateDistribution")}</h3>
             {isLoading ? (
               <Skeleton className="h-[250px]" />
             ) : (
@@ -277,7 +277,7 @@ export default function PagePerformancePage() {
         {/* SEO Score vs Views */}
         <Card className="shadow-surface lg:col-span-2">
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold mb-3">SEO Score vs Traffic (Top 20 Pages)</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("pagePerformance.seoScoreVsTraffic")}</h3>
             {isLoading ? (
               <Skeleton className="h-[220px]" />
             ) : seoVsPerf.length > 0 ? (
@@ -295,7 +295,7 @@ export default function PagePerformancePage() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-                No data available yet.
+                {t("pagePerformance.noDataYet")}
               </div>
             )}
           </CardContent>
