@@ -68,6 +68,7 @@ function decodeHtmlEntities(text: string): string {
 
 export default function WebsiteContentPage() {
   const { currentWorkspace } = useWorkspace();
+  const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
   const { toast } = useToast();
   const persistedUiState = useMemo(() => readWebsiteContentUiState(), []);
