@@ -413,13 +413,13 @@ export default function WebsiteContentPage() {
               </div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <Button size="sm" variant="outline" className="h-9 w-full justify-center gap-1.5 text-xs" onClick={() => setPreviewPage(scannedItem)}>
-                  <Eye className="h-3.5 w-3.5" /> Preview
+                  <Eye className="h-3.5 w-3.5" /> {t("websiteContent.preview")}
                 </Button>
                 <Button size="sm" className="h-9 w-full justify-center gap-1.5 text-xs bg-primary text-primary-foreground" onClick={() => setTemplatePage(scannedItem)}>
-                  <Sparkles className="h-3.5 w-3.5" /> Generate Template
+                  <Sparkles className="h-3.5 w-3.5" /> {t("websiteContent.generateTemplate")}
                 </Button>
                 <Button size="sm" variant="outline" className="h-9 w-full justify-center gap-1.5 text-xs" onClick={() => window.open(scannedItem.url, "_blank")}>
-                  <ExternalLink className="h-3.5 w-3.5" /> Open
+                  <ExternalLink className="h-3.5 w-3.5" /> {t("websiteContent.open")}
                 </Button>
               </div>
             </div>
