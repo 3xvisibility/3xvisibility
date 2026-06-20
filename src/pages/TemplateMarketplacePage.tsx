@@ -759,7 +759,7 @@ export default function TemplateMarketplacePage() {
                     {shareCategories.map((id) => (
                       <SelectItem key={id} value={id}>
                         <span className="flex items-center gap-2">
-                          {categoryMeta(id).label}
+                          {localizedCategoryLabel(id, language)}
                           {id === "prestashop" && (
                             <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
                           )}
