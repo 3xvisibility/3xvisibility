@@ -67,17 +67,17 @@ interface ValidationResult {
   errors: string[];
 }
 
-function validateCsv(headers: string[], rows: string[][], delimiter: string): ValidationResult {
+function validateCsv(headers: string[], rows: string[][], delimiter: string, t: (key: string, vars?: Record<string, string | number>) => string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   // Empty headers
   const emptyIdx = headers.map((h, i) => h.trim() === "" ? i + 1 : -1).filter(i => i > 0);
-  if (emptyIdx.length > 0) errors.push(`Empty header(s) at column(s): ${emptyIdx.join(", ")}`);
+  if (emptyIdx.length > 0) errors.push(t("dataCsv.errorEmptyHeaders", { columns: emptyIdx.join(", ") }));
 
   // Duplicate headers
   const dupes = headers.filter((h, i) => h && headers.indexOf(h) !== i);
-  if (dupes.length > 0) errors.push(`Duplicate header(s): ${[...new Set(dupes)].join(", ")}`);
+  if (dupes.length > 0) errors.push(t("dataCsv.errorDuplicateHeaders", { headers: [...new Set(dupes)].join(", ") }));
 
   // Row length mismatches
   const expectedCols = headers.length;
@@ -85,14 +85,14 @@ function validateCsv(headers: string[], rows: string[][], delimiter: string): Va
   for (const row of rows) {
     if (row.length !== expectedCols) mismatchCount++;
   }
-  if (mismatchCount > 0) warnings.push(`${mismatchCount} row(s) have different column count than header (${expectedCols})`);
+  if (mismatchCount > 0) warnings.push(t("dataCsv.warningColumnMismatch", { count: mismatchCount, columns: expectedCols }));
 
   // Very few rows
-  if (rows.length === 0) errors.push("No data rows found");
-  else if (rows.length < 3) warnings.push("Very few data rows – is this intentional?");
+  if (rows.length === 0) errors.push(t("dataCsv.errorNoRows"));
+  else if (rows.length < 3) warnings.push(t("dataCsv.warningFewRows"));
 
   // Very many columns
-  if (headers.length > 50) warnings.push(`Large number of columns (${headers.length})`);
+  if (headers.length > 50) warnings.push(t("dataCsv.warningManyColumns", { count: headers.length }));
 
   return { valid: errors.length === 0, warnings, errors };
 }
@@ -257,7 +257,7 @@ export default function DataCsvPage() {
     }
     try {
       const parsed = await parseUploadedFile(file);
-      const validation = validateCsv(parsed.headers, parsed.rows, parsed.delimiter);
+      const validation = validateCsv(parsed.headers, parsed.rows, parsed.delimiter, t);
       setPendingFile(file);
       setPendingParsed(parsed);
       setPendingValidation(validation);
