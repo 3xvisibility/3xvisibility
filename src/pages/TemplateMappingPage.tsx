@@ -572,11 +572,12 @@ function MappingEditor({
   compact?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
+  const { t } = useLanguage();
 
   if (csvColumns.length === 0) {
     return (
       <span className="text-[11px] italic text-muted-foreground">
-        No CSV columns available
+        {t("templateMapping.noCsvColumns")}
       </span>
     );
   }
@@ -590,17 +591,17 @@ function MappingEditor({
             <span className="font-medium truncate" title={currentColumn}>{currentColumn}</span>
           </span>
         ) : (
-          <Badge variant="destructive" className="text-[10px]">unmapped</Badge>
+          <Badge variant="destructive" className="text-[10px]">{t("templateMapping.unmapped")}</Badge>
         )}
         {isDirty && (
-          <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-300">unsaved</Badge>
+          <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-300">{t("templateMapping.unsaved")}</Badge>
         )}
         <Button
           variant="ghost"
           size="icon"
           className="h-6 w-6 shrink-0"
           onClick={() => setEditing(true)}
-          aria-label={`Change mapping for ${varName}`}
+          aria-label={t("templateMapping.changeMappingAria", { name: varName })}
         >
           <Pencil className="h-3 w-3" />
         </Button>
@@ -618,11 +619,11 @@ function MappingEditor({
         }}
       >
         <SelectTrigger className="h-7 text-xs min-w-[140px] max-w-[220px]">
-          <SelectValue placeholder="Pick a CSV column" />
+          <SelectValue placeholder={t("templateMapping.pickCsvColumn")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={UNMAPPED}>
-            <span className="italic text-muted-foreground">— Unmapped —</span>
+            <span className="italic text-muted-foreground">{t("templateMapping.unmappedOption")}</span>
           </SelectItem>
           {csvColumns.map(c => (
             <SelectItem key={c} value={c}>{c}</SelectItem>
@@ -634,7 +635,7 @@ function MappingEditor({
         size="icon"
         className="h-6 w-6 shrink-0"
         onClick={() => setEditing(false)}
-        aria-label="Cancel"
+        aria-label={t("common.cancel")}
       >
         <XIcon className="h-3 w-3" />
       </Button>
