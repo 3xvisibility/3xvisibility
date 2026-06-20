@@ -185,9 +185,13 @@ Deno.serve(async (req) => {
     const keys = Object.keys(stringMap);
     if (keys.length > 0) {
       const values = keys.map((k) => stringMap[k] ?? "");
-      const out = await translateBatch(values, target_language);
+      let out = await translateBatch(values, target_language);
+      if (!out) {
+        out = await aiTranslateBatch(values, langName); // free service down → AI
+        if (out) via = "ai-fallback";
+      }
       if (out) {
-        keys.forEach((k, i) => { translatedStrings[k] = out[i]; });
+        keys.forEach((k, i) => { translatedStrings[k] = out![i]; });
       } else {
         translatedStrings = stringMap; // keep originals on failure
       }
