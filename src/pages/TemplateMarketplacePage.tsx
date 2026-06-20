@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import type { Language } from "@/i18n/translations";
 import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoDefaultsEditor } from "@/components/templates/SeoDefaultsEditor";
@@ -62,6 +63,25 @@ function categoryMeta(id: string) {
   return CATEGORY_META[id] || { label: categoryLabel(id), icon: Tag };
 }
 
+// Localized labels for the generic categories. Brand names (WordPress, Shopify,
+// PrestaShop) are intentionally omitted so they stay untranslated.
+const CATEGORY_LABEL_I18N: Record<string, Partial<Record<Language, string>>> = {
+  all: { fr: "Tous", de: "Alle", es: "Todos" },
+  "local-seo": { fr: "SEO local", de: "Lokales SEO", es: "SEO local" },
+  ecommerce: { fr: "E-commerce", de: "E-Commerce", es: "Comercio electrónico" },
+  saas: { fr: "SaaS / Tech", de: "SaaS / Technik", es: "SaaS / Tecnología" },
+  marketing: { fr: "Marketing", de: "Marketing", es: "Marketing" },
+  professional: { fr: "Professionnel", de: "Professionell", es: "Profesional" },
+  education: { fr: "Éducation", de: "Bildung", es: "Educación" },
+  health: { fr: "Santé", de: "Gesundheit", es: "Salud" },
+  general: { fr: "Général", de: "Allgemein", es: "General" },
+};
+
+// Resolve a category label for the active language, keeping brand names intact.
+function localizedCategoryLabel(id: string, language: Language): string {
+  return CATEGORY_LABEL_I18N[id]?.[language] ?? categoryMeta(id).label;
+}
+
 
 
 
@@ -85,8 +105,19 @@ export default function TemplateMarketplacePage() {
 
   // Auto-translate the previewed template (content, name, SEO + default values)
   // into the active language (en/fr/de/es). English is returned untouched.
-  const { template: activePreview, translating: previewTranslating } =
+  const { template: activePreview, translating: previewTranslating, error: translateError } =
     useTranslatedTemplate(previewTemplate, language);
+
+  // Surface translation failures so the user knows the preview fell back to English.
+  useEffect(() => {
+    if (translateError) {
+      toast({
+        title: "Translation unavailable",
+        description: `${translateError}. Showing the original English template.`,
+        variant: "destructive",
+      });
+    }
+  }, [translateError, toast]);
 
   // Reset uploaded CSV + image overrides when switching templates.
   useEffect(() => { setUploadedCsv([]); setImageOverrides({}); setContentOverrides({}); }, [previewTemplate?.id]);
@@ -199,13 +230,13 @@ export default function TemplateMarketplacePage() {
       counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
     }
     const ids = Array.from(counts.keys()).sort((a, b) =>
-      categoryMeta(a).label.localeCompare(categoryMeta(b).label)
+      localizedCategoryLabel(a, language).localeCompare(localizedCategoryLabel(b, language))
     );
     return [
-      { id: "all", ...categoryMeta("all"), count: source.length },
-      ...ids.map((id) => ({ id, ...categoryMeta(id), count: counts.get(id) || 0 })),
+      { id: "all", ...categoryMeta("all"), label: localizedCategoryLabel("all", language), count: source.length },
+      ...ids.map((id) => ({ id, ...categoryMeta(id), label: localizedCategoryLabel(id, language), count: counts.get(id) || 0 })),
     ];
-  }, [activeTab, allTemplates, communityTemplates]);
+  }, [activeTab, allTemplates, communityTemplates, language]);
 
   const shareCategories = useMemo(() => {
     const ids = new Set(Object.keys(CATEGORY_META).filter((id) => id !== "all"));
@@ -328,7 +359,7 @@ export default function TemplateMarketplacePage() {
     },
   });
 
-  const categoryIcon = (cat: string) => categoryMeta(cat).label;
+  const categoryIcon = (cat: string) => localizedCategoryLabel(cat, language);
 
 
   return (
@@ -739,7 +770,7 @@ export default function TemplateMarketplacePage() {
                     {shareCategories.map((id) => (
                       <SelectItem key={id} value={id}>
                         <span className="flex items-center gap-2">
-                          {categoryMeta(id).label}
+                          {localizedCategoryLabel(id, language)}
                           {id === "prestashop" && (
                             <Badge variant="secondary" className="text-[9px] px-1 py-0 h-3.5 bg-amber-500/10 text-amber-500 border-amber-500/20">Soon</Badge>
                           )}

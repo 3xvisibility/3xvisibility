@@ -28,6 +28,8 @@ function hash(str: string): string {
 interface TranslatedTemplateState {
   template: MarketplaceTemplate;
   translating: boolean;
+  /** Set when auto-translation failed; the source-language template is shown. */
+  error: string | null;
 }
 
 /**
@@ -42,6 +44,7 @@ export function useTranslatedTemplate(
 ): TranslatedTemplateState {
   const [translated, setTranslated] = useState<MarketplaceTemplate | null>(template);
   const [translating, setTranslating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const reqId = useRef(0);
 
   useEffect(() => {
@@ -51,10 +54,26 @@ export function useTranslatedTemplate(
     if (language === "en" || !SUPPORTED.has(language)) {
       setTranslated(template);
       setTranslating(false);
+      setError(null);
       return;
     }
 
-    const cacheKey = `mkt-tr:${template.id}:${language}:${hash(template.content || "")}`;
+    const contentHash = hash(template.content || "");
+    const cacheKey = `mkt-tr:${template.id}:${language}:${contentHash}`;
+    // Cache invalidation: drop any stale entries for this template whose content
+    // hash no longer matches (i.e. the template was updated) so we never serve
+    // an out-of-date translation and localStorage doesn't grow unbounded.
+    try {
+      const prefix = `mkt-tr:${template.id}:`;
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix) && !k.endsWith(`:${contentHash}`)) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch { /* ignore */ }
+
+    setError(null);
     try {
       const cached = localStorage.getItem(cacheKey);
       if (cached) {
@@ -80,10 +99,12 @@ export function useTranslatedTemplate(
 
     (async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("translate-template", {
+        const { data, error: invokeError } = await supabase.functions.invoke("translate-template", {
           body: { content: template.content, strings, target_language: language },
         });
-        if (error) throw error;
+        if (invokeError) throw invokeError;
+        if (data?.error) throw new Error(data.error);
+        if (data?.via === "failed") throw new Error("Translation service unavailable");
         if (myId !== reqId.current) return; // a newer request superseded this one
 
         const ts = (data?.strings ?? {}) as Record<string, string>;
@@ -101,13 +122,17 @@ export function useTranslatedTemplate(
         };
         try { localStorage.setItem(cacheKey, JSON.stringify(patch)); } catch { /* quota */ }
         setTranslated({ ...template, ...patch });
-      } catch {
-        if (myId === reqId.current) setTranslated(template); // fall back to source
+      } catch (e) {
+        if (myId === reqId.current) {
+          setTranslated(template); // fall back to source language
+          setError(e instanceof Error ? e.message : "Translation failed");
+        }
       } finally {
         if (myId === reqId.current) setTranslating(false);
       }
     })();
   }, [template, language]);
 
-  return { template: translated ?? template!, translating };
+  return { template: translated ?? template!, translating, error };
 }
+
