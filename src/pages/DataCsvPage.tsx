@@ -67,17 +67,17 @@ interface ValidationResult {
   errors: string[];
 }
 
-function validateCsv(headers: string[], rows: string[][], delimiter: string): ValidationResult {
+function validateCsv(headers: string[], rows: string[][], delimiter: string, t: (key: string, vars?: Record<string, string | number>) => string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   // Empty headers
   const emptyIdx = headers.map((h, i) => h.trim() === "" ? i + 1 : -1).filter(i => i > 0);
-  if (emptyIdx.length > 0) errors.push(`Empty header(s) at column(s): ${emptyIdx.join(", ")}`);
+  if (emptyIdx.length > 0) errors.push(t("dataCsv.errorEmptyHeaders", { columns: emptyIdx.join(", ") }));
 
   // Duplicate headers
   const dupes = headers.filter((h, i) => h && headers.indexOf(h) !== i);
-  if (dupes.length > 0) errors.push(`Duplicate header(s): ${[...new Set(dupes)].join(", ")}`);
+  if (dupes.length > 0) errors.push(t("dataCsv.errorDuplicateHeaders", { headers: [...new Set(dupes)].join(", ") }));
 
   // Row length mismatches
   const expectedCols = headers.length;
@@ -85,14 +85,14 @@ function validateCsv(headers: string[], rows: string[][], delimiter: string): Va
   for (const row of rows) {
     if (row.length !== expectedCols) mismatchCount++;
   }
-  if (mismatchCount > 0) warnings.push(`${mismatchCount} row(s) have different column count than header (${expectedCols})`);
+  if (mismatchCount > 0) warnings.push(t("dataCsv.warningColumnMismatch", { count: mismatchCount, columns: expectedCols }));
 
   // Very few rows
-  if (rows.length === 0) errors.push("No data rows found");
-  else if (rows.length < 3) warnings.push("Very few data rows – is this intentional?");
+  if (rows.length === 0) errors.push(t("dataCsv.errorNoRows"));
+  else if (rows.length < 3) warnings.push(t("dataCsv.warningFewRows"));
 
   // Very many columns
-  if (headers.length > 50) warnings.push(`Large number of columns (${headers.length})`);
+  if (headers.length > 50) warnings.push(t("dataCsv.warningManyColumns", { count: headers.length }));
 
   return { valid: errors.length === 0, warnings, errors };
 }
@@ -117,7 +117,7 @@ function formatSize(bytes: number) {
   return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
-const delimiterLabel: Record<string, string> = { ",": "Comma", ";": "Semicolon", "\t": "Tab", "|": "Pipe" };
+const delimiterLabelKey: Record<string, string> = { ",": "dataCsv.delimiterComma", ";": "dataCsv.delimiterSemicolon", "\t": "dataCsv.delimiterTab", "|": "dataCsv.delimiterPipe" };
 
 const PAGE_SIZE = 10;
 
@@ -185,18 +185,18 @@ export default function DataCsvPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["csv-files"] });
-      toast({ title: "CSV file deleted" });
+      toast({ title: t("dataCsv.deleted") });
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     },
   });
 
   const uploadMutation = useMutation({
     mutationFn: async ({ file, parsed }: { file: File; parsed: ReturnType<typeof parseCsvText> }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      if (!wsId) throw new Error("No workspace selected");
+      if (!user) throw new Error(t("dataCsv.notAuthenticated"));
+      if (!wsId) throw new Error(t("dataCsv.noWorkspace"));
       const text = await file.text();
       const { error } = await (supabase.from("campaign_csv_files" as any) as any).insert({
         campaign_id: null as any,
@@ -213,11 +213,11 @@ export default function DataCsvPage() {
     },
     onSuccess: (name) => {
       queryClient.invalidateQueries({ queryKey: ["csv-files"] });
-      toast({ title: "CSV uploaded", description: `"${name}" is ready to use.` });
+      toast({ title: t("dataCsv.uploaded_toast"), description: t("dataCsv.readyToUse", { name }) });
       resetUpload();
     },
     onError: (err: Error) => {
-      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+      toast({ title: t("dataCsv.uploadFailed"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -238,11 +238,11 @@ export default function DataCsvPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["csv-files"] });
-      toast({ title: "CSV replaced", description: `"${data.fileName}" uploaded with ${data.rowCount} rows.` });
+      toast({ title: t("dataCsv.replaced"), description: t("dataCsv.replacedDesc", { name: data.fileName, count: data.rowCount }) });
       setReplacingFileId(null);
     },
     onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -252,19 +252,19 @@ export default function DataCsvPage() {
     const ext = file.name.split(".").pop()?.toLowerCase();
     const validExts = ["csv", "tsv", "txt", "json", "xlsx", "xls"];
     if (!ext || !validExts.includes(ext)) {
-      toast({ title: "Invalid file", description: "Please upload a .csv, .tsv, .json, .xlsx, or .xls file.", variant: "destructive" });
+      toast({ title: t("dataCsv.invalidFile"), description: t("dataCsv.invalidFileDesc"), variant: "destructive" });
       return;
     }
     try {
       const parsed = await parseUploadedFile(file);
-      const validation = validateCsv(parsed.headers, parsed.rows, parsed.delimiter);
+      const validation = validateCsv(parsed.headers, parsed.rows, parsed.delimiter, t);
       setPendingFile(file);
       setPendingParsed(parsed);
       setPendingValidation(validation);
       setPendingEncoding("utf-8");
       setUploadOpen(true);
     } catch (err: any) {
-      toast({ title: "Parse error", description: err.message || "Failed to parse file", variant: "destructive" });
+      toast({ title: t("dataCsv.parseError"), description: err.message || t("dataCsv.parseFailed"), variant: "destructive" });
     }
   };
 
@@ -285,7 +285,7 @@ export default function DataCsvPage() {
       .eq("id", file.id)
       .single();
     if (error || !data) {
-      toast({ title: "Error loading preview", variant: "destructive" });
+      toast({ title: t("dataCsv.previewLoadError"), variant: "destructive" });
       return;
     }
     const headers = (data.headers as string[]) || [];
@@ -305,7 +305,7 @@ export default function DataCsvPage() {
       .eq("id", file.id)
       .single();
     if (error || !data?.raw_content) {
-      toast({ title: "Error downloading file", variant: "destructive" });
+      toast({ title: t("dataCsv.downloadError"), variant: "destructive" });
       return;
     }
     const headers = (data.headers as string[]) || [];
@@ -323,7 +323,7 @@ export default function DataCsvPage() {
 
   const handleBulkDownload = async () => {
     if (csvFiles.length === 0) return;
-    toast({ title: "Downloading…", description: `Preparing ${csvFiles.length} file(s).` });
+    toast({ title: t("dataCsv.downloading"), description: t("dataCsv.preparingFiles", { count: csvFiles.length }) });
     for (const file of csvFiles) {
       await handleDownload(file);
       await new Promise(r => setTimeout(r, 300));
@@ -403,7 +403,7 @@ export default function DataCsvPage() {
               {isDragging ? t("dataCsv.dropHere") : t("dataCsv.dragAndDrop")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Supports CSV, TSV, JSON, Excel (.xlsx, .xls) files
+              {t("dataCsv.supportedFormatsFull")}
             </p>
           </div>
         </CardContent>
@@ -411,31 +411,31 @@ export default function DataCsvPage() {
 
       {/* Future connectors hint */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="font-medium">Coming soon:</span>
+        <span className="font-medium">{t("dataCsv.comingSoon")}</span>
         <div className="flex items-center gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex items-center gap-1.5 opacity-50 cursor-default">
-                <Sheet className="h-3.5 w-3.5" /> Google Sheets
+                <Sheet className="h-3.5 w-3.5" /> {t("dataCsv.googleSheets")}
               </span>
             </TooltipTrigger>
-            <TooltipContent>Import data directly from Google Sheets</TooltipContent>
+            <TooltipContent>{t("dataCsv.googleSheetsTooltip")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex items-center gap-1.5 opacity-50 cursor-default">
-                <Rss className="h-3.5 w-3.5" /> API Feed
+                <Rss className="h-3.5 w-3.5" /> {t("dataCsv.apiFeed")}
               </span>
             </TooltipTrigger>
-            <TooltipContent>Connect a REST API as a data source</TooltipContent>
+            <TooltipContent>{t("dataCsv.apiFeedTooltip")}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex items-center gap-1.5 opacity-50 cursor-default">
-                <Database className="h-3.5 w-3.5" /> Database
+                <Database className="h-3.5 w-3.5" /> {t("dataCsv.database")}
               </span>
             </TooltipTrigger>
-            <TooltipContent>Query a database directly</TooltipContent>
+            <TooltipContent>{t("dataCsv.databaseTooltip")}</TooltipContent>
           </Tooltip>
         </div>
       </div>
@@ -444,7 +444,7 @@ export default function DataCsvPage() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search files or campaigns..."
+          placeholder={t("dataCsv.searchFilesOrCampaigns")}
           value={searchQuery}
           onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
           className="pl-9"
@@ -454,10 +454,10 @@ export default function DataCsvPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total Files", value: csvFiles.length, icon: FileSpreadsheet, color: "text-primary" },
-          { label: "Total Rows", value: csvFiles.reduce((s: number, f: any) => s + (f.row_count || 0), 0).toLocaleString(), icon: Database, color: "text-secondary" },
-          { label: "Total Size", value: formatSize(csvFiles.reduce((s: number, f: any) => s + (f.file_size || 0), 0)), icon: HardDrive, color: "text-success" },
-          { label: "Campaigns", value: campaignIds.length, icon: Layers, color: "text-warning" },
+          { label: t("dataCsv.totalFiles"), value: csvFiles.length, icon: FileSpreadsheet, color: "text-primary" },
+          { label: t("dataCsv.totalRows"), value: csvFiles.reduce((s: number, f: any) => s + (f.row_count || 0), 0).toLocaleString(), icon: Database, color: "text-secondary" },
+          { label: t("dataCsv.totalSize"), value: formatSize(csvFiles.reduce((s: number, f: any) => s + (f.file_size || 0), 0)), icon: HardDrive, color: "text-success" },
+          { label: t("dataCsv.campaigns"), value: campaignIds.length, icon: Layers, color: "text-warning" },
         ].map(stat => (
           <Card key={stat.label} className="border-0 shadow-surface">
             <CardContent className="p-4 flex items-center gap-3">
@@ -488,12 +488,12 @@ export default function DataCsvPage() {
                 <FileSpreadsheet className="h-8 w-8 text-muted-foreground/50" />
               </div>
               <h3 className="font-semibold">
-                {csvFiles.length === 0 ? "No CSV files yet" : "No matching files"}
+                {csvFiles.length === 0 ? t("dataCsv.noFilesTitle") : t("dataCsv.noMatchingFiles")}
               </h3>
               <p className="text-muted-foreground text-sm max-w-sm">
                 {csvFiles.length === 0
-                  ? "Upload a CSV file above or create a campaign with data."
-                  : "Try adjusting your search query."}
+                  ? t("dataCsv.noFilesHint")
+                  : t("dataCsv.adjustSearch")}
               </p>
             </div>
           </CardContent>
@@ -510,12 +510,12 @@ export default function DataCsvPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{file.file_name || "data.csv"}</p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <Badge variant="secondary" className="text-[10px] rounded-lg">{(file.row_count || 0).toLocaleString()} rows</Badge>
+                    <Badge variant="secondary" className="text-[10px] rounded-lg">{t("dataCsv.rowsCount", { count: (file.row_count || 0).toLocaleString() })}</Badge>
                     <span className="text-[10px] text-muted-foreground">{formatSize(file.file_size || 0)}</span>
-                    <span className="text-[10px] text-muted-foreground">{(file.headers as string[] | null)?.length || "—"} cols</span>
+                    <span className="text-[10px] text-muted-foreground">{t("dataCsv.colsCount", { count: (file.headers as string[] | null)?.length || "—" })}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                    {file.campaign_id ? getCampaignName(file.campaign_id) : "Standalone"} · {new Date(file.created_at).toLocaleDateString()}
+                    {file.campaign_id ? getCampaignName(file.campaign_id) : t("dataCsv.standalone")} · {new Date(file.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <DropdownMenu>
@@ -526,23 +526,23 @@ export default function DataCsvPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuItem onClick={() => handlePreview(file)}>
-                      <Eye className="h-4 w-4 mr-2" /> Preview
+                      <Eye className="h-4 w-4 mr-2" /> {t("dataCsv.preview")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDownloadAs(file, "csv")}>
-                      <FileText className="h-4 w-4 mr-2" /> Download CSV
+                      <FileText className="h-4 w-4 mr-2" /> {t("dataCsv.downloadCsv")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDownloadAs(file, "json")}>
-                      <FileJson className="h-4 w-4 mr-2" /> Download JSON
+                      <FileJson className="h-4 w-4 mr-2" /> {t("dataCsv.downloadJson")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDownloadAs(file, "xlsx")}>
-                      <FileSpreadsheet className="h-4 w-4 mr-2" /> Download Excel
+                      <FileSpreadsheet className="h-4 w-4 mr-2" /> {t("dataCsv.downloadExcel")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => { setReplacingFileId(file.id); document.getElementById("data-csv-replace-input")?.click(); }}>
-                      <Upload className="h-4 w-4 mr-2" /> Replace
+                      <Upload className="h-4 w-4 mr-2" /> {t("dataCsv.replace")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => deleteMutation.mutate(file.id)} className="text-destructive focus:text-destructive">
-                      <Trash2 className="h-4 w-4 mr-2" /> Delete
+                      <Trash2 className="h-4 w-4 mr-2" /> {t("dataCsv.delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -555,13 +555,13 @@ export default function DataCsvPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">File Name</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Size</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Rows</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">Columns</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">Campaign</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium">Uploaded</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider font-medium text-right">Actions</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.fileName")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.size")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.rows")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">{t("dataCsv.columns")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium hidden xl:table-cell">{t("dataCsv.campaign")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium">{t("dataCsv.uploaded")}</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider font-medium text-right">{t("dataCsv.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -584,7 +584,7 @@ export default function DataCsvPage() {
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
                       <span className="text-sm text-muted-foreground truncate max-w-[180px] block">
-                        {file.campaign_id ? getCampaignName(file.campaign_id) : <span className="italic">Standalone</span>}
+                        {file.campaign_id ? getCampaignName(file.campaign_id) : <span className="italic">{t("dataCsv.standalone")}</span>}
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -599,29 +599,29 @@ export default function DataCsvPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
                           <DropdownMenuItem onClick={() => handlePreview(file)}>
-                            <Eye className="h-4 w-4 mr-2" /> Preview
+                            <Eye className="h-4 w-4 mr-2" /> {t("dataCsv.preview")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDownloadAs(file, "csv")}>
-                            <FileText className="h-4 w-4 mr-2" /> Download CSV
+                            <FileText className="h-4 w-4 mr-2" /> {t("dataCsv.downloadCsv")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDownloadAs(file, "json")}>
-                            <FileJson className="h-4 w-4 mr-2" /> Download JSON
+                            <FileJson className="h-4 w-4 mr-2" /> {t("dataCsv.downloadJson")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDownloadAs(file, "xlsx")}>
-                            <FileSpreadsheet className="h-4 w-4 mr-2" /> Download Excel
+                            <FileSpreadsheet className="h-4 w-4 mr-2" /> {t("dataCsv.downloadExcel")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                             setReplacingFileId(file.id);
                             document.getElementById("data-csv-replace-input")?.click();
                           }}>
-                            <Upload className="h-4 w-4 mr-2" /> Replace
+                            <Upload className="h-4 w-4 mr-2" /> {t("dataCsv.replace")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => deleteMutation.mutate(file.id)}
                             className="text-destructive focus:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            <Trash2 className="h-4 w-4 mr-2" /> {t("dataCsv.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -636,7 +636,7 @@ export default function DataCsvPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
               <span className="text-xs text-muted-foreground">
-                Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filteredFiles.length)} of {filteredFiles.length}
+                {t("dataCsv.showingRange", { start: (safePage - 1) * PAGE_SIZE + 1, end: Math.min(safePage * PAGE_SIZE, filteredFiles.length), total: filteredFiles.length })}
               </span>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-7 w-7" disabled={safePage <= 1} onClick={() => setCurrentPage(p => p - 1)}>
@@ -696,10 +696,10 @@ export default function DataCsvPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5 text-primary" />
-              {pendingFile?.name || "Upload CSV"}
+              {pendingFile?.name || t("dataCsv.uploadCsv")}
             </DialogTitle>
             <DialogDescription>
-              Review file structure before uploading.
+              {t("dataCsv.reviewBeforeUpload")}
             </DialogDescription>
           </DialogHeader>
 
@@ -711,16 +711,16 @@ export default function DataCsvPage() {
                   <FileSpreadsheet className="h-3 w-3" /> {formatSize(pendingFile?.size || 0)}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  {pendingParsed.rowData.length.toLocaleString()} rows
+                  {t("dataCsv.rowsCount", { count: pendingParsed.rowData.length.toLocaleString() })}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  {pendingParsed.headers.length} columns
+                  {t("dataCsv.columnsCount", { count: pendingParsed.headers.length })}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  Delimiter: {delimiterLabel[pendingParsed.delimiter] || pendingParsed.delimiter}
+                  {t("dataCsv.delimiter", { value: delimiterLabelKey[pendingParsed.delimiter] ? t(delimiterLabelKey[pendingParsed.delimiter]) : pendingParsed.delimiter })}
                 </Badge>
                 <Badge variant="outline" className="text-[10px] gap-1">
-                  Encoding: {pendingEncoding.toUpperCase()}
+                  {t("dataCsv.encoding", { value: pendingEncoding.toUpperCase() })}
                 </Badge>
               </div>
 
@@ -745,17 +745,17 @@ export default function DataCsvPage() {
               {pendingValidation.valid && pendingValidation.warnings.length === 0 && (
                 <div className="flex items-center gap-2 text-xs text-success bg-success/5 border border-success/20 rounded-lg p-2.5">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span>File structure looks good – no issues detected.</span>
+                  <span>{t("dataCsv.structureGood")}</span>
                 </div>
               )}
 
               {/* Headers list */}
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Detected Headers</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">{t("dataCsv.detectedHeaders")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {pendingParsed.headers.map((h, i) => (
                     <Badge key={i} variant="secondary" className="text-[10px] rounded-md font-mono">
-                      {h || <span className="italic text-destructive">(empty)</span>}
+                      {h || <span className="italic text-destructive">{t("dataCsv.emptyHeader")}</span>}
                     </Badge>
                   ))}
                 </div>
@@ -763,7 +763,7 @@ export default function DataCsvPage() {
 
               {/* Preview table */}
               <div className="flex-1 overflow-hidden">
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Preview (first 10 rows)</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">{t("dataCsv.previewFirstRows", { count: 10 })}</p>
                 <ScrollArea className="max-h-[30vh] border border-border rounded-lg">
                   <div className="overflow-x-auto">
                     <Table>
@@ -794,7 +794,7 @@ export default function DataCsvPage() {
 
               {/* Actions */}
               <div className="flex justify-end gap-2 pt-2 border-t border-border">
-                <Button variant="outline" onClick={resetUpload}>Cancel</Button>
+                <Button variant="outline" onClick={resetUpload}>{t("common.cancel")}</Button>
                 <Button
                   disabled={!pendingValidation.valid || uploadMutation.isPending}
                   onClick={() => {
@@ -803,7 +803,7 @@ export default function DataCsvPage() {
                   }}
                   className="bg-gradient-primary hover:brightness-110 gap-2"
                 >
-                  {uploadMutation.isPending ? "Uploading…" : <><Upload className="h-4 w-4" /> Upload File</>}
+                  {uploadMutation.isPending ? t("dataCsv.uploading") : <><Upload className="h-4 w-4" /> {t("dataCsv.uploadFile")}</>}
                 </Button>
               </div>
             </div>
@@ -817,10 +817,10 @@ export default function DataCsvPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5 text-primary" />
-              {previewFile?.file_name || "CSV Preview"}
+              {previewFile?.file_name || t("dataCsv.csvPreview")}
             </DialogTitle>
             <DialogDescription>
-              Showing first 10 rows · {previewFile?.row_count?.toLocaleString()} total rows · {formatSize(previewFile?.file_size || 0)}
+              {t("dataCsv.previewSummary", { count: 10, total: previewFile?.row_count?.toLocaleString() || 0, size: formatSize(previewFile?.file_size || 0) })}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[50vh]">
@@ -850,7 +850,7 @@ export default function DataCsvPage() {
             ) : (
               <div className="py-12 text-center text-muted-foreground">
                 <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
-                <p className="text-sm">Loading preview...</p>
+                <p className="text-sm">{t("dataCsv.loadingPreview")}</p>
               </div>
             )}
           </ScrollArea>
