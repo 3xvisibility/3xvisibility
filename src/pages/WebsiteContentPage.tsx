@@ -366,7 +366,7 @@ export default function WebsiteContentPage() {
               <Input
                 value={scanUrl}
                 onChange={(e) => setScanUrl(e.target.value)}
-                placeholder="Search page by URL — paste any page or product URL..."
+                placeholder={t("websiteContent.scanUrlPlaceholder")}
                 className="h-9 text-sm flex-1"
                 type="url"
               />
