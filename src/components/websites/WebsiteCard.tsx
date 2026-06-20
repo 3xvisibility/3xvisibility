@@ -21,6 +21,7 @@ import { RetranslateSiteDialog } from "./RetranslateSiteDialog";
 import { ShopifyProductManager } from "./ShopifyProductManager";
 import { extractEdgeError } from "@/lib/edge-function-error";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 type Website = Tables<"websites">;
 
@@ -39,6 +40,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
   const [reconnectConfirmOpen, setReconnectConfirmOpen] = useState(false);
   const [disconnectConfirmOpen, setDisconnectConfirmOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
 
   const isShopify = site.type === "shopify";
@@ -286,7 +288,7 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           <div className="mt-3 flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="capitalize text-xs">{site.type}</Badge>
             <Badge variant={site.status === "connected" ? "secondary" : "destructive"} className={site.status === "connected" ? "bg-success/10 text-success" : ""}>
-              {site.status}
+              {site.status === "connected" ? t("websiteCard.connected") : t("websiteCard.disconnected")}
             </Badge>
             {site.language && (
               <Badge variant="outline" className="text-xs gap-1">
@@ -481,9 +483,9 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               onClick={() => testConnectionMutation.mutate()}
             >
               {testConnectionMutation.isPending ? (
-                <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Testing...</>
+                <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.testing")}</>
               ) : (
-                <><Zap className="h-3 w-3 mr-1" /> Test Connection</>
+                <><Zap className="h-3 w-3 mr-1" /> {t("websiteCard.testConnection")}</>
               )}
             </Button>
             <Button
@@ -493,12 +495,12 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
               onClick={() => setRetransOpen(true)}
               title={
                 site.language
-                  ? `Re-translate the most recent pages to ${site.language} and republish them`
-                  : "Set a Site Language first to enable this action"
+                  ? t("websiteCard.retranslateTitle", { lang: site.language })
+                  : t("websiteCard.retranslateTitleNoLang")
               }
             >
               <Languages className="h-3 w-3 mr-1" />
-              Re-translate to {site.language || "site language"}
+              {t("websiteCard.retranslateTo", { lang: site.language || t("websiteCard.siteLanguage") })}
             </Button>
             {isShopify && (
               <>
@@ -545,18 +547,18 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex items-center gap-2 mb-2">
               <Map className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold">Sitemap</span>
+              <span className="text-xs font-semibold">{t("websiteCard.sitemap")}</span>
             </div>
             {sitemap ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="tabular-nums">{sitemap.page_count} pages</span>
+                  <span className="tabular-nums">{t("websiteCard.pagesCount", { count: sitemap.page_count })}</span>
                   <span>•</span>
                   <span className="tabular-nums">{new Date(sitemap.last_generated_at).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center gap-1 flex-wrap">
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleDownloadSitemap}>
-                    <Download className="h-3 w-3 mr-1" /> Download
+                    <Download className="h-3 w-3 mr-1" /> {t("websiteCard.download")}
                   </Button>
                   <Button
                     size="sm"
@@ -566,16 +568,16 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                     onClick={() => generateSitemapMutation.mutate(site.id)}
                   >
                     {isGenerating ? (
-                      <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                      <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.generating")}</>
                     ) : (
-                      <><RefreshCw className="h-3 w-3 mr-1" /> Regenerate</>
+                      <><RefreshCw className="h-3 w-3 mr-1" /> {t("websiteCard.regenerate")}</>
                     )}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">No sitemap generated yet.</p>
+                <p className="text-xs text-muted-foreground">{t("websiteCard.noSitemap")}</p>
                 <Button
                   size="sm"
                   variant="outline"
@@ -584,9 +586,9 @@ export function WebsiteCard({ site, sitemap, onDelete, isDeleting, autoOpenProdu
                   onClick={() => generateSitemapMutation.mutate(site.id)}
                 >
                   {isGenerating ? (
-                    <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Generating...</>
+                    <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> {t("websiteCard.generating")}</>
                   ) : (
-                    <><Map className="h-3 w-3 mr-1" /> Generate Sitemap</>
+                    <><Map className="h-3 w-3 mr-1" /> {t("websiteCard.generateSitemap")}</>
                   )}
                 </Button>
               </div>
