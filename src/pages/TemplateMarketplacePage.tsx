@@ -455,7 +455,7 @@ export default function TemplateMarketplacePage() {
 
       {/* Template grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map((tpl) => (
+        {paginatedTemplates.map((tpl) => (
           <Card
             key={tpl.id}
             className="shadow-surface hover:shadow-surface-hover transition-all duration-150 cursor-pointer group"
