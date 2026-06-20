@@ -286,16 +286,16 @@ export default function WebsiteContentPage() {
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
-            Website Content
+            {t("websiteContent.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Browse pages & products from your connected websites
+            {t("websiteContent.description")}
           </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select value={effectiveWebsite} onValueChange={setSelectedWebsite}>
             <SelectTrigger className="h-9 text-sm w-full sm:w-[240px]">
-              <SelectValue placeholder="Select website" />
+              <SelectValue placeholder={t("websiteContent.selectWebsite")} />
             </SelectTrigger>
             <SelectContent>
               {websites.map((w) => (
