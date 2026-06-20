@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { SeoDefaultsEditor } from "@/components/templates/SeoDefaultsEditor";
@@ -75,6 +76,7 @@ export default function TemplateMarketplacePage() {
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const { currentWorkspace } = useWorkspace();
   const wsId = currentWorkspace?.id;
@@ -328,14 +330,14 @@ export default function TemplateMarketplacePage() {
         <div>
           <h1 className="text-display flex items-center gap-2">
             <Store className="h-6 w-6 text-primary" />
-            Template Marketplace
+            {t("marketplace.title")}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Browse, share, and rate community templates.
+            {t("marketplace.subtitle")}
           </p>
         </div>
         <Button onClick={() => setShareOpen(true)} variant="outline" className="gap-2">
-          <Share2 className="h-4 w-4" /> Share Template
+          <Share2 className="h-4 w-4" /> {t("marketplace.shareTemplate")}
         </Button>
       </div>
 
@@ -346,14 +348,14 @@ export default function TemplateMarketplacePage() {
           variant={activeTab === "browse" ? "default" : "outline"}
           onClick={() => setActiveTab("browse")}
         >
-          <Store className="h-3.5 w-3.5 mr-1.5" /> All Templates
+          <Store className="h-3.5 w-3.5 mr-1.5" /> {t("marketplace.allTemplates")}
         </Button>
         <Button
           size="sm"
           variant={activeTab === "community" ? "default" : "outline"}
           onClick={() => setActiveTab("community")}
         >
-          <Users className="h-3.5 w-3.5 mr-1.5" /> Community Shared
+          <Users className="h-3.5 w-3.5 mr-1.5" /> {t("marketplace.communityShared")}
           {communityTemplates.length > 0 && (
             <Badge variant="secondary" className="ml-1.5 text-[10px]">{communityTemplates.length}</Badge>
           )}
@@ -365,7 +367,7 @@ export default function TemplateMarketplacePage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search templates..."
+            placeholder={t("marketplace.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
