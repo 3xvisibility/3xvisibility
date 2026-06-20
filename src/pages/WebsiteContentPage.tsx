@@ -574,7 +574,7 @@ function ContentList({
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex items-start gap-2">
                       <h3 className="min-w-0 flex-1 text-sm font-medium leading-snug break-words">
-                        {decodeHtmlEntities(item.title) || "(Untitled)"}
+                        {decodeHtmlEntities(item.title) || t("websiteContent.untitled")}
                       </h3>
                       {item.url && (
                         <Button
