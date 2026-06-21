@@ -76,9 +76,11 @@ export class WordPressConnector implements CmsConnector {
   readonly type = "wordpress";
   private baseUrl: string;
   private headers: HeadersInit;
+  private elementorWidget: boolean;
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
+    this.elementorWidget = config.elementor_widget === true;
     const credentials = btoa(`${config.username}:${config.password}`);
     this.headers = {
       Accept: "application/json",
