@@ -224,7 +224,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="all">{t("audit.allActions")}</SelectItem>
               {ALL_ACTIONS.map((a) => (
                 <SelectItem key={a} value={a}>
                   {t(actionConfig[a].labelKey)}
@@ -236,7 +236,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search logs (email, name, URL…)"
+              placeholder={t("audit.searchLogs")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 text-xs"
@@ -256,7 +256,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
                   ? dateRange.to
                     ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d")}`
                     : format(dateRange.from, "MMM d, yyyy")
-                  : "Date range"}
+                  : t("audit.dateRange")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
@@ -269,7 +269,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               {(dateRange.from || dateRange.to) && (
                 <div className="p-2 border-t">
                   <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setDateRange({})}>
-                    Clear dates
+                    {t("audit.clearDates")}
                   </Button>
                 </div>
               )}
@@ -283,7 +283,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               className="h-9 text-xs text-muted-foreground"
               onClick={() => { setActionFilter("all"); setSearchQuery(""); setDateRange({}); }}
             >
-              Clear all
+              {t("audit.clearAll")}
             </Button>
           )}
         </div>
@@ -297,7 +297,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           </div>
         ) : !logs.length ? (
           <p className="text-sm text-muted-foreground text-center py-8">
-            {hasFilters ? "No events match your filters." : "No audit events yet."}
+            {hasFilters ? t("audit.noMatch") : t("audit.noEvents")}
           </p>
         ) : (
           <div className="max-h-[500px] overflow-y-auto pr-3">
@@ -339,7 +339,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
             )}
 
             {!hasNextPage && logs.length >= PAGE_SIZE && (
-              <p className="text-xs text-muted-foreground text-center py-2">All events loaded.</p>
+              <p className="text-xs text-muted-foreground text-center py-2">{t("audit.allLoaded")}</p>
             )}
           </div>
         )}
