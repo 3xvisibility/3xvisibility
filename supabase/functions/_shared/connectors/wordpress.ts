@@ -1,6 +1,6 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
-import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
+import { adaptHtmlForWordPressTheme, buildElementorHtmlWidget } from "./wordpress-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 
 function slugify(text: string): string {
