@@ -1527,36 +1527,6 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       <MarketplaceImportProgress steps={mpSteps} errorMessage={mpImportError} />
                     )}
 
-                    {selectedTemplate && (
-                      <div className="space-y-1.5 pt-1">
-                        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <Info className="h-3 w-3" />
-                          {selectedTemplateVars.length > 0
-                            ? <>Each page needs values for these <strong className="text-foreground">{selectedTemplateVars.length}</strong> variables:</>
-                            : <>This template has no variables — every page will be identical.</>}
-                        </p>
-                        {selectedTemplateVars.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {selectedTemplateVars.map(v => (
-                              <Badge key={v} variant="secondary" className="text-[10px] rounded-md font-mono">{`{${v}}`}</Badge>
-                            ))}
-                          </div>
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-[11px] text-primary hover:text-primary"
-                          onClick={() => {
-                            const tpl = templates.find(t => t.id === selectedTemplate);
-                            if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
-                          }}
-                        >
-                          <Upload className="h-3 w-3 mr-1 rotate-180" />
-                          Download starter CSV with these columns
-                        </Button>
-                      </div>
-                    )}
                   </div>
 
                   {/* Website selection inline */}
@@ -1640,8 +1610,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               >
                                 <SelectTrigger className="h-8 text-xs rounded-lg flex-1"><SelectValue placeholder="Choose template to download starter" /></SelectTrigger>
                                 <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>)}</SelectContent>
-                              </Select>
+                               </Select>
                             </div>
+                            {selectedTemplate && selectedTemplateVars.length > 0 && (
+                              <div className="space-y-1.5 pt-2">
+                                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                  <Info className="h-3 w-3" />
+                                  Each page needs values for these <strong className="text-foreground">{selectedTemplateVars.length}</strong> variables:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {selectedTemplateVars.map(v => (
+                                    <Badge key={v} variant="secondary" className="text-[10px] rounded-md font-mono">{`{${v}}`}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
