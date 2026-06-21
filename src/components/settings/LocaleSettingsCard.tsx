@@ -37,7 +37,7 @@ export default function LocaleSettingsCard() {
         delete next[code];
         return next;
       });
-      toast({ title: "Saved", description: `Updated ${code.toUpperCase()} locale.` });
+      toast({ title: t("localeSettings.saved"), description: t("localeSettings.updatedLocale", { code: code.toUpperCase() }) });
     } catch (e) {
       toast({
         title: "Could not save",
