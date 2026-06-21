@@ -40,8 +40,8 @@ export default function LocaleSettingsCard() {
       toast({ title: t("localeSettings.saved"), description: t("localeSettings.updatedLocale", { code: code.toUpperCase() }) });
     } catch (e) {
       toast({
-        title: "Could not save",
-        description: e instanceof Error ? e.message : "Invalid value.",
+        title: t("localeSettings.couldNotSave"),
+        description: e instanceof Error ? e.message : t("localeSettings.invalidValue"),
         variant: "destructive",
       });
     }
@@ -52,8 +52,8 @@ export default function LocaleSettingsCard() {
       saveLocaleOverride(code, { enabled });
     } catch (e) {
       toast({
-        title: "Could not update",
-        description: e instanceof Error ? e.message : "Invalid value.",
+        title: t("localeSettings.couldNotUpdate"),
+        description: e instanceof Error ? e.message : t("localeSettings.invalidValue"),
         variant: "destructive",
       });
     }
