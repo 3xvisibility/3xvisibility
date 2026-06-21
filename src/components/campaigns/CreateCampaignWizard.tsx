@@ -1770,18 +1770,38 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                               <div>
-                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Business / Brand</Label>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Business / Brand <span className="text-primary">*</span></Label>
                                 <Input value={aiBusiness} onChange={(e) => setAiBusiness(e.target.value)} placeholder="Acme Plumbing" className="h-9 rounded-lg text-xs" />
                               </div>
                               <div>
-                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Niche / Industry</Label>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Niche / Industry <span className="text-muted-foreground/60">(optional)</span></Label>
                                 <Input value={aiNiche} onChange={(e) => setAiNiche(e.target.value)} placeholder="Home services" className="h-9 rounded-lg text-xs" />
                               </div>
                               <div>
-                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Service / Product</Label>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Service / Product <span className="text-muted-foreground/60">(optional)</span></Label>
                                 <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-9 rounded-lg text-xs" />
                               </div>
                             </div>
+
+                            {contactVars.length > 0 && (
+                              <div className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-2.5">
+                                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Your contact & links</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {contactVars.map((v) => (
+                                    <div key={v}>
+                                      <Label className="text-[10px] text-muted-foreground mb-1 block font-mono">{`{${v}}`}</Label>
+                                      <Input
+                                        value={aiFixedValues[v] || ""}
+                                        onChange={(e) => setAiFixedValues((prev) => ({ ...prev, [v]: e.target.value }))}
+                                        placeholder={/phone|tel|mobile|whatsapp/i.test(v) ? "+1 555 123 4567" : /mail/i.test(v) ? "hello@brand.com" : "https://brand.com"}
+                                        className="h-9 rounded-lg text-xs"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">These exact values are used on every generated page — AI won't change them.</p>
+                              </div>
+                            )}
                             <div className="flex items-end gap-2">
                               <div className="flex-1">
                                 <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Pages to generate</Label>
