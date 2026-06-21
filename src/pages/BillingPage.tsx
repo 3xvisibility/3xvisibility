@@ -92,20 +92,20 @@ const featureIcons: Record<string, React.ReactNode> = {
   teamCollaboration: <Users className="h-4 w-4 text-primary" />,
 };
 
-const featureRows: { label: string; key: string }[] = [
-  { label: "Pages / month", key: "pagesLimit" },
-  { label: "AI credits / month", key: "aiLimit" },
-  { label: "Templates", key: "templates" },
-  { label: "Websites", key: "websites" },
-  { label: "WordPress", key: "wordpress" },
-  { label: "Shopify", key: "shopify" },
-  { label: "PrestaShop", key: "prestashop" },
-  { label: "WooCommerce", key: "woocommerce" },
-  { label: "Google Indexing", key: "indexing" },
-  { label: "Website Discovery", key: "discovery" },
-  { label: "Internal Links", key: "internalLinks" },
-  { label: "API Access", key: "apiAccess" },
-  { label: "Team Collaboration", key: "teamCollaboration" },
+const featureRows: { labelKey: string; key: string }[] = [
+  { labelKey: "billing.featurePagesMonth", key: "pagesLimit" },
+  { labelKey: "billing.featureAiCreditsMonth", key: "aiLimit" },
+  { labelKey: "billing.featureTemplates", key: "templates" },
+  { labelKey: "billing.featureWebsites", key: "websites" },
+  { labelKey: "billing.featureWordPress", key: "wordpress" },
+  { labelKey: "billing.featureShopify", key: "shopify" },
+  { labelKey: "billing.featurePrestaShop", key: "prestashop" },
+  { labelKey: "billing.featureWooCommerce", key: "woocommerce" },
+  { labelKey: "billing.featureGoogleIndexing", key: "indexing" },
+  { labelKey: "billing.featureWebsiteDiscovery", key: "discovery" },
+  { labelKey: "billing.featureInternalLinks", key: "internalLinks" },
+  { labelKey: "billing.featureApiAccess", key: "apiAccess" },
+  { labelKey: "billing.featureTeamCollaboration", key: "teamCollaboration" },
 ];
 
 function formatValue(val: number | boolean, unlimitedLabel: string): React.ReactNode {
@@ -507,7 +507,7 @@ export default function BillingPage() {
                     <td className="py-3.5 px-5">
                       <div className="flex items-center gap-2.5">
                         {featureIcons[row.key]}
-                        <span className="text-foreground font-medium">{row.label}</span>
+                        <span className="text-foreground font-medium">{t(row.labelKey)}</span>
                         {row.key === "prestashop" && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border-amber-500/20">{t("common.comingSoon")}</Badge>
                         )}
