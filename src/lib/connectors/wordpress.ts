@@ -165,6 +165,7 @@ export class WordPressConnector implements CmsConnector {
       body.content = sanitizeWordPressContent(themed) || "<p></p>";
     }
 
+
     if (isCreate || payload.slug) {
       body.slug = payload.slug;
     }
