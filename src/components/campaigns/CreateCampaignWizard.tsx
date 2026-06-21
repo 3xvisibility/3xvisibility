@@ -592,6 +592,22 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
 
+  // Variables that hold contact/link info the user should supply directly
+  // (phone, email, links/URLs) rather than letting the AI invent fake values.
+  const contactVars = useMemo(
+    () =>
+      selectedTemplateVars.filter((v) =>
+        /(phone|tel|mobile|whatsapp|email|mail|link|url|website|address|booking|calendar)/i.test(v)
+      ),
+    [selectedTemplateVars]
+  );
+  // Variables the AI should generate (everything that's not a fixed contact value).
+  const aiGenVars = useMemo(
+    () => selectedTemplateVars.filter((v) => !contactVars.includes(v)),
+    [selectedTemplateVars, contactVars]
+  );
+  const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
+
   // Pre-fill vibe controls from a template's saved `vibe_theme` whenever the
   // user picks (or switches) a template. Persists the auto-fix outcome from
   // last session so the same safe combo is reused on next campaign.
@@ -768,11 +784,22 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       toast({ title: "This template has no variables", description: "Add variables to the template first.", variant: "destructive" });
       return;
     }
+    if (!aiBusiness.trim()) {
+      toast({ title: "Add your brand name", description: "AI fills the template using your brand name.", variant: "destructive" });
+      return;
+    }
     setAiGenerating(true);
     try {
+      // Only ask AI for non-contact variables; contact values come from the user.
+      const fixedValues: Record<string, string> = {};
+      for (const v of contactVars) {
+        const val = (aiFixedValues[v] || "").trim();
+        if (val) fixedValues[v] = val;
+      }
+      const genVars = aiGenVars.length > 0 ? aiGenVars : selectedTemplateVars;
       const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
         body: {
-          variables: selectedTemplateVars,
+          variables: genVars,
           count: Math.max(1, Math.min(200, aiPageCount)),
           business: aiBusiness || undefined,
           niche: aiNiche || undefined,
@@ -783,10 +810,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      const rows = Array.isArray(data?.rows) ? data.rows : [];
-      if (rows.length === 0) throw new Error("AI returned no rows");
+      const baseRows = Array.isArray(data?.rows) ? data.rows : [];
+      if (baseRows.length === 0) throw new Error("AI returned no rows");
+      // Apply the user's fixed contact values to every row.
+      const rows = baseRows.map((r: Record<string, string>) => ({ ...r, ...fixedValues }));
       setAiGeneratedRows(rows);
       toast({ title: `Generated ${rows.length} rows`, description: "Edit any cell below before continuing." });
+
     } catch (err: any) {
       toast({ title: "AI generation failed", description: friendlyError(err.message), variant: "destructive" });
     } finally {
@@ -1660,7 +1690,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             <div className="flex items-start gap-2">
                               <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                               <div className="text-[11px] text-muted-foreground flex-1">
-                                Tell us about your business and we'll fill the <strong className="text-foreground">{selectedTemplateVars.length}</strong> template variables for as many pages as you need.
+                                Enter your <strong className="text-foreground">brand name</strong> and AI fills the <strong className="text-foreground">{aiGenVars.length}</strong> content variables based on your chosen template.{contactVars.length > 0 ? <> Add your real contact / link details below so they're used exactly as you enter them.</> : null}
                               </div>
                             </div>
 
@@ -1740,18 +1770,38 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                               <div>
-                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Business / Brand</Label>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Business / Brand <span className="text-primary">*</span></Label>
                                 <Input value={aiBusiness} onChange={(e) => setAiBusiness(e.target.value)} placeholder="Acme Plumbing" className="h-9 rounded-lg text-xs" />
                               </div>
                               <div>
-                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Niche / Industry</Label>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Niche / Industry <span className="text-muted-foreground/60">(optional)</span></Label>
                                 <Input value={aiNiche} onChange={(e) => setAiNiche(e.target.value)} placeholder="Home services" className="h-9 rounded-lg text-xs" />
                               </div>
                               <div>
-                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Service / Product</Label>
+                                <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Service / Product <span className="text-muted-foreground/60">(optional)</span></Label>
                                 <Input value={aiServiceProduct} onChange={(e) => setAiServiceProduct(e.target.value)} placeholder="Emergency plumbing" className="h-9 rounded-lg text-xs" />
                               </div>
                             </div>
+
+                            {contactVars.length > 0 && (
+                              <div className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-2.5">
+                                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Your contact & links</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {contactVars.map((v) => (
+                                    <div key={v}>
+                                      <Label className="text-[10px] text-muted-foreground mb-1 block font-mono">{`{${v}}`}</Label>
+                                      <Input
+                                        value={aiFixedValues[v] || ""}
+                                        onChange={(e) => setAiFixedValues((prev) => ({ ...prev, [v]: e.target.value }))}
+                                        placeholder={/phone|tel|mobile|whatsapp/i.test(v) ? "+1 555 123 4567" : /mail/i.test(v) ? "hello@brand.com" : "https://brand.com"}
+                                        className="h-9 rounded-lg text-xs"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">These exact values are used on every generated page — AI won't change them.</p>
+                              </div>
+                            )}
                             <div className="flex items-end gap-2">
                               <div className="flex-1">
                                 <Label className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1 block">Pages to generate</Label>
