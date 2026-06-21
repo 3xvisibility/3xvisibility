@@ -15,6 +15,7 @@ import {
 import { CreditCard, Plus, Loader2, Trash2, Star, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface PaymentMethod {
   id: string;
@@ -42,6 +43,7 @@ const brandLabel = (brand: string | null) => {
 
 export function PaymentMethods() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [defaultId, setDefaultId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +80,7 @@ export function PaymentMethods() {
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
     } catch (err: any) {
-      toast({ title: "Couldn't open card form", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.cardFormOpenFailed"), description: err.message, variant: "destructive" });
       setAdding(false);
     }
   };
@@ -90,10 +92,10 @@ export function PaymentMethods() {
         body: { action: "delete", paymentMethodId: pm.id },
       });
       if (error) throw error;
-      toast({ title: "Payment method removed" });
+      toast({ title: t("billing.paymentMethodRemoved") });
       await load();
     } catch (err: any) {
-      toast({ title: "Couldn't remove", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.paymentMethodRemoveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setBusyId(null);
       setToDelete(null);
@@ -108,9 +110,9 @@ export function PaymentMethods() {
       });
       if (error) throw error;
       setDefaultId(pm.id);
-      toast({ title: "Default payment method updated" });
+      toast({ title: t("billing.defaultPaymentUpdated") });
     } catch (err: any) {
-      toast({ title: "Couldn't update", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.defaultPaymentUpdateFailed"), description: err.message, variant: "destructive" });
     } finally {
       setBusyId(null);
     }
