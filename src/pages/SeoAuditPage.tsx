@@ -223,7 +223,7 @@ export default function SeoAuditPage() {
                         .map((item, idx) => (
                           <div key={idx} className="flex items-center gap-2 pl-1">
                             {categoryIcon.passed}
-                            <span className="text-xs text-muted-foreground">{item.label}</span>
+                            <span className="text-xs text-muted-foreground">{t(item.labelKey, item.vars)}</span>
                           </div>
                         ))}
                     </div>
