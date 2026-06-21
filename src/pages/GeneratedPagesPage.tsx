@@ -804,7 +804,7 @@ export default function GeneratedPagesPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
                         <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
-                        {cfg.label}
+                        {t(cfg.labelKey)}
                       </Badge>
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
@@ -877,7 +877,7 @@ export default function GeneratedPagesPage() {
                       <td className="p-3">
                         <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
                           <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
-                          {cfg.label}
+                          {t(cfg.labelKey)}
                         </Badge>
                         {page.error_message && (
                           <TooltipProvider>
