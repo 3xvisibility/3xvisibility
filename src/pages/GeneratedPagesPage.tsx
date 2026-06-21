@@ -585,7 +585,7 @@ export default function GeneratedPagesPage() {
               onClick={() => handlePublish(pendingPages.map((p) => p.id), "publish")}
             >
               <Send className="h-3.5 w-3.5 mr-1.5" />
-              {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
+              {publishMutation.isPending ? t("generatedPages.publishing") : t("generatedPages.publishAll", { count: pendingPages.length })}
             </Button>
           )}
           {retryableQueuedPages.length > 0 && (
@@ -596,7 +596,7 @@ export default function GeneratedPagesPage() {
               onClick={() => handlePublish(retryableQueuedPages.map((p) => p.id), "retry")}
             >
               <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${retryFailedMutation.isPending ? "animate-spin" : ""}`} />
-              Retry queued ({retryableQueuedPages.length})
+              {t("generatedPages.retryQueued", { count: retryableQueuedPages.length })}
             </Button>
           )}
           <DropdownMenu>
