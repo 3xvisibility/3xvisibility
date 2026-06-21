@@ -1610,8 +1610,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                               >
                                 <SelectTrigger className="h-8 text-xs rounded-lg flex-1"><SelectValue placeholder="Choose template to download starter" /></SelectTrigger>
                                 <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>)}</SelectContent>
-                              </Select>
+                               </Select>
                             </div>
+                            {selectedTemplate && selectedTemplateVars.length > 0 && (
+                              <div className="space-y-1.5 pt-2">
+                                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                  <Info className="h-3 w-3" />
+                                  Each page needs values for these <strong className="text-foreground">{selectedTemplateVars.length}</strong> variables:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {selectedTemplateVars.map(v => (
+                                    <Badge key={v} variant="secondary" className="text-[10px] rounded-md font-mono">{`{${v}}`}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
