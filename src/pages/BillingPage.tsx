@@ -300,19 +300,19 @@ export default function BillingPage() {
                 <Sparkles className="h-4.5 w-4.5 text-primary" />
               </div>
               <div>
-                <span className="text-xl font-bold capitalize">{PLAN_FEATURES[activePlan]?.label || "Free"}</span>
-                <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">Active</Badge>
+                <span className="text-xl font-bold capitalize">{PLAN_FEATURES[activePlan]?.label || t("common.free")}</span>
+                <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">{t("billing.active")}</Badge>
               </div>
             </div>
             {currentPlan !== "free" && subscriptionEnd && (
               <p className="text-xs text-muted-foreground">
-                Renews {new Date(subscriptionEnd).toLocaleDateString()}
+                {t("billing.renews", { date: new Date(subscriptionEnd).toLocaleDateString() })}
               </p>
             )}
             {currentPlan !== "free" && (
               <Button variant="outline" size="sm" className="w-full mt-2" onClick={handleManageSubscription} disabled={portalLoading}>
                 {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-                Manage Subscription
+                {t("billing.manageSubscription")}
               </Button>
             )}
           </CardContent>
@@ -326,8 +326,8 @@ export default function BillingPage() {
             <Progress value={pagesPercent} className="h-2" />
             <p className={`text-xs ${pagesPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {pagesPercent >= 100
-                ? "Limit reached — upgrade to continue"
-                : `${pagesLimit - pagesUsed} remaining this month`}
+                ? t("billing.limitReached")
+                : t("billing.remainingMonth", { count: pagesLimit - pagesUsed })}
             </p>
           </CardContent>
         </Card>
@@ -340,8 +340,8 @@ export default function BillingPage() {
             <Progress value={aiPercent} className="h-2" />
             <p className={`text-xs ${aiPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {aiPercent >= 100
-                ? "Limit reached — upgrade to continue"
-                : `${aiLimit - aiUsed} remaining this month`}
+                ? t("billing.limitReached")
+                : t("billing.remainingMonth", { count: aiLimit - aiUsed })}
             </p>
           </CardContent>
         </Card>
@@ -356,10 +356,10 @@ export default function BillingPage() {
             <Progress value={sitesLimit === -1 ? 0 : (sitesLimit > 0 ? Math.round((sitesConnected / sitesLimit) * 100) : 0)} className="h-2" />
             <p className={`text-xs ${sitesLimit !== -1 && sitesConnected >= sitesLimit ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {sitesLimit === -1
-                ? "Unlimited websites"
+                ? t("billing.unlimited")
                 : sitesConnected >= sitesLimit
-                  ? "Limit reached — upgrade to add more"
-                  : `${sitesLimit - sitesConnected} slots available`}
+                  ? t("billing.limitReachedAddMore")
+                  : t("billing.slotsAvailable", { count: sitesLimit - sitesConnected })}
             </p>
           </CardContent>
         </Card>
