@@ -90,9 +90,12 @@ export class WordPressConnector implements CmsConnector {
   private baseUrl: string;
   private headers: HeadersInit;
   private authString: string;
+  private elementorWidget: boolean;
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
+    this.elementorWidget = config.elementor_widget === true;
+
 
     // Support both Application Password (Basic) and JWT auth
     if (config.access_token) {
