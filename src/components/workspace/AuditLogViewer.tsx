@@ -150,7 +150,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
       if (q) {
         results = results.filter((log) => {
           const detailsStr = log.details ? JSON.stringify(log.details).toLowerCase() : "";
-          const actionLabel = (actionConfig[log.action]?.label || log.action).toLowerCase();
+          const actionLabel = (actionConfig[log.action] ? t(actionConfig[log.action].labelKey) : log.action).toLowerCase();
           return (
             actionLabel.includes(q) ||
             log.user_id.toLowerCase().includes(q) ||
@@ -227,7 +227,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               <SelectItem value="all">All Actions</SelectItem>
               {ALL_ACTIONS.map((a) => (
                 <SelectItem key={a} value={a}>
-                  {actionConfig[a].label}
+                  {t(actionConfig[a].labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -303,20 +303,19 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           <div className="max-h-[500px] overflow-y-auto pr-3">
             <div className="relative pl-6 border-l-2 border-border space-y-4">
               {logs.map((log) => {
-                const cfg = actionConfig[log.action] || {
-                  icon: <Clock className="h-3.5 w-3.5" />,
-                  label: log.action.replace(/_/g, " "),
-                  color: "bg-muted text-muted-foreground",
-                };
+                const cfg = actionConfig[log.action];
+                const cfgIcon = cfg?.icon ?? <Clock className="h-3.5 w-3.5" />;
+                const cfgColor = cfg?.color ?? "bg-muted text-muted-foreground";
+                const cfgLabel = cfg ? t(cfg.labelKey) : log.action.replace(/_/g, " ");
                 return (
                   <div key={log.id} className="relative">
                     <div className="absolute -left-[calc(0.75rem+1px)] top-1 h-5 w-5 rounded-full bg-background border-2 border-border flex items-center justify-center">
                       <div className="h-2 w-2 rounded-full bg-primary" />
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                      <Badge variant="outline" className={`gap-1 shrink-0 w-fit text-xs ${cfg.color}`}>
-                        {cfg.icon}
-                        {cfg.label}
+                      <Badge variant="outline" className={`gap-1 shrink-0 w-fit text-xs ${cfgColor}`}>
+                        {cfgIcon}
+                        {cfgLabel}
                       </Badge>
                       <span className="text-sm text-foreground truncate">
                         {getActionDetails(log)}
