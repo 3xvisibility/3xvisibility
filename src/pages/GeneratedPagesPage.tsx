@@ -731,44 +731,45 @@ export default function GeneratedPagesPage() {
           <CardContent className="p-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">{selectedIds.size} selected</span>
+              <span className="text-sm font-semibold">{t("generatedPages.selectedCountShort", { count: selectedIds.size })}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Button size="sm" className="h-7 text-xs bg-gradient-primary border-0" disabled={bulkPublishMutation.isPending}
                 onClick={() => {
                   const publishable = [...selectedIds].filter((id) => { const p = pages.find((pg) => pg.id === id); return p?.status === "pending" || p?.status === "failed" || p?.status === "queued" || p?.status === "publishing"; });
-                  if (!publishable.length) { toast({ title: "No publishable pages", variant: "destructive" }); return; }
+                  if (!publishable.length) { toast({ title: t("generatedPages.noPublishable"), variant: "destructive" }); return; }
                   handlePublish(publishable, "bulk");
                 }}>
-                <Send className="h-3 w-3 mr-1" />{bulkPublishMutation.isPending ? "..." : "Publish"}
+                <Send className="h-3 w-3 mr-1" />{bulkPublishMutation.isPending ? "..." : t("generatedPages.publish")}
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" disabled={retryFailedMutation.isPending}
                 onClick={() => {
                   const retryable = [...selectedIds].filter((id) => { const status = pages.find((p) => p.id === id)?.status; return status === "failed" || status === "queued" || status === "publishing"; });
-                  if (!retryable.length) { toast({ title: "No queued or failed pages to retry", variant: "destructive" }); return; }
+                  if (!retryable.length) { toast({ title: t("generatedPages.noRetryable"), variant: "destructive" }); return; }
                   handlePublish(retryable, "retry");
                 }}>
-                <RefreshCw className="h-3 w-3 mr-1" />Retry
+                <RefreshCw className="h-3 w-3 mr-1" />{t("generatedPages.retry")}
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={openBulkSeoEditor}>
-                <Tag className="h-3 w-3 mr-1" />SEO
+                <Tag className="h-3 w-3 mr-1" />{t("generatedPages.seo")}
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setTranslateOpen(true)}>
-                <Languages className="h-3 w-3 mr-1" />Translate
+                <Languages className="h-3 w-3 mr-1" />{t("generatedPages.translate")}
               </Button>
               <Select onValueChange={(status) => bulkStatusMutation.mutate({ ids: [...selectedIds], status })}>
-                <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder="Status..." /></SelectTrigger>
+                <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder={t("generatedPages.setStatus")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="pending">{t("status.pending")}</SelectItem>
+                  <SelectItem value="published">{t("status.published")}</SelectItem>
+                  <SelectItem value="failed">{t("status.failed")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={() => { if (window.confirm(`Delete ${selectedIds.size} pages?`)) bulkDeleteMutation.mutate([...selectedIds]); }}
+                onClick={() => { if (window.confirm(t("generatedPages.confirmDelete", { count: selectedIds.size }))) bulkDeleteMutation.mutate([...selectedIds]); }}
                 disabled={bulkDeleteMutation.isPending}>
-                <Trash2 className="h-3 w-3 mr-1" />Delete
+                <Trash2 className="h-3 w-3 mr-1" />{t("common.delete")}
               </Button>
+
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
                 <X className="h-3 w-3" />
               </Button>
