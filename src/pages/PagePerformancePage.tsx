@@ -125,7 +125,7 @@ export default function PagePerformancePage() {
     let result = pagePerformance;
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(p => p.title.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q));
+      result = result.filter(p => (p.title || "").toLowerCase().includes(q) || (p.slug || "").toLowerCase().includes(q));
     }
     result.sort((a, b) => {
       switch (sortBy) {
