@@ -206,9 +206,9 @@ export default function SeoAuditPage() {
                       <div key={idx} className="flex items-start gap-2 pl-1">
                         {categoryIcon[item.category]}
                         <div>
-                          <p className="text-sm font-medium">{item.label}</p>
-                          {item.recommendation && (
-                            <p className="text-xs text-muted-foreground">{item.recommendation}</p>
+                          <p className="text-sm font-medium">{t(item.labelKey, item.vars)}</p>
+                          {item.recKey && (
+                            <p className="text-xs text-muted-foreground">{t(item.recKey, item.vars)}</p>
                           )}
                         </div>
                       </div>
