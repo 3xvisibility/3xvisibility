@@ -187,12 +187,12 @@ export default function SeoAuditPage() {
                   <div className="hidden sm:flex gap-1.5 shrink-0">
                     {audit.items.some((i) => i.category === "critical") && (
                       <Badge variant="destructive" className="text-[10px] px-1.5">
-                        {audit.items.filter((i) => i.category === "critical").length} Critical
+                        {audit.items.filter((i) => i.category === "critical").length} {t("seoAudit.critical")}
                       </Badge>
                     )}
                     {audit.items.some((i) => i.category === "warning") && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 text-amber-600">
-                        {audit.items.filter((i) => i.category === "warning").length} Warn
+                        {audit.items.filter((i) => i.category === "warning").length} {t("seoAudit.warn")}
                       </Badge>
                     )}
                   </div>
@@ -216,7 +216,7 @@ export default function SeoAuditPage() {
                   {audit.items.filter((i) => i.category === "passed").length > 0 && (
                     <div className="pt-2 border-t border-border mt-2">
                       <p className="text-xs text-muted-foreground mb-1.5">
-                        ✓ {audit.items.filter((i) => i.category === "passed").length} check(s) passed
+                        ✓ {t("seoAudit.checksPassed", { count: audit.items.filter((i) => i.category === "passed").length })}
                       </p>
                       {audit.items
                         .filter((i) => i.category === "passed")
