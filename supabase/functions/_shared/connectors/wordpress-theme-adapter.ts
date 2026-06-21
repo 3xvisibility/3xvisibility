@@ -79,6 +79,39 @@ function applyGutenbergClasses(html: string): string {
   return out;
 }
 
+/**
+ * Build Elementor `_elementor_data` JSON that wraps the adapted HTML in a single
+ * HTML widget, so the page opens in the Elementor editor showing the exact
+ * template design. Returns the stringified Elementor data structure.
+ */
+export function buildElementorHtmlWidget(adaptedHtml: string): string {
+  const rand = () => Math.random().toString(36).slice(2, 9);
+  const data = [
+    {
+      id: rand(),
+      elType: "section",
+      settings: {},
+      elements: [
+        {
+          id: rand(),
+          elType: "column",
+          settings: { _column_size: 100 },
+          elements: [
+            {
+              id: rand(),
+              elType: "widget",
+              widgetType: "html",
+              settings: { html: adaptedHtml },
+              elements: [],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  return JSON.stringify(data);
+}
+
 export function adaptHtmlForWordPressTheme(
   html: string,
   kind: WpAdaptKind = "page",
