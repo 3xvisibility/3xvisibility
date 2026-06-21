@@ -1,5 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
-import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter";
+import { adaptHtmlForWordPressTheme, buildElementorHtmlWidget } from "./wordpress-theme-adapter";
 
 /**
  * WordPress REST API connector.
