@@ -122,7 +122,7 @@ export default function PagePerformancePage() {
 
   // Filter and sort
   const filtered = useMemo(() => {
-    let result = pagePerformance;
+    let result = [...pagePerformance];
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(p => (p.title || "").toLowerCase().includes(q) || (p.slug || "").toLowerCase().includes(q));
