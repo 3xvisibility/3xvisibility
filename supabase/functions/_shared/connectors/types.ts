@@ -110,6 +110,8 @@ export interface ConnectorConfig {
   access_token?: string;
   consumer_key?: string;
   consumer_secret?: string;
+  /** Wrap WordPress page content inside an Elementor HTML widget */
+  elementor_widget?: boolean;
 }
 
 export interface CmsConnector {
