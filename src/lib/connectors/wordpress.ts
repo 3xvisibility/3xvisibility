@@ -160,10 +160,14 @@ export class WordPressConnector implements CmsConnector {
       body.title = resolveWordPressTitle(payload);
     }
 
+    let elementorData: string | undefined;
     if (isCreate || typeof payload.content === "string") {
       const themed = adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page");
-      body.content = sanitizeWordPressContent(themed) || "<p></p>";
+      const safeContent = sanitizeWordPressContent(themed) || "<p></p>";
+      body.content = safeContent;
+      if (this.elementorWidget) elementorData = buildElementorHtmlWidget(safeContent);
     }
+
 
 
     if (isCreate || payload.slug) {
