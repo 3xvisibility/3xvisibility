@@ -200,7 +200,7 @@ export default function TemplateMarketplacePage() {
         id: st.id,
         shared_id: st.id,
         name: st.description ? st.description.slice(0, 40) : `Template by ${st.author_name || "Anonymous"}`,
-        description: st.description,
+        description: st.description || "",
         content: st.content,
         variables: st.variables || [],
         category: st.category,
