@@ -492,7 +492,7 @@ export default function ReferralPage() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => share("email")} className="gap-2">
                 <Mail className="h-4 w-4" />
-                <span className="hidden sm:inline">Email</span>
+                <span className="hidden sm:inline">{t("referral.email")}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={copyLink} className="gap-2">
                 <ClipboardCopy className="h-4 w-4" />
@@ -772,7 +772,7 @@ export default function ReferralPage() {
                     <h3 className="font-semibold text-sm">{item.title}</h3>
                     {item.reward && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 bg-green-500/10 text-green-600 hover:bg-green-500/10">
-                        {item.reward}
+                        {t("referral.rewardCredits", { count: 50 })}
                       </Badge>
                     )}
                   </div>
