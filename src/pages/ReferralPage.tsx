@@ -742,12 +742,14 @@ export default function ReferralPage() {
                 icon: Link2,
                 title: t("referral.step1Title"),
                 desc: t("referral.step1Desc"),
+                rewardCount: undefined,
               },
               {
                 step: "2",
                 icon: Users,
                 title: t("referral.step2Title"),
                 desc: t("referral.step2Desc"),
+                rewardCount: undefined,
               },
               {
                 step: "3",
