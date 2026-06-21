@@ -492,7 +492,7 @@ export default function ReferralPage() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => share("email")} className="gap-2">
                 <Mail className="h-4 w-4" />
-                <span className="hidden sm:inline">Email</span>
+                <span className="hidden sm:inline">{t("referral.email")}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={copyLink} className="gap-2">
                 <ClipboardCopy className="h-4 w-4" />
@@ -742,19 +742,21 @@ export default function ReferralPage() {
                 icon: Link2,
                 title: t("referral.step1Title"),
                 desc: t("referral.step1Desc"),
+                rewardCount: undefined,
               },
               {
                 step: "2",
                 icon: Users,
                 title: t("referral.step2Title"),
                 desc: t("referral.step2Desc"),
+                rewardCount: undefined,
               },
               {
                 step: "3",
                 icon: Gift,
                 title: t("referral.step3Title"),
                 desc: t("referral.step3Desc"),
-                reward: "+50 AI credits",
+                rewardCount: 50,
               },
             ].map((item) => (
               <div key={item.step} className="relative flex gap-4">
@@ -770,9 +772,9 @@ export default function ReferralPage() {
                   <item.icon className="h-4 w-4 text-muted-foreground" />
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm">{item.title}</h3>
-                    {item.reward && (
+                    {item.rewardCount && (
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 bg-green-500/10 text-green-600 hover:bg-green-500/10">
-                        {item.reward}
+                        {t("referral.rewardCredits", { count: item.rewardCount })}
                       </Badge>
                     )}
                   </div>

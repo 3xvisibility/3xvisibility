@@ -15,6 +15,7 @@ import {
 import { CreditCard, Plus, Loader2, Trash2, Star, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface PaymentMethod {
   id: string;
@@ -42,6 +43,7 @@ const brandLabel = (brand: string | null) => {
 
 export function PaymentMethods() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [defaultId, setDefaultId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +80,7 @@ export function PaymentMethods() {
       if (error) throw error;
       if (data?.url) window.location.href = data.url;
     } catch (err: any) {
-      toast({ title: "Couldn't open card form", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.cardFormOpenFailed"), description: err.message, variant: "destructive" });
       setAdding(false);
     }
   };
@@ -90,10 +92,10 @@ export function PaymentMethods() {
         body: { action: "delete", paymentMethodId: pm.id },
       });
       if (error) throw error;
-      toast({ title: "Payment method removed" });
+      toast({ title: t("billing.paymentMethodRemoved") });
       await load();
     } catch (err: any) {
-      toast({ title: "Couldn't remove", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.paymentMethodRemoveFailed"), description: err.message, variant: "destructive" });
     } finally {
       setBusyId(null);
       setToDelete(null);
@@ -108,9 +110,9 @@ export function PaymentMethods() {
       });
       if (error) throw error;
       setDefaultId(pm.id);
-      toast({ title: "Default payment method updated" });
+      toast({ title: t("billing.defaultPaymentUpdated") });
     } catch (err: any) {
-      toast({ title: "Couldn't update", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.defaultPaymentUpdateFailed"), description: err.message, variant: "destructive" });
     } finally {
       setBusyId(null);
     }
@@ -124,15 +126,15 @@ export function PaymentMethods() {
             <CreditCard className="h-4.5 w-4.5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-base font-bold">Payment Methods</CardTitle>
+            <CardTitle className="text-base font-bold">{t("billing.paymentMethods")}</CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Manage your saved cards and PayPal. Add, set default or remove anytime.
+              {t("billing.paymentMethodsDesc")}
             </p>
           </div>
         </div>
         <Button size="sm" onClick={handleAdd} disabled={adding}>
           {adding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-          Add
+          {t("common.add")}
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -143,10 +145,10 @@ export function PaymentMethods() {
         ) : methods.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
             <Wallet className="h-8 w-8 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">No payment methods saved yet.</p>
+            <p className="text-sm text-muted-foreground">{t("billing.noPaymentMethods")}</p>
             <Button variant="outline" size="sm" onClick={handleAdd} disabled={adding}>
               {adding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-              Add a card or PayPal
+              {t("billing.addCardPaypal")}
             </Button>
           </div>
         ) : (
@@ -173,7 +175,7 @@ export function PaymentMethods() {
                     )}
                     {defaultId === pm.id && (
                       <Badge variant="outline" className="text-[10px] text-success border-success/30 bg-success/5">
-                        Default
+                        {t("billing.default")}
                       </Badge>
                     )}
                   </div>
@@ -181,7 +183,7 @@ export function PaymentMethods() {
                     {pm.type === "paypal"
                       ? pm.email ?? "PayPal account"
                       : pm.expMonth
-                        ? `Expires ${String(pm.expMonth).padStart(2, "0")}/${pm.expYear}`
+                        ? t("billing.expires", { date: `${String(pm.expMonth).padStart(2, "0")}/${pm.expYear}` })
                         : ""}
                   </p>
                 </div>
@@ -193,7 +195,7 @@ export function PaymentMethods() {
                     size="sm"
                     onClick={() => handleSetDefault(pm)}
                     disabled={busyId === pm.id}
-                    title="Set as default"
+                    title={t("billing.setAsDefault")}
                   >
                     {busyId === pm.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
                   </Button>
@@ -204,7 +206,7 @@ export function PaymentMethods() {
                   className="text-destructive hover:text-destructive"
                   onClick={() => setToDelete(pm)}
                   disabled={busyId === pm.id}
-                  title="Remove"
+                  title={t("common.remove")}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -217,20 +219,20 @@ export function PaymentMethods() {
       <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove payment method?</AlertDialogTitle>
+            <AlertDialogTitle>{t("billing.removePaymentMethodTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove{" "}
-              {toDelete?.type === "paypal" ? "your PayPal account" : `${brandLabel(toDelete?.brand ?? null)} ending in ${toDelete?.last4}`}{" "}
-              from your account. You can add it again later.
+              {toDelete?.type === "paypal"
+                ? t("billing.removePaypalDesc")
+                : t("billing.removeCardDesc", { brand: brandLabel(toDelete?.brand ?? null), last4: toDelete?.last4 ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => toDelete && handleDelete(toDelete)}
             >
-              Remove
+              {t("common.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

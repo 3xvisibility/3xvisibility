@@ -43,40 +43,36 @@ const YEARLY_DISCOUNT = 2 / 12;
 interface PlanConfig {
   name: PlanName;
   monthlyPrice: number;
-  description: string;
+  descriptionKey: string;
   popular: boolean;
   icon: React.ReactNode;
   gradient: string;
-  cta: string;
 }
 
 const planConfigs: PlanConfig[] = [
   {
     name: "starter",
     monthlyPrice: 19,
-    description: "For freelancers and small businesses",
+    descriptionKey: "billing.planDescStarter",
     popular: false,
     icon: <Zap className="h-5 w-5" />,
     gradient: "from-secondary/20 to-secondary/5",
-    cta: "Get Started",
   },
   {
     name: "pro",
     monthlyPrice: 59,
-    description: "For growing businesses and marketers",
+    descriptionKey: "billing.planDescPro",
     popular: true,
     icon: <Sparkles className="h-5 w-5" />,
     gradient: "from-primary/20 to-primary/5",
-    cta: "Upgrade to Pro",
   },
   {
     name: "agency",
     monthlyPrice: 149,
-    description: "For agencies and multi-client teams",
+    descriptionKey: "billing.planDescAgency",
     popular: false,
     icon: <Crown className="h-5 w-5" />,
     gradient: "from-warning/20 to-warning/5",
-    cta: "Contact Sales",
   },
 ];
 
@@ -96,23 +92,23 @@ const featureIcons: Record<string, React.ReactNode> = {
   teamCollaboration: <Users className="h-4 w-4 text-primary" />,
 };
 
-const featureRows: { label: string; key: string }[] = [
-  { label: "Pages / month", key: "pagesLimit" },
-  { label: "AI credits / month", key: "aiLimit" },
-  { label: "Templates", key: "templates" },
-  { label: "Websites", key: "websites" },
-  { label: "WordPress", key: "wordpress" },
-  { label: "Shopify", key: "shopify" },
-  { label: "PrestaShop", key: "prestashop" },
-  { label: "WooCommerce", key: "woocommerce" },
-  { label: "Google Indexing", key: "indexing" },
-  { label: "Website Discovery", key: "discovery" },
-  { label: "Internal Links", key: "internalLinks" },
-  { label: "API Access", key: "apiAccess" },
-  { label: "Team Collaboration", key: "teamCollaboration" },
+const featureRows: { labelKey: string; key: string }[] = [
+  { labelKey: "billing.featurePagesMonth", key: "pagesLimit" },
+  { labelKey: "billing.featureAiCreditsMonth", key: "aiLimit" },
+  { labelKey: "billing.featureTemplates", key: "templates" },
+  { labelKey: "billing.featureWebsites", key: "websites" },
+  { labelKey: "billing.featureWordPress", key: "wordpress" },
+  { labelKey: "billing.featureShopify", key: "shopify" },
+  { labelKey: "billing.featurePrestaShop", key: "prestashop" },
+  { labelKey: "billing.featureWooCommerce", key: "woocommerce" },
+  { labelKey: "billing.featureGoogleIndexing", key: "indexing" },
+  { labelKey: "billing.featureWebsiteDiscovery", key: "discovery" },
+  { labelKey: "billing.featureInternalLinks", key: "internalLinks" },
+  { labelKey: "billing.featureApiAccess", key: "apiAccess" },
+  { labelKey: "billing.featureTeamCollaboration", key: "teamCollaboration" },
 ];
 
-function formatValue(val: number | boolean): React.ReactNode {
+function formatValue(val: number | boolean, unlimitedLabel: string): React.ReactNode {
   if (typeof val === "boolean") {
     return val ? (
       <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
@@ -124,23 +120,23 @@ function formatValue(val: number | boolean): React.ReactNode {
       </div>
     );
   }
-  return <span className="font-semibold tabular-nums">{val === -1 ? "Unlimited" : val.toLocaleString()}</span>;
+  return <span className="font-semibold tabular-nums">{val === -1 ? unlimitedLabel : val.toLocaleString()}</span>;
 }
 
-function getFeatureList(name: PlanName): string[] {
+function getFeatureList(name: PlanName, t: (key: string, vars?: Record<string, string | number>) => string): string[] {
   const f = PLAN_FEATURES[name];
   return [
-    `${f.pagesLimit.toLocaleString()} pages/month`,
-    `${f.aiLimit.toLocaleString()} AI credits`,
-    `${f.templates === -1 ? "Unlimited" : f.templates} templates`,
-    `${f.websites === -1 ? "Unlimited" : f.websites} website${f.websites !== 1 ? "s" : ""}`,
-    ...(f.shopify ? ["All CMS integrations"] : f.wordpress ? ["WordPress integration"] : []),
-    ...(f.indexing ? ["Google Indexing"] : []),
-    ...(f.discovery ? ["Website Discovery"] : []),
-    ...(f.internalLinks ? ["Internal link building"] : []),
-    ...(f.apiAccess ? ["API access"] : []),
-    ...(f.teamCollaboration ? ["Team collaboration"] : []),
-    name === "starter" ? "Email support" : name === "pro" ? "Priority support" : "Dedicated support",
+    t("billing.pagesCountMonth", { count: f.pagesLimit.toLocaleString() }),
+    t("billing.aiCreditsCount", { count: f.aiLimit.toLocaleString() }),
+    f.templates === -1 ? t("billing.unlimitedTemplates") : t("billing.templatesCount", { count: f.templates }),
+    f.websites === -1 ? t("billing.unlimited") : t(f.websites === 1 ? "billing.websiteCount" : "billing.websitesCount", { count: f.websites }),
+    ...(f.shopify ? [t("billing.allCmsIntegrations")] : f.wordpress ? [t("billing.wordpressIntegration")] : []),
+    ...(f.indexing ? [t("billing.googleIndexing")] : []),
+    ...(f.discovery ? [t("billing.websiteDiscovery")] : []),
+    ...(f.internalLinks ? [t("billing.internalLinkBuilding")] : []),
+    ...(f.apiAccess ? [t("billing.apiAccess")] : []),
+    ...(f.teamCollaboration ? [t("billing.teamCollaboration")] : []),
+    name === "starter" ? t("billing.emailSupport") : name === "pro" ? t("billing.prioritySupport") : t("billing.dedicatedSupport"),
   ];
 }
 
@@ -179,7 +175,7 @@ export default function BillingPage() {
       setShowCanceled(true);
     }
     if (searchParams.get("card_added") === "true") {
-      toast({ title: "Payment method saved", description: "Your card is now on file." });
+    toast({ title: t("billing.paymentMethodSaved"), description: t("billing.cardOnFile") });
       setSearchParams({}, { replace: true });
     }
 
@@ -231,7 +227,7 @@ export default function BillingPage() {
         window.open(data.url, "_blank");
       }
     } catch (err: any) {
-      toast({ title: "Checkout failed", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.checkoutFailed"), description: err.message, variant: "destructive" });
     } finally {
       setLoadingPlan(null);
     }
@@ -247,7 +243,7 @@ export default function BillingPage() {
         window.open(data.url, "_blank");
       }
     } catch (err: any) {
-      toast({ title: "Portal error", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.portalError"), description: err.message, variant: "destructive" });
     } finally {
       setPortalLoading(false);
     }
@@ -262,9 +258,9 @@ export default function BillingPage() {
 
   const getButtonState = (name: PlanName) => {
     const idx = planOrder.indexOf(name);
-    if (idx === currentIdx) return { label: "Current Plan", disabled: true, variant: "outline" as const };
-    if (idx > currentIdx) return { label: "Upgrade", disabled: false, variant: "default" as const };
-    return { label: "Downgrade", disabled: false, variant: "outline" as const };
+    if (idx === currentIdx) return { label: t("billing.currentPlanBtn"), disabled: true, variant: "outline" as const };
+    if (idx > currentIdx) return { label: t("billing.upgrade"), disabled: false, variant: "default" as const };
+    return { label: t("billing.downgrade"), disabled: false, variant: "outline" as const };
   };
 
   const handleSuccessDismiss = () => {
@@ -304,19 +300,19 @@ export default function BillingPage() {
                 <Sparkles className="h-4.5 w-4.5 text-primary" />
               </div>
               <div>
-                <span className="text-xl font-bold capitalize">{PLAN_FEATURES[activePlan]?.label || "Free"}</span>
-                <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">Active</Badge>
+                <span className="text-xl font-bold capitalize">{PLAN_FEATURES[activePlan]?.label || t("common.free")}</span>
+                <Badge variant="outline" className="ml-2 text-[10px] text-success border-success/30 bg-success/5">{t("billing.active")}</Badge>
               </div>
             </div>
             {currentPlan !== "free" && subscriptionEnd && (
               <p className="text-xs text-muted-foreground">
-                Renews {new Date(subscriptionEnd).toLocaleDateString()}
+                {t("billing.renews", { date: new Date(subscriptionEnd).toLocaleDateString() })}
               </p>
             )}
             {currentPlan !== "free" && (
               <Button variant="outline" size="sm" className="w-full mt-2" onClick={handleManageSubscription} disabled={portalLoading}>
                 {portalLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
-                Manage Subscription
+                {t("billing.manageSubscription")}
               </Button>
             )}
           </CardContent>
@@ -330,8 +326,8 @@ export default function BillingPage() {
             <Progress value={pagesPercent} className="h-2" />
             <p className={`text-xs ${pagesPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {pagesPercent >= 100
-                ? "Limit reached — upgrade to continue"
-                : `${pagesLimit - pagesUsed} remaining this month`}
+                ? t("billing.limitReached")
+                : t("billing.remainingMonth", { count: pagesLimit - pagesUsed })}
             </p>
           </CardContent>
         </Card>
@@ -344,8 +340,8 @@ export default function BillingPage() {
             <Progress value={aiPercent} className="h-2" />
             <p className={`text-xs ${aiPercent >= 90 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {aiPercent >= 100
-                ? "Limit reached — upgrade to continue"
-                : `${aiLimit - aiUsed} remaining this month`}
+                ? t("billing.limitReached")
+                : t("billing.remainingMonth", { count: aiLimit - aiUsed })}
             </p>
           </CardContent>
         </Card>
@@ -360,10 +356,10 @@ export default function BillingPage() {
             <Progress value={sitesLimit === -1 ? 0 : (sitesLimit > 0 ? Math.round((sitesConnected / sitesLimit) * 100) : 0)} className="h-2" />
             <p className={`text-xs ${sitesLimit !== -1 && sitesConnected >= sitesLimit ? "text-destructive font-medium" : "text-muted-foreground"}`}>
               {sitesLimit === -1
-                ? "Unlimited websites"
+                ? t("billing.unlimited")
                 : sitesConnected >= sitesLimit
-                  ? "Limit reached — upgrade to add more"
-                  : `${sitesLimit - sitesConnected} slots available`}
+                  ? t("billing.limitReachedAddMore")
+                  : t("billing.slotsAvailable", { count: sitesLimit - sitesConnected })}
             </p>
           </CardContent>
         </Card>
@@ -393,7 +389,7 @@ export default function BillingPage() {
           const features = PLAN_FEATURES[config.name];
           const btn = getButtonState(config.name);
           const price = isYearly ? Math.round(config.monthlyPrice * (1 - YEARLY_DISCOUNT)) : config.monthlyPrice;
-          const featureList = getFeatureList(config.name);
+          const featureList = getFeatureList(config.name, t);
           const isLoading = loadingPlan === config.name;
 
           return (
@@ -424,17 +420,17 @@ export default function BillingPage() {
                     <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">{t("billing.mostPopular")}</Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">{config.description}</p>
+                <p className="text-xs text-muted-foreground mt-2">{t(config.descriptionKey)}</p>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold tabular-nums tracking-tight">€{price}</span>
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
                 {isYearly && (
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Billed €{price * 12}/year <span className="line-through text-muted-foreground/50">€{config.monthlyPrice * 12}</span>
+                    {t("billing.billedYearly", { amount: price * 12 })} <span className="line-through text-muted-foreground/50">€{config.monthlyPrice * 12}</span>
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">{features.pagesLimit.toLocaleString()} pages/month</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("billing.pagesCountMonth", { count: features.pagesLimit.toLocaleString() })}</p>
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <Separator />
@@ -461,7 +457,7 @@ export default function BillingPage() {
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : btn.disabled ? (
-                    "Current Plan"
+                    t("billing.currentPlanBtn")
                   ) : (
                     <>
                       {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -481,16 +477,16 @@ export default function BillingPage() {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-primary" />
-            Feature Comparison
+            {t("billing.comparePlans")}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">See what's included in each plan</p>
+          <p className="text-sm text-muted-foreground">{t("billing.compareDesc")}</p>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-hidden">
             <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left py-3.5 px-5 font-semibold text-foreground">Feature</th>
+                  <th className="text-left py-3.5 px-5 font-semibold text-foreground">{t("billing.feature")}</th>
                   {planConfigs.map((p) => (
                     <th key={p.name} className="text-center py-3.5 px-5">
                       <div className="flex flex-col items-center gap-1">
@@ -498,7 +494,7 @@ export default function BillingPage() {
                           {PLAN_FEATURES[p.name].label}
                         </span>
                         {p.name === activePlan && (
-                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 px-1.5 py-0">Current</Badge>
+                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 px-1.5 py-0">{t("billing.current")}</Badge>
                         )}
                       </div>
                     </th>
@@ -511,9 +507,9 @@ export default function BillingPage() {
                     <td className="py-3.5 px-5">
                       <div className="flex items-center gap-2.5">
                         {featureIcons[row.key]}
-                        <span className="text-foreground font-medium">{row.label}</span>
+                        <span className="text-foreground font-medium">{t(row.labelKey)}</span>
                         {row.key === "prestashop" && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border-amber-500/20">Coming Soon</Badge>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border-amber-500/20">{t("common.comingSoon")}</Badge>
                         )}
                       </div>
                     </td>
@@ -524,7 +520,7 @@ export default function BillingPage() {
                           {row.key === "prestashop" ? (
                             <span className="text-xs text-muted-foreground">—</span>
                           ) : (
-                            formatValue(val)
+                            formatValue(val, t("common.unlimited"))
                           )}
                         </td>
                       );
@@ -535,12 +531,12 @@ export default function BillingPage() {
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-2.5">
                       <Headphones className="h-4 w-4 text-primary" />
-                      <span className="text-foreground font-medium">Support</span>
+                      <span className="text-foreground font-medium">{t("billing.support")}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-muted-foreground">Email</span></td>
-                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">Priority</span></td>
-                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">Dedicated</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-muted-foreground">{t("billing.email")}</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">{t("billing.priority")}</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">{t("billing.dedicated")}</span></td>
                 </tr>
               </tbody>
             </table>
