@@ -45,6 +45,8 @@ export interface ConnectorConfig {
   api_secret?: string;
   access_token?: string;
   shop_domain?: string;
+  /** Wrap WordPress page content inside an Elementor HTML widget */
+  elementor_widget?: boolean;
 }
 
 export interface CmsConnector {
