@@ -12,9 +12,11 @@ import {
   resetLocaleConfig,
 } from "@/i18n/localeConfig";
 import type { Language } from "@/i18n/translations";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function LocaleSettingsCard() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const locales = useEffectiveLocales();
   const [drafts, setDrafts] = useState<Record<string, { label: string; flag: string }>>({});
 
