@@ -607,6 +607,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     [selectedTemplateVars, contactVars]
   );
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
+  // Classify a contact/link variable into a placeholder type so the mapping UI
+  // can label it and pick the right input type/placeholder/example.
+  const contactVarKind = (v: string): "phone" | "email" | "link" => {
+    if (/phone|tel|mobile|whatsapp/i.test(v)) return "phone";
+    if (/mail/i.test(v)) return "email";
+    return "link";
+  };
+  const CONTACT_KIND_META: Record<
+    "phone" | "email" | "link",
+    { label: string; placeholder: string; inputType: string }
+  > = {
+    phone: { label: "Phone", placeholder: "+1 555 123 4567", inputType: "tel" },
+    email: { label: "Email", placeholder: "hello@brand.com", inputType: "email" },
+    link: { label: "Link / URL", placeholder: "https://brand.com", inputType: "url" },
+  };
 
   // Pre-fill vibe controls from a template's saved `vibe_theme` whenever the
   // user picks (or switches) a template. Persists the auto-fix outcome from
