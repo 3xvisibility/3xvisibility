@@ -803,6 +803,24 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       toast({ title: "Add your brand name", description: "AI fills the template using your brand name.", variant: "destructive" });
       return;
     }
+    // Validate contact/link placeholders: required + well-formed.
+    const PATTERNS: Record<"phone" | "email" | "link", RegExp> = {
+      phone: /^[+]?[\d][\d\s()./-]{5,}$/,
+      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      link: /^https?:\/\/[^\s.]+\.[^\s]+$/i,
+    };
+    for (const v of contactVars) {
+      const kind = contactVarKind(v);
+      const val = (aiFixedValues[v] || "").trim();
+      if (!val) {
+        toast({ title: `Missing ${CONTACT_KIND_META[kind].label.toLowerCase()}`, description: `Enter a value for {${v}} before generating.`, variant: "destructive" });
+        return;
+      }
+      if (!PATTERNS[kind].test(val)) {
+        toast({ title: `Invalid ${CONTACT_KIND_META[kind].label.toLowerCase()}`, description: `The value for {${v}} doesn't look like a valid ${kind}.`, variant: "destructive" });
+        return;
+      }
+    }
     setAiGenerating(true);
     try {
       // Only ask AI for non-contact variables; contact values come from the user.
