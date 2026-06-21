@@ -107,6 +107,7 @@ function exportAuditCsv(logs: AuditLog[]) {
 }
 
 export default function AuditLogViewer({ workspaceId }: { workspaceId: string }) {
+  const { t } = useLanguage();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
