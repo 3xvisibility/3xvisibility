@@ -175,7 +175,7 @@ export default function BillingPage() {
       setShowCanceled(true);
     }
     if (searchParams.get("card_added") === "true") {
-      toast({ title: "Payment method saved", description: "Your card is now on file." });
+    toast({ title: t("billing.paymentMethodSaved"), description: t("billing.cardOnFile") });
       setSearchParams({}, { replace: true });
     }
 
@@ -227,7 +227,7 @@ export default function BillingPage() {
         window.open(data.url, "_blank");
       }
     } catch (err: any) {
-      toast({ title: "Checkout failed", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.checkoutFailed"), description: err.message, variant: "destructive" });
     } finally {
       setLoadingPlan(null);
     }
@@ -243,7 +243,7 @@ export default function BillingPage() {
         window.open(data.url, "_blank");
       }
     } catch (err: any) {
-      toast({ title: "Portal error", description: err.message, variant: "destructive" });
+      toast({ title: t("billing.portalError"), description: err.message, variant: "destructive" });
     } finally {
       setPortalLoading(false);
     }
@@ -258,9 +258,9 @@ export default function BillingPage() {
 
   const getButtonState = (name: PlanName) => {
     const idx = planOrder.indexOf(name);
-    if (idx === currentIdx) return { label: "Current Plan", disabled: true, variant: "outline" as const };
-    if (idx > currentIdx) return { label: "Upgrade", disabled: false, variant: "default" as const };
-    return { label: "Downgrade", disabled: false, variant: "outline" as const };
+    if (idx === currentIdx) return { label: t("billing.currentPlanBtn"), disabled: true, variant: "outline" as const };
+    if (idx > currentIdx) return { label: t("billing.upgrade"), disabled: false, variant: "default" as const };
+    return { label: t("billing.downgrade"), disabled: false, variant: "outline" as const };
   };
 
   const handleSuccessDismiss = () => {
