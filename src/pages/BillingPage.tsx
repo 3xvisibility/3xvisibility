@@ -389,7 +389,7 @@ export default function BillingPage() {
           const features = PLAN_FEATURES[config.name];
           const btn = getButtonState(config.name);
           const price = isYearly ? Math.round(config.monthlyPrice * (1 - YEARLY_DISCOUNT)) : config.monthlyPrice;
-          const featureList = getFeatureList(config.name);
+          const featureList = getFeatureList(config.name, t);
           const isLoading = loadingPlan === config.name;
 
           return (
@@ -420,17 +420,17 @@ export default function BillingPage() {
                     <Badge className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2.5">{t("billing.mostPopular")}</Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">{config.description}</p>
+                <p className="text-xs text-muted-foreground mt-2">{t(config.descriptionKey)}</p>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold tabular-nums tracking-tight">€{price}</span>
                   <span className="text-muted-foreground text-sm">/mo</span>
                 </div>
                 {isYearly && (
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Billed €{price * 12}/year <span className="line-through text-muted-foreground/50">€{config.monthlyPrice * 12}</span>
+                    {t("billing.billedYearly", { amount: price * 12 })} <span className="line-through text-muted-foreground/50">€{config.monthlyPrice * 12}</span>
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground mt-1">{features.pagesLimit.toLocaleString()} pages/month</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("billing.pagesCountMonth", { count: features.pagesLimit.toLocaleString() })}</p>
               </CardHeader>
               <CardContent className="pt-4 space-y-4">
                 <Separator />
@@ -457,7 +457,7 @@ export default function BillingPage() {
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : btn.disabled ? (
-                    "Current Plan"
+                    t("billing.currentPlanBtn")
                   ) : (
                     <>
                       {btn.label} <ArrowRight className="ml-1.5 h-4 w-4" />
