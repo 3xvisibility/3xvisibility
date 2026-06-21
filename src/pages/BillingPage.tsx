@@ -477,16 +477,16 @@ export default function BillingPage() {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-primary" />
-            Feature Comparison
+            {t("billing.comparePlans")}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">See what's included in each plan</p>
+          <p className="text-sm text-muted-foreground">{t("billing.compareDesc")}</p>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-hidden">
             <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left py-3.5 px-5 font-semibold text-foreground">Feature</th>
+                  <th className="text-left py-3.5 px-5 font-semibold text-foreground">{t("billing.feature")}</th>
                   {planConfigs.map((p) => (
                     <th key={p.name} className="text-center py-3.5 px-5">
                       <div className="flex flex-col items-center gap-1">
@@ -494,7 +494,7 @@ export default function BillingPage() {
                           {PLAN_FEATURES[p.name].label}
                         </span>
                         {p.name === activePlan && (
-                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 px-1.5 py-0">Current</Badge>
+                          <Badge variant="outline" className="text-[9px] text-primary border-primary/30 px-1.5 py-0">{t("billing.current")}</Badge>
                         )}
                       </div>
                     </th>
@@ -509,7 +509,7 @@ export default function BillingPage() {
                         {featureIcons[row.key]}
                         <span className="text-foreground font-medium">{row.label}</span>
                         {row.key === "prestashop" && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border-amber-500/20">Coming Soon</Badge>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-500 border-amber-500/20">{t("common.comingSoon")}</Badge>
                         )}
                       </div>
                     </td>
@@ -520,7 +520,7 @@ export default function BillingPage() {
                           {row.key === "prestashop" ? (
                             <span className="text-xs text-muted-foreground">—</span>
                           ) : (
-                            formatValue(val)
+                            formatValue(val, t("common.unlimited"))
                           )}
                         </td>
                       );
@@ -531,12 +531,12 @@ export default function BillingPage() {
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-2.5">
                       <Headphones className="h-4 w-4 text-primary" />
-                      <span className="text-foreground font-medium">Support</span>
+                      <span className="text-foreground font-medium">{t("billing.support")}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-muted-foreground">Email</span></td>
-                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">Priority</span></td>
-                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">Dedicated</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-muted-foreground">{t("billing.email")}</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">{t("billing.priority")}</span></td>
+                  <td className="py-3.5 px-5 text-center"><span className="font-medium text-foreground">{t("billing.dedicated")}</span></td>
                 </tr>
               </tbody>
             </table>
