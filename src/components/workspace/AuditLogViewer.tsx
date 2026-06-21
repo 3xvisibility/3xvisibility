@@ -197,10 +197,10 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           <div>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-primary" />
-              Audit Log
+              {t("audit.title")}
             </CardTitle>
             <CardDescription className="mt-1.5">
-              Track sensitive actions: publications, deletions, role & plan changes.
+              {t("audit.subtitle")}
             </CardDescription>
           </div>
           <Button
@@ -211,7 +211,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
             disabled={!logs.length}
           >
             <Download className="h-3.5 w-3.5" />
-            Export CSV
+            {t("audit.exportCsv")}
           </Button>
         </div>
       </CardHeader>
