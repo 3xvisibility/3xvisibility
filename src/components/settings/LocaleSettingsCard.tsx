@@ -64,13 +64,12 @@ export default function LocaleSettingsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Languages className="h-5 w-5" />
-          Supported Languages
+          {t("localeSettings.title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Edit the display name, flag, and availability for each supported locale.
-          Language codes and translations are fixed and can’t be changed here.
+          {t("localeSettings.description")}
         </p>
 
         <div className="space-y-3">
