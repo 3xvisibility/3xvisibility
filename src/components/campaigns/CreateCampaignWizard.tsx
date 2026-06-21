@@ -592,6 +592,22 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return (tpl.variables as string[]).map(v => v.replace(/[{}]/g, "")).filter(v => !isDesignVariable(v));
   }, [selectedTemplate, templates]);
 
+  // Variables that hold contact/link info the user should supply directly
+  // (phone, email, links/URLs) rather than letting the AI invent fake values.
+  const contactVars = useMemo(
+    () =>
+      selectedTemplateVars.filter((v) =>
+        /(phone|tel|mobile|whatsapp|email|mail|link|url|website|address|booking|calendar)/i.test(v)
+      ),
+    [selectedTemplateVars]
+  );
+  // Variables the AI should generate (everything that's not a fixed contact value).
+  const aiGenVars = useMemo(
+    () => selectedTemplateVars.filter((v) => !contactVars.includes(v)),
+    [selectedTemplateVars, contactVars]
+  );
+  const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
+
   // Pre-fill vibe controls from a template's saved `vibe_theme` whenever the
   // user picks (or switches) a template. Persists the auto-fix outcome from
   // last session so the same safe combo is reused on next campaign.
