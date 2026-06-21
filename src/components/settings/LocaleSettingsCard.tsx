@@ -104,7 +104,7 @@ export default function LocaleSettingsCard() {
                     aria-label={`Enable ${l.code}`}
                   />
                   <span className="text-xs text-muted-foreground w-14">
-                    {l.enabled ? "Enabled" : "Disabled"}
+                    {l.enabled ? t("localeSettings.enabled") : t("localeSettings.disabled")}
                   </span>
                 </div>
                 <Button
@@ -112,7 +112,7 @@ export default function LocaleSettingsCard() {
                   disabled={!dirty}
                   onClick={() => save(l.code, draft.label, draft.flag)}
                 >
-                  Save
+                  {t("common.save")}
                 </Button>
               </div>
             );
@@ -125,11 +125,11 @@ export default function LocaleSettingsCard() {
           onClick={() => {
             resetLocaleConfig();
             setDrafts({});
-            toast({ title: "Reset", description: "Locale settings restored to defaults." });
+            toast({ title: t("localeSettings.reset"), description: t("localeSettings.resetDesc") });
           }}
         >
           <RotateCcw className="h-4 w-4 mr-2" />
-          Reset to defaults
+          {t("localeSettings.resetDefaults")}
         </Button>
       </CardContent>
     </Card>
