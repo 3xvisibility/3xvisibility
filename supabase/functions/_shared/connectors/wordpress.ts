@@ -166,9 +166,10 @@ export class WordPressConnector implements CmsConnector {
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const assets = await this.themeAssets();
+    const adapted = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page", assets)) || "<p></p>";
     const body: Record<string, unknown> = {
       title: resolveWordPressTitle(payload),
-      content: sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page", assets)) || "<p></p>",
+      content: adapted,
       slug: slugify(payload.slug || payload.title),
       status: payload.status === "publish" ? "publish" : "draft",
     };
@@ -186,15 +187,23 @@ export class WordPressConnector implements CmsConnector {
       || payload.page_template
       || undefined;
 
-    if (payload.elementor_meta?.elementor_data) {
-      meta._elementor_data = payload.elementor_meta.elementor_data;
-      meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
+    // Auto-wrap the adapted HTML in an Elementor HTML widget when enabled and the
+    // caller did not already provide explicit Elementor data.
+    const autoElementorData =
+      this.elementorWidget && !payload.elementor_meta?.elementor_data
+        ? buildElementorHtmlWidget(adapted)
+        : undefined;
+
+    if (payload.elementor_meta?.elementor_data || autoElementorData) {
+      meta._elementor_data = payload.elementor_meta?.elementor_data || autoElementorData;
+      meta._elementor_edit_mode = payload.elementor_meta?.elementor_edit_mode || "builder";
       meta._elementor_template_type = "wp-page";
       meta._elementor_version = "3.0.0";
       if (resolvedTemplate) meta._wp_page_template = resolvedTemplate;
     } else if (resolvedTemplate) {
       meta._wp_page_template = resolvedTemplate;
     }
+
 
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
