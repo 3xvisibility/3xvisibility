@@ -43,40 +43,36 @@ const YEARLY_DISCOUNT = 2 / 12;
 interface PlanConfig {
   name: PlanName;
   monthlyPrice: number;
-  description: string;
+  descriptionKey: string;
   popular: boolean;
   icon: React.ReactNode;
   gradient: string;
-  cta: string;
 }
 
 const planConfigs: PlanConfig[] = [
   {
     name: "starter",
     monthlyPrice: 19,
-    description: "For freelancers and small businesses",
+    descriptionKey: "billing.planDescStarter",
     popular: false,
     icon: <Zap className="h-5 w-5" />,
     gradient: "from-secondary/20 to-secondary/5",
-    cta: "Get Started",
   },
   {
     name: "pro",
     monthlyPrice: 59,
-    description: "For growing businesses and marketers",
+    descriptionKey: "billing.planDescPro",
     popular: true,
     icon: <Sparkles className="h-5 w-5" />,
     gradient: "from-primary/20 to-primary/5",
-    cta: "Upgrade to Pro",
   },
   {
     name: "agency",
     monthlyPrice: 149,
-    description: "For agencies and multi-client teams",
+    descriptionKey: "billing.planDescAgency",
     popular: false,
     icon: <Crown className="h-5 w-5" />,
     gradient: "from-warning/20 to-warning/5",
-    cta: "Contact Sales",
   },
 ];
 
@@ -112,7 +108,7 @@ const featureRows: { label: string; key: string }[] = [
   { label: "Team Collaboration", key: "teamCollaboration" },
 ];
 
-function formatValue(val: number | boolean): React.ReactNode {
+function formatValue(val: number | boolean, unlimitedLabel: string): React.ReactNode {
   if (typeof val === "boolean") {
     return val ? (
       <div className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-success/10">
@@ -124,23 +120,23 @@ function formatValue(val: number | boolean): React.ReactNode {
       </div>
     );
   }
-  return <span className="font-semibold tabular-nums">{val === -1 ? "Unlimited" : val.toLocaleString()}</span>;
+  return <span className="font-semibold tabular-nums">{val === -1 ? unlimitedLabel : val.toLocaleString()}</span>;
 }
 
-function getFeatureList(name: PlanName): string[] {
+function getFeatureList(name: PlanName, t: (key: string, vars?: Record<string, string | number>) => string): string[] {
   const f = PLAN_FEATURES[name];
   return [
-    `${f.pagesLimit.toLocaleString()} pages/month`,
-    `${f.aiLimit.toLocaleString()} AI credits`,
-    `${f.templates === -1 ? "Unlimited" : f.templates} templates`,
-    `${f.websites === -1 ? "Unlimited" : f.websites} website${f.websites !== 1 ? "s" : ""}`,
-    ...(f.shopify ? ["All CMS integrations"] : f.wordpress ? ["WordPress integration"] : []),
-    ...(f.indexing ? ["Google Indexing"] : []),
-    ...(f.discovery ? ["Website Discovery"] : []),
-    ...(f.internalLinks ? ["Internal link building"] : []),
-    ...(f.apiAccess ? ["API access"] : []),
-    ...(f.teamCollaboration ? ["Team collaboration"] : []),
-    name === "starter" ? "Email support" : name === "pro" ? "Priority support" : "Dedicated support",
+    t("billing.pagesCountMonth", { count: f.pagesLimit.toLocaleString() }),
+    t("billing.aiCreditsCount", { count: f.aiLimit.toLocaleString() }),
+    f.templates === -1 ? t("billing.unlimitedTemplates") : t("billing.templatesCount", { count: f.templates }),
+    f.websites === -1 ? t("billing.unlimited") : t(f.websites === 1 ? "billing.websiteCount" : "billing.websitesCount", { count: f.websites }),
+    ...(f.shopify ? [t("billing.allCmsIntegrations")] : f.wordpress ? [t("billing.wordpressIntegration")] : []),
+    ...(f.indexing ? [t("billing.googleIndexing")] : []),
+    ...(f.discovery ? [t("billing.websiteDiscovery")] : []),
+    ...(f.internalLinks ? [t("billing.internalLinkBuilding")] : []),
+    ...(f.apiAccess ? [t("billing.apiAccess")] : []),
+    ...(f.teamCollaboration ? [t("billing.teamCollaboration")] : []),
+    name === "starter" ? t("billing.emailSupport") : name === "pro" ? t("billing.prioritySupport") : t("billing.dedicatedSupport"),
   ];
 }
 
