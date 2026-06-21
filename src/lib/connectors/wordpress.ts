@@ -184,6 +184,11 @@ export class WordPressConnector implements CmsConnector {
     if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
     if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
     if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
+    if (elementorData) {
+      meta._elementor_edit_mode = "builder";
+      meta._elementor_data = elementorData;
+      meta._elementor_template_type = "wp-page";
+    }
     if (Object.keys(meta).length > 0) body.meta = meta;
 
     if (payload.custom_fields) {
