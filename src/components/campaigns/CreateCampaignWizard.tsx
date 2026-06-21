@@ -829,7 +829,17 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         const val = (aiFixedValues[v] || "").trim();
         if (val) fixedValues[v] = val;
       }
-      const genVars = aiGenVars.length > 0 ? aiGenVars : selectedTemplateVars;
+      // If every variable is a user-supplied contact value, skip the AI call
+      // entirely and just build rows from the fixed values to avoid generating
+      // fake contact data and wasting AI credits.
+      if (aiGenVars.length === 0) {
+        const count = Math.max(1, Math.min(200, aiPageCount));
+        const rows = Array.from({ length: count }, () => ({ ...fixedValues }));
+        setAiGeneratedRows(rows);
+        toast({ title: `Generated ${rows.length} rows`, description: "Edit any cell below before continuing." });
+        return;
+      }
+      const genVars = aiGenVars;
       const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
         body: {
           variables: genVars,
