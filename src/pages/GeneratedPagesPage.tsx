@@ -622,11 +622,11 @@ export default function GeneratedPagesPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Pages", value: stats.total, icon: FileText, color: "text-foreground" },
-          { label: "Published", value: stats.published, icon: CheckCircle2, color: "text-emerald-500" },
-          { label: "In Progress", value: stats.active, icon: Activity, color: "text-primary" },
-          { label: "Pending", value: stats.pending, icon: Clock, color: "text-amber-500" },
-          { label: "Failed", value: stats.failed, icon: AlertCircle, color: "text-destructive" },
+          { label: t("generatedPages.totalPages"), value: stats.total, icon: FileText, color: "text-foreground" },
+          { label: t("status.published"), value: stats.published, icon: CheckCircle2, color: "text-emerald-500" },
+          { label: t("status.inProgress"), value: stats.active, icon: Activity, color: "text-primary" },
+          { label: t("status.pending"), value: stats.pending, icon: Clock, color: "text-amber-500" },
+          { label: t("status.failed"), value: stats.failed, icon: AlertCircle, color: "text-destructive" },
         ].map((s) => (
           <Card key={s.label} className="shadow-surface border-border/50">
             <CardContent className="p-4 flex items-center gap-3">
@@ -643,16 +643,17 @@ export default function GeneratedPagesPage() {
         <Card className="shadow-surface border-border/50 col-span-2 lg:col-span-1">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-              <TrendingUp className="h-3 w-3" /> Freshness
+              <TrendingUp className="h-3 w-3" /> {t("generatedPages.freshnessLabel")}
             </p>
             <div className="grid grid-cols-2 gap-1 text-xs">
-              <span className="text-emerald-500 font-medium">{freshCounts.fresh} Fresh</span>
-              <span className="text-primary font-medium">{freshCounts.aging} Aging</span>
-              <span className="text-amber-500 font-medium">{freshCounts.stale} Stale</span>
-              <span className="text-destructive font-medium">{freshCounts.outdated} Old</span>
+              <span className="text-emerald-500 font-medium">{freshCounts.fresh} {t("generatedPages.fresh")}</span>
+              <span className="text-primary font-medium">{freshCounts.aging} {t("generatedPages.aging")}</span>
+              <span className="text-amber-500 font-medium">{freshCounts.stale} {t("generatedPages.stale")}</span>
+              <span className="text-destructive font-medium">{freshCounts.outdated} {t("generatedPages.old")}</span>
             </div>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Filters */}
