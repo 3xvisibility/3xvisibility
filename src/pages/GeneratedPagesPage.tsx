@@ -660,36 +660,36 @@ export default function GeneratedPagesPage() {
       <div className="flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
+          <Input placeholder={t("common.searchPages")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="queued">Queued</SelectItem>
-            <SelectItem value="generating">Generating</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="publishing">Publishing</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="done">Done</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="all">{t("generatedPages.allStatus")}</SelectItem>
+            <SelectItem value="queued">{t("status.queued")}</SelectItem>
+            <SelectItem value="generating">{t("status.generating")}</SelectItem>
+            <SelectItem value="pending">{t("status.pending")}</SelectItem>
+            <SelectItem value="publishing">{t("status.publishing")}</SelectItem>
+            <SelectItem value="published">{t("status.published")}</SelectItem>
+            <SelectItem value="done">{t("status.done")}</SelectItem>
+            <SelectItem value="failed">{t("status.failed")}</SelectItem>
           </SelectContent>
         </Select>
         {uniqueSites.length > 0 && (
           <Select value={siteFilter} onValueChange={setSiteFilter}>
-            <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder="All Sites" /></SelectTrigger>
+            <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder={t("generatedPages.allSites")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Sites</SelectItem>
+              <SelectItem value="all">{t("generatedPages.allSites")}</SelectItem>
               {uniqueSites.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
         {uniqueCampaigns.length > 0 && (
           <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-            <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="All Campaigns" /></SelectTrigger>
+            <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder={t("generatedPages.allCampaigns")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Campaigns</SelectItem>
-              <SelectItem value="direct">Direct Publish</SelectItem>
+              <SelectItem value="all">{t("generatedPages.allCampaigns")}</SelectItem>
+              <SelectItem value="direct">{t("generatedPages.directPublish")}</SelectItem>
               {uniqueCampaigns.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -699,11 +699,11 @@ export default function GeneratedPagesPage() {
             <Clock className="h-3.5 w-3.5 mr-1.5 shrink-0" /><SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Freshness</SelectItem>
-            <SelectItem value="fresh">Fresh (&lt;30d)</SelectItem>
-            <SelectItem value="aging">Aging (30-90d)</SelectItem>
-            <SelectItem value="stale">Stale (90-180d)</SelectItem>
-            <SelectItem value="outdated">Outdated (&gt;180d)</SelectItem>
+            <SelectItem value="all">{t("generatedPages.allFreshness")}</SelectItem>
+            <SelectItem value="fresh">{t("generatedPages.freshRange")}</SelectItem>
+            <SelectItem value="aging">{t("generatedPages.agingRange")}</SelectItem>
+            <SelectItem value="stale">{t("generatedPages.staleRange")}</SelectItem>
+            <SelectItem value="outdated">{t("generatedPages.outdatedRange")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={setSortBy}>
@@ -711,17 +711,18 @@ export default function GeneratedPagesPage() {
             <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 shrink-0" /><SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest first</SelectItem>
-            <SelectItem value="oldest">Oldest first</SelectItem>
-            <SelectItem value="freshness">Stalest first</SelectItem>
-            <SelectItem value="seo_desc">SEO ↓ (best)</SelectItem>
-            <SelectItem value="seo_asc">SEO ↑ (worst)</SelectItem>
-            <SelectItem value="sea_desc">SEA ↓ (best)</SelectItem>
-            <SelectItem value="sea_asc">SEA ↑ (worst)</SelectItem>
-            <SelectItem value="geo_desc">GEO ↓ (best)</SelectItem>
-            <SelectItem value="geo_asc">GEO ↑ (worst)</SelectItem>
+            <SelectItem value="newest">{t("generatedPages.newestFirst")}</SelectItem>
+            <SelectItem value="oldest">{t("generatedPages.oldestFirst")}</SelectItem>
+            <SelectItem value="freshness">{t("generatedPages.stalestFirst")}</SelectItem>
+            <SelectItem value="seo_desc">{t("generatedPages.seoBest")}</SelectItem>
+            <SelectItem value="seo_asc">{t("generatedPages.seoWorst")}</SelectItem>
+            <SelectItem value="sea_desc">{t("generatedPages.seaBest")}</SelectItem>
+            <SelectItem value="sea_asc">{t("generatedPages.seaWorst")}</SelectItem>
+            <SelectItem value="geo_desc">{t("generatedPages.geoBest")}</SelectItem>
+            <SelectItem value="geo_asc">{t("generatedPages.geoWorst")}</SelectItem>
           </SelectContent>
         </Select>
+
       </div>
 
       {/* Bulk Action Bar */}
