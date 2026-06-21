@@ -607,6 +607,21 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     [selectedTemplateVars, contactVars]
   );
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
+  // Classify a contact/link variable into a placeholder type so the mapping UI
+  // can label it and pick the right input type/placeholder/example.
+  const contactVarKind = (v: string): "phone" | "email" | "link" => {
+    if (/phone|tel|mobile|whatsapp/i.test(v)) return "phone";
+    if (/mail/i.test(v)) return "email";
+    return "link";
+  };
+  const CONTACT_KIND_META: Record<
+    "phone" | "email" | "link",
+    { label: string; placeholder: string; inputType: string }
+  > = {
+    phone: { label: "Phone", placeholder: "+1 555 123 4567", inputType: "tel" },
+    email: { label: "Email", placeholder: "hello@brand.com", inputType: "email" },
+    link: { label: "Link / URL", placeholder: "https://brand.com", inputType: "url" },
+  };
 
   // Pre-fill vibe controls from a template's saved `vibe_theme` whenever the
   // user picks (or switches) a template. Persists the auto-fix outcome from
@@ -1785,19 +1800,28 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
 
                             {contactVars.length > 0 && (
                               <div className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-2.5">
-                                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Your contact & links</p>
+                                <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">Contact &amp; link variables</p>
+                                <p className="text-[10px] text-muted-foreground">These template placeholders are phone / email / link fields. Set fixed values used exactly as entered on every page.</p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {contactVars.map((v) => (
-                                    <div key={v}>
-                                      <Label className="text-[10px] text-muted-foreground mb-1 block font-mono">{`{${v}}`}</Label>
-                                      <Input
-                                        value={aiFixedValues[v] || ""}
-                                        onChange={(e) => setAiFixedValues((prev) => ({ ...prev, [v]: e.target.value }))}
-                                        placeholder={/phone|tel|mobile|whatsapp/i.test(v) ? "+1 555 123 4567" : /mail/i.test(v) ? "hello@brand.com" : "https://brand.com"}
-                                        className="h-9 rounded-lg text-xs"
-                                      />
-                                    </div>
-                                  ))}
+                                  {contactVars.map((v) => {
+                                    const kind = contactVarKind(v);
+                                    const meta = CONTACT_KIND_META[kind];
+                                    return (
+                                      <div key={v}>
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">{meta.label}</Badge>
+                                          <Label className="text-[10px] text-muted-foreground block font-mono">{`{${v}}`}</Label>
+                                        </div>
+                                        <Input
+                                          type={meta.inputType}
+                                          value={aiFixedValues[v] || ""}
+                                          onChange={(e) => setAiFixedValues((prev) => ({ ...prev, [v]: e.target.value }))}
+                                          placeholder={meta.placeholder}
+                                          className="h-9 rounded-lg text-xs"
+                                        />
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                                 <p className="text-[10px] text-muted-foreground">These exact values are used on every generated page — AI won't change them.</p>
                               </div>
