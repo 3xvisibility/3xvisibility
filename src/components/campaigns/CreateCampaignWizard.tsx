@@ -784,11 +784,22 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       toast({ title: "This template has no variables", description: "Add variables to the template first.", variant: "destructive" });
       return;
     }
+    if (!aiBusiness.trim()) {
+      toast({ title: "Add your brand name", description: "AI fills the template using your brand name.", variant: "destructive" });
+      return;
+    }
     setAiGenerating(true);
     try {
+      // Only ask AI for non-contact variables; contact values come from the user.
+      const fixedValues: Record<string, string> = {};
+      for (const v of contactVars) {
+        const val = (aiFixedValues[v] || "").trim();
+        if (val) fixedValues[v] = val;
+      }
+      const genVars = aiGenVars.length > 0 ? aiGenVars : selectedTemplateVars;
       const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
         body: {
-          variables: selectedTemplateVars,
+          variables: genVars,
           count: Math.max(1, Math.min(200, aiPageCount)),
           business: aiBusiness || undefined,
           niche: aiNiche || undefined,
@@ -799,10 +810,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      const rows = Array.isArray(data?.rows) ? data.rows : [];
-      if (rows.length === 0) throw new Error("AI returned no rows");
+      const baseRows = Array.isArray(data?.rows) ? data.rows : [];
+      if (baseRows.length === 0) throw new Error("AI returned no rows");
+      // Apply the user's fixed contact values to every row.
+      const rows = baseRows.map((r: Record<string, string>) => ({ ...r, ...fixedValues }));
       setAiGeneratedRows(rows);
       toast({ title: `Generated ${rows.length} rows`, description: "Edit any cell below before continuing." });
+
     } catch (err: any) {
       toast({ title: "AI generation failed", description: friendlyError(err.message), variant: "destructive" });
     } finally {
