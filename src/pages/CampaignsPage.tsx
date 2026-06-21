@@ -268,7 +268,7 @@ export default function CampaignsPage() {
     if (statusFilter !== "all") result = result.filter(c => c.status === statusFilter);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(c => c.name.toLowerCase().includes(q) || c.templates?.name?.toLowerCase().includes(q) || c.websites?.name?.toLowerCase().includes(q));
+      result = result.filter(c => (c.name || "").toLowerCase().includes(q) || c.templates?.name?.toLowerCase().includes(q) || c.websites?.name?.toLowerCase().includes(q));
     }
     return result;
   }, [campaigns, typeFilter, statusFilter, searchQuery]);
