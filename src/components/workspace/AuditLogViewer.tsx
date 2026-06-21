@@ -27,29 +27,30 @@ interface AuditLog {
 
 const PAGE_SIZE = 20;
 
-const actionConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+const actionConfig: Record<string, { icon: React.ReactNode; labelKey: string; color: string }> = {
   // Members
-  invite_member:     { icon: <UserPlus className="h-3.5 w-3.5" />, label: "Member Invited",     color: "bg-success/10 text-success" },
-  update_role:       { icon: <Shield className="h-3.5 w-3.5" />,   label: "Role Changed",       color: "bg-primary/10 text-primary" },
-  remove_member:     { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Member Removed",     color: "bg-destructive/10 text-destructive" },
-  rename_workspace:  { icon: <Pencil className="h-3.5 w-3.5" />,   label: "Workspace Renamed",  color: "bg-warning/10 text-warning" },
+  invite_member:     { icon: <UserPlus className="h-3.5 w-3.5" />, labelKey: "audit.action.inviteMember",     color: "bg-success/10 text-success" },
+  update_role:       { icon: <Shield className="h-3.5 w-3.5" />,   labelKey: "audit.action.updateRole",       color: "bg-primary/10 text-primary" },
+  remove_member:     { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.removeMember",     color: "bg-destructive/10 text-destructive" },
+  rename_workspace:  { icon: <Pencil className="h-3.5 w-3.5" />,   labelKey: "audit.action.renameWorkspace",  color: "bg-warning/10 text-warning" },
   // Sites
-  site_created:      { icon: <Globe className="h-3.5 w-3.5" />,    label: "Site Created",       color: "bg-success/10 text-success" },
-  site_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Site Deleted",       color: "bg-destructive/10 text-destructive" },
-  site_updated:      { icon: <Pencil className="h-3.5 w-3.5" />,   label: "Site Updated",       color: "bg-primary/10 text-primary" },
+  site_created:      { icon: <Globe className="h-3.5 w-3.5" />,    labelKey: "audit.action.siteCreated",       color: "bg-success/10 text-success" },
+  site_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.siteDeleted",       color: "bg-destructive/10 text-destructive" },
+  site_updated:      { icon: <Pencil className="h-3.5 w-3.5" />,   labelKey: "audit.action.siteUpdated",       color: "bg-primary/10 text-primary" },
   // Campaigns
-  campaign_started:  { icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Started",   color: "bg-primary/10 text-primary" },
-  campaign_completed:{ icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Completed", color: "bg-success/10 text-success" },
-  campaign_failed:   { icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Failed",    color: "bg-destructive/10 text-destructive" },
-  campaign_deleted:  { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Campaign Deleted",   color: "bg-destructive/10 text-destructive" },
+  campaign_started:  { icon: <Rocket className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignStarted",   color: "bg-primary/10 text-primary" },
+  campaign_completed:{ icon: <Rocket className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignCompleted", color: "bg-success/10 text-success" },
+  campaign_failed:   { icon: <Rocket className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignFailed",    color: "bg-destructive/10 text-destructive" },
+  campaign_deleted:  { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignDeleted",   color: "bg-destructive/10 text-destructive" },
   // Pages
-  page_published:    { icon: <FileText className="h-3.5 w-3.5" />, label: "Page Published",     color: "bg-success/10 text-success" },
-  page_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Page Deleted",       color: "bg-destructive/10 text-destructive" },
-  pages_bulk_published: { icon: <FileText className="h-3.5 w-3.5" />, label: "Bulk Publish",    color: "bg-success/10 text-success" },
+  page_published:    { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.pagePublished",     color: "bg-success/10 text-success" },
+  page_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.pageDeleted",       color: "bg-destructive/10 text-destructive" },
+  pages_bulk_published: { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.bulkPublish",    color: "bg-success/10 text-success" },
   // Plan / billing
-  plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Plan Changed",     color: "bg-warning/10 text-warning" },
-  subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Subscription Updated", color: "bg-primary/10 text-primary" },
+  plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.planChanged",     color: "bg-warning/10 text-warning" },
+  subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.subscriptionUpdated", color: "bg-primary/10 text-primary" },
 };
+
 
 const ALL_ACTIONS = Object.keys(actionConfig);
 
