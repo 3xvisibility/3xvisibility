@@ -12,9 +12,11 @@ import {
   resetLocaleConfig,
 } from "@/i18n/localeConfig";
 import type { Language } from "@/i18n/translations";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 export default function LocaleSettingsCard() {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const locales = useEffectiveLocales();
   const [drafts, setDrafts] = useState<Record<string, { label: string; flag: string }>>({});
 
@@ -35,11 +37,11 @@ export default function LocaleSettingsCard() {
         delete next[code];
         return next;
       });
-      toast({ title: "Saved", description: `Updated ${code.toUpperCase()} locale.` });
+      toast({ title: t("localeSettings.saved"), description: t("localeSettings.updatedLocale", { code: code.toUpperCase() }) });
     } catch (e) {
       toast({
-        title: "Could not save",
-        description: e instanceof Error ? e.message : "Invalid value.",
+        title: t("localeSettings.couldNotSave"),
+        description: e instanceof Error ? e.message : t("localeSettings.invalidValue"),
         variant: "destructive",
       });
     }
@@ -50,8 +52,8 @@ export default function LocaleSettingsCard() {
       saveLocaleOverride(code, { enabled });
     } catch (e) {
       toast({
-        title: "Could not update",
-        description: e instanceof Error ? e.message : "Invalid value.",
+        title: t("localeSettings.couldNotUpdate"),
+        description: e instanceof Error ? e.message : t("localeSettings.invalidValue"),
         variant: "destructive",
       });
     }
@@ -62,13 +64,12 @@ export default function LocaleSettingsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Languages className="h-5 w-5" />
-          Supported Languages
+          {t("localeSettings.title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Edit the display name, flag, and availability for each supported locale.
-          Language codes and translations are fixed and can’t be changed here.
+          {t("localeSettings.description")}
         </p>
 
         <div className="space-y-3">
@@ -103,7 +104,7 @@ export default function LocaleSettingsCard() {
                     aria-label={`Enable ${l.code}`}
                   />
                   <span className="text-xs text-muted-foreground w-14">
-                    {l.enabled ? "Enabled" : "Disabled"}
+                    {l.enabled ? t("localeSettings.enabled") : t("localeSettings.disabled")}
                   </span>
                 </div>
                 <Button
@@ -111,7 +112,7 @@ export default function LocaleSettingsCard() {
                   disabled={!dirty}
                   onClick={() => save(l.code, draft.label, draft.flag)}
                 >
-                  Save
+                  {t("common.save")}
                 </Button>
               </div>
             );
@@ -124,11 +125,11 @@ export default function LocaleSettingsCard() {
           onClick={() => {
             resetLocaleConfig();
             setDrafts({});
-            toast({ title: "Reset", description: "Locale settings restored to defaults." });
+            toast({ title: t("localeSettings.reset"), description: t("localeSettings.resetDesc") });
           }}
         >
           <RotateCcw className="h-4 w-4 mr-2" />
-          Reset to defaults
+          {t("localeSettings.resetDefaults")}
         </Button>
       </CardContent>
     </Card>

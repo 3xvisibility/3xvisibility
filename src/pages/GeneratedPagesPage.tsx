@@ -41,15 +41,16 @@ type GeneratedPage = Tables<"generated_pages"> & {
   websites?: { name: string; type?: string | null } | null;
 };
 
-const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
-  queued:     { icon: Clock,         color: "text-muted-foreground", bg: "bg-muted text-muted-foreground border-border", label: "Queued" },
-  pending:    { icon: Clock,         color: "text-amber-500",        bg: "bg-amber-500/10 text-amber-600 border-amber-500/20", label: "Pending" },
-  generating: { icon: Loader2,       color: "text-primary",          bg: "bg-primary/10 text-primary border-primary/20", label: "Generating" },
-  publishing: { icon: SendIcon,      color: "text-primary",         bg: "bg-primary/10 text-primary border-primary/20", label: "Publishing" },
-  published:  { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Published" },
-  done:       { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", label: "Done" },
-  failed:     { icon: AlertCircle,   color: "text-destructive",      bg: "bg-destructive/10 text-destructive border-destructive/20", label: "Failed" },
+const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; labelKey: string }> = {
+  queued:     { icon: Clock,         color: "text-muted-foreground", bg: "bg-muted text-muted-foreground border-border", labelKey: "status.queued" },
+  pending:    { icon: Clock,         color: "text-amber-500",        bg: "bg-amber-500/10 text-amber-600 border-amber-500/20", labelKey: "status.pending" },
+  generating: { icon: Loader2,       color: "text-primary",          bg: "bg-primary/10 text-primary border-primary/20", labelKey: "status.generating" },
+  publishing: { icon: SendIcon,      color: "text-primary",         bg: "bg-primary/10 text-primary border-primary/20", labelKey: "status.publishing" },
+  published:  { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", labelKey: "status.published" },
+  done:       { icon: CheckCircle2,  color: "text-emerald-500",      bg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20", labelKey: "status.done" },
+  failed:     { icon: AlertCircle,   color: "text-destructive",      bg: "bg-destructive/10 text-destructive border-destructive/20", labelKey: "status.failed" },
 };
+
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
@@ -584,7 +585,7 @@ export default function GeneratedPagesPage() {
               onClick={() => handlePublish(pendingPages.map((p) => p.id), "publish")}
             >
               <Send className="h-3.5 w-3.5 mr-1.5" />
-              {publishMutation.isPending ? "Publishing..." : `Publish All (${pendingPages.length})`}
+              {publishMutation.isPending ? t("generatedPages.publishing") : t("generatedPages.publishAll", { count: pendingPages.length })}
             </Button>
           )}
           {retryableQueuedPages.length > 0 && (
@@ -595,7 +596,7 @@ export default function GeneratedPagesPage() {
               onClick={() => handlePublish(retryableQueuedPages.map((p) => p.id), "retry")}
             >
               <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${retryFailedMutation.isPending ? "animate-spin" : ""}`} />
-              Retry queued ({retryableQueuedPages.length})
+              {t("generatedPages.retryQueued", { count: retryableQueuedPages.length })}
             </Button>
           )}
           <DropdownMenu>
@@ -621,11 +622,11 @@ export default function GeneratedPagesPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
         {[
-          { label: "Total Pages", value: stats.total, icon: FileText, color: "text-foreground" },
-          { label: "Published", value: stats.published, icon: CheckCircle2, color: "text-emerald-500" },
-          { label: "In Progress", value: stats.active, icon: Activity, color: "text-primary" },
-          { label: "Pending", value: stats.pending, icon: Clock, color: "text-amber-500" },
-          { label: "Failed", value: stats.failed, icon: AlertCircle, color: "text-destructive" },
+          { label: t("generatedPages.totalPages"), value: stats.total, icon: FileText, color: "text-foreground" },
+          { label: t("status.published"), value: stats.published, icon: CheckCircle2, color: "text-emerald-500" },
+          { label: t("status.inProgress"), value: stats.active, icon: Activity, color: "text-primary" },
+          { label: t("status.pending"), value: stats.pending, icon: Clock, color: "text-amber-500" },
+          { label: t("status.failed"), value: stats.failed, icon: AlertCircle, color: "text-destructive" },
         ].map((s) => (
           <Card key={s.label} className="shadow-surface border-border/50">
             <CardContent className="p-4 flex items-center gap-3">
@@ -642,52 +643,53 @@ export default function GeneratedPagesPage() {
         <Card className="shadow-surface border-border/50 col-span-2 lg:col-span-1">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
-              <TrendingUp className="h-3 w-3" /> Freshness
+              <TrendingUp className="h-3 w-3" /> {t("generatedPages.freshnessLabel")}
             </p>
             <div className="grid grid-cols-2 gap-1 text-xs">
-              <span className="text-emerald-500 font-medium">{freshCounts.fresh} Fresh</span>
-              <span className="text-primary font-medium">{freshCounts.aging} Aging</span>
-              <span className="text-amber-500 font-medium">{freshCounts.stale} Stale</span>
-              <span className="text-destructive font-medium">{freshCounts.outdated} Old</span>
+              <span className="text-emerald-500 font-medium">{freshCounts.fresh} {t("generatedPages.fresh")}</span>
+              <span className="text-primary font-medium">{freshCounts.aging} {t("generatedPages.aging")}</span>
+              <span className="text-amber-500 font-medium">{freshCounts.stale} {t("generatedPages.stale")}</span>
+              <span className="text-destructive font-medium">{freshCounts.outdated} {t("generatedPages.old")}</span>
             </div>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search pages..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
+          <Input placeholder={t("common.searchPages")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="queued">Queued</SelectItem>
-            <SelectItem value="generating">Generating</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="publishing">Publishing</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="done">Done</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="all">{t("generatedPages.allStatus")}</SelectItem>
+            <SelectItem value="queued">{t("status.queued")}</SelectItem>
+            <SelectItem value="generating">{t("status.generating")}</SelectItem>
+            <SelectItem value="pending">{t("status.pending")}</SelectItem>
+            <SelectItem value="publishing">{t("status.publishing")}</SelectItem>
+            <SelectItem value="published">{t("status.published")}</SelectItem>
+            <SelectItem value="done">{t("status.done")}</SelectItem>
+            <SelectItem value="failed">{t("status.failed")}</SelectItem>
           </SelectContent>
         </Select>
         {uniqueSites.length > 0 && (
           <Select value={siteFilter} onValueChange={setSiteFilter}>
-            <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder="All Sites" /></SelectTrigger>
+            <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder={t("generatedPages.allSites")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Sites</SelectItem>
+              <SelectItem value="all">{t("generatedPages.allSites")}</SelectItem>
               {uniqueSites.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
         {uniqueCampaigns.length > 0 && (
           <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-            <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="All Campaigns" /></SelectTrigger>
+            <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder={t("generatedPages.allCampaigns")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Campaigns</SelectItem>
-              <SelectItem value="direct">Direct Publish</SelectItem>
+              <SelectItem value="all">{t("generatedPages.allCampaigns")}</SelectItem>
+              <SelectItem value="direct">{t("generatedPages.directPublish")}</SelectItem>
               {uniqueCampaigns.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -697,11 +699,11 @@ export default function GeneratedPagesPage() {
             <Clock className="h-3.5 w-3.5 mr-1.5 shrink-0" /><SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Freshness</SelectItem>
-            <SelectItem value="fresh">Fresh (&lt;30d)</SelectItem>
-            <SelectItem value="aging">Aging (30-90d)</SelectItem>
-            <SelectItem value="stale">Stale (90-180d)</SelectItem>
-            <SelectItem value="outdated">Outdated (&gt;180d)</SelectItem>
+            <SelectItem value="all">{t("generatedPages.allFreshness")}</SelectItem>
+            <SelectItem value="fresh">{t("generatedPages.freshRange")}</SelectItem>
+            <SelectItem value="aging">{t("generatedPages.agingRange")}</SelectItem>
+            <SelectItem value="stale">{t("generatedPages.staleRange")}</SelectItem>
+            <SelectItem value="outdated">{t("generatedPages.outdatedRange")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={setSortBy}>
@@ -709,17 +711,18 @@ export default function GeneratedPagesPage() {
             <ArrowUpDown className="h-3.5 w-3.5 mr-1.5 shrink-0" /><SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest first</SelectItem>
-            <SelectItem value="oldest">Oldest first</SelectItem>
-            <SelectItem value="freshness">Stalest first</SelectItem>
-            <SelectItem value="seo_desc">SEO ↓ (best)</SelectItem>
-            <SelectItem value="seo_asc">SEO ↑ (worst)</SelectItem>
-            <SelectItem value="sea_desc">SEA ↓ (best)</SelectItem>
-            <SelectItem value="sea_asc">SEA ↑ (worst)</SelectItem>
-            <SelectItem value="geo_desc">GEO ↓ (best)</SelectItem>
-            <SelectItem value="geo_asc">GEO ↑ (worst)</SelectItem>
+            <SelectItem value="newest">{t("generatedPages.newestFirst")}</SelectItem>
+            <SelectItem value="oldest">{t("generatedPages.oldestFirst")}</SelectItem>
+            <SelectItem value="freshness">{t("generatedPages.stalestFirst")}</SelectItem>
+            <SelectItem value="seo_desc">{t("generatedPages.seoBest")}</SelectItem>
+            <SelectItem value="seo_asc">{t("generatedPages.seoWorst")}</SelectItem>
+            <SelectItem value="sea_desc">{t("generatedPages.seaBest")}</SelectItem>
+            <SelectItem value="sea_asc">{t("generatedPages.seaWorst")}</SelectItem>
+            <SelectItem value="geo_desc">{t("generatedPages.geoBest")}</SelectItem>
+            <SelectItem value="geo_asc">{t("generatedPages.geoWorst")}</SelectItem>
           </SelectContent>
         </Select>
+
       </div>
 
       {/* Bulk Action Bar */}
@@ -728,44 +731,45 @@ export default function GeneratedPagesPage() {
           <CardContent className="p-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">{selectedIds.size} selected</span>
+              <span className="text-sm font-semibold">{t("generatedPages.selectedCountShort", { count: selectedIds.size })}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Button size="sm" className="h-7 text-xs bg-gradient-primary border-0" disabled={bulkPublishMutation.isPending}
                 onClick={() => {
                   const publishable = [...selectedIds].filter((id) => { const p = pages.find((pg) => pg.id === id); return p?.status === "pending" || p?.status === "failed" || p?.status === "queued" || p?.status === "publishing"; });
-                  if (!publishable.length) { toast({ title: "No publishable pages", variant: "destructive" }); return; }
+                  if (!publishable.length) { toast({ title: t("generatedPages.noPublishable"), variant: "destructive" }); return; }
                   handlePublish(publishable, "bulk");
                 }}>
-                <Send className="h-3 w-3 mr-1" />{bulkPublishMutation.isPending ? "..." : "Publish"}
+                <Send className="h-3 w-3 mr-1" />{bulkPublishMutation.isPending ? "..." : t("generatedPages.publish")}
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" disabled={retryFailedMutation.isPending}
                 onClick={() => {
                   const retryable = [...selectedIds].filter((id) => { const status = pages.find((p) => p.id === id)?.status; return status === "failed" || status === "queued" || status === "publishing"; });
-                  if (!retryable.length) { toast({ title: "No queued or failed pages to retry", variant: "destructive" }); return; }
+                  if (!retryable.length) { toast({ title: t("generatedPages.noRetryable"), variant: "destructive" }); return; }
                   handlePublish(retryable, "retry");
                 }}>
-                <RefreshCw className="h-3 w-3 mr-1" />Retry
+                <RefreshCw className="h-3 w-3 mr-1" />{t("generatedPages.retry")}
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={openBulkSeoEditor}>
-                <Tag className="h-3 w-3 mr-1" />SEO
+                <Tag className="h-3 w-3 mr-1" />{t("generatedPages.seo")}
               </Button>
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setTranslateOpen(true)}>
-                <Languages className="h-3 w-3 mr-1" />Translate
+                <Languages className="h-3 w-3 mr-1" />{t("generatedPages.translate")}
               </Button>
               <Select onValueChange={(status) => bulkStatusMutation.mutate({ ids: [...selectedIds], status })}>
-                <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder="Status..." /></SelectTrigger>
+                <SelectTrigger className="h-7 w-[100px] text-xs"><SelectValue placeholder={t("generatedPages.setStatus")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="pending">{t("status.pending")}</SelectItem>
+                  <SelectItem value="published">{t("status.published")}</SelectItem>
+                  <SelectItem value="failed">{t("status.failed")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button size="sm" variant="outline" className="h-7 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-                onClick={() => { if (window.confirm(`Delete ${selectedIds.size} pages?`)) bulkDeleteMutation.mutate([...selectedIds]); }}
+                onClick={() => { if (window.confirm(t("generatedPages.confirmDelete", { count: selectedIds.size }))) bulkDeleteMutation.mutate([...selectedIds]); }}
                 disabled={bulkDeleteMutation.isPending}>
-                <Trash2 className="h-3 w-3 mr-1" />Delete
+                <Trash2 className="h-3 w-3 mr-1" />{t("common.delete")}
               </Button>
+
               <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
                 <X className="h-3 w-3" />
               </Button>
@@ -803,7 +807,7 @@ export default function GeneratedPagesPage() {
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
                         <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
-                        {cfg.label}
+                        {t(cfg.labelKey)}
                       </Badge>
                       {page.campaigns?.name && <Badge variant="outline" className="text-[10px]">{page.campaigns.name}</Badge>}
                       <code className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[180px]">{page.slug}</code>
@@ -841,12 +845,13 @@ export default function GeneratedPagesPage() {
                   <th className="p-3 w-10">
                     <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} aria-label="Select all" />
                   </th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs">Page</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-24">Status</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden xl:table-cell">Campaign</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden 2xl:table-cell">Slug</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground text-xs w-36">Scores</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground text-xs w-28">Actions</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs">{t("generatedPages.page")}</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-24">{t("common.status")}</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden xl:table-cell">{t("generatedPages.campaign")}</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden 2xl:table-cell">{t("generatedPages.slug")}</th>
+                  <th className="p-3 text-center font-medium text-muted-foreground text-xs w-36">{t("generatedPages.scores")}</th>
+                  <th className="p-3 text-right font-medium text-muted-foreground text-xs w-28">{t("common.actions")}</th>
+
                 </tr>
               </thead>
               <tbody>
@@ -876,7 +881,7 @@ export default function GeneratedPagesPage() {
                       <td className="p-3">
                         <Badge variant="outline" className={`text-[10px] ${cfg.bg} inline-flex items-center gap-1`}>
                           <cfg.icon className={`h-2.5 w-2.5 ${page.status === "generating" || page.status === "publishing" ? "animate-spin" : ""}`} />
-                          {cfg.label}
+                          {t(cfg.labelKey)}
                         </Badge>
                         {page.error_message && (
                           <TooltipProvider>

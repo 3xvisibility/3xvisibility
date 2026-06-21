@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format, startOfDay, endOfDay } from "date-fns";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface AuditLog {
   id: string;
@@ -27,29 +28,30 @@ interface AuditLog {
 
 const PAGE_SIZE = 20;
 
-const actionConfig: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+const actionConfig: Record<string, { icon: React.ReactNode; labelKey: string; color: string }> = {
   // Members
-  invite_member:     { icon: <UserPlus className="h-3.5 w-3.5" />, label: "Member Invited",     color: "bg-success/10 text-success" },
-  update_role:       { icon: <Shield className="h-3.5 w-3.5" />,   label: "Role Changed",       color: "bg-primary/10 text-primary" },
-  remove_member:     { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Member Removed",     color: "bg-destructive/10 text-destructive" },
-  rename_workspace:  { icon: <Pencil className="h-3.5 w-3.5" />,   label: "Workspace Renamed",  color: "bg-warning/10 text-warning" },
+  invite_member:     { icon: <UserPlus className="h-3.5 w-3.5" />, labelKey: "audit.action.inviteMember",     color: "bg-success/10 text-success" },
+  update_role:       { icon: <Shield className="h-3.5 w-3.5" />,   labelKey: "audit.action.updateRole",       color: "bg-primary/10 text-primary" },
+  remove_member:     { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.removeMember",     color: "bg-destructive/10 text-destructive" },
+  rename_workspace:  { icon: <Pencil className="h-3.5 w-3.5" />,   labelKey: "audit.action.renameWorkspace",  color: "bg-warning/10 text-warning" },
   // Sites
-  site_created:      { icon: <Globe className="h-3.5 w-3.5" />,    label: "Site Created",       color: "bg-success/10 text-success" },
-  site_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Site Deleted",       color: "bg-destructive/10 text-destructive" },
-  site_updated:      { icon: <Pencil className="h-3.5 w-3.5" />,   label: "Site Updated",       color: "bg-primary/10 text-primary" },
+  site_created:      { icon: <Globe className="h-3.5 w-3.5" />,    labelKey: "audit.action.siteCreated",       color: "bg-success/10 text-success" },
+  site_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.siteDeleted",       color: "bg-destructive/10 text-destructive" },
+  site_updated:      { icon: <Pencil className="h-3.5 w-3.5" />,   labelKey: "audit.action.siteUpdated",       color: "bg-primary/10 text-primary" },
   // Campaigns
-  campaign_started:  { icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Started",   color: "bg-primary/10 text-primary" },
-  campaign_completed:{ icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Completed", color: "bg-success/10 text-success" },
-  campaign_failed:   { icon: <Rocket className="h-3.5 w-3.5" />,   label: "Campaign Failed",    color: "bg-destructive/10 text-destructive" },
-  campaign_deleted:  { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Campaign Deleted",   color: "bg-destructive/10 text-destructive" },
+  campaign_started:  { icon: <Rocket className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignStarted",   color: "bg-primary/10 text-primary" },
+  campaign_completed:{ icon: <Rocket className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignCompleted", color: "bg-success/10 text-success" },
+  campaign_failed:   { icon: <Rocket className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignFailed",    color: "bg-destructive/10 text-destructive" },
+  campaign_deleted:  { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.campaignDeleted",   color: "bg-destructive/10 text-destructive" },
   // Pages
-  page_published:    { icon: <FileText className="h-3.5 w-3.5" />, label: "Page Published",     color: "bg-success/10 text-success" },
-  page_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   label: "Page Deleted",       color: "bg-destructive/10 text-destructive" },
-  pages_bulk_published: { icon: <FileText className="h-3.5 w-3.5" />, label: "Bulk Publish",    color: "bg-success/10 text-success" },
+  page_published:    { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.pagePublished",     color: "bg-success/10 text-success" },
+  page_deleted:      { icon: <Trash2 className="h-3.5 w-3.5" />,   labelKey: "audit.action.pageDeleted",       color: "bg-destructive/10 text-destructive" },
+  pages_bulk_published: { icon: <FileText className="h-3.5 w-3.5" />, labelKey: "audit.action.bulkPublish",    color: "bg-success/10 text-success" },
   // Plan / billing
-  plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Plan Changed",     color: "bg-warning/10 text-warning" },
-  subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, label: "Subscription Updated", color: "bg-primary/10 text-primary" },
+  plan_changed:      { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.planChanged",     color: "bg-warning/10 text-warning" },
+  subscription_updated: { icon: <CreditCard className="h-3.5 w-3.5" />, labelKey: "audit.action.subscriptionUpdated", color: "bg-primary/10 text-primary" },
 };
+
 
 const ALL_ACTIONS = Object.keys(actionConfig);
 
@@ -105,6 +107,7 @@ function exportAuditCsv(logs: AuditLog[]) {
 }
 
 export default function AuditLogViewer({ workspaceId }: { workspaceId: string }) {
+  const { t } = useLanguage();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -147,7 +150,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
       if (q) {
         results = results.filter((log) => {
           const detailsStr = log.details ? JSON.stringify(log.details).toLowerCase() : "";
-          const actionLabel = (actionConfig[log.action]?.label || log.action).toLowerCase();
+          const actionLabel = (actionConfig[log.action] ? t(actionConfig[log.action].labelKey) : log.action).toLowerCase();
           return (
             actionLabel.includes(q) ||
             log.user_id.toLowerCase().includes(q) ||
@@ -194,10 +197,10 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           <div>
             <CardTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-primary" />
-              Audit Log
+              {t("audit.title")}
             </CardTitle>
             <CardDescription className="mt-1.5">
-              Track sensitive actions: publications, deletions, role & plan changes.
+              {t("audit.subtitle")}
             </CardDescription>
           </div>
           <Button
@@ -208,7 +211,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
             disabled={!logs.length}
           >
             <Download className="h-3.5 w-3.5" />
-            Export CSV
+            {t("audit.exportCsv")}
           </Button>
         </div>
       </CardHeader>
@@ -221,10 +224,10 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="all">{t("audit.allActions")}</SelectItem>
               {ALL_ACTIONS.map((a) => (
                 <SelectItem key={a} value={a}>
-                  {actionConfig[a].label}
+                  {t(actionConfig[a].labelKey)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -233,7 +236,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search logs (email, name, URL…)"
+              placeholder={t("audit.searchLogs")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 text-xs"
@@ -253,7 +256,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
                   ? dateRange.to
                     ? `${format(dateRange.from, "MMM d")} – ${format(dateRange.to, "MMM d")}`
                     : format(dateRange.from, "MMM d, yyyy")
-                  : "Date range"}
+                  : t("audit.dateRange")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
@@ -266,7 +269,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               {(dateRange.from || dateRange.to) && (
                 <div className="p-2 border-t">
                   <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setDateRange({})}>
-                    Clear dates
+                    {t("audit.clearDates")}
                   </Button>
                 </div>
               )}
@@ -280,7 +283,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
               className="h-9 text-xs text-muted-foreground"
               onClick={() => { setActionFilter("all"); setSearchQuery(""); setDateRange({}); }}
             >
-              Clear all
+              {t("audit.clearAll")}
             </Button>
           )}
         </div>
@@ -294,26 +297,25 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
           </div>
         ) : !logs.length ? (
           <p className="text-sm text-muted-foreground text-center py-8">
-            {hasFilters ? "No events match your filters." : "No audit events yet."}
+            {hasFilters ? t("audit.noMatch") : t("audit.noEvents")}
           </p>
         ) : (
           <div className="max-h-[500px] overflow-y-auto pr-3">
             <div className="relative pl-6 border-l-2 border-border space-y-4">
               {logs.map((log) => {
-                const cfg = actionConfig[log.action] || {
-                  icon: <Clock className="h-3.5 w-3.5" />,
-                  label: log.action.replace(/_/g, " "),
-                  color: "bg-muted text-muted-foreground",
-                };
+                const cfg = actionConfig[log.action];
+                const cfgIcon = cfg?.icon ?? <Clock className="h-3.5 w-3.5" />;
+                const cfgColor = cfg?.color ?? "bg-muted text-muted-foreground";
+                const cfgLabel = cfg ? t(cfg.labelKey) : log.action.replace(/_/g, " ");
                 return (
                   <div key={log.id} className="relative">
                     <div className="absolute -left-[calc(0.75rem+1px)] top-1 h-5 w-5 rounded-full bg-background border-2 border-border flex items-center justify-center">
                       <div className="h-2 w-2 rounded-full bg-primary" />
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                      <Badge variant="outline" className={`gap-1 shrink-0 w-fit text-xs ${cfg.color}`}>
-                        {cfg.icon}
-                        {cfg.label}
+                      <Badge variant="outline" className={`gap-1 shrink-0 w-fit text-xs ${cfgColor}`}>
+                        {cfgIcon}
+                        {cfgLabel}
                       </Badge>
                       <span className="text-sm text-foreground truncate">
                         {getActionDetails(log)}
@@ -337,7 +339,7 @@ export default function AuditLogViewer({ workspaceId }: { workspaceId: string })
             )}
 
             {!hasNextPage && logs.length >= PAGE_SIZE && (
-              <p className="text-xs text-muted-foreground text-center py-2">All events loaded.</p>
+              <p className="text-xs text-muted-foreground text-center py-2">{t("audit.allLoaded")}</p>
             )}
           </div>
         )}
