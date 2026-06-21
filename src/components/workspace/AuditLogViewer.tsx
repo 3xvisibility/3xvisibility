@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow, format, startOfDay, endOfDay } from "date-fns";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 interface AuditLog {
   id: string;
