@@ -845,12 +845,13 @@ export default function GeneratedPagesPage() {
                   <th className="p-3 w-10">
                     <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} aria-label="Select all" />
                   </th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs">Page</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-24">Status</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden xl:table-cell">Campaign</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden 2xl:table-cell">Slug</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground text-xs w-36">Scores</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground text-xs w-28">Actions</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs">{t("generatedPages.page")}</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-24">{t("common.status")}</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden xl:table-cell">{t("generatedPages.campaign")}</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground text-xs w-32 hidden 2xl:table-cell">{t("generatedPages.slug")}</th>
+                  <th className="p-3 text-center font-medium text-muted-foreground text-xs w-36">{t("generatedPages.scores")}</th>
+                  <th className="p-3 text-right font-medium text-muted-foreground text-xs w-28">{t("common.actions")}</th>
+
                 </tr>
               </thead>
               <tbody>
