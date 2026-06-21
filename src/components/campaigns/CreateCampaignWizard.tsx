@@ -1690,7 +1690,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             <div className="flex items-start gap-2">
                               <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                               <div className="text-[11px] text-muted-foreground flex-1">
-                                Tell us about your business and we'll fill the <strong className="text-foreground">{selectedTemplateVars.length}</strong> template variables for as many pages as you need.
+                                Enter your <strong className="text-foreground">brand name</strong> and AI fills the <strong className="text-foreground">{aiGenVars.length}</strong> content variables based on your chosen template.{contactVars.length > 0 ? <> Add your real contact / link details below so they're used exactly as you enter them.</> : null}
                               </div>
                             </div>
 
