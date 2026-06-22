@@ -29,7 +29,7 @@ import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
-import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { COMMUNITY_TEMPLATES, applyTemplateDefaults, elementorToPreviewHtml, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
 import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
 import { Languages } from "lucide-react";
@@ -511,7 +511,7 @@ export default function TemplateMarketplacePage() {
               <div className="border border-border rounded-md overflow-hidden bg-muted/30 h-32">
                 <div
                   className="transform scale-[0.25] origin-top-left w-[400%] h-[400%] pointer-events-none"
-                  dangerouslySetInnerHTML={{ __html: applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
+                  dangerouslySetInnerHTML={{ __html: tpl.kind === "elementor" && tpl.elementorData ? applyTemplateDefaults(elementorToPreviewHtml(tpl.elementorData), tpl.defaultValues) : applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
                 />
               </div>
 
@@ -644,7 +644,7 @@ export default function TemplateMarketplacePage() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="preview" className="mt-3">
-                    <TemplatePreview html={applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
+                    <TemplatePreview html={activePreview.kind === "elementor" && activePreview.elementorData ? applyTemplateDefaults(elementorToPreviewHtml(activePreview.elementorData), activePreview.defaultValues) : applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
                   </TabsContent>
                   <TabsContent value="customize" className="mt-3 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
