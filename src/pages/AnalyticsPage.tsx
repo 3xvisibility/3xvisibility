@@ -419,7 +419,17 @@ export default function AnalyticsPage() {
     toast({ title: "PDF report opened", description: "Use your browser's print dialog to save as PDF." });
   }, [pages, stats, seoDistribution, campaignPerformance, avgSeoScore, aiUsed, aiLimit, aiPercent, aiUsage, jobStats, toast]);
 
-  usePageAutoTranslate(pageRef, [loadingPages, pages.length, campaignPerformance.length]);
+  usePageAutoTranslate(pageRef, [
+    loadingPages,
+    pages.length,
+    campaignPerformance.length,
+    campaignSuccessRates.length,
+    seoDistribution.length,
+    speedTrends.length,
+    publishRateOverTime.length,
+    publishingFunnel.length,
+    stats.total,
+  ]);
 
   return (
     <div ref={pageRef} className="space-y-6">
