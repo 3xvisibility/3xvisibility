@@ -52,7 +52,7 @@ export default function BlogPostPage() {
         </div>
 
         <p className="not-prose text-xs uppercase tracking-widest text-[hsl(250,15%,45%)]">
-          {post.category} · {post.date} · {post.readTime}
+          {post.category} · {post.date}
         </p>
 
         <figure className="not-prose my-6 overflow-hidden rounded-2xl border border-[hsl(96,90%,45%,0.12)]">
