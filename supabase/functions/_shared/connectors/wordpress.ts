@@ -247,6 +247,13 @@ export class WordPressConnector implements CmsConnector {
     if (!preserveDesign && resolvedTemplate) {
       meta._wp_page_template = resolvedTemplate;
     }
+
+    // Rebuild the native Elementor layout when the body content is being updated
+    // (skipped in design-preservation mode and for products).
+    if (!preserveDesign && !payload.product_data && typeof payload.content === "string") {
+      Object.assign(meta, buildElementorMeta(payload.content));
+    }
+
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
