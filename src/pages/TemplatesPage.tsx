@@ -30,6 +30,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { friendlyError } from "@/lib/friendly-errors";
+import { validateElementorFile, type ElementorValidationResult } from "@/lib/elementor-validation";
 import { htmlToBlocks } from "@/components/templates/TemplateVisualEditor";
 import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
