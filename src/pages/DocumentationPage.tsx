@@ -1,6 +1,7 @@
 import { Seo } from "@/components/Seo";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
 import {
   LayoutDashboard, Globe, Rocket, Layers, FileText, Store, Database,
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
