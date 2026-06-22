@@ -766,8 +766,12 @@ Deno.serve(async (req) => {
           const elementorInfo = elementorCache.get(wsKey)!;
 
           if (elementorInfo.usesElementor) {
+            // Publish the page EXACTLY like the template: wrap the full adapted
+            // HTML (with its own styles intact) into a single Elementor HTML
+            // widget. Fragmenting into separate heading/image/text widgets used
+            // to strip the template's <style> blocks and break the design.
             elementorMeta = {
-              elementor_data: buildElementorData(cleanedContent),
+              elementor_data: buildElementorHtmlWidget(cleanedContent),
               elementor_edit_mode: "builder",
               page_template: elementorInfo.pageTemplate,
             };
