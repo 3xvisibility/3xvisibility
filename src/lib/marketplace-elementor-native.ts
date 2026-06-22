@@ -297,6 +297,8 @@ export type ThemedSpec = {
   feature3: [string, string, string];
   aboutImage: string;
   defaults: Record<string, string>;
+  /** Live demo URL this template is modelled on (fetched for the real design on import). */
+  demoUrl?: string;
 };
 
 export const makeThemed = (s: ThemedSpec): MarketplaceTemplate => {
@@ -359,6 +361,7 @@ export const makeThemed = (s: ThemedSpec): MarketplaceTemplate => {
     kind: "elementor",
     elementorData: data,
     elementorPageTemplate: "elementor_canvas",
+    sourceUrl: s.demoUrl,
     defaultValues: {
       cta_label: "Get Started", cta_url: "#contact", features_title: "What we offer",
       feature_1_title: s.feature1[1], feature_1_body: s.feature1[2],

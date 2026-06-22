@@ -297,6 +297,31 @@ export default function TemplateMarketplacePage() {
       const content = hasOverrides
         ? applyTemplateDefaults(tpl.content, overrides)
         : tpl.content;
+      // Native Elementor templates: fetch the REAL design from the live demo URL
+      // and convert it to native Elementor JSON. Fall back to the bundled layout
+      // if the live fetch is unavailable.
+      let elementorPayload: Record<string, unknown> = {};
+      if (tpl.kind === "elementor" && tpl.elementorData) {
+        let elementorData = tpl.elementorData;
+        if (tpl.sourceUrl) {
+          try {
+            const { data: fetched, error: fErr } = await supabase.functions.invoke(
+              "import-elementor-demo",
+              { body: { url: tpl.sourceUrl } },
+            );
+            if (!fErr && fetched?.elementorData && Array.isArray(fetched.elementorData) && fetched.elementorData.length) {
+              elementorData = fetched.elementorData;
+            }
+          } catch {
+            // keep bundled elementorData
+          }
+        }
+        elementorPayload = {
+          template_kind: "elementor",
+          elementor_data: elementorData,
+          elementor_page_template: tpl.elementorPageTemplate || null,
+        };
+      }
       const { error } = await supabase.from("templates").insert({
         name: tpl.name,
         content,
@@ -306,15 +331,7 @@ export default function TemplateMarketplacePage() {
         seo_title_pattern: tpl.seo_title_pattern || "",
         seo_description_pattern: tpl.seo_description_pattern || "",
         schema_type: tpl.schema_type || "WebPage",
-        // Native Elementor templates carry their original JSON so publishing
-        // produces a native, editable Elementor page (not converted HTML).
-        ...(tpl.kind === "elementor" && tpl.elementorData
-          ? {
-              template_kind: "elementor",
-              elementor_data: tpl.elementorData,
-              elementor_page_template: tpl.elementorPageTemplate || null,
-            }
-          : {}),
+        ...elementorPayload,
         schema_config: {
           default_values: mergedDefaults,
           ...(hasOverrides
