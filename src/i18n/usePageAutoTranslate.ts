@@ -51,7 +51,10 @@ function collectTextNodes(root: HTMLElement): Text[] {
   return nodes;
 }
 
-export function usePageAutoTranslate(ref: React.RefObject<HTMLElement>) {
+export function usePageAutoTranslate(
+  ref: React.RefObject<HTMLElement>,
+  deps: unknown[] = [],
+) {
   const { language } = useLanguage();
   const originals = useRef<WeakMap<Text, string>>(new WeakMap());
 
