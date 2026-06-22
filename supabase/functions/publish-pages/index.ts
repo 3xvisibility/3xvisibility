@@ -3,6 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { buildElementorHtmlWidget } from "../_shared/connectors/wordpress-theme-adapter.ts";
 import { deepReplaceElementorVariables, stringifyElementorData, validateElementorData } from "../_shared/elementor-vars.ts";
+import { translateElementorTree } from "../_shared/elementor-translate.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
