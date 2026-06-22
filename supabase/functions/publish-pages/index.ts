@@ -3,6 +3,7 @@ import { createConnector, createProductConnector, type WebsiteRecord } from "../
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { buildElementorHtmlWidget } from "../_shared/connectors/wordpress-theme-adapter.ts";
 import { deepReplaceElementorVariables, stringifyElementorData, validateElementorData } from "../_shared/elementor-vars.ts";
+import { translateElementorTree } from "../_shared/elementor-translate.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
@@ -503,6 +504,7 @@ Deno.serve(async (req) => {
       elementor_data: unknown;
       page_template?: string | null;
       rows: Record<string, string>[];
+      language?: string | null;
     } | null;
     const elementorTemplateCache = new Map<string, ElementorTemplate>();
     async function getCampaignElementorTemplate(campaignId: string | null | undefined): Promise<ElementorTemplate> {
@@ -511,7 +513,7 @@ Deno.serve(async (req) => {
       let result: ElementorTemplate = null;
       const { data: campaign } = await supabase
         .from("campaigns")
-        .select("template_id, csv_data")
+        .select("template_id, csv_data, language")
         .eq("id", campaignId)
         .maybeSingle();
       if (campaign?.template_id) {
@@ -531,6 +533,7 @@ Deno.serve(async (req) => {
             elementor_data: (tpl as any).elementor_data,
             page_template: (tpl as any).elementor_page_template || undefined,
             rows: (campaign.csv_data as Record<string, string>[] | null) || [],
+            language: (campaign as any).language || null,
           };
         }
       }
@@ -811,8 +814,11 @@ Deno.serve(async (req) => {
               nativeTpl.rows[0] ||
               {};
             const resolved = deepReplaceElementorVariables(nativeTpl.elementor_data, row);
+            // Translate every static widget text/label into the campaign's
+            // language so the published WordPress page is fully localized.
+            const localized = await translateElementorTree(resolved, nativeTpl.language || "en");
             elementorMeta = {
-              elementor_data: stringifyElementorData(resolved),
+              elementor_data: stringifyElementorData(localized),
               elementor_edit_mode: "builder",
               page_template: nativeTpl.page_template || undefined,
             };
