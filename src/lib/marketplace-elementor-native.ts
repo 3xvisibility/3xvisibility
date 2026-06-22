@@ -297,6 +297,8 @@ export type ThemedSpec = {
   feature3: [string, string, string];
   aboutImage: string;
   defaults: Record<string, string>;
+  /** Live demo URL this template is modelled on (fetched for the real design on import). */
+  demoUrl?: string;
 };
 
 export const makeThemed = (s: ThemedSpec): MarketplaceTemplate => {
