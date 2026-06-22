@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { buildElementorHtmlWidget } from "../_shared/connectors/wordpress-theme-adapter.ts";
-import { deepReplaceElementorVariables, stringifyElementorData } from "../_shared/elementor-vars.ts";
+import { deepReplaceElementorVariables, stringifyElementorData, validateElementorData } from "../_shared/elementor-vars.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
@@ -521,6 +521,12 @@ Deno.serve(async (req) => {
           .eq("id", campaign.template_id)
           .maybeSingle();
         if (tpl && (tpl as any).template_kind === "elementor" && (tpl as any).elementor_data) {
+          // Server-side validation: reject malformed Elementor JSON before publishing.
+          try {
+            validateElementorData((tpl as any).elementor_data);
+          } catch (e) {
+            throw new Error(`Invalid Elementor template: ${(e as Error).message}`);
+          }
           result = {
             elementor_data: (tpl as any).elementor_data,
             page_template: (tpl as any).elementor_page_template || undefined,
