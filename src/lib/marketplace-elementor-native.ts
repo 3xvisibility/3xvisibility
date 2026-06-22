@@ -361,6 +361,7 @@ export const makeThemed = (s: ThemedSpec): MarketplaceTemplate => {
     kind: "elementor",
     elementorData: data,
     elementorPageTemplate: "elementor_canvas",
+    sourceUrl: s.demoUrl,
     defaultValues: {
       cta_label: "Get Started", cta_url: "#contact", features_title: "What we offer",
       feature_1_title: s.feature1[1], feature_1_body: s.feature1[2],
