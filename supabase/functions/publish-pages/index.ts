@@ -521,6 +521,12 @@ Deno.serve(async (req) => {
           .eq("id", campaign.template_id)
           .maybeSingle();
         if (tpl && (tpl as any).template_kind === "elementor" && (tpl as any).elementor_data) {
+          // Server-side validation: reject malformed Elementor JSON before publishing.
+          try {
+            validateElementorData((tpl as any).elementor_data);
+          } catch (e) {
+            throw new Error(`Invalid Elementor template: ${(e as Error).message}`);
+          }
           result = {
             elementor_data: (tpl as any).elementor_data,
             page_template: (tpl as any).elementor_page_template || undefined,
