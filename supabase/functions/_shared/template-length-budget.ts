@@ -63,7 +63,7 @@ export function analyzeTemplateBudget(defaultValues?: Record<string, string>): B
 /** Human-readable per-field hints injected into the generation prompt. */
 export function buildBudgetPromptHints(budget: BudgetMap): string {
   const lines = Object.entries(budget).map(
-    ([k, b]) => `- ${k}: ${b.minWords}-${b.maxWords} words (max ${b.maxChars} characters)`,
+    ([k, b]) => `- ${k}: ${b.minWords}-${b.maxWords} words; characters min ${b.minChars}, recommended ~${b.recommendedChars}, max ${b.maxChars}`,
   );
   if (lines.length === 0) return "";
   return `Strict length limits per field — generated text MUST fit the template layout. Never exceed 120% of the original length:\n${lines.join("\n")}`;
