@@ -305,7 +305,7 @@ export default function TemplateMarketplacePage() {
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     return source.filter((tpl) => {
-      const platform = tpl.platform || platformFromCategory(tpl.category || "");
+      const platform = effectivePlatform(tpl);
       const matchesCategory =
         selectedCategory === "all" ||
         tpl.category === selectedCategory ||
