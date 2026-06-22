@@ -30,6 +30,7 @@ import { FRAMER_BATCH17_TEMPLATES } from "@/lib/marketplace-framer-batch17";
 import { FRAMER_BATCH18_TEMPLATES } from "@/lib/marketplace-framer-batch18";
 import { FRAMER_BATCH19_TEMPLATES } from "@/lib/marketplace-framer-batch19";
 import { ELEMENTOR_NATIVE_TEMPLATES } from "@/lib/marketplace-elementor-native";
+import { ULTIMATE_ELEMENTOR_TEMPLATES } from "@/lib/marketplace-elementor-ultimate";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -3646,6 +3647,7 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
 
   // Native Elementor JSON templates — publish as true editable Elementor pages.
   ...ELEMENTOR_NATIVE_TEMPLATES,
+  ...ULTIMATE_ELEMENTOR_TEMPLATES,
 
 
 
