@@ -398,28 +398,35 @@ export default function TemplatesPage() {
 
   const importTemplate = async (file: File) => {
     try {
-      const data = JSON.parse(await file.text());
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
       if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
 
-      // ── Native Elementor export detection ──────────────────────────────
-      // Accept: (a) raw Elementor export { content: [...], page_settings, type:"page" },
-      //         (b) our export with `elementor_data`, or (c) a bare array of elements.
-      const elementorData =
-        data.elementor_data
-          ? data.elementor_data
-          : Array.isArray(data.content)
-            ? data.content
-            : Array.isArray(data)
-              ? data
-              : null;
+      // ── Native Elementor export detection (validated) ──────────────────
+      // Accepts our export (`elementor_data`), raw Elementor export ({ content: [...] }),
+      // or a bare array. Throws a clear error for malformed files.
+      let elementorResult: ElementorValidationResult | null = null;
+      let data: any;
+      try {
+        elementorResult = await validateElementorFile(file);
+        data = elementorResult.raw;
+      } catch (elemErr: any) {
+        // Not valid Elementor — fall back to legacy template format below.
+        try {
+          data = JSON.parse(await file.text());
+        } catch {
+          throw new Error("Failed to parse file: please ensure it is valid JSON.");
+        }
+        if (data && (data.elementor_data || Array.isArray(data.content) || Array.isArray(data))) {
+          // It looked like Elementor but failed validation — surface that error.
+          throw elemErr;
+        }
+      }
 
-      if (elementorData) {
-        const json = JSON.stringify(elementorData);
-        // Auto-extract {variable} placeholders found anywhere in the JSON.
-        const vars = [...new Set((json.match(/\{([a-z0-9_]+)\}/gi) || []).map((m) => m.slice(1, -1).toLowerCase()))];
-        const name = data.name || file.name.replace(/\.json$/i, "") || "Elementor Template";
+      if (elementorResult) {
+        const elementorData = elementorResult.elementorData;
+        const vars = elementorResult.variables;
+        const name = elementorResult.name || file.name.replace(/\.json$/i, "") || "Elementor Template";
         const { error } = await supabase.from("templates").insert({
           name,
           content: "<!-- Native Elementor template -->",
