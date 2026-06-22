@@ -19,6 +19,8 @@ export interface PagePayload {
   schema_json?: Record<string, unknown>;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
+  /** When true, preserve the live page design and skip rebuilding the layout. */
+  preserve_design?: boolean;
   /** For product-type publishing */
   product_data?: {
     price?: string;

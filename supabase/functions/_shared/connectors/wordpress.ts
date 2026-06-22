@@ -2,6 +2,7 @@ import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PageP
 import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
 import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
+import { buildElementorMeta } from "./elementor-engine.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -188,6 +189,12 @@ export class WordPressConnector implements CmsConnector {
     }
 
 
+    // WordPress Template Compatibility Engine: build a native, editable Elementor
+    // page from the HTML template (pages only, not Shopify-style products).
+    if (!payload.product_data && payload.content) {
+      Object.assign(meta, buildElementorMeta(payload.content));
+    }
+
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
 
@@ -240,6 +247,13 @@ export class WordPressConnector implements CmsConnector {
     if (!preserveDesign && resolvedTemplate) {
       meta._wp_page_template = resolvedTemplate;
     }
+
+    // Rebuild the native Elementor layout when the body content is being updated
+    // (skipped in design-preservation mode and for products).
+    if (!preserveDesign && !payload.product_data && typeof payload.content === "string") {
+      Object.assign(meta, buildElementorMeta(payload.content));
+    }
+
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
