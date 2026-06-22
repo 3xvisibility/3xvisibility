@@ -169,14 +169,8 @@ export class WooCommerceConnector implements CmsConnector {
     if (payload.excerpt) body.excerpt = payload.excerpt;
 
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
-    if (!preserveDesign && payload.elementor_meta?.elementor_data) {
-      meta._elementor_data = payload.elementor_meta.elementor_data;
-      meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
-      meta._elementor_template_type = "wp-page";
-      meta._elementor_version = "3.0.0";
-    }
     if (Object.keys(meta).length > 0) body.meta = meta;
-    if (!preserveDesign && payload.elementor_meta?.page_template) body.template = payload.elementor_meta.page_template;
+    if (!preserveDesign && payload.page_template) body.template = payload.page_template;
 
     const res = await fetch(`${this.baseUrl}/wp-json/wp/v2/pages/${externalId}`, {
       method: "PUT",

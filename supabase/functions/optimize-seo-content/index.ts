@@ -17,57 +17,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function generateElementorId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let id = "";
-  for (let i = 0; i < 7; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
-}
 
-function buildElementorData(htmlContent: string): string {
-  return JSON.stringify([
-    {
-      id: generateElementorId(),
-      elType: "section",
-      settings: {
-        structure: "10",
-        padding: { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false },
-      },
-      elements: [
-        {
-          id: generateElementorId(),
-          elType: "column",
-          settings: { _column_size: 100, _inline_size: null },
-          elements: [
-            {
-              id: generateElementorId(),
-              elType: "widget",
-              widgetType: "text-editor",
-              settings: {
-                editor: htmlContent,
-              },
-              elements: [],
-            },
-          ],
-        },
-      ],
-    },
-  ]);
-}
 
-function shouldMirrorToElementor(
-  websiteType: string | undefined,
-  pageType: string | undefined,
-  html: string | null | undefined,
-): boolean {
-  if (!html || pageType === "product") return false;
-  if (!websiteType || !["wordpress", "woocommerce"].includes(websiteType)) return false;
-
-  const normalized = html.toLowerCase();
-  return normalized.includes("elementor") || normalized.includes("data-elementor") || normalized.includes("e-con");
-}
 
 // Lite model is enough for SEO meta + minor text tweaks; saves significant credits.
 const OPTIMIZATION_MODEL = "google/gemini-2.5-flash-lite";
@@ -360,12 +311,6 @@ Deno.serve(async (req) => {
           status: "publish",
         };
         if (isProductContent) updatePayload.product_data = { handle: page_slug || undefined };
-        if (!preserveDesign && shouldMirrorToElementor(website.type, page_type, nextContent)) {
-          updatePayload.elementor_meta = {
-            elementor_data: buildElementorData(nextContent),
-            elementor_edit_mode: "builder",
-          };
-        }
         if (preserveDesign) updatePayload.preserve_design = true;
         if (manual_excerpt) updatePayload.excerpt = manual_excerpt;
         if (seo_title) updatePayload.seo_title = seo_title;
