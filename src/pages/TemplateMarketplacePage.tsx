@@ -298,7 +298,11 @@ export default function TemplateMarketplacePage() {
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     return source.filter((tpl) => {
-      const matchesCategory = selectedCategory === "all" || tpl.category === selectedCategory;
+      const platform = tpl.platform || platformFromCategory(tpl.category || "");
+      const matchesCategory =
+        selectedCategory === "all" ||
+        tpl.category === selectedCategory ||
+        ((selectedCategory === "wordpress" || selectedCategory === "shopify") && platform === selectedCategory);
       const matchesSearch =
         !searchQuery ||
         (tpl.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
