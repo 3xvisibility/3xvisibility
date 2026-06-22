@@ -1,7 +1,7 @@
 import programmaticSeo from "@/assets/blog/programmatic-seo.jpg";
 import shopifyPublishing from "@/assets/blog/shopify-publishing.jpg";
 import aiTemplates from "@/assets/blog/ai-templates.jpg";
-import seoAeoGeo from "@/assets/blog/seo-aeo-geo.jpg.asset.json";
+import seoAeoGeo from "@/assets/blog/seo-aeo-geo-ai.jpg";
 
 export interface BlogSection {
   heading: string;
