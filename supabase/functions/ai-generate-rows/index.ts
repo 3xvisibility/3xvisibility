@@ -1,5 +1,10 @@
 // Edge function: AI-generate CSV-like rows for a template's variables.
 import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
+import {
+  analyzeTemplateBudget,
+  buildBudgetPromptHints,
+  enforceRowBudget,
+} from "../_shared/template-length-budget.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +20,10 @@ interface Body {
   service?: string;
   language?: string;
   country?: string;
+  /** Original template sample values used to derive per-field length budgets. */
+  defaultValues?: Record<string, string>;
+  /** Template Safe Mode: enforce length budgets so content never breaks layout. */
+  templateSafeMode?: boolean;
 }
 
 Deno.serve(async (req) => {
