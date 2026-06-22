@@ -2,14 +2,47 @@ import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { posts } from "@/data/blog";
+import { getLocalizedPosts } from "@/data/blog";
+import { useLanguage } from "@/i18n/LanguageContext";
+import type { Language } from "@/i18n/translations";
+
+const UI: Record<Language, { title: string; subtitle: string; readMore: string; more: string }> = {
+  en: {
+    title: "Blog",
+    subtitle: "Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team.",
+    readMore: "Read more",
+    more: "More posts coming soon — follow us for updates.",
+  },
+  fr: {
+    title: "Blog",
+    subtitle: "Nouveautés produit, guides SEO et notes d'ingénierie de l'équipe 3XVISIBILITY.",
+    readMore: "Lire la suite",
+    more: "D'autres articles arrivent bientôt — suivez-nous pour les mises à jour.",
+  },
+  de: {
+    title: "Blog",
+    subtitle: "Produkt-Updates, SEO-Playbooks und Engineering-Notizen vom 3XVISIBILITY-Team.",
+    readMore: "Weiterlesen",
+    more: "Weitere Beiträge folgen bald — folgen Sie uns für Updates.",
+  },
+  es: {
+    title: "Blog",
+    subtitle: "Novedades de producto, guías de SEO y notas de ingeniería del equipo de 3XVISIBILITY.",
+    readMore: "Leer más",
+    more: "Pronto más artículos — síguenos para novedades.",
+  },
+};
 
 export default function BlogPage() {
+  const { language } = useLanguage();
+  const posts = getLocalizedPosts(language);
+  const ui = UI[language] ?? UI.en;
+
   return (
     <>
       <Seo
-        title="Blog"
-        description="Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team."
+        title={ui.title}
+        description={ui.subtitle}
         path="/blog"
         jsonLd={{
           "@context": "https://schema.org",
@@ -24,7 +57,7 @@ export default function BlogPage() {
           })),
         }}
       />
-      <StaticPageLayout title="Blog" subtitle="Product updates, SEO playbooks and engineering notes from the 3XVISIBILITY team.">
+      <StaticPageLayout title={ui.title} subtitle={ui.subtitle}>
         <div className="not-prose grid gap-6 sm:grid-cols-2">
           {posts.map((p, i) => (
             <Link
@@ -53,13 +86,13 @@ export default function BlogPage() {
                 <h3 className="mt-2 text-xl font-semibold leading-snug group-hover:text-primary transition-colors">{p.title}</h3>
                 <p className="mt-2 text-sm text-[hsl(250,15%,65%)]">{p.excerpt}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
-                  Read more <ArrowRight className="h-4 w-4" />
+                  {ui.readMore} <ArrowRight className="h-4 w-4" />
                 </span>
               </div>
             </Link>
           ))}
         </div>
-        <p className="mt-10 text-sm">More posts coming soon — follow us for updates.</p>
+        <p className="mt-10 text-sm">{ui.more}</p>
       </StaticPageLayout>
     </>
   );
