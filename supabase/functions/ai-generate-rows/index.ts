@@ -135,7 +135,8 @@ Make every row meaningfully different so each generated page is unique.`;
     const normalized = rows.slice(0, count).map((r) => {
       const out: Record<string, string> = {};
       for (const v of variables) out[v] = String(r?.[v] ?? "").trim();
-      return out;
+      // Design protection: clamp every field to its length budget (<=120%).
+      return safeMode ? enforceRowBudget(out, budget) : out;
     });
 
     return new Response(JSON.stringify({ rows: normalized }), {
