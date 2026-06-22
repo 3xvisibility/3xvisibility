@@ -284,7 +284,7 @@ const heroLead = (): MarketplaceTemplate => {
 // ── Generic themed factory (Ultimate Addons / Elementor "free download" style) ─
 // Builds a standard hero → features → about → CTA native Elementor page so each
 // niche template publishes as a true, editable Elementor page on WordPress.
-type ThemedSpec = {
+export type ThemedSpec = {
   id: string;
   name: string;
   description: string;
@@ -299,7 +299,7 @@ type ThemedSpec = {
   defaults: Record<string, string>;
 };
 
-const makeThemed = (s: ThemedSpec): MarketplaceTemplate => {
+export const makeThemed = (s: ThemedSpec): MarketplaceTemplate => {
   _id = 0;
   const data = [
     section(
