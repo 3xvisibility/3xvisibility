@@ -33,7 +33,7 @@ export function MarketplaceImportPanel() {
   const [url, setUrl] = useState("");
   const [category, setCategory] = useState("business");
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: rows = [], isLoading, isError, error, isFetching, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["admin-marketplace-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
