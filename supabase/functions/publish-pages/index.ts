@@ -495,6 +495,43 @@ Deno.serve(async (req) => {
       return out;
     }
 
+    // ── Native Elementor template cache ─────────────────────────────
+    // Loads the campaign's source template; when it's a native Elementor JSON
+    // template we publish its original structure (variables replaced with AI
+    // content) instead of converting HTML — keeping the exact design + editability.
+    type ElementorTemplate = {
+      elementor_data: unknown;
+      page_template?: string | null;
+      rows: Record<string, string>[];
+    } | null;
+    const elementorTemplateCache = new Map<string, ElementorTemplate>();
+    async function getCampaignElementorTemplate(campaignId: string | null | undefined): Promise<ElementorTemplate> {
+      if (!campaignId) return null;
+      if (elementorTemplateCache.has(campaignId)) return elementorTemplateCache.get(campaignId)!;
+      let result: ElementorTemplate = null;
+      const { data: campaign } = await supabase
+        .from("campaigns")
+        .select("template_id, csv_data")
+        .eq("id", campaignId)
+        .maybeSingle();
+      if (campaign?.template_id) {
+        const { data: tpl } = await supabase
+          .from("templates")
+          .select("template_kind, elementor_data, elementor_page_template")
+          .eq("id", campaign.template_id)
+          .maybeSingle();
+        if (tpl && (tpl as any).template_kind === "elementor" && (tpl as any).elementor_data) {
+          result = {
+            elementor_data: (tpl as any).elementor_data,
+            page_template: (tpl as any).elementor_page_template || undefined,
+            rows: (campaign.csv_data as Record<string, string>[] | null) || [],
+          };
+        }
+      }
+      elementorTemplateCache.set(campaignId, result);
+      return result;
+    }
+
     function applyShopifySuffix(payload: PagePayload, websiteType: string | undefined, suffixes: { page?: string; product?: string }, resolvedType: string) {
       if (websiteType !== "shopify") return;
       if (resolvedType === "product") {
