@@ -96,6 +96,20 @@ export function MarketplaceImportPanel() {
 
   return (
     <div className="space-y-4">
+      {isError ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          Failed to load marketplace templates: {(error as Error)?.message || "Unknown error"}
+        </div>
+      ) : isFetching ? (
+        <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" /> Refreshing marketplace templates…
+        </div>
+      ) : isSuccess ? (
+        <div className="rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-600 dark:text-green-400">
+          Loaded {rows.length} template{rows.length === 1 ? "" : "s"}
+          {dataUpdatedAt ? ` · updated ${new Date(dataUpdatedAt).toLocaleTimeString()}` : ""}
+        </div>
+      ) : null}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
