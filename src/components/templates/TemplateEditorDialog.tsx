@@ -15,7 +15,7 @@ import {
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { DynamicElementsInserter } from "@/components/templates/DynamicElementsInserter";
 
-import { LayoutPanelTop } from "lucide-react";
+
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
 import { filterDesignVars } from "@/lib/design-vars-filter";
