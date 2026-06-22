@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useRef } from "react";
+import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
 import { motion } from "framer-motion";
 import Autoplay from "embla-carousel-autoplay";
 import {
