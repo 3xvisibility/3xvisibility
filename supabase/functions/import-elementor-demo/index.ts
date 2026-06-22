@@ -62,15 +62,35 @@ function htmlToElementor(html: string, baseUrl: string): ElNode[] {
     n.remove(),
   );
 
-  // Pick the main content containers (Elementor sections render as .elementor-section)
+  // Pick the main content containers. Newer Elementor uses flexbox .e-con
+  // containers; classic uses .elementor-section.
   let containers = root.querySelectorAll(
-    "section.elementor-section, .elementor-top-section, main section, .elementor-section",
+    ".elementor-top-section, .e-con.e-parent, section.elementor-section",
   );
   if (containers.length === 0) {
-    containers = root.querySelectorAll("section, .e-con, main > div");
+    containers = root.querySelectorAll(".elementor-section, .e-con, main section, section");
+  }
+  if (containers.length === 0) {
+    containers = root.querySelectorAll("main > div, body > div");
   }
 
+  const pickImg = (i: ReturnType<typeof root.querySelector>): string => {
+    if (!i) return "";
+    return (
+      i.getAttribute("data-src") ||
+      i.getAttribute("data-lazy-src") ||
+      i.getAttribute("src") ||
+      (i.getAttribute("data-srcset") || i.getAttribute("srcset") || "")
+        .split(",")[0]
+        ?.trim()
+        .split(" ")[0] ||
+      ""
+    );
+  };
+
   const sections: ElNode[] = [];
+  const seenImages = new Set<string>();
+  const seenHeadings = new Set<string>();
   let firstHeroDone = false;
 
   for (const c of containers) {
@@ -81,10 +101,13 @@ function htmlToElementor(html: string, baseUrl: string): ElNode[] {
 
     const elements: ElNode[] = [];
 
-    // headings
+    // headings (dedupe across the whole page)
     for (const h of headings.slice(0, 2)) {
       const t = clean(h.text);
       if (!t || t.length > 200) continue;
+      const key = t.toLowerCase();
+      if (seenHeadings.has(key)) continue;
+      seenHeadings.add(key);
       elements.push(
         widget("heading", {
           title: t,
@@ -103,18 +126,20 @@ function htmlToElementor(html: string, baseUrl: string): ElNode[] {
       elements.push(widget("text-editor", { editor: `<p>${t}</p>`, align: "center" }));
     }
 
-    // image (hero/background or inline)
+    // image (hero/background or inline) — dedupe across page
     const img = imgs.find((i) => {
-      const src = i.getAttribute("src") || i.getAttribute("data-src") || "";
-      return src && !/logo|icon|placeholder|spacer/i.test(src);
+      const src = pickImg(i);
+      return src && !/logo|icon|placeholder|spacer|avatar|favicon/i.test(src);
     });
     let imageUrl = "";
     if (img) {
-      imageUrl = absolutize(
-        img.getAttribute("src") || img.getAttribute("data-src") || "",
-        baseUrl,
-      );
+      const abs = absolutize(pickImg(img), baseUrl);
+      if (abs && !seenImages.has(abs)) {
+        seenImages.add(abs);
+        imageUrl = abs;
+      }
     }
+
 
     // button
     const btn = links.find((a) => clean(a.text));
