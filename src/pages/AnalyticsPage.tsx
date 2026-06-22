@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ import { calculateSeoScore } from "@/lib/seo-score";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
 
 const CHART_TOOLTIP_STYLE = {
   backgroundColor: "hsl(var(--popover))",
@@ -55,6 +56,8 @@ export default function AnalyticsPage() {
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
+  const pageRef = useRef<HTMLDivElement>(null);
+
 
   // Fetch all generated pages
   const { data: pages = [], isLoading: loadingPages } = useQuery({
@@ -416,8 +419,10 @@ export default function AnalyticsPage() {
     toast({ title: "PDF report opened", description: "Use your browser's print dialog to save as PDF." });
   }, [pages, stats, seoDistribution, campaignPerformance, avgSeoScore, aiUsed, aiLimit, aiPercent, aiUsage, jobStats, toast]);
 
+  usePageAutoTranslate(pageRef, [loadingPages, pages.length, campaignPerformance.length]);
+
   return (
-    <div className="space-y-6">
+    <div ref={pageRef} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-display flex items-center gap-2">
