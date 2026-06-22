@@ -419,8 +419,10 @@ export default function AnalyticsPage() {
     toast({ title: "PDF report opened", description: "Use your browser's print dialog to save as PDF." });
   }, [pages, stats, seoDistribution, campaignPerformance, avgSeoScore, aiUsed, aiLimit, aiPercent, aiUsage, jobStats, toast]);
 
+  usePageAutoTranslate(pageRef, [loadingPages, pages.length, campaignPerformance.length]);
+
   return (
-    <div className="space-y-6">
+    <div ref={pageRef} className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-display flex items-center gap-2">
