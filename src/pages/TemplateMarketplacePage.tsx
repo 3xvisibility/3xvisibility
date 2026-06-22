@@ -259,15 +259,27 @@ export default function TemplateMarketplacePage() {
   const displayCategories = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     const counts = new Map<string, number>();
+    // Platform pills (like Shopify) so WordPress templates are grouped together.
+    const platformCounts = new Map<string, number>();
     for (const tpl of source) {
-      if (!tpl.category) continue;
-      counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
+      if (tpl.category) counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
+      const platform = tpl.platform || platformFromCategory(tpl.category || "");
+      if (platform === "wordpress" || platform === "shopify") {
+        platformCounts.set(platform, (platformCounts.get(platform) || 0) + 1);
+      }
     }
-    const ids = Array.from(counts.keys()).sort((a, b) =>
-      localizedCategoryLabel(a, language).localeCompare(localizedCategoryLabel(b, language))
-    );
+    // Don't double-list a platform that is already a literal category id.
+    const ids = Array.from(counts.keys())
+      .filter((id) => id !== "wordpress" && id !== "shopify")
+      .sort((a, b) =>
+        localizedCategoryLabel(a, language).localeCompare(localizedCategoryLabel(b, language))
+      );
+    const platformPills = (["wordpress", "shopify"] as const)
+      .filter((p) => (platformCounts.get(p) || 0) > 0)
+      .map((p) => ({ id: p, ...categoryMeta(p), label: localizedCategoryLabel(p, language), count: platformCounts.get(p) || 0 }));
     return [
       { id: "all", ...categoryMeta("all"), label: localizedCategoryLabel("all", language), count: source.length },
+      ...platformPills,
       ...ids.map((id) => ({ id, ...categoryMeta(id), label: localizedCategoryLabel(id, language), count: counts.get(id) || 0 })),
     ];
   }, [activeTab, allTemplates, communityTemplates, language]);
