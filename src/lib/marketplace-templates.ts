@@ -29,6 +29,7 @@ import { FRAMER_BATCH16_TEMPLATES } from "@/lib/marketplace-framer-batch16";
 import { FRAMER_BATCH17_TEMPLATES } from "@/lib/marketplace-framer-batch17";
 import { FRAMER_BATCH18_TEMPLATES } from "@/lib/marketplace-framer-batch18";
 import { FRAMER_BATCH19_TEMPLATES } from "@/lib/marketplace-framer-batch19";
+import { ELEMENTOR_NATIVE_TEMPLATES } from "@/lib/marketplace-elementor-native";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -57,6 +58,12 @@ export interface MarketplaceTemplate {
   shared_id?: string;
   /** Sensible default values used to fill {variables} in the preview so no section looks empty. */
   defaultValues?: Record<string, string>;
+  /** Native Elementor template kind. When 'elementor', the page is published as a native Elementor page. */
+  kind?: "html" | "elementor";
+  /** Original Elementor `_elementor_data` structure (array of elements). Required when kind === 'elementor'. */
+  elementorData?: unknown;
+  /** Optional WordPress page-template slug used when publishing the Elementor page (e.g. elementor_canvas). */
+  elementorPageTemplate?: string;
 }
 
 /**
@@ -3636,6 +3643,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   ...FRAMER_BATCH17_TEMPLATES,
   ...FRAMER_BATCH18_TEMPLATES,
   ...FRAMER_BATCH19_TEMPLATES,
+
+  // Native Elementor JSON templates — publish as true editable Elementor pages.
+  ...ELEMENTOR_NATIVE_TEMPLATES,
 
 
 

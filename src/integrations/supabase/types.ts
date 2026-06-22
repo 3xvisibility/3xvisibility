@@ -2292,6 +2292,8 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          elementor_data: Json | null
+          elementor_page_template: string | null
           id: string
           name: string
           schema_config: Json | null
@@ -2301,6 +2303,7 @@ export type Database = {
           source_imported_at: string | null
           source_marketplace_id: string | null
           source_version: string | null
+          template_kind: string
           updated_at: string
           user_id: string
           variables: string[] | null
@@ -2310,6 +2313,8 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          elementor_data?: Json | null
+          elementor_page_template?: string | null
           id?: string
           name: string
           schema_config?: Json | null
@@ -2319,6 +2324,7 @@ export type Database = {
           source_imported_at?: string | null
           source_marketplace_id?: string | null
           source_version?: string | null
+          template_kind?: string
           updated_at?: string
           user_id: string
           variables?: string[] | null
@@ -2328,6 +2334,8 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          elementor_data?: Json | null
+          elementor_page_template?: string | null
           id?: string
           name?: string
           schema_config?: Json | null
@@ -2337,6 +2345,7 @@ export type Database = {
           source_imported_at?: string | null
           source_marketplace_id?: string | null
           source_version?: string | null
+          template_kind?: string
           updated_at?: string
           user_id?: string
           variables?: string[] | null

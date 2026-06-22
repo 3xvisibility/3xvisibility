@@ -399,10 +399,49 @@ export default function TemplatesPage() {
   const importTemplate = async (file: File) => {
     try {
       const data = JSON.parse(await file.text());
-      if (!data.name || !data.content) throw new Error("Invalid template file.");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !wsId) throw new Error("Not authenticated");
       if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
+
+      // ── Native Elementor export detection ──────────────────────────────
+      // Accept: (a) raw Elementor export { content: [...], page_settings, type:"page" },
+      //         (b) our export with `elementor_data`, or (c) a bare array of elements.
+      const elementorData =
+        data.elementor_data
+          ? data.elementor_data
+          : Array.isArray(data.content)
+            ? data.content
+            : Array.isArray(data)
+              ? data
+              : null;
+
+      if (elementorData) {
+        const json = JSON.stringify(elementorData);
+        // Auto-extract {variable} placeholders found anywhere in the JSON.
+        const vars = [...new Set((json.match(/\{([a-z0-9_]+)\}/gi) || []).map((m) => m.slice(1, -1).toLowerCase()))];
+        const name = data.name || file.name.replace(/\.json$/i, "") || "Elementor Template";
+        const { error } = await supabase.from("templates").insert({
+          name,
+          content: "<!-- Native Elementor template -->",
+          variables: vars,
+          user_id: user.id,
+          workspace_id: wsId,
+          template_kind: "elementor",
+          elementor_data: elementorData,
+          elementor_page_template: data.elementor_page_template || data.page_template || null,
+          seo_title_pattern: data.seo_title_pattern || "",
+          seo_description_pattern: data.seo_description_pattern || "",
+          schema_type: data.schema_type || "WebPage",
+          schema_config: data.schema_config || {},
+        } as any);
+        if (error) throw error;
+        await refreshTemplates();
+        toast({ title: "Elementor template imported", description: `Native Elementor page with ${vars.length} variable(s).` });
+        if (importFileRef.current) importFileRef.current.value = "";
+        return;
+      }
+
+      if (!data.name || !data.content) throw new Error("Invalid template file.");
       const { error } = await supabase.from("templates").insert({ name: data.name, content: data.content, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
       if (error) throw error;
       await refreshTemplates();

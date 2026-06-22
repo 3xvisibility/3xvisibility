@@ -306,6 +306,15 @@ export default function TemplateMarketplacePage() {
         seo_title_pattern: tpl.seo_title_pattern || "",
         seo_description_pattern: tpl.seo_description_pattern || "",
         schema_type: tpl.schema_type || "WebPage",
+        // Native Elementor templates carry their original JSON so publishing
+        // produces a native, editable Elementor page (not converted HTML).
+        ...(tpl.kind === "elementor" && tpl.elementorData
+          ? {
+              template_kind: "elementor",
+              elementor_data: tpl.elementorData,
+              elementor_page_template: tpl.elementorPageTemplate || null,
+            }
+          : {}),
         schema_config: {
           default_values: mergedDefaults,
           ...(hasOverrides

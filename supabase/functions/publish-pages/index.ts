@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { buildElementorHtmlWidget } from "../_shared/connectors/wordpress-theme-adapter.ts";
+import { deepReplaceElementorVariables, stringifyElementorData } from "../_shared/elementor-vars.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
@@ -494,6 +495,43 @@ Deno.serve(async (req) => {
       return out;
     }
 
+    // ── Native Elementor template cache ─────────────────────────────
+    // Loads the campaign's source template; when it's a native Elementor JSON
+    // template we publish its original structure (variables replaced with AI
+    // content) instead of converting HTML — keeping the exact design + editability.
+    type ElementorTemplate = {
+      elementor_data: unknown;
+      page_template?: string | null;
+      rows: Record<string, string>[];
+    } | null;
+    const elementorTemplateCache = new Map<string, ElementorTemplate>();
+    async function getCampaignElementorTemplate(campaignId: string | null | undefined): Promise<ElementorTemplate> {
+      if (!campaignId) return null;
+      if (elementorTemplateCache.has(campaignId)) return elementorTemplateCache.get(campaignId)!;
+      let result: ElementorTemplate = null;
+      const { data: campaign } = await supabase
+        .from("campaigns")
+        .select("template_id, csv_data")
+        .eq("id", campaignId)
+        .maybeSingle();
+      if (campaign?.template_id) {
+        const { data: tpl } = await supabase
+          .from("templates")
+          .select("template_kind, elementor_data, elementor_page_template")
+          .eq("id", campaign.template_id)
+          .maybeSingle();
+        if (tpl && (tpl as any).template_kind === "elementor" && (tpl as any).elementor_data) {
+          result = {
+            elementor_data: (tpl as any).elementor_data,
+            page_template: (tpl as any).elementor_page_template || undefined,
+            rows: (campaign.csv_data as Record<string, string>[] | null) || [],
+          };
+        }
+      }
+      elementorTemplateCache.set(campaignId, result);
+      return result;
+    }
+
     function applyShopifySuffix(payload: PagePayload, websiteType: string | undefined, suffixes: { page?: string; product?: string }, resolvedType: string) {
       if (websiteType !== "shopify") return;
       if (resolvedType === "product") {
@@ -757,24 +795,38 @@ Deno.serve(async (req) => {
 
         let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
         if (resolvedPublishType === "page" && !preserveDesign) {
-          // Auto-detect Elementor for pages only (cached) — first publish only.
-          const wsKey = page.website_id || "default";
-          if (!elementorCache.has(wsKey)) {
-            const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
-            elementorCache.set(wsKey, detected);
-          }
-          const elementorInfo = elementorCache.get(wsKey)!;
-
-          if (elementorInfo.usesElementor) {
-            // Publish the page EXACTLY like the template: wrap the full adapted
-            // HTML (with its own styles intact) into a single Elementor HTML
-            // widget. Fragmenting into separate heading/image/text widgets used
-            // to strip the template's <style> blocks and break the design.
+          // 1️⃣ Native Elementor template: publish the ORIGINAL Elementor JSON with
+          // variables replaced by AI/row content. No HTML conversion, no widget
+          // fragmentation — the design and Elementor editability are preserved.
+          const nativeTpl = await getCampaignElementorTemplate(page.campaign_id);
+          if (nativeTpl) {
+            const row =
+              nativeTpl.rows.find((r) => r.slug === page.slug || r.title === page.title) ||
+              nativeTpl.rows[0] ||
+              {};
+            const resolved = deepReplaceElementorVariables(nativeTpl.elementor_data, row);
             elementorMeta = {
-              elementor_data: buildElementorHtmlWidget(cleanedContent),
+              elementor_data: stringifyElementorData(resolved),
               elementor_edit_mode: "builder",
-              page_template: elementorInfo.pageTemplate,
+              page_template: nativeTpl.page_template || undefined,
             };
+          } else {
+            // 2️⃣ Fallback: auto-detect Elementor on the site (cached) and wrap the
+            // full adapted HTML in a single Elementor HTML widget.
+            const wsKey = page.website_id || "default";
+            if (!elementorCache.has(wsKey)) {
+              const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
+              elementorCache.set(wsKey, detected);
+            }
+            const elementorInfo = elementorCache.get(wsKey)!;
+
+            if (elementorInfo.usesElementor) {
+              elementorMeta = {
+                elementor_data: buildElementorHtmlWidget(cleanedContent),
+                elementor_edit_mode: "builder",
+                page_template: elementorInfo.pageTemplate,
+              };
+            }
           }
         }
 
