@@ -13,7 +13,7 @@ export function StaticPageLayout({ title, subtitle, children }: Props) {
     <div className="min-h-screen flex flex-col landing-page" data-auto-translate>
       <LandingNav />
       <main className="flex-1">
-        <section className="pt-10 pb-8 sm:pt-14 sm:pb-10 md:pt-20 md:pb-12 border-b border-[hsl(96,90%,45%,0.08)]">
+        <section className="pt-24 pb-8 sm:pt-28 sm:pb-10 md:pt-32 md:pb-12 border-b border-[hsl(96,90%,45%,0.08)]">
           <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">{title}</h1>
             {subtitle && (
