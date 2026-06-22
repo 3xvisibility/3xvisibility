@@ -107,8 +107,10 @@ export default function AboutPage() {
   const autoplayRef = useRef(
     Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true }),
   );
+  const pageRef = useRef<HTMLDivElement>(null);
+  usePageAutoTranslate(pageRef);
   return (
-    <div className="min-h-screen flex flex-col landing-page" data-auto-translate>
+    <div className="min-h-screen flex flex-col landing-page" ref={pageRef}>
       <Seo
         title="About us"
         description="3XVISIBILITY helps marketers, agencies and ecommerce teams turn structured data into thousands of high-quality, SEO-optimized pages published to WordPress, Shopify, WooCommerce and PrestaShop."
