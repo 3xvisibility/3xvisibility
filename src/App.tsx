@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -105,6 +105,14 @@ function ProtectedRoute({ children, session }: { children: React.ReactNode; sess
   return <>{children}</>;
 }
 
+/** Redirects deep admin paths (e.g. /admin/system/marketplace) to the query-param section */
+function AdminSectionRedirect() {
+  const { section } = useParams();
+  const depth = section ? window.location.pathname.split("/admin/")[1]?.split("/").length ?? 1 : 1;
+  const up = "../".repeat(depth);
+  return <Navigate to={`${up}admin?section=${section ?? "overview"}`} replace />;
+}
+
 /** All the dashboard child routes, rendered inside DashboardLayout */
 function DashboardRoutes({ session, onLogout }: { session: Session | null; onLogout: () => void }) {
   const wrap = (el: React.ReactNode) => (
@@ -128,6 +136,8 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="billing" element={wrap(<BillingPage />)} />
       <Route path="settings" element={wrap(<SettingsPage />)} />
       <Route path="admin" element={wrap(<AdminPage />)} />
+      <Route path="admin/:group/:section" element={<AdminSectionRedirect />} />
+      <Route path="admin/:section" element={<AdminSectionRedirect />} />
       <Route path="indexing" element={wrap(<FeatureGate feature="indexing"><IndexingPage /></FeatureGate>)} />
       <Route path="workspace-settings" element={wrap(<FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate>)} />
       <Route path="data" element={wrap(<DataCsvPage />)} />
