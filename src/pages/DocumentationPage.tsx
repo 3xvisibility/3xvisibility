@@ -1,6 +1,7 @@
 import { Seo } from "@/components/Seo";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
 import {
   LayoutDashboard, Globe, Rocket, Layers, FileText, Store, Database,
   KeyRound, Zap, Columns3, BarChart3, Activity, CalendarDays,
@@ -210,6 +211,8 @@ const QUICK_FLOW = [
 
 export default function DocumentationPage() {
   const [active, setActive] = useState<string>("getting-started");
+  const pageRef = useRef<HTMLDivElement>(null);
+  usePageAutoTranslate(pageRef, [active]);
 
   useEffect(() => {
     document.title = "Documentation — 3XVISIBILITY";
@@ -218,7 +221,7 @@ export default function DocumentationPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" ref={pageRef}>
       <Seo
         title="Documentation"
         description="Step-by-step guides for every 3XVISIBILITY tool — from connecting websites and building templates to generating and publishing pages at scale."

@@ -1,6 +1,7 @@
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
 
 interface Props {
   title: string;
@@ -9,8 +10,11 @@ interface Props {
 }
 
 export function StaticPageLayout({ title, subtitle, children }: Props) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  usePageAutoTranslate(contentRef);
+
   return (
-    <div className="min-h-screen flex flex-col landing-page" data-auto-translate>
+    <div className="min-h-screen flex flex-col landing-page" ref={contentRef}>
       <LandingNav />
       <main className="flex-1">
         <section className="pt-24 pb-8 sm:pt-28 sm:pb-10 md:pt-32 md:pb-12 border-b border-[hsl(96,90%,45%,0.08)]">
