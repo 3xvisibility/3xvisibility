@@ -2,6 +2,7 @@ import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PageP
 import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
 import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
+import { buildElementorMeta } from "./elementor-engine.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
