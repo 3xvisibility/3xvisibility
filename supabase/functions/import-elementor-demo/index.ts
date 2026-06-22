@@ -62,15 +62,35 @@ function htmlToElementor(html: string, baseUrl: string): ElNode[] {
     n.remove(),
   );
 
-  // Pick the main content containers (Elementor sections render as .elementor-section)
+  // Pick the main content containers. Newer Elementor uses flexbox .e-con
+  // containers; classic uses .elementor-section.
   let containers = root.querySelectorAll(
-    "section.elementor-section, .elementor-top-section, main section, .elementor-section",
+    ".elementor-top-section, .e-con.e-parent, section.elementor-section",
   );
   if (containers.length === 0) {
-    containers = root.querySelectorAll("section, .e-con, main > div");
+    containers = root.querySelectorAll(".elementor-section, .e-con, main section, section");
+  }
+  if (containers.length === 0) {
+    containers = root.querySelectorAll("main > div, body > div");
   }
 
+  const pickImg = (i: ReturnType<typeof root.querySelector>): string => {
+    if (!i) return "";
+    return (
+      i.getAttribute("data-src") ||
+      i.getAttribute("data-lazy-src") ||
+      i.getAttribute("src") ||
+      (i.getAttribute("data-srcset") || i.getAttribute("srcset") || "")
+        .split(",")[0]
+        ?.trim()
+        .split(" ")[0] ||
+      ""
+    );
+  };
+
   const sections: ElNode[] = [];
+  const seenImages = new Set<string>();
+  const seenHeadings = new Set<string>();
   let firstHeroDone = false;
 
   for (const c of containers) {
