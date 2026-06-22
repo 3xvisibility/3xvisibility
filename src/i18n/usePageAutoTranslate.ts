@@ -128,5 +128,6 @@ export function usePageAutoTranslate(
     return () => {
       cancelled = true;
     };
-  }, [language, ref]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, ref, ...deps]);
 }
