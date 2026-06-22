@@ -52,6 +52,8 @@ export function analyzeTemplateBudget(defaultValues?: Record<string, string>): B
       words,
       minWords,
       maxWords,
+      minChars: Math.max(1, Math.floor(originalChars * 0.8)),
+      recommendedChars: originalChars,
       maxChars: Math.max(8, Math.ceil(originalChars * 1.2)),
     };
   }
