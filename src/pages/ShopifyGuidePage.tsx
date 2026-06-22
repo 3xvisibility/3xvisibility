@@ -9,96 +9,15 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/i18n/LanguageContext";
+import { shopifyGuide } from "@/data/integration-guides";
 
-const PREREQS = [
-  "An active Shopify store (any paid plan or trial).",
-  "Admin / owner access to that store.",
-  "A Pro plan on 3XVISIBILITY (Shopify is a Pro feature).",
-];
-
-const STEPS = [
-  {
-    icon: Store,
-    title: "Find your store domain",
-    desc: "Shopify connects through a secure OAuth flow — you only need your store's .myshopify.com domain.",
-    bullets: [
-      "Log in to your Shopify admin.",
-      "Go to Settings → Domains.",
-      "Note your permanent domain — it looks like my-store.myshopify.com.",
-    ],
-  },
-  {
-    icon: Plug,
-    title: "Open the Websites page in 3XVISIBILITY",
-    desc: "All your connected stores and sites are managed here.",
-    bullets: [
-      "From the sidebar, click Websites.",
-      "Click Connect Website in the top-right.",
-      "Select Shopify from the platform dropdown.",
-    ],
-  },
-  {
-    icon: Link2,
-    title: "Enter your store domain",
-    desc: "We use this to start the secure authorization with Shopify.",
-    bullets: [
-      "Store name: anything you like (e.g. “My Shop”).",
-      "Store domain: paste your full my-store.myshopify.com address.",
-      "Pick the store's primary language.",
-    ],
-  },
-  {
-    icon: MousePointerClick,
-    title: "Authorize via Shopify OAuth",
-    desc: "No API keys to copy — Shopify handles permissions for you.",
-    bullets: [
-      "Click Connect — you'll be redirected to Shopify.",
-      "Review the requested permissions and click Install app / Authorize.",
-      "You'll be sent back to 3XVISIBILITY automatically once approved.",
-    ],
-  },
-  {
-    icon: ShieldCheck,
-    title: "Confirm the connection",
-    desc: "Verify everything is linked before you start.",
-    bullets: [
-      "A green “Connected” badge appears on the store card.",
-      "Your product count and store details load automatically.",
-      "If it ever expires, click Reconnect to re-authorize.",
-    ],
-  },
-  {
-    icon: Rocket,
-    title: "Publish products & pages",
-    desc: "Your Shopify store is now a publishing and SEO target.",
-    bullets: [
-      "Generate landing pages and push them to Shopify.",
-      "Bulk-optimize product SEO (titles, meta descriptions) from the app.",
-      "Re-run campaigns anytime to scale your catalog content.",
-    ],
-  },
-];
-
-const TROUBLESHOOT = [
-  {
-    q: "Shopify option is locked / 🔒 Pro",
-    a: "Shopify is available on the Pro plan. Upgrade under Sidebar → Billing → Upgrade plan to unlock it.",
-  },
-  {
-    q: "“Shopify OAuth is not configured”",
-    a: "This means the integration wasn't fully set up for your workspace. Refresh and try again, or contact support if it persists.",
-  },
-  {
-    q: "“Domain must end with .myshopify.com”",
-    a: "Use your permanent store domain (my-store.myshopify.com), not your custom domain like www.mystore.com.",
-  },
-  {
-    q: "Connection shows as expired",
-    a: "Access tokens can expire or be revoked. Open the store card and click Reconnect to re-authorize via Shopify.",
-  },
-];
+const STEP_ICONS = [Store, Plug, Link2, MousePointerClick, ShieldCheck, Rocket];
 
 export default function ShopifyGuidePage() {
+  const { language } = useLanguage();
+  const c = shopifyGuide[language] ?? shopifyGuide.en;
+
   useEffect(() => {
     document.title = "Connect Shopify — 3XVISIBILITY";
     const m = document.querySelector('meta[name="description"]');
@@ -114,17 +33,17 @@ export default function ShopifyGuidePage() {
       />
       <LandingNav />
 
-      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16" data-auto-translate>
+      <main className="container mx-auto px-4 lg:px-8 pt-28 pb-16">
         {/* Hero */}
         <header className="max-w-3xl mx-auto text-center mb-14">
           <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
-            <Store className="h-3 w-3 mr-1" /> Shopify Integration
+            <Store className="h-3 w-3 mr-1" /> {c.badge}
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Connect your Shopify store
+            {c.heroTitle}
           </h1>
           <p className="text-base md:text-lg text-muted-foreground">
-            Authorize Shopify securely with one click — no API keys to copy — and publish pages and product SEO straight from 3XVISIBILITY.
+            {c.heroSubtitle}
           </p>
         </header>
 
@@ -132,10 +51,10 @@ export default function ShopifyGuidePage() {
         <section className="max-w-4xl mx-auto mb-14">
           <div className="rounded-2xl border border-border bg-card p-6 md:p-8">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <ListChecks className="h-5 w-5 text-primary" /> Before you start
+              <ListChecks className="h-5 w-5 text-primary" /> {c.beforeYouStart}
             </h2>
             <ul className="grid sm:grid-cols-3 gap-3">
-              {PREREQS.map((p, i) => (
+              {c.prereqs.map((p, i) => (
                 <li key={i} className="flex gap-2 text-sm text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
                   <span>{p}</span>
@@ -147,10 +66,10 @@ export default function ShopifyGuidePage() {
 
         {/* Steps */}
         <section className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-8 text-center">Step-by-step setup</h2>
+          <h2 className="text-2xl font-bold mb-8 text-center">{c.stepByStep}</h2>
           <div className="relative space-y-5">
-            {STEPS.map((s, i) => {
-              const Icon = s.icon;
+            {c.steps.map((s, i) => {
+              const Icon = STEP_ICONS[i] ?? Store;
               return (
                 <article
                   key={i}
@@ -161,7 +80,7 @@ export default function ShopifyGuidePage() {
                       <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                         <Icon className="h-5 w-5" />
                       </div>
-                      <span className="mt-2 text-xs font-bold text-muted-foreground">Step {i + 1}</span>
+                      <span className="mt-2 text-xs font-bold text-muted-foreground">{c.stepLabel} {i + 1}</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-lg">{s.title}</h3>
@@ -187,10 +106,10 @@ export default function ShopifyGuidePage() {
         {/* Troubleshooting */}
         <section className="max-w-4xl mx-auto mt-16">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-primary" /> Troubleshooting
+            <AlertTriangle className="h-6 w-6 text-primary" /> {c.troubleshooting}
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
-            {TROUBLESHOOT.map((t, i) => (
+            {c.troubleshoot.map((t, i) => (
               <div key={i} className="rounded-xl border border-border bg-card p-5">
                 <h3 className="font-medium text-sm mb-1.5">{t.q}</h3>
                 <p className="text-sm text-muted-foreground">{t.a}</p>
@@ -201,16 +120,16 @@ export default function ShopifyGuidePage() {
 
         {/* CTA */}
         <section className="max-w-4xl mx-auto mt-16 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-transparent p-8 text-center">
-          <h2 className="text-xl font-bold mb-2">Ready to connect?</h2>
+          <h2 className="text-xl font-bold mb-2">{c.ctaTitle}</h2>
           <p className="text-sm text-muted-foreground mb-5">
-            Open the app, head to Websites, and authorize Shopify in a few clicks.
+            {c.ctaSubtitle}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button asChild>
-              <Link to="/dashboard">Go to the app <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              <Link to="/dashboard">{c.ctaPrimary} <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to="/guides/wordpress">Connect WordPress instead</Link>
+              <Link to="/guides/wordpress">{c.ctaSecondary}</Link>
             </Button>
           </div>
         </section>
