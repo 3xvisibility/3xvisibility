@@ -192,6 +192,146 @@ function button(node: HtmlNode): ElementorElement {
   };
 }
 
+/* --------------------- advanced widget builders -------------------------- */
+
+function findNode(node: HtmlNode, pred: (n: HtmlNode) => boolean): HtmlNode | undefined {
+  for (const child of node.children) {
+    if (child.tag && pred(child)) return child;
+    const nested = findNode(child, pred);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
+function findAll(node: HtmlNode, pred: (n: HtmlNode) => boolean): HtmlNode[] {
+  const out: HtmlNode[] = [];
+  for (const child of node.children) {
+    if (child.tag && pred(child)) out.push(child);
+    else out.push(...findAll(child, pred));
+  }
+  return out;
+}
+
+function iconList(node: HtmlNode): ElementorElement {
+  const items = node.children
+    .filter((c) => c.tag === "li")
+    .map((li) => ({
+      _id: genId(),
+      text: textContent(li),
+      selected_icon: { value: "fas fa-check", library: "fa-solid" },
+    }));
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "icon-list",
+    settings: { icon_list: items },
+    elements: [],
+  };
+}
+
+function counter(node: HtmlNode): ElementorElement {
+  const numNode = findNode(node, (n) => /\d/.test(textContent(n)) && n.children.every((c) => !c.tag));
+  const raw = textContent(numNode || node);
+  const ending = parseInt(raw.replace(/[^\d]/g, ""), 10) || 0;
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "label"));
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "counter",
+    settings: {
+      starting_number: 0,
+      ending_number: ending,
+      title: titleNode ? textContent(titleNode) : "",
+    },
+    elements: [],
+  };
+}
+
+function testimonial(node: HtmlNode): ElementorElement {
+  const img = findNode(node, (n) => n.tag === "img");
+  const nameNode = findNode(node, (n) => hasClass(n, "name", "author") || HEADINGS.has(n.tag));
+  const jobNode = findNode(node, (n) => hasClass(n, "role", "job", "title", "position"));
+  const contentNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "content", "text", "quote"));
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "testimonial",
+    settings: {
+      testimonial_content: contentNode ? textContent(contentNode) : textContent(node),
+      testimonial_name: nameNode ? textContent(nameNode) : "",
+      testimonial_job: jobNode ? textContent(jobNode) : "",
+      testimonial_image: img ? { url: img.attrs.src || "" } : { url: "" },
+    },
+    elements: [],
+  };
+}
+
+function iconBox(node: HtmlNode): ElementorElement {
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "icon-box",
+    settings: {
+      title_text: titleNode ? textContent(titleNode) : "",
+      description_text: descNode ? textContent(descNode) : "",
+      selected_icon: { value: "fas fa-star", library: "fa-solid" },
+    },
+    elements: [],
+  };
+}
+
+function accordion(node: HtmlNode): ElementorElement {
+  const items = findAll(node, (n) => hasClass(n, "accordion-item", "accordion__item", "faq-item")).map((item) => {
+    const head = findNode(item, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "header", "question"));
+    const bodyNode = findNode(item, (n) => hasClass(n, "content", "body", "answer", "panel"));
+    return {
+      _id: genId(),
+      tab_title: head ? textContent(head) : textContent(item).slice(0, 60),
+      tab_content: bodyNode ? innerHtml(bodyNode) : "",
+    };
+  });
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "accordion",
+    settings: { tabs: items },
+    elements: [],
+  };
+}
+
+function tabs(node: HtmlNode): ElementorElement {
+  const panels = findAll(node, (n) => hasClass(n, "tab-pane", "tab-panel", "tabs__panel", "tab-content"));
+  const titles = findAll(node, (n) => hasClass(n, "tab-title", "tab-link", "nav-link", "tabs__title"));
+  const items = panels.map((panel, i) => ({
+    _id: genId(),
+    tab_title: titles[i] ? textContent(titles[i]) : `Tab ${i + 1}`,
+    tab_content: innerHtml(panel),
+  }));
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "tabs",
+    settings: { tabs: items },
+    elements: [],
+  };
+}
+
+/**
+ * Detect rich UI patterns by class names and structure, returning the matching
+ * native Elementor widget (or null to fall back to generic conversion).
+ */
+function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
+  if (node.tag === "ul" || node.tag === "ol") return iconList(node);
+  if (hasClass(node, "accordion", "faq")) return accordion(node);
+  if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
+  if (hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
+  if (hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
+  if (hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
+  return null;
+}
+
 function container(children: ElementorElement[], node?: HtmlNode): ElementorElement {
   const settings: Record<string, unknown> = {
     content_width: "boxed",
