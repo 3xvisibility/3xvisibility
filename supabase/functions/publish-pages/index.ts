@@ -504,6 +504,7 @@ Deno.serve(async (req) => {
       elementor_data: unknown;
       page_template?: string | null;
       rows: Record<string, string>[];
+      language?: string | null;
     } | null;
     const elementorTemplateCache = new Map<string, ElementorTemplate>();
     async function getCampaignElementorTemplate(campaignId: string | null | undefined): Promise<ElementorTemplate> {
@@ -512,7 +513,7 @@ Deno.serve(async (req) => {
       let result: ElementorTemplate = null;
       const { data: campaign } = await supabase
         .from("campaigns")
-        .select("template_id, csv_data")
+        .select("template_id, csv_data, language")
         .eq("id", campaignId)
         .maybeSingle();
       if (campaign?.template_id) {
@@ -532,6 +533,7 @@ Deno.serve(async (req) => {
             elementor_data: (tpl as any).elementor_data,
             page_template: (tpl as any).elementor_page_template || undefined,
             rows: (campaign.csv_data as Record<string, string>[] | null) || [],
+            language: (campaign as any).language || null,
           };
         }
       }
