@@ -345,6 +345,7 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   if (hasClass(node, "tabs", "tab-wrapper", "tabbed")) return tabs(node);
   if (hasClass(node, "counter", "stat", "stats", "countup")) return counter(node);
   if (hasClass(node, "testimonial", "review", "quote-card")) return testimonial(node);
+  if (hasClass(node, "image-box", "img-box")) return imageBox(node);
   if (hasClass(node, "icon-box", "feature-box", "feature-card", "service-box")) return iconBox(node);
   return null;
 }
