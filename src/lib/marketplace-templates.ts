@@ -29,6 +29,7 @@ import { FRAMER_BATCH16_TEMPLATES } from "@/lib/marketplace-framer-batch16";
 import { FRAMER_BATCH17_TEMPLATES } from "@/lib/marketplace-framer-batch17";
 import { FRAMER_BATCH18_TEMPLATES } from "@/lib/marketplace-framer-batch18";
 import { FRAMER_BATCH19_TEMPLATES } from "@/lib/marketplace-framer-batch19";
+import { ELEMENTOR_NATIVE_TEMPLATES } from "@/lib/marketplace-elementor-native";
 
 export interface MarketplaceTemplate {
   id: string;
