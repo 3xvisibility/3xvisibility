@@ -37,7 +37,7 @@ export default function ElementorTestPage() {
 
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
-      <Seo title="Elementor Test Publish | Verify native Elementor conversion" description="Test mode to verify Elementor structure, layout, content replacement and editability before converting the full template library." />
+      <Seo path="/elementor-test" title="Elementor Test Publish | Verify native Elementor conversion" description="Test mode to verify Elementor structure, layout, content replacement and editability before converting the full template library." />
       <div>
         <h1 className="text-2xl font-bold">Elementor Test Publish</h1>
         <p className="text-muted-foreground">
