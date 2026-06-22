@@ -814,8 +814,11 @@ Deno.serve(async (req) => {
               nativeTpl.rows[0] ||
               {};
             const resolved = deepReplaceElementorVariables(nativeTpl.elementor_data, row);
+            // Translate every static widget text/label into the campaign's
+            // language so the published WordPress page is fully localized.
+            const localized = await translateElementorTree(resolved, nativeTpl.language || "en");
             elementorMeta = {
-              elementor_data: stringifyElementorData(resolved),
+              elementor_data: stringifyElementorData(localized),
               elementor_edit_mode: "builder",
               page_template: nativeTpl.page_template || undefined,
             };
