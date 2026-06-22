@@ -189,6 +189,12 @@ export class WordPressConnector implements CmsConnector {
     }
 
 
+    // WordPress Template Compatibility Engine: build a native, editable Elementor
+    // page from the HTML template (pages only, not Shopify-style products).
+    if (!payload.product_data && payload.content) {
+      Object.assign(meta, buildElementorMeta(payload.content));
+    }
+
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
 
