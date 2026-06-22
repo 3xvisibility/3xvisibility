@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ import { calculateSeoScore } from "@/lib/seo-score";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useLanguage } from "@/i18n/LanguageContext";
+import { usePageAutoTranslate } from "@/i18n/usePageAutoTranslate";
 
 const CHART_TOOLTIP_STYLE = {
   backgroundColor: "hsl(var(--popover))",
