@@ -65,6 +65,10 @@ export interface MarketplaceTemplate {
   elementorData?: unknown;
   /** Optional WordPress page-template slug used when publishing the Elementor page (e.g. elementor_canvas). */
   elementorPageTemplate?: string;
+  /** Live demo URL this template is modelled on. Used to fetch the real design on import. */
+  sourceUrl?: string;
+  /** Preview thumbnail image (real demo screenshot when available). */
+  previewImage?: string;
 }
 
 /**
