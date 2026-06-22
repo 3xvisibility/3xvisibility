@@ -2,16 +2,29 @@ import { Seo } from "@/components/Seo";
 import { StaticPageLayout } from "@/components/landing/StaticPageLayout";
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { getPostBySlug, posts } from "@/data/blog";
+import { getPostBySlug, getLocalizedPosts } from "@/data/blog";
+import { useLanguage } from "@/i18n/LanguageContext";
+import type { Language } from "@/i18n/translations";
 import NotFound from "@/pages/NotFound";
+
+const UI: Record<Language, { back: string; keepReading: string }> = {
+  en: { back: "Back to blog", keepReading: "Keep reading" },
+  fr: { back: "Retour au blog", keepReading: "Continuer la lecture" },
+  de: { back: "Zurück zum Blog", keepReading: "Weiterlesen" },
+  es: { back: "Volver al blog", keepReading: "Seguir leyendo" },
+};
 
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
-  const post = slug ? getPostBySlug(slug) : undefined;
+  const { language } = useLanguage();
+  const post = slug ? getPostBySlug(slug, language) : undefined;
 
   if (!post) return <NotFound />;
 
-  const related = posts.filter((p) => p.slug !== post.slug).slice(0, 2);
+  const ui = UI[language] ?? UI.en;
+  const related = getLocalizedPosts(language)
+    .filter((p) => p.slug !== post.slug)
+    .slice(0, 2);
 
   return (
     <>
@@ -34,7 +47,7 @@ export default function BlogPostPage() {
       <StaticPageLayout title={post.title} subtitle={post.excerpt}>
         <div className="not-prose mb-2">
           <Link to="/blog" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            <ArrowLeft className="h-4 w-4" /> Back to blog
+            <ArrowLeft className="h-4 w-4" /> {ui.back}
           </Link>
         </div>
 
@@ -74,7 +87,7 @@ export default function BlogPostPage() {
 
         {related.length > 0 && (
           <div className="not-prose mt-12 border-t border-[hsl(96,90%,45%,0.08)] pt-8">
-            <h2 className="text-lg font-semibold tracking-tight">Keep reading</h2>
+            <h2 className="text-lg font-semibold tracking-tight">{ui.keepReading}</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {related.map((p) => (
                 <Link
