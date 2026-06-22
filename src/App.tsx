@@ -128,6 +128,8 @@ function DashboardRoutes({ session, onLogout }: { session: Session | null; onLog
       <Route path="billing" element={wrap(<BillingPage />)} />
       <Route path="settings" element={wrap(<SettingsPage />)} />
       <Route path="admin" element={wrap(<AdminPage />)} />
+      <Route path="admin/:group/:section" element={<AdminSectionRedirect />} />
+      <Route path="admin/:section" element={<AdminSectionRedirect />} />
       <Route path="indexing" element={wrap(<FeatureGate feature="indexing"><IndexingPage /></FeatureGate>)} />
       <Route path="workspace-settings" element={wrap(<FeatureGate feature="teamCollaboration"><WorkspaceSettingsPage /></FeatureGate>)} />
       <Route path="data" element={wrap(<DataCsvPage />)} />
