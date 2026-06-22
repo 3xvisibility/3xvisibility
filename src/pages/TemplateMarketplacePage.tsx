@@ -511,7 +511,7 @@ export default function TemplateMarketplacePage() {
               <div className="border border-border rounded-md overflow-hidden bg-muted/30 h-32">
                 <div
                   className="transform scale-[0.25] origin-top-left w-[400%] h-[400%] pointer-events-none"
-                  dangerouslySetInnerHTML={{ __html: applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
+                  dangerouslySetInnerHTML={{ __html: tpl.kind === "elementor" && tpl.elementorData ? applyTemplateDefaults(elementorToPreviewHtml(tpl.elementorData), tpl.defaultValues) : applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
                 />
               </div>
 
