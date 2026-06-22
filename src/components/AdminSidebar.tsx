@@ -13,6 +13,7 @@ import {
   Plug,
   KeyRound,
   Settings,
+  Store,
   ArrowLeft,
   LogOut,
 } from "lucide-react";
