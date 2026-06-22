@@ -120,3 +120,39 @@ export function stringifyElementorData(data: unknown): string {
   if (typeof data === "string") return data;
   return JSON.stringify(data);
 }
+
+function looksLikeElementorElement(node: unknown): boolean {
+  if (!node || typeof node !== "object") return false;
+  const n = node as Record<string, unknown>;
+  return typeof n.elType === "string" || typeof n.widgetType === "string" || Array.isArray(n.elements);
+}
+
+/**
+ * Server-side validation. Normalizes stored elementor_data into an element array
+ * and throws a clear Error when the structure is not valid Elementor JSON.
+ */
+export function validateElementorData(data: unknown): ElementorNode[] {
+  let parsed: unknown = data;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      throw new Error("Invalid Elementor data: not valid JSON.");
+    }
+  }
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const obj = parsed as Record<string, unknown>;
+    parsed = obj.elementor_data ?? obj.content ?? parsed;
+    if (typeof parsed === "string") {
+      try { parsed = JSON.parse(parsed); } catch { throw new Error("Invalid Elementor data: not valid JSON."); }
+    }
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error("Invalid Elementor template: missing element array.");
+  }
+  if (!parsed.some(looksLikeElementorElement)) {
+    throw new Error("Invalid Elementor template: elements are not valid Elementor nodes.");
+  }
+  return parsed as ElementorNode[];
+}
+
