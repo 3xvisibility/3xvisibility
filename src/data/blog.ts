@@ -1,7 +1,7 @@
 import programmaticSeo from "@/assets/blog/programmatic-seo.jpg";
 import shopifyPublishing from "@/assets/blog/shopify-publishing.jpg";
 import aiTemplates from "@/assets/blog/ai-templates.jpg";
-import seoAeoGeo from "@/assets/blog/seo-aeo-geo.jpg.asset.json";
+import seoAeoGeo from "@/assets/blog/seo-aeo-geo-ai.jpg";
 
 export interface BlogSection {
   heading: string;
@@ -29,7 +29,7 @@ export const posts: BlogPost[] = [
     category: "AI Search",
     excerpt:
       "Search is no longer one game. Learn how Search, Answer and Generative engine optimisation work — and how to win all three at once.",
-    image: seoAeoGeo.url,
+    image: seoAeoGeo,
     readTime: "8 min read",
     intro: [
       "For two decades \"being found online\" meant one thing: ranking on Google. That era is over. Today a single buying decision can travel through three very different discovery layers — a classic search result, an AI answer box, and a generative chat recommendation. Each one rewards a different kind of content.",
