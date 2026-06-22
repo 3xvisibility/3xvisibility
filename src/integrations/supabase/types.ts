@@ -1420,6 +1420,51 @@ export type Database = {
           },
         ]
       }
+      marketplace_templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          default_values: Json
+          description: string
+          elementor_data: Json
+          id: string
+          name: string
+          preview_html: string | null
+          source_url: string | null
+          updated_at: string
+          variables: string[]
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          default_values?: Json
+          description?: string
+          elementor_data?: Json
+          id?: string
+          name: string
+          preview_html?: string | null
+          source_url?: string | null
+          updated_at?: string
+          variables?: string[]
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          default_values?: Json
+          description?: string
+          elementor_data?: Json
+          id?: string
+          name?: string
+          preview_html?: string | null
+          source_url?: string | null
+          updated_at?: string
+          variables?: string[]
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           campaign_id: string | null

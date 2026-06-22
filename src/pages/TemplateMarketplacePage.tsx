@@ -177,6 +177,19 @@ export default function TemplateMarketplacePage() {
     },
   });
 
+  // Fetch admin-imported Elementor marketplace templates
+  const { data: adminTemplates = [] } = useQuery({
+    queryKey: ["marketplace-admin-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("marketplace_templates")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch ratings for shared templates
   const { data: allRatings = [] } = useQuery({
     queryKey: ["template-ratings"],
@@ -188,6 +201,26 @@ export default function TemplateMarketplacePage() {
       return data;
     },
   });
+
+  const importedTemplates: MarketplaceTemplate[] = useMemo(() => {
+    return (adminTemplates as any[]).map((at) => ({
+      id: at.id,
+      name: at.name,
+      description: at.description || "",
+      content: at.preview_html || "",
+      variables: at.variables || [],
+      category: at.category || "business",
+      tags: [],
+      author: "Marketplace",
+      downloads: 0,
+      rating: 0,
+      kind: "elementor" as const,
+      elementorData: at.elementor_data,
+      defaultValues: at.default_values || {},
+      sourceUrl: at.source_url || undefined,
+    }));
+  }, [adminTemplates]);
+
 
   // Convert shared templates to MarketplaceTemplate format
   const communityTemplates: MarketplaceTemplate[] = useMemo(() => {
@@ -219,8 +252,8 @@ export default function TemplateMarketplacePage() {
 
   // Merge built-in + community for "browse" tab
   const allTemplates = useMemo(() => {
-    return [...COMMUNITY_TEMPLATES, ...communityTemplates];
-  }, [communityTemplates]);
+    return [...importedTemplates, ...COMMUNITY_TEMPLATES, ...communityTemplates];
+  }, [importedTemplates, communityTemplates]);
 
   // Build the category pill list dynamically from whatever templates exist on
   // the active tab. "All" is always first; every category present in the data

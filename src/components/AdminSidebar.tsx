@@ -13,6 +13,7 @@ import {
   Plug,
   KeyRound,
   Settings,
+  Store,
   ArrowLeft,
   LogOut,
 } from "lucide-react";
@@ -55,6 +56,7 @@ const aiNav: AdminNavItem[] = [
 ];
 
 const systemNav: AdminNavItem[] = [
+  { label: "Marketplace", section: "marketplace", icon: Store },
   { label: "Connections", section: "connections", icon: Plug },
   { label: "Settings", section: "settings", icon: Settings },
 ];
