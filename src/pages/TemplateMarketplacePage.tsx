@@ -256,6 +256,13 @@ export default function TemplateMarketplacePage() {
   // Build the category pill list dynamically from whatever templates exist on
   // the active tab. "All" is always first; every category present in the data
   // gets a pill (with a count), so newly added niches appear automatically.
+  // WordPress is the default CMS, so any "generic" template is grouped under the
+  // WordPress platform pill — mirroring how Shopify templates are grouped.
+  const effectivePlatform = (tpl: MarketplaceTemplate) => {
+    const p = tpl.platform || platformFromCategory(tpl.category || "");
+    return p === "generic" ? "wordpress" : p;
+  };
+
   const displayCategories = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     const counts = new Map<string, number>();
@@ -263,7 +270,7 @@ export default function TemplateMarketplacePage() {
     const platformCounts = new Map<string, number>();
     for (const tpl of source) {
       if (tpl.category) counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
-      const platform = tpl.platform || platformFromCategory(tpl.category || "");
+      const platform = effectivePlatform(tpl);
       if (platform === "wordpress" || platform === "shopify") {
         platformCounts.set(platform, (platformCounts.get(platform) || 0) + 1);
       }
@@ -298,7 +305,7 @@ export default function TemplateMarketplacePage() {
   const filteredTemplates = useMemo(() => {
     const source = activeTab === "community" ? communityTemplates : allTemplates;
     return source.filter((tpl) => {
-      const platform = tpl.platform || platformFromCategory(tpl.category || "");
+      const platform = effectivePlatform(tpl);
       const matchesCategory =
         selectedCategory === "all" ||
         tpl.category === selectedCategory ||
@@ -572,7 +579,13 @@ export default function TemplateMarketplacePage() {
         {filteredTemplates.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
             <Store className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No templates found</p>
+            <p className="font-medium">
+              {selectedCategory === "wordpress"
+                ? "No WordPress templates available yet"
+                : selectedCategory === "shopify"
+                ? "No Shopify templates available yet"
+                : "No templates found"}
+            </p>
             <p className="text-sm mt-1">Try a different search or category.</p>
           </div>
         )}
