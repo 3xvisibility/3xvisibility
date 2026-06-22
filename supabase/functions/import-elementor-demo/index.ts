@@ -101,10 +101,13 @@ function htmlToElementor(html: string, baseUrl: string): ElNode[] {
 
     const elements: ElNode[] = [];
 
-    // headings
+    // headings (dedupe across the whole page)
     for (const h of headings.slice(0, 2)) {
       const t = clean(h.text);
       if (!t || t.length > 200) continue;
+      const key = t.toLowerCase();
+      if (seenHeadings.has(key)) continue;
+      seenHeadings.add(key);
       elements.push(
         widget("heading", {
           title: t,
@@ -123,18 +126,20 @@ function htmlToElementor(html: string, baseUrl: string): ElNode[] {
       elements.push(widget("text-editor", { editor: `<p>${t}</p>`, align: "center" }));
     }
 
-    // image (hero/background or inline)
+    // image (hero/background or inline) — dedupe across page
     const img = imgs.find((i) => {
-      const src = i.getAttribute("src") || i.getAttribute("data-src") || "";
-      return src && !/logo|icon|placeholder|spacer/i.test(src);
+      const src = pickImg(i);
+      return src && !/logo|icon|placeholder|spacer|avatar|favicon/i.test(src);
     });
     let imageUrl = "";
     if (img) {
-      imageUrl = absolutize(
-        img.getAttribute("src") || img.getAttribute("data-src") || "",
-        baseUrl,
-      );
+      const abs = absolutize(pickImg(img), baseUrl);
+      if (abs && !seenImages.has(abs)) {
+        seenImages.add(abs);
+        imageUrl = abs;
+      }
     }
+
 
     // button
     const btn = links.find((a) => clean(a.text));
