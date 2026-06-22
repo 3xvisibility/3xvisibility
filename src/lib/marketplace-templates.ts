@@ -61,6 +61,10 @@ export interface MarketplaceTemplate {
   sourceUrl?: string;
   /** Preview thumbnail image (real demo screenshot when available). */
   previewImage?: string;
+  /** True when this template publishes as a native, editable Elementor page. */
+  elementorCompatible?: boolean;
+  /** Optional marketing badge shown on the template card (e.g. "Elementor Compatible"). */
+  badge?: string;
 }
 
 /**
