@@ -11,7 +11,9 @@ export interface LengthBudget {
   /** Allowed word range [min, max]. */
   minWords: number;
   maxWords: number;
-  /** Hard character cap = 120% of original length (design protection). */
+  /** Character limits: floor, recommended target, and hard cap (120% of original). */
+  minChars: number;
+  recommendedChars: number;
   maxChars: number;
 }
 
