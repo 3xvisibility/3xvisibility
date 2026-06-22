@@ -151,11 +151,9 @@ ${source}`;
 
     // Platform-specific guidance
     const platformRules: Record<string, string> = {
-      wordpress: `PLATFORM: WordPress + Elementor (modern Container/Flexbox engine — NOT legacy Section/Column).
-- Structure every section as a flexbox/grid CONTAINER: <div class="e-con e-con-boxed e-flex pgp-section"><div class="e-con-inner">...</div></div>. For multi-column layouts, nest child containers (<div class="e-con e-child e-flex">) side by side inside .e-con-inner — do NOT use the old elementor-section/elementor-column wrappers.
-- Use display:flex (or display:grid for galleries/bento) on containers with gap/flex-direction set via inline styles or classes; this matches Elementor's Container widget so it stays editable as flex/grid.
-- Wrap headings in <h2 class="elementor-heading-title"></h2>, paragraphs in <div class="elementor-widget-text-editor"><p>...</p></div>, buttons in <a class="elementor-button elementor-button-link"><span class="elementor-button-text">...</span></a>, images in <img class="elementor-image"/>.
-- This ensures the imported template maps to Elementor's drag-and-drop Container editor on the client's WordPress site.`,
+      wordpress: `PLATFORM: WordPress.
+- Structure every section as a semantic block: <section class="pgp-section"><div class="pgp-container">...</div></section>. For multi-column layouts use CSS flexbox/grid wrappers.
+- Use clean, semantic HTML (h1-h3, p, a, img) with descriptive class names so the markup stays editable in the WordPress block editor.`,
 
       shopify: `PLATFORM: Shopify.
 - Use semantic HTML compatible with Shopify Online Store 2.0 sections.
