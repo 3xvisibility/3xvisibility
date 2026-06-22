@@ -985,6 +985,10 @@ export default function AdminPage() {
           <AdminConnectionsPanel />
         </TabsContent>
 
+        <TabsContent value="marketplace" className="space-y-4">
+          <MarketplaceImportPanel />
+        </TabsContent>
+
         <TabsContent value="settings" className="space-y-4">
           <SystemSettingsPanel />
         </TabsContent>
