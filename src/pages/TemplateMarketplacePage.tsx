@@ -29,7 +29,7 @@ import { RowMappingPreview } from "@/components/campaigns/RowMappingPreview";
 import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
-import { COMMUNITY_TEMPLATES, applyTemplateDefaults, elementorToPreviewHtml, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { COMMUNITY_TEMPLATES, applyTemplateDefaults, type MarketplaceTemplate } from "@/lib/marketplace-templates";
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
 import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
 import { Languages } from "lucide-react";
@@ -214,8 +214,6 @@ export default function TemplateMarketplacePage() {
       author: "Marketplace",
       downloads: 0,
       rating: 0,
-      kind: "elementor" as const,
-      elementorData: at.elementor_data,
       defaultValues: at.default_values || {},
       sourceUrl: at.source_url || undefined,
     }));
@@ -330,31 +328,6 @@ export default function TemplateMarketplacePage() {
       const content = hasOverrides
         ? applyTemplateDefaults(tpl.content, overrides)
         : tpl.content;
-      // Native Elementor templates: fetch the REAL design from the live demo URL
-      // and convert it to native Elementor JSON. Fall back to the bundled layout
-      // if the live fetch is unavailable.
-      let elementorPayload: Record<string, unknown> = {};
-      if (tpl.kind === "elementor" && tpl.elementorData) {
-        let elementorData = tpl.elementorData;
-        if (tpl.sourceUrl) {
-          try {
-            const { data: fetched, error: fErr } = await supabase.functions.invoke(
-              "import-elementor-demo",
-              { body: { url: tpl.sourceUrl } },
-            );
-            if (!fErr && fetched?.elementorData && Array.isArray(fetched.elementorData) && fetched.elementorData.length) {
-              elementorData = fetched.elementorData;
-            }
-          } catch {
-            // keep bundled elementorData
-          }
-        }
-        elementorPayload = {
-          template_kind: "elementor",
-          elementor_data: elementorData,
-          elementor_page_template: tpl.elementorPageTemplate || null,
-        };
-      }
       const { error } = await supabase.from("templates").insert({
         name: tpl.name,
         content,
@@ -364,7 +337,6 @@ export default function TemplateMarketplacePage() {
         seo_title_pattern: tpl.seo_title_pattern || "",
         seo_description_pattern: tpl.seo_description_pattern || "",
         schema_type: tpl.schema_type || "WebPage",
-        ...elementorPayload,
         schema_config: {
           default_values: mergedDefaults,
           ...(hasOverrides
@@ -544,7 +516,7 @@ export default function TemplateMarketplacePage() {
               <div className="border border-border rounded-md overflow-hidden bg-muted/30 h-32">
                 <div
                   className="transform scale-[0.25] origin-top-left w-[400%] h-[400%] pointer-events-none"
-                  dangerouslySetInnerHTML={{ __html: tpl.kind === "elementor" && tpl.elementorData ? applyTemplateDefaults(elementorToPreviewHtml(tpl.elementorData), tpl.defaultValues) : applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
+                  dangerouslySetInnerHTML={{ __html: applyTemplateDefaults(tpl.content, tpl.defaultValues) }}
                 />
               </div>
 
@@ -677,7 +649,7 @@ export default function TemplateMarketplacePage() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="preview" className="mt-3">
-                    <TemplatePreview html={activePreview.kind === "elementor" && activePreview.elementorData ? applyTemplateDefaults(elementorToPreviewHtml(activePreview.elementorData), activePreview.defaultValues) : applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
+                    <TemplatePreview html={applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
                   </TabsContent>
                   <TabsContent value="customize" className="mt-3 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">

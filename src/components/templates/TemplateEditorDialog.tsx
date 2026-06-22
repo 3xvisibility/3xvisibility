@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 import { DynamicElementsInserter } from "@/components/templates/DynamicElementsInserter";
-import { ElementorEditor } from "@/components/templates/ElementorEditor";
+
 import { LayoutPanelTop } from "lucide-react";
 import { SeoScoreBadge } from "@/components/SeoScoreBadge";
 import { calculateContentSeoScore, calculateContentSeaScore, calculateContentGeoScore } from "@/lib/content-seo-score";
@@ -467,12 +467,6 @@ ${contentText}`
                     <Code className="h-3 w-3 inline mr-1" /> Code
                   </button>
                   <button
-                    onClick={() => setViewMode("builder")}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${viewMode === "builder" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    <LayoutPanelTop className="h-3 w-3 inline mr-1" /> Builder
-                  </button>
-                  <button
                     onClick={() => setViewMode("preview")}
                     className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${viewMode === "preview" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
@@ -512,14 +506,6 @@ ${contentText}`
                 {viewMode === "preview" ? (
                   <div className="h-full">
                     <TemplatePreview html={content} />
-                  </div>
-                ) : viewMode === "builder" ? (
-                  <div className="h-full min-h-[60vh]">
-                    <ElementorEditor
-                      html={content}
-                      onChange={(html) => setContent(html)}
-                      customVars={uniqueVars}
-                    />
                   </div>
                 ) : (
                   <textarea
@@ -978,8 +964,6 @@ ${contentText}`
                         <SelectItem value="sidebar-left">Sidebar Left</SelectItem>
                         <SelectItem value="sidebar-right">Sidebar Right</SelectItem>
                         <SelectItem value="blank">Blank (No Header/Footer)</SelectItem>
-                        <SelectItem value="elementor_canvas">Elementor Canvas</SelectItem>
-                        <SelectItem value="elementor_header_footer">Elementor Full Width</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

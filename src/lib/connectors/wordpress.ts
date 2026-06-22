@@ -1,5 +1,5 @@
 import type { CmsConnector, ConnectorConfig, ConnectorPage, PagePayload } from "./types";
-import { adaptHtmlForWordPressTheme, buildElementorHtmlWidget } from "./wordpress-theme-adapter";
+import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter";
 
 /**
  * WordPress REST API connector.
@@ -76,11 +76,10 @@ export class WordPressConnector implements CmsConnector {
   readonly type = "wordpress";
   private baseUrl: string;
   private headers: HeadersInit;
-  private elementorWidget: boolean;
+  
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
-    this.elementorWidget = config.elementor_widget === true;
     const credentials = btoa(`${config.username}:${config.password}`);
     this.headers = {
       Accept: "application/json",
@@ -160,15 +159,11 @@ export class WordPressConnector implements CmsConnector {
       body.title = resolveWordPressTitle(payload);
     }
 
-    let elementorData: string | undefined;
     if (isCreate || typeof payload.content === "string") {
       const themed = adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page");
       const safeContent = sanitizeWordPressContent(themed) || "<p></p>";
       body.content = safeContent;
-      if (this.elementorWidget) elementorData = buildElementorHtmlWidget(safeContent);
     }
-
-
 
     if (isCreate || payload.slug) {
       body.slug = payload.slug;
@@ -184,11 +179,6 @@ export class WordPressConnector implements CmsConnector {
     if (payload.seo_title) meta._yoast_wpseo_title = payload.seo_title;
     if (payload.seo_description) meta._yoast_wpseo_metadesc = payload.seo_description;
     if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
-    if (elementorData) {
-      meta._elementor_edit_mode = "builder";
-      meta._elementor_data = elementorData;
-      meta._elementor_template_type = "wp-page";
-    }
     if (Object.keys(meta).length > 0) body.meta = meta;
 
     if (payload.custom_fields) {

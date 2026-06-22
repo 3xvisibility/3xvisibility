@@ -29,7 +29,7 @@ import { AdminOverviewPanel } from "@/components/admin/AdminOverviewPanel";
 import { ContactInboxPanel } from "@/components/admin/ContactInboxPanel";
 import { UserDetailDialog } from "@/components/admin/UserDetailDialog";
 import { EditUserProfileDialog } from "@/components/admin/EditUserProfileDialog";
-import { MarketplaceImportPanel } from "@/components/admin/MarketplaceImportPanel";
+
 import { PLAN_FEATURES } from "@/lib/plan-features";
 
 interface AdminUser {
@@ -947,7 +947,7 @@ export default function AdminPage() {
           <TabsTrigger value="ai-usage" className="text-xs gap-1"><Activity className="h-3 w-3" />Usage Report</TabsTrigger>
           <TabsTrigger value="connections" className="text-xs gap-1"><AlertCircle className="h-3 w-3" />Connections</TabsTrigger>
           <TabsTrigger value="ai-access" className="text-xs gap-1"><ShieldCheck className="h-3 w-3" />AI Access</TabsTrigger>
-          <TabsTrigger value="marketplace" className="text-xs gap-1"><FileText className="h-3 w-3" />Marketplace</TabsTrigger>
+          
           <TabsTrigger value="settings" className="text-xs gap-1"><UserCog className="h-3 w-3" />Settings</TabsTrigger>
         </TabsList>
 
@@ -986,9 +986,6 @@ export default function AdminPage() {
           <AdminConnectionsPanel />
         </TabsContent>
 
-        <TabsContent value="marketplace" className="space-y-4">
-          <MarketplaceImportPanel />
-        </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
           <SystemSettingsPanel />

@@ -29,8 +29,6 @@ import { FRAMER_BATCH16_TEMPLATES } from "@/lib/marketplace-framer-batch16";
 import { FRAMER_BATCH17_TEMPLATES } from "@/lib/marketplace-framer-batch17";
 import { FRAMER_BATCH18_TEMPLATES } from "@/lib/marketplace-framer-batch18";
 import { FRAMER_BATCH19_TEMPLATES } from "@/lib/marketplace-framer-batch19";
-import { ELEMENTOR_NATIVE_TEMPLATES } from "@/lib/marketplace-elementor-native";
-import { ULTIMATE_ELEMENTOR_TEMPLATES } from "@/lib/marketplace-elementor-ultimate";
 
 export interface MarketplaceTemplate {
   id: string;
@@ -59,12 +57,6 @@ export interface MarketplaceTemplate {
   shared_id?: string;
   /** Sensible default values used to fill {variables} in the preview so no section looks empty. */
   defaultValues?: Record<string, string>;
-  /** Native Elementor template kind. When 'elementor', the page is published as a native Elementor page. */
-  kind?: "html" | "elementor";
-  /** Original Elementor `_elementor_data` structure (array of elements). Required when kind === 'elementor'. */
-  elementorData?: unknown;
-  /** Optional WordPress page-template slug used when publishing the Elementor page (e.g. elementor_canvas). */
-  elementorPageTemplate?: string;
   /** Live demo URL this template is modelled on. Used to fetch the real design on import. */
   sourceUrl?: string;
   /** Preview thumbnail image (real demo screenshot when available). */
@@ -83,62 +75,7 @@ export function applyTemplateDefaults(content: string, defaults?: Record<string,
   );
 }
 
-/**
- * Build a lightweight HTML preview from native Elementor JSON so marketplace
- * cards/dialogs show the actual design instead of a blank box.
- */
-export function elementorToPreviewHtml(elementorData: unknown): string {
-  const sections: string[] = [];
-  const walk = (nodes: any[]): string => {
-    let out = "";
-    for (const n of nodes || []) {
-      const s = n?.settings || {};
-      if (n?.elType === "widget") {
-        switch (n.widgetType) {
-          case "heading":
-            out += `<${s.header_size || "h2"} style="text-align:${s.align || "left"};color:${s.title_color || "inherit"};margin:8px 0">${s.title ?? ""}</${s.header_size || "h2"}>`;
-            break;
-          case "text-editor":
-            out += `<div style="text-align:${s.align || "left"};margin:6px 0">${s.editor ?? ""}</div>`;
-            break;
-          case "button":
-            out += `<a href="#" style="display:inline-block;background:${s.button_background_color || "#2563eb"};color:${s.button_text_color || "#fff"};padding:10px 22px;border-radius:8px;margin:8px 0;text-decoration:none">${s.text ?? "Button"}</a>`;
-            break;
-          case "image":
-            if (s.image?.url) out += `<img src="${s.image.url}" alt="${s.image.alt || ""}" style="max-width:100%;border-radius:12px;margin:8px 0"/>`;
-            break;
-          case "icon-box":
-            out += `<div style="margin:10px 0"><strong>${s.title_text ?? ""}</strong><p>${s.description_text ?? ""}</p></div>`;
-            break;
-        }
-      } else if (Array.isArray(n?.elements)) {
-        const inner = walk(n.elements);
-        if (n.elType === "column") {
-          out += `<div style="flex:1;min-width:160px;padding:8px">${inner}</div>`;
-        } else {
-          out += inner;
-        }
-      }
-    }
-    return out;
-  };
-  const data = Array.isArray(elementorData) ? elementorData : [];
-  for (const sec of data) {
-    const s = sec?.settings || {};
-    const bg = s.background_image?.url;
-    const overlay = s.background_overlay_color;
-    const bgStyle = bg
-      ? `background-image:${overlay ? `linear-gradient(${overlay},${overlay}),` : ""}url('${bg}');background-size:cover;background-position:center;color:#fff`
-      : s.background_color
-      ? `background:${s.background_color};color:#fff`
-      : "";
-    const cols = Array.isArray(sec?.elements) ? walk(sec.elements) : "";
-    sections.push(
-      `<section style="padding:32px 20px;${bgStyle}"><div style="display:flex;flex-wrap:wrap;gap:12px;max-width:960px;margin:0 auto">${cols}</div></section>`,
-    );
-  }
-  return `<div class="elementor-preview">${sections.join("")}</div>`;
-}
+
 
 // ── Shared base styles ─────────────────────────────────────────────────────
 // Modern "Lovable AI-vibe" design system: gradient meshes, glassmorphism,
@@ -3705,10 +3642,6 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   ...FRAMER_BATCH17_TEMPLATES,
   ...FRAMER_BATCH18_TEMPLATES,
   ...FRAMER_BATCH19_TEMPLATES,
-
-  // Native Elementor JSON templates — publish as true editable Elementor pages.
-  ...ELEMENTOR_NATIVE_TEMPLATES,
-  ...ULTIMATE_ELEMENTOR_TEMPLATES,
 
 
 

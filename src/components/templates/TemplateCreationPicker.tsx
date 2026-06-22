@@ -77,7 +77,7 @@ const CONTENT_TYPES: { id: ContentType; icon: typeof FileText; label: string; de
 ];
 
 const PLATFORMS: { id: TargetPlatform; icon: string; label: string; desc: string; feature: FeatureKey; comingSoon?: boolean }[] = [
-  { id: "wordpress", icon: "🟦", label: "WordPress / Elementor", desc: "Editable in Elementor page builder", feature: "wordpress" },
+  { id: "wordpress", icon: "🟦", label: "WordPress", desc: "Editable WordPress page", feature: "wordpress" },
   { id: "shopify", icon: "🛍️", label: "Shopify", desc: "Liquid-friendly, OS 2.0 sections", feature: "shopify" },
   { id: "prestashop", icon: "🛒", label: "PrestaShop", desc: "Smarty + Bootstrap grid", feature: "prestashop", comingSoon: true },
   { id: "generic", icon: "🌐", label: "Universal HTML", desc: "Works on any platform", feature: "shopify" },

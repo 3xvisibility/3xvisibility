@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw, Lock, ImageIcon } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
-import { ElementorEditor } from "@/components/templates/ElementorEditor";
+
 import { TemplateImageEditor } from "@/components/templates/TemplateImageEditor";
 
 import { filterDesignVars } from "@/lib/design-vars-filter";
@@ -43,7 +43,7 @@ const AI_LANGUAGES = [
 
 
 const PLATFORMS = [
-  { value: "wordpress", label: "WordPress / Elementor", icon: "🟦", desc: "Editable in Elementor", feature: "wordpress" as const },
+  { value: "wordpress", label: "WordPress", icon: "🟦", desc: "Editable WordPress page", feature: "wordpress" as const },
   { value: "shopify", label: "Shopify", icon: "🛍️", desc: "Liquid-friendly markup", feature: "shopify" as const },
   { value: "prestashop", label: "PrestaShop", icon: "🛒", desc: "Smarty-compatible", feature: "prestashop" as const, comingSoon: true },
   { value: "generic", label: "Universal HTML", icon: "🌐", desc: "Works anywhere", feature: "shopify" as const },
@@ -818,11 +818,8 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
               <Input value={generatedName} onChange={(e) => setGeneratedName(e.target.value)} />
             </div>
 
-            <Tabs defaultValue="visual" className="w-full">
-              <TabsList className="w-full grid grid-cols-4">
-                <TabsTrigger value="visual" className="flex items-center gap-1.5">
-                  <MousePointerClick className="h-3.5 w-3.5" /> Visual Edit
-                </TabsTrigger>
+            <Tabs defaultValue="preview" className="w-full">
+              <TabsList className="w-full grid grid-cols-3">
                 <TabsTrigger value="images" className="flex items-center gap-1.5">
                   <ImageIcon className="h-3.5 w-3.5" /> Images
                 </TabsTrigger>
@@ -834,18 +831,6 @@ export function AiTemplateBuilderDialog({ open, onOpenChange, onSave, isSaving, 
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="visual" className="mt-3">
-                <div className="rounded-lg border border-border overflow-hidden bg-background" style={{ minHeight: "60vh" }}>
-                  <ElementorEditor
-                    html={generatedContent}
-                    onChange={(html) => setGeneratedContent(html)}
-                    preserveOriginalStyles
-                  />
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-2">
-                  💡 Click any element (heading, text, button, image) to edit its content, colors, fonts and spacing. Changes save automatically.
-                </p>
-              </TabsContent>
               <TabsContent value="images" className="mt-3">
                 <TemplateImageEditor html={generatedContent} onChange={setGeneratedContent} />
               </TabsContent>
