@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
+import { buildElementorHtmlWidget } from "../_shared/connectors/wordpress-theme-adapter.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
@@ -765,8 +766,12 @@ Deno.serve(async (req) => {
           const elementorInfo = elementorCache.get(wsKey)!;
 
           if (elementorInfo.usesElementor) {
+            // Publish the page EXACTLY like the template: wrap the full adapted
+            // HTML (with its own styles intact) into a single Elementor HTML
+            // widget. Fragmenting into separate heading/image/text widgets used
+            // to strip the template's <style> blocks and break the design.
             elementorMeta = {
-              elementor_data: buildElementorData(cleanedContent),
+              elementor_data: buildElementorHtmlWidget(cleanedContent),
               elementor_edit_mode: "builder",
               page_template: elementorInfo.pageTemplate,
             };
