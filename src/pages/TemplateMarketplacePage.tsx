@@ -263,7 +263,7 @@ export default function TemplateMarketplacePage() {
     const platformCounts = new Map<string, number>();
     for (const tpl of source) {
       if (tpl.category) counts.set(tpl.category, (counts.get(tpl.category) || 0) + 1);
-      const platform = tpl.platform || platformFromCategory(tpl.category || "");
+      const platform = effectivePlatform(tpl);
       if (platform === "wordpress" || platform === "shopify") {
         platformCounts.set(platform, (platformCounts.get(platform) || 0) + 1);
       }
