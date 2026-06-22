@@ -282,6 +282,23 @@ function iconBox(node: HtmlNode): ElementorElement {
   };
 }
 
+function imageBox(node: HtmlNode): ElementorElement {
+  const img = findNode(node, (n) => n.tag === "img");
+  const titleNode = findNode(node, (n) => HEADINGS.has(n.tag) || hasClass(n, "title"));
+  const descNode = findNode(node, (n) => n.tag === "p" || hasClass(n, "desc", "text", "description"));
+  return {
+    id: genId(),
+    elType: "widget",
+    widgetType: "image-box",
+    settings: {
+      image: img ? { url: img.attrs.src || "", alt: img.attrs.alt || "" } : { url: "" },
+      title_text: titleNode ? textContent(titleNode) : "",
+      description_text: descNode ? textContent(descNode) : "",
+    },
+    elements: [],
+  };
+}
+
 function accordion(node: HtmlNode): ElementorElement {
   const items = findAll(node, (n) => hasClass(n, "accordion-item", "accordion__item", "faq-item")).map((item) => {
     const head = findNode(item, (n) => HEADINGS.has(n.tag) || hasClass(n, "title", "header", "question"));
