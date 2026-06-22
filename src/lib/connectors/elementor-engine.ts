@@ -363,6 +363,13 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
     }
     if (IGNORED_TAGS.has(node.tag)) continue;
 
+    const special = detectSpecialWidget(node);
+    if (special) {
+      flush();
+      out.push(special);
+      continue;
+    }
+
     if (HEADINGS.has(node.tag)) {
       flush();
       out.push(heading(node));
