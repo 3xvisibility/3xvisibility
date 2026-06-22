@@ -105,6 +105,14 @@ function ProtectedRoute({ children, session }: { children: React.ReactNode; sess
   return <>{children}</>;
 }
 
+/** Redirects deep admin paths (e.g. /admin/system/marketplace) to the query-param section */
+function AdminSectionRedirect() {
+  const { section } = useParams();
+  const depth = section ? window.location.pathname.split("/admin/")[1]?.split("/").length ?? 1 : 1;
+  const up = "../".repeat(depth);
+  return <Navigate to={`${up}admin?section=${section ?? "overview"}`} replace />;
+}
+
 /** All the dashboard child routes, rendered inside DashboardLayout */
 function DashboardRoutes({ session, onLogout }: { session: Session | null; onLogout: () => void }) {
   const wrap = (el: React.ReactNode) => (
