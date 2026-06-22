@@ -56,6 +56,8 @@ export default function AnalyticsPage() {
   const { currentWorkspace } = useWorkspace();
   const { t } = useLanguage();
   const wsId = currentWorkspace?.id;
+  const pageRef = useRef<HTMLDivElement>(null);
+
 
   // Fetch all generated pages
   const { data: pages = [], isLoading: loadingPages } = useQuery({
