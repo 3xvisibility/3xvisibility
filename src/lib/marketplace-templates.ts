@@ -3643,6 +3643,9 @@ const RAW_COMMUNITY_TEMPLATES: MarketplaceTemplate[] = [
   ...FRAMER_BATCH18_TEMPLATES,
   ...FRAMER_BATCH19_TEMPLATES,
 
+  // Native Elementor JSON templates — publish as true editable Elementor pages.
+  ...ELEMENTOR_NATIVE_TEMPLATES,
+
 
 
 
