@@ -13,10 +13,9 @@ export interface PagePayload {
   seo_keywords?: string[];
   canonical_url?: string;
   /**
-   * WordPress page template slug (e.g. "elementor_canvas", "elementor_header_footer",
-   * "page-templates/full-width.php", or theme-specific). When set, mirrors the
-   * template the rest of the site already uses so generated pages inherit the
-   * same theme/builder layout.
+   * WordPress page template slug (e.g. "page-templates/full-width.php", or
+   * theme-specific). When set, mirrors the template the rest of the site already
+   * uses so generated pages inherit the same theme layout.
    */
   page_template?: string;
   /**
@@ -30,18 +29,13 @@ export interface PagePayload {
   taxonomies?: Record<string, string[]>;
   /**
    * When true (default for republishes of existing CMS pages), the connector MUST
-   * NOT touch the live page's body content, Elementor data, builder layout, or
-   * page template. Only metadata-level fields (title, slug, SEO title/description/
-   * keywords, canonical, excerpt) are updated. This preserves the original site
-   * design exactly as the user built it on the CMS, while still allowing AI-driven
-   * SEO improvements to flow through.
+   * NOT touch the live page's body content, builder layout, or page template. Only
+   * metadata-level fields (title, slug, SEO title/description/keywords, canonical,
+   * excerpt) are updated. This preserves the original site design exactly as the
+   * user built it on the CMS, while still allowing AI-driven SEO improvements to
+   * flow through.
    */
   preserve_design?: boolean;
-  elementor_meta?: {
-    elementor_data?: string;
-    elementor_edit_mode?: string;
-    page_template?: string;
-  };
   product_data?: {
     price?: string;
     sku?: string;
@@ -96,8 +90,6 @@ export interface ContentItem {
   seo_description?: string;
   seo_keywords?: string[];
   canonical_url?: string;
-  elementor_data?: string;
-  elementor_edit_mode?: string;
   page_template?: string;
   raw_meta?: Record<string, unknown>;
 }
@@ -110,8 +102,6 @@ export interface ConnectorConfig {
   access_token?: string;
   consumer_key?: string;
   consumer_secret?: string;
-  /** Wrap WordPress page content inside an Elementor HTML widget */
-  elementor_widget?: boolean;
 }
 
 export interface CmsConnector {

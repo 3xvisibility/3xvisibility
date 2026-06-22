@@ -30,7 +30,7 @@ import { useLanguage } from "@/i18n/LanguageContext";
 import { useSubscription } from "@/hooks/use-subscription";
 import { filterDesignVars } from "@/lib/design-vars-filter";
 import { friendlyError } from "@/lib/friendly-errors";
-import { validateElementorFile, type ElementorValidationResult } from "@/lib/elementor-validation";
+
 import { htmlToBlocks } from "@/components/templates/TemplateVisualEditor";
 import { AiTemplateBuilderDialog } from "@/components/templates/AiTemplateBuilderDialog";
 import { TemplateEditorDialog } from "@/components/templates/TemplateEditorDialog";
@@ -403,51 +403,14 @@ export default function TemplatesPage() {
       if (!user || !wsId) throw new Error("Not authenticated");
       if (maxTemplates > 0 && userTemplateCount >= maxTemplates) throw new Error(`Plan limit: max ${maxTemplates} templates. Upgrade your plan to add more.`);
 
-      // ── Native Elementor export detection (validated) ──────────────────
-      // Accepts our export (`elementor_data`), raw Elementor export ({ content: [...] }),
-      // or a bare array. Throws a clear error for malformed files.
-      let elementorResult: ElementorValidationResult | null = null;
       let data: any;
       try {
-        elementorResult = await validateElementorFile(file);
-        data = elementorResult.raw;
-      } catch (elemErr: any) {
-        // Not valid Elementor — fall back to legacy template format below.
-        try {
-          data = JSON.parse(await file.text());
-        } catch {
-          throw new Error("Failed to parse file: please ensure it is valid JSON.");
-        }
-        if (data && (data.elementor_data || Array.isArray(data.content) || Array.isArray(data))) {
-          // It looked like Elementor but failed validation — surface that error.
-          throw elemErr;
-        }
+        data = JSON.parse(await file.text());
+      } catch {
+        throw new Error("Failed to parse file: please ensure it is valid JSON.");
       }
 
-      if (elementorResult) {
-        const elementorData = elementorResult.elementorData;
-        const vars = elementorResult.variables;
-        const name = elementorResult.name || file.name.replace(/\.json$/i, "") || "Elementor Template";
-        const { error } = await supabase.from("templates").insert({
-          name,
-          content: "<!-- Native Elementor template -->",
-          variables: vars,
-          user_id: user.id,
-          workspace_id: wsId,
-          template_kind: "elementor",
-          elementor_data: elementorData,
-          elementor_page_template: data.elementor_page_template || data.page_template || null,
-          seo_title_pattern: data.seo_title_pattern || "",
-          seo_description_pattern: data.seo_description_pattern || "",
-          schema_type: data.schema_type || "WebPage",
-          schema_config: data.schema_config || {},
-        } as any);
-        if (error) throw error;
-        await refreshTemplates();
-        toast({ title: "Elementor template imported", description: `Native Elementor page with ${vars.length} variable(s).` });
-        if (importFileRef.current) importFileRef.current.value = "";
-        return;
-      }
+
 
       if (!data.name || !data.content) throw new Error("Invalid template file.");
       const { error } = await supabase.from("templates").insert({ name: data.name, content: data.content, variables: data.variables || [], user_id: user.id, workspace_id: wsId, seo_title_pattern: data.seo_title_pattern || "", seo_description_pattern: data.seo_description_pattern || "", schema_type: data.schema_type || "WebPage", schema_config: data.schema_config || {} } as any);
@@ -833,28 +796,11 @@ slug: ${fields.slug}`,
 
       let scaffold = "";
       if (platform === "wordpress") {
-        // Elementor-compatible structure with proper section/container/widget classes
-        scaffold = `<section class="elementor-section elementor-top-section elementor-section-boxed">
-  <div class="elementor-container elementor-column-gap-default">
-    <div class="elementor-column elementor-col-100 elementor-top-column">
-      <div class="elementor-widget-wrap elementor-element-populated">
-        <div class="elementor-element elementor-widget elementor-widget-heading">
-          <div class="elementor-widget-container">
-            <h1 class="elementor-heading-title elementor-size-default">{title}</h1>
-          </div>
-        </div>
-        <div class="elementor-element elementor-widget elementor-widget-text-editor">
-          <div class="elementor-widget-container">
-            ${kwBlocks || "<p>Edit this content in Elementor.</p>"}
-          </div>
-        </div>
-        <div class="elementor-element elementor-widget elementor-widget-button">
-          <div class="elementor-widget-container">
-            <a class="elementor-button elementor-button-link elementor-size-md" href="#"><span class="elementor-button-text">Get Started</span></a>
-          </div>
-        </div>
-      </div>
-    </div>
+        scaffold = `<section class="pgp-section">
+  <div class="pgp-container">
+    <h1>{title}</h1>
+    ${kwBlocks || "<p>Edit this content.</p>"}
+    <a class="pgp-button" href="#">Get Started</a>
   </div>
 </section>`;
       } else if (platform === "shopify") {

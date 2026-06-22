@@ -1,9 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
-import { buildElementorHtmlWidget } from "../_shared/connectors/wordpress-theme-adapter.ts";
-import { deepReplaceElementorVariables, stringifyElementorData, validateElementorData } from "../_shared/elementor-vars.ts";
-import { translateElementorTree } from "../_shared/elementor-translate.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
 
 /**
@@ -31,201 +28,25 @@ function stripHeadTagsForCms(content: string): string {
 }
 
 /**
- * Convert HTML content into an Elementor JSON structure.
- *
- * Instead of dumping the whole page into a single text-editor widget, the HTML is
- * split into top-level sections (each `<section>`, `<header>`, `<footer>`, or
- * heading-delimited block becomes its own Elementor section). Within each section
- * leading headings and standalone images are promoted to native Elementor
- * heading/image widgets, and the remaining markup becomes a text-editor widget.
- * This keeps the layout intact while making every block individually editable and
- * maintainable inside the Elementor visual builder.
+ * Detect the WordPress site's most-common page template so new pages inherit the
+ * active theme's preferred layout.
  */
-function elementorTextWidget(html: string) {
-  return {
-    id: generateElementorId(),
-    elType: "widget",
-    widgetType: "text-editor",
-    settings: { editor: html },
-    elements: [],
-  };
-}
-
-function elementorHeadingWidget(text: string, tag: string) {
-  return {
-    id: generateElementorId(),
-    elType: "widget",
-    widgetType: "heading",
-    settings: { title: text, header_size: /^h[1-6]$/i.test(tag) ? tag.toLowerCase() : "h2" },
-    elements: [],
-  };
-}
-
-function elementorImageWidget(src: string, alt: string) {
-  return {
-    id: generateElementorId(),
-    elType: "widget",
-    widgetType: "image",
-    settings: { image: { url: src, alt: alt || "" } },
-    elements: [],
-  };
-}
-
-function stripTags(html: string): string {
-  return html.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim();
-}
-
-/** Split raw HTML into top-level section-like blocks. */
-function splitIntoSectionBlocks(html: string): string[] {
-  let trimmed = (html || "").trim();
-  if (!trimmed) return [];
-
-  // Unwrap a single outer page-wrapper container (e.g. <div class="pgp-page">…</div>)
-  // so its leading "<div>" and trailing "</div>" don't become junk fragment sections.
-  let wrapper = trimmed.match(/^<(div|main|article|section)\b[^>]*>([\s\S]*)<\/\1>\s*$/i);
-  while (wrapper) {
-    const inner = wrapper[2].trim();
-    // Only unwrap when the inner content itself holds multiple structural blocks;
-    // otherwise keep the container so genuine single sections are preserved.
-    if (/<(section|header|footer|article)\b[\s\S]*?<\/(section|header|footer|article)>[\s\S]*<(section|header|footer|article)\b/i.test(inner)) {
-      trimmed = inner;
-      wrapper = trimmed.match(/^<(div|main|article|section)\b[^>]*>([\s\S]*)<\/\1>\s*$/i);
-    } else {
-      break;
-    }
-  }
-
-  // First try explicit structural containers.
-  const structural = trimmed.match(
-    /<(section|header|footer|article)\b[\s\S]*?<\/\1>/gi
-  );
-  if (structural && structural.length > 1) {
-    // Preserve any leading/trailing markup outside the matched blocks.
-    const blocks: string[] = [];
-    let rest = trimmed;
-    for (const block of structural) {
-      const idx = rest.indexOf(block);
-      const before = rest.slice(0, idx).trim();
-      if (before) blocks.push(before);
-      blocks.push(block);
-      rest = rest.slice(idx + block.length);
-    }
-    if (rest.trim()) blocks.push(rest.trim());
-    return blocks.filter(Boolean);
-  }
-
-  // Fallback: split on top-level <h1>/<h2> boundaries so each major heading
-  // starts a new section.
-  const parts = trimmed.split(/(?=<h[12]\b)/i).map((p) => p.trim()).filter(Boolean);
-  return parts.length > 1 ? parts : [trimmed];
-}
-
-/** Convert a single section block into an array of Elementor widgets. */
-function blockToWidgets(block: string): Array<Record<string, unknown>> {
-  const widgets: Array<Record<string, unknown>> = [];
-  let rest = block.trim();
-
-  // Unwrap a single outer structural container (e.g. <section>...</section>) so
-  // its inner heading/image/text can be promoted to dedicated widgets.
-  const wrapper = rest.match(/^<(section|header|footer|article|div)\b[^>]*>([\s\S]*)<\/\1>\s*$/i);
-  if (wrapper) rest = wrapper[2].trim();
-
-  // Promote a single leading heading to a heading widget.
-  const headingMatch = rest.match(/^\s*<(h[1-6])\b[^>]*>([\s\S]*?)<\/\1>/i);
-  if (headingMatch) {
-    const text = stripTags(headingMatch[2]);
-    if (text) {
-      widgets.push(elementorHeadingWidget(text, headingMatch[1]));
-      rest = rest.slice(headingMatch[0].length).trim();
-    }
-  }
-
-  // Promote a leading standalone image to an image widget.
-  const imgMatch = rest.match(/^\s*(?:<(?:figure|p|div)[^>]*>\s*)?<img\b[^>]*>/i);
-  if (imgMatch) {
-    const src = imgMatch[0].match(/\bsrc=["']([^"']+)["']/i);
-    const alt = imgMatch[0].match(/\balt=["']([^"']*)["']/i);
-    if (src) {
-      widgets.push(elementorImageWidget(src[1], alt?.[1] || ""));
-      rest = rest.slice(imgMatch[0].length).trim();
-    }
-  }
-
-  if (stripTags(rest)) {
-    widgets.push(elementorTextWidget(rest));
-  }
-
-  // Guarantee at least one widget so the section is never empty.
-  if (widgets.length === 0) widgets.push(elementorTextWidget(block));
-  return widgets;
-}
-
-function buildElementorData(htmlContent: string): string {
-  const blocks = splitIntoSectionBlocks(htmlContent || "");
-  const safeBlocks = blocks.length > 0 ? blocks : [htmlContent || "<p></p>"];
-
-  const elementorStructure = safeBlocks.map((block) => ({
-    id: generateElementorId(),
-    elType: "section",
-    settings: {
-      structure: "10",
-      padding: { unit: "px", top: "0", right: "0", bottom: "0", left: "0", isLinked: false },
-    },
-    elements: [
-      {
-        id: generateElementorId(),
-        elType: "column",
-        settings: { _column_size: 100, _inline_size: null },
-        elements: blockToWidgets(block),
-      },
-    ],
-  }));
-
-  return JSON.stringify(elementorStructure);
-}
-
-function generateElementorId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let id = "";
-  for (let i = 0; i < 7; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
-}
-
-/**
- * Check if a WordPress site uses Elementor by looking at existing pages' meta.
- */
-async function detectElementor(
+async function detectPageTemplate(
   supabase: any,
   websiteId: string,
   websiteType: string,
   connector: any
-): Promise<{ usesElementor: boolean; pageTemplate?: string }> {
-  if (websiteType !== "wordpress") return { usesElementor: false };
+): Promise<{ pageTemplate?: string }> {
+  if (websiteType !== "wordpress") return {};
 
   try {
     if (typeof connector.listContent === "function") {
       const pages = await connector.listContent("pages");
-
-      // Tally page_template usage across published pages so we mirror whatever
-      // theme/builder template the site already uses (Elementor, Divi, default, etc.).
       const templateCounts = new Map<string, number>();
-      let elementorPagesCount = 0;
-      let elementorPreferredTemplate: string | undefined;
-
       for (const p of pages) {
         const tmpl = (p.page_template && String(p.page_template).trim()) || "default";
         templateCounts.set(tmpl, (templateCounts.get(tmpl) || 0) + 1);
-        if (p.elementor_data || p.elementor_edit_mode) {
-          elementorPagesCount++;
-          if (!elementorPreferredTemplate && p.page_template) {
-            elementorPreferredTemplate = p.page_template;
-          }
-        }
       }
-
-      // Pick the most-frequently-used template across the site.
       let mostCommonTemplate: string | undefined;
       let maxCount = 0;
       for (const [tmpl, count] of templateCounts.entries()) {
@@ -234,27 +55,14 @@ async function detectElementor(
           mostCommonTemplate = tmpl === "default" ? undefined : tmpl;
         }
       }
-
-      if (elementorPagesCount > 0) {
-        return {
-          usesElementor: true,
-          // Prefer the template used by other Elementor pages on the site;
-          // fall back to the site-wide most-common template (matches the active theme/builder).
-          pageTemplate: elementorPreferredTemplate || mostCommonTemplate,
-        };
-      }
-
-      // Non-Elementor site: still mirror the site's dominant template so the new
-      // page inherits the same theme layout as existing pages.
-      if (mostCommonTemplate) {
-        return { usesElementor: false, pageTemplate: mostCommonTemplate };
-      }
+      if (mostCommonTemplate) return { pageTemplate: mostCommonTemplate };
     }
   } catch (err) {
     console.log("[PUBLISH] Template detection failed, using standard publish:", err);
   }
-  return { usesElementor: false };
+  return {};
 }
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -268,7 +76,6 @@ const corsHeaders = {
 function buildPayload(
   page: { title: string; content: string; slug: string; seo_title?: string | null; seo_description?: string | null; seo_keywords?: string[] | null; canonical_url?: string | null },
   publishType: string,
-  elementorMeta?: { elementor_data?: string; elementor_edit_mode?: string; page_template?: string },
   extraData?: Record<string, unknown>,
   pageTemplate?: string,
   preserveDesign?: boolean,
@@ -288,20 +95,12 @@ function buildPayload(
 
   if (preserveDesign) payload.preserve_design = true;
 
-  // Forward the detected/explicit page_template so non-Elementor sites also
-  // inherit the active theme's preferred template (e.g. Divi, Astra, default).
-  // Skipped when preserving the live design — we don't want to retemplate the page.
+  // Forward the detected/explicit page_template so the new page inherits the
+  // active theme's preferred template. Skipped when preserving the live design.
   if (pageTemplate && !preserveDesign) {
     payload.page_template = pageTemplate;
   }
 
-  if (elementorMeta?.elementor_data && !preserveDesign) {
-    payload.elementor_meta = {
-      elementor_data: elementorMeta.elementor_data,
-      elementor_edit_mode: elementorMeta.elementor_edit_mode || "builder",
-      page_template: elementorMeta.page_template,
-    };
-  }
 
   if (publishType === "product" && extraData) {
     const ed = extraData as Record<string, unknown>;
@@ -496,50 +295,8 @@ Deno.serve(async (req) => {
       return out;
     }
 
-    // ── Native Elementor template cache ─────────────────────────────
-    // Loads the campaign's source template; when it's a native Elementor JSON
-    // template we publish its original structure (variables replaced with AI
-    // content) instead of converting HTML — keeping the exact design + editability.
-    type ElementorTemplate = {
-      elementor_data: unknown;
-      page_template?: string | null;
-      rows: Record<string, string>[];
-      language?: string | null;
-    } | null;
-    const elementorTemplateCache = new Map<string, ElementorTemplate>();
-    async function getCampaignElementorTemplate(campaignId: string | null | undefined): Promise<ElementorTemplate> {
-      if (!campaignId) return null;
-      if (elementorTemplateCache.has(campaignId)) return elementorTemplateCache.get(campaignId)!;
-      let result: ElementorTemplate = null;
-      const { data: campaign } = await supabase
-        .from("campaigns")
-        .select("template_id, csv_data, language")
-        .eq("id", campaignId)
-        .maybeSingle();
-      if (campaign?.template_id) {
-        const { data: tpl } = await supabase
-          .from("templates")
-          .select("template_kind, elementor_data, elementor_page_template")
-          .eq("id", campaign.template_id)
-          .maybeSingle();
-        if (tpl && (tpl as any).template_kind === "elementor" && (tpl as any).elementor_data) {
-          // Server-side validation: reject malformed Elementor JSON before publishing.
-          try {
-            validateElementorData((tpl as any).elementor_data);
-          } catch (e) {
-            throw new Error(`Invalid Elementor template: ${(e as Error).message}`);
-          }
-          result = {
-            elementor_data: (tpl as any).elementor_data,
-            page_template: (tpl as any).elementor_page_template || undefined,
-            rows: (campaign.csv_data as Record<string, string>[] | null) || [],
-            language: (campaign as any).language || null,
-          };
-        }
-      }
-      elementorTemplateCache.set(campaignId, result);
-      return result;
-    }
+
+
 
     function applyShopifySuffix(payload: PagePayload, websiteType: string | undefined, suffixes: { page?: string; product?: string }, resolvedType: string) {
       if (websiteType !== "shopify") return;
@@ -556,7 +313,7 @@ Deno.serve(async (req) => {
     }
 
     // Default behavior: when republishing an existing CMS page, preserve its
-    // design (Elementor layout, theme blocks, builder structure) and only push
+    // design (theme blocks, builder structure) and only push
     // metadata-level fields. Caller can opt out with `overwrite_design: true`
     // (e.g. for first publish or explicit content rewrites).
     const allowOverwriteDesign = overwrite_design === true;
@@ -584,11 +341,8 @@ Deno.serve(async (req) => {
       const workspaceId = website.workspace_id || body.workspace_id || null;
       const campaignId = body.campaign_id || null;
 
-      // Auto-detect Elementor on first direct publish
-      const elementorInfo = await detectElementor(supabase, website_id, website.type, connector);
-      if (elementorInfo.usesElementor) {
-        console.log("[PUBLISH] Detected Elementor on site, will publish with Elementor format");
-      }
+      // Detect the site's preferred page template on first direct publish
+      const templateInfo = await detectPageTemplate(supabase, website_id, website.type, connector);
 
       for (const dp of directPages) {
         try {
@@ -597,29 +351,15 @@ Deno.serve(async (req) => {
           const isRepublish = !!dp.external_id;
           const preserveDesign = isRepublish && !allowOverwriteDesign;
 
-          // If page already has Elementor data, use it; otherwise auto-generate if site uses Elementor.
-          // Skipped entirely on design-preserving republishes.
-          let elementorMeta = (!preserveDesign && dp.elementor_data)
-            ? { elementor_data: dp.elementor_data, elementor_edit_mode: dp.elementor_edit_mode, page_template: dp.page_template }
-            : undefined;
-
-          if (!preserveDesign && !elementorMeta && elementorInfo.usesElementor) {
-            elementorMeta = {
-              elementor_data: buildElementorData(cleanedContent),
-              elementor_edit_mode: "builder",
-              page_template: elementorInfo.pageTemplate,
-            };
-          }
-
           const payload = buildPayload(
             { title: dp.title, content: cleanedContent, slug: dp.slug, seo_title: dp.seo_title, seo_description: dp.seo_description },
             pubType,
-            elementorMeta,
             undefined,
-            // Mirror the site's preferred template when no Elementor data is present.
-            (!preserveDesign && !elementorMeta) ? elementorInfo.pageTemplate : undefined,
+            // Mirror the site's preferred template.
+            !preserveDesign ? templateInfo.pageTemplate : undefined,
             preserveDesign,
           );
+
 
           // Apply Shopify template suffix overrides for direct publish
           const dpSuffixes = campaignId
@@ -713,8 +453,8 @@ Deno.serve(async (req) => {
 
     const results: { id: string; status: string; external_url?: string; error?: string }[] = [];
 
-    // Cache Elementor detection per website to avoid redundant checks
-    const elementorCache = new Map<string, { usesElementor: boolean; pageTemplate?: string }>();
+    // Cache page-template detection per website to avoid redundant checks
+    const templateCache = new Map<string, { pageTemplate?: string }>();
 
     const publishStartTime = Date.now();
     let pageIndex = 0;
@@ -797,50 +537,20 @@ Deno.serve(async (req) => {
           : await createConnector(page.websites as WebsiteRecord);
         const cleanedContent = stripHeadTagsForCms(page.content);
         // Republish of an already-published CMS page → preserve existing on-site
-        // design (Elementor layout, theme blocks, builder structure). Only
-        // metadata (title, slug, SEO meta, canonical) flows through.
+        // design. Only metadata (title, slug, SEO meta, canonical) flows through.
         const isRepublish = !!page.external_id;
         const preserveDesign = isRepublish && !allowOverwriteDesign;
 
-        let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
+        // Detect the site's preferred page template (cached) so new pages inherit
+        // the active theme layout.
         if (resolvedPublishType === "page" && !preserveDesign) {
-          // 1️⃣ Native Elementor template: publish the ORIGINAL Elementor JSON with
-          // variables replaced by AI/row content. No HTML conversion, no widget
-          // fragmentation — the design and Elementor editability are preserved.
-          const nativeTpl = await getCampaignElementorTemplate(page.campaign_id);
-          if (nativeTpl) {
-            const row =
-              nativeTpl.rows.find((r) => r.slug === page.slug || r.title === page.title) ||
-              nativeTpl.rows[0] ||
-              {};
-            const resolved = deepReplaceElementorVariables(nativeTpl.elementor_data, row);
-            // Translate every static widget text/label into the campaign's
-            // language so the published WordPress page is fully localized.
-            const localized = await translateElementorTree(resolved, nativeTpl.language || "en");
-            elementorMeta = {
-              elementor_data: stringifyElementorData(localized),
-              elementor_edit_mode: "builder",
-              page_template: nativeTpl.page_template || undefined,
-            };
-          } else {
-            // 2️⃣ Fallback: auto-detect Elementor on the site (cached) and wrap the
-            // full adapted HTML in a single Elementor HTML widget.
-            const wsKey = page.website_id || "default";
-            if (!elementorCache.has(wsKey)) {
-              const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
-              elementorCache.set(wsKey, detected);
-            }
-            const elementorInfo = elementorCache.get(wsKey)!;
-
-            if (elementorInfo.usesElementor) {
-              elementorMeta = {
-                elementor_data: buildElementorHtmlWidget(cleanedContent),
-                elementor_edit_mode: "builder",
-                page_template: elementorInfo.pageTemplate,
-              };
-            }
+          const wsKey = page.website_id || "default";
+          if (!templateCache.has(wsKey)) {
+            const detected = await detectPageTemplate(supabase, wsKey, (page.websites as any).type, connector);
+            templateCache.set(wsKey, detected);
           }
         }
+
 
         // Resolve Shopify field mapping (campaign override → website default)
         let shopifyExtraData: Record<string, unknown> | undefined;
@@ -971,10 +681,9 @@ Deno.serve(async (req) => {
         const payload = buildPayload(
           { title: page.title, content: cleanedContent, slug: page.slug, seo_title: page.seo_title, seo_description: page.seo_description, seo_keywords: page.seo_keywords, canonical_url: page.canonical_url },
           resolvedPublishType,
-          elementorMeta,
           resolvedPublishType === "product" ? (shopifyExtraData || {}) : undefined,
-          (resolvedPublishType === "page" && !elementorMeta && !preserveDesign)
-            ? elementorCache.get(page.website_id || "default")?.pageTemplate
+          (resolvedPublishType === "page" && !preserveDesign)
+            ? templateCache.get(page.website_id || "default")?.pageTemplate
             : undefined,
           preserveDesign,
         );

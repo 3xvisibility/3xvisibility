@@ -1,6 +1,6 @@
 import type { CmsConnector, ConnectorConfig, ConnectorResult, ContentItem, PagePayload } from "./types.ts";
 import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
-import { adaptHtmlForWordPressTheme, buildElementorHtmlWidget } from "./wordpress-theme-adapter.ts";
+import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 
 function slugify(text: string): string {
@@ -90,11 +90,11 @@ export class WordPressConnector implements CmsConnector {
   private baseUrl: string;
   private headers: HeadersInit;
   private authString: string;
-  private elementorWidget: boolean;
 
   constructor(config: ConnectorConfig) {
     this.baseUrl = config.base_url.replace(/\/+$/, "");
-    this.elementorWidget = config.elementor_widget === true;
+
+
 
 
     // Support both Application Password (Basic) and JWT auth
@@ -179,28 +179,11 @@ export class WordPressConnector implements CmsConnector {
     const meta: Record<string, unknown> = buildSeoMetaRecord(payload);
 
     // Resolve the WordPress page_template:
-    //  1. Explicit elementor_meta.page_template (passed from caller)
-    //  2. Top-level payload.page_template (auto-detected from site's existing pages)
-    //  3. Otherwise leave unset → WordPress uses the active theme default.
-    const resolvedTemplate =
-      payload.elementor_meta?.page_template
-      || payload.page_template
-      || undefined;
+    //  1. payload.page_template (auto-detected from site's existing pages)
+    //  2. Otherwise leave unset → WordPress uses the active theme default.
+    const resolvedTemplate = payload.page_template || undefined;
 
-    // Auto-wrap the adapted HTML in an Elementor HTML widget when enabled and the
-    // caller did not already provide explicit Elementor data.
-    const autoElementorData =
-      this.elementorWidget && !payload.elementor_meta?.elementor_data
-        ? buildElementorHtmlWidget(adapted)
-        : undefined;
-
-    if (payload.elementor_meta?.elementor_data || autoElementorData) {
-      meta._elementor_data = payload.elementor_meta?.elementor_data || autoElementorData;
-      meta._elementor_edit_mode = payload.elementor_meta?.elementor_edit_mode || "builder";
-      meta._elementor_template_type = "wp-page";
-      meta._elementor_version = "3.0.0";
-      if (resolvedTemplate) meta._wp_page_template = resolvedTemplate;
-    } else if (resolvedTemplate) {
+    if (resolvedTemplate) {
       meta._wp_page_template = resolvedTemplate;
     }
 
@@ -252,17 +235,9 @@ export class WordPressConnector implements CmsConnector {
 
     const resolvedTemplate = preserveDesign
       ? undefined
-      : (payload.elementor_meta?.page_template
-        || payload.page_template
-        || undefined);
+      : (payload.page_template || undefined);
 
-    if (!preserveDesign && payload.elementor_meta?.elementor_data) {
-      meta._elementor_data = payload.elementor_meta.elementor_data;
-      meta._elementor_edit_mode = payload.elementor_meta.elementor_edit_mode || "builder";
-      meta._elementor_template_type = "wp-page";
-      meta._elementor_version = "3.0.0";
-      if (resolvedTemplate) meta._wp_page_template = resolvedTemplate;
-    } else if (!preserveDesign && resolvedTemplate) {
+    if (!preserveDesign && resolvedTemplate) {
       meta._wp_page_template = resolvedTemplate;
     }
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
@@ -325,8 +300,6 @@ export class WordPressConnector implements CmsConnector {
           seo_description: seoFields.seo_description,
           seo_keywords: seoFields.seo_keywords,
           canonical_url: seoFields.canonical_url,
-          elementor_data: meta._elementor_data || undefined,
-          elementor_edit_mode: meta._elementor_edit_mode || undefined,
           page_template: item.template || meta._wp_page_template || undefined,
           raw_meta: meta,
         });
@@ -338,7 +311,7 @@ export class WordPressConnector implements CmsConnector {
     }
 
     for (const item of items) {
-      if (!item.elementor_data && item.type === "page") {
+      if (item.type === "page") {
         try {
           const singleResp = await fetch(
             `${this.baseUrl}/wp-json/wp/v2/pages/${item.id}?context=edit`,
@@ -348,10 +321,6 @@ export class WordPressConnector implements CmsConnector {
             const singleData = await singleResp.json();
             const meta = singleData.meta || {};
             const mergedMeta = { ...item.raw_meta, ...meta };
-            if (meta._elementor_data) {
-              item.elementor_data = meta._elementor_data;
-              item.elementor_edit_mode = meta._elementor_edit_mode || "builder";
-            }
             if (singleData.template) item.page_template = singleData.template;
             if (singleData.content?.raw) {
               mergedMeta._raw_content = singleData.content.raw;

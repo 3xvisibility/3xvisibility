@@ -43,8 +43,6 @@ interface ContentItem {
   content: string;
   excerpt: string;
   modified: string;
-  elementor_data?: string;
-  elementor_edit_mode?: string;
   page_template?: string;
   raw_meta?: Record<string, any>;
 }
@@ -496,7 +494,7 @@ export function TemplateDetectorDialog({
   const [step, setStep] = useState<"detect" | "edit" | "generate" | "done">("detect");
   const [variables, setVariables] = useState<VariableEntry[]>([]);
   const [templateHtml, setTemplateHtml] = useState("");
-  const [templateElementorData, setTemplateElementorData] = useState("");
+  
   const [detecting, setDetecting] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -581,13 +579,8 @@ Rules:
 
       // Build template HTML
       let html = page.content;
-      let elData = page.elementor_data || "";
       html = applyTemplateVariables(html, mergedVars);
-      if (elData) {
-        elData = applyTemplateVariables(elData, mergedVars);
-      }
       setTemplateHtml(html || page.content);
-      setTemplateElementorData(elData);
       setStep("edit");
 
       if (mergedVars.length > 0) {
@@ -598,7 +591,6 @@ Rules:
       if (fallbackVars.length > 0) {
         setVariables(fallbackVars);
         setTemplateHtml(applyTemplateVariables(page.content, fallbackVars));
-        setTemplateElementorData(page.elementor_data ? applyTemplateVariables(page.elementor_data, fallbackVars) : "");
         setStep("edit");
         toast({ title: `${fallbackVars.length} variables detected`, description: "AI detection failed, so variables were created from the imported page content." });
       } else {
@@ -611,12 +603,10 @@ Rules:
 
   const rebuildTemplate = () => {
     let html = page.content;
-    let elData = page.elementor_data || "";
     html = applyTemplateVariables(html, variables);
-    if (elData) elData = applyTemplateVariables(elData, variables);
     setTemplateHtml(html);
-    setTemplateElementorData(elData);
   };
+
 
   const addVariable = () => {
     setVariables((prev) => [...prev, { name: `variable_${prev.length + 1}`, original: "", values: [""] }]);
@@ -736,10 +726,8 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
         const batch = rows.slice(i, i + batchSize);
         const batchPages = batch.map((row) => {
           let html = templateHtml;
-          let elData = templateElementorData;
           for (const [key, val] of Object.entries(row)) {
             html = html.split(`{${key}}`).join(val);
-            if (elData) elData = elData.split(`{${key}}`).join(val);
           }
 
           // Build title from source page title with replacements
@@ -760,9 +748,6 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
             slug,
             seo_title: title,
             seo_description: buildGeneratedSeoDescription(title, page.excerpt || page.content, row, variables),
-            // Pass Elementor meta for design preservation
-            elementor_data: elData || undefined,
-            elementor_edit_mode: page.elementor_edit_mode || undefined,
             page_template: page.page_template || undefined,
           };
         });
@@ -805,7 +790,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
       setStep("detect");
       setVariables([]);
       setTemplateHtml("");
-      setTemplateElementorData("");
+      
       setProgress(0);
       setCsvMode(false);
       setCsvText("");
@@ -851,7 +836,7 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                   <p>1. AI detects the best replaceable values in your page</p>
                   <p>2. You add multiple values for any variable you want to scale</p>
                 <p>3. Pages are generated with same design + new data</p>
-                <p>4. Elementor/page builder design is preserved</p>
+                <p>4. The original page design is preserved</p>
               </div>
 
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -871,7 +856,6 @@ Return ONLY a comma-separated list of values, nothing else. Example: "value1, va
                   variant="outline"
                   onClick={() => {
                     setTemplateHtml(page.content);
-                    setTemplateElementorData(page.elementor_data || "");
                     setStep("edit");
                   }}
                 >
