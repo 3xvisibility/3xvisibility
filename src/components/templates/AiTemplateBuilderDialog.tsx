@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, MousePointerClick, ArrowLeft, CheckCircle2, Palette, RefreshCw, Lock, ImageIcon } from "lucide-react";
+import { Sparkles, Loader2, Code, Eye, Globe, Wand2, Zap, Layers, ArrowLeft, CheckCircle2, Palette, RefreshCw, Lock, ImageIcon } from "lucide-react";
 import { TemplatePreview } from "@/components/templates/TemplatePreview";
 
 import { TemplateImageEditor } from "@/components/templates/TemplateImageEditor";
