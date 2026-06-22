@@ -51,6 +51,10 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join("\n");
 
+    const budget = analyzeTemplateBudget(body.defaultValues);
+    const safeMode = body.templateSafeMode !== false; // default ON
+    const budgetHints = safeMode ? buildBudgetPromptHints(budget) : "";
+
     const systemPrompt = `You generate realistic dataset rows for a programmatic SEO page generator.
 Each row must contain ONE value for every requested variable. Values must be:
 - Specific, realistic, locally relevant where possible
@@ -58,7 +62,7 @@ Each row must contain ONE value for every requested variable. Values must be:
 - Concise: short fields = 1-5 words, long fields (description/excerpt) = 1-2 sentences
 - In the requested language
 - Plain text only (no markdown, no quotes, no escapes)
-Return through the provided tool function, never as free text.`;
+${budgetHints ? "\nTEMPLATE SAFE MODE — design integrity is more important than content length. " + budgetHints + "\n" : ""}Return through the provided tool function, never as free text.`;
 
     const userPrompt = `Generate ${count} unique rows.
 Variables (column names): ${variables.join(", ")}
