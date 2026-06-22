@@ -579,7 +579,13 @@ export default function TemplateMarketplacePage() {
         {filteredTemplates.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
             <Store className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No templates found</p>
+            <p className="font-medium">
+              {selectedCategory === "wordpress"
+                ? "No WordPress templates available yet"
+                : selectedCategory === "shopify"
+                ? "No Shopify templates available yet"
+                : "No templates found"}
+            </p>
             <p className="text-sm mt-1">Try a different search or category.</p>
           </div>
         )}
