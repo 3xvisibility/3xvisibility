@@ -182,6 +182,12 @@ export class WordPressConnector implements CmsConnector {
     if (payload.canonical_url) meta._yoast_wpseo_canonical = payload.canonical_url;
     if (Object.keys(meta).length > 0) body.meta = meta;
 
+    // WordPress Template Compatibility Engine: convert HTML into a native,
+    // editable Elementor layout (pages only — Shopify keeps plain HTML).
+    if (!payload.preserve_design && !payload.product_data && typeof payload.content === "string" && payload.content) {
+      body.meta = { ...(body.meta as Record<string, unknown>), ...buildElementorMeta(payload.content) };
+    }
+
     if (payload.custom_fields) {
       body.meta = { ...(body.meta as Record<string, unknown>), ...payload.custom_fields };
     }
