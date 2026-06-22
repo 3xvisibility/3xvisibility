@@ -644,7 +644,7 @@ export default function TemplateMarketplacePage() {
                     </TabsTrigger>
                   </TabsList>
                   <TabsContent value="preview" className="mt-3">
-                    <TemplatePreview html={applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
+                    <TemplatePreview html={activePreview.kind === "elementor" && activePreview.elementorData ? applyTemplateDefaults(elementorToPreviewHtml(activePreview.elementorData), activePreview.defaultValues) : applyTemplateDefaults(activePreview.content, activePreview.defaultValues)} />
                   </TabsContent>
                   <TabsContent value="customize" className="mt-3 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
