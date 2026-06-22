@@ -795,24 +795,38 @@ Deno.serve(async (req) => {
 
         let elementorMeta: { elementor_data: string; elementor_edit_mode: string; page_template?: string } | undefined;
         if (resolvedPublishType === "page" && !preserveDesign) {
-          // Auto-detect Elementor for pages only (cached) — first publish only.
-          const wsKey = page.website_id || "default";
-          if (!elementorCache.has(wsKey)) {
-            const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
-            elementorCache.set(wsKey, detected);
-          }
-          const elementorInfo = elementorCache.get(wsKey)!;
-
-          if (elementorInfo.usesElementor) {
-            // Publish the page EXACTLY like the template: wrap the full adapted
-            // HTML (with its own styles intact) into a single Elementor HTML
-            // widget. Fragmenting into separate heading/image/text widgets used
-            // to strip the template's <style> blocks and break the design.
+          // 1️⃣ Native Elementor template: publish the ORIGINAL Elementor JSON with
+          // variables replaced by AI/row content. No HTML conversion, no widget
+          // fragmentation — the design and Elementor editability are preserved.
+          const nativeTpl = await getCampaignElementorTemplate(page.campaign_id);
+          if (nativeTpl) {
+            const row =
+              nativeTpl.rows.find((r) => r.slug === page.slug || r.title === page.title) ||
+              nativeTpl.rows[0] ||
+              {};
+            const resolved = deepReplaceElementorVariables(nativeTpl.elementor_data, row);
             elementorMeta = {
-              elementor_data: buildElementorHtmlWidget(cleanedContent),
+              elementor_data: stringifyElementorData(resolved),
               elementor_edit_mode: "builder",
-              page_template: elementorInfo.pageTemplate,
+              page_template: nativeTpl.page_template || undefined,
             };
+          } else {
+            // 2️⃣ Fallback: auto-detect Elementor on the site (cached) and wrap the
+            // full adapted HTML in a single Elementor HTML widget.
+            const wsKey = page.website_id || "default";
+            if (!elementorCache.has(wsKey)) {
+              const detected = await detectElementor(supabase, wsKey, (page.websites as any).type, connector);
+              elementorCache.set(wsKey, detected);
+            }
+            const elementorInfo = elementorCache.get(wsKey)!;
+
+            if (elementorInfo.usesElementor) {
+              elementorMeta = {
+                elementor_data: buildElementorHtmlWidget(cleanedContent),
+                elementor_edit_mode: "builder",
+                page_template: elementorInfo.pageTemplate,
+              };
+            }
           }
         }
 
