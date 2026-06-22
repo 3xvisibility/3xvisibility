@@ -252,8 +252,8 @@ export default function TemplateMarketplacePage() {
 
   // Merge built-in + community for "browse" tab
   const allTemplates = useMemo(() => {
-    return [...COMMUNITY_TEMPLATES, ...communityTemplates];
-  }, [communityTemplates]);
+    return [...importedTemplates, ...COMMUNITY_TEMPLATES, ...communityTemplates];
+  }, [importedTemplates, communityTemplates]);
 
   // Build the category pill list dynamically from whatever templates exist on
   // the active tab. "All" is always first; every category present in the data
