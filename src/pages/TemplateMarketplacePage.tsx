@@ -30,6 +30,7 @@ import { downloadStarterCsv } from "@/lib/csv-starter";
 import { exportTemplateZip } from "@/lib/template-export";
 import { parseUploadedFile } from "@/lib/export-csv";
 import { COMMUNITY_TEMPLATES, applyTemplateDefaults, platformFromCategory, type MarketplaceTemplate } from "@/lib/marketplace-templates";
+import { ELEMENTOR_TEMPLATES } from "@/lib/marketplace-elementor-templates";
 import { useTranslatedTemplate } from "@/hooks/use-translated-template";
 import { useTranslatedTemplateList } from "@/hooks/use-translated-template-list";
 import { Languages } from "lucide-react";
@@ -251,7 +252,7 @@ export default function TemplateMarketplacePage() {
 
   // Merge built-in + community for "browse" tab
   const allTemplates = useMemo(() => {
-    return [...importedTemplates, ...COMMUNITY_TEMPLATES, ...communityTemplates];
+    return [...importedTemplates, ...ELEMENTOR_TEMPLATES, ...COMMUNITY_TEMPLATES, ...communityTemplates];
   }, [importedTemplates, communityTemplates]);
 
   // Build the category pill list dynamically from whatever templates exist on
