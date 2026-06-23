@@ -63,6 +63,8 @@ export interface StarterCsvOptions {
   variables: string[];
   /** Number of example rows to include (default 1). */
   exampleRows?: number;
+  /** Output format (default "csv"). */
+  format?: "csv" | "xlsx";
   /**
    * Optional template default values keyed by variable name. When provided,
    * each column is pre-filled with the real template content (services, stats,
@@ -71,8 +73,8 @@ export interface StarterCsvOptions {
   defaultValues?: Record<string, string>;
 }
 
-/** Trigger a download of a starter CSV containing the template's variable headers + example rows. */
-export function downloadStarterCsv({ templateName, variables, exampleRows = 1, defaultValues }: StarterCsvOptions) {
+/** Trigger a download of a starter CSV/Excel containing the template's variable headers + example rows. */
+export function downloadStarterCsv({ templateName, variables, exampleRows = 1, format = "csv", defaultValues }: StarterCsvOptions) {
   const cleaned = Array.from(
     new Set(
       variables
