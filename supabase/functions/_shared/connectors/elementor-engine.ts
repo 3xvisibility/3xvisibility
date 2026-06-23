@@ -456,10 +456,12 @@ export function buildElementorMeta(html: string, version = "3.21.0"): Record<str
     _elementor_template_type: "wp-page",
     _elementor_version: version,
     _elementor_data: JSON.stringify(data),
-    _elementor_page_settings: JSON.stringify({
-      content_width: "full",
-      template: "elementor_canvas",
-    }),
+    // NOTE: `_elementor_page_settings` is intentionally omitted. Elementor
+    // registers it with an `object` REST schema, so sending a JSON string
+    // triggers `rest_invalid_type` (HTTP 400). Forcing the canvas template via
+    // `_wp_page_template` already yields the full-width, header/footer-less
+    // layout we need, so the page-settings meta is unnecessary.
     _wp_page_template: "elementor_canvas",
   };
+
 }
