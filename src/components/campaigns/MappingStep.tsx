@@ -843,7 +843,7 @@ export function MappingStep({
                 )}
               </div>
               {w.customTarget && (
-                <div className="flex items-center gap-1.5 pl-5.5">
+                <div className="flex items-center gap-1.5 pl-6">
                   <Input
                     value={customTargetInputs[w.customTarget.targetKey] || ""}
                     onChange={(e) => setCustomTargetInputs(prev => ({ ...prev, [w.customTarget!.targetKey]: e.target.value }))}
