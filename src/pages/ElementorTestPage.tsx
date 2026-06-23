@@ -75,12 +75,54 @@ export default function ElementorTestPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            Select an Elementor template <Badge variant="secondary">{ELEMENTOR_BADGE}</Badge>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-3">
+              Choose templates to convert <Badge variant="secondary">{ELEMENTOR_BADGE}</Badge>
+            </span>
+            <Button size="sm" variant="outline" onClick={() => setSelectedIds(defaultSelection())}>
+              Reset to best 2
+            </Button>
           </CardTitle>
         </CardHeader>
+        <CardContent className="space-y-5">
+          <p className="text-sm text-muted-foreground">
+            Pick up to {PER_CATEGORY} templates per category. Selecting a third in a full category replaces the oldest pick.
+          </p>
+          <div className="grid gap-5 md:grid-cols-2">
+            {[...candidates.entries()].map(([category, list]) => {
+              const inCat = list.filter((t) => selectedIds.includes(t.id)).length;
+              return (
+                <div key={category} className="rounded-lg border p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-medium">{category}</span>
+                    <Badge variant={inCat >= PER_CATEGORY ? "default" : "outline"}>
+                      {inCat}/{PER_CATEGORY}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {list.map((t) => {
+                      const checked = selectedIds.includes(t.id);
+                      return (
+                        <label key={t.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                          <Checkbox checked={checked} onCheckedChange={() => toggle(t.id, category)} />
+                          <span className={checked ? "" : "text-muted-foreground"}>{t.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Preview an Elementor template</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
-          <Select value={selectedId} onValueChange={setSelectedId}>
+          <Select value={activeId} onValueChange={setSelectedId}>
             <SelectTrigger className="max-w-md"><SelectValue placeholder="Choose template" /></SelectTrigger>
             <SelectContent>
               {templates.map((t) => (
@@ -89,7 +131,7 @@ export default function ElementorTestPage() {
             </SelectContent>
           </Select>
           <div className="text-sm text-muted-foreground">
-            {templates.length} templates across {new Set(ELEMENTOR_TEMPLATES.map((t) => t.id)).size} entries · best 2 per source category.
+            {templates.length} templates selected for conversion.
           </div>
         </CardContent>
       </Card>
