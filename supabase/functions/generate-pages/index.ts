@@ -1155,6 +1155,62 @@ Deno.serve(async (req) => {
       csvRows = (campaign.csv_data || []) as Record<string, string>[];
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // PREVIEW MODE (dry run): generate the title + description for the first
+    // sample row and return them with line/word counts compared to the
+    // original template patterns. Nothing is persisted or published.
+    // ─────────────────────────────────────────────────────────────────────
+    if (action === "preview") {
+      const sampleRow = (csvRows[0] || {}) as Record<string, string>;
+      const mappingObj = (campaign.mapping || {}) as Record<string, any>;
+      const customValues = (mappingObj.custom_values || {}) as Record<string, string>;
+      const previewVars: Record<string, string> = { ...customValues, ...sampleRow };
+
+      const resolveTpl = (pattern: string): string => {
+        let resolved = pattern || "";
+        for (const [key, value] of Object.entries(previewVars)) {
+          resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+        }
+        return resolved.replace(/\{[^}]+\}/g, "").trim();
+      };
+
+      const origTitle = (campaign.templates.seo_title_pattern as string) || "";
+      const origDesc = (campaign.templates.seo_description_pattern as string) || "";
+      const genTitle = resolveTpl(origTitle);
+      const genDesc = resolveTpl(origDesc);
+
+      const capLines = (campaign.ai_max_lines as number | null) ?? null;
+      const capWords = (campaign.ai_max_words as number | null) ?? null;
+
+      const describe = (original: string, generated: string) => {
+        const origW = countWords(original);
+        const origL = countLines(original);
+        const genW = countWords(generated);
+        const genL = countLines(generated);
+        const lineLimit = (capLines && capLines > 0 ? capLines : origL) + 1;
+        const wordLimit = capWords && capWords > 0 ? capWords + Math.ceil((capWords) / Math.max(capLines || origL || 1, 1)) : (origW > 0 ? origW + Math.ceil(origW / Math.max(origL, 1)) : 0);
+        const overflow = (wordLimit > 0 && genW > wordLimit) || (genL > lineLimit);
+        return {
+          original_words: origW,
+          original_lines: origL,
+          generated_words: genW,
+          generated_lines: genL,
+          overflow,
+        };
+      };
+
+      return new Response(JSON.stringify({
+        success: true,
+        action: "preview",
+        cap: { max_lines: capLines, max_words: capWords },
+        title: { original: origTitle, generated: genTitle, ...describe(origTitle, genTitle) },
+        description: { original: origDesc, generated: genDesc, ...describe(origDesc, genDesc) },
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     if (csvRows.length === 0) {
       console.error("[GENERATE-PAGES] No CSV data found for campaign");
       return new Response(JSON.stringify({ error: "No CSV data in this campaign" }), {
