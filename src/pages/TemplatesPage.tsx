@@ -862,10 +862,10 @@ slug: ${fields.slug}`,
         <div className="flex flex-wrap gap-2">
           <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTemplate(f); }} />
           <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} disabled={limitReached}>
-            <Upload className="mr-1.5 h-3.5 w-3.5" /> Import JSON
+            <Upload className="mr-1.5 h-3.5 w-3.5" /> {t("templates.importJson")}
           </Button>
           <Button size="sm" onClick={() => setPickerOpen(true)} disabled={limitReached}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Template
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("templates.createTemplate")}
           </Button>
         </div>
       </div>
@@ -894,12 +894,12 @@ slug: ${fields.slug}`,
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search templates..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
+          <Input placeholder={t("common.searchTemplates")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
         </div>
         <Select value={siteTypeFilter} onValueChange={setSiteTypeFilter}>
-          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="All Platforms" /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder={t("common.allPlatforms")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Platforms</SelectItem>
+            <SelectItem value="all">{t("common.allPlatforms")}</SelectItem>
             <SelectItem value="wordpress">WordPress</SelectItem>
             <SelectItem value="shopify">Shopify</SelectItem>
             <SelectItem value="prestashop">
@@ -912,9 +912,9 @@ slug: ${fields.slug}`,
           </SelectContent>
         </Select>
         <Select value={campaignTypeFilter} onValueChange={setCampaignTypeFilter}>
-          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="All Types" /></SelectTrigger>
+          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder={t("common.allTypes")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">{t("common.allTypes")}</SelectItem>
             <SelectItem value="seo">SEO</SelectItem>
             <SelectItem value="sea">SEA</SelectItem>
             <SelectItem value="geo">GEO</SelectItem>
@@ -1009,11 +1009,11 @@ slug: ${fields.slug}`,
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10"><Checkbox checked={paginatedTemplates.length > 0 && selectedIds.size === paginatedTemplates.length} onCheckedChange={toggleSelectAll} /></TableHead>
-                  <TableHead className="w-[35%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("name")}>Name <SortIcon col="name" /></button></TableHead>
-                  <TableHead className="w-[12%]">Platform</TableHead>
-                  <TableHead className="w-[8%]">Variables</TableHead>
-                  <TableHead className="w-[10%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("campaigns")}>Campaigns <SortIcon col="campaigns" /></button></TableHead>
-                  <TableHead className="w-[12%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("date")}>Updated <SortIcon col="date" /></button></TableHead>
+                  <TableHead className="w-[35%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("name")}>{t("common.name")} <SortIcon col="name" /></button></TableHead>
+                  <TableHead className="w-[12%]">{t("templates.colPlatform")}</TableHead>
+                  <TableHead className="w-[8%]">{t("templates.colVariables")}</TableHead>
+                  <TableHead className="w-[10%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("campaigns")}>{t("templates.colCampaigns")} <SortIcon col="campaigns" /></button></TableHead>
+                  <TableHead className="w-[12%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("date")}>{t("templates.colUpdated")} <SortIcon col="date" /></button></TableHead>
                   <TableHead className="text-right w-10">Actions</TableHead>
                 </TableRow>
               </TableHeader>
