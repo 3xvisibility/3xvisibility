@@ -232,6 +232,7 @@ export function MappingStep({
   const [saveProfileName, setSaveProfileName] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [aiFilling, setAiFilling] = useState(false);
+  const [customTargetInputs, setCustomTargetInputs] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -490,8 +491,24 @@ export function MappingStep({
     toast({ title: "Fixed", description: `"${variable}" is now mapped to ${label}.` });
   };
 
+  // Apply a literal custom value to a target (title/slug/price). Stores the typed
+  // value on the best candidate variable (or the first template var) and maps it
+  // to the requested target field.
+  const applyCustomTarget = (value: string, targetKey: string, label: string, candidate: string | null) => {
+    const variable = candidate || templateVars[0];
+    if (!variable) return;
+    setCustomValues(prev => ({ ...prev, [variable]: value }));
+    setTargetFieldMappings(prev => ({ ...prev, [variable]: targetKey }));
+    toast({ title: "Custom value set", description: `${label} set to "${value}".` });
+  };
+
   const mandatoryWarnings = useMemo(() => {
-    const warnings: { message: string; fix?: () => void; fixLabel?: string }[] = [];
+    const warnings: {
+      message: string;
+      fix?: () => void;
+      fixLabel?: string;
+      customTarget?: { targetKey: string; label: string; candidate: string | null; placeholder: string };
+    }[] = [];
     const mappedTargets = new Set(Object.values(targetFieldMappings).filter(Boolean));
     const hasTitleVar = resolvedMapping.some(m => (m.column || m.customValue) && ["title", "name", "h1", "page_title"].includes(m.variable.toLowerCase()));
     const hasTitleTarget = mappedTargets.has("title") || mappedTargets.has("name");
@@ -501,6 +518,7 @@ export function MappingStep({
         message: "No title/name variable is mapped — pages may have generic titles.",
         fixLabel: candidate ? `Use {${candidate}} as title` : undefined,
         fix: candidate ? () => applyTargetFix(candidate, "title", "Page Title") : undefined,
+        customTarget: { targetKey: "title", label: "Page Title", candidate, placeholder: "Type a custom title…" },
       });
     }
 
@@ -513,6 +531,7 @@ export function MappingStep({
           message: "WordPress: Slug mapping recommended for clean URLs.",
           fixLabel: candidate ? `Use {${candidate}} as slug` : undefined,
           fix: candidate ? () => applyTargetFix(candidate, "slug", "URL Slug") : undefined,
+          customTarget: { targetKey: "slug", label: "URL Slug", candidate, placeholder: "Type a custom slug…" },
         });
       }
     }
@@ -524,6 +543,7 @@ export function MappingStep({
           message: "Shopify: Price variable recommended for product pages.",
           fixLabel: candidate ? `Use {${candidate}} as price` : undefined,
           fix: candidate ? () => applyTargetFix(candidate, "price", "Price") : undefined,
+          customTarget: { targetKey: "price", label: "Price", candidate, placeholder: "Type a custom price…" },
         });
       }
     }
@@ -805,20 +825,46 @@ export function MappingStep({
       {mandatoryWarnings.length > 0 && (
         <div className="space-y-1.5">
           {mandatoryWarnings.map((w, i) => (
-            <div key={i} className="flex items-start gap-2 text-xs text-warning bg-warning/5 border border-warning/20 rounded-lg p-2.5">
-              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span className="flex-1">{w.message}</span>
-              {w.fix && w.fixLabel && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-6 px-2 text-[11px] shrink-0"
-                  onClick={w.fix}
-                >
-                  <Wand2 className="h-3 w-3 mr-1" />
-                  {w.fixLabel}
-                </Button>
+            <div key={i} className="flex flex-col gap-2 text-xs text-warning bg-warning/5 border border-warning/20 rounded-lg p-2.5">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span className="flex-1">{w.message}</span>
+                {w.fix && w.fixLabel && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-[11px] shrink-0"
+                    onClick={w.fix}
+                  >
+                    <Wand2 className="h-3 w-3 mr-1" />
+                    {w.fixLabel}
+                  </Button>
+                )}
+              </div>
+              {w.customTarget && (
+                <div className="flex items-center gap-1.5 pl-6">
+                  <Input
+                    value={customTargetInputs[w.customTarget.targetKey] || ""}
+                    onChange={(e) => setCustomTargetInputs(prev => ({ ...prev, [w.customTarget!.targetKey]: e.target.value }))}
+                    placeholder={w.customTarget.placeholder}
+                    className="h-7 text-[11px] flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 px-2 text-[11px] shrink-0"
+                    disabled={!(customTargetInputs[w.customTarget.targetKey] || "").trim()}
+                    onClick={() => {
+                      const ct = w.customTarget!;
+                      applyCustomTarget((customTargetInputs[ct.targetKey] || "").trim(), ct.targetKey, ct.label, ct.candidate);
+                      setCustomTargetInputs(prev => ({ ...prev, [ct.targetKey]: "" }));
+                    }}
+                  >
+                    Use custom
+                  </Button>
+                </div>
               )}
             </div>
           ))}
