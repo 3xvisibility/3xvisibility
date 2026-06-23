@@ -113,5 +113,5 @@ export function downloadStarterCsv({ templateName, variables, exampleRows = 1, f
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 50) || "template";
-  exportDataFile(rows, "csv", `${safeName}-starter.csv`);
+  exportDataFile(rows, format, `${safeName}-starter.${format}`);
 }
