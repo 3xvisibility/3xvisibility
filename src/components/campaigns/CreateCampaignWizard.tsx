@@ -1742,8 +1742,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                  className="h-8 text-xs rounded-lg shrink-0"
                                  disabled={!selectedTemplate}
                                  onClick={() => {
-                                   const tpl = templates.find(t => t.id === selectedTemplate);
-                                   if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
+                                   const tpl = templates.find(t => t.id === selectedTemplate) as { id: string; name: string; variables?: string[]; default_values?: Record<string, string> } | undefined;
+                                   if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [], defaultValues: tpl.default_values || undefined });
                                  }}
                                >
                                  <Download className="h-3.5 w-3.5 mr-1" /> Download
