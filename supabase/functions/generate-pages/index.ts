@@ -13,6 +13,7 @@ const corsHeaders = {
 };
 
 import { slugifyLocale } from "../_shared/locale-format.ts";
+import { analyzeTemplateBudget, enforceBudget, type BudgetMap } from "../_shared/template-length-budget.ts";
 
 function slugify(text: string, locale?: string): string {
   return slugifyLocale(text, locale);
@@ -1094,7 +1095,7 @@ Deno.serve(async (req) => {
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("*, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
+      .select("*, templates(content, variables, default_values, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
       .eq("id", campaign_id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -1340,6 +1341,21 @@ Deno.serve(async (req) => {
 
 
     const templateContent = campaign.templates.content as string;
+    // ── Template Structure Analyzer / Design Integrity Protection ──
+    // Derive per-variable length budgets from the template's ORIGINAL sample
+    // values (default_values). Generated/CSV/AI content is clamped to <=120% of
+    // the original so the published page keeps the template's exact layout,
+    // spacing and section heights. Safe Mode is ON unless explicitly disabled.
+    const templateSafeMode =
+      ((campaign.mapping || {}) as { template_safe_mode?: boolean }).template_safe_mode !== false;
+    const lengthBudget: BudgetMap = templateSafeMode
+      ? analyzeTemplateBudget((campaign.templates as { default_values?: Record<string, string> }).default_values)
+      : {};
+    const clampVar = (key: string, value: string): string => {
+      if (!templateSafeMode || typeof value !== "string") return value;
+      const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
+      return b ? enforceBudget(value, b) : value;
+    };
     const aiBlocks = extractAiBlocks(templateContent);
     const aiImageBlocks = extractAiImageBlocks(templateContent);
     const hasAiBlocks = aiBlocks.length > 0;
@@ -1820,7 +1836,7 @@ Deno.serve(async (req) => {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") {
               if (value || rule === "ai_only") {
-                pageContent = pageContent.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+                pageContent = pageContent.replace(new RegExp(`\\{${key}\\}`, "gi"), clampVar(key, value || ""));
               }
             }
           }
@@ -1830,7 +1846,7 @@ Deno.serve(async (req) => {
             const rule = _ruleFor(key);
             if (rule === "ai_only") continue; // CSV must be ignored
             const regex = new RegExp(`\\{${key}\\}`, "gi");
-            pageContent = pageContent.replace(regex, value || "");
+            pageContent = pageContent.replace(regex, clampVar(key, value || ""));
           }
 
           // 3. AI fallback for any still-unfilled placeholders (csv_first when CSV empty).
@@ -1838,7 +1854,7 @@ Deno.serve(async (req) => {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") continue; // already applied
             const regex = new RegExp(`\\{${key}\\}`, "gi");
-            pageContent = pageContent.replace(regex, value || "");
+            pageContent = pageContent.replace(regex, clampVar(key, value || ""));
           }
 
 
