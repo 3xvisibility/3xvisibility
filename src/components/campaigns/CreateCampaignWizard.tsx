@@ -333,6 +333,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (typeof s.recurringInterval === "string") setRecurringInterval(s.recurringInterval);
         if (s.recurringEndDate) setRecurringEndDate(new Date(s.recurringEndDate));
         if (typeof s.seoTitleFormat === "string") setSeoTitleFormat(s.seoTitleFormat);
+        if (typeof s.aiMaxLines === "string") setAiMaxLines(s.aiMaxLines);
+        if (typeof s.aiMaxWords === "string") setAiMaxWords(s.aiMaxWords);
         if (typeof s.utmSource === "string") setUtmSource(s.utmSource);
         if (typeof s.utmMedium === "string") setUtmMedium(s.utmMedium);
         if (typeof s.utmCampaign === "string") setUtmCampaign(s.utmCampaign);
