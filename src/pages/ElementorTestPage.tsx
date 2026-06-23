@@ -54,6 +54,35 @@ export default function ElementorTestPage() {
     });
   };
 
+  type ConvResult = { id: string; name: string; status: "ok" | "error"; widgets?: number; error?: string };
+  const [converting, setConverting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<ConvResult[]>([]);
+
+  const convertSelected = async () => {
+    const list = buildElementorTemplates(selectedIds);
+    if (!list.length) return;
+    setConverting(true);
+    setResults([]);
+    setProgress(0);
+    const out: ConvResult[] = [];
+    for (let i = 0; i < list.length; i++) {
+      const t = list[i];
+      try {
+        const html = applyTemplateDefaults(t.content, t.defaultValues);
+        const data = templateToElementor(html);
+        if (!data.length) throw new Error("No Elementor elements produced");
+        out.push({ id: t.id, name: t.name, status: "ok", widgets: Object.values(countWidgets(data)).reduce((a, b) => a + b, 0) });
+      } catch (e) {
+        out.push({ id: t.id, name: t.name, status: "error", error: e instanceof Error ? e.message : String(e) });
+      }
+      setResults([...out]);
+      setProgress(Math.round(((i + 1) / list.length) * 100));
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    setConverting(false);
+  };
+
   const resolvedHtml = useMemo(
     () => (template ? applyTemplateDefaults(template.content, template.defaultValues) : ""),
     [template],
@@ -114,6 +143,32 @@ export default function ElementorTestPage() {
               );
             })}
           </div>
+
+          <div className="flex items-center gap-3 border-t pt-4">
+            <Button onClick={convertSelected} disabled={converting || selectedIds.length === 0}>
+              {converting ? `Converting… ${progress}%` : `Convert Selected (${selectedIds.length})`}
+            </Button>
+            {converting && (
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+              </div>
+            )}
+          </div>
+
+          {results.length > 0 && (
+            <div className="space-y-2">
+              {results.map((r) => (
+                <div key={r.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                  <span className="truncate">{r.name}</span>
+                  {r.status === "ok" ? (
+                    <Badge variant="outline" className="shrink-0">✅ {r.widgets} widgets</Badge>
+                  ) : (
+                    <Badge variant="destructive" className="shrink-0" title={r.error}>❌ {r.error}</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
