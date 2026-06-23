@@ -232,6 +232,7 @@ export function MappingStep({
   const [saveProfileName, setSaveProfileName] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [aiFilling, setAiFilling] = useState(false);
+  const [customTargetInputs, setCustomTargetInputs] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
