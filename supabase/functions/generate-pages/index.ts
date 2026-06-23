@@ -1095,7 +1095,7 @@ Deno.serve(async (req) => {
     // Fetch campaign
     const { data: campaign, error: campaignError } = await supabase
       .from("campaigns")
-      .select("*, templates(content, variables, default_values, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
+      .select("*, templates(content, variables, seo_title_pattern, seo_description_pattern, schema_type, schema_config)")
       .eq("id", campaign_id)
       .eq("user_id", user.id)
       .maybeSingle();
@@ -1349,7 +1349,7 @@ Deno.serve(async (req) => {
     const templateSafeMode =
       ((campaign.mapping || {}) as { template_safe_mode?: boolean }).template_safe_mode !== false;
     const lengthBudget: BudgetMap = templateSafeMode
-      ? analyzeTemplateBudget((campaign.templates as { default_values?: Record<string, string> }).default_values)
+      ? analyzeTemplateBudget((campaign.templates as { default_values?: Record<string, string> }).default_values || {})
       : {};
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
