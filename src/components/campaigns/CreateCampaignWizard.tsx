@@ -253,7 +253,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     scheduledDate: scheduledDate ? scheduledDate.toISOString() : null,
     recurringInterval,
     recurringEndDate: recurringEndDate ? recurringEndDate.toISOString() : null,
-    seoTitleFormat,
+    seoTitleFormat, aiMaxLines, aiMaxWords,
     utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
     adCampaignId, adGroupId, seaDirectoryLevels,
     geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, geoLanguage,
