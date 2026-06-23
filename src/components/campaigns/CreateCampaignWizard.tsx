@@ -52,7 +52,7 @@ import {
   Plus, Upload, ArrowRight, Check, AlertTriangle, Play, Loader2, Eye,
   MapPin, Target, Search as SearchIconLucide, Layers, CalendarIcon,
   Settings2, Globe, Database as DatabaseIcon, Sparkles, Wand2, Info,
-  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save, ChevronRight,
+  CheckCircle2, XCircle, Lightbulb, ArrowLeft, Bookmark, Trash2, Save, ChevronRight, Download,
 } from "lucide-react";
 
 const LANGUAGES = [
@@ -1731,15 +1731,23 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                             <div className="flex items-center gap-2 pt-1">
                               <Select
                                 value={selectedTemplate || ""}
-                                onValueChange={(v) => {
-                                  setSelectedTemplate(v);
-                                  const tpl = templates.find(t => t.id === v);
-                                  if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
-                                }}
+                                onValueChange={(v) => setSelectedTemplate(v)}
                               >
                                 <SelectTrigger className="h-8 text-xs rounded-lg flex-1"><SelectValue placeholder="Choose template to download starter" /></SelectTrigger>
                                 <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id} className="text-xs">{t.name}</SelectItem>)}</SelectContent>
                                </Select>
+                               <Button
+                                 type="button"
+                                 size="sm"
+                                 className="h-8 text-xs rounded-lg shrink-0"
+                                 disabled={!selectedTemplate}
+                                 onClick={() => {
+                                   const tpl = templates.find(t => t.id === selectedTemplate);
+                                   if (tpl) downloadStarterCsv({ templateName: tpl.name, variables: (tpl.variables as string[]) || [] });
+                                 }}
+                               >
+                                 <Download className="h-3.5 w-3.5 mr-1" /> Download
+                               </Button>
                             </div>
                             {selectedTemplate && selectedTemplateVars.length > 0 && (
                               <p className="text-[11px] text-muted-foreground flex items-center gap-1 pt-2">
