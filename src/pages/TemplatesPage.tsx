@@ -1009,11 +1009,11 @@ slug: ${fields.slug}`,
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10"><Checkbox checked={paginatedTemplates.length > 0 && selectedIds.size === paginatedTemplates.length} onCheckedChange={toggleSelectAll} /></TableHead>
-                  <TableHead className="w-[35%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("name")}>Name <SortIcon col="name" /></button></TableHead>
-                  <TableHead className="w-[12%]">Platform</TableHead>
-                  <TableHead className="w-[8%]">Variables</TableHead>
-                  <TableHead className="w-[10%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("campaigns")}>Campaigns <SortIcon col="campaigns" /></button></TableHead>
-                  <TableHead className="w-[12%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("date")}>Updated <SortIcon col="date" /></button></TableHead>
+                  <TableHead className="w-[35%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("name")}>{t("common.name")} <SortIcon col="name" /></button></TableHead>
+                  <TableHead className="w-[12%]">{t("templates.colPlatform")}</TableHead>
+                  <TableHead className="w-[8%]">{t("templates.colVariables")}</TableHead>
+                  <TableHead className="w-[10%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("campaigns")}>{t("templates.colCampaigns")} <SortIcon col="campaigns" /></button></TableHead>
+                  <TableHead className="w-[12%]"><button className="flex items-center hover:text-foreground" onClick={() => toggleSort("date")}>{t("templates.colUpdated")} <SortIcon col="date" /></button></TableHead>
                   <TableHead className="text-right w-10">Actions</TableHead>
                 </TableRow>
               </TableHeader>
