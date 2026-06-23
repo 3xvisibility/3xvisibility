@@ -270,7 +270,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     shopifyTuneOpen, shopifyFullBleed, shopifyContainerMax, shopifyHorizontalPad,
     shopifyHeadingScale, shopifyBodyLineHeight, shopifySectionPadScale,
     publishMode, publishAs, maxRows, generationMethod,
-    scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat,
+    scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat, aiMaxLines, aiMaxWords,
     utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
     adCampaignId, adGroupId, seaDirectoryLevels,
     geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, geoLanguage,
