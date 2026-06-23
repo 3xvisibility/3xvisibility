@@ -60,7 +60,59 @@ export function analyzeTemplateBudget(defaultValues?: Record<string, string>): B
   return out;
 }
 
+/**
+ * Fallback analyzer: when a template ships no sample values, derive a per-variable
+ * budget from the template HTML by inspecting the element that encloses each
+ * `{variable}` placeholder. Headings, buttons, paragraphs etc. each get a
+ * sensible word/char budget so generated content keeps the original proportions.
+ */
+function budgetForTag(tag: string): { maxWords: number; maxChars: number } {
+  switch (tag) {
+    case "h1": return { maxWords: 12, maxChars: 80 };
+    case "h2": return { maxWords: 10, maxChars: 70 };
+    case "h3": return { maxWords: 9, maxChars: 60 };
+    case "h4":
+    case "h5":
+    case "h6": return { maxWords: 8, maxChars: 50 };
+    case "button":
+    case "a": return { maxWords: 5, maxChars: 30 };
+    case "li": return { maxWords: 24, maxChars: 160 };
+    case "span":
+    case "strong":
+    case "em": return { maxWords: 10, maxChars: 70 };
+    case "p":
+    case "div": return { maxWords: 60, maxChars: 420 };
+    default: return { maxWords: 40, maxChars: 280 };
+  }
+}
+
+export function analyzeTemplateContentBudget(content?: string): BudgetMap {
+  const out: BudgetMap = {};
+  if (!content || typeof content !== "string") return out;
+  const tokenRe = /\{([a-zA-Z0-9_.-]+)\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = tokenRe.exec(content)) !== null) {
+    const key = m[1].replace(/^\{|\}$/g, "");
+    if (out[key]) continue;
+    // Find the nearest enclosing opening tag before this placeholder.
+    const before = content.slice(0, m.index);
+    const tagMatch = before.match(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>(?:[^<]*)$/);
+    const tag = (tagMatch?.[1] || "p").toLowerCase();
+    const { maxWords, maxChars } = budgetForTag(tag);
+    out[key] = {
+      words: maxWords,
+      minWords: 1,
+      maxWords,
+      minChars: 1,
+      recommendedChars: Math.round(maxChars / 1.2),
+      maxChars,
+    };
+  }
+  return out;
+}
+
 /** Human-readable per-field hints injected into the generation prompt. */
+
 export function buildBudgetPromptHints(budget: BudgetMap): string {
   const lines = Object.entries(budget).map(
     ([k, b]) => `- ${k}: ${b.minWords}-${b.maxWords} words; characters min ${b.minChars}, recommended ~${b.recommendedChars}, max ${b.maxChars}`,
