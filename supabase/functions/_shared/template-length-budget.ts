@@ -26,13 +26,17 @@ export function countWords(s: string): number {
   return t ? t.split(/\s+/).length : 0;
 }
 
-/** Build an allowed word range around the original, scaled to field size. */
+/**
+ * Build an allowed word range around the original. Design integrity is strict:
+ * generated text may never exceed the original word count by more than 3 words,
+ * regardless of field size, so the template layout never breaks.
+ */
 function rangeForWords(words: number): { minWords: number; maxWords: number } {
   if (words <= 2) return { minWords: 1, maxWords: words + 2 };
   if (words <= 4) return { minWords: Math.max(2, words - 1), maxWords: words + 2 };
   if (words <= 8) return { minWords: Math.max(3, words - 2), maxWords: words + 3 };
-  if (words <= 20) return { minWords: Math.max(8, Math.round(words * 0.75)), maxWords: Math.round(words * 1.2) };
-  return { minWords: Math.round(words * 0.8), maxWords: Math.round(words * 1.2) };
+  if (words <= 20) return { minWords: Math.max(8, Math.round(words * 0.75)), maxWords: words + 3 };
+  return { minWords: Math.round(words * 0.85), maxWords: words + 3 };
 }
 
 /**
