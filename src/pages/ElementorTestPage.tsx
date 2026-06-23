@@ -1,10 +1,19 @@
 import { useMemo, useState } from "react";
-import { ELEMENTOR_TEMPLATES, templateToElementor, ELEMENTOR_BADGE } from "@/lib/marketplace-elementor-templates";
+import {
+  buildElementorTemplates,
+  templateToElementor,
+  ELEMENTOR_BADGE,
+  getElementorCandidates,
+  defaultSelection,
+  PER_CATEGORY,
+} from "@/lib/marketplace-elementor-templates";
 import { applyTemplateDefaults } from "@/lib/marketplace-templates";
 import type { ElementorElement } from "@/lib/connectors/elementor-engine";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Seo } from "@/components/Seo";
 
@@ -22,9 +31,28 @@ function countWidgets(els: ElementorElement[]): Record<string, number> {
 }
 
 export default function ElementorTestPage() {
-  const templates = ELEMENTOR_TEMPLATES;
-  const [selectedId, setSelectedId] = useState(templates[0]?.id ?? "");
-  const template = useMemo(() => templates.find((t) => t.id === selectedId), [templates, selectedId]);
+  const candidates = useMemo(() => getElementorCandidates(), []);
+  const [selectedIds, setSelectedIds] = usePersistedState<string[]>(
+    "elementor-test-selection",
+    defaultSelection(),
+  );
+
+  const templates = useMemo(() => buildElementorTemplates(selectedIds), [selectedIds]);
+  const [selectedId, setSelectedId] = useState("");
+  const activeId = templates.some((t) => t.id === selectedId) ? selectedId : templates[0]?.id ?? "";
+  const template = useMemo(() => templates.find((t) => t.id === activeId), [templates, activeId]);
+
+  const toggle = (sourceId: string, category: string) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(sourceId)) return prev.filter((id) => id !== sourceId);
+      const catIds = (candidates.get(category) ?? []).map((t) => t.id);
+      const inCat = prev.filter((id) => catIds.includes(id));
+      if (inCat.length >= PER_CATEGORY) {
+        return [...prev.filter((id) => id !== inCat[0]), sourceId];
+      }
+      return [...prev, sourceId];
+    });
+  };
 
   const resolvedHtml = useMemo(
     () => (template ? applyTemplateDefaults(template.content, template.defaultValues) : ""),
