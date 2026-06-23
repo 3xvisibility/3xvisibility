@@ -1278,7 +1278,10 @@ Deno.serve(async (req) => {
       tone: profile?.ai_tone || "professional",
       contentLength: profile?.ai_content_length || "medium",
       language: resolvedLanguage,
+      maxLines: (campaign.ai_max_lines as number | null) ?? null,
+      maxWords: (campaign.ai_max_words as number | null) ?? null,
     };
+
 
     const templateContent = campaign.templates.content as string;
     const aiBlocks = extractAiBlocks(templateContent);
