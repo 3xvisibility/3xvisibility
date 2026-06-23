@@ -350,11 +350,18 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   return null;
 }
 
-function container(children: ElementorElement[], node?: HtmlNode): ElementorElement {
+function container(children: ElementorElement[], node?: HtmlNode, topLevel = false): ElementorElement {
   const settings: Record<string, unknown> = {
     content_width: "boxed",
     flex_direction: "column",
   };
+  // Top-level sections stretch edge-to-edge so the page matches the template
+  // 1:1 (no theme gutters / boxed wrapper around each section).
+  if (topLevel) {
+    settings.content_width = "full";
+    settings.width = "100%";
+    settings.flex_align_items = "center";
+  }
   // Detect column/row layouts to preserve responsive grids.
   if (node && hasClass(node, "row", "columns", "flex", "grid", "d-flex")) {
     settings.flex_direction = "row";
