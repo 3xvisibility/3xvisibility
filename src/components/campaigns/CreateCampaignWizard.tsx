@@ -171,6 +171,13 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [recurringInterval, setRecurringInterval] = useState<"daily" | "weekly" | "biweekly" | "monthly">("weekly");
   const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
   const [seoTitleFormat, setSeoTitleFormat] = useState("{title} | {brand}");
+  // AI content length limits for template blocks (empty = use template default).
+  const [aiMaxLines, setAiMaxLines] = useState("");
+  const [aiMaxWords, setAiMaxWords] = useState("");
+  // Length preview (dry run) state.
+  const [lengthPreview, setLengthPreview] = useState<any>(null);
+  const [lengthPreviewLoading, setLengthPreviewLoading] = useState(false);
+
 
   // UTM/SEA
   const [utmSource, setUtmSource] = useState("");
