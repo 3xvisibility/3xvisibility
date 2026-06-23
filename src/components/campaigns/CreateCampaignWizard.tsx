@@ -697,6 +697,40 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return out;
   }, [customValues]);
 
+  // Client-side length preview: resolve the selected template's SEO title and
+  // description for the first sample row and compare line/word length against
+  // the configured caps (or the template's own length) so the user can confirm
+  // the generated content will fit the design before publishing.
+  const lengthPreviewData = useMemo(() => {
+    const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+    if (!tpl) return null;
+    const sampleRow = (baseCsvData[0] || {}) as Record<string, string>;
+    const vars: Record<string, string> = { ...customValues, ...sampleRow };
+    const resolve = (pattern: string) => {
+      let r = pattern || "";
+      for (const [k, v] of Object.entries(vars)) r = r.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+      return r.replace(/\{[^}]+\}/g, "").trim();
+    };
+    const words = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+    const lines = (t: string) => t.split(/\n/).filter((l) => l.trim().length > 0).length;
+    const capL = aiMaxLines.trim() ? parseInt(aiMaxLines, 10) : 0;
+    const capW = aiMaxWords.trim() ? parseInt(aiMaxWords, 10) : 0;
+    const build = (orig: string, gen: string) => {
+      const oL = lines(orig), oW = words(orig), gL = lines(gen), gW = words(gen);
+      const lineLimit = (capL > 0 ? capL : oL) + 1;
+      const wordLimit = capW > 0 ? capW + Math.ceil(capW / Math.max(capL || oL || 1, 1)) : (oW > 0 ? oW + Math.ceil(oW / Math.max(oL, 1)) : 0);
+      const overflow = (wordLimit > 0 && gW > wordLimit) || gL > lineLimit;
+      return { origLines: oL, origWords: oW, genLines: gL, genWords: gW, overflow };
+    };
+    const origTitle = tpl.seo_title_pattern || "";
+    const origDesc = tpl.seo_description_pattern || "";
+    return {
+      title: { generated: resolve(origTitle), ...build(origTitle, resolve(origTitle)) },
+      description: { generated: resolve(origDesc), ...build(origDesc, resolve(origDesc)) },
+    };
+  }, [templates, selectedTemplate, baseCsvData, customValues, aiMaxLines, aiMaxWords]);
+
+
   // Expand the data set by the cartesian product of every multi-value custom
   // variable, so N services × existing rows produce N× the pages.
   const { effectiveCsvData, effectiveCsvHeaders } = useMemo(() => {
