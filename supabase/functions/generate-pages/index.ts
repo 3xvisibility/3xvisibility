@@ -1348,8 +1348,11 @@ Deno.serve(async (req) => {
     // spacing and section heights. Safe Mode is ON unless explicitly disabled.
     const templateSafeMode =
       ((campaign.mapping || {}) as { template_safe_mode?: boolean }).template_safe_mode !== false;
+    const sampleValues = (campaign.templates as { default_values?: Record<string, string> }).default_values;
     const lengthBudget: BudgetMap = templateSafeMode
-      ? analyzeTemplateBudget((campaign.templates as { default_values?: Record<string, string> }).default_values || {})
+      ? (sampleValues && Object.keys(sampleValues).length
+          ? analyzeTemplateBudget(sampleValues)
+          : analyzeTemplateContentBudget(campaign.templates.content as string))
       : {};
     const clampVar = (key: string, value: string): string => {
       if (!templateSafeMode || typeof value !== "string") return value;
