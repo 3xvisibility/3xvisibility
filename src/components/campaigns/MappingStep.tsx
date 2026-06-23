@@ -490,8 +490,24 @@ export function MappingStep({
     toast({ title: "Fixed", description: `"${variable}" is now mapped to ${label}.` });
   };
 
+  // Apply a literal custom value to a target (title/slug/price). Stores the typed
+  // value on the best candidate variable (or the first template var) and maps it
+  // to the requested target field.
+  const applyCustomTarget = (value: string, targetKey: string, label: string, candidate: string | null) => {
+    const variable = candidate || templateVars[0];
+    if (!variable) return;
+    setCustomValues(prev => ({ ...prev, [variable]: value }));
+    setTargetFieldMappings(prev => ({ ...prev, [variable]: targetKey }));
+    toast({ title: "Custom value set", description: `${label} set to "${value}".` });
+  };
+
   const mandatoryWarnings = useMemo(() => {
-    const warnings: { message: string; fix?: () => void; fixLabel?: string }[] = [];
+    const warnings: {
+      message: string;
+      fix?: () => void;
+      fixLabel?: string;
+      customTarget?: { targetKey: string; label: string; candidate: string | null; placeholder: string };
+    }[] = [];
     const mappedTargets = new Set(Object.values(targetFieldMappings).filter(Boolean));
     const hasTitleVar = resolvedMapping.some(m => (m.column || m.customValue) && ["title", "name", "h1", "page_title"].includes(m.variable.toLowerCase()));
     const hasTitleTarget = mappedTargets.has("title") || mappedTargets.has("name");
@@ -501,6 +517,7 @@ export function MappingStep({
         message: "No title/name variable is mapped — pages may have generic titles.",
         fixLabel: candidate ? `Use {${candidate}} as title` : undefined,
         fix: candidate ? () => applyTargetFix(candidate, "title", "Page Title") : undefined,
+        customTarget: { targetKey: "title", label: "Page Title", candidate, placeholder: "Type a custom title…" },
       });
     }
 
@@ -513,6 +530,7 @@ export function MappingStep({
           message: "WordPress: Slug mapping recommended for clean URLs.",
           fixLabel: candidate ? `Use {${candidate}} as slug` : undefined,
           fix: candidate ? () => applyTargetFix(candidate, "slug", "URL Slug") : undefined,
+          customTarget: { targetKey: "slug", label: "URL Slug", candidate, placeholder: "Type a custom slug…" },
         });
       }
     }
@@ -524,6 +542,7 @@ export function MappingStep({
           message: "Shopify: Price variable recommended for product pages.",
           fixLabel: candidate ? `Use {${candidate}} as price` : undefined,
           fix: candidate ? () => applyTargetFix(candidate, "price", "Price") : undefined,
+          customTarget: { targetKey: "price", label: "Price", candidate, placeholder: "Type a custom price…" },
         });
       }
     }
