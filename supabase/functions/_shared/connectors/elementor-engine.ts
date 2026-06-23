@@ -350,11 +350,18 @@ function detectSpecialWidget(node: HtmlNode): ElementorElement | null {
   return null;
 }
 
-function container(children: ElementorElement[], node?: HtmlNode): ElementorElement {
+function container(children: ElementorElement[], node?: HtmlNode, topLevel = false): ElementorElement {
   const settings: Record<string, unknown> = {
     content_width: "boxed",
     flex_direction: "column",
   };
+  // Top-level sections stretch edge-to-edge so the page matches the template
+  // 1:1 (no theme gutters / boxed wrapper around each section).
+  if (topLevel) {
+    settings.content_width = "full";
+    settings.width = "100%";
+    settings.flex_align_items = "center";
+  }
   // Detect column/row layouts to preserve responsive grids.
   if (node && hasClass(node, "row", "columns", "flex", "grid", "d-flex")) {
     settings.flex_direction = "row";
@@ -426,15 +433,21 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
 export function htmlToElementor(html: string): ElementorElement[] {
   const tree = parseHtml(html || "");
   const converted = convertChildren(tree);
-  // Ensure every top-level element is a container (Elementor sections).
+  // Ensure every top-level element is a full-width container (Elementor sections).
   return converted.map((el) =>
-    el.elType === "container" ? el : container([el])
+    el.elType === "container"
+      ? { ...el, settings: { ...el.settings, content_width: "full", width: "100%" } }
+      : container([el], undefined, true)
   );
 }
 
 /**
  * Build the WordPress post meta needed to make a page render & edit natively in
  * Elementor. Returns meta keys to merge into the REST `meta` payload.
+ *
+ * The Elementor "Canvas" page template is forced so the published page renders
+ * with NO theme header/footer/sidebar and full width — making the WordPress
+ * output match the original template design 1:1.
  */
 export function buildElementorMeta(html: string, version = "3.21.0"): Record<string, unknown> {
   const data = htmlToElementor(html);
@@ -443,5 +456,10 @@ export function buildElementorMeta(html: string, version = "3.21.0"): Record<str
     _elementor_template_type: "wp-page",
     _elementor_version: version,
     _elementor_data: JSON.stringify(data),
+    _elementor_page_settings: JSON.stringify({
+      content_width: "full",
+      template: "elementor_canvas",
+    }),
+    _wp_page_template: "elementor_canvas",
   };
 }
