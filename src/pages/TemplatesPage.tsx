@@ -894,12 +894,12 @@ slug: ${fields.slug}`,
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search templates..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
+          <Input placeholder={t("common.searchTemplates")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-8 h-9" />
         </div>
         <Select value={siteTypeFilter} onValueChange={setSiteTypeFilter}>
-          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="All Platforms" /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder={t("common.allPlatforms")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Platforms</SelectItem>
+            <SelectItem value="all">{t("common.allPlatforms")}</SelectItem>
             <SelectItem value="wordpress">WordPress</SelectItem>
             <SelectItem value="shopify">Shopify</SelectItem>
             <SelectItem value="prestashop">
@@ -912,9 +912,9 @@ slug: ${fields.slug}`,
           </SelectContent>
         </Select>
         <Select value={campaignTypeFilter} onValueChange={setCampaignTypeFilter}>
-          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="All Types" /></SelectTrigger>
+          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder={t("common.allTypes")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">{t("common.allTypes")}</SelectItem>
             <SelectItem value="seo">SEO</SelectItem>
             <SelectItem value="sea">SEA</SelectItem>
             <SelectItem value="geo">GEO</SelectItem>
