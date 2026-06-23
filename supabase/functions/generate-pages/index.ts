@@ -1836,7 +1836,7 @@ Deno.serve(async (req) => {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") {
               if (value || rule === "ai_only") {
-                pageContent = pageContent.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+                pageContent = pageContent.replace(new RegExp(`\\{${key}\\}`, "gi"), clampVar(key, value || ""));
               }
             }
           }
@@ -1846,7 +1846,7 @@ Deno.serve(async (req) => {
             const rule = _ruleFor(key);
             if (rule === "ai_only") continue; // CSV must be ignored
             const regex = new RegExp(`\\{${key}\\}`, "gi");
-            pageContent = pageContent.replace(regex, value || "");
+            pageContent = pageContent.replace(regex, clampVar(key, value || ""));
           }
 
           // 3. AI fallback for any still-unfilled placeholders (csv_first when CSV empty).
@@ -1854,7 +1854,7 @@ Deno.serve(async (req) => {
             const rule = _ruleFor(key);
             if (rule === "ai_only" || rule === "ai_first") continue; // already applied
             const regex = new RegExp(`\\{${key}\\}`, "gi");
-            pageContent = pageContent.replace(regex, value || "");
+            pageContent = pageContent.replace(regex, clampVar(key, value || ""));
           }
 
 
