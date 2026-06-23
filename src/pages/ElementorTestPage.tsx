@@ -54,6 +54,35 @@ export default function ElementorTestPage() {
     });
   };
 
+  type ConvResult = { id: string; name: string; status: "ok" | "error"; widgets?: number; error?: string };
+  const [converting, setConverting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<ConvResult[]>([]);
+
+  const convertSelected = async () => {
+    const list = buildElementorTemplates(selectedIds);
+    if (!list.length) return;
+    setConverting(true);
+    setResults([]);
+    setProgress(0);
+    const out: ConvResult[] = [];
+    for (let i = 0; i < list.length; i++) {
+      const t = list[i];
+      try {
+        const html = applyTemplateDefaults(t.content, t.defaultValues);
+        const data = templateToElementor(html);
+        if (!data.length) throw new Error("No Elementor elements produced");
+        out.push({ id: t.id, name: t.name, status: "ok", widgets: Object.values(countWidgets(data)).reduce((a, b) => a + b, 0) });
+      } catch (e) {
+        out.push({ id: t.id, name: t.name, status: "error", error: e instanceof Error ? e.message : String(e) });
+      }
+      setResults([...out]);
+      setProgress(Math.round(((i + 1) / list.length) * 100));
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    setConverting(false);
+  };
+
   const resolvedHtml = useMemo(
     () => (template ? applyTemplateDefaults(template.content, template.defaultValues) : ""),
     [template],
