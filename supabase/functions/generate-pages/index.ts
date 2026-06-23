@@ -501,37 +501,33 @@ async function generateAiImage(
   }
 }
 
-async function generateAiContent(
-  prompt: string,
-  settings: { tone: string; contentLength: string; language: string },
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+function countLines(text: string): number {
+  return text.split(/\n/).filter((l) => l.trim().length > 0).length;
+}
+
+// Safely truncate to a max word count without cutting mid-word, preferring a
+// sentence boundary so the result still reads cleanly and fits the design.
+function safeTruncate(text: string, maxWords: number): string {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return text.trim();
+  let clipped = words.slice(0, maxWords).join(" ");
+  const lastStop = Math.max(clipped.lastIndexOf("."), clipped.lastIndexOf("!"), clipped.lastIndexOf("?"));
+  if (lastStop > clipped.length * 0.5) {
+    clipped = clipped.slice(0, lastStop + 1);
+  } else if (!/[.!?]$/.test(clipped)) {
+    clipped = clipped.replace(/[,;:]\s*$/, "") + "…";
+  }
+  return clipped.trim();
+}
+
+async function callAiContent(
+  systemPrompt: string,
+  userPrompt: string,
   apiKey: string
 ): Promise<string> {
-  const lengthGuide: Record<string, string> = {
-    short: "Keep it concise, 1-2 sentences.",
-    medium: "Write a well-developed paragraph of 3-5 sentences.",
-    long: "Write a detailed, comprehensive section of 2-3 paragraphs.",
-  };
-  const resolvedLangName = resolveLanguageName(settings.language);
-
-  // Match the length of the original template block so the design stays intact.
-  // The prompt itself reflects the original content's size: generate within its
-  // word/line count, or at most one line more.
-  const refText = prompt.trim();
-  const wordCount = refText.split(/\s+/).filter(Boolean).length;
-  const lineCount = refText.split(/\n/).filter((l) => l.trim().length > 0).length;
-  const lengthConstraint =
-    wordCount > 0
-      ? `\n\nLENGTH MATCH (design-critical): The original content has about ${wordCount} words across ${lineCount} line(s). Your output MUST stay within that size — use a similar number of words and at most ONE line more than the original. Do NOT exceed it, so the page layout/design stays intact.`
-      : "";
-
-  const systemPrompt = `You are an expert content writer. Generate high-quality, engaging content.
-Tone: ${settings.tone}
-Length: ${lengthGuide[settings.contentLength] || lengthGuide.medium}${lengthConstraint}
-
-CRITICAL LANGUAGE RULE: ALL generated text MUST be written in ${resolvedLangName}. This is the website's primary language and is non-negotiable. If the input prompt, template, or CSV data is in another language (e.g. English), TRANSLATE it into ${resolvedLangName}. Never output English unless ${resolvedLangName} IS English.
-
-IMPORTANT: Return ONLY the generated content text. No markdown formatting, no headers, no extra commentary.`;
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
   try {
@@ -545,7 +541,7 @@ IMPORTANT: Return ONLY the generated content text. No markdown formatting, no he
         model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: userPrompt },
         ],
       }),
       signal: controller.signal,
@@ -567,6 +563,66 @@ IMPORTANT: Return ONLY the generated content text. No markdown formatting, no he
     clearTimeout(timeout);
   }
 }
+
+async function generateAiContent(
+  prompt: string,
+  settings: { tone: string; contentLength: string; language: string; maxLines?: number | null; maxWords?: number | null },
+  apiKey: string
+): Promise<string> {
+  const lengthGuide: Record<string, string> = {
+    short: "Keep it concise, 1-2 sentences.",
+    medium: "Write a well-developed paragraph of 3-5 sentences.",
+    long: "Write a detailed, comprehensive section of 2-3 paragraphs.",
+  };
+  const resolvedLangName = resolveLanguageName(settings.language);
+
+  // Resolve the effective length limit:
+  //   campaign setting (maxWords/maxLines) -> template default computed from the
+  //   original block size. The output may run at most ONE line longer.
+  const refText = prompt.trim();
+  const refWords = countWords(refText);
+  const refLines = countLines(refText);
+
+  const capWords = settings.maxWords && settings.maxWords > 0 ? settings.maxWords : (refWords > 0 ? refWords : 0);
+  const capLines = settings.maxLines && settings.maxLines > 0 ? settings.maxLines : (refLines > 0 ? refLines : 0);
+  // Allowance: one extra line worth of words (approx words-per-line) on top of cap.
+  const wordsPerLine = capLines > 0 && capWords > 0 ? Math.ceil(capWords / capLines) : 14;
+  const hardWordLimit = capWords > 0 ? capWords + wordsPerLine : 0;
+
+  const lengthConstraint =
+    capWords > 0
+      ? `\n\nLENGTH MATCH (design-critical): Keep the output to about ${capWords} words across at most ${capLines || 1} line(s). You may go at most ONE line longer than the original. Do NOT exceed roughly ${hardWordLimit} words, so the page layout/design stays intact.`
+      : "";
+
+  const systemPrompt = `You are an expert content writer. Generate high-quality, engaging content.
+Tone: ${settings.tone}
+Length: ${lengthGuide[settings.contentLength] || lengthGuide.medium}${lengthConstraint}
+
+CRITICAL LANGUAGE RULE: ALL generated text MUST be written in ${resolvedLangName}. This is the website's primary language and is non-negotiable. If the input prompt, template, or CSV data is in another language (e.g. English), TRANSLATE it into ${resolvedLangName}. Never output English unless ${resolvedLangName} IS English.
+
+IMPORTANT: Return ONLY the generated content text. No markdown formatting, no headers, no extra commentary.`;
+
+  let content = await callAiContent(systemPrompt, prompt, apiKey);
+
+  // Overflow validation + safe auto-fix.
+  if (hardWordLimit > 0 && (countWords(content) > hardWordLimit || (capLines > 0 && countLines(content) > capLines + 1))) {
+    try {
+      const stricterSystem = `${systemPrompt}\n\nYOUR PREVIOUS ANSWER WAS TOO LONG. Rewrite it in NO MORE THAN ${capWords} words and ${capLines || 1} line(s). Be tighter.`;
+      const retry = await callAiContent(stricterSystem, prompt, apiKey);
+      if (countWords(retry) <= hardWordLimit) content = retry;
+      else content = retry; // keep the tighter attempt before final truncation
+    } catch (_e) {
+      // ignore retry failure; fall through to truncation
+    }
+    // Final safety net: hard truncate at a word/sentence boundary.
+    if (countWords(content) > hardWordLimit) {
+      content = safeTruncate(content, hardWordLimit);
+    }
+  }
+
+  return content.trim();
+}
+
 
 /**
  * Generate AI default values for unmapped template variables, in one batched
@@ -1099,6 +1155,62 @@ Deno.serve(async (req) => {
       csvRows = (campaign.csv_data || []) as Record<string, string>[];
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // PREVIEW MODE (dry run): generate the title + description for the first
+    // sample row and return them with line/word counts compared to the
+    // original template patterns. Nothing is persisted or published.
+    // ─────────────────────────────────────────────────────────────────────
+    if (action === "preview") {
+      const sampleRow = (csvRows[0] || {}) as Record<string, string>;
+      const mappingObj = (campaign.mapping || {}) as Record<string, any>;
+      const customValues = (mappingObj.custom_values || {}) as Record<string, string>;
+      const previewVars: Record<string, string> = { ...customValues, ...sampleRow };
+
+      const resolveTpl = (pattern: string): string => {
+        let resolved = pattern || "";
+        for (const [key, value] of Object.entries(previewVars)) {
+          resolved = resolved.replace(new RegExp(`\\{${key}\\}`, "gi"), value || "");
+        }
+        return resolved.replace(/\{[^}]+\}/g, "").trim();
+      };
+
+      const origTitle = (campaign.templates.seo_title_pattern as string) || "";
+      const origDesc = (campaign.templates.seo_description_pattern as string) || "";
+      const genTitle = resolveTpl(origTitle);
+      const genDesc = resolveTpl(origDesc);
+
+      const capLines = (campaign.ai_max_lines as number | null) ?? null;
+      const capWords = (campaign.ai_max_words as number | null) ?? null;
+
+      const describe = (original: string, generated: string) => {
+        const origW = countWords(original);
+        const origL = countLines(original);
+        const genW = countWords(generated);
+        const genL = countLines(generated);
+        const lineLimit = (capLines && capLines > 0 ? capLines : origL) + 1;
+        const wordLimit = capWords && capWords > 0 ? capWords + Math.ceil((capWords) / Math.max(capLines || origL || 1, 1)) : (origW > 0 ? origW + Math.ceil(origW / Math.max(origL, 1)) : 0);
+        const overflow = (wordLimit > 0 && genW > wordLimit) || (genL > lineLimit);
+        return {
+          original_words: origW,
+          original_lines: origL,
+          generated_words: genW,
+          generated_lines: genL,
+          overflow,
+        };
+      };
+
+      return new Response(JSON.stringify({
+        success: true,
+        action: "preview",
+        cap: { max_lines: capLines, max_words: capWords },
+        title: { original: origTitle, generated: genTitle, ...describe(origTitle, genTitle) },
+        description: { original: origDesc, generated: genDesc, ...describe(origDesc, genDesc) },
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     if (csvRows.length === 0) {
       console.error("[GENERATE-PAGES] No CSV data found for campaign");
       return new Response(JSON.stringify({ error: "No CSV data in this campaign" }), {
@@ -1222,7 +1334,10 @@ Deno.serve(async (req) => {
       tone: profile?.ai_tone || "professional",
       contentLength: profile?.ai_content_length || "medium",
       language: resolvedLanguage,
+      maxLines: (campaign.ai_max_lines as number | null) ?? null,
+      maxWords: (campaign.ai_max_words as number | null) ?? null,
     };
+
 
     const templateContent = campaign.templates.content as string;
     const aiBlocks = extractAiBlocks(templateContent);

@@ -171,6 +171,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
   const [recurringInterval, setRecurringInterval] = useState<"daily" | "weekly" | "biweekly" | "monthly">("weekly");
   const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
   const [seoTitleFormat, setSeoTitleFormat] = useState("{title} | {brand}");
+  // AI content length limits for template blocks (empty = use template default).
+  const [aiMaxLines, setAiMaxLines] = useState("");
+  const [aiMaxWords, setAiMaxWords] = useState("");
+
+
 
   // UTM/SEA
   const [utmSource, setUtmSource] = useState("");
@@ -246,7 +251,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     scheduledDate: scheduledDate ? scheduledDate.toISOString() : null,
     recurringInterval,
     recurringEndDate: recurringEndDate ? recurringEndDate.toISOString() : null,
-    seoTitleFormat,
+    seoTitleFormat, aiMaxLines, aiMaxWords,
     utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
     adCampaignId, adGroupId, seaDirectoryLevels,
     geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, geoLanguage,
@@ -263,7 +268,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     shopifyTuneOpen, shopifyFullBleed, shopifyContainerMax, shopifyHorizontalPad,
     shopifyHeadingScale, shopifyBodyLineHeight, shopifySectionPadScale,
     publishMode, publishAs, maxRows, generationMethod,
-    scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat,
+    scheduleMode, scheduledDate, recurringInterval, recurringEndDate, seoTitleFormat, aiMaxLines, aiMaxWords,
     utmSource, utmMedium, utmCampaign, utmTerm, utmContent,
     adCampaignId, adGroupId, seaDirectoryLevels,
     geoCountry, geoRegion, geoCity, geoPostcode, geoLat, geoLng, geoLanguage,
@@ -326,6 +331,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         if (typeof s.recurringInterval === "string") setRecurringInterval(s.recurringInterval);
         if (s.recurringEndDate) setRecurringEndDate(new Date(s.recurringEndDate));
         if (typeof s.seoTitleFormat === "string") setSeoTitleFormat(s.seoTitleFormat);
+        if (typeof s.aiMaxLines === "string") setAiMaxLines(s.aiMaxLines);
+        if (typeof s.aiMaxWords === "string") setAiMaxWords(s.aiMaxWords);
         if (typeof s.utmSource === "string") setUtmSource(s.utmSource);
         if (typeof s.utmMedium === "string") setUtmMedium(s.utmMedium);
         if (typeof s.utmCampaign === "string") setUtmCampaign(s.utmCampaign);
@@ -688,6 +695,40 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return out;
   }, [customValues]);
 
+  // Client-side length preview: resolve the selected template's SEO title and
+  // description for the first sample row and compare line/word length against
+  // the configured caps (or the template's own length) so the user can confirm
+  // the generated content will fit the design before publishing.
+  const lengthPreviewData = useMemo(() => {
+    const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+    if (!tpl) return null;
+    const sampleRow = (baseCsvData[0] || {}) as Record<string, string>;
+    const vars: Record<string, string> = { ...customValues, ...sampleRow };
+    const resolve = (pattern: string) => {
+      let r = pattern || "";
+      for (const [k, v] of Object.entries(vars)) r = r.replace(new RegExp(`\\{${k}\\}`, "gi"), v || "");
+      return r.replace(/\{[^}]+\}/g, "").trim();
+    };
+    const words = (t: string) => t.trim().split(/\s+/).filter(Boolean).length;
+    const lines = (t: string) => t.split(/\n/).filter((l) => l.trim().length > 0).length;
+    const capL = aiMaxLines.trim() ? parseInt(aiMaxLines, 10) : 0;
+    const capW = aiMaxWords.trim() ? parseInt(aiMaxWords, 10) : 0;
+    const build = (orig: string, gen: string) => {
+      const oL = lines(orig), oW = words(orig), gL = lines(gen), gW = words(gen);
+      const lineLimit = (capL > 0 ? capL : oL) + 1;
+      const wordLimit = capW > 0 ? capW + Math.ceil(capW / Math.max(capL || oL || 1, 1)) : (oW > 0 ? oW + Math.ceil(oW / Math.max(oL, 1)) : 0);
+      const overflow = (wordLimit > 0 && gW > wordLimit) || gL > lineLimit;
+      return { origLines: oL, origWords: oW, genLines: gL, genWords: gW, overflow };
+    };
+    const origTitle = tpl.seo_title_pattern || "";
+    const origDesc = tpl.seo_description_pattern || "";
+    return {
+      title: { generated: resolve(origTitle), ...build(origTitle, resolve(origTitle)) },
+      description: { generated: resolve(origDesc), ...build(origDesc, resolve(origDesc)) },
+    };
+  }, [templates, selectedTemplate, baseCsvData, customValues, aiMaxLines, aiMaxWords]);
+
+
   // Expand the data set by the cartesian product of every multi-value custom
   // variable, so N services × existing rows produce N× the pages.
   const { effectiveCsvData, effectiveCsvHeaders } = useMemo(() => {
@@ -1037,6 +1078,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         campaign_type: campaignType,
         campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
+        ai_max_lines: aiMaxLines.trim() ? parseInt(aiMaxLines, 10) : null,
+        ai_max_words: aiMaxWords.trim() ? parseInt(aiMaxWords, 10) : null,
         website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
         csv_data: effectiveCsvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: maxRows ? Math.min(parseInt(maxRows), effectiveRowCount) : effectiveRowCount,
@@ -2162,6 +2205,63 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </div>
                     );
                   })()}
+                  {/* AI content length control + length preview */}
+                  {selectedTemplate && (
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-3 space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold">AI content length</p>
+                        <p className="text-[10px] text-muted-foreground leading-snug">
+                          Limit AI-written content so it fits the template design. Leave blank to use the template's own length as the default.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Max lines</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={aiMaxLines}
+                            onChange={(e) => setAiMaxLines(e.target.value)}
+                            placeholder="Template default"
+                            className="h-8 rounded-lg text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Max words</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={aiMaxWords}
+                            onChange={(e) => setAiMaxWords(e.target.value)}
+                            placeholder="Template default"
+                            className="h-8 rounded-lg text-xs"
+                          />
+                        </div>
+                      </div>
+                      {lengthPreviewData && (
+                        <div className="rounded-lg border border-border/60 bg-muted/30 p-2.5 space-y-2">
+                          <p className="text-[11px] font-semibold">Length preview (first row)</p>
+                          {(["title", "description"] as const).map((field) => {
+                            const d = (lengthPreviewData as any)[field];
+                            return (
+                              <div key={field} className="space-y-0.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{field}</span>
+                                  <span className={`text-[10px] font-medium ${d.overflow ? "text-destructive" : "text-emerald-500"}`}>
+                                    {d.overflow ? "Overflows - will be trimmed" : "Fits"} · {d.genWords}w / {d.genLines}L vs orig {d.origWords}w / {d.origLines}L
+                                  </span>
+                                </div>
+                                <p className={`text-[11px] leading-snug ${d.overflow ? "text-destructive" : "text-foreground"}`}>
+                                  {d.generated || <span className="text-muted-foreground italic">No {field} pattern set on this template.</span>}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {selectedTemplate && selectedTemplateVars.length > 0 && (
                     <FillRulesPanel
                       templateVars={selectedTemplateVars}
