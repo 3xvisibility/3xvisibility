@@ -2207,6 +2207,63 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </div>
                     );
                   })()}
+                  {/* AI content length control + length preview */}
+                  {selectedTemplate && (
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-3 space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold">AI content length</p>
+                        <p className="text-[10px] text-muted-foreground leading-snug">
+                          Limit AI-written content so it fits the template design. Leave blank to use the template's own length as the default.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Max lines</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={aiMaxLines}
+                            onChange={(e) => setAiMaxLines(e.target.value)}
+                            placeholder="Template default"
+                            className="h-8 rounded-lg text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Max words</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={aiMaxWords}
+                            onChange={(e) => setAiMaxWords(e.target.value)}
+                            placeholder="Template default"
+                            className="h-8 rounded-lg text-xs"
+                          />
+                        </div>
+                      </div>
+                      {lengthPreviewData && (
+                        <div className="rounded-lg border border-border/60 bg-muted/30 p-2.5 space-y-2">
+                          <p className="text-[11px] font-semibold">Length preview (first row)</p>
+                          {(["title", "description"] as const).map((field) => {
+                            const d = (lengthPreviewData as any)[field];
+                            return (
+                              <div key={field} className="space-y-0.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{field}</span>
+                                  <span className={`text-[10px] font-medium ${d.overflow ? "text-destructive" : "text-emerald-500"}`}>
+                                    {d.overflow ? "Overflows �— will be trimmed" : "Fits ✓"} · {d.genWords}w / {d.genLines}L vs orig {d.origWords}w / {d.origLines}L
+                                  </span>
+                                </div>
+                                <p className={`text-[11px] leading-snug ${d.overflow ? "text-destructive" : "text-foreground"}`}>
+                                  {d.generated || <span className="text-muted-foreground italic">No {field} pattern set on this template.</span>}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {selectedTemplate && selectedTemplateVars.length > 0 && (
                     <FillRulesPanel
                       templateVars={selectedTemplateVars}
