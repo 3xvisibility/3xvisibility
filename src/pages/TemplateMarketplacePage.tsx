@@ -656,11 +656,25 @@ export default function TemplateMarketplacePage() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="text-xs text-muted-foreground">Variables:</span>
-                  {activePreview.variables.map((v) => (
-                    <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
-                  ))}
+                <div className="rounded-lg border border-border bg-muted/20">
+                  <button
+                    type="button"
+                    onClick={() => setVariablesOpen((o) => !o)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform ${variablesOpen ? "" : "-rotate-90"}`}
+                    />
+                    <span className="font-medium">Variables</span>
+                    <Badge variant="secondary" className="text-[10px]">{activePreview.variables.length}</Badge>
+                  </button>
+                  {variablesOpen && (
+                    <div className="flex flex-wrap gap-1.5 px-3 pb-3">
+                      {activePreview.variables.map((v) => (
+                        <Badge key={v} variant="outline" className="text-xs font-mono">{v}</Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <SeoDefaultsEditor template={activePreview} />
