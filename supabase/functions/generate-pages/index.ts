@@ -13,6 +13,7 @@ const corsHeaders = {
 };
 
 import { slugifyLocale } from "../_shared/locale-format.ts";
+import { analyzeTemplateBudget, enforceBudget, type BudgetMap } from "../_shared/template-length-budget.ts";
 
 function slugify(text: string, locale?: string): string {
   return slugifyLocale(text, locale);
