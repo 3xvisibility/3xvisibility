@@ -433,15 +433,21 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
 export function htmlToElementor(html: string): ElementorElement[] {
   const tree = parseHtml(html || "");
   const converted = convertChildren(tree);
-  // Ensure every top-level element is a container (Elementor sections).
+  // Ensure every top-level element is a full-width container (Elementor sections).
   return converted.map((el) =>
-    el.elType === "container" ? el : container([el])
+    el.elType === "container"
+      ? { ...el, settings: { ...el.settings, content_width: "full", width: "100%" } }
+      : container([el], undefined, true)
   );
 }
 
 /**
  * Build the WordPress post meta needed to make a page render & edit natively in
  * Elementor. Returns meta keys to merge into the REST `meta` payload.
+ *
+ * The Elementor "Canvas" page template is forced so the published page renders
+ * with NO theme header/footer/sidebar and full width — making the WordPress
+ * output match the original template design 1:1.
  */
 export function buildElementorMeta(html: string, version = "3.21.0"): Record<string, unknown> {
   const data = htmlToElementor(html);
@@ -450,5 +456,10 @@ export function buildElementorMeta(html: string, version = "3.21.0"): Record<str
     _elementor_template_type: "wp-page",
     _elementor_version: version,
     _elementor_data: JSON.stringify(data),
+    _elementor_page_settings: JSON.stringify({
+      content_width: "full",
+      template: "elementor_canvas",
+    }),
+    _wp_page_template: "elementor_canvas",
   };
 }
