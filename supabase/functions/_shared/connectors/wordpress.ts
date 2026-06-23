@@ -255,13 +255,16 @@ export class WordPressConnector implements CmsConnector {
 
     // Rebuild the native Elementor layout when the body content is being updated
     // (skipped in design-preservation mode and for products).
+    let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && typeof payload.content === "string") {
       Object.assign(meta, buildElementorMeta(payload.content));
+      elementorApplied = true;
     }
 
     if (payload.custom_fields) Object.assign(meta, payload.custom_fields);
     if (Object.keys(meta).length > 0) body.meta = meta;
     if (!preserveDesign && resolvedTemplate) body.template = resolvedTemplate;
+    else if (!preserveDesign && elementorApplied) body.template = "elementor_canvas";
 
     const data = await this.executePageRequest(
       `${this.baseUrl}/wp-json/wp/v2/${resourcePath}/${externalId}`,
