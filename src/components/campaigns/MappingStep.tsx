@@ -824,20 +824,46 @@ export function MappingStep({
       {mandatoryWarnings.length > 0 && (
         <div className="space-y-1.5">
           {mandatoryWarnings.map((w, i) => (
-            <div key={i} className="flex items-start gap-2 text-xs text-warning bg-warning/5 border border-warning/20 rounded-lg p-2.5">
-              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span className="flex-1">{w.message}</span>
-              {w.fix && w.fixLabel && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-6 px-2 text-[11px] shrink-0"
-                  onClick={w.fix}
-                >
-                  <Wand2 className="h-3 w-3 mr-1" />
-                  {w.fixLabel}
-                </Button>
+            <div key={i} className="flex flex-col gap-2 text-xs text-warning bg-warning/5 border border-warning/20 rounded-lg p-2.5">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span className="flex-1">{w.message}</span>
+                {w.fix && w.fixLabel && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-[11px] shrink-0"
+                    onClick={w.fix}
+                  >
+                    <Wand2 className="h-3 w-3 mr-1" />
+                    {w.fixLabel}
+                  </Button>
+                )}
+              </div>
+              {w.customTarget && (
+                <div className="flex items-center gap-1.5 pl-5.5">
+                  <Input
+                    value={customTargetInputs[w.customTarget.targetKey] || ""}
+                    onChange={(e) => setCustomTargetInputs(prev => ({ ...prev, [w.customTarget!.targetKey]: e.target.value }))}
+                    placeholder={w.customTarget.placeholder}
+                    className="h-7 text-[11px] flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 px-2 text-[11px] shrink-0"
+                    disabled={!(customTargetInputs[w.customTarget.targetKey] || "").trim()}
+                    onClick={() => {
+                      const ct = w.customTarget!;
+                      applyCustomTarget((customTargetInputs[ct.targetKey] || "").trim(), ct.targetKey, ct.label, ct.candidate);
+                      setCustomTargetInputs(prev => ({ ...prev, [ct.targetKey]: "" }));
+                    }}
+                  >
+                    Use custom
+                  </Button>
+                </div>
               )}
             </div>
           ))}
