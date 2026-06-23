@@ -862,10 +862,10 @@ slug: ${fields.slug}`,
         <div className="flex flex-wrap gap-2">
           <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) importTemplate(f); }} />
           <Button variant="outline" size="sm" onClick={() => importFileRef.current?.click()} disabled={limitReached}>
-            <Upload className="mr-1.5 h-3.5 w-3.5" /> Import JSON
+            <Upload className="mr-1.5 h-3.5 w-3.5" /> {t("templates.importJson")}
           </Button>
           <Button size="sm" onClick={() => setPickerOpen(true)} disabled={limitReached}>
-            <Plus className="mr-1.5 h-3.5 w-3.5" /> Create Template
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> {t("templates.createTemplate")}
           </Button>
         </div>
       </div>
