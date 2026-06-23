@@ -1341,6 +1341,21 @@ Deno.serve(async (req) => {
 
 
     const templateContent = campaign.templates.content as string;
+    // ── Template Structure Analyzer / Design Integrity Protection ──
+    // Derive per-variable length budgets from the template's ORIGINAL sample
+    // values (default_values). Generated/CSV/AI content is clamped to <=120% of
+    // the original so the published page keeps the template's exact layout,
+    // spacing and section heights. Safe Mode is ON unless explicitly disabled.
+    const templateSafeMode =
+      ((campaign.mapping || {}) as { template_safe_mode?: boolean }).template_safe_mode !== false;
+    const lengthBudget: BudgetMap = templateSafeMode
+      ? analyzeTemplateBudget((campaign.templates as { default_values?: Record<string, string> }).default_values)
+      : {};
+    const clampVar = (key: string, value: string): string => {
+      if (!templateSafeMode || typeof value !== "string") return value;
+      const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
+      return b ? enforceBudget(value, b) : value;
+    };
     const aiBlocks = extractAiBlocks(templateContent);
     const aiImageBlocks = extractAiImageBlocks(templateContent);
     const hasAiBlocks = aiBlocks.length > 0;
