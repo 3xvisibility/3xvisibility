@@ -356,7 +356,14 @@ function container(children: ElementorElement[], node?: HtmlNode): ElementorElem
     flex_direction: "column",
   };
   // Detect column/row layouts to preserve responsive grids.
-  if (node && hasClass(node, "row", "columns", "flex", "grid", "d-flex")) {
+  if (node && hasClass(node, "grid", "services", "features", "team", "pricing", "cards")) {
+    // Native Elementor Grid Container (responsive, mobile-optimized).
+    settings.container_type = "grid";
+    settings.grid_columns = { unit: "fr", size: 3, sizes: [] };
+    settings.grid_columns_tablet = { unit: "fr", size: 2, sizes: [] };
+    settings.grid_columns_mobile = { unit: "fr", size: 1, sizes: [] };
+    settings.grid_gaps = { column: "24", row: "24", unit: "px" };
+  } else if (node && hasClass(node, "row", "columns", "flex", "d-flex")) {
     settings.flex_direction = "row";
     settings.flex_wrap = "wrap";
   }
