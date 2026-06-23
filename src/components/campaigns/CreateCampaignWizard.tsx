@@ -2250,7 +2250,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                 <div className="flex items-center justify-between gap-2">
                                   <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{field}</span>
                                   <span className={`text-[10px] font-medium ${d.overflow ? "text-destructive" : "text-emerald-500"}`}>
-                                    {d.overflow ? "Overflows �— will be trimmed" : "Fits ✓"} · {d.genWords}w / {d.genLines}L vs orig {d.origWords}w / {d.origLines}L
+                                    {d.overflow ? "Overflows - will be trimmed" : "Fits"} · {d.genWords}w / {d.genLines}L vs orig {d.origWords}w / {d.origLines}L
                                   </span>
                                 </div>
                                 <p className={`text-[11px] leading-snug ${d.overflow ? "text-destructive" : "text-foreground"}`}>
