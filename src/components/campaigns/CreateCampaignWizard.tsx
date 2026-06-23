@@ -1044,6 +1044,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         campaign_type: campaignType,
         campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
+        ai_max_lines: aiMaxLines.trim() ? parseInt(aiMaxLines, 10) : null,
+        ai_max_words: aiMaxWords.trim() ? parseInt(aiMaxWords, 10) : null,
         website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
         csv_data: effectiveCsvData as unknown as Database["public"]["Tables"]["campaigns"]["Insert"]["csv_data"],
         total_rows: maxRows ? Math.min(parseInt(maxRows), effectiveRowCount) : effectiveRowCount,
