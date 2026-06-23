@@ -544,6 +544,8 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          ai_max_lines: number | null
+          ai_max_words: number | null
           author_rotation: Json | null
           batch_size: number | null
           campaign_type: Database["public"]["Enums"]["campaign_type"]
@@ -583,6 +585,8 @@ export type Database = {
           workspace_id: string | null
         }
         Insert: {
+          ai_max_lines?: number | null
+          ai_max_words?: number | null
           author_rotation?: Json | null
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
@@ -622,6 +626,8 @@ export type Database = {
           workspace_id?: string | null
         }
         Update: {
+          ai_max_lines?: number | null
+          ai_max_words?: number | null
           author_rotation?: Json | null
           batch_size?: number | null
           campaign_type?: Database["public"]["Enums"]["campaign_type"]
