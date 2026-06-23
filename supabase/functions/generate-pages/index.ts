@@ -513,9 +513,20 @@ async function generateAiContent(
   };
   const resolvedLangName = resolveLanguageName(settings.language);
 
+  // Match the length of the original template block so the design stays intact.
+  // The prompt itself reflects the original content's size: generate within its
+  // word/line count, or at most one line more.
+  const refText = prompt.trim();
+  const wordCount = refText.split(/\s+/).filter(Boolean).length;
+  const lineCount = refText.split(/\n/).filter((l) => l.trim().length > 0).length;
+  const lengthConstraint =
+    wordCount > 0
+      ? `\n\nLENGTH MATCH (design-critical): The original content has about ${wordCount} words across ${lineCount} line(s). Your output MUST stay within that size — use a similar number of words and at most ONE line more than the original. Do NOT exceed it, so the page layout/design stays intact.`
+      : "";
+
   const systemPrompt = `You are an expert content writer. Generate high-quality, engaging content.
 Tone: ${settings.tone}
-Length: ${lengthGuide[settings.contentLength] || lengthGuide.medium}
+Length: ${lengthGuide[settings.contentLength] || lengthGuide.medium}${lengthConstraint}
 
 CRITICAL LANGUAGE RULE: ALL generated text MUST be written in ${resolvedLangName}. This is the website's primary language and is non-negotiable. If the input prompt, template, or CSV data is in another language (e.g. English), TRANSLATE it into ${resolvedLangName}. Never output English unless ${resolvedLangName} IS English.
 
