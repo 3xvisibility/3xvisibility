@@ -1306,6 +1306,14 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     return { titlePattern, descPattern, titleVar, locationVar, brandVar, descVar };
   }, [variableMapping]);
 
+  // Seed the campaign's SEO title format from the selected template's SEO title
+  // pattern, so SEO title/description default to the template's own patterns.
+  useEffect(() => {
+    const tpl = templates.find(t => t.id === selectedTemplate);
+    if (tpl?.seo_title_pattern) setSeoTitleFormat(tpl.seo_title_pattern);
+  }, [selectedTemplate, templates]);
+
+
   const persistTemplatePattern = useCallback(
     async (field: "seo_title_pattern" | "seo_description_pattern", value: string) => {
       const tpl = templates.find(t => t.id === selectedTemplate);
