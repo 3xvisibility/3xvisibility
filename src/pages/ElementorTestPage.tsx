@@ -1,10 +1,19 @@
 import { useMemo, useState } from "react";
-import { ELEMENTOR_TEMPLATES, templateToElementor, ELEMENTOR_BADGE } from "@/lib/marketplace-elementor-templates";
+import {
+  buildElementorTemplates,
+  templateToElementor,
+  ELEMENTOR_BADGE,
+  getElementorCandidates,
+  defaultSelection,
+  PER_CATEGORY,
+} from "@/lib/marketplace-elementor-templates";
 import { applyTemplateDefaults } from "@/lib/marketplace-templates";
 import type { ElementorElement } from "@/lib/connectors/elementor-engine";
+import { usePersistedState } from "@/hooks/use-persisted-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Seo } from "@/components/Seo";
 
@@ -22,9 +31,28 @@ function countWidgets(els: ElementorElement[]): Record<string, number> {
 }
 
 export default function ElementorTestPage() {
-  const templates = ELEMENTOR_TEMPLATES;
-  const [selectedId, setSelectedId] = useState(templates[0]?.id ?? "");
-  const template = useMemo(() => templates.find((t) => t.id === selectedId), [templates, selectedId]);
+  const candidates = useMemo(() => getElementorCandidates(), []);
+  const [selectedIds, setSelectedIds] = usePersistedState<string[]>(
+    "elementor-test-selection",
+    defaultSelection(),
+  );
+
+  const templates = useMemo(() => buildElementorTemplates(selectedIds), [selectedIds]);
+  const [selectedId, setSelectedId] = useState("");
+  const activeId = templates.some((t) => t.id === selectedId) ? selectedId : templates[0]?.id ?? "";
+  const template = useMemo(() => templates.find((t) => t.id === activeId), [templates, activeId]);
+
+  const toggle = (sourceId: string, category: string) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(sourceId)) return prev.filter((id) => id !== sourceId);
+      const catIds = (candidates.get(category) ?? []).map((t) => t.id);
+      const inCat = prev.filter((id) => catIds.includes(id));
+      if (inCat.length >= PER_CATEGORY) {
+        return [...prev.filter((id) => id !== inCat[0]), sourceId];
+      }
+      return [...prev, sourceId];
+    });
+  };
 
   const resolvedHtml = useMemo(
     () => (template ? applyTemplateDefaults(template.content, template.defaultValues) : ""),
@@ -47,12 +75,54 @@ export default function ElementorTestPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            Select an Elementor template <Badge variant="secondary">{ELEMENTOR_BADGE}</Badge>
+          <CardTitle className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-3">
+              Choose templates to convert <Badge variant="secondary">{ELEMENTOR_BADGE}</Badge>
+            </span>
+            <Button size="sm" variant="outline" onClick={() => setSelectedIds(defaultSelection())}>
+              Reset to best 2
+            </Button>
           </CardTitle>
         </CardHeader>
+        <CardContent className="space-y-5">
+          <p className="text-sm text-muted-foreground">
+            Pick up to {PER_CATEGORY} templates per category. Selecting a third in a full category replaces the oldest pick.
+          </p>
+          <div className="grid gap-5 md:grid-cols-2">
+            {[...candidates.entries()].map(([category, list]) => {
+              const inCat = list.filter((t) => selectedIds.includes(t.id)).length;
+              return (
+                <div key={category} className="rounded-lg border p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="font-medium">{category}</span>
+                    <Badge variant={inCat >= PER_CATEGORY ? "default" : "outline"}>
+                      {inCat}/{PER_CATEGORY}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {list.map((t) => {
+                      const checked = selectedIds.includes(t.id);
+                      return (
+                        <label key={t.id} className="flex cursor-pointer items-center gap-2 text-sm">
+                          <Checkbox checked={checked} onCheckedChange={() => toggle(t.id, category)} />
+                          <span className={checked ? "" : "text-muted-foreground"}>{t.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Preview an Elementor template</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
-          <Select value={selectedId} onValueChange={setSelectedId}>
+          <Select value={activeId} onValueChange={setSelectedId}>
             <SelectTrigger className="max-w-md"><SelectValue placeholder="Choose template" /></SelectTrigger>
             <SelectContent>
               {templates.map((t) => (
@@ -61,7 +131,7 @@ export default function ElementorTestPage() {
             </SelectContent>
           </Select>
           <div className="text-sm text-muted-foreground">
-            {templates.length} templates across {new Set(ELEMENTOR_TEMPLATES.map((t) => t.id)).size} entries · best 2 per source category.
+            {templates.length} templates selected for conversion.
           </div>
         </CardContent>
       </Card>
