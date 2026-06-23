@@ -698,8 +698,21 @@ export default function TemplateMarketplacePage() {
                   <TabsContent value="customize" className="mt-3 space-y-3">
                     <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
                       <span className="text-xs text-muted-foreground mr-auto">
-                        Map your data: download the starter CSV (one column per variable), fill it in, then upload to auto-populate every section.
+                        Map your data: download the starter file (one column per variable, pre-filled with a real example row), edit it, then upload to auto-populate every section.
                       </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => downloadStarterCsv({
+                          templateName: activePreview.name,
+                          variables: activePreview.variables,
+                          defaultValues: activePreview.defaultValues,
+                          format: "xlsx",
+                        })}
+                      >
+                        <Download className="h-3.5 w-3.5 mr-1.5" /> Starter Excel
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
