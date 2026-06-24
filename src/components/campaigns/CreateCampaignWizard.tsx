@@ -1903,6 +1903,15 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                           <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">{meta.label}</Badge>
                                           <Label className="text-[10px] text-muted-foreground block font-mono">{`{${v}}`}</Label>
                                         </div>
+                                        {kind === "link" && (
+                                          <Input
+                                            type="text"
+                                            value={aiLinkTexts[v] || ""}
+                                            onChange={(e) => setAiLinkTexts((prev) => ({ ...prev, [v]: e.target.value }))}
+                                            placeholder="Button / link text (optional)"
+                                            className="h-9 rounded-lg text-xs mb-1.5"
+                                          />
+                                        )}
                                         <Input
                                           type={meta.inputType}
                                           value={aiFixedValues[v] || ""}
