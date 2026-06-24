@@ -1238,6 +1238,15 @@ export default function GeneratedPagesPage() {
 
       {/* External dialogs */}
       <DuplicateContentDialog open={duplicateOpen} onOpenChange={setDuplicateOpen} pages={pages.map((p) => ({ id: p.id, title: p.title, content: p.content }))} />
+      <VisualFidelityDialog
+        open={!!fidelityPage}
+        onOpenChange={(v) => { if (!v) setFidelityPage(null); }}
+        templateHtml={fidelityPage?.content}
+        publishedUrl={fidelityPage?.external_url}
+        workspaceId={wsId}
+        generatedPageId={fidelityPage?.id}
+        templateId={fidelityPage?.template_id as string | undefined}
+      />
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
