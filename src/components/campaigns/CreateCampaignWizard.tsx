@@ -887,7 +887,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         return;
       }
       const genVars = aiGenVars;
-      const genTpl = templates.find((t) => t.id === selectedTemplate) as { content?: string } | undefined;
+      const genTpl = templates.find((t) => t.id === selectedTemplate) as { content?: string; default_values?: Record<string, string> } | undefined;
       const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
         body: {
           variables: genVars,
@@ -900,6 +900,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           // Template Safe Mode: keep generated content within the template's
           // original length budget so the layout/design never breaks.
           templateSafeMode: true,
+          // Exact per-field word/char budgets derived from the template's own
+          // default values, so AI headings/text match the template length 1:1.
+          defaultValues: genTpl?.default_values || undefined,
           templateContent: genTpl?.content || undefined,
         },
       });
