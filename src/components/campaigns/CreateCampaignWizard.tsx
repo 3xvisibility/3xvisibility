@@ -900,6 +900,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           // Template Safe Mode: keep generated content within the template's
           // original length budget so the layout/design never breaks.
           templateSafeMode: true,
+          // Exact per-field word/char budgets derived from the template's own
+          // default values, so AI headings/text match the template length 1:1.
+          defaultValues: genTpl?.default_values || undefined,
           templateContent: genTpl?.content || undefined,
         },
       });
