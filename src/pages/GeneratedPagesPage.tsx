@@ -1245,7 +1245,7 @@ export default function GeneratedPagesPage() {
         publishedUrl={fidelityPage?.external_url}
         workspaceId={wsId}
         generatedPageId={fidelityPage?.id}
-        templateId={fidelityPage?.template_id as string | undefined}
+        templateId={undefined}
       />
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
