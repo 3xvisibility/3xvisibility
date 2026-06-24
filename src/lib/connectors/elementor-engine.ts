@@ -613,9 +613,36 @@ export function compareVisualRegression(html: string): VisualRegressionReport {
  * Build the WordPress post meta needed to make a page render & edit natively in
  * Elementor. Returns meta keys to merge into the REST `meta` payload.
  */
+/**
+ * Collect external stylesheet hrefs (Google Fonts + theme CSS) from <link> tags
+ * and convert them into @import rules. Because extractRenderableHtml strips
+ * <link> tags, this keeps web fonts (typography) and any external CSS working
+ * inside the embedded Elementor HTML widget.
+ */
+function extractStylesheetImports(html: string): string {
+  const input = html || "";
+  const imports: string[] = [];
+  const seen = new Set<string>();
+  const linkRe = /<link\b[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = linkRe.exec(input)) !== null) {
+    const tag = m[0];
+    if (!/rel\s*=\s*("|')?[^"'>]*stylesheet/i.test(tag)) continue;
+    const hrefMatch = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
+    let href = (hrefMatch ? (hrefMatch[2] ?? hrefMatch[3] ?? "") : "").trim();
+    if (!href) continue;
+    if (href.startsWith("//")) href = "https:" + href;
+    if (seen.has(href)) continue;
+    seen.add(href);
+    imports.push(`@import url("${href}");`);
+  }
+  return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
+}
+
 function extractRenderableHtml(html: string): string {
   const input = html || "";
-  const styles = (input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || []).join("\n");
+  const fontImports = extractStylesheetImports(input);
+  const styles = [fontImports, ...(input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [])].filter(Boolean).join("\n");
   const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
   let body = bodyMatch ? bodyMatch[1] : input;
   body = body

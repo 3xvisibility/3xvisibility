@@ -506,10 +506,37 @@ export function htmlToElementor(html: string): ElementorElement[] {
  * markup, with <script>/<meta>/<link> removed. Returned as a single HTML string
  * that renders identically to the original template.
  */
+/**
+ * Collect external stylesheet hrefs (Google Fonts + theme CSS) from <link> tags
+ * and convert them into @import rules so web fonts/typography keep working
+ * inside the embedded Elementor HTML widget (where <link> tags are stripped).
+ */
+function extractStylesheetImports(html: string): string {
+  const input = html || "";
+  const imports: string[] = [];
+  const seen = new Set<string>();
+  const linkRe = /<link\b[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = linkRe.exec(input)) !== null) {
+    const tag = m[0];
+    if (!/rel\s*=\s*("|')?[^"'>]*stylesheet/i.test(tag)) continue;
+    const hrefMatch = tag.match(/href\s*=\s*("([^"]*)"|'([^']*)')/i);
+    let href = (hrefMatch ? (hrefMatch[2] ?? hrefMatch[3] ?? "") : "").trim();
+    if (!href) continue;
+    if (href.startsWith("//")) href = "https:" + href;
+    if (seen.has(href)) continue;
+    seen.add(href);
+    imports.push(`@import url("${href}");`);
+  }
+  return imports.length ? `<style>\n${imports.join("\n")}\n</style>` : "";
+}
+
 function extractRenderableHtml(html: string): string {
   const input = html || "";
+  // Preserve external fonts/CSS as @import (the <link> tags get stripped below).
+  const fontImports = extractStylesheetImports(input);
   // Collect every <style> block verbatim (keeps fonts, layout, bg images).
-  const styles = (input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || []).join("\n");
+  const styles = [fontImports, ...(input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || [])].filter(Boolean).join("\n");
   // Prefer the <body> inner markup; fall back to the whole document.
   const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
   let body = bodyMatch ? bodyMatch[1] : input;
