@@ -78,6 +78,7 @@ export default function GeneratedPagesPage() {
   const [translateLang, setTranslateLang] = useState("fr");
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
+  const [fidelityPage, setFidelityPage] = useState<GeneratedPage | null>(null);
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
