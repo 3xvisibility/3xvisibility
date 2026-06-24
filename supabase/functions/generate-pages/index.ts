@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 import { slugifyLocale } from "../_shared/locale-format.ts";
-import { analyzeTemplateBudget, analyzeTemplateContentBudget, enforceBudget, type BudgetMap } from "../_shared/template-length-budget.ts";
+import { analyzeTemplateBudget, analyzeTemplateContentBudget, enforceBudget, inferInlineBudgetForHtmlToken, type BudgetMap } from "../_shared/template-length-budget.ts";
 
 function slugify(text: string, locale?: string): string {
   return slugifyLocale(text, locale);
@@ -577,22 +577,19 @@ async function generateAiContent(
   };
   const resolvedLangName = resolveLanguageName(settings.language);
 
-  // Resolve the effective length limit:
-  //   campaign setting (maxWords/maxLines) -> template default computed from the
-  //   original block size. The output may run at most ONE line longer.
+  // Resolve the effective length limit. Template Safe Mode is strict: generated
+  // text must fit the same word/line footprint as the template area.
   const refText = prompt.trim();
   const refWords = countWords(refText);
   const refLines = countLines(refText);
 
   const capWords = settings.maxWords && settings.maxWords > 0 ? settings.maxWords : (refWords > 0 ? refWords : 0);
   const capLines = settings.maxLines && settings.maxLines > 0 ? settings.maxLines : (refLines > 0 ? refLines : 0);
-  // Allowance: one extra line worth of words (approx words-per-line) on top of cap.
-  const wordsPerLine = capLines > 0 && capWords > 0 ? Math.ceil(capWords / capLines) : 14;
-  const hardWordLimit = capWords > 0 ? capWords + wordsPerLine : 0;
+  const hardWordLimit = capWords > 0 ? capWords : 0;
 
   const lengthConstraint =
     capWords > 0
-      ? `\n\nLENGTH MATCH (design-critical): Keep the output to about ${capWords} words across at most ${capLines || 1} line(s). You may go at most ONE line longer than the original. Do NOT exceed roughly ${hardWordLimit} words, so the page layout/design stays intact.`
+      ? `\n\nLENGTH MATCH (design-critical): Write no more than ${capWords} words across at most ${capLines || 1} line(s). Match the original template text footprint exactly; do NOT add extra description, extra sentences, or a second line unless requested.`
       : "";
 
   const systemPrompt = `You are an expert content writer. Generate high-quality, engaging content.
@@ -606,11 +603,11 @@ IMPORTANT: Return ONLY the generated content text. No markdown formatting, no he
   let content = await callAiContent(systemPrompt, prompt, apiKey);
 
   // Overflow validation + safe auto-fix.
-  if (hardWordLimit > 0 && (countWords(content) > hardWordLimit || (capLines > 0 && countLines(content) > capLines + 1))) {
+    if (hardWordLimit > 0 && (countWords(content) > hardWordLimit || (capLines > 0 && countLines(content) > capLines))) {
     try {
-      const stricterSystem = `${systemPrompt}\n\nYOUR PREVIOUS ANSWER WAS TOO LONG. Rewrite it in NO MORE THAN ${capWords} words and ${capLines || 1} line(s). Be tighter.`;
+      const stricterSystem = `${systemPrompt}\n\nYOUR PREVIOUS ANSWER WAS TOO LONG. Rewrite it in NO MORE THAN ${capWords} words and ${capLines || 1} line(s). No extra descriptions.`;
       const retry = await callAiContent(stricterSystem, prompt, apiKey);
-      if (countWords(retry) <= hardWordLimit) content = retry;
+      if (countWords(retry) <= hardWordLimit && (capLines <= 0 || countLines(retry) <= capLines)) content = retry;
       else content = retry; // keep the tighter attempt before final truncation
     } catch (_e) {
       // ignore retry failure; fall through to truncation
@@ -1343,8 +1340,8 @@ Deno.serve(async (req) => {
     const templateContent = campaign.templates.content as string;
     // ── Template Structure Analyzer / Design Integrity Protection ──
     // Derive per-variable length budgets from the template's ORIGINAL sample
-    // values (default_values). Generated/CSV/AI content is clamped to <=120% of
-    // the original so the published page keeps the template's exact layout,
+    // values (default_values). Generated/CSV/AI content is clamped to the same
+    // word footprint so the published page keeps the template's exact layout,
     // spacing and section heights. Safe Mode is ON unless explicitly disabled.
     const templateSafeMode =
       ((campaign.mapping || {}) as { template_safe_mode?: boolean }).template_safe_mode !== false;
@@ -1769,7 +1766,7 @@ Deno.serve(async (req) => {
                 } catch { /* use original value */ }
               }
               const regex = new RegExp(`\\{${mapping.target_field}\\}`, "gi");
-              pageContent = pageContent.replace(regex, finalValue);
+              pageContent = pageContent.replace(regex, clampVar(mapping.target_field, finalValue));
             }
           }
 
@@ -1777,7 +1774,7 @@ Deno.serve(async (req) => {
           for (const [geoKey, geoValue] of Object.entries(geoSettings)) {
             if (typeof geoValue === "string") {
               const geoRegex = new RegExp(`\\{${geoKey}\\}`, "gi");
-              pageContent = pageContent.replace(geoRegex, geoValue);
+                pageContent = pageContent.replace(geoRegex, clampVar(geoKey, geoValue));
             }
           }
 
@@ -1880,8 +1877,15 @@ Deno.serve(async (req) => {
             const currentAiBlocks = extractAiBlocks(pageContent);
             for (const block of currentAiBlocks) {
               try {
-                const generatedText = await generateAiContent(block.prompt, aiSettings, LOVABLE_API_KEY);
-                pageContent = pageContent.replace(block.fullMatch, generatedText);
+                const blockBudget = templateSafeMode ? inferInlineBudgetForHtmlToken(pageContent, block.fullMatch) : null;
+                const generatedText = await generateAiContent(
+                  block.prompt,
+                  blockBudget
+                    ? { ...aiSettings, maxWords: blockBudget.maxWords, maxLines: Math.max(1, Math.min(2, Math.ceil(blockBudget.maxWords / 10))) }
+                    : aiSettings,
+                  LOVABLE_API_KEY,
+                );
+                pageContent = pageContent.replace(block.fullMatch, blockBudget ? enforceBudget(generatedText, blockBudget) : generatedText);
                 aiGenerationsUsed++;
               } catch (aiErr: any) {
                 pageContent = pageContent.replace(block.fullMatch, `<em style="color:#dc2626;">[AI failed: ${aiErr.message}]</em>`);

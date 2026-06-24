@@ -2,8 +2,8 @@
 //
 // Derives per-variable length constraints from a template's *original* sample
 // content (the defaultValues that ship with each template) so AI-generated
-// content fits the existing layout. Enforces a hard cap of 120% of the original
-// length ("design integrity > content length").
+// content fits the existing layout. Enforces a hard cap at the original length
+// plus a tiny 2-3 word tolerance ("design integrity > content length").
 
 export interface LengthBudget {
   /** Original word count of the sample value. */
@@ -11,7 +11,7 @@ export interface LengthBudget {
   /** Allowed word range [min, max]. */
   minWords: number;
   maxWords: number;
-  /** Character limits: floor, recommended target, and hard cap (120% of original). */
+  /** Character limits: floor, recommended target, and hard cap. */
   minChars: number;
   recommendedChars: number;
   maxChars: number;
@@ -32,11 +32,18 @@ export function countWords(s: string): number {
  * regardless of field size, so the template layout never breaks.
  */
 function rangeForWords(words: number): { minWords: number; maxWords: number } {
-  if (words <= 2) return { minWords: 1, maxWords: words + 2 };
-  if (words <= 4) return { minWords: Math.max(2, words - 1), maxWords: words + 2 };
-  if (words <= 8) return { minWords: Math.max(3, words - 2), maxWords: words + 3 };
-  if (words <= 20) return { minWords: Math.max(8, Math.round(words * 0.75)), maxWords: words + 3 };
-  return { minWords: Math.round(words * 0.85), maxWords: words + 3 };
+  if (words <= 1) return { minWords: 1, maxWords: 1 };
+  if (words <= 3) return { minWords: Math.max(1, words - 1), maxWords: words + 1 };
+  if (words <= 8) return { minWords: Math.max(2, words - 2), maxWords: words + 2 };
+  return { minWords: Math.max(3, Math.round(words * 0.85)), maxWords: words + 3 };
+}
+
+function charCapForValue(value: string, maxWords: number): number {
+  const originalChars = stripHtml(value).length;
+  const words = stripHtml(value).split(/\s+/).filter(Boolean);
+  const avgWordLength = words.length > 0 ? originalChars / words.length : 7;
+  const tinyTolerance = Math.ceil(avgWordLength * Math.min(3, Math.max(0, maxWords - words.length)));
+  return Math.max(8, originalChars + tinyTolerance);
 }
 
 /**
@@ -58,7 +65,7 @@ export function analyzeTemplateBudget(defaultValues?: Record<string, string>): B
       maxWords,
       minChars: Math.max(1, Math.floor(originalChars * 0.8)),
       recommendedChars: originalChars,
-      maxChars: Math.max(8, Math.ceil(originalChars * 1.2)),
+      maxChars: charCapForValue(value, maxWords),
     };
   }
   return out;
@@ -72,22 +79,42 @@ export function analyzeTemplateBudget(defaultValues?: Record<string, string>): B
  */
 function budgetForTag(tag: string): { maxWords: number; maxChars: number } {
   switch (tag) {
-    case "h1": return { maxWords: 12, maxChars: 80 };
-    case "h2": return { maxWords: 10, maxChars: 70 };
-    case "h3": return { maxWords: 9, maxChars: 60 };
+    case "h1": return { maxWords: 8, maxChars: 58 };
+    case "h2": return { maxWords: 7, maxChars: 52 };
+    case "h3": return { maxWords: 6, maxChars: 46 };
     case "h4":
     case "h5":
-    case "h6": return { maxWords: 8, maxChars: 50 };
+    case "h6": return { maxWords: 5, maxChars: 40 };
     case "button":
-    case "a": return { maxWords: 5, maxChars: 30 };
-    case "li": return { maxWords: 24, maxChars: 160 };
+    case "a": return { maxWords: 4, maxChars: 28 };
+    case "li": return { maxWords: 12, maxChars: 90 };
     case "span":
     case "strong":
-    case "em": return { maxWords: 10, maxChars: 70 };
+    case "em": return { maxWords: 6, maxChars: 46 };
     case "p":
-    case "div": return { maxWords: 60, maxChars: 420 };
-    default: return { maxWords: 40, maxChars: 280 };
+    case "div": return { maxWords: 18, maxChars: 140 };
+    default: return { maxWords: 14, maxChars: 110 };
   }
+}
+
+export function inferInlineBudgetForHtmlToken(content: string, token: string): LengthBudget | null {
+  if (!content || !token) return null;
+  const index = content.indexOf(token);
+  if (index < 0) return null;
+
+  const before = content.slice(0, index);
+  const tagMatch = before.match(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>(?:[^<]*)$/);
+  const tag = (tagMatch?.[1] || "p").toLowerCase();
+  const { maxWords, maxChars } = budgetForTag(tag);
+
+  return {
+    words: maxWords,
+    minWords: 1,
+    maxWords,
+    minChars: 1,
+    recommendedChars: Math.max(8, Math.round(maxChars * 0.85)),
+    maxChars,
+  };
 }
 
 export function analyzeTemplateContentBudget(content?: string): BudgetMap {
@@ -98,19 +125,8 @@ export function analyzeTemplateContentBudget(content?: string): BudgetMap {
   while ((m = tokenRe.exec(content)) !== null) {
     const key = m[1].replace(/^\{|\}$/g, "");
     if (out[key]) continue;
-    // Find the nearest enclosing opening tag before this placeholder.
-    const before = content.slice(0, m.index);
-    const tagMatch = before.match(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>(?:[^<]*)$/);
-    const tag = (tagMatch?.[1] || "p").toLowerCase();
-    const { maxWords, maxChars } = budgetForTag(tag);
-    out[key] = {
-      words: maxWords,
-      minWords: 1,
-      maxWords,
-      minChars: 1,
-      recommendedChars: Math.round(maxChars / 1.2),
-      maxChars,
-    };
+    const inferred = inferInlineBudgetForHtmlToken(content, m[0]);
+    if (inferred) out[key] = inferred;
   }
   return out;
 }
@@ -122,12 +138,12 @@ export function buildBudgetPromptHints(budget: BudgetMap): string {
     ([k, b]) => `- ${k}: ${b.minWords}-${b.maxWords} words; characters min ${b.minChars}, recommended ~${b.recommendedChars}, max ${b.maxChars}`,
   );
   if (lines.length === 0) return "";
-  return `Strict length limits per field — generated text MUST fit the template layout. Never exceed 120% of the original length:\n${lines.join("\n")}`;
+  return `Strict length limits per field — generated text MUST fit the template layout. Match the original template word count; never exceed the listed max words/chars:\n${lines.join("\n")}`;
 }
 
 /**
  * Design protection: shorten a value to its budget at a word boundary, never
- * exceeding maxChars (120% cap). Preserves meaning by keeping the leading words.
+ * exceeding maxChars. Preserves meaning by keeping the leading words.
  */
 export function enforceBudget(value: string, budget?: LengthBudget): string {
   if (!budget) return value;
