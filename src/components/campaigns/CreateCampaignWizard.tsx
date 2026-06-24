@@ -614,6 +614,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     [selectedTemplateVars, contactVars]
   );
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
+  // Optional button/link label text shown for a link variable (separate from its URL).
+  const [aiLinkTexts, setAiLinkTexts] = useState<Record<string, string>>({});
   // Classify a contact/link variable into a placeholder type so the mapping UI
   // can label it and pick the right input type/placeholder/example.
   const contactVarKind = (v: string): "phone" | "email" | "link" => {
