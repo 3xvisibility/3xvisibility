@@ -674,14 +674,18 @@ export default function AuthPage() {
                         />
                         <span className="text-xs text-muted-foreground leading-relaxed">
                           {t("auth.acceptTerms")}{" "}
-                          <a href="/terms" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
+                          <Link to="/terms" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
                             {t("auth.termsOfService")}
-                          </a>{" "}
-                          {t("auth.and")}{" "}
-                          <a href="/privacy" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
+                          </Link>{", "}
+                          <Link to="/privacy" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
                             {t("auth.privacyPolicy")}
-                          </a>
+                          </Link>{" "}
+                          {t("auth.and")}{" "}
+                          <Link to="/contact" target="_blank" className="text-primary hover:text-primary/80 font-medium underline underline-offset-2">
+                            {t("auth.contactUs") || "Contact"}
+                          </Link>
                         </span>
+
                       </label>
                     )}
 
