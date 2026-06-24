@@ -3,6 +3,7 @@ import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
 import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 import { buildElementorMeta } from "./elementor-engine.ts";
+import { importHtmlAssets } from "./asset-import.ts";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -123,6 +124,64 @@ export class WordPressConnector implements CmsConnector {
     return this.assetsPromise;
   }
 
+  /** Cache of source URL -> uploaded Media Library URL to avoid re-uploading. */
+  private mediaCache = new Map<string, string | null>();
+
+  /**
+   * Download a remote asset and upload it into the WordPress Media Library.
+   * Returns the new Media Library URL, or null on failure (caller keeps original).
+   */
+  private async uploadMediaFromUrl(sourceUrl: string): Promise<string | null> {
+    if (this.mediaCache.has(sourceUrl)) return this.mediaCache.get(sourceUrl)!;
+    try {
+      const res = await fetch(sourceUrl);
+      if (!res.ok) {
+        this.mediaCache.set(sourceUrl, null);
+        return null;
+      }
+      const contentType = res.headers.get("content-type") || "application/octet-stream";
+      if (!/^image\/|^font\/|svg|octet-stream/i.test(contentType)) {
+        this.mediaCache.set(sourceUrl, null);
+        return null;
+      }
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      let filename = sourceUrl.split("/").pop()?.split("?")[0] || "asset";
+      if (!/\.[a-z0-9]+$/i.test(filename)) {
+        const ext = contentType.includes("svg") ? "svg" : (contentType.split("/")[1] || "bin");
+        filename = `${filename}.${ext}`;
+      }
+
+      const uploadHeaders: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": contentType,
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      };
+      if (this.authString) uploadHeaders.Authorization = `Basic ${this.authString}`;
+      else {
+        const auth = (this.headers as Record<string, string>).Authorization;
+        if (auth) uploadHeaders.Authorization = auth;
+      }
+
+      const mediaRes = await fetch(`${this.baseUrl}/wp-json/wp/v2/media`, {
+        method: "POST",
+        headers: uploadHeaders,
+        body: bytes,
+      });
+      if (!mediaRes.ok) {
+        this.mediaCache.set(sourceUrl, null);
+        return null;
+      }
+      const data = await mediaRes.json();
+      const newUrl: string | null = data.source_url || data.guid?.rendered || null;
+      this.mediaCache.set(sourceUrl, newUrl);
+      return newUrl;
+    } catch {
+      this.mediaCache.set(sourceUrl, null);
+      return null;
+    }
+  }
+
+
   private async executePageRequest(
     url: string,
     method: "POST" | "PUT",
@@ -167,6 +226,14 @@ export class WordPressConnector implements CmsConnector {
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const assets = await this.themeAssets();
+    // Asset Import System: download every referenced image/background/CSS asset
+    // into the WP Media Library and rewrite URLs before publishing.
+    if (!payload.product_data && payload.content) {
+      payload = {
+        ...payload,
+        content: await importHtmlAssets(payload.content, (u) => this.uploadMediaFromUrl(u), this.baseUrl),
+      };
+    }
     const adapted = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page", assets)) || "<p></p>";
     const body: Record<string, unknown> = {
       title: resolveWordPressTitle(payload),
@@ -235,7 +302,13 @@ export class WordPressConnector implements CmsConnector {
     // looks exactly the same — better SEO/title text only.
     if (!preserveDesign) {
       if (typeof payload.content === "string") {
-        body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content, payload.product_data ? "product" : "page", await this.themeAssets())) || "<p></p>";
+        if (!payload.product_data) {
+          payload = {
+            ...payload,
+            content: await importHtmlAssets(payload.content, (u) => this.uploadMediaFromUrl(u), this.baseUrl),
+          };
+        }
+        body.content = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content as string, payload.product_data ? "product" : "page", await this.themeAssets())) || "<p></p>";
       }
     }
 
