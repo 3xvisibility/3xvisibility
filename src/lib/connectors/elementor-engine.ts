@@ -427,16 +427,43 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
 }
 
 /**
+ * A container is treated as a pure layout wrapper when it only groups other
+ * elements without meaningful grid/row structure. We unwrap such wrappers so
+ * each real visual section becomes its own top-level Elementor Container
+ * instead of being nested inside one giant page container.
+ */
+function isPlainWrapper(el: ElementorElement): boolean {
+  if (el.elType !== "container") return false;
+  if (el.settings.container_type === "grid") return false;
+  if (el.settings.flex_direction === "row") return false;
+  return true;
+}
+
+/**
+ * Promote nested sections to the top level. If converting produced a single
+ * wrapper container (the page/body wrapper) holding multiple section
+ * containers, we lift those sections out so they sit as independent top-level
+ * Containers, mirroring the original template structure.
+ */
+function flattenSections(elements: ElementorElement[]): ElementorElement[] {
+  let current = elements;
+  while (current.length === 1 && isPlainWrapper(current[0]) && current[0].elements.length > 1) {
+    current = current[0].elements;
+  }
+  // Ensure every top-level element is a container (Elementor sections).
+  return current.map((el) =>
+    el.elType === "container" ? el : container([el])
+  );
+}
+
+/**
  * Convert an HTML string into a top-level array of Elementor elements
- * (each top-level block becomes a section Container).
+ * (each visual section becomes its own top-level Container).
  */
 export function htmlToElementor(html: string): ElementorElement[] {
   const tree = parseHtml(html || "");
   const converted = convertChildren(tree);
-  // Ensure every top-level element is a container (Elementor sections).
-  return converted.map((el) =>
-    el.elType === "container" ? el : container([el])
-  );
+  return flattenSections(converted);
 }
 
 /**
