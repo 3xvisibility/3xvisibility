@@ -14,9 +14,10 @@ import {
   Search, Eye, Trash2, ExternalLink, FileText, Send, Pencil, Tag, Save,
   Loader2, CheckSquare, X, Download, RefreshCw, ChevronLeft, ChevronRight,
   RotateCw, ArrowUpDown, Clock, Sparkles, Languages, Copy, Code, BarChart3,
-  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, Send as SendIcon
+  MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, ScanEye, Send as SendIcon
 } from "lucide-react";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
+import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
@@ -77,6 +78,7 @@ export default function GeneratedPagesPage() {
   const [translateLang, setTranslateLang] = useState("fr");
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [jsonPayloadPage, setJsonPayloadPage] = useState<GeneratedPage | null>(null);
+  const [fidelityPage, setFidelityPage] = useState<GeneratedPage | null>(null);
   const [seoAnalysisPage, setSeoAnalysisPage] = useState<GeneratedPage | null>(null);
   const [showWebsiteSelector, setShowWebsiteSelector] = useState(false);
   const [pendingPublishIds, setPendingPublishIds] = useState<string[]>([]);
@@ -828,6 +830,7 @@ export default function GeneratedPagesPage() {
                       <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
                       {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                       {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open Live</a></DropdownMenuItem>}
+                      {page.external_url && <DropdownMenuItem onClick={() => setFidelityPage(page)}><ScanEye className="h-3.5 w-3.5 mr-2" />Visual fidelity</DropdownMenuItem>}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
                     </DropdownMenuContent>
@@ -925,6 +928,7 @@ export default function GeneratedPagesPage() {
                               <DropdownMenuItem onClick={() => setJsonPayloadPage(page)}><Code className="h-3.5 w-3.5 mr-2" />View JSON</DropdownMenuItem>
                               {page.status === "failed" && <DropdownMenuItem onClick={() => handlePublish([page.id], "retry")}><RefreshCw className="h-3.5 w-3.5 mr-2" />Retry</DropdownMenuItem>}
                               {page.external_url && <DropdownMenuItem asChild><a href={page.external_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-2" />Open live</a></DropdownMenuItem>}
+                              {page.external_url && <DropdownMenuItem onClick={() => setFidelityPage(page)}><ScanEye className="h-3.5 w-3.5 mr-2" />Visual fidelity</DropdownMenuItem>}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5 mr-2" />Delete</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -1234,6 +1238,15 @@ export default function GeneratedPagesPage() {
 
       {/* External dialogs */}
       <DuplicateContentDialog open={duplicateOpen} onOpenChange={setDuplicateOpen} pages={pages.map((p) => ({ id: p.id, title: p.title, content: p.content }))} />
+      <VisualFidelityDialog
+        open={!!fidelityPage}
+        onOpenChange={(v) => { if (!v) setFidelityPage(null); }}
+        templateHtml={fidelityPage?.content}
+        publishedUrl={fidelityPage?.external_url}
+        workspaceId={wsId}
+        generatedPageId={fidelityPage?.id}
+        templateId={undefined}
+      />
       <SeoAnalysisDialog open={!!seoAnalysisPage} onOpenChange={(open) => !open && setSeoAnalysisPage(null)} page={seoAnalysisPage}
         campaignTitles={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.title) : undefined}
         campaignSlugs={seoAnalysisPage?.campaign_id ? pages.filter(p => p.campaign_id === seoAnalysisPage.campaign_id).map(p => p.slug) : undefined}
