@@ -432,11 +432,43 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
  * each real visual section becomes its own top-level Elementor Container
  * instead of being nested inside one giant page container.
  */
+function isLayoutContainer(el: ElementorElement): boolean {
+  return (
+    el.elType === "container" &&
+    (el.settings.container_type === "grid" || el.settings.flex_direction === "row")
+  );
+}
+
 function isPlainWrapper(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
-  if (el.settings.container_type === "grid") return false;
-  if (el.settings.flex_direction === "row") return false;
-  return true;
+  return !isLayoutContainer(el);
+}
+
+/**
+ * Recursively remove redundant wrapper containers while preserving any
+ * container that carries real layout meaning (grid / flex-row / columns).
+ */
+function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
+  const out: ElementorElement[] = [];
+  for (const el of elements) {
+    el.elements = unwrapRedundant(el.elements);
+    if (isLayoutContainer(el)) {
+      out.push(el);
+      continue;
+    }
+    if (isPlainWrapper(el)) {
+      if (el.elements.length === 1 && el.elements[0].elType === "container") {
+        out.push(el.elements[0]);
+        continue;
+      }
+      if (el.elements.length > 1 && el.elements.every((c) => c.elType === "container")) {
+        out.push(...el.elements);
+        continue;
+      }
+    }
+    out.push(el);
+  }
+  return out;
 }
 
 /**
@@ -446,7 +478,7 @@ function isPlainWrapper(el: ElementorElement): boolean {
  * Containers, mirroring the original template structure.
  */
 function flattenSections(elements: ElementorElement[]): ElementorElement[] {
-  let current = elements;
+  let current = unwrapRedundant(elements);
   while (current.length === 1 && isPlainWrapper(current[0]) && current[0].elements.length > 1) {
     current = current[0].elements;
   }
