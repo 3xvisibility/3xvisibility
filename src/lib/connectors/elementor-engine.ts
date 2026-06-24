@@ -613,12 +613,37 @@ export function compareVisualRegression(html: string): VisualRegressionReport {
  * Build the WordPress post meta needed to make a page render & edit natively in
  * Elementor. Returns meta keys to merge into the REST `meta` payload.
  */
+function extractRenderableHtml(html: string): string {
+  const input = html || "";
+  const styles = (input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || []).join("\n");
+  const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
+  let body = bodyMatch ? bodyMatch[1] : input;
+  body = body
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<meta\b[^>]*>/gi, "")
+    .replace(/<link\b[^>]*>/gi, "")
+    .replace(/<\/?(?:html|head|body)\b[^>]*>/gi, "")
+    .trim();
+  return `${styles}\n${body}`.trim();
+}
+
 export function buildElementorMeta(html: string, version = "3.21.0"): Record<string, unknown> {
-  const data = htmlToElementor(html);
+  const renderable = extractRenderableHtml(html);
+  const htmlWidget: ElementorElement = {
+    id: genId(),
+    elType: "widget",
+    widgetType: "html",
+    settings: { html: renderable },
+    elements: [],
+  };
+  const data: ElementorElement[] = [container([htmlWidget])];
   return {
     _elementor_edit_mode: "builder",
     _elementor_template_type: "wp-page",
     _elementor_version: version,
     _elementor_data: JSON.stringify(data),
+    _wp_page_template: "elementor_canvas",
   };
 }
