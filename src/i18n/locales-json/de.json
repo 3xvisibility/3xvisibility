@@ -201,6 +201,7 @@
   "auth.companyRequired": "Firmenname ist erforderlich.",
   "auth.confirmPassword": "Passwort bestätigen",
   "auth.confirmationSent": "Wir haben Ihnen einen Bestätigungslink gesendet.",
+  "auth.contactUs": "Kontakt",
   "auth.contentLanguage": "Inhaltssprache",
   "auth.contentLanguageDesc": "KI-generierte Inhalte werden in dieser Sprache sein",
   "auth.createAccount": "Konto erstellen",

@@ -201,6 +201,7 @@
   "auth.companyRequired": "Se requiere el nombre de la empresa.",
   "auth.confirmPassword": "Confirmar contraseña",
   "auth.confirmationSent": "Le enviamos un enlace de confirmación.",
+  "auth.contactUs": "Contáctanos",
   "auth.contentLanguage": "Idioma del contenido",
   "auth.contentLanguageDesc": "El contenido generado por AI estará en este idioma.",
   "auth.createAccount": "Crea tu cuenta",
