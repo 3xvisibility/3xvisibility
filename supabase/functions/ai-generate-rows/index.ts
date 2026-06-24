@@ -2,6 +2,7 @@
 import { aiGenerate, extractAuthToken } from "../_shared/ai-service.ts";
 import {
   analyzeTemplateBudget,
+  analyzeTemplateContentBudget,
   buildBudgetPromptHints,
   enforceRowBudget,
 } from "../_shared/template-length-budget.ts";
@@ -22,6 +23,8 @@ interface Body {
   country?: string;
   /** Original template sample values used to derive per-field length budgets. */
   defaultValues?: Record<string, string>;
+  /** Template HTML fallback used when sample values are unavailable. */
+  templateContent?: string;
   /** Template Safe Mode: enforce length budgets so content never breaks layout. */
   templateSafeMode?: boolean;
 }
@@ -51,18 +54,19 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join("\n");
 
-    const budget = analyzeTemplateBudget(body.defaultValues);
     const safeMode = body.templateSafeMode !== false; // default ON
+    const sampleBudget = analyzeTemplateBudget(body.defaultValues);
+    const budget = Object.keys(sampleBudget).length > 0 ? sampleBudget : analyzeTemplateContentBudget(body.templateContent);
     const budgetHints = safeMode ? buildBudgetPromptHints(budget) : "";
 
     const systemPrompt = `You generate realistic dataset rows for a programmatic SEO page generator.
 Each row must contain ONE value for every requested variable. Values must be:
 - Specific, realistic, locally relevant where possible
 - Distinct across rows (no duplicates)
-- Concise: short fields = 1-5 words, long fields (description/excerpt) = 1-2 sentences
+- Concise: match each template field's original word count; never expand descriptions
 - In the requested language
 - Plain text only (no markdown, no quotes, no escapes)
-${budgetHints ? "\nTEMPLATE SAFE MODE — design integrity is more important than content length. " + budgetHints + "\n" : ""}Return through the provided tool function, never as free text.`;
+${budgetHints ? "\nTEMPLATE SAFE MODE — design integrity is more important than content length. Keep every title/description within the exact listed word and character budget. " + budgetHints + "\n" : ""}Return through the provided tool function, never as free text.`;
 
     const userPrompt = `Generate ${count} unique rows.
 Variables (column names): ${variables.join(", ")}
@@ -135,7 +139,7 @@ Make every row meaningfully different so each generated page is unique.`;
     const normalized = rows.slice(0, count).map((r) => {
       const out: Record<string, string> = {};
       for (const v of variables) out[v] = String(r?.[v] ?? "").trim();
-      // Design protection: clamp every field to its length budget (<=120%).
+      // Design protection: clamp every field to its template length budget.
       return safeMode ? enforceRowBudget(out, budget) : out;
     });
 

@@ -359,7 +359,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     queryKey: ["templates", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("id, name, variables, content, seo_title_pattern, seo_description_pattern, schema_type, schema_config, vibe_theme").eq("workspace_id", wsId!).order("name");
+      const { data, error } = await supabase.from("templates").select("id, name, variables, content, default_values, seo_title_pattern, seo_description_pattern, schema_type, schema_config, vibe_theme").eq("workspace_id", wsId!).order("name");
       if (error) throw error;
       return data;
     },
@@ -881,7 +881,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         return;
       }
       const genVars = aiGenVars;
-      const genTpl = templates.find((t) => t.id === selectedTemplate) as { default_values?: Record<string, string> } | undefined;
+      const genTpl = templates.find((t) => t.id === selectedTemplate) as { default_values?: Record<string, string>; content?: string } | undefined;
       const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
         body: {
           variables: genVars,
@@ -895,6 +895,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           // original length budget so the layout/design never breaks.
           templateSafeMode: true,
           defaultValues: genTpl?.default_values || undefined,
+          templateContent: genTpl?.content || undefined,
         },
       });
       if (error) throw error;
