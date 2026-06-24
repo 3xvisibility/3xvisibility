@@ -226,6 +226,14 @@ export class WordPressConnector implements CmsConnector {
 
   async createPage(payload: PagePayload): Promise<ConnectorResult> {
     const assets = await this.themeAssets();
+    // Asset Import System: download every referenced image/background/CSS asset
+    // into the WP Media Library and rewrite URLs before publishing.
+    if (!payload.product_data && payload.content) {
+      payload = {
+        ...payload,
+        content: await importHtmlAssets(payload.content, (u) => this.uploadMediaFromUrl(u), this.baseUrl),
+      };
+    }
     const adapted = sanitizeWordPressContent(adaptHtmlForWordPressTheme(payload.content || "", payload.product_data ? "product" : "page", assets)) || "<p></p>";
     const body: Record<string, unknown> = {
       title: resolveWordPressTitle(payload),
