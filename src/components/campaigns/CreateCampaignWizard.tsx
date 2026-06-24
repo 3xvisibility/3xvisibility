@@ -870,7 +870,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       const fixedValues: Record<string, string> = {};
       for (const v of contactVars) {
         const val = (aiFixedValues[v] || "").trim();
-        if (val) fixedValues[v] = val;
+        if (!val) continue;
+        // For link variables with a custom label, store a full anchor so the
+        // button shows the user's text and points to their URL.
+        const text = contactVarKind(v) === "link" ? (aiLinkTexts[v] || "").trim() : "";
+        fixedValues[v] = text ? `<a href="${val}">${text}</a>` : val;
       }
       // If every variable is a user-supplied contact value, skip the AI call
       // entirely and just build rows from the fixed values to avoid generating
