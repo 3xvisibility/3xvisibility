@@ -887,7 +887,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         return;
       }
       const genVars = aiGenVars;
-      const genTpl = templates.find((t) => t.id === selectedTemplate) as { content?: string } | undefined;
+      const genTpl = templates.find((t) => t.id === selectedTemplate) as { content?: string; default_values?: Record<string, string> } | undefined;
       const { data, error } = await supabase.functions.invoke("ai-generate-rows", {
         body: {
           variables: genVars,
