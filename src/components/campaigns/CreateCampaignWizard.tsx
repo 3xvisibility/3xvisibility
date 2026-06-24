@@ -614,6 +614,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     [selectedTemplateVars, contactVars]
   );
   const [aiFixedValues, setAiFixedValues] = useState<Record<string, string>>({});
+  // Optional button/link label text shown for a link variable (separate from its URL).
+  const [aiLinkTexts, setAiLinkTexts] = useState<Record<string, string>>({});
   // Classify a contact/link variable into a placeholder type so the mapping UI
   // can label it and pick the right input type/placeholder/example.
   const contactVarKind = (v: string): "phone" | "email" | "link" => {
@@ -868,7 +870,11 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       const fixedValues: Record<string, string> = {};
       for (const v of contactVars) {
         const val = (aiFixedValues[v] || "").trim();
-        if (val) fixedValues[v] = val;
+        if (!val) continue;
+        // For link variables with a custom label, store a full anchor so the
+        // button shows the user's text and points to their URL.
+        const text = contactVarKind(v) === "link" ? (aiLinkTexts[v] || "").trim() : "";
+        fixedValues[v] = text ? `<a href="${val}">${text}</a>` : val;
       }
       // If every variable is a user-supplied contact value, skip the AI call
       // entirely and just build rows from the fixed values to avoid generating
@@ -1897,6 +1903,15 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                                           <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">{meta.label}</Badge>
                                           <Label className="text-[10px] text-muted-foreground block font-mono">{`{${v}}`}</Label>
                                         </div>
+                                        {kind === "link" && (
+                                          <Input
+                                            type="text"
+                                            value={aiLinkTexts[v] || ""}
+                                            onChange={(e) => setAiLinkTexts((prev) => ({ ...prev, [v]: e.target.value }))}
+                                            placeholder="Button / link text (optional)"
+                                            className="h-9 rounded-lg text-xs mb-1.5"
+                                          />
+                                        )}
                                         <Input
                                           type={meta.inputType}
                                           value={aiFixedValues[v] || ""}
