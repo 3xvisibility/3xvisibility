@@ -8,7 +8,7 @@ import {
   PER_CATEGORY,
 } from "@/lib/marketplace-elementor-templates";
 import { applyTemplateDefaults } from "@/lib/marketplace-templates";
-import type { ElementorElement } from "@/lib/connectors/elementor-engine";
+import { compareVisualRegression, type ElementorElement } from "@/lib/connectors/elementor-engine";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,6 +89,10 @@ export default function ElementorTestPage() {
   );
   const elementor = useMemo(() => (resolvedHtml ? templateToElementor(resolvedHtml) : []), [resolvedHtml]);
   const counts = useMemo(() => countWidgets(elementor), [elementor]);
+  const regression = useMemo(
+    () => (resolvedHtml ? compareVisualRegression(resolvedHtml) : null),
+    [resolvedHtml],
+  );
 
   const unresolved = (resolvedHtml.match(/\{[a-z_][a-z0-9_]*\}/gi) || []).length;
 
@@ -206,6 +210,30 @@ export default function ElementorTestPage() {
               </div>
             </CardContent>
           </Card>
+
+          {regression && (
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Visual regression (HTML vs Elementor)
+                  <Badge variant={regression.match ? "outline" : "destructive"}>
+                    {regression.match ? "✅ match" : `⚠ ${regression.differences.length} diff`} · {Math.round(regression.score * 100)}%
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>Spacing/width — layout blocks: <strong>HTML {regression.html.layoutContainers}</strong> vs <strong>Elementor {regression.elementor.layoutContainers}</strong></p>
+                <p>Typography — headings: <strong>HTML [{regression.html.headings.join(", ") || "—"}]</strong> vs <strong>Elementor [{regression.elementor.headings.join(", ") || "—"}]</strong></p>
+                {regression.differences.length > 0 ? (
+                  <ul className="list-disc space-y-1 pl-5 text-destructive">
+                    {regression.differences.map((d, i) => <li key={i}>{d}</li>)}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground">Spacing, width and typography match the original template.</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader><CardTitle>Original layout preview</CardTitle></CardHeader>

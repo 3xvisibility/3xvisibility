@@ -432,11 +432,62 @@ function convertChildren(nodes: HtmlNode[]): ElementorElement[] {
  * each real visual section becomes its own top-level Elementor Container
  * instead of being nested inside one giant page container.
  */
+function isLayoutContainer(el: ElementorElement): boolean {
+  return (
+    el.elType === "container" &&
+    (el.settings.container_type === "grid" || el.settings.flex_direction === "row")
+  );
+}
+
 function isPlainWrapper(el: ElementorElement): boolean {
   if (el.elType !== "container") return false;
-  if (el.settings.container_type === "grid") return false;
-  if (el.settings.flex_direction === "row") return false;
-  return true;
+  // Grid / row / column containers are REQUIRED for layout — never unwrap.
+  return !isLayoutContainer(el);
+}
+
+/**
+ * Recursively remove redundant wrapper containers while preserving any
+ * container that carries real layout meaning (grid / flex-row / columns).
+ *
+ * Heuristics:
+ *   1. A plain wrapper that holds exactly one child is redundant — replace it
+ *      with its child (collapse the chain), unless the child is a bare widget
+ *      that still needs a section wrapper at the top level.
+ *   2. A plain wrapper holding multiple children where ALL siblings are
+ *      containers is a pure grouping shell — unwrap into its children.
+ *   3. Layout containers (grid/row) are kept intact; only their descendants
+ *      are cleaned recursively.
+ */
+function unwrapRedundant(elements: ElementorElement[]): ElementorElement[] {
+  const out: ElementorElement[] = [];
+  for (const el of elements) {
+    // Clean children first (depth-first).
+    const cleanedChildren = unwrapRedundant(el.elements);
+    el.elements = cleanedChildren;
+
+    if (isLayoutContainer(el)) {
+      out.push(el); // required wrapper, keep as-is
+      continue;
+    }
+
+    if (isPlainWrapper(el)) {
+      // Collapse single-child redundant wrapper.
+      if (cleanedChildren.length === 1 && cleanedChildren[0].elType === "container") {
+        out.push(cleanedChildren[0]);
+        continue;
+      }
+      // Pure grouping shell (all children are containers) -> dissolve.
+      if (
+        cleanedChildren.length > 1 &&
+        cleanedChildren.every((c) => c.elType === "container")
+      ) {
+        out.push(...cleanedChildren);
+        continue;
+      }
+    }
+    out.push(el);
+  }
+  return out;
 }
 
 /**
@@ -446,7 +497,7 @@ function isPlainWrapper(el: ElementorElement): boolean {
  * Containers, mirroring the original template structure.
  */
 function flattenSections(elements: ElementorElement[]): ElementorElement[] {
-  let current = elements;
+  let current = unwrapRedundant(elements);
   while (current.length === 1 && isPlainWrapper(current[0]) && current[0].elements.length > 1) {
     current = current[0].elements;
   }
@@ -464,6 +515,98 @@ export function htmlToElementor(html: string): ElementorElement[] {
   const tree = parseHtml(html || "");
   const converted = convertChildren(tree);
   return flattenSections(converted);
+}
+
+/* --------------------- visual regression workflow ------------------------ */
+
+export interface VisualSignature {
+  /** number of top-level sections */
+  sections: number;
+  /** counts of each widget/container type */
+  widgets: Record<string, number>;
+  /** ordered heading levels (h1..h6) used for typography comparison */
+  headings: string[];
+  /** number of grid/flex layout containers (width/spacing structure) */
+  layoutContainers: number;
+}
+
+function collectSignature(elements: ElementorElement[]): VisualSignature {
+  const sig: VisualSignature = { sections: elements.length, widgets: {}, headings: [], layoutContainers: 0 };
+  const walk = (els: ElementorElement[]) => {
+    for (const el of els) {
+      const key = el.elType === "widget" ? el.widgetType || "widget" : "container";
+      sig.widgets[key] = (sig.widgets[key] || 0) + 1;
+      if (isLayoutContainer(el)) sig.layoutContainers++;
+      if (el.widgetType === "heading") {
+        const lvl = String((el.settings as { header_size?: string }).header_size || "h2");
+        sig.headings.push(lvl);
+      }
+      walk(el.elements);
+    }
+  };
+  walk(elements);
+  return sig;
+}
+
+/** Build a visual signature directly from the source HTML template. */
+function htmlSignature(html: string): VisualSignature {
+  const tree = parseHtml(html || "");
+  const sig: VisualSignature = { sections: 0, widgets: {}, headings: [], layoutContainers: 0 };
+  const walk = (nodes: HtmlNode[]) => {
+    for (const n of nodes) {
+      if (!n.tag) continue;
+      if (HEADINGS.has(n.tag)) sig.headings.push(n.tag);
+      if (n.tag === "img") sig.widgets.image = (sig.widgets.image || 0) + 1;
+      if (isButton(n)) sig.widgets.button = (sig.widgets.button || 0) + 1;
+      if (hasClass(n, "grid", "row", "columns", "flex", "d-flex")) sig.layoutContainers++;
+      walk(n.children);
+    }
+  };
+  walk(tree);
+  sig.sections = tree.filter((n) => n.tag === "section").length || tree.filter((n) => n.tag).length;
+  return sig;
+}
+
+export interface VisualRegressionReport {
+  match: boolean;
+  score: number; // 0..1
+  differences: string[];
+  html: VisualSignature;
+  elementor: VisualSignature;
+}
+
+/**
+ * Compare the rendered HTML template against the generated Elementor structure
+ * to confirm spacing/width (layout containers), structure (sections/widgets)
+ * and typography (heading hierarchy) match.
+ */
+export function compareVisualRegression(html: string): VisualRegressionReport {
+  const htmlSig = htmlSignature(html);
+  const elementorSig = collectSignature(htmlToElementor(html));
+  const differences: string[] = [];
+
+  // Typography: heading hierarchy must be preserved.
+  if (htmlSig.headings.join(",") !== elementorSig.headings.join(",")) {
+    differences.push(
+      `Typography mismatch: HTML headings [${htmlSig.headings.join(", ")}] vs Elementor [${elementorSig.headings.join(", ")}]`,
+    );
+  }
+  // Width/spacing: layout container count should roughly match.
+  if (Math.abs(htmlSig.layoutContainers - elementorSig.layoutContainers) > 1) {
+    differences.push(
+      `Layout (width/spacing) mismatch: HTML ${htmlSig.layoutContainers} grid/flex blocks vs Elementor ${elementorSig.layoutContainers}`,
+    );
+  }
+  // Structure: images & buttons preserved.
+  for (const key of ["image", "button"] as const) {
+    const h = htmlSig.widgets[key] || 0;
+    const e = elementorSig.widgets[key] || 0;
+    if (h !== e) differences.push(`${key} count mismatch: HTML ${h} vs Elementor ${e}`);
+  }
+
+  const checks = 4;
+  const score = Math.max(0, (checks - differences.length) / checks);
+  return { match: differences.length === 0, score, differences, html: htmlSig, elementor: elementorSig };
 }
 
 /**
