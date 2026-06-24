@@ -501,15 +501,52 @@ export function htmlToElementor(html: string): ElementorElement[] {
 }
 
 /**
- * Build the WordPress post meta needed to make a page render & edit natively in
- * Elementor. Returns meta keys to merge into the REST `meta` payload.
+ * Extract the renderable markup of a template: all <style> blocks (so the
+ * design CSS, including background-image rules, is preserved) plus the <body>
+ * markup, with <script>/<meta>/<link> removed. Returned as a single HTML string
+ * that renders identically to the original template.
+ */
+function extractRenderableHtml(html: string): string {
+  const input = html || "";
+  // Collect every <style> block verbatim (keeps fonts, layout, bg images).
+  const styles = (input.match(/<style\b[^>]*>[\s\S]*?<\/style>/gi) || []).join("\n");
+  // Prefer the <body> inner markup; fall back to the whole document.
+  const bodyMatch = input.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
+  let body = bodyMatch ? bodyMatch[1] : input;
+  body = body
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<meta\b[^>]*>/gi, "")
+    .replace(/<link\b[^>]*>/gi, "")
+    .replace(/<\/?(?:html|head|body)\b[^>]*>/gi, "")
+    .trim();
+  return `${styles}\n${body}`.trim();
+}
+
+/**
+ * Build the WordPress post meta needed to render the template 1:1 inside
+ * Elementor. The entire template (markup + its <style> CSS + background images)
+ * is embedded in a single Elementor "html" widget so it renders verbatim —
+ * independent of Elementor's per-page CSS generation (which never runs when a
+ * page is created via the REST API) and immune to WordPress kses stripping
+ * <style> tags from post_content.
  *
- * The Elementor "Canvas" page template is forced so the published page renders
- * with NO theme header/footer/sidebar and full width — making the WordPress
- * output match the original template design 1:1.
+ * The Elementor "Canvas" page template is forced so the page renders with NO
+ * theme header/footer/sidebar and full width — matching the original design.
  */
 export function buildElementorMeta(html: string, version = "3.21.0"): Record<string, unknown> {
-  const data = htmlToElementor(html);
+  const renderable = extractRenderableHtml(html);
+  const htmlWidget: ElementorElement = {
+    id: genId(),
+    elType: "widget",
+    widgetType: "html",
+    settings: { html: renderable },
+    elements: [],
+  };
+  const data: ElementorElement[] = [
+    container([htmlWidget], undefined, true),
+  ];
   return {
     _elementor_edit_mode: "builder",
     _elementor_template_type: "wp-page",
@@ -522,5 +559,4 @@ export function buildElementorMeta(html: string, version = "3.21.0"): Record<str
     // layout we need, so the page-settings meta is unnecessary.
     _wp_page_template: "elementor_canvas",
   };
-
 }
