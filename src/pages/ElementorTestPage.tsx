@@ -211,6 +211,30 @@ export default function ElementorTestPage() {
             </CardContent>
           </Card>
 
+          {regression && (
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Visual regression (HTML vs Elementor)
+                  <Badge variant={regression.match ? "outline" : "destructive"}>
+                    {regression.match ? "✅ match" : `⚠ ${regression.differences.length} diff`} · {Math.round(regression.score * 100)}%
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>Spacing/width — layout blocks: <strong>HTML {regression.html.layoutContainers}</strong> vs <strong>Elementor {regression.elementor.layoutContainers}</strong></p>
+                <p>Typography — headings: <strong>HTML [{regression.html.headings.join(", ") || "—"}]</strong> vs <strong>Elementor [{regression.elementor.headings.join(", ") || "—"}]</strong></p>
+                {regression.differences.length > 0 ? (
+                  <ul className="list-disc space-y-1 pl-5 text-destructive">
+                    {regression.differences.map((d, i) => <li key={i}>{d}</li>)}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground">Spacing, width and typography match the original template.</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader><CardTitle>Original layout preview</CardTitle></CardHeader>
             <CardContent>
