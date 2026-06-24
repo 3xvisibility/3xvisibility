@@ -17,6 +17,7 @@ import {
   MoreVertical, Globe, TrendingUp, AlertCircle, CheckCircle2, Activity, Send as SendIcon
 } from "lucide-react";
 import { LiveGenerationProgress } from "@/components/generated-pages/LiveGenerationProgress";
+import { VisualFidelityDialog } from "@/components/generated-pages/VisualFidelityDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DuplicateContentDialog } from "@/components/DuplicateContentDialog";
 import { SeoAnalysisDialog } from "@/components/SeoAnalysisDialog";
