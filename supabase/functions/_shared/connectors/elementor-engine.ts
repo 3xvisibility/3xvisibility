@@ -535,18 +535,35 @@ function extractRenderableHtml(html: string): string {
  * The Elementor "Canvas" page template is forced so the page renders with NO
  * theme header/footer/sidebar and full width — matching the original design.
  */
-export function buildElementorMeta(html: string, version = "3.21.0"): Record<string, unknown> {
-  const renderable = extractRenderableHtml(html);
-  const htmlWidget: ElementorElement = {
-    id: genId(),
-    elType: "widget",
-    widgetType: "html",
-    settings: { html: renderable },
-    elements: [],
-  };
-  const data: ElementorElement[] = [
-    container([htmlWidget], undefined, true),
-  ];
+export interface BuildElementorMetaOptions {
+  /** When true (default), embed full template markup + CSS in a single HTML widget. When false, rely on native Elementor widgets + Elementor-generated CSS. */
+  embedCss?: boolean;
+  version?: string;
+}
+
+export function buildElementorMeta(
+  html: string,
+  options: BuildElementorMetaOptions | string = {},
+): Record<string, unknown> {
+  // Back-compat: allow passing version string as the 2nd arg.
+  const opts: BuildElementorMetaOptions =
+    typeof options === "string" ? { version: options } : options;
+  const { embedCss = true, version = "3.21.0" } = opts;
+
+  let data: ElementorElement[];
+  if (embedCss) {
+    const renderable = extractRenderableHtml(html);
+    const htmlWidget: ElementorElement = {
+      id: genId(),
+      elType: "widget",
+      widgetType: "html",
+      settings: { html: renderable },
+      elements: [],
+    };
+    data = [container([htmlWidget], undefined, true)];
+  } else {
+    data = htmlToElementor(html);
+  }
   return {
     _elementor_edit_mode: "builder",
     _elementor_template_type: "wp-page",
