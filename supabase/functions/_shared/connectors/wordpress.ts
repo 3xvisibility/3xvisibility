@@ -124,6 +124,64 @@ export class WordPressConnector implements CmsConnector {
     return this.assetsPromise;
   }
 
+  /** Cache of source URL -> uploaded Media Library URL to avoid re-uploading. */
+  private mediaCache = new Map<string, string | null>();
+
+  /**
+   * Download a remote asset and upload it into the WordPress Media Library.
+   * Returns the new Media Library URL, or null on failure (caller keeps original).
+   */
+  private async uploadMediaFromUrl(sourceUrl: string): Promise<string | null> {
+    if (this.mediaCache.has(sourceUrl)) return this.mediaCache.get(sourceUrl)!;
+    try {
+      const res = await fetch(sourceUrl);
+      if (!res.ok) {
+        this.mediaCache.set(sourceUrl, null);
+        return null;
+      }
+      const contentType = res.headers.get("content-type") || "application/octet-stream";
+      if (!/^image\/|^font\/|svg|octet-stream/i.test(contentType)) {
+        this.mediaCache.set(sourceUrl, null);
+        return null;
+      }
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      let filename = sourceUrl.split("/").pop()?.split("?")[0] || "asset";
+      if (!/\.[a-z0-9]+$/i.test(filename)) {
+        const ext = contentType.includes("svg") ? "svg" : (contentType.split("/")[1] || "bin");
+        filename = `${filename}.${ext}`;
+      }
+
+      const uploadHeaders: Record<string, string> = {
+        Accept: "application/json",
+        "Content-Type": contentType,
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      };
+      if (this.authString) uploadHeaders.Authorization = `Basic ${this.authString}`;
+      else {
+        const auth = (this.headers as Record<string, string>).Authorization;
+        if (auth) uploadHeaders.Authorization = auth;
+      }
+
+      const mediaRes = await fetch(`${this.baseUrl}/wp-json/wp/v2/media`, {
+        method: "POST",
+        headers: uploadHeaders,
+        body: bytes,
+      });
+      if (!mediaRes.ok) {
+        this.mediaCache.set(sourceUrl, null);
+        return null;
+      }
+      const data = await mediaRes.json();
+      const newUrl: string | null = data.source_url || data.guid?.rendered || null;
+      this.mediaCache.set(sourceUrl, newUrl);
+      return newUrl;
+    } catch {
+      this.mediaCache.set(sourceUrl, null);
+      return null;
+    }
+  }
+
+
   private async executePageRequest(
     url: string,
     method: "POST" | "PUT",
