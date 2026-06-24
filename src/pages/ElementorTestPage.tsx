@@ -89,6 +89,10 @@ export default function ElementorTestPage() {
   );
   const elementor = useMemo(() => (resolvedHtml ? templateToElementor(resolvedHtml) : []), [resolvedHtml]);
   const counts = useMemo(() => countWidgets(elementor), [elementor]);
+  const regression = useMemo(
+    () => (resolvedHtml ? compareVisualRegression(resolvedHtml) : null),
+    [resolvedHtml],
+  );
 
   const unresolved = (resolvedHtml.match(/\{[a-z_][a-z0-9_]*\}/gi) || []).length;
 
