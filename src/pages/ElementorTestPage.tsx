@@ -8,7 +8,7 @@ import {
   PER_CATEGORY,
 } from "@/lib/marketplace-elementor-templates";
 import { applyTemplateDefaults } from "@/lib/marketplace-templates";
-import type { ElementorElement } from "@/lib/connectors/elementor-engine";
+import { compareVisualRegression, type ElementorElement } from "@/lib/connectors/elementor-engine";
 import { usePersistedState } from "@/hooks/use-persisted-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
