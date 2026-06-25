@@ -259,12 +259,11 @@ export class WordPressConnector implements CmsConnector {
     // WordPress Template Compatibility Engine: build a native, editable Elementor
     // page from the HTML template (pages only, not Shopify-style products).
     let elementorApplied = false;
-    if (!payload.product_data && payload.content) {
-      // Native Elementor publishing: convert the HTML template into real
-      // Elementor Containers + Widgets (heading, text-editor, image, button,
-      // icon-box, counter, accordion, gallery, divider, spacer, video,
-      // testimonial) — NOT a raw-HTML widget — so the page is fully editable.
-      Object.assign(meta, buildElementorMeta(payload.content, { embedCss: false }));
+    if (!payload.product_data && (payload.content || payload.elementor_data)) {
+      // Catalog path: when a pre-built Elementor tree is supplied (stored template
+      // with editable content applied), publish it verbatim. Otherwise convert the
+      // HTML template into native Elementor Containers + Widgets.
+      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: false, prebuiltData: payload.elementor_data }));
       // NOTE: do NOT send `_elementor_css`. Elementor registers it with an
       // `object` REST schema, so a string value triggers `rest_invalid_type`
       // (HTTP 400). A newly created page has no cached CSS file, so Elementor
