@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Seo } from "@/components/Seo";
+import { supabase } from "@/integrations/supabase/client";
 
 function countWidgets(els: ElementorElement[]): Record<string, number> {
   const counts: Record<string, number> = {};
@@ -58,6 +59,42 @@ export default function ElementorTestPage() {
   const [converting, setConverting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ConvResult[]>([]);
+
+  type SeedResult = { id: string; ok: boolean; widgets?: number; fields?: number; error?: string };
+  const [seeding, setSeeding] = useState(false);
+  const [seedSummary, setSeedSummary] = useState<{ seeded: number; total: number } | null>(null);
+  const [seedResults, setSeedResults] = useState<SeedResult[]>([]);
+  const [seedError, setSeedError] = useState<string | null>(null);
+
+  const seedToDatabase = async () => {
+    const list = buildElementorTemplates(selectedIds);
+    if (!list.length) return;
+    setSeeding(true);
+    setSeedSummary(null);
+    setSeedResults([]);
+    setSeedError(null);
+    try {
+      const payload = {
+        templates: list.map((t) => ({
+          sourceTemplateId: t.id,
+          name: t.name,
+          category: t.category ?? "General",
+          previewImage: t.previewImage ?? undefined,
+          html: applyTemplateDefaults(t.content, t.defaultValues),
+        })),
+      };
+      const { data, error } = await supabase.functions.invoke("seed-elementor-templates", {
+        body: payload,
+      });
+      if (error) throw error;
+      setSeedSummary({ seeded: data?.seeded ?? 0, total: data?.total ?? list.length });
+      setSeedResults(data?.results ?? []);
+    } catch (e) {
+      setSeedError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const convertSelected = async () => {
     const list = buildElementorTemplates(selectedIds);
@@ -148,9 +185,16 @@ export default function ElementorTestPage() {
             })}
           </div>
 
-          <div className="flex items-center gap-3 border-t pt-4">
+          <div className="flex flex-wrap items-center gap-3 border-t pt-4">
             <Button onClick={convertSelected} disabled={converting || selectedIds.length === 0}>
               {converting ? `Converting… ${progress}%` : `Convert Selected (${selectedIds.length})`}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={seedToDatabase}
+              disabled={seeding || selectedIds.length === 0}
+            >
+              {seeding ? "Seeding…" : `Seed to database (${selectedIds.length})`}
             </Button>
             {converting && (
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
@@ -158,6 +202,27 @@ export default function ElementorTestPage() {
               </div>
             )}
           </div>
+
+          {seedError && (
+            <p className="text-sm text-destructive">Seeding failed: {seedError}</p>
+          )}
+          {seedSummary && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Stored <strong>{seedSummary.seeded}</strong> of {seedSummary.total} templates in the database catalog.
+              </p>
+              {seedResults.map((r) => (
+                <div key={r.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                  <span className="truncate">{r.id}</span>
+                  {r.ok ? (
+                    <Badge variant="outline" className="shrink-0">✅ {r.widgets} widgets · {r.fields} fields</Badge>
+                  ) : (
+                    <Badge variant="destructive" className="shrink-0" title={r.error}>❌ {r.error}</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {results.length > 0 && (
             <div className="space-y-2">
