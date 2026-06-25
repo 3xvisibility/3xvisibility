@@ -2,6 +2,60 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import { createConnector, createProductConnector, type WebsiteRecord } from "../_shared/connectors/factory.ts";
 import type { PagePayload } from "../_shared/connectors/types.ts";
 import { validateMapping, validateResolved } from "../_shared/shopify-mapping-validation.ts";
+import { buildElementorFromCatalog } from "../_shared/connectors/elementor-catalog.ts";
+
+/**
+ * Resolve a stored Elementor catalog template for a generated page and overlay the
+ * page's new content onto its editable fields. Chain:
+ *   page.campaign_id → campaigns.template_id → templates.source_marketplace_id
+ *     → elementor_templates.source_template_id → elementor_json
+ * Returns a validated `_elementor_data` string, or null when no stored template
+ * matches (caller falls back to HTML→Elementor conversion).
+ */
+async function resolveCatalogElementorData(
+  supabase: ReturnType<typeof createClient>,
+  page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
+  cache: Map<string, unknown>,
+): Promise<string | null> {
+  try {
+    if (!page.campaign_id) return null;
+
+    let elementorJson: unknown;
+    if (cache.has(page.campaign_id)) {
+      elementorJson = cache.get(page.campaign_id);
+    } else {
+      const { data: campaign } = await supabase
+        .from("campaigns").select("template_id").eq("id", page.campaign_id).maybeSingle();
+      const templateId = (campaign as { template_id?: string | null } | null)?.template_id;
+      if (!templateId) { cache.set(page.campaign_id, null); return null; }
+
+      const { data: tpl } = await supabase
+        .from("templates").select("source_marketplace_id").eq("id", templateId).maybeSingle();
+      const marketplaceId = (tpl as { source_marketplace_id?: string | null } | null)?.source_marketplace_id;
+      if (!marketplaceId) { cache.set(page.campaign_id, null); return null; }
+
+      const { data: stored } = await supabase
+        .from("elementor_templates").select("elementor_json")
+        .eq("source_template_id", marketplaceId).maybeSingle();
+      elementorJson = (stored as { elementor_json?: unknown } | null)?.elementor_json ?? null;
+      cache.set(page.campaign_id, elementorJson);
+    }
+
+    if (!elementorJson) return null;
+
+    const built = buildElementorFromCatalog(elementorJson, {
+      title: page.title,
+      description: page.seo_description || undefined,
+      bodyHtml: page.content,
+    });
+    if (!built) return null;
+    console.log(`[publish-pages] catalog Elementor applied (similarity ${built.similarity}%, truncated ${built.truncatedFields.length})`);
+    return built.data;
+  } catch (e) {
+    console.warn("[publish-pages] catalog Elementor resolve failed", e);
+    return null;
+  }
+}
 
 /**
  * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
@@ -455,6 +509,7 @@ Deno.serve(async (req) => {
 
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
+    const elementorCatalogCache = new Map<string, unknown>();
 
     const publishStartTime = Date.now();
     let pageIndex = 0;
@@ -687,6 +742,16 @@ Deno.serve(async (req) => {
             : undefined,
           preserveDesign,
         );
+
+        // WordPress page publishes: prefer the stored Elementor catalog template
+        // (editable JSON with new content applied + validated) over HTML conversion.
+        if (
+          resolvedPublishType === "page" && !preserveDesign &&
+          (page.websites as { type?: string })?.type === "wordpress"
+        ) {
+          const catalogData = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
+          if (catalogData) payload.elementor_data = catalogData;
+        }
 
         // Apply Shopify template suffix overrides (campaign or request body)
         const pageSuffixes = {

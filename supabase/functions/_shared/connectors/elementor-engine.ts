@@ -566,6 +566,11 @@ export interface BuildElementorMetaOptions {
   /** When true (default), embed full template markup + CSS in a single HTML widget. When false, rely on native Elementor widgets + Elementor-generated CSS. */
   embedCss?: boolean;
   version?: string;
+  /**
+   * Pre-built `_elementor_data` JSON string (from the stored catalog with editable
+   * content already applied). When set, it's used verbatim and the HTML is ignored.
+   */
+  prebuiltData?: string;
 }
 
 export function buildElementorMeta(
@@ -575,27 +580,34 @@ export function buildElementorMeta(
   // Back-compat: allow passing version string as the 2nd arg.
   const opts: BuildElementorMetaOptions =
     typeof options === "string" ? { version: options } : options;
-  const { embedCss = true, version = "3.21.0" } = opts;
+  const { embedCss = true, version = "3.21.0", prebuiltData } = opts;
 
-  let data: ElementorElement[];
-  if (embedCss) {
-    const renderable = extractRenderableHtml(html);
-    const htmlWidget: ElementorElement = {
-      id: genId(),
-      elType: "widget",
-      widgetType: "html",
-      settings: { html: renderable },
-      elements: [],
-    };
-    data = [container([htmlWidget], undefined, true)];
+  let dataStr: string;
+  if (prebuiltData) {
+    // Catalog path: stored Elementor JSON with editable content already applied.
+    dataStr = prebuiltData;
   } else {
-    data = htmlToElementor(html);
+    let data: ElementorElement[];
+    if (embedCss) {
+      const renderable = extractRenderableHtml(html);
+      const htmlWidget: ElementorElement = {
+        id: genId(),
+        elType: "widget",
+        widgetType: "html",
+        settings: { html: renderable },
+        elements: [],
+      };
+      data = [container([htmlWidget], undefined, true)];
+    } else {
+      data = htmlToElementor(html);
+    }
+    dataStr = JSON.stringify(data);
   }
   return {
     _elementor_edit_mode: "builder",
     _elementor_template_type: "wp-page",
     _elementor_version: version,
-    _elementor_data: JSON.stringify(data),
+    _elementor_data: dataStr,
     // NOTE: `_elementor_page_settings` is intentionally omitted. Elementor
     // registers it with an `object` REST schema, so sending a JSON string
     // triggers `rest_invalid_type` (HTTP 400). Forcing the canvas template via
