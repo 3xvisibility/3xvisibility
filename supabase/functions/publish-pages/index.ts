@@ -742,6 +742,16 @@ Deno.serve(async (req) => {
           preserveDesign,
         );
 
+        // WordPress page publishes: prefer the stored Elementor catalog template
+        // (editable JSON with new content applied + validated) over HTML conversion.
+        if (
+          resolvedPublishType === "page" && !preserveDesign &&
+          (page.websites as { type?: string })?.type === "wordpress"
+        ) {
+          const catalogData = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
+          if (catalogData) payload.elementor_data = catalogData;
+        }
+
         // Apply Shopify template suffix overrides (campaign or request body)
         const pageSuffixes = {
           ...(await getCampaignShopifySuffixes(page.campaign_id)),
