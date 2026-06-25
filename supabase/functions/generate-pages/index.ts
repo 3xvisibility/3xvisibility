@@ -1356,8 +1356,14 @@ Deno.serve(async (req) => {
       const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
       return b ? enforceBudget(value, b) : value;
     };
-    const aiBlocks = extractAiBlocks(templateContent);
-    const aiImageBlocks = extractAiImageBlocks(templateContent);
+    // ── Template Reuse Mode ──
+    // When enabled, the template's existing title/description/content are reused
+    // verbatim and ONLY CSV placeholders (single {var} and double {{var}}) are
+    // replaced deterministically. No AI rewriting, no AI/stock image insertion.
+    const reuseTemplateContent =
+      ((campaign.mapping || {}) as { reuse_template_content?: boolean }).reuse_template_content === true;
+    const aiBlocks = reuseTemplateContent ? [] : extractAiBlocks(templateContent);
+    const aiImageBlocks = reuseTemplateContent ? [] : extractAiImageBlocks(templateContent);
     const hasAiBlocks = aiBlocks.length > 0;
     const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
