@@ -733,6 +733,41 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     };
   }, [templates, selectedTemplate, baseCsvData, customValues, aiMaxLines, aiMaxWords]);
 
+  // Reuse-mode before/after diff: for the first sample row, show the template's
+  // original title/description/content (BEFORE) next to the version with ONLY
+  // CSV placeholders replaced (AFTER). No AI involved — purely deterministic.
+  const reuseDiffData = useMemo(() => {
+    const tpl = templates.find((t) => t.id === selectedTemplate) as any;
+    if (!tpl) return null;
+    const sampleRow = (baseCsvData[0] || {}) as Record<string, string>;
+    const vars: Record<string, string> = { ...customValues, ...sampleRow };
+    const fill = (text: string) => {
+      let r = text || "";
+      for (const [k, v] of Object.entries(vars)) {
+        const safe = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        r = r.replace(new RegExp(`\\{\\{\\s*${safe}\\s*\\}\\}`, "gi"), v || "");
+        r = r.replace(new RegExp(`\\{${safe}\\}`, "gi"), v || "");
+      }
+      return r;
+    };
+    const stripTags = (t: string) => t.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    const origContent = stripTags(String(tpl.content || "")).slice(0, 400);
+    const origTitle = String(tpl.seo_title_pattern || "");
+    const origDesc = String(tpl.seo_description_pattern || "");
+    const mk = (orig: string) => {
+      const after = fill(orig);
+      return { before: orig, after, changed: after !== orig };
+    };
+    return {
+      title: mk(origTitle),
+      description: mk(origDesc),
+      content: mk(origContent),
+      hasSample: Object.keys(sampleRow).length > 0,
+    };
+  }, [templates, selectedTemplate, baseCsvData, customValues]);
+
+
+
 
   // Expand the data set by the cartesian product of every multi-value custom
   // variable, so N services × existing rows produce N× the pages.
