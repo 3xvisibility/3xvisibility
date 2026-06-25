@@ -179,6 +179,72 @@ export function defaultContentFor(fields: EditableField[]): Record<string, strin
   return out;
 }
 
+export interface FieldViolation {
+  key: string;
+  reason: "word_overflow" | "char_overflow" | "multi_line" | "not_numeric";
+  generated: number;
+  limit: number;
+}
+
+export interface ValidationReport {
+  /** 0-100 visual-fidelity proxy: share of fields that fit the template. */
+  similarity: number;
+  violations: FieldViolation[];
+  ok: boolean;
+}
+
+const stripTags = (s: string): string => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
+/**
+ * Validate generated content against the template budget. Detects the overflow
+ * conditions (too many words/chars, multi-line where single-line required,
+ * non-numeric counters) that would break the Elementor layout, and returns an
+ * overall similarity score. `ok` is true at/above `target` (default 98%).
+ */
+export function validateContent(
+  fields: EditableField[],
+  limits: BudgetMap,
+  content: Record<string, string>,
+  target = 98,
+): ValidationReport {
+  const violations: FieldViolation[] = [];
+  let checked = 0;
+
+  for (const f of fields) {
+    if (!(f.key in content)) continue;
+    checked++;
+    const raw = content[f.key] ?? "";
+
+    if (f.kind === "counter_number") {
+      if (!/^\s*[\d.,%+\-\s]+\s*$/.test(stripTags(raw))) {
+        violations.push({ key: f.key, reason: "not_numeric", generated: 1, limit: 0 });
+      }
+      continue;
+    }
+
+    const text = stripTags(raw);
+    const words = text ? text.split(/\s+/).length : 0;
+    const budget = limits[f.key];
+
+    // Single-line fields must not wrap (heuristic: no hard line breaks).
+    const singleLine = ["heading", "button", "iconbox_title", "counter_title",
+      "accordion_title"].includes(f.kind);
+    if (singleLine && /\n|<br\s*\/?>/i.test(raw)) {
+      violations.push({ key: f.key, reason: "multi_line", generated: 2, limit: 1 });
+    }
+    if (budget) {
+      if (words > budget.maxWords) {
+        violations.push({ key: f.key, reason: "word_overflow", generated: words, limit: budget.maxWords });
+      } else if (text.length > budget.maxChars) {
+        violations.push({ key: f.key, reason: "char_overflow", generated: text.length, limit: budget.maxChars });
+      }
+    }
+  }
+
+  const similarity = checked === 0 ? 100 : Math.round(((checked - violations.length) / checked) * 100);
+  return { similarity, violations, ok: similarity >= target };
+}
+
 /**
  * Per-field length budget (with hard caps applied) keyed by field key.
  * Reuses analyzeTemplateBudget so caps stay consistent with generation.
