@@ -339,7 +339,8 @@ export class WordPressConnector implements CmsConnector {
     let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && typeof payload.content === "string") {
       Object.assign(meta, buildElementorMeta(payload.content, { embedCss: false }));
-      meta._elementor_css = "";
+      // `_elementor_css` omitted on purpose (object REST schema → rest_invalid_type);
+      // Elementor regenerates the CSS automatically when the page is re-rendered.
       elementorApplied = true;
     }
 
