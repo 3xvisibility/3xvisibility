@@ -336,8 +336,8 @@ export class WordPressConnector implements CmsConnector {
     // Rebuild the native Elementor layout when the body content is being updated
     // (skipped in design-preservation mode and for products).
     let elementorApplied = false;
-    if (!preserveDesign && !payload.product_data && typeof payload.content === "string") {
-      Object.assign(meta, buildElementorMeta(payload.content, { embedCss: false }));
+    if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
+      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: false, prebuiltData: payload.elementor_data }));
       // `_elementor_css` omitted on purpose (object REST schema → rest_invalid_type);
       // Elementor regenerates the CSS automatically when the page is re-rendered.
       elementorApplied = true;
