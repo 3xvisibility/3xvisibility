@@ -607,7 +607,7 @@ export function buildElementorMeta(
     _elementor_edit_mode: "builder",
     _elementor_template_type: "wp-page",
     _elementor_version: version,
-    _elementor_data: JSON.stringify(data),
+    _elementor_data: dataStr,
     // NOTE: `_elementor_page_settings` is intentionally omitted. Elementor
     // registers it with an `object` REST schema, so sending a JSON string
     // triggers `rest_invalid_type` (HTTP 400). Forcing the canvas template via
