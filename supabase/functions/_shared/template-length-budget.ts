@@ -126,7 +126,7 @@ export function analyzeTemplateBudget(defaultValues?: Record<string, string>): B
       maxChars: charCapForValue(value, maxWords),
     };
   }
-  return out;
+  return applyFieldCaps(out);
 }
 
 /**
