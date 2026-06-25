@@ -1113,6 +1113,8 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
           },
           // Per-variable rules controlling CSV vs AI fill behavior.
           fill_rules: fillRules,
+          // Reuse template content verbatim; only CSV placeholders are replaced.
+          reuse_template_content: reuseTemplateContent,
           // Whether AI defaults should be generated once per campaign (cheap,
           // same value for every row) or once per CSV row (richer per-row
           // results that incorporate that row's data — costs 1 AI call/row).
