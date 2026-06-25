@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Seo } from "@/components/Seo";
+import { supabase } from "@/integrations/supabase/client";
 
 function countWidgets(els: ElementorElement[]): Record<string, number> {
   const counts: Record<string, number> = {};
@@ -78,7 +79,7 @@ export default function ElementorTestPage() {
           sourceTemplateId: t.id,
           name: t.name,
           category: t.category ?? "General",
-          previewImage: t.preview ?? undefined,
+          previewImage: t.previewImage ?? undefined,
           html: applyTemplateDefaults(t.content, t.defaultValues),
         })),
       };
