@@ -1379,6 +1379,7 @@ Deno.serve(async (req) => {
     let aiVarDefaults: Record<string, string> = {};
     let aiAutofillUsed = 0;
     try {
+      if (reuseTemplateContent) throw new Error("__skip_ai_autofill__");
       const declaredVars = (((campaign.templates as { variables?: string[] }).variables) || []) as string[];
       const tokenMatches = templateContent.match(/\{([a-zA-Z0-9_.-]+)\}/g) || [];
       const tokenVars = tokenMatches.map((t: string) => t.slice(1, -1));
