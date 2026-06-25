@@ -185,9 +185,16 @@ export default function ElementorTestPage() {
             })}
           </div>
 
-          <div className="flex items-center gap-3 border-t pt-4">
+          <div className="flex flex-wrap items-center gap-3 border-t pt-4">
             <Button onClick={convertSelected} disabled={converting || selectedIds.length === 0}>
               {converting ? `Converting… ${progress}%` : `Convert Selected (${selectedIds.length})`}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={seedToDatabase}
+              disabled={seeding || selectedIds.length === 0}
+            >
+              {seeding ? "Seeding…" : `Seed to database (${selectedIds.length})`}
             </Button>
             {converting && (
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
@@ -195,6 +202,27 @@ export default function ElementorTestPage() {
               </div>
             )}
           </div>
+
+          {seedError && (
+            <p className="text-sm text-destructive">Seeding failed: {seedError}</p>
+          )}
+          {seedSummary && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Stored <strong>{seedSummary.seeded}</strong> of {seedSummary.total} templates in the database catalog.
+              </p>
+              {seedResults.map((r) => (
+                <div key={r.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                  <span className="truncate">{r.id}</span>
+                  {r.ok ? (
+                    <Badge variant="outline" className="shrink-0">✅ {r.widgets} widgets · {r.fields} fields</Badge>
+                  ) : (
+                    <Badge variant="destructive" className="shrink-0" title={r.error}>❌ {r.error}</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {results.length > 0 && (
             <div className="space-y-2">
