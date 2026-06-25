@@ -59,6 +59,42 @@ export default function ElementorTestPage() {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ConvResult[]>([]);
 
+  type SeedResult = { id: string; ok: boolean; widgets?: number; fields?: number; error?: string };
+  const [seeding, setSeeding] = useState(false);
+  const [seedSummary, setSeedSummary] = useState<{ seeded: number; total: number } | null>(null);
+  const [seedResults, setSeedResults] = useState<SeedResult[]>([]);
+  const [seedError, setSeedError] = useState<string | null>(null);
+
+  const seedToDatabase = async () => {
+    const list = buildElementorTemplates(selectedIds);
+    if (!list.length) return;
+    setSeeding(true);
+    setSeedSummary(null);
+    setSeedResults([]);
+    setSeedError(null);
+    try {
+      const payload = {
+        templates: list.map((t) => ({
+          sourceTemplateId: t.id,
+          name: t.name,
+          category: t.category ?? "General",
+          previewImage: t.preview ?? undefined,
+          html: applyTemplateDefaults(t.content, t.defaultValues),
+        })),
+      };
+      const { data, error } = await supabase.functions.invoke("seed-elementor-templates", {
+        body: payload,
+      });
+      if (error) throw error;
+      setSeedSummary({ seeded: data?.seeded ?? 0, total: data?.total ?? list.length });
+      setSeedResults(data?.results ?? []);
+    } catch (e) {
+      setSeedError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const convertSelected = async () => {
     const list = buildElementorTemplates(selectedIds);
     if (!list.length) return;
