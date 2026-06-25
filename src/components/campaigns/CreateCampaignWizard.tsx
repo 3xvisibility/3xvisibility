@@ -133,6 +133,9 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     metafields: import("../websites/ShopifyFieldMappingEditor").ShopifyMetafieldMap[];
   }>({ enabled: false, field_map: {}, variant_map: {}, metafields: [] });
   const [aiFillMode, setAiFillMode] = useState<"per_campaign" | "per_row">("per_campaign");
+  // Template Reuse Mode: reuse template title/description/content verbatim and
+  // only replace CSV placeholders ({var} or {{var}}) — never rewrite via AI.
+  const [reuseTemplateContent, setReuseTemplateContent] = useState(false);
   // AI vibe theme — palette + typography + density override applied at
   // generation time so a single template can adopt many distinct looks.
   const [vibePalette, setVibePalette] = useState<VibePalette>(DEFAULT_VIBE.palette);
