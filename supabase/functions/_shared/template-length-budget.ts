@@ -90,10 +90,11 @@ export function countWords(s: string): number {
  * regardless of field size, so the template layout never breaks.
  */
 function rangeForWords(words: number): { minWords: number; maxWords: number } {
+  // Strict: generated text must fit the SAME word count as the template,
+  // never more than +1 word, so the layout/design is preserved exactly.
   if (words <= 1) return { minWords: 1, maxWords: 1 };
-  if (words <= 3) return { minWords: Math.max(1, words - 1), maxWords: words + 1 };
-  if (words <= 8) return { minWords: Math.max(2, words - 2), maxWords: words + 2 };
-  return { minWords: Math.max(3, Math.round(words * 0.85)), maxWords: words + 3 };
+  if (words <= 8) return { minWords: Math.max(1, words - 1), maxWords: words + 1 };
+  return { minWords: Math.max(3, Math.round(words * 0.9)), maxWords: words + 1 };
 }
 
 function charCapForValue(value: string, maxWords: number): number {
