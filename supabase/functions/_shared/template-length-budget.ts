@@ -227,7 +227,15 @@ export function enforceBudget(value: string, budget?: LengthBudget): string {
 export function enforceRowBudget(row: Record<string, string>, budget: BudgetMap): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(row)) {
-    out[k] = typeof v === "string" ? enforceBudget(v, budget[k]) : v;
+    if (typeof v !== "string") { out[k] = v; continue; }
+    const cap = capForFieldName(k);
+    // Counters: keep digits/symbols only, drop prose.
+    if (cap?.numeric) {
+      const num = (stripHtml(v).match(/[\d.,%+\-]+/g)?.[0]) ?? stripHtml(v).trim();
+      out[k] = num || v;
+      continue;
+    }
+    out[k] = enforceBudget(v, budget[k]);
   }
   return out;
 }
