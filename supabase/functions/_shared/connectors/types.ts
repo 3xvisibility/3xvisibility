@@ -25,6 +25,13 @@ export interface PagePayload {
    */
   shopify_page_template_suffix?: string;
   schema_json?: Record<string, unknown>;
+  /**
+   * Pre-built Elementor `_elementor_data` JSON string. When set (resolved from the
+   * stored `elementor_templates` catalog with editable content already applied),
+   * the WordPress connector uses it verbatim instead of converting HTML, so the
+   * published page matches the stored template design 1:1.
+   */
+  elementor_data?: string;
   custom_fields?: Record<string, unknown>;
   taxonomies?: Record<string, string[]>;
   /**
