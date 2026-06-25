@@ -792,6 +792,51 @@ export type Database = {
           },
         ]
       }
+      elementor_templates: {
+        Row: {
+          category: string
+          created_at: string
+          default_content: Json
+          default_limits: Json
+          editable_fields: Json
+          elementor_json: Json
+          id: string
+          name: string
+          preview_image: string | null
+          source_template_id: string
+          template_structure: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          default_content?: Json
+          default_limits?: Json
+          editable_fields?: Json
+          elementor_json?: Json
+          id?: string
+          name: string
+          preview_image?: string | null
+          source_template_id: string
+          template_structure?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          default_content?: Json
+          default_limits?: Json
+          editable_fields?: Json
+          elementor_json?: Json
+          id?: string
+          name?: string
+          preview_image?: string | null
+          source_template_id?: string
+          template_structure?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
