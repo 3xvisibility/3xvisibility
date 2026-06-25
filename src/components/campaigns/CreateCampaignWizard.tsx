@@ -2183,7 +2183,52 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                       </div>
                     </div>
                   )}
-                  {selectedTemplate && (() => {
+                  {selectedTemplate && (
+                    <div className="rounded-xl border border-border/60 bg-background/60 p-3 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold">Reuse template content (no AI rewrite)</p>
+                          <p className="text-[10px] text-muted-foreground leading-snug">
+                            Keep the template's title, description and content exactly as-is and only replace CSV placeholders like <code>{"{keyword}"}</code> or <code>{"{{city}}"}</code>. Images stay from the template — missing ones are left blank, never generated.
+                          </p>
+                        </div>
+                        <Switch checked={reuseTemplateContent} onCheckedChange={setReuseTemplateContent} />
+                      </div>
+                      {reuseTemplateContent && reuseDiffData && (
+                        <div className="space-y-2.5 rounded-lg border border-border/60 bg-background/40 p-2.5">
+                          <p className="text-[11px] font-semibold">
+                            Before / after preview (first row)
+                            {!reuseDiffData.hasSample && <span className="text-muted-foreground font-normal"> — add data to see replacements</span>}
+                          </p>
+                          {([
+                            ["Title", reuseDiffData.title, true],
+                            ["Description", reuseDiffData.description, true],
+                            ["Content", reuseDiffData.content, false],
+                          ] as const).map(([label, field]) => (
+                            <div key={label} className="space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+                                <Badge variant="outline" className={`h-4 px-1.5 text-[9px] ${field.changed ? "border-primary/40 text-primary" : "border-border text-muted-foreground"}`}>
+                                  {field.changed ? "Replaced from CSV" : "Reused from template"}
+                                </Badge>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                <div className="rounded-md border border-border/60 bg-muted/30 p-1.5">
+                                  <p className="text-[8px] uppercase tracking-wide text-muted-foreground mb-0.5">Template</p>
+                                  <p className="text-[10px] leading-snug break-words">{field.before || <span className="text-muted-foreground italic">empty</span>}</p>
+                                </div>
+                                <div className="rounded-md border border-primary/30 bg-primary/5 p-1.5">
+                                  <p className="text-[8px] uppercase tracking-wide text-primary/70 mb-0.5">Published</p>
+                                  <p className="text-[10px] leading-snug break-words">{field.after || <span className="text-muted-foreground italic">empty</span>}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {selectedTemplate && !reuseTemplateContent && (() => {
                     const targetSite = websites.find((w) => w.id === (selectedWebsite || websiteForPages));
                     const siteLang = (targetSite as { language?: string | null } | undefined)?.language;
                     const siteLocked = !!(targetSite as { language_locked?: boolean } | undefined)?.language_locked;
