@@ -1356,8 +1356,14 @@ Deno.serve(async (req) => {
       const b = lengthBudget[key] || lengthBudget[key.toLowerCase()];
       return b ? enforceBudget(value, b) : value;
     };
-    const aiBlocks = extractAiBlocks(templateContent);
-    const aiImageBlocks = extractAiImageBlocks(templateContent);
+    // ── Template Reuse Mode ──
+    // When enabled, the template's existing title/description/content are reused
+    // verbatim and ONLY CSV placeholders (single {var} and double {{var}}) are
+    // replaced deterministically. No AI rewriting, no AI/stock image insertion.
+    const reuseTemplateContent =
+      ((campaign.mapping || {}) as { reuse_template_content?: boolean }).reuse_template_content === true;
+    const aiBlocks = reuseTemplateContent ? [] : extractAiBlocks(templateContent);
+    const aiImageBlocks = reuseTemplateContent ? [] : extractAiImageBlocks(templateContent);
     const hasAiBlocks = aiBlocks.length > 0;
     const hasAiImageBlocks = aiImageBlocks.length > 0;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -1373,6 +1379,7 @@ Deno.serve(async (req) => {
     let aiVarDefaults: Record<string, string> = {};
     let aiAutofillUsed = 0;
     try {
+      if (reuseTemplateContent) throw new Error("__skip_ai_autofill__");
       const declaredVars = (((campaign.templates as { variables?: string[] }).variables) || []) as string[];
       const tokenMatches = templateContent.match(/\{([a-zA-Z0-9_.-]+)\}/g) || [];
       const tokenVars = tokenMatches.map((t: string) => t.slice(1, -1));
@@ -1455,7 +1462,11 @@ Deno.serve(async (req) => {
       (globalThis as unknown as { __aiFillTargets?: string[] }).__aiFillTargets = unmapped;
       (globalThis as unknown as { __aiFillContext?: typeof aiContext }).__aiFillContext = aiContext;
     } catch (err) {
-      console.error("[GENERATE-PAGES] AI fill setup failed:", err);
+      if ((err as Error)?.message === "__skip_ai_autofill__") {
+        console.log("[GENERATE-PAGES] Template reuse mode ON — AI auto-fill skipped; only CSV placeholders replaced.");
+      } else {
+        console.error("[GENERATE-PAGES] AI fill setup failed:", err);
+      }
     }
 
 
@@ -1842,11 +1853,15 @@ Deno.serve(async (req) => {
           }
 
           // 2. Standard CSV/row variable replacement for remaining placeholders.
+          //    Supports BOTH double-brace {{key}} and single-brace {key} tokens.
+          //    Double-brace is replaced first so the inner braces aren't left behind.
           for (const [key, value] of Object.entries(row)) {
             const rule = _ruleFor(key);
             if (rule === "ai_only") continue; // CSV must be ignored
-            const regex = new RegExp(`\\{${key}\\}`, "gi");
-            pageContent = pageContent.replace(regex, clampVar(key, value || ""));
+            const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const clamped = clampVar(key, value || "");
+            pageContent = pageContent.replace(new RegExp(`\\{\\{\\s*${safeKey}\\s*\\}\\}`, "gi"), clamped);
+            pageContent = pageContent.replace(new RegExp(`\\{${safeKey}\\}`, "gi"), clamped);
           }
 
           // 3. AI fallback for any still-unfilled placeholders (csv_first when CSV empty).
