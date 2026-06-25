@@ -260,7 +260,14 @@ export class WordPressConnector implements CmsConnector {
     // page from the HTML template (pages only, not Shopify-style products).
     let elementorApplied = false;
     if (!payload.product_data && payload.content) {
-      Object.assign(meta, buildElementorMeta(payload.content));
+      // Native Elementor publishing: convert the HTML template into real
+      // Elementor Containers + Widgets (heading, text-editor, image, button,
+      // icon-box, counter, accordion, gallery, divider, spacer, video,
+      // testimonial) — NOT a raw-HTML widget — so the page is fully editable.
+      Object.assign(meta, buildElementorMeta(payload.content, { embedCss: false }));
+      // Clear cached per-post CSS so Elementor regenerates settings-based CSS
+      // (fonts/spacing/margins/backgrounds/shadows) on next render.
+      meta._elementor_css = "";
       elementorApplied = true;
     }
 
@@ -330,7 +337,8 @@ export class WordPressConnector implements CmsConnector {
     // (skipped in design-preservation mode and for products).
     let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && typeof payload.content === "string") {
-      Object.assign(meta, buildElementorMeta(payload.content));
+      Object.assign(meta, buildElementorMeta(payload.content, { embedCss: false }));
+      meta._elementor_css = "";
       elementorApplied = true;
     }
 
