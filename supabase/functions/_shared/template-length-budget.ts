@@ -19,6 +19,64 @@ export interface LengthBudget {
 
 export type BudgetMap = Record<string, LengthBudget>;
 
+// ============================================================================
+// Hard per-field caps (provider-independent). Derived from the field's *role*,
+// detected by its variable name. The final budget is the STRICTER of these caps
+// and the original-length (±10%) budget, so every AI provider converges to the
+// same template-safe lengths.
+// ============================================================================
+
+export interface FieldCap {
+  maxChars?: number;
+  maxWords?: number;
+  /** numeric only (counters) */
+  numeric?: boolean;
+  /** must stay on a single line */
+  singleLine?: boolean;
+}
+
+/** Returns a hard cap based on a field's name, or null if no rule matches. */
+export function capForFieldName(name: string): FieldCap | null {
+  const n = name.toLowerCase();
+  if (/(counter|count|number|stat|metric|years?|percent)/.test(n)) return { numeric: true };
+  if (/(button|btn|cta_label|cta_button|link_text|action)/.test(n)) return { maxWords: 4, singleLine: true };
+  if (/(hero).*(title|heading|head)|(title|heading).*(hero)/.test(n)) return { maxChars: 35, singleLine: true };
+  if (/(feature).*(title|name|head)/.test(n)) return { maxWords: 5, singleLine: true };
+  if (/(faq).*(question|q)\b|question/.test(n)) return { singleLine: true };
+  if (/(cta).*(title|heading|head)/.test(n)) return { maxChars: 45, singleLine: true };
+  if (/(small|sub).*(title|heading|head)|tagline|eyebrow|label/.test(n)) return { maxChars: 30, singleLine: true };
+  if (/(section).*(title|heading|head)|^heading|_heading$|(^|_)title($|_)/.test(n)) return { maxChars: 45, singleLine: true };
+  return null;
+}
+
+/** Merge a hard FieldCap into an existing LengthBudget, keeping the stricter side. */
+function applyCap(b: LengthBudget, cap: FieldCap): LengthBudget {
+  const out = { ...b };
+  if (cap.maxChars != null) {
+    out.maxChars = Math.min(out.maxChars, cap.maxChars);
+    out.recommendedChars = Math.min(out.recommendedChars, cap.maxChars);
+    out.minChars = Math.min(out.minChars, out.maxChars);
+  }
+  if (cap.maxWords != null) {
+    out.maxWords = Math.min(out.maxWords, cap.maxWords);
+    out.minWords = Math.min(out.minWords, out.maxWords);
+  }
+  if (cap.singleLine) {
+    out.maxWords = Math.min(out.maxWords, Math.max(out.words, out.minWords));
+  }
+  return out;
+}
+
+/** Apply name-based hard caps across an entire budget map. */
+export function applyFieldCaps(budget: BudgetMap): BudgetMap {
+  const out: BudgetMap = {};
+  for (const [k, b] of Object.entries(budget)) {
+    const cap = capForFieldName(k);
+    out[k] = cap ? applyCap(b, cap) : b;
+  }
+  return out;
+}
+
 const stripHtml = (s: string): string => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 export function countWords(s: string): number {
@@ -68,7 +126,7 @@ export function analyzeTemplateBudget(defaultValues?: Record<string, string>): B
       maxChars: charCapForValue(value, maxWords),
     };
   }
-  return out;
+  return applyFieldCaps(out);
 }
 
 /**
@@ -128,7 +186,7 @@ export function analyzeTemplateContentBudget(content?: string): BudgetMap {
     const inferred = inferInlineBudgetForHtmlToken(content, m[0]);
     if (inferred) out[key] = inferred;
   }
-  return out;
+  return applyFieldCaps(out);
 }
 
 /** Human-readable per-field hints injected into the generation prompt. */
@@ -169,7 +227,15 @@ export function enforceBudget(value: string, budget?: LengthBudget): string {
 export function enforceRowBudget(row: Record<string, string>, budget: BudgetMap): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(row)) {
-    out[k] = typeof v === "string" ? enforceBudget(v, budget[k]) : v;
+    if (typeof v !== "string") { out[k] = v; continue; }
+    const cap = capForFieldName(k);
+    // Counters: keep digits/symbols only, drop prose.
+    if (cap?.numeric) {
+      const num = (stripHtml(v).match(/[\d.,%+\-]+/g)?.[0]) ?? stripHtml(v).trim();
+      out[k] = num || v;
+      continue;
+    }
+    out[k] = enforceBudget(v, budget[k]);
   }
   return out;
 }
