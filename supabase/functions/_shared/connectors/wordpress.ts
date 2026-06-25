@@ -265,9 +265,10 @@ export class WordPressConnector implements CmsConnector {
       // icon-box, counter, accordion, gallery, divider, spacer, video,
       // testimonial) — NOT a raw-HTML widget — so the page is fully editable.
       Object.assign(meta, buildElementorMeta(payload.content, { embedCss: false }));
-      // Clear cached per-post CSS so Elementor regenerates settings-based CSS
-      // (fonts/spacing/margins/backgrounds/shadows) on next render.
-      meta._elementor_css = "";
+      // NOTE: do NOT send `_elementor_css`. Elementor registers it with an
+      // `object` REST schema, so a string value triggers `rest_invalid_type`
+      // (HTTP 400). A newly created page has no cached CSS file, so Elementor
+      // regenerates settings-based CSS automatically on first render.
       elementorApplied = true;
     }
 
@@ -338,7 +339,8 @@ export class WordPressConnector implements CmsConnector {
     let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && typeof payload.content === "string") {
       Object.assign(meta, buildElementorMeta(payload.content, { embedCss: false }));
-      meta._elementor_css = "";
+      // `_elementor_css` omitted on purpose (object REST schema → rest_invalid_type);
+      // Elementor regenerates the CSS automatically when the page is re-rendered.
       elementorApplied = true;
     }
 
