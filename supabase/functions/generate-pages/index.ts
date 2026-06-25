@@ -1928,8 +1928,10 @@ Deno.serve(async (req) => {
           // ═══════════════════════════════════════════════════════════
           // Per-template image mapping: when the template opts to keep its
           // original design images, never swap/insert stock or AI images.
+          // Default: ALWAYS keep the template's own images. Only generate/swap
+          // images when a template explicitly opts in via _preserveImages === false.
           const preserveTemplateImages =
-            ((campaign.templates?.schema_config || {}) as Record<string, any>)._preserveImages === true;
+            ((campaign.templates?.schema_config || {}) as Record<string, any>)._preserveImages !== false;
           if (!preserveTemplateImages) {
 
             const imgTags = pageContent.match(/<img\b[^>]*src\s*=\s*["']([^"']+)["'][^>]*>/gi) || [];
