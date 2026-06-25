@@ -1462,7 +1462,11 @@ Deno.serve(async (req) => {
       (globalThis as unknown as { __aiFillTargets?: string[] }).__aiFillTargets = unmapped;
       (globalThis as unknown as { __aiFillContext?: typeof aiContext }).__aiFillContext = aiContext;
     } catch (err) {
-      console.error("[GENERATE-PAGES] AI fill setup failed:", err);
+      if ((err as Error)?.message === "__skip_ai_autofill__") {
+        console.log("[GENERATE-PAGES] Template reuse mode ON — AI auto-fill skipped; only CSV placeholders replaced.");
+      } else {
+        console.error("[GENERATE-PAGES] AI fill setup failed:", err);
+      }
     }
 
 
