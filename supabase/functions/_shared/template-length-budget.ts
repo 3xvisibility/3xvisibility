@@ -186,7 +186,7 @@ export function analyzeTemplateContentBudget(content?: string): BudgetMap {
     const inferred = inferInlineBudgetForHtmlToken(content, m[0]);
     if (inferred) out[key] = inferred;
   }
-  return out;
+  return applyFieldCaps(out);
 }
 
 /** Human-readable per-field hints injected into the generation prompt. */
