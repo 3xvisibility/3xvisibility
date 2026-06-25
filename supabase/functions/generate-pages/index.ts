@@ -1853,11 +1853,15 @@ Deno.serve(async (req) => {
           }
 
           // 2. Standard CSV/row variable replacement for remaining placeholders.
+          //    Supports BOTH double-brace {{key}} and single-brace {key} tokens.
+          //    Double-brace is replaced first so the inner braces aren't left behind.
           for (const [key, value] of Object.entries(row)) {
             const rule = _ruleFor(key);
             if (rule === "ai_only") continue; // CSV must be ignored
-            const regex = new RegExp(`\\{${key}\\}`, "gi");
-            pageContent = pageContent.replace(regex, clampVar(key, value || ""));
+            const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const clamped = clampVar(key, value || "");
+            pageContent = pageContent.replace(new RegExp(`\\{\\{\\s*${safeKey}\\s*\\}\\}`, "gi"), clamped);
+            pageContent = pageContent.replace(new RegExp(`\\{${safeKey}\\}`, "gi"), clamped);
           }
 
           // 3. AI fallback for any still-unfilled placeholders (csv_first when CSV empty).
