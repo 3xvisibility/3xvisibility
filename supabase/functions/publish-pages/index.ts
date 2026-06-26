@@ -505,7 +505,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const results: { id: string; status: string; external_url?: string; error?: string }[] = [];
+    const results: { id: string; status: string; external_url?: string; error?: string; elementor_source?: "catalog" | "html-fallback"; elementor_similarity?: number }[] = [];
 
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
