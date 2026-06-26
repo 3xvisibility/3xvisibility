@@ -2614,6 +2614,19 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
                         <div className="flex items-center space-x-1.5"><RadioGroupItem value="product" id="w-as-product" /><Label htmlFor="w-as-product" className="text-xs cursor-pointer">Product</Label></div>
                       </RadioGroup>
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">Publish Format</Label>
+                      <RadioGroup
+                        value={publishFormat}
+                        onValueChange={v => { publishFormatTouchedRef.current = true; setPublishFormat(v as any); }}
+                        className="flex flex-wrap gap-3"
+                      >
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="elementor" id="w-fmt-elementor" /><Label htmlFor="w-fmt-elementor" className="text-xs cursor-pointer">Elementor</Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="gutenberg" id="w-fmt-gutenberg" /><Label htmlFor="w-fmt-gutenberg" className="text-xs cursor-pointer">Gutenberg <span className="opacity-60">(Beta)</span></Label></div>
+                        <div className="flex items-center space-x-1.5"><RadioGroupItem value="shopify" id="w-fmt-shopify" /><Label htmlFor="w-fmt-shopify" className="text-xs cursor-pointer">Shopify</Label></div>
+                      </RadioGroup>
+                      <p className="text-[10px] text-muted-foreground">Controls how the page is built when published. WordPress supports Elementor &amp; Gutenberg; Shopify uses its native sections.</p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
