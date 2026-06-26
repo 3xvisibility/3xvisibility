@@ -3,6 +3,7 @@ import { buildSeoMetaRecord, extractSeoFieldsFromMeta } from "./seo-meta.ts";
 import { adaptHtmlForWordPressTheme } from "./wordpress-theme-adapter.ts";
 import { getThemeAssets, type ThemeAssets } from "./theme-assets.ts";
 import { buildElementorMeta } from "./elementor-engine.ts";
+import { htmlToGutenberg } from "./gutenberg-engine.ts";
 import { importHtmlAssets } from "./asset-import.ts";
 
 function slugify(text: string): string {
