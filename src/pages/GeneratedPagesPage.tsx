@@ -267,7 +267,7 @@ export default function GeneratedPagesPage() {
       if (apply.description) updatePayload.seo_description = seo_description || null;
       if (apply.keywords) updatePayload.seo_keywords = keywordsArr.length > 0 ? keywordsArr : null;
       if (Object.keys(updatePayload).length === 0) throw new Error("Select at least one field");
-      const { error } = await supabase.from("generated_pages").update(updatePayload).in("id", ids);
+      const { error } = await supabase.from("generated_pages").update(updatePayload as never).in("id", ids);
       if (error) throw error;
       return ids.length;
     },

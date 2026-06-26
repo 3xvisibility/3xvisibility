@@ -171,7 +171,7 @@ export function SeoImprovementWorkflow({
       if (Object.keys(updates).length > 0) {
         const { error: upErr } = await supabase
           .from("generated_pages")
-          .update(updates)
+          .update(updates as never)
           .eq("id", suggestion.pageId);
         if (upErr) throw upErr;
       }
