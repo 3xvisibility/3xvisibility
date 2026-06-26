@@ -374,8 +374,11 @@ export class WordPressConnector implements CmsConnector {
 
     // Rebuild the native Elementor layout when the body content is being updated
     // (skipped in design-preservation mode and for products).
+    const format = payload.publish_format || "elementor";
     let elementorApplied = false;
-    if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
+    if (!preserveDesign && !payload.product_data && format === "gutenberg" && typeof payload.content === "string") {
+      body.content = htmlToGutenberg(payload.content) || (body.content as string);
+    } else if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
       const elementorData = payload.elementor_data
         ? await this.importElementorImages(payload.elementor_data)
         : undefined;
