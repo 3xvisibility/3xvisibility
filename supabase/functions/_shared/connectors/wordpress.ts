@@ -181,6 +181,33 @@ export class WordPressConnector implements CmsConnector {
     }
   }
 
+  /**
+   * Upload every image referenced inside a stored Elementor `_elementor_data`
+   * JSON string into the WordPress Media Library and rewrite the URLs to the
+   * uploaded copies. Template-only: images that fail to upload are left as-is
+   * (never replaced with AI/stock); no images are ever generated or inserted.
+   */
+  private async importElementorImages(elementorData: string): Promise<string> {
+    if (!elementorData) return elementorData;
+    const URL_RE = /https?:\/\/[^\s"'\\)]+?\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp)(?:\?[^\s"'\\)]*)?/gi;
+    const urls = [...new Set(elementorData.match(URL_RE) ?? [])];
+    if (urls.length === 0) return elementorData;
+    let result = elementorData;
+    for (const original of urls) {
+      try {
+        const uploaded = await this.uploadMediaFromUrl(original);
+        if (uploaded && uploaded !== original) {
+          result = result.split(original).join(uploaded);
+        }
+      } catch {
+        // Best effort: keep the original template URL on failure.
+      }
+    }
+    return result;
+  }
+
+
+
 
   private async executePageRequest(
     url: string,
@@ -263,7 +290,10 @@ export class WordPressConnector implements CmsConnector {
       // Catalog path: when a pre-built Elementor tree is supplied (stored template
       // with editable content applied), publish it verbatim. Otherwise convert the
       // HTML template into native Elementor Containers + Widgets.
-      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: false, prebuiltData: payload.elementor_data }));
+      const elementorData = payload.elementor_data
+        ? await this.importElementorImages(payload.elementor_data)
+        : undefined;
+      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: false, prebuiltData: elementorData }));
       // NOTE: do NOT send `_elementor_css`. Elementor registers it with an
       // `object` REST schema, so a string value triggers `rest_invalid_type`
       // (HTTP 400). A newly created page has no cached CSS file, so Elementor
@@ -337,7 +367,10 @@ export class WordPressConnector implements CmsConnector {
     // (skipped in design-preservation mode and for products).
     let elementorApplied = false;
     if (!preserveDesign && !payload.product_data && (typeof payload.content === "string" || payload.elementor_data)) {
-      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: false, prebuiltData: payload.elementor_data }));
+      const elementorData = payload.elementor_data
+        ? await this.importElementorImages(payload.elementor_data)
+        : undefined;
+      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: false, prebuiltData: elementorData }));
       // `_elementor_css` omitted on purpose (object REST schema → rest_invalid_type);
       // Elementor regenerates the CSS automatically when the page is re-rendered.
       elementorApplied = true;

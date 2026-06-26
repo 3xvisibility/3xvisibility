@@ -12,11 +12,23 @@ import { buildElementorFromCatalog } from "../_shared/connectors/elementor-catal
  * Returns a validated `_elementor_data` string, or null when no stored template
  * matches (caller falls back to HTML→Elementor conversion).
  */
+const ELEMENTOR_SIMILARITY_TARGET = 98;
+const MAX_REBUILD_ATTEMPTS = 4;
+
+/** Trim a string to a fraction of its words (used by the rebuild loop). */
+function shrinkText(text: string | undefined, keepFraction: number): string | undefined {
+  if (!text) return text;
+  const words = text.trim().split(/\s+/);
+  if (words.length <= 1) return text;
+  const keep = Math.max(1, Math.floor(words.length * keepFraction));
+  return words.slice(0, keep).join(" ");
+}
+
 async function resolveCatalogElementorData(
   supabase: ReturnType<typeof createClient>,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
-): Promise<{ data: string; similarity: number; truncatedFields: string[] } | null> {
+): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -43,19 +55,34 @@ async function resolveCatalogElementorData(
 
     if (!elementorJson) return null;
 
-    const built = buildElementorFromCatalog(elementorJson, {
-      title: page.title,
-      description: page.seo_description || undefined,
-      bodyHtml: page.content,
-    });
-    if (!built) return null;
-    console.log(`[publish-pages] catalog Elementor applied (similarity ${built.similarity}%, truncated ${built.truncatedFields.length})`);
-    return built;
+    // Automatic rebuild loop: regenerate fields (progressively shrinking content)
+    // until the visual similarity check reaches the target or attempts run out.
+    let best: { data: string; similarity: number; truncatedFields: string[] } | null = null;
+    for (let attempt = 0; attempt < MAX_REBUILD_ATTEMPTS; attempt++) {
+      const keepFraction = 1 - attempt * 0.15;
+      const built = buildElementorFromCatalog(elementorJson, {
+        title: shrinkText(page.title, keepFraction),
+        description: shrinkText(page.seo_description || undefined, keepFraction),
+        bodyHtml: page.content,
+      }, ELEMENTOR_SIMILARITY_TARGET);
+      if (!built) return null;
+      if (!best || built.similarity > best.similarity) best = built;
+      if (built.similarity >= ELEMENTOR_SIMILARITY_TARGET) break;
+    }
+    if (!best) return null;
+
+    const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
+    console.log(
+      `[publish-pages] catalog Elementor rebuilt (similarity ${best.similarity}%, ` +
+      `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length})`,
+    );
+    return { ...best, ok };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
   }
 }
+
 
 /**
  * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
@@ -505,7 +532,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const results: { id: string; status: string; external_url?: string; error?: string; elementor_source?: "catalog" | "html-fallback"; elementor_similarity?: number }[] = [];
+    const results: { id: string; status: string; external_url?: string; error?: string; elementor_source?: "catalog"; elementor_similarity?: number }[] = [];
 
     // Cache page-template detection per website to avoid redundant checks
     const templateCache = new Map<string, { pageTemplate?: string }>();
@@ -743,30 +770,42 @@ Deno.serve(async (req) => {
           preserveDesign,
         );
 
-        // WordPress page publishes: ALWAYS prefer the stored Elementor catalog
-        // template (editable JSON with new content applied + validated). The
-        // catalog JSON is the master design; HTML conversion is a last resort
-        // only when no template has been seeded for this campaign.
-        let elementorSource: "catalog" | "html-fallback" | undefined;
+        // WordPress page publishes: ALWAYS use the stored Elementor catalog
+        // template (editable JSON with new content applied + validated). There is
+        // NO raw-HTML fallback — if no matching template is seeded, or the rebuild
+        // loop cannot reach the visual-similarity target, the page fails with a
+        // clear report so the design integrity is never compromised.
+        let elementorSource: "catalog" | undefined;
         let elementorSimilarity: number | undefined;
         if (
           resolvedPublishType === "page" && !preserveDesign &&
           (page.websites as { type?: string })?.type === "wordpress"
         ) {
           const catalog = await resolveCatalogElementorData(supabase, page, elementorCatalogCache);
-          if (catalog) {
-            payload.elementor_data = catalog.data;
-            elementorSource = "catalog";
-            elementorSimilarity = catalog.similarity;
-          } else {
-            elementorSource = "html-fallback";
-            console.warn(
-              `[publish-pages] page ${page.id} has no seeded Elementor template; ` +
-              `falling back to HTML→Elementor conversion (layout fidelity not guaranteed). ` +
-              `Seed this template via seed-elementor-templates to publish from the master JSON.`,
-            );
+          if (!catalog) {
+            const msg =
+              "Publish blocked: no stored Elementor template found for this campaign. " +
+              "Seed the template via seed-elementor-templates before publishing to WordPress.";
+            console.error("[publish-pages]", msg, { pageId: page.id });
+            await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+            results.push({ id: page.id, status: "failed", error: msg });
+            continue;
           }
+          if (!catalog.ok) {
+            const msg =
+              `Publish blocked: visual similarity ${catalog.similarity}% is below the ` +
+              `${ELEMENTOR_SIMILARITY_TARGET}% threshold after ${MAX_REBUILD_ATTEMPTS} rebuild attempts. ` +
+              `Content could not be fit into the template design.`;
+            console.error("[publish-pages]", msg, { pageId: page.id });
+            await supabase.from("generated_pages").update({ status: "failed", error_message: msg.slice(0, 1000) }).eq("id", page.id);
+            results.push({ id: page.id, status: "failed", error: msg, elementor_similarity: catalog.similarity });
+            continue;
+          }
+          payload.elementor_data = catalog.data;
+          elementorSource = "catalog";
+          elementorSimilarity = catalog.similarity;
         }
+
 
 
         // Apply Shopify template suffix overrides (campaign or request body)
