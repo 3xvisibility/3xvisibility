@@ -302,7 +302,12 @@ export class WordPressConnector implements CmsConnector {
       const elementorData = payload.elementor_data
         ? await this.importElementorImages(payload.elementor_data)
         : undefined;
-      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: false, prebuiltData: elementorData }));
+      // When a stored Elementor catalog JSON exists, its CSS is already baked into
+      // the widget settings, so publish it verbatim. Otherwise embed the full
+      // template markup + <style> CSS in a single HTML widget so ALL styling
+      // (fonts, backgrounds, layout) renders 1:1 in Elementor and on the
+      // WordPress frontend — native-widget conversion would drop <style> blocks.
+      Object.assign(meta, buildElementorMeta(payload.content || "", { embedCss: !elementorData, prebuiltData: elementorData }));
       // NOTE: do NOT send `_elementor_css`. Elementor registers it with an
       // `object` REST schema, so a string value triggers `rest_invalid_type`
       // (HTTP 400). A newly created page has no cached CSS file, so Elementor
@@ -382,7 +387,9 @@ export class WordPressConnector implements CmsConnector {
       const elementorData = payload.elementor_data
         ? await this.importElementorImages(payload.elementor_data)
         : undefined;
-      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: false, prebuiltData: elementorData }));
+      // Embed full markup + CSS when there is no stored catalog JSON, so all
+      // template styling renders 1:1 in Elementor and on the WordPress frontend.
+      Object.assign(meta, buildElementorMeta((payload.content as string) || "", { embedCss: !elementorData, prebuiltData: elementorData }));
       // `_elementor_css` omitted on purpose (object REST schema → rest_invalid_type);
       // Elementor regenerates the CSS automatically when the page is re-rendered.
       elementorApplied = true;
