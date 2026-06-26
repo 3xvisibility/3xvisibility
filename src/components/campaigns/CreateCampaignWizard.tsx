@@ -1412,7 +1412,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
       if (!tpl) throw new Error("Template not found");
       const { error } = await supabase
         .from("templates")
-        .update({ [field]: value })
+        .update({ [field]: value } as never)
         .eq("id", tpl.id);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["templates", wsId] });
