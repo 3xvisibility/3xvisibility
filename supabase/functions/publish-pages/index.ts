@@ -788,7 +788,7 @@ Deno.serve(async (req) => {
           error_message: null,
         }).eq("id", page.id);
 
-        results.push({ id: page.id, status: "published", external_url: result.url });
+        results.push({ id: page.id, status: "published", external_url: result.url, elementor_source: elementorSource, elementor_similarity: elementorSimilarity });
 
         // Audit log for publish
         try {
