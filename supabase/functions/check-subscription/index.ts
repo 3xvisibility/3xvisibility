@@ -69,6 +69,14 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // ── Per-invocation instrumentation state ──────────────────────────────────
+  const startedAt = Date.now();
+  let metricUserId: string | null = null;
+  let metricWorkspaceId: string | null = null;
+  let metricOutcome: "success" | "failure" = "success";
+  let metricStatus = 200;
+  let metricFailureReason: string | null = null;
+
   try {
     logStep("Function started");
 
@@ -77,6 +85,8 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      metricOutcome = "failure";
+      metricFailureReason = "missing_auth_header";
       return new Response(JSON.stringify({ subscribed: false, error: "No authorization header" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -87,6 +97,8 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError || !userData?.user) {
       logStep("Auth failed gracefully", { message: userError?.message });
+      metricOutcome = "failure";
+      metricFailureReason = "auth_failed";
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -95,6 +107,7 @@ serve(async (req) => {
     
     const userId = userData.user.id;
     const userEmail = userData.user.email;
+    metricUserId = userId;
     if (!userEmail) throw new Error("No email in token");
     logStep("User authenticated", { email: userEmail });
 
@@ -106,6 +119,7 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
     const workspaceId = memberData?.workspace_id ?? null;
+    metricWorkspaceId = workspaceId;
     logStep("Workspace", { workspaceId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -196,9 +210,28 @@ serve(async (req) => {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: msg });
+    metricOutcome = "failure";
+    metricStatus = 500;
+    metricFailureReason = msg;
     return new Response(JSON.stringify({ error: msg }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
+    });
+  } finally {
+    // Emit one structured metric per invocation. Counts are per-isolate
+    // cumulative tallies keyed by user and workspace; latency + outcome are
+    // per-call. Aggregate across logs for global counts.
+    const userCallCount = bump(callCountByUser, metricUserId);
+    const workspaceCallCount = bump(callCountByWorkspace, metricWorkspaceId);
+    emitMetric({
+      user_id: metricUserId,
+      workspace_id: metricWorkspaceId,
+      duration_ms: Date.now() - startedAt,
+      outcome: metricOutcome,
+      status: metricStatus,
+      failure_reason: metricFailureReason,
+      user_call_count: userCallCount,
+      workspace_call_count: workspaceCallCount,
     });
   }
 });
