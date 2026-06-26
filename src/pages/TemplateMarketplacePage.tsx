@@ -84,8 +84,44 @@ function localizedCategoryLabel(id: string, language: Language): string {
   return CATEGORY_LABEL_I18N[id]?.[language] ?? categoryMeta(id).label;
 }
 
-
-
+// 3-way format selector (Elementor / Gutenberg / Shopify) shown on each template
+// card and in the preview dialog. Gutenberg is flagged Beta.
+function FormatPills({
+  template,
+  value,
+  onChange,
+  size = "sm",
+}: {
+  template: MarketplaceTemplate;
+  value: TemplateFormat;
+  onChange: (fmt: TemplateFormat) => void;
+  size?: "sm" | "md";
+}) {
+  return (
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      {availableFormats(template).map((fmt) => (
+        <button
+          key={fmt}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onChange(fmt);
+          }}
+          className={`rounded-full border transition-colors ${
+            size === "md" ? "px-3 py-1 text-xs" : "px-2 py-0.5 text-[10px]"
+          } ${
+            value === fmt
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
+          }`}
+        >
+          {TEMPLATE_FORMAT_LABELS[fmt]}
+          {fmt === "gutenberg" && <span className="ml-1 opacity-70">βeta</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function TemplateMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
