@@ -586,7 +586,11 @@ export default function TemplateMarketplacePage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+              <div className="mt-3 pt-3 border-t border-border">
+                <FormatPills template={tpl} value={resolveFormat(tpl)} onChange={(f) => setFormat(tpl.id, f)} />
+              </div>
+
+              <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-muted-foreground">
                   {tpl.variables.length} variables
                 </span>
