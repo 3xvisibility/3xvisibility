@@ -12,11 +12,23 @@ import { buildElementorFromCatalog } from "../_shared/connectors/elementor-catal
  * Returns a validated `_elementor_data` string, or null when no stored template
  * matches (caller falls back to HTML→Elementor conversion).
  */
+const ELEMENTOR_SIMILARITY_TARGET = 98;
+const MAX_REBUILD_ATTEMPTS = 4;
+
+/** Trim a string to a fraction of its words (used by the rebuild loop). */
+function shrinkText(text: string | undefined, keepFraction: number): string | undefined {
+  if (!text) return text;
+  const words = text.trim().split(/\s+/);
+  if (words.length <= 1) return text;
+  const keep = Math.max(1, Math.floor(words.length * keepFraction));
+  return words.slice(0, keep).join(" ");
+}
+
 async function resolveCatalogElementorData(
   supabase: ReturnType<typeof createClient>,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
-): Promise<{ data: string; similarity: number; truncatedFields: string[] } | null> {
+): Promise<{ data: string; similarity: number; truncatedFields: string[]; ok: boolean } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -43,19 +55,34 @@ async function resolveCatalogElementorData(
 
     if (!elementorJson) return null;
 
-    const built = buildElementorFromCatalog(elementorJson, {
-      title: page.title,
-      description: page.seo_description || undefined,
-      bodyHtml: page.content,
-    });
-    if (!built) return null;
-    console.log(`[publish-pages] catalog Elementor applied (similarity ${built.similarity}%, truncated ${built.truncatedFields.length})`);
-    return built;
+    // Automatic rebuild loop: regenerate fields (progressively shrinking content)
+    // until the visual similarity check reaches the target or attempts run out.
+    let best: { data: string; similarity: number; truncatedFields: string[] } | null = null;
+    for (let attempt = 0; attempt < MAX_REBUILD_ATTEMPTS; attempt++) {
+      const keepFraction = 1 - attempt * 0.15;
+      const built = buildElementorFromCatalog(elementorJson, {
+        title: shrinkText(page.title, keepFraction),
+        description: shrinkText(page.seo_description || undefined, keepFraction),
+        bodyHtml: page.content,
+      }, ELEMENTOR_SIMILARITY_TARGET);
+      if (!built) return null;
+      if (!best || built.similarity > best.similarity) best = built;
+      if (built.similarity >= ELEMENTOR_SIMILARITY_TARGET) break;
+    }
+    if (!best) return null;
+
+    const ok = best.similarity >= ELEMENTOR_SIMILARITY_TARGET;
+    console.log(
+      `[publish-pages] catalog Elementor rebuilt (similarity ${best.similarity}%, ` +
+      `target ${ELEMENTOR_SIMILARITY_TARGET}%, ok=${ok}, truncated ${best.truncatedFields.length})`,
+    );
+    return { ...best, ok };
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
   }
 }
+
 
 /**
  * Strip head-level tags (meta, link, script/JSON-LD, style) from generated content
