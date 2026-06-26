@@ -16,7 +16,7 @@ async function resolveCatalogElementorData(
   supabase: ReturnType<typeof createClient>,
   page: { campaign_id?: string | null; title: string; content: string; seo_description?: string | null },
   cache: Map<string, unknown>,
-): Promise<string | null> {
+): Promise<{ data: string; similarity: number; truncatedFields: string[] } | null> {
   try {
     if (!page.campaign_id) return null;
 
@@ -50,7 +50,7 @@ async function resolveCatalogElementorData(
     });
     if (!built) return null;
     console.log(`[publish-pages] catalog Elementor applied (similarity ${built.similarity}%, truncated ${built.truncatedFields.length})`);
-    return built.data;
+    return built;
   } catch (e) {
     console.warn("[publish-pages] catalog Elementor resolve failed", e);
     return null;
