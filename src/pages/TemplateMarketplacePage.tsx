@@ -102,6 +102,11 @@ export default function TemplateMarketplacePage() {
   const [uploadedCsv, setUploadedCsv] = useState<Record<string, string>[]>([]);
   const [imageOverrides, setImageOverrides] = useState<Record<string, string>>({});
   const [contentOverrides, setContentOverrides] = useState<Record<string, string>>({});
+  const [formatByTemplate, setFormatByTemplate] = useState<Record<string, TemplateFormat>>({});
+  const resolveFormat = (tpl: MarketplaceTemplate): TemplateFormat =>
+    formatByTemplate[tpl.id] ?? defaultFormat(tpl);
+  const setFormat = (id: string, fmt: TemplateFormat) =>
+    setFormatByTemplate((prev) => ({ ...prev, [id]: fmt }));
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
