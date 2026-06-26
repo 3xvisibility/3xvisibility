@@ -1127,6 +1127,7 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
         campaign_type: campaignType,
         campaign_types: campaignTypes as any,
         template_id: selectedTemplate || null,
+        publish_format: publishFormat,
         ai_max_lines: aiMaxLines.trim() ? parseInt(aiMaxLines, 10) : null,
         ai_max_words: aiMaxWords.trim() ? parseInt(aiMaxWords, 10) : null,
         website_id: selectedWebsite || (dataSource === "website" ? websiteForPages : null) || null,
