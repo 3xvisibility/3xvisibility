@@ -141,37 +141,41 @@ export function useSubscription(): SubscriptionData {
     queryKey: ["user-subscription", wsId],
     enabled: !!wsId,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use the locally-cached session (no network round-trip). getUser() hits
+      // /auth/v1/user over the network on every fetch; getSession reads the
+      // stored JWT and is sufficient to identify the user here.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
       if (!user) return null;
 
-      // Fetch subscription
+      // Fetch subscription, AI credits and connected-site count in parallel so
+      // the three independent reads don't run as a serial waterfall.
       const subQuery = supabase
         .from("subscriptions")
         .select("plan, pages_used, pages_limit, ai_generations_used, ai_generations_limit, current_period_end")
         .eq("user_id", user.id);
       if (wsId) subQuery.eq("workspace_id", wsId);
-      const { data: subData } = await subQuery.maybeSingle();
 
-      // Fetch AI credits — the single source of truth for AI usage/limits.
-      // Every AI action deducts from this table via deduct_ai_credits, so all
-      // surfaces (dashboard, settings, billing, widget) stay in sync.
-      const { data: creditsData } = await supabase
-        .from("ai_credits")
-        .select("total_credits, used_credits, remaining_credits")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [subRes, creditsRes, sitesRes] = await Promise.all([
+        subQuery.maybeSingle(),
+        supabase
+          .from("ai_credits")
+          .select("total_credits, used_credits, remaining_credits")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        wsId
+          ? supabase
+              .from("websites")
+              .select("id", { count: "exact", head: true })
+              .eq("workspace_id", wsId)
+          : Promise.resolve({ count: 0 } as { count: number }),
+      ]);
 
-      // Count connected websites for this workspace
-      let sitesConnected = 0;
-      if (wsId) {
-        const { count } = await supabase
-          .from("websites")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", wsId);
-        sitesConnected = count ?? 0;
-      }
-
-      return { ...subData, sitesConnected, aiCredits: creditsData };
+      return {
+        ...subRes.data,
+        sitesConnected: (sitesRes as { count: number | null }).count ?? 0,
+        aiCredits: creditsRes.data,
+      };
     },
     staleTime: 60_000,
   });
