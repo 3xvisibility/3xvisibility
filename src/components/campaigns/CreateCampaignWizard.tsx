@@ -657,6 +657,16 @@ export function CreateCampaignWizard({ open, onOpenChange, onCreated }: CreateCa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTemplate]);
 
+  // Seed the publish format from the template's saved choice (from marketplace),
+  // unless the user has already changed it manually.
+  useEffect(() => {
+    if (!selectedTemplate || publishFormatTouchedRef.current) return;
+    const tpl = templates.find(t => t.id === selectedTemplate) as { schema_config?: { publish_format?: string } } | undefined;
+    const fmt = tpl?.schema_config?.publish_format;
+    if (fmt === "elementor" || fmt === "gutenberg" || fmt === "shopify") setPublishFormat(fmt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate, templates]);
+
   // Vibe validator — runs on every change of template/palette/typography/density
   // and surfaces clash warnings + one-click fixes inside the vibe panel.
   const vibeValidation = useMemo(() => {
