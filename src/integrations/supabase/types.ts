@@ -2834,6 +2834,7 @@ export type Database = {
     }
     Functions: {
       campaign_limit_for_plan: { Args: { _plan: string }; Returns: number }
+      can_access_realtime_topic: { Args: { _topic: string }; Returns: boolean }
       deduct_ai_credits: {
         Args: {
           p_credits: number
