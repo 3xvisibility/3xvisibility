@@ -405,6 +405,7 @@ export default function TemplateMarketplacePage() {
         schema_type: tpl.schema_type || "WebPage",
         schema_config: {
           default_values: mergedDefaults,
+          publish_format: resolveFormat(tpl),
           ...(hasOverrides
             ? { content_overrides: contentOverrides, image_overrides: imageOverrides }
             : {}),
